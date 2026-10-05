@@ -1509,275 +1509,31 @@ impl Compiler {
         component::encode_component(&core_wasm, &resolve, *world_id)
     }
 
-    /// Compile source code for main mode execution
+    /// Compile source containing the requested namespace and its `-main` var
+    /// to the pinned official asynchronous WASI command profile.
     ///
-    /// This method compiles Suss source code containing a `-main` function
-    /// into a WASM component that exports a `run` function.
-    ///
-    /// # Arguments
-    ///
-    /// * `source` - Suss source code containing a `-main` function
-    /// * `_main_ns` - The namespace containing `-main` (currently unused, reserved for future)
-    ///
-    /// # Returns
-    ///
-    /// Compiled WASM component bytes with `run` export
-    pub fn compile_for_main(&mut self, source: &str, _main_ns: &str) -> CompileResult<Vec<u8>> {
-        // Load core.sus (auto-injected before user code per Clojure semantics)
-        let core_exprs = load_core_exprs()?;
-
-        // Parse the Suss source
-        let mut parser_state = ParserState::new("suss");
-        let user_exprs = suss_reader::parse_all(source, &mut parser_state)
-            .map_err(|e| CompileError::Parse(e.to_string()))?;
-
-        // Combine core + user expressions
-        let mut all_exprs = core_exprs;
-        all_exprs.extend(user_exprs);
-
-        // Expand macros
-        let exprs = expand::expand_all(all_exprs, None)?;
-
-        // Extract definitions (functions, deftypes, protocols, extensions)
-        // For main mode, we allow empty remaining expressions
-        let (mut functions, deftypes, protocols, extensions) =
-            Self::extract_definitions_for_main(exprs)?;
-
-        // Find the -main function
-        let main_fn_exists = functions.iter().any(|f| f.name == "-main");
-        if !main_fn_exists {
-            return Err(CompileError::Undefined(
-                "-main function not found in source".into(),
-            ));
+    /// Native compilation uses the shared compiled Macro/Runtime pipeline and
+    /// resolves dependencies from `src`. Runtime initializers execute only in
+    /// the artifact host. Ordinary completion succeeds; explicit exit uses the
+    /// command status policy.
+    pub fn compile_for_main(&mut self, source: &str, main_ns: &str) -> CompileResult<Vec<u8>> {
+        #[cfg(not(target_family = "wasm"))]
+        {
+            portable_aot::compile_main_source(
+                source,
+                None,
+                main_ns,
+                &[std::path::PathBuf::from("src")],
+            )
+            .map_err(CompileError::Semantic)
         }
-
-        // Generate a synthetic `run` function that calls -main
-        let run_body = Edn::List(vec![
-            Edn::Symbol(suss_core::Symbol::new("-main")),
-        ]);
-
-        functions.push(analyze::AnalyzedFunction {
-            name: "__run".to_string(),
-            exported: true,
-            // Export name must match what wit-component expects for interface exports
-            // Format: "{interface-path}#{function-name}"
-            export_name: Some("wasi:cli/run@0.2.4#run".to_string()),
-            params: Vec::new(),
-            rest_param: None,
-            // wasi:cli/run requires `run: func() -> result`
-            return_type: ir::Type::Result { ok: None, err: None },
-            return_type_hint: None,
-            docstring: None,
-            body: run_body,
-        });
-
-        // Detect WASI calls in all function bodies
-        let mut all_wasi_calls = Vec::new();
-        for func in &functions {
-            let calls = wasi::collect_wasi_calls(&func.body);
-            all_wasi_calls.extend(calls);
+        #[cfg(target_family = "wasm")]
+        {
+            let _ = (source, main_ns);
+            Err(CompileError::Unsupported(
+                "Public command compilation requires the native compiled macro host".into(),
+            ))
         }
-
-        // Deduplicate WASI calls
-        all_wasi_calls.sort_by(|a, b| {
-            (&a.wit_interface, &a.function_name).cmp(&(&b.wit_interface, &b.function_name))
-        });
-        all_wasi_calls.dedup_by(|a, b| {
-            a.wit_interface == b.wit_interface && a.function_name == b.function_name
-        });
-
-        // Convert WASI calls to AnalyzedImports
-        let imports: Vec<analyze::AnalyzedImport> = all_wasi_calls
-            .iter()
-            .map(|info| {
-                let package = info
-                    .wit_interface
-                    .split(':')
-                    .nth(1)
-                    .and_then(|s| s.split('/').next())
-                    .unwrap_or("unknown");
-
-                analyze::AnalyzedImport {
-                    alias: format!("wasi.{}", package),
-                    wit_interface: info.wit_interface.clone(),
-                    function_name: info.function_name.clone(),
-                    params: info.params.clone(),
-                    return_type: info.return_type.clone(),
-                }
-            })
-            .collect();
-
-        // Create analyzed module
-        let analyzed = analyze::AnalyzedModule {
-            namespace: None,
-            world_target: None,
-            imports,
-            suss_requires: Vec::new(),
-            functions,
-            globals: Vec::new(),
-            protocols,
-            extensions,
-            deftypes,
-        };
-
-        // Parse the CLI command world
-        let wit_source = worlds::CLI_COMMAND_WORLD;
-        let mut resolve = Resolve::new();
-
-        // Load WASI packages needed by CLI command world
-        for pkg_name in &["io", "cli", "random", "clocks"] {
-            if let Some(combined) = wasi::get_combined_package(pkg_name) {
-                let _ = resolve.push_str(&format!("wasi-{}.wit", pkg_name), &combined);
-            }
-        }
-
-        let pkg_id = resolve
-            .push_str("world.wit", wit_source)
-            .map_err(|e| CompileError::Wit(e.to_string()))?;
-
-        let pkg = &resolve.packages[pkg_id];
-        let world_id = pkg
-            .worlds
-            .values()
-            .next()
-            .ok_or_else(|| CompileError::Wit("No world found in CLI world template".to_string()))?;
-
-        // Lower to IR (Component mode for proper export handling)
-        let ir = lower::lower_for_component(&analyzed)?;
-
-        // Generate core WASM module
-        let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
-
-        // Wrap as WASM Component
-        component::encode_component(&core_wasm, &resolve, *world_id)
-    }
-
-    /// Extract definitions for main mode (allows empty remaining expressions)
-    fn extract_definitions_for_main(
-        exprs: Vec<Edn>,
-    ) -> CompileResult<(
-        Vec<analyze::AnalyzedFunction>,
-        Vec<analyze::AnalyzedDeftype>,
-        Vec<analyze::AnalyzedProtocol>,
-        Vec<analyze::AnalyzedExtension>,
-    )> {
-        let mut functions = Vec::new();
-        let mut deftypes = Vec::new();
-        let mut protocols = Vec::new();
-        let mut extensions = Vec::new();
-
-        for expr in exprs {
-            if let Edn::List(ref items) = expr {
-                if let Some(Edn::Symbol(sym)) = items.first() {
-                    // Extract protocol declarations
-                    if sym.name == "defprotocol" {
-                        if let Some(protocol) = Self::extract_protocol(items)? {
-                            protocols.push(protocol);
-                            continue;
-                        }
-                    }
-                    // Extract extend-type forms
-                    if sym.name == "extend-type" && items.len() >= 2 {
-                        if let Some(extension) = Self::extract_extension(items)? {
-                            extensions.push(extension);
-                            continue;
-                        }
-                    }
-                    // Extract deftype forms
-                    if sym.name == "deftype" && items.len() >= 3 {
-                        if let Some(deftype) = Self::extract_deftype(items)? {
-                            deftypes.push(deftype);
-                            continue;
-                        }
-                    }
-                    // Extract defn forms
-                    if sym.name == "defn" && items.len() >= 3 {
-                        if let Edn::Symbol(name_sym) = &items[1] {
-                            let (params_idx, body_start) = if matches!(&items[2], Edn::String(_)) {
-                                (3, 4)
-                            } else {
-                                (2, 3)
-                            };
-
-                            if params_idx < items.len() {
-                                if let Edn::Vector(params_vec) = &items[params_idx] {
-                                    let params: Vec<(String, ir::Type)> = params_vec
-                                        .iter()
-                                        .filter_map(|p| {
-                                            if let Edn::Symbol(s) = p {
-                                                Some((s.name.clone(), ir::Type::GcRef))
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .collect();
-
-                                    let body = if items.len() == body_start + 1 {
-                                        items[body_start].clone()
-                                    } else if items.len() > body_start {
-                                        Edn::List(
-                                            std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
-                                                .chain(items[body_start..].iter().cloned())
-                                                .collect(),
-                                        )
-                                    } else {
-                                        Edn::Nil
-                                    };
-
-                                    functions.push(analyze::AnalyzedFunction {
-                                        name: name_sym.name.clone(),
-                                        exported: false,
-                                        export_name: None,
-                                        params,
-                                        rest_param: None,
-                                        return_type: ir::Type::GcRef,
-                                        return_type_hint: None,
-                                        docstring: None,
-                                        body,
-                                    });
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    // Handle def forms: extract (def name [docstring] (fn [params] body)) as functions
-                    if sym.name == "def" && items.len() >= 3 {
-                        if let Edn::Symbol(name_sym) = &items[1] {
-                            // Check for optional docstring after name
-                            let (docstring, value_idx) = if let Some(Edn::String(doc)) = items.get(2) {
-                                (Some(doc.clone()), 3)
-                            } else {
-                                (None, 2)
-                            };
-
-                            if let Some(value) = items.get(value_idx) {
-                                // Check if value is an fn form: (def name [docstring] (fn [params] body))
-                                if let Edn::List(fn_items) = value {
-                                    if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
-                                        if fn_sym.name == "fn" && fn_items.len() >= 2 {
-                                            if let Some(mut extracted) = Self::extract_def_fn(
-                                                &name_sym.name,
-                                                false, // Not exported by default
-                                                &fn_items[1..],
-                                            )? {
-                                                extracted.docstring = docstring;
-                                                functions.push(extracted);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            // Plain def (not fn): skip for now
-                            continue;
-                        }
-                    }
-                }
-            }
-            // Ignore other expressions (non-definition top-level forms)
-        }
-
-        Ok((functions, deftypes, protocols, extensions))
     }
 
     // ========================================================================

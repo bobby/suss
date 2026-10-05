@@ -18069,3 +18069,96 @@ on the final reviewed head and reach all four doctest suites; prior full failure
 and superseded CI are not acceptance. Temporarily release the sole local heavy
 slot to root for the next bounded implementation checks before coordinating
 reviewer full restart. No PR readiness, merge, closure or M3 completion.
+
+
+## Public command compiler migration (2026-10-05)
+
+Isolated /private/tmp/suss-m3-public-command-compiler, branch
+portable/m3-public-command-compiler now based on reviewed PR197 repair25cb06d.
+Public Compiler::compile_for_main now shares compiled official command preparation
+with native CLI file mode. Requested namespace validates before Macro effects;
+file mode retains its source path through a crate-private helper. Runtime
+initializers remain deferred. Deleted the sole-use prototype main extractor.
+Other public compiler methods and production evaluators are not yet retired.
+See docs/runtime/public-compiled-compiler.md and the updated acceptance-m3 audit.
+
+Regressions were added first, then unchanged tests copied to a detached parent
+/private/tmp/suss-public-command-before at25cb06d. Sequential bounded execution
+uses shared /private/tmp/suss-m3-pr143-target, jobs2, no RUSTFLAGS. ALL root heavy
+handles below ACTUAL TERMINAL:
+- ParentCLI11447 exit101:1passed/4failed/0ignored/0filtered,0.44s; parenthost30519
+  exit101:4passed/2failed/0ignored/0filtered,3.21s. Six new regressions expose hidden
+  print imports, missing state/lexical macro data and namespace preflight ordering;
+  the phase-isolation regression and four preexisting typed fixtures already pass.
+  Logs /private/tmp/suss-public-command-parent-{cli,host}.log.
+- Both phase bootstrap Wasm/JSON pairs regenerated59327 exit0; compilerbuild5.65s.
+  Log /private/tmp/suss-public-command-bootstrap-generate.log.
+- Replacementhost17349 exit0:6passed/0failed/0ignored/0filtered,8.35s; CLI99352
+  exit0:5passed/0failed/0ignored/0filtered,48.83s. Actual typed async calls in2fresh
+  Stores repeatedly survive forced GC/retained Unicode and atom state, once-only
+  initialization, exact imports, wrong-argument Err and later recovery. Independent
+  exception decoder asserts initializer f64 payload42 bits. CLI executes lexical
+  macros, empty/Unicode argument ordering, normal completion, uncaught failures,
+  checked explicit exit and7invalid statuses caught before exit73. Logs
+  /private/tmp/suss-public-command-fixed-{host,cli}.log.
+- Existing officialCLI17909 exit0:6passed/0failed/0ignored/0filtered,69.64s,
+  preserving original paths/dependencies, phase isolation and exit behavior.
+  Log /private/tmp/suss-public-command-official-cli.log.
+- Java/Node-free85102 exit0: BOTH pairs byte-exact against two fresh generations,
+  checkout-independent identity and bootstrap4passed/0failed/0ignored/0filtered,
+  13.53s. Log /private/tmp/suss-public-command-bootstrap-verify.log.
+- Rust syntax/touched test formatting and git diff --check pass. No unfiltered
+  workspace baseline has run at this new command head; review/full/final CI pending.
+
+Design section4 now explicitly guarantees constant stack use for loop/function
+recur. Dated2026-10-05 clarification retains source-order/temporary assignment and
+arity/tail diagnostics, grounded in pinned compiler.cljc:1156 c4295f3 emission.
+PR197 focused100000-iteration tests already execute under2MiB Wasm stack limits.
+General ordinary-call TCO is unpromised; no milestone completion follows.
+
+PR197 first full63838 TERMINAL101:58groups239passed/1failed/noignored/nofiltered,
+no doctests. Bootstrap-source-cache reset defect repaired without dropping Store
+roots/code. Reviewer generation/verifier/public12/profile8/cache6/REPL6 pass and
+clean frozen25cb06d pushed. Root explicitly returned sole heavy slot after all
+above handles terminal; reviewer replacement exact full47430 ACTUALLY LIVE,
+/private/tmp/suss-pr197-review-full-final-retry.log. Root may not compete.
+New final-head CI37257364671 watcher63455 LIVE. Supersededa853 CI37255544458
+CANCELLED, watcher52282 terminal1; never acceptance of the repaired head.
+
+PR195 b6870b7 CI37249501965 SUCCESS, raw/local149tuple audit1220/0/17/all4docs.
+Ready and unmerged. Original issues12–15 remain open. Publish command increment
+as a draft stacked on197; dispatch independent review with no competing heavy
+commands until reviewer197 actual terminal/all4docs audit/release. Significant
+fixes, exact unfiltered full baseline and final reviewed-head CI still required.
+Use Refs12/13/14 only. No merge/issue closure/M3 completion. Next migrate remaining
+public file/namespace/project/expression/cache and component-target evaluator
+routes, complete source schemas and original pending-I/O/rooted continuation/
+cancellation/live-GC versus resident-code acceptance without narrowing scope.
+
+
+## Independent PR198 command compiler review (2026-10-05)
+
+Reviewed initial92b9e920c1d96edba221db308959d6495ebde8af against25cb06d in
+isolated /private/tmp/suss-pr198-review. Read applicable AGENTS, accepted design,
+roadmap, compatibility inventory and handoff. Native public command routing uses
+the existing compiled pipeline; shared file preparation retains exact source
+path/search paths and namespace validation precedes effectful Macro construction.
+Runtime initialization stays deferred. Official async result shape, user argument
+order, reachable imports, explicit exit checks and phase isolation remain covered
+by executing assertions. Removed extractor has no remaining uses. Wasm-target
+entry reports Unsupported. Independently inspected pinned compiler.cljc at
+c4295f3: recurrence evaluates temporaries, assigns parameters and emits continue,
+supporting the explicit constant-stack clarification. No significant finding or
+source change; original #12–#15 acceptance scope remains open.
+
+After explicit exclusive heavy-slot transfer from root, serial independent tests
+use shared /private/tmp/suss-m3-pr143-target, jobs2, no RUSTFLAGS:
+- Host28176 ACTUAL TERMINAL0: portable_command6passed/0failed/0ignored/0filtered,
+  7.79s; /private/tmp/suss-pr198-review-focused-host.log.
+- CLI49104 ACTUAL TERMINAL0: existing official6passed70.13s and public5passed
+  50.61s, no failures/ignores/filters; /private/tmp/suss-pr198-review-focused-cli.log.
+
+Freeze this docs-only review head before the exact unfiltered workspace baseline.
+Compiler/bootstrap source identity is unchanged. Full baseline/all four doctest
+suites and final-head CI remain required; reviewer retains the exclusive heavy
+slot until actual terminal audit/release. No merge, issue closure or M3 completion.
