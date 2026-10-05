@@ -18219,3 +18219,45 @@ audited150 full-workspace result groups against local full47430:1232passed,
 0failed,17existing ignores,0filtered and all four doctest suites; separate CI
 bootstrap4 also passed. PR197 is ready and unmerged. PR198 independent full91839
 passed1239/0/17 across151groups/all four docs; final CI watcher88840 remains live.
+
+## Independent PR199 scalar option review (2026-10-05)
+
+Reviewed0cc43693654ccffe9585e4a3062471a6439632ad against reviewed PR198 e35fdce
+in isolated /private/tmp/suss-pr199-review. Significant finding: the initial
+nil/raw scalar option mapping contradicted accepted design section8. Added an
+executing regression before repair:45175 TERMINAL101, None inspected as [:none]
+returned-1 instead of7. Log /private/tmp/suss-pr199-tagged-before.log.
+
+Repair represents options as actual nominal PersistentVector/Keyword values:
+[:none] and [:some scalar]. A privately rooted compiled schema initializes after
+the Runtime core initializer and before user initializers. It captures intrinsic
+identity/array closures, class constructors and keyword constants. Direct nominal
+identity and schema field checks avoid both namespace shadows and transitive
+mutable public vector?/count/nth/=/nil? calls. Ordinary user core bindings stay
+live. Initial capture-only attempt79280 exposed that transitive bypass (15passed,
+1failed); stable primitive repair and regression52944 pass. Malformed nonvectors,
+wrong tags/lengths and scalar [:some nil] independently decode language schema
+exceptions; nil is not admitted by scalar payload types. Composite/nested option
+payloads that can contain nil remain explicitly unsupported.
+
+Both phase Wasm/JSON pairs were regenerated after the final compiler edits.
+Final focused63505 TERMINAL0: options16, scalar AOT13 and async AOT3 passed,
+0failed/0ignored/0filtered. Log /private/tmp/suss-pr199-review-focused-final.log.
+The original twelve typed host assertions are preserved with source functions
+adapted to the accepted tagged contract. Additional tests execute literal source
+observations, malformed results, namespace shadows and core function/constructor
+redefinitions. Static review covers canonical 1/2/4/8-byte alignment, actual
+component type indices, sixteen-flat-param preflight, flattened async task-return,
+zero hidden imports and bounded shared canonical result memory. Source suspension,
+composite options/other WIT types, full evaluator retirement and original M3
+requirements remain unfinished. No issue/milestone closure or merge.
+
+Freeze/push this reviewed repair before running the exact unfiltered workspace
+baseline. All four doctest suites and final reviewed-head CI remain mandatory.
+Reviewer retains the sole local heavy slot until actual terminal baseline audit
+and explicit release.
+
+Java/Node-free verifier45590 ACTUAL TERMINAL0: BOTH phase pairs match two fresh
+builds byte-for-byte, checkout-independent compiler identity passes and bootstrap4
+passes with0failed/0ignored/0filtered,12.96s. Log
+/private/tmp/suss-pr199-review-bootstrap-verify.log. No new ignores or skips.

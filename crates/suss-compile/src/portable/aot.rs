@@ -498,8 +498,50 @@ pub fn component(
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
     }
+    // Compile the design's tagged option schema through the ordinary source
+    // pipeline, preserving nominal persistent-vector and keyword identities.
+    // This fragment has no definitions or user macro expansion.
+    let option_schema = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.optional())
+            || export.result.is_some_and(Boundary::optional)
+    });
+    let mut fragments = fragments.to_vec();
+    if option_schema {
+        fragments.push(super::prepare_fragment(
+            r#"(let [identical suss.core/identical?
+                        make-array suss.core/array get-array suss.core/aget
+                        vector-class suss.core/PersistentVector
+                        keyword-class suss.core/Keyword
+                        root (.-EMPTY_NODE suss.core/PersistentVector)
+                        none [:none] some-tag :some]
+                (fn [lifting value]
+                    (if lifting
+                        (if (identical nil value) none
+                            (new vector-class nil 2 5 root (make-array some-tag value) nil))
+                        (if (suss.core/instance? vector-class value)
+                            (let [length (.-cnt value) tail (.-tail value)]
+                                (if (if (identical length 1) true (identical length 2))
+                                    (let [tag (get-array tail 0)]
+                                        (if (if (suss.core/instance? keyword-class tag)
+                                                (identical nil (.-ns tag)) false)
+                                            (if (identical length 1)
+                                                (if (identical (.-name tag) "none") nil
+                                                    (throw "WIT option requires [:none] or [:some value]"))
+                                                (if (identical (.-name tag) "some")
+                                                    (let [payload (get-array tail 1)]
+                                                        (if (identical nil payload)
+                                                            (throw "WIT scalar option payload cannot be nil")
+                                                            payload))
+                                                    (throw "WIT option requires [:none] or [:some value]")))
+                                            (throw "WIT option requires [:none] or [:some value]")))
+                                    (throw "WIT option requires [:none] or [:some value]")))
+                            (throw "WIT option requires [:none] or [:some value]")))))"#,
+            &fragments[0].environment,
+            Phase::Runtime,
+        )?);
+    }
     // Reject every artifact before assembling any initialization start function.
-    for fragment in fragments {
+    for fragment in &fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
             .map_err(error)?;
         artifact_identity::verify(
@@ -516,7 +558,7 @@ pub fn component(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let adapter = adapter(&exports, fragments.len())?;
+    let adapter = adapter(&exports, fragments.len(), option_schema)?;
     let asynchronous = exports
         .iter()
         .filter(|export| export.asynchronous)
@@ -826,7 +868,11 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
     module.finish()
 }
 
-fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnostic> {
+fn adapter(
+    exports: &[Export],
+    fragment_count: usize,
+    option_schema: bool,
+) -> Result<Vec<u8>, Diagnostic> {
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
     let signatures = [
@@ -927,6 +973,18 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
                         .instruction(&Instruction::I32Const(0))
                         .instruction(&Instruction::RefI31)
                         .instruction(&Instruction::End);
+                    // Consume the lifted scalar exactly once, then form its
+                    // [:none]/[:some value] source representation.
+                    body.instruction(&Instruction::LocalSet(result))
+                        .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                        .instruction(&Instruction::I32Const(4))
+                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::LocalGet(result))
+                        .instruction(&Instruction::ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: 2,
+                        })
+                        .instruction(&Instruction::Call(2));
                     parameter += 2;
                 }
             }
@@ -943,6 +1001,17 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
                 lower_scalar(&mut body, ty, result, integer, number, &export.name)
             }
             Some(Boundary::Option(ty)) => {
+                debug_assert!(option_schema);
+                body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::RefI31)
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: runtime_abi::ARGS,
+                        array_size: 2,
+                    })
+                    .instruction(&Instruction::Call(2))
+                    .instruction(&Instruction::LocalSet(result));
                 // Scalar option returns use a fixed canonical return area. No
                 // allocation, ownership transfer or post-return free is needed.
                 body.instruction(&Instruction::LocalGet(result))
@@ -986,10 +1055,18 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    for index in 0..fragment_count {
+    for index in 0..fragment_count - usize::from(option_schema) {
         start
             .instruction(&Instruction::Call(HELPERS + index as u32))
             .instruction(&Instruction::Drop);
+        if option_schema && index == 0 {
+            // The first fragment provides compiled Runtime core. Capture schema
+            // closures and constructors before any user initializer can redefine
+            // those public cells. This private root is never exported.
+            start
+                .instruction(&Instruction::Call(HELPERS + fragment_count as u32 - 1))
+                .instruction(&Instruction::GlobalSet(global_indices.len() as u32));
+        }
     }
     start.instruction(&Instruction::End);
     code.function(&start);
@@ -1013,6 +1090,18 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
         });
         module.section(&memory);
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
+    }
+    if option_schema {
+        let mut globals = GlobalSection::new();
+        globals.global(
+            GlobalType {
+                val_type: VALUE,
+                mutable: true,
+                shared: false,
+            },
+            &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
+        );
+        module.section(&globals);
     }
     module
         .section(&public)

@@ -68,7 +68,7 @@ fn complete<F: std::future::Future>(future: F) -> F::Output {
 #[test]
 fn asynchronous_option_arguments_preserve_none_and_false() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export choose [x fallback] (if (nil? x) fallback (if x 1 0)))",
+        "(defn ^:export choose [x fallback] (if (= x [:none]) fallback (if (nth x 1) 1 0)))",
         "export choose: async func(x: option<bool>, fallback: s32) -> s32;",
     );
     let function = instance
@@ -171,7 +171,7 @@ fn mixed_scalar_and_optional_exports_use_their_actual_component_type_indices() {
 #[test]
 fn optional_integer_parameters_preserve_none_some_and_argument_order() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export choose [x fallback] (if (nil? x) fallback x))",
+        "(defn ^:export choose [x fallback] (if (= x [:none]) fallback (nth x 1)))",
         "export choose: func(x: option<s32>, fallback: s32) -> s32;",
     );
     let choose = instance
@@ -354,7 +354,7 @@ fn optional_small_integer_result_rejects_invalid_payload_with_language_exception
     // failures; successful calls below retain repeated-call/post-return coverage.
     for bad in [256.0, -2.0, 1.5, f64::NAN, f64::INFINITY] {
         let (mut store, instance) = instantiate(
-            "(defn ^:export value [x] (if (= x -1) nil x))",
+            "(defn ^:export value [x] (if (= x -1) [:none] [:some x]))",
             "export value: func(x: f64) -> option<u8>;",
         );
         let function = instance
@@ -402,4 +402,109 @@ fn optional_small_integer_result_rejects_invalid_payload_with_language_exception
             .to_string()
             .contains("cannot enter component instance"));
     }
+}
+
+#[test]
+fn option_boundary_uses_tagged_vectors_in_source() {
+    let (mut store, instance) = instantiate(
+        "(defn ^:export inspect [x] (if (= x [:none]) 7 (if (= x [:some false]) 8 (if (= x [:some true]) 9 -1))))",
+        "export inspect: func(x: option<bool>) -> s32;",
+    );
+    let function = instance
+        .get_typed_func::<(Option<bool>,), (i32,)>(&mut store, "inspect")
+        .unwrap();
+    for (value, expected) in [(None, 7), (Some(false), 8), (Some(true), 9)] {
+        assert_eq!(function.call(&mut store, (value,)).unwrap(), (expected,));
+        function.post_return(&mut store).unwrap();
+    }
+}
+
+#[test]
+fn malformed_option_results_are_language_errors_not_none() {
+    for form in [
+        "nil",
+        "false",
+        "42",
+        "[]",
+        "[:some]",
+        "[:none 42]",
+        "[:wrong 42]",
+        "[:some 1 2]",
+        "'(:some 42)",
+        "[:other/some 42]",
+        "[:some nil]",
+    ] {
+        let (mut store, instance) = instantiate(
+            &format!("(defn ^:export malformed [] {form})"),
+            "export malformed: func() -> option<s32>;",
+        );
+        let function = instance
+            .get_typed_func::<(), (Option<i32>,)>(&mut store, "malformed")
+            .unwrap();
+        assert!(function.call(&mut store, ()).is_err(), "{form}");
+        let exception = store
+            .as_context_mut()
+            .take_pending_exception()
+            .expect("language schema exception");
+        let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+        let message = fields[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&store)
+            .unwrap()
+            .unwrap();
+        let units = message
+            .elems(&mut store)
+            .unwrap()
+            .map(|unit| unit.unwrap_i32() as u16)
+            .collect::<Vec<_>>();
+        let expected = if form == "[:some nil]" {
+            "WIT scalar option payload cannot be nil"
+        } else {
+            "WIT option requires [:none] or [:some value]"
+        };
+        assert_eq!(String::from_utf16(&units).unwrap(), expected, "{form}");
+    }
+}
+
+#[test]
+fn option_schema_ignores_user_namespace_function_shadows() {
+    let (mut store, instance) = instantiate(
+        "(defn vector? [x] false) (defn count [x] 0) (defn nth [x y] (throw 17)) (defn nil? [x] true) (defn = [x y] false) (defn ^:export identity-option [x] x)",
+        "export identity-option: func(x: option<bool>) -> option<bool>;",
+    );
+    let function = instance
+        .get_typed_func::<(Option<bool>,), (Option<bool>,)>(&mut store, "identity-option")
+        .unwrap();
+    for value in [None, Some(false), Some(true)] {
+        assert_eq!(function.call(&mut store, (value,)).unwrap(), (value,));
+        function.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+    }
+}
+
+#[test]
+fn option_schema_survives_core_function_and_constructor_redefinition() {
+    let source = "(ns suss.core) (def vector? (fn [x] true)) (def count (fn [x] 1)) (def nth (fn [x i] :none)) (def = (fn [x y] true)) (def nil? (fn [x] true)) (def PersistentVector nil) (def Keyword nil) (ns user) (defn ^:export identity-option [x] x)";
+    let (mut store, instance) = instantiate(
+        source,
+        "export identity-option: func(x: option<bool>) -> option<bool>;",
+    );
+    let function = instance
+        .get_typed_func::<(Option<bool>,), (Option<bool>,)>(&mut store, "identity-option")
+        .unwrap();
+    for value in [None, Some(false), Some(true)] {
+        assert_eq!(function.call(&mut store, (value,)).unwrap(), (value,));
+        function.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+    }
+    let (mut store, instance) = instantiate(
+        "(ns suss.core) (def vector? (fn [x] true)) (def count (fn [x] 1)) (def nth (fn [x i] :none)) (def = (fn [x y] true)) (ns user) (defn ^:export malformed [] 42)",
+        "export malformed: func() -> option<s32>;",
+    );
+    let function = instance
+        .get_typed_func::<(), (Option<i32>,)>(&mut store, "malformed")
+        .unwrap();
+    assert!(function.call(&mut store, ()).is_err());
+    assert!(store.as_context_mut().take_pending_exception().is_some());
 }

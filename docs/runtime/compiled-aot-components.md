@@ -124,7 +124,11 @@ acceptance remain open. These focused results do not certify M3 completion.
 ## Scalar options
 
 A scalar option parameter uses a canonical discriminant and payload. None maps to
-language nil; Some(false) remains distinct from None. Scalar payload conversions
+`[:none]`; Some(value) maps to `[:some value]`, as required by design section8.
+Some(false) remains distinct from None. Nonvectors, unknown tags and wrong
+lengths raise language schema exceptions. `[:some nil]` is rejected for these
+scalar payload types; nested/composite options, including a payload that admits
+nil, remain unsupported rather than collapsing some(nil) to none. Scalar payload conversions
 share the checked numeric/boolean rules above. Optional synchronous results use
 a one-byte discriminant followed by a payload aligned to1/2/4/8 bytes in a bounded
 one-page canonical memory. Calls do not allocate or transfer scalar payload memory.
@@ -133,8 +137,17 @@ Canonical asynchronous completion uses flattened tag/payload parameters through
 This supports non-suspending source bodies; rooted source suspension and pending
 I/O cancellation remain separate M3 work.
 
-Twelve actual-component regressions fail on the unchanged parent and pass with
-these adapters. They cover typed None/Some values, false versus nil, integer
+The original twelve actual-component regressions fail on the unchanged parent
+and pass with these adapters. Independent review found and repaired an incorrect
+nil/raw source mapping; a tagged-vector observation fails on the initial PR head.
+The schema runs as compiled source, captures private primitive identity/array closures, keyword constants and
+the vector constructor immediately after core initialization, and is privately
+rooted before user initializers. User namespace shadows and subsequent core cell
+redefinitions cannot replace those captured values. Shape checks use nominal
+constructor identity, direct schema fields and captured private primitives,
+avoiding transitive calls through mutable public count/nth/=/nil? cells. Ordinary user calls retain
+their live core bindings. Additional regressions cover malformed shapes and
+core function/constructor redefinition. They cover typed None/Some values, false versus none, integer
 bounds/alignment, exact f64 bits, f32 signed zero, mixed component type indices,
 eight optional arguments, canonical async completion and repeated calls/GC.
 Invalid u8 results independently decode the shared language exception; the pinned
