@@ -76,17 +76,16 @@ from caught language throws; fuel/time failures are never language exceptions.
 
 M1-02's bounded evidence-harness acceptance is complete after the merged
 implementation audit in [acceptance-m0-m1.md](../../docs/roadmap/acceptance-m0-m1.md).
-The named differential cases exist and their exact failures remain visible; this
-does not certify compatibility or comprehensive semantic/arity coverage. Those
-repairs remain M2/M4/M7 work. The GitHub issue remains open until the reconciliation
-PR merges with its closing link. ExceptionInfo itself still fails at compilation;
-implementing its data/message/cause and descriptor behavior belongs with M2's runtime exception foundation.
-On a Wasm trap or failed decoding, the prototype cannot recover the partial
-trace; that limitation is explicit. The current production integer/UTF-8
-representation cannot claim the binary64/UTF-16 contract from these reference
-results. CI checks transport/comparator regressions and executes the shared Suss
-corpus against the reference snapshot; it does not build or run the JVM/Node
-oracle. The ordinary 201-case legacy baseline remains separate and unchanged.
+The historical 9-pass/7-failure result established that evidence harness; it did
+not certify compatibility. The native cached expression route now executes the
+shared ABI2 pipeline and independently observes all 16 cases successfully,
+including ExceptionInfo. Other prototype routes and comprehensive semantic/arity
+coverage remain unfinished. See [compiled expression artifacts](../../docs/runtime/compiled-expression-artifacts.md).
+On a Wasm trap or failed decoding, the runner cannot recover the partial trace;
+that limitation remains explicit. CI checks transport/comparator regressions and
+executes the shared Suss corpus against the reference snapshot; it does not build
+or run the JVM/Node oracle. The ordinary 201-case baseline retains its original
+inputs and expected values and now executes through the native cached bundle API.
 
 ## Portable reader boundary
 
@@ -95,8 +94,9 @@ corpus in the pinned compiler's tools.reader 1.3.6 dependency and Node, comparin
 binary64 bits and UTF-16 units exactly. Rust reads the same sources and transfers
 parsed scalars into generated ABI runtime objects, inspecting them after GC.
 These are reader-boundary observations, not additional compiler compatibility
-passes; the shared full-source corpus remains 9 passing/7 exact failures/0 skips.
-The legacy compiler still uses its EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).
+passes; the shared full-source corpus now has 16 passing/0 failures/0 skips
+through the native cached expression route. Remaining prototype compiler routes
+still use their EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).
 
 ## Portable compiler bootstrap
 
@@ -106,7 +106,8 @@ strict typed observations, then executes generated shared-ABI fragments in Rust.
 It uses an ignored generated `.cljc` fixture so reader conditionals are allowed.
 This source oracle covers the current scalar/let/do/if/numeric bootstrap only.
 The 16-case legacy source corpus and 14-case reader corpus retain their separate
-counts and purposes; known failures are unchanged. See the
+counts and purposes; the 16-case baseline was reconciled only after fresh
+pinned agreement, as recorded above. See the
 [compiler contract](../../docs/runtime/portable-pipeline.md) for remaining work.
 
 ## Primitive numeric helper matrix
