@@ -18162,3 +18162,133 @@ Freeze this docs-only review head before the exact unfiltered workspace baseline
 Compiler/bootstrap source identity is unchanged. Full baseline/all four doctest
 suites and final-head CI remain required; reviewer retains the exclusive heavy
 slot until actual terminal audit/release. No merge, issue closure or M3 completion.
+
+
+## Portable scalar option adapter prerequisite
+
+Isolated `/private/tmp/suss-m3-option-adapters`, branch
+`portable/m3-option-adapters`, is rebased onto PR198 reviewed e35fdce. The public
+file/project migration remains separate and unpublished: its existing component
+suite exposed20 failures, including three previously executing typed fixtures.
+These adapter prerequisites preserve those assertions; strings/lists/exact64,
+indirect arguments and composite options remain unfinished.
+
+Twelve new actual-component tests were copied byte-identically to unchanged
+parent `/private/tmp/suss-public-files-before`. Final parent run28205 exited101:
+0passed/12failed/0ignored/0filtered, all due to missing option capability or
+its missing precise pre-effect diagnostic. Replacement run89229 exited0:
+option12, existing scalar AOT13 and async AOT3 all passed with no ignores/filters.
+Command: `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --locked --test portable_aot_options --test portable_aot
+--test portable_aot_async -- --test-threads=2`. Logs are
+`/private/tmp/suss-option-parent.log` and `/private/tmp/suss-option-fixed.log`.
+
+Adapters resolve scalar-option graphs, flatten tag/payload parameters and use
+aligned bounded canonical result memory. Sync lifts use indirect scalar-option
+results; async completion forwards flattened tag/payload through exact task-return
+signatures. Tests cover None/Some(false), integer bounds/alignment, bit-exact f64
+NaN and signed zero, f32, mixed component type indices, eight optional arguments,
+repeated calls/GC/post-return and source pre-effect capability diagnostics.
+Nested/composite payloads and over-sixteen-flat arguments remain explicitly
+unsupported; this is not complete generic WIT support or final M3 acceptance.
+
+Generation12605 exited0 after correcting encoder iterator lengths. Both phase
+Wasm/JSON pairs were regenerated. Java/Node-free `sh scripts/verify-bootstrap.sh`
+run5400 exited0: both pairs match two fresh generations, checkout-independent
+identity checks passed and bootstrap4 passed. Log:
+`/private/tmp/suss-option-bootstrap-verify.log`.
+
+Initial replacement35466 passed11 and failed one incorrect same-instance host
+re-entry expectation after a successful language-exception decode. Pinned
+Wasmtime locks a component instance after a failed canonical lifted call, as the
+existing integer tests already document. The corrected test decodes every invalid
+payload exception in a fresh instance, asserts that lock and checks repeated
+successful Some/None/post-return/GC calls before failure. The corrected source
+was rerun unchanged against both parent and replacement. This is not persistent
+REPL exception recovery evidence, rooted suspension or pending-I/O cancellation.
+
+Independent review, exact unfiltered full baseline and final reviewed-head CI
+remain required before this increment is ready. The reviewed PR198 base is integrated with its independent review evidence.
+Next publish a draft with Refs12/13/14 and dispatch independent review. Preserve
+all original M3 requirements: public expression/cache and component-target evaluator
+retirement, complete portable source schemas, rooted pending-I/O continuations,
+cancellation/cleanup and live heap versus resident code accounting remain open.
+
+PR197 final CI37257364671 succeeded at reviewed25cb06d. Root downloaded and
+audited150 full-workspace result groups against local full47430:1232passed,
+0failed,17existing ignores,0filtered and all four doctest suites; separate CI
+bootstrap4 also passed. PR197 is ready and unmerged. PR198 independent full91839
+passed1239/0/17 across151groups/all four docs; final CI watcher88840 remains live.
+
+## Independent PR199 scalar option review (2026-10-05)
+
+Reviewed0cc43693654ccffe9585e4a3062471a6439632ad against reviewed PR198 e35fdce
+in isolated /private/tmp/suss-pr199-review. Significant finding: the initial
+nil/raw scalar option mapping contradicted accepted design section8. Added an
+executing regression before repair:45175 TERMINAL101, None inspected as [:none]
+returned-1 instead of7. Log /private/tmp/suss-pr199-tagged-before.log.
+
+Repair represents options as actual nominal PersistentVector/Keyword values:
+[:none] and [:some scalar]. A privately rooted compiled schema initializes after
+the Runtime core initializer and before user initializers. It captures intrinsic
+identity/array closures, class constructors and keyword constants. Direct nominal
+identity and schema field checks avoid both namespace shadows and transitive
+mutable public vector?/count/nth/=/nil? calls. Ordinary user core bindings stay
+live. Initial capture-only attempt79280 exposed that transitive bypass (15passed,
+1failed); stable primitive repair and regression52944 pass. Malformed nonvectors,
+wrong tags/lengths and scalar [:some nil] independently decode language schema
+exceptions; nil is not admitted by scalar payload types. Composite/nested option
+payloads that can contain nil remain explicitly unsupported.
+
+Both phase Wasm/JSON pairs were regenerated after the final compiler edits.
+Final focused63505 TERMINAL0: options16, scalar AOT13 and async AOT3 passed,
+0failed/0ignored/0filtered. Log /private/tmp/suss-pr199-review-focused-final.log.
+The original twelve typed host assertions are preserved with source functions
+adapted to the accepted tagged contract. Additional tests execute literal source
+observations, malformed results, namespace shadows and core function/constructor
+redefinitions. Static review covers canonical 1/2/4/8-byte alignment, actual
+component type indices, sixteen-flat-param preflight, flattened async task-return,
+zero hidden imports and bounded shared canonical result memory. Source suspension,
+composite options/other WIT types, full evaluator retirement and original M3
+requirements remain unfinished. No issue/milestone closure or merge.
+
+Freeze/push this reviewed repair before running the exact unfiltered workspace
+baseline. All four doctest suites and final reviewed-head CI remain mandatory.
+Reviewer retains the sole local heavy slot until actual terminal baseline audit
+and explicit release.
+
+Java/Node-free verifier45590 ACTUAL TERMINAL0: BOTH phase pairs match two fresh
+builds byte-for-byte, checkout-independent compiler identity passes and bootstrap4
+passes with0failed/0ignored/0filtered,12.96s. Log
+/private/tmp/suss-pr199-review-bootstrap-verify.log. No new ignores or skips.
+
+## PR199 final CI allowance review (2026-10-05)
+
+Final-head CI 37265512292 at 14137b70 reached the job's 90-minute cap:
+04:55:06 through 06:25:19 UTC. The workspace step began at 04:56:37 and its
+first tests ran at 04:57:20. Raw `/private/tmp/suss-pr199-final-ci-raw.log`
+contains 137 completed workspace result groups, exactly matching the prefix of
+reviewed local full 79823: 1,102 passed, 0 failed, 15 existing ignores and no
+measured/filtered tests. The job was cancelled while `portable_pipeline` still
+ran; the remaining 15 groups, including all four doctest suites, did not finish.
+Cancellation is not a passing baseline or CI gate. No test failure is inferred.
+
+Completed CI test durations total 5,095.80 seconds against 1,869.31 seconds
+locally (2.73 times slower). Remaining local groups total 78.83 seconds,
+approximately 3.6 additional minutes at that aggregate slowdown. Increase the
+bounded CI job allowance from 90 to 120 minutes, providing roughly 25 minutes of
+runner/cache/remaining-test headroom beyond projected completion. Preserve
+`CARGO_BUILD_JOBS=2` and the exact unfiltered
+`cargo test --workspace --locked -- --test-threads=2` command, inventory checks,
+Java-free bootstrap reproduction and every existing assertion/ignore. Changes
+are limited to the workflow allowance and this evidence record. Compiler/crates,
+bootstrap assets, manifests and test sources are byte-identical to 14137b70.
+
+Reviewed local full 79823 remains actual source evidence: 152 groups, 1,255
+passed, 0 failed, 17 unchanged ignores, 0 filtered and all four doctest suites.
+It did not run at the follow-up workflow head. Replacement final-head CI must
+execute the complete unfiltered suite and every other gate before readiness.
+No result is carried forward as passing new-head CI. Root owns the sole heavy
+slot; this follow-up runs no Cargo/JVM/Node and claims no new local baseline.
+No merge, issue closure or M3 completion. Record new head/CI and any replacement
+local execution independently, preserving the old result's provenance.

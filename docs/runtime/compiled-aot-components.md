@@ -4,13 +4,13 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, plus void
-results using direct canonical
-signatures (at most16 scalar parameters). Larger signatures need indirect-memory
-lowering and currently fail component validation. Other WIT boundary
-shapes return explicit unimplemented diagnostics. Native CLI file and namespace compilation
-use this pipeline through `portable_aot::compile_file` and `compile_namespace`;
-project, main and component-host compilation still require migration.
+pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, scalar options
+and void results. Parameters use direct canonical signatures with at most16
+flattened fields; larger signatures receive an explicit unsupported diagnostic
+before effectful source macros. Other WIT boundary shapes also receive explicit
+unimplemented diagnostics. Native CLI file, namespace, project and main compilation
+use this pipeline. Public compiler file/namespace/project migration and the
+component-target host evaluator remain unfinished.
 
 Functions may be freestanding world exports or members of exported interfaces.
 An interface mapping uses the exact resolved world key followed by `#` and the
@@ -120,3 +120,41 @@ This is original Rust and ports no upstream forms. Shared GC layout and ABI2
 remain unchanged. Complete selected-WIT adapters and published artifact policy,
 AOT frontend migration, evaluator retirement and scheduler/cancellation/live heap
 acceptance remain open. These focused results do not certify M3 completion.
+
+## Scalar options
+
+A scalar option parameter uses a canonical discriminant and payload. None maps to
+`[:none]`; Some(value) maps to `[:some value]`, as required by design section8.
+Some(false) remains distinct from None. Nonvectors, unknown tags and wrong
+lengths raise language schema exceptions. `[:some nil]` is rejected for these
+scalar payload types; nested/composite options, including a payload that admits
+nil, remain unsupported rather than collapsing some(nil) to none. Scalar payload conversions
+share the checked numeric/boolean rules above. Optional synchronous results use
+a one-byte discriminant followed by a payload aligned to1/2/4/8 bytes in a bounded
+one-page canonical memory. Calls do not allocate or transfer scalar payload memory.
+Canonical asynchronous completion uses flattened tag/payload parameters through
+`task.return`, loading the synchronous source adapter's aligned result area.
+This supports non-suspending source bodies; rooted source suspension and pending
+I/O cancellation remain separate M3 work.
+
+The original twelve actual-component regressions fail on the unchanged parent
+and pass with these adapters. Independent review found and repaired an incorrect
+nil/raw source mapping; a tagged-vector observation fails on the initial PR head.
+The schema runs as compiled source, captures private primitive identity/array closures, keyword constants and
+the vector constructor immediately after core initialization, and is privately
+rooted before user initializers. User namespace shadows and subsequent core cell
+redefinitions cannot replace those captured values. Shape checks use nominal
+constructor identity, direct schema fields and captured private primitives,
+avoiding transitive calls through mutable public count/nth/=/nil? cells. Ordinary user calls retain
+their live core bindings. Additional regressions cover malformed shapes and
+core function/constructor redefinition. They cover typed None/Some values, false versus none, integer
+bounds/alignment, exact f64 bits, f32 signed zero, mixed component type indices,
+eight optional arguments, canonical async completion and repeated calls/GC.
+Invalid u8 results independently decode the shared language exception; the pinned
+canonical engine locks an instance after a failed lifted call, so each failure
+uses a fresh instance. Successful repeated calls and post-return are checked
+separately. Existing scalar13 and async3 tests pass. Both phase bootstrap pairs
+reproduce without Java/Node; bootstrap4 passes. Independent review, the exact
+unfiltered full baseline and final-head CI remain required for this increment.
+Composite/nested options, strings, lists, exact64 and indirect argument lowering
+remain unfinished; this is not generic WIT or complete M3 acceptance.

@@ -1,6 +1,6 @@
 //! Original target assembly for already prepared portable source fragments.
 //! This development boundary supports scalar function exports, including interfaces.
-use super::{Diagnostic, PreparedFragment, artifact_identity, core_bindings, resolve::Phase};
+use super::{artifact_identity, core_bindings, resolve::Phase, Diagnostic, PreparedFragment};
 use crate::runtime_abi;
 use suss_reader::Symbol;
 use wasm_encoder::*;
@@ -13,8 +13,8 @@ const HELPERS: u32 = 6;
 struct Export {
     name: String,
     global: super::resolve::Global,
-    params: Vec<(String, Scalar)>,
-    result: Option<Scalar>,
+    params: Vec<(String, Boundary)>,
+    result: Option<Boundary>,
     asynchronous: bool,
 }
 enum PublicExport {
@@ -40,6 +40,58 @@ enum Scalar {
     U32,
     S32,
 }
+#[derive(Clone, Copy)]
+enum Boundary {
+    Scalar(Scalar),
+    Option(Scalar),
+}
+impl Boundary {
+    fn flat(self) -> Vec<ValType> {
+        match self {
+            Self::Scalar(ty) => vec![ty.core()],
+            Self::Option(ty) => vec![ValType::I32, ty.core()],
+        }
+    }
+    fn core_result(self) -> ValType {
+        match self {
+            Self::Scalar(ty) => ty.core(),
+            Self::Option(_) => ValType::I32,
+        }
+    }
+    fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
+        match self {
+            Self::Scalar(ty) => ty.component(),
+            Self::Option(ty) => {
+                let index = types.len();
+                types.defined_type().option(ty.component());
+                ComponentValType::Type(index)
+            }
+        }
+    }
+    fn optional(self) -> bool {
+        matches!(self, Self::Option(_))
+    }
+}
+
+fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
+    for _ in 0..64 {
+        if let Type::Id(id) = ty {
+            match &resolve.types[id].kind {
+                wit_parser::TypeDefKind::Type(next) => {
+                    ty = *next;
+                    continue;
+                }
+                wit_parser::TypeDefKind::Option(payload) => {
+                    return scalar(resolve, *payload).map(Boundary::Option);
+                }
+                _ => {}
+            }
+        }
+        return scalar(resolve, ty).map(Boundary::Scalar);
+    }
+    Err(error("WIT boundary alias nesting exceeds 64"))
+}
+
 impl Scalar {
     fn core(self) -> ValType {
         match self {
@@ -48,6 +100,42 @@ impl Scalar {
             }
             Self::F32 => ValType::F32,
             Self::F64 => ValType::F64,
+        }
+    }
+    fn payload_memory(self) -> MemArg {
+        // Canonical option's one-byte discriminant precedes its aligned payload.
+        let (offset, align) = match self {
+            Self::F64 => (8, 3),
+            Self::F32 | Self::U32 | Self::S32 => (4, 2),
+            Self::U16 | Self::S16 => (2, 1),
+            _ => (1, 0),
+        };
+        MemArg {
+            offset,
+            align,
+            memory_index: 0,
+        }
+    }
+    fn payload_store(self) -> Instruction<'static> {
+        let arg = self.payload_memory();
+        match self {
+            Self::F64 => Instruction::F64Store(arg),
+            Self::F32 => Instruction::F32Store(arg),
+            Self::U32 | Self::S32 => Instruction::I32Store(arg),
+            Self::U16 | Self::S16 => Instruction::I32Store16(arg),
+            _ => Instruction::I32Store8(arg),
+        }
+    }
+    fn payload_load(self) -> Instruction<'static> {
+        let arg = self.payload_memory();
+        match self {
+            Self::F64 => Instruction::F64Load(arg),
+            Self::F32 => Instruction::F32Load(arg),
+            Self::U32 | Self::S32 => Instruction::I32Load(arg),
+            Self::U16 => Instruction::I32Load16U(arg),
+            Self::S16 => Instruction::I32Load16S(arg),
+            Self::S8 => Instruction::I32Load8S(arg),
+            _ => Instruction::I32Load8U(arg),
         }
     }
     fn integer_bounds(self) -> Option<(f64, f64, bool)> {
@@ -156,11 +244,21 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
                 "Portable AOT resource function adapters remain unimplemented",
             ));
         }
+        let mut flat_parameters = 0;
         for parameter in &function.params {
-            scalar(resolve, parameter.ty)?;
+            let ty = boundary(resolve, parameter.ty)?;
+            flat_parameters += ty.flat().len();
+        }
+        // Canonical lifted calls switch above sixteen flattened
+        // parameters to an indirect argument area. Diagnose that missing path
+        // before Macro effects rather than emitting an invalid core signature.
+        if flat_parameters > 16 {
+            return Err(error(
+                "Portable AOT indirect parameter adapters remain unimplemented",
+            ));
         }
         if let Some(result) = function.result {
-            scalar(resolve, result)?;
+            boundary(resolve, result)?;
         }
         Ok(())
     };
@@ -360,9 +458,12 @@ pub fn component(
                 params: function
                     .params
                     .iter()
-                    .map(|param| Ok((param.name.clone(), scalar(resolve, param.ty)?)))
+                    .map(|param| Ok((param.name.clone(), boundary(resolve, param.ty)?)))
                     .collect::<Result<_, Diagnostic>>()?,
-                result: function.result.map(|ty| scalar(resolve, ty)).transpose()?,
+                result: function
+                    .result
+                    .map(|ty| boundary(resolve, ty))
+                    .transpose()?,
                 asynchronous: function.kind == FunctionKind::AsyncFreestanding,
             });
             Ok(index)
@@ -397,8 +498,50 @@ pub fn component(
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
     }
+    // Compile the design's tagged option schema through the ordinary source
+    // pipeline, preserving nominal persistent-vector and keyword identities.
+    // This fragment has no definitions or user macro expansion.
+    let option_schema = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.optional())
+            || export.result.is_some_and(Boundary::optional)
+    });
+    let mut fragments = fragments.to_vec();
+    if option_schema {
+        fragments.push(super::prepare_fragment(
+            r#"(let [identical suss.core/identical?
+                        make-array suss.core/array get-array suss.core/aget
+                        vector-class suss.core/PersistentVector
+                        keyword-class suss.core/Keyword
+                        root (.-EMPTY_NODE suss.core/PersistentVector)
+                        none [:none] some-tag :some]
+                (fn [lifting value]
+                    (if lifting
+                        (if (identical nil value) none
+                            (new vector-class nil 2 5 root (make-array some-tag value) nil))
+                        (if (suss.core/instance? vector-class value)
+                            (let [length (.-cnt value) tail (.-tail value)]
+                                (if (if (identical length 1) true (identical length 2))
+                                    (let [tag (get-array tail 0)]
+                                        (if (if (suss.core/instance? keyword-class tag)
+                                                (identical nil (.-ns tag)) false)
+                                            (if (identical length 1)
+                                                (if (identical (.-name tag) "none") nil
+                                                    (throw "WIT option requires [:none] or [:some value]"))
+                                                (if (identical (.-name tag) "some")
+                                                    (let [payload (get-array tail 1)]
+                                                        (if (identical nil payload)
+                                                            (throw "WIT scalar option payload cannot be nil")
+                                                            payload))
+                                                    (throw "WIT option requires [:none] or [:some value]")))
+                                            (throw "WIT option requires [:none] or [:some value]")))
+                                    (throw "WIT option requires [:none] or [:some value]")))
+                            (throw "WIT option requires [:none] or [:some value]")))))"#,
+            &fragments[0].environment,
+            Phase::Runtime,
+        )?);
+    }
     // Reject every artifact before assembling any initialization start function.
-    for fragment in fragments {
+    for fragment in &fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
             .map_err(error)?;
         artifact_identity::verify(
@@ -415,7 +558,7 @@ pub fn component(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let adapter = adapter(&exports, fragments.len())?;
+    let adapter = adapter(&exports, fragments.len(), option_schema)?;
     let asynchronous = exports
         .iter()
         .filter(|export| export.asynchronous)
@@ -464,24 +607,33 @@ pub fn component(
     instances.instantiate(adapter_instance, args);
     component.section(&instances);
     let mut types = ComponentTypeSection::new();
+    let mut function_types = Vec::new();
+    let mut result_types = Vec::new();
     for export in &exports {
+        let params = export
+            .params
+            .iter()
+            .map(|(name, ty)| (name.as_str(), ty.component(&mut types)))
+            .collect::<Vec<_>>();
+        let result = export.result.map(|ty| ty.component(&mut types));
+        function_types.push(types.len());
+        result_types.push(result);
         types
             .function()
             .async_(export.asynchronous)
-            .params(
-                export
-                    .params
-                    .iter()
-                    .map(|(name, ty)| (name.as_str(), ty.component())),
-            )
-            .result(export.result.map(Scalar::component));
+            .params(params)
+            .result(result);
     }
     component.section(&types);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
-    for export in &asynchronous {
-        completion.task_return(export.result.map(Scalar::component), []);
+    for (index, export) in exports.iter().enumerate() {
+        if export.asynchronous {
+            // task.return takes the flattened result as parameters; a scalar
+            // option is a tag and payload, not the adapter's return pointer.
+            completion.task_return(result_types[index], []);
+        }
     }
     let bridge_instance = if asynchronous.is_empty() {
         None
@@ -519,6 +671,16 @@ pub fn component(
         core_function += 1;
         index
     });
+    if exports
+        .iter()
+        .any(|export| export.result.is_some_and(Boundary::optional))
+    {
+        aliases.alias(Alias::CoreInstanceExport {
+            instance: adapter_instance,
+            kind: ExportKind::Memory,
+            name: "suss.canonical.memory",
+        });
+    }
     let mut asynchronous_index = 0;
     for (index, export) in exports.iter().enumerate() {
         let entry_name = if export.asynchronous {
@@ -542,10 +704,12 @@ pub fn component(
                 CanonicalOption::Async,
                 CanonicalOption::Callback(callback.unwrap()),
             ]
+        } else if export.result.is_some_and(Boundary::optional) {
+            vec![CanonicalOption::Memory(0)]
         } else {
             vec![]
         };
-        canonical.lift(core_function, index as u32, options);
+        canonical.lift(core_function, function_types[index], options);
         core_function += 1;
     }
     for export in public_exports {
@@ -598,10 +762,21 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
     let mut imports = ImportSection::new();
     for (index, export) in exports.iter().enumerate() {
         types.ty().function(
-            export.params.iter().map(|(_, ty)| ty.core()),
-            export.result.map(Scalar::core),
+            export
+                .params
+                .iter()
+                .flat_map(|(_, ty)| ty.flat())
+                .collect::<Vec<_>>(),
+            export.result.map(Boundary::core_result),
         );
-        types.ty().function(export.result.map(Scalar::core), []);
+        types.ty().function(
+            export
+                .result
+                .into_iter()
+                .flat_map(Boundary::flat)
+                .collect::<Vec<_>>(),
+            [],
+        );
         imports.import(
             "suss.aot",
             &export.name,
@@ -613,13 +788,33 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
             EntityType::Function(2 * index as u32 + 1),
         );
     }
+    if exports
+        .iter()
+        .any(|export| export.result.is_some_and(Boundary::optional))
+    {
+        imports.import(
+            "suss.aot",
+            "suss.canonical.memory",
+            EntityType::Memory(MemoryType {
+                minimum: 1,
+                maximum: Some(1),
+                memory64: false,
+                shared: false,
+                page_size_log2: None,
+            }),
+        );
+    }
     let imported = 2 * exports.len() as u32;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
         types.ty().function(
-            export.params.iter().map(|(_, ty)| ty.core()),
+            export
+                .params
+                .iter()
+                .flat_map(|(_, ty)| ty.flat())
+                .collect::<Vec<_>>(),
             [ValType::I32],
         );
         functions.function(imported + index as u32);
@@ -628,12 +823,28 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
             ExportKind::Func,
             imported + index as u32,
         );
-        let mut body = Function::new([]);
-        for parameter in 0..export.params.len() {
+        let flat_params = export
+            .params
+            .iter()
+            .map(|(_, ty)| ty.flat().len())
+            .sum::<usize>();
+        let mut body = Function::new([(1, ValType::I32)]);
+        for parameter in 0..flat_params {
             body.instruction(&Instruction::LocalGet(parameter as u32));
         }
-        body.instruction(&Instruction::Call(2 * index as u32))
-            .instruction(&Instruction::Call(2 * index as u32 + 1))
+        body.instruction(&Instruction::Call(2 * index as u32));
+        if let Some(Boundary::Option(ty)) = export.result {
+            body.instruction(&Instruction::LocalSet(flat_params as u32))
+                .instruction(&Instruction::LocalGet(flat_params as u32))
+                .instruction(&Instruction::I32Load8U(MemArg {
+                    offset: 0,
+                    align: 0,
+                    memory_index: 0,
+                }))
+                .instruction(&Instruction::LocalGet(flat_params as u32))
+                .instruction(&ty.payload_load());
+        }
+        body.instruction(&Instruction::Call(2 * index as u32 + 1))
             .instruction(&Instruction::I32Const(0))
             .instruction(&Instruction::End);
         code.function(&body);
@@ -657,7 +868,11 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
     module.finish()
 }
 
-fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnostic> {
+fn adapter(
+    exports: &[Export],
+    fragment_count: usize,
+    option_schema: bool,
+) -> Result<Vec<u8>, Diagnostic> {
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
     let signatures = [
@@ -722,60 +937,55 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
     for (index, export) in exports.iter().enumerate() {
         let ty = runtime_abi::TYPE_COUNT + HELPERS + 2 + index as u32;
         types.ty().function(
-            export.params.iter().map(|(_, ty)| ty.core()),
-            export.result.map(Scalar::core),
+            export
+                .params
+                .iter()
+                .flat_map(|(_, ty)| ty.flat())
+                .collect::<Vec<_>>(),
+            export.result.map(Boundary::core_result),
         );
         functions.function(ty);
         public.export(&export.name, ExportKind::Func, imported + index as u32);
-        let result = export.params.len() as u32;
+        let result = export
+            .params
+            .iter()
+            .map(|(_, ty)| ty.flat().len() as u32)
+            .sum::<u32>();
         let integer = result + 1;
         let number = integer + 1;
         let mut body = Function::new([(1, VALUE), (1, ValType::I32), (1, ValType::F64)]);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
-        for (parameter, (_, ty)) in export.params.iter().enumerate() {
-            body.instruction(&Instruction::LocalGet(parameter as u32));
+        let mut parameter = 0;
+        for (_, ty) in &export.params {
             match ty {
-                Scalar::Bool => {
-                    body.instruction(&Instruction::I32Const(2))
-                        .instruction(&Instruction::I32Mul)
-                        .instruction(&Instruction::I32Const(2))
-                        .instruction(&Instruction::I32Add)
-                        .instruction(&Instruction::RefI31);
+                Boundary::Scalar(ty) => {
+                    body.instruction(&Instruction::LocalGet(parameter));
+                    lift_scalar(&mut body, ty);
+                    parameter += 1;
                 }
-                Scalar::F32 => {
-                    body.instruction(&Instruction::F64PromoteF32)
-                        .instruction(&Instruction::Call(1));
-                }
-                Scalar::F64 => {
-                    body.instruction(&Instruction::Call(1));
-                }
-                Scalar::U8 | Scalar::S8 | Scalar::U16 | Scalar::S16 | Scalar::U32 | Scalar::S32 => {
-                    // Normalize canonical subword bits before widening to the
-                    // ordinary binary64 language number; u32 must stay unsigned.
-                    match ty {
-                        Scalar::U8 => {
-                            body.instruction(&Instruction::I32Const(255))
-                                .instruction(&Instruction::I32And);
-                        }
-                        Scalar::S8 => {
-                            body.instruction(&Instruction::I32Extend8S);
-                        }
-                        Scalar::U16 => {
-                            body.instruction(&Instruction::I32Const(65535))
-                                .instruction(&Instruction::I32And);
-                        }
-                        Scalar::S16 => {
-                            body.instruction(&Instruction::I32Extend16S);
-                        }
-                        _ => {}
-                    }
-                    body.instruction(&if ty.integer_bounds().unwrap().2 {
-                        Instruction::F64ConvertI32S
-                    } else {
-                        Instruction::F64ConvertI32U
-                    })
-                    .instruction(&Instruction::Call(1));
+                Boundary::Option(ty) => {
+                    body.instruction(&Instruction::LocalGet(parameter))
+                        .instruction(&Instruction::If(BlockType::Result(VALUE)))
+                        .instruction(&Instruction::LocalGet(parameter + 1));
+                    lift_scalar(&mut body, ty);
+                    body.instruction(&Instruction::Else)
+                        .instruction(&Instruction::I32Const(0))
+                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::End);
+                    // Consume the lifted scalar exactly once, then form its
+                    // [:none]/[:some value] source representation.
+                    body.instruction(&Instruction::LocalSet(result))
+                        .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                        .instruction(&Instruction::I32Const(4))
+                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::LocalGet(result))
+                        .instruction(&Instruction::ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: 2,
+                        })
+                        .instruction(&Instruction::Call(2));
+                    parameter += 2;
                 }
             }
         }
@@ -787,77 +997,55 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
         .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
-            Some(Scalar::Bool) => {
+            Some(Boundary::Scalar(ty)) => {
+                lower_scalar(&mut body, ty, result, integer, number, &export.name)
+            }
+            Some(Boundary::Option(ty)) => {
+                debug_assert!(option_schema);
+                body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::RefI31)
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: runtime_abi::ARGS,
+                        array_size: 2,
+                    })
+                    .instruction(&Instruction::Call(2))
+                    .instruction(&Instruction::LocalSet(result));
+                // Scalar option returns use a fixed canonical return area. No
+                // allocation, ownership transfer or post-return free is needed.
                 body.instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::RefTestNonNull(HeapType::I31))
-                    .instruction(&Instruction::I32Eqz)
-                    .instruction(&Instruction::If(BlockType::Empty));
-                boundary_error(&mut body, result, &export.name);
-                body.instruction(&Instruction::End)
+                    .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
                     .instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::RefCastNonNull(HeapType::I31))
                     .instruction(&Instruction::I31GetS)
-                    .instruction(&Instruction::LocalTee(integer))
-                    .instruction(&Instruction::I32Const(2))
-                    .instruction(&Instruction::I32Eq)
-                    .instruction(&Instruction::LocalGet(integer))
-                    .instruction(&Instruction::I32Const(4))
-                    .instruction(&Instruction::I32Eq)
-                    .instruction(&Instruction::I32Or)
                     .instruction(&Instruction::I32Eqz)
-                    .instruction(&Instruction::If(BlockType::Empty));
-                boundary_error(&mut body, result, &export.name);
-                body.instruction(&Instruction::End)
-                    .instruction(&Instruction::LocalGet(integer))
-                    .instruction(&Instruction::I32Const(4))
-                    .instruction(&Instruction::I32Eq);
-            }
-            Some(scalar) => {
-                body.instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
-                        runtime_abi::NUMBER,
-                    )))
-                    .instruction(&Instruction::I32Eqz)
-                    .instruction(&Instruction::If(BlockType::Empty));
-                boundary_error(&mut body, result, &export.name);
-                body.instruction(&Instruction::End)
-                    .instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                        runtime_abi::NUMBER,
-                    )))
-                    .instruction(&Instruction::StructGet {
-                        struct_type_index: runtime_abi::NUMBER,
-                        field_index: 0,
-                    });
-                if let Some((min, max, signed)) = scalar.integer_bounds() {
-                    // Validate before truncation: NaN fails the integral test,
-                    // infinities fail bounds, and no invalid result reaches a
-                    // trapping numeric conversion instead of a language error.
-                    body.instruction(&Instruction::LocalSet(number))
-                        .instruction(&Instruction::LocalGet(number))
-                        .instruction(&Instruction::F64Const(min.into()))
-                        .instruction(&Instruction::F64Lt)
-                        .instruction(&Instruction::LocalGet(number))
-                        .instruction(&Instruction::F64Const(max.into()))
-                        .instruction(&Instruction::F64Gt)
-                        .instruction(&Instruction::I32Or)
-                        .instruction(&Instruction::LocalGet(number))
-                        .instruction(&Instruction::LocalGet(number))
-                        .instruction(&Instruction::F64Trunc)
-                        .instruction(&Instruction::F64Ne)
-                        .instruction(&Instruction::I32Or)
-                        .instruction(&Instruction::If(BlockType::Empty));
-                    boundary_error(&mut body, result, &export.name);
-                    body.instruction(&Instruction::End)
-                        .instruction(&Instruction::LocalGet(number))
-                        .instruction(&if signed {
-                            Instruction::I32TruncF64S
-                        } else {
-                            Instruction::I32TruncF64U
-                        });
-                } else if matches!(scalar, Scalar::F32) {
-                    body.instruction(&Instruction::F32DemoteF64);
-                }
+                    .instruction(&Instruction::Else)
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::If(BlockType::Empty))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Store8(MemArg {
+                        offset: 0,
+                        align: 0,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::Else)
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Const(1))
+                    .instruction(&Instruction::I32Store8(MemArg {
+                        offset: 0,
+                        align: 0,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::I32Const(0));
+                lower_scalar(&mut body, ty, result, integer, number, &export.name);
+                let store = ty.payload_store();
+                body.instruction(&store)
+                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::I32Const(0));
             }
         }
         body.instruction(&Instruction::End);
@@ -867,10 +1055,18 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    for index in 0..fragment_count {
+    for index in 0..fragment_count - usize::from(option_schema) {
         start
             .instruction(&Instruction::Call(HELPERS + index as u32))
             .instruction(&Instruction::Drop);
+        if option_schema && index == 0 {
+            // The first fragment provides compiled Runtime core. Capture schema
+            // closures and constructors before any user initializer can redefine
+            // those public cells. This private root is never exported.
+            start
+                .instruction(&Instruction::Call(HELPERS + fragment_count as u32 - 1))
+                .instruction(&Instruction::GlobalSet(global_indices.len() as u32));
+        }
     }
     start.instruction(&Instruction::End);
     code.function(&start);
@@ -879,7 +1075,35 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
         .section(&runtime_abi::Manifest::default().section())
         .section(&types)
         .section(&imports)
-        .section(&functions)
+        .section(&functions);
+    if exports
+        .iter()
+        .any(|export| export.result.is_some_and(Boundary::optional))
+    {
+        let mut memory = MemorySection::new();
+        memory.memory(MemoryType {
+            minimum: 1,
+            maximum: Some(1),
+            memory64: false,
+            shared: false,
+            page_size_log2: None,
+        });
+        module.section(&memory);
+        public.export("suss.canonical.memory", ExportKind::Memory, 0);
+    }
+    if option_schema {
+        let mut globals = GlobalSection::new();
+        globals.global(
+            GlobalType {
+                val_type: VALUE,
+                mutable: true,
+                shared: false,
+            },
+            &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
+        );
+        module.section(&globals);
+    }
+    module
         .section(&public)
         .section(&StartSection {
             function_index: imported + exports.len() as u32,
@@ -887,6 +1111,136 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
         .section(&code);
     Ok(module.finish())
 }
+fn lift_scalar(body: &mut Function, ty: &Scalar) {
+    match ty {
+        Scalar::Bool => {
+            body.instruction(&Instruction::I32Const(2))
+                .instruction(&Instruction::I32Mul)
+                .instruction(&Instruction::I32Const(2))
+                .instruction(&Instruction::I32Add)
+                .instruction(&Instruction::RefI31);
+        }
+        Scalar::F32 => {
+            body.instruction(&Instruction::F64PromoteF32)
+                .instruction(&Instruction::Call(1));
+        }
+        Scalar::F64 => {
+            body.instruction(&Instruction::Call(1));
+        }
+        Scalar::U8 | Scalar::S8 | Scalar::U16 | Scalar::S16 | Scalar::U32 | Scalar::S32 => {
+            // Normalize canonical subword bits before widening to the
+            // ordinary binary64 language number; u32 must stay unsigned.
+            match ty {
+                Scalar::U8 => {
+                    body.instruction(&Instruction::I32Const(255))
+                        .instruction(&Instruction::I32And);
+                }
+                Scalar::S8 => {
+                    body.instruction(&Instruction::I32Extend8S);
+                }
+                Scalar::U16 => {
+                    body.instruction(&Instruction::I32Const(65535))
+                        .instruction(&Instruction::I32And);
+                }
+                Scalar::S16 => {
+                    body.instruction(&Instruction::I32Extend16S);
+                }
+                _ => {}
+            }
+            body.instruction(&if ty.integer_bounds().unwrap().2 {
+                Instruction::F64ConvertI32S
+            } else {
+                Instruction::F64ConvertI32U
+            })
+            .instruction(&Instruction::Call(1));
+        }
+    }
+}
+
+fn lower_scalar(
+    body: &mut Function,
+    scalar: Scalar,
+    result: u32,
+    integer: u32,
+    number: u32,
+    name: &str,
+) {
+    match scalar {
+        Scalar::Bool => {
+            body.instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::RefTestNonNull(HeapType::I31))
+                .instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::RefCastNonNull(HeapType::I31))
+                .instruction(&Instruction::I31GetS)
+                .instruction(&Instruction::LocalTee(integer))
+                .instruction(&Instruction::I32Const(2))
+                .instruction(&Instruction::I32Eq)
+                .instruction(&Instruction::LocalGet(integer))
+                .instruction(&Instruction::I32Const(4))
+                .instruction(&Instruction::I32Eq)
+                .instruction(&Instruction::I32Or)
+                .instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(integer))
+                .instruction(&Instruction::I32Const(4))
+                .instruction(&Instruction::I32Eq);
+        }
+        scalar => {
+            body.instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
+                    runtime_abi::NUMBER,
+                )))
+                .instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+                    runtime_abi::NUMBER,
+                )))
+                .instruction(&Instruction::StructGet {
+                    struct_type_index: runtime_abi::NUMBER,
+                    field_index: 0,
+                });
+            if let Some((min, max, signed)) = scalar.integer_bounds() {
+                // Validate before truncation: NaN fails the integral test,
+                // infinities fail bounds, and no invalid result reaches a
+                // trapping numeric conversion instead of a language error.
+                body.instruction(&Instruction::LocalSet(number))
+                    .instruction(&Instruction::LocalGet(number))
+                    .instruction(&Instruction::F64Const(min.into()))
+                    .instruction(&Instruction::F64Lt)
+                    .instruction(&Instruction::LocalGet(number))
+                    .instruction(&Instruction::F64Const(max.into()))
+                    .instruction(&Instruction::F64Gt)
+                    .instruction(&Instruction::I32Or)
+                    .instruction(&Instruction::LocalGet(number))
+                    .instruction(&Instruction::LocalGet(number))
+                    .instruction(&Instruction::F64Trunc)
+                    .instruction(&Instruction::F64Ne)
+                    .instruction(&Instruction::I32Or)
+                    .instruction(&Instruction::If(BlockType::Empty));
+                boundary_error(body, result, name);
+                body.instruction(&Instruction::End)
+                    .instruction(&Instruction::LocalGet(number))
+                    .instruction(&if signed {
+                        Instruction::I32TruncF64S
+                    } else {
+                        Instruction::I32TruncF64U
+                    });
+            } else if matches!(scalar, Scalar::F32) {
+                body.instruction(&Instruction::F32DemoteF64);
+            }
+        }
+    }
+}
+
 fn boundary_error(body: &mut Function, local: u32, name: &str) {
     let message = format!("WIT export {name} returned an incompatible scalar value")
         .encode_utf16()
