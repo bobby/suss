@@ -7,6 +7,8 @@ use wasm_encoder::*;
 use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
+mod strings;
+
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 const HELPERS: u32 = 6;
 
@@ -44,23 +46,33 @@ enum Scalar {
 enum Boundary {
     Scalar(Scalar),
     Option(Scalar),
+    String,
+    StringOption,
 }
 impl Boundary {
     fn flat(self) -> Vec<ValType> {
         match self {
             Self::Scalar(ty) => vec![ty.core()],
             Self::Option(ty) => vec![ValType::I32, ty.core()],
+            Self::String => vec![ValType::I32, ValType::I32],
+            Self::StringOption => vec![ValType::I32; 3],
         }
     }
     fn core_result(self) -> ValType {
         match self {
             Self::Scalar(ty) => ty.core(),
-            Self::Option(_) => ValType::I32,
+            Self::Option(_) | Self::String | Self::StringOption => ValType::I32,
         }
     }
     fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
         match self {
             Self::Scalar(ty) => ty.component(),
+            Self::String => PrimitiveValType::String.into(),
+            Self::StringOption => {
+                let index = types.len();
+                types.defined_type().option(PrimitiveValType::String);
+                ComponentValType::Type(index)
+            }
             Self::Option(ty) => {
                 let index = types.len();
                 types.defined_type().option(ty.component());
@@ -68,8 +80,20 @@ impl Boundary {
             }
         }
     }
+    fn string(self) -> bool {
+        matches!(self, Self::String)
+    }
+    fn uses_strings(self) -> bool {
+        matches!(self, Self::String | Self::StringOption)
+    }
+    fn string_option(self) -> bool {
+        matches!(self, Self::StringOption)
+    }
+    fn indirect_result(self) -> bool {
+        self.optional() || self.string()
+    }
     fn optional(self) -> bool {
-        matches!(self, Self::Option(_))
+        matches!(self, Self::Option(_) | Self::StringOption)
     }
 }
 
@@ -82,10 +106,26 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                     continue;
                 }
                 wit_parser::TypeDefKind::Option(payload) => {
-                    return scalar(resolve, *payload).map(Boundary::Option);
+                    let mut payload = *payload;
+                    for _ in 0..64 {
+                        if payload == Type::String {
+                            return Ok(Boundary::StringOption);
+                        }
+                        if let Type::Id(id) = payload {
+                            if let wit_parser::TypeDefKind::Type(next) = &resolve.types[id].kind {
+                                payload = *next;
+                                continue;
+                            }
+                        }
+                        return scalar(resolve, payload).map(Boundary::Option);
+                    }
+                    return Err(error("WIT option payload alias nesting exceeds 64"));
                 }
                 _ => {}
             }
+        }
+        if ty == Type::String {
+            return Ok(Boundary::String);
         }
         return scalar(resolve, ty).map(Boundary::Scalar);
     }
@@ -558,6 +598,10 @@ pub fn component(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
+    let has_strings = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.uses_strings())
+            || export.result.is_some_and(Boundary::uses_strings)
+    });
     let adapter = adapter(&exports, fragments.len(), option_schema)?;
     let asynchronous = exports
         .iter()
@@ -574,8 +618,15 @@ pub fn component(
             data: &module,
         });
     }
+    if has_strings {
+        let memory = super::command::memory::module();
+        component.section(&RawSection {
+            id: ComponentSectionId::CoreModule.into(),
+            data: &memory,
+        });
+    }
     if !asynchronous.is_empty() {
-        let bridge = async_adapter(&asynchronous);
+        let bridge = async_adapter(&asynchronous, has_strings);
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
             data: &bridge,
@@ -603,8 +654,19 @@ pub fn component(
             ModuleArg::Instance(2 + index as u32),
         )
     }));
-    let adapter_instance = 2 + fragments.len() as u32;
-    instances.instantiate(adapter_instance, args);
+    if has_strings {
+        let allocator_instance = 2 + fragments.len() as u32;
+        instances.instantiate(
+            3 + fragments.len() as u32,
+            std::iter::empty::<(&str, ModuleArg)>(),
+        );
+        args.push((
+            "suss.memory".to_owned(),
+            ModuleArg::Instance(allocator_instance),
+        ));
+    }
+    let adapter_instance = 2 + fragments.len() as u32 + u32::from(has_strings);
+    instances.instantiate(2 + fragments.len() as u32, args);
     component.section(&instances);
     let mut types = ComponentTypeSection::new();
     let mut function_types = Vec::new();
@@ -625,6 +687,31 @@ pub fn component(
             .result(result);
     }
     component.section(&types);
+    // Memory must be aliased before canonical task-return uses Unicode results.
+    // Alias realloc first so its core function index is stable across sync/async.
+    let mut memory_aliases = ComponentAliasSection::new();
+    if has_strings
+        || exports
+            .iter()
+            .any(|export| export.result.is_some_and(Boundary::indirect_result))
+    {
+        memory_aliases.alias(Alias::CoreInstanceExport {
+            instance: adapter_instance,
+            kind: ExportKind::Memory,
+            name: "suss.canonical.memory",
+        });
+    }
+    if has_strings {
+        memory_aliases.alias(Alias::CoreInstanceExport {
+            instance: adapter_instance - 1,
+            kind: ExportKind::Func,
+            name: "cabi_realloc",
+        });
+    }
+    if !memory_aliases.is_empty() {
+        component.section(&memory_aliases);
+    }
+    let completion_base = u32::from(has_strings);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
@@ -632,7 +719,18 @@ pub fn component(
         if export.asynchronous {
             // task.return takes the flattened result as parameters; a scalar
             // option is a tag and payload, not the adapter's return pointer.
-            completion.task_return(result_types[index], []);
+            let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
+                || export.result.is_some_and(Boundary::uses_strings);
+            // Pinned task-return checks encoding against the lifted export even
+            // for scalar/void results whose inputs required Unicode lowering.
+            let mut options = vec![];
+            if string_boundary {
+                options.push(CanonicalOption::UTF16);
+            }
+            if export.result.is_some_and(Boundary::uses_strings) {
+                options.push(CanonicalOption::Memory(0));
+            }
+            completion.task_return(result_types[index], options);
         }
     }
     let bridge_instance = if asynchronous.is_empty() {
@@ -640,14 +738,15 @@ pub fn component(
     } else {
         component.section(&completion);
         let mut bridge_instances = InstanceSection::new();
-        bridge_instances.export_items(
-            asynchronous
-                .iter()
-                .enumerate()
-                .map(|(index, export)| (export.name.as_str(), ExportKind::Func, index as u32)),
-        );
+        bridge_instances.export_items(asynchronous.iter().enumerate().map(|(index, export)| {
+            (
+                export.name.as_str(),
+                ExportKind::Func,
+                completion_base + index as u32,
+            )
+        }));
         bridge_instances.instantiate(
-            3 + fragments.len() as u32,
+            3 + fragments.len() as u32 + u32::from(has_strings),
             [
                 ("suss.aot", ModuleArg::Instance(adapter_instance)),
                 ("suss.completion", ModuleArg::Instance(adapter_instance + 1)),
@@ -660,7 +759,7 @@ pub fn component(
     let mut canonical = CanonicalFunctionSection::new();
     let mut public = ComponentExportSection::new();
     let mut exported_instances = ComponentInstanceSection::new();
-    let mut core_function = asynchronous.len() as u32;
+    let mut core_function = completion_base + asynchronous.len() as u32;
     let callback = bridge_instance.map(|instance| {
         aliases.alias(Alias::CoreInstanceExport {
             instance,
@@ -671,16 +770,6 @@ pub fn component(
         core_function += 1;
         index
     });
-    if exports
-        .iter()
-        .any(|export| export.result.is_some_and(Boundary::optional))
-    {
-        aliases.alias(Alias::CoreInstanceExport {
-            instance: adapter_instance,
-            kind: ExportKind::Memory,
-            name: "suss.canonical.memory",
-        });
-    }
     let mut asynchronous_index = 0;
     for (index, export) in exports.iter().enumerate() {
         let entry_name = if export.asynchronous {
@@ -699,18 +788,36 @@ pub fn component(
             kind: ExportKind::Func,
             name: &entry_name,
         });
-        let options = if export.asynchronous {
-            vec![
+        let entry = core_function;
+        core_function += 1;
+        let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
+            || export.result.is_some_and(Boundary::uses_strings);
+        let mut options = vec![];
+        if string_boundary {
+            options.extend([
+                CanonicalOption::Memory(0),
+                CanonicalOption::Realloc(0),
+                CanonicalOption::UTF16,
+            ]);
+        } else if !export.asynchronous && export.result.is_some_and(Boundary::indirect_result) {
+            options.push(CanonicalOption::Memory(0));
+        }
+        if export.asynchronous {
+            options.extend([
                 CanonicalOption::Async,
                 CanonicalOption::Callback(callback.unwrap()),
-            ]
-        } else if export.result.is_some_and(Boundary::optional) {
-            vec![CanonicalOption::Memory(0)]
-        } else {
-            vec![]
-        };
-        canonical.lift(core_function, function_types[index], options);
-        core_function += 1;
+            ]);
+        } else if export.result.is_some_and(Boundary::uses_strings) {
+            let post_name = format!("post.{}", export.name);
+            aliases.alias(Alias::CoreInstanceExport {
+                instance: adapter_instance,
+                kind: ExportKind::Func,
+                name: &post_name,
+            });
+            options.push(CanonicalOption::PostReturn(core_function));
+            core_function += 1;
+        }
+        canonical.lift(entry, function_types[index], options);
     }
     for export in public_exports {
         match export {
@@ -757,7 +864,7 @@ pub fn component(
 /// Canonical callback entrypoints for non-suspending source functions. They
 /// complete the task exactly once, then report EXIT. No continuation exists:
 /// suspension points must use the future rooted-continuation lowering instead.
-fn async_adapter(exports: &[&Export]) -> Vec<u8> {
+fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
     let mut types = TypeSection::new();
     let mut imports = ImportSection::new();
     for (index, export) in exports.iter().enumerate() {
@@ -790,25 +897,44 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
     }
     if exports
         .iter()
-        .any(|export| export.result.is_some_and(Boundary::optional))
+        .any(|export| export.result.is_some_and(Boundary::indirect_result))
     {
         imports.import(
             "suss.aot",
             "suss.canonical.memory",
             EntityType::Memory(MemoryType {
                 minimum: 1,
-                maximum: Some(1),
+                maximum: Some(if dynamic_memory { 65536 } else { 1 }),
                 memory64: false,
                 shared: false,
                 page_size_log2: None,
             }),
         );
     }
-    let imported = 2 * exports.len() as u32;
+    let mut posts = std::collections::BTreeMap::new();
+    if exports
+        .iter()
+        .any(|export| export.result.is_some_and(Boundary::uses_strings))
+    {
+        let ty = types.len();
+        types.ty().function([ValType::I32], []);
+        for (index, export) in exports
+            .iter()
+            .enumerate()
+            .filter(|(_, export)| export.result.is_some_and(Boundary::uses_strings))
+        {
+            let function = 2 * exports.len() as u32 + posts.len() as u32;
+            let name = format!("post.{}", export.name);
+            imports.import("suss.aot", &name, EntityType::Function(ty));
+            posts.insert(index, function);
+        }
+    }
+    let imported = 2 * exports.len() as u32 + posts.len() as u32;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
+        let entry_type = types.len();
         types.ty().function(
             export
                 .params
@@ -817,7 +943,7 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
                 .collect::<Vec<_>>(),
             [ValType::I32],
         );
-        functions.function(imported + index as u32);
+        functions.function(entry_type);
         public.export(
             &format!("entry.{index}"),
             ExportKind::Func,
@@ -844,15 +970,49 @@ fn async_adapter(exports: &[&Export]) -> Vec<u8> {
                 .instruction(&Instruction::LocalGet(flat_params as u32))
                 .instruction(&ty.payload_load());
         }
-        body.instruction(&Instruction::Call(2 * index as u32 + 1))
-            .instruction(&Instruction::I32Const(0))
+        if export.result.is_some_and(Boundary::uses_strings) {
+            body.instruction(&Instruction::LocalSet(flat_params as u32));
+            let optional = export.result.is_some_and(Boundary::string_option);
+            if optional {
+                body.instruction(&Instruction::LocalGet(flat_params as u32))
+                    .instruction(&Instruction::I32Load8U(MemArg {
+                        offset: 0,
+                        align: 0,
+                        memory_index: 0,
+                    }));
+            }
+            body.instruction(&Instruction::LocalGet(flat_params as u32))
+                .instruction(&Instruction::I32Load(MemArg {
+                    offset: if optional { 4 } else { 0 },
+                    align: 2,
+                    memory_index: 0,
+                }))
+                .instruction(&Instruction::LocalGet(flat_params as u32))
+                .instruction(&Instruction::I32Load(MemArg {
+                    offset: if optional { 8 } else { 4 },
+                    align: 2,
+                    memory_index: 0,
+                }));
+        }
+        body.instruction(&Instruction::Call(2 * index as u32 + 1));
+        if let Some(post) = posts.get(&index) {
+            // task-return consumes canonical bytes before the non-suspending
+            // completion call returns. Release transfer ownership exactly once.
+            body.instruction(&Instruction::LocalGet(flat_params as u32))
+                .instruction(&Instruction::Call(*post));
+        }
+        body.instruction(&Instruction::I32Const(0))
             .instruction(&Instruction::End);
         code.function(&body);
     }
-    let callback_type = imported + exports.len() as u32;
+    let callback_type = types.len();
     types.ty().function([ValType::I32; 3], [ValType::I32]);
     functions.function(callback_type);
-    public.export("callback", ExportKind::Func, callback_type);
+    public.export(
+        "callback",
+        ExportKind::Func,
+        imported + exports.len() as u32,
+    );
     let mut callback = Function::new([]);
     callback
         .instruction(&Instruction::Unreachable)
@@ -873,9 +1033,14 @@ fn adapter(
     fragment_count: usize,
     option_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
+    let has_strings = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.uses_strings())
+            || export.result.is_some_and(Boundary::uses_strings)
+    });
+    let helpers = if has_strings { HELPERS + 4 } else { HELPERS };
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
-    let signatures = [
+    let mut signatures = vec![
         ("binding-get", vec![VALUE], vec![VALUE]),
         ("number-box", vec![ValType::F64], vec![VALUE]),
         ("invoke", vec![VALUE, VALUE], vec![VALUE]),
@@ -887,6 +1052,12 @@ fn adapter(
             vec![ValType::I32],
         ),
     ];
+    if has_strings {
+        signatures.extend([
+            ("string-length", vec![VALUE], vec![ValType::I32]),
+            ("string-unit", vec![VALUE, ValType::I32], vec![ValType::I32]),
+        ]);
+    }
     for (index, (name, params, results)) in signatures.into_iter().enumerate() {
         types.ty().function(params, results);
         imports.import(
@@ -895,13 +1066,40 @@ fn adapter(
             EntityType::Function(runtime_abi::TYPE_COUNT + index as u32),
         );
     }
+    if has_strings {
+        for (index, (name, params, results)) in [
+            ("cabi_realloc", vec![ValType::I32; 4], vec![ValType::I32]),
+            ("release", vec![ValType::I32; 2], vec![]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            types.ty().function(params, results);
+            imports.import(
+                "suss.memory",
+                name,
+                EntityType::Function(runtime_abi::TYPE_COUNT + 8 + index as u32),
+            );
+        }
+        imports.import(
+            "suss.memory",
+            "memory",
+            EntityType::Memory(MemoryType {
+                minimum: 1,
+                maximum: Some(65536),
+                memory64: false,
+                shared: false,
+                page_size_log2: None,
+            }),
+        );
+    }
     types.ty().function([VALUE], []);
     imports.import(
         "suss.runtime",
         "language-exception",
         EntityType::Tag(TagType {
             kind: TagKind::Exception,
-            func_type_idx: runtime_abi::TYPE_COUNT + HELPERS,
+            func_type_idx: runtime_abi::TYPE_COUNT + helpers,
         }),
     );
     types.ty().function([], [VALUE]);
@@ -909,7 +1107,7 @@ fn adapter(
         imports.import(
             &format!("suss.fragment.{index}"),
             "eval",
-            EntityType::Function(runtime_abi::TYPE_COUNT + HELPERS + 1),
+            EntityType::Function(runtime_abi::TYPE_COUNT + helpers + 1),
         );
     }
     // Components forbid duplicate module/name imports. Multiple WIT exports
@@ -930,12 +1128,12 @@ fn adapter(
             global_indices.insert(export.global.clone(), index);
         }
     }
-    let imported = HELPERS + fragment_count as u32;
+    let imported = helpers + fragment_count as u32;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
-        let ty = runtime_abi::TYPE_COUNT + HELPERS + 2 + index as u32;
+        let ty = runtime_abi::TYPE_COUNT + helpers + 2 + index as u32;
         types.ty().function(
             export
                 .params
@@ -953,16 +1151,73 @@ fn adapter(
             .sum::<u32>();
         let integer = result + 1;
         let number = integer + 1;
-        let mut body = Function::new([(1, VALUE), (1, ValType::I32), (1, ValType::F64)]);
+        let pointer = number + 1;
+        let length = pointer + 1;
+        let position = length + 1;
+        let unit = position + 1;
+        let mut body = Function::new([
+            (1, VALUE),
+            (1, ValType::I32),
+            (1, ValType::F64),
+            (4, ValType::I32),
+        ]);
+        let string_locals = strings::Locals {
+            value: result,
+            pointer,
+            length,
+            index: position,
+            unit,
+        };
+        let string_helpers = strings::Helpers {
+            new: 4,
+            length: 6,
+            unit: 7,
+            set_unit: 5,
+            realloc: 8,
+        };
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         let mut parameter = 0;
         for (_, ty) in &export.params {
             match ty {
+                Boundary::String => {
+                    body.instruction(&Instruction::LocalGet(parameter))
+                        .instruction(&Instruction::LocalSet(pointer))
+                        .instruction(&Instruction::LocalGet(parameter + 1))
+                        .instruction(&Instruction::LocalSet(length));
+                    strings::copy_in(&mut body, &string_locals, &string_helpers);
+                    body.instruction(&Instruction::LocalGet(result));
+                    parameter += 2;
+                }
                 Boundary::Scalar(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter));
                     lift_scalar(&mut body, ty);
                     parameter += 1;
+                }
+                Boundary::StringOption => {
+                    body.instruction(&Instruction::LocalGet(parameter))
+                        .instruction(&Instruction::If(BlockType::Result(VALUE)))
+                        .instruction(&Instruction::LocalGet(parameter + 1))
+                        .instruction(&Instruction::LocalSet(pointer))
+                        .instruction(&Instruction::LocalGet(parameter + 2))
+                        .instruction(&Instruction::LocalSet(length));
+                    strings::copy_in(&mut body, &string_locals, &string_helpers);
+                    body.instruction(&Instruction::LocalGet(result))
+                        .instruction(&Instruction::Else)
+                        .instruction(&Instruction::I32Const(0))
+                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::End)
+                        .instruction(&Instruction::LocalSet(result))
+                        .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                        .instruction(&Instruction::I32Const(4))
+                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::LocalGet(result))
+                        .instruction(&Instruction::ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: 2,
+                        })
+                        .instruction(&Instruction::Call(2));
+                    parameter += 3;
                 }
                 Boundary::Option(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter))
@@ -992,11 +1247,137 @@ fn adapter(
         body.instruction(&Instruction::ArrayNewFixed {
             array_type_index: runtime_abi::ARGS,
             array_size: export.params.len() as u32,
-        })
-        .instruction(&Instruction::Call(2))
-        .instruction(&Instruction::LocalSet(result));
+        });
+        // Every source argument now owns its GC value; release canonical input
+        // buffers before invoking code that can throw a language exception.
+        let mut parameter = 0;
+        for (_, ty) in &export.params {
+            if ty.string() {
+                body.instruction(&Instruction::LocalGet(parameter))
+                    .instruction(&Instruction::LocalGet(parameter + 1))
+                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::I32Mul)
+                    .instruction(&Instruction::Call(9));
+            }
+            if ty.string_option() {
+                body.instruction(&Instruction::LocalGet(parameter))
+                    .instruction(&Instruction::If(BlockType::Empty))
+                    .instruction(&Instruction::LocalGet(parameter + 1))
+                    .instruction(&Instruction::LocalGet(parameter + 2))
+                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::I32Mul)
+                    .instruction(&Instruction::Call(9))
+                    .instruction(&Instruction::End);
+            }
+            parameter += ty.flat().len() as u32;
+        }
+        body.instruction(&Instruction::Call(2))
+            .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
+            Some(Boundary::String) => {
+                strings::validate(&mut body, &string_locals, &string_helpers, |body| {
+                    boundary_error_message(
+                        body,
+                        result,
+                        &format!(
+                            "WIT export {} returned an incompatible Unicode string",
+                            export.name
+                        ),
+                    );
+                });
+                strings::copy_out(&mut body, &string_locals, &string_helpers);
+                body.instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::LocalGet(pointer))
+                    .instruction(&Instruction::I32Store(MemArg {
+                        offset: 0,
+                        align: 2,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::LocalGet(length))
+                    .instruction(&Instruction::I32Store(MemArg {
+                        offset: 4,
+                        align: 2,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::I32Const(0));
+            }
+            Some(Boundary::StringOption) => {
+                body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
+                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::RefI31)
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: runtime_abi::ARGS,
+                        array_size: 2,
+                    })
+                    .instruction(&Instruction::Call(2))
+                    .instruction(&Instruction::LocalSet(result));
+                body.instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::RefTestNonNull(HeapType::I31))
+                    .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::RefCastNonNull(HeapType::I31))
+                    .instruction(&Instruction::I31GetS)
+                    .instruction(&Instruction::I32Eqz)
+                    .instruction(&Instruction::Else)
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::If(BlockType::Empty));
+                for (offset, align) in [(0, 0), (4, 2), (8, 2)] {
+                    body.instruction(&Instruction::I32Const(0))
+                        .instruction(&Instruction::I32Const(0));
+                    if offset == 0 {
+                        body.instruction(&Instruction::I32Store8(MemArg {
+                            offset,
+                            align,
+                            memory_index: 0,
+                        }));
+                    } else {
+                        body.instruction(&Instruction::I32Store(MemArg {
+                            offset,
+                            align,
+                            memory_index: 0,
+                        }));
+                    }
+                }
+                body.instruction(&Instruction::Else);
+                strings::validate(&mut body, &string_locals, &string_helpers, |body| {
+                    boundary_error_message(
+                        body,
+                        result,
+                        &format!(
+                            "WIT export {} returned an incompatible Unicode string option payload",
+                            export.name
+                        ),
+                    );
+                });
+                strings::copy_out(&mut body, &string_locals, &string_helpers);
+                body.instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Const(1))
+                    .instruction(&Instruction::I32Store8(MemArg {
+                        offset: 0,
+                        align: 0,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::LocalGet(pointer))
+                    .instruction(&Instruction::I32Store(MemArg {
+                        offset: 4,
+                        align: 2,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::LocalGet(length))
+                    .instruction(&Instruction::I32Store(MemArg {
+                        offset: 8,
+                        align: 2,
+                        memory_index: 0,
+                    }))
+                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::I32Const(0));
+            }
             Some(Boundary::Scalar(ty)) => {
                 lower_scalar(&mut body, ty, result, integer, number, &export.name)
             }
@@ -1051,34 +1432,78 @@ fn adapter(
         body.instruction(&Instruction::End);
         code.function(&body);
     }
-    let start_type = runtime_abi::TYPE_COUNT + HELPERS + 2 + exports.len() as u32;
+    let start_type = runtime_abi::TYPE_COUNT + helpers + 2 + exports.len() as u32;
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
     for index in 0..fragment_count - usize::from(option_schema) {
         start
-            .instruction(&Instruction::Call(HELPERS + index as u32))
+            .instruction(&Instruction::Call(helpers + index as u32))
             .instruction(&Instruction::Drop);
         if option_schema && index == 0 {
             // The first fragment provides compiled Runtime core. Capture schema
             // closures and constructors before any user initializer can redefine
             // those public cells. This private root is never exported.
             start
-                .instruction(&Instruction::Call(HELPERS + fragment_count as u32 - 1))
+                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
                 .instruction(&Instruction::GlobalSet(global_indices.len() as u32));
         }
     }
     start.instruction(&Instruction::End);
     code.function(&start);
+    for export in exports
+        .iter()
+        .filter(|export| export.result.is_some_and(Boundary::uses_strings))
+    {
+        // TypeSection counts the shared recursive group as one entry, while
+        // core type indices count all TYPE_COUNT members of that group.
+        let ty = types.len() + runtime_abi::TYPE_COUNT - 1;
+        types.ty().function([ValType::I32], []);
+        let index = imported + functions.len();
+        functions.function(ty);
+        public.export(&format!("post.{}", export.name), ExportKind::Func, index);
+        let mut post = Function::new([]);
+        let optional = export.result.is_some_and(Boundary::string_option);
+        if optional {
+            post.instruction(&Instruction::LocalGet(0))
+                .instruction(&Instruction::I32Load8U(MemArg {
+                    offset: 0,
+                    align: 0,
+                    memory_index: 0,
+                }))
+                .instruction(&Instruction::If(BlockType::Empty));
+        }
+        post.instruction(&Instruction::LocalGet(0))
+            .instruction(&Instruction::I32Load(MemArg {
+                offset: if optional { 4 } else { 0 },
+                align: 2,
+                memory_index: 0,
+            }))
+            .instruction(&Instruction::LocalGet(0))
+            .instruction(&Instruction::I32Load(MemArg {
+                offset: if optional { 8 } else { 4 },
+                align: 2,
+                memory_index: 0,
+            }))
+            .instruction(&Instruction::I32Const(2))
+            .instruction(&Instruction::I32Mul)
+            .instruction(&Instruction::Call(9));
+        if optional {
+            post.instruction(&Instruction::End);
+        }
+        post.instruction(&Instruction::End);
+        code.function(&post);
+    }
     let mut module = Module::new();
     module
         .section(&runtime_abi::Manifest::default().section())
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if exports
-        .iter()
-        .any(|export| export.result.is_some_and(Boundary::optional))
+    if !has_strings
+        && exports
+            .iter()
+            .any(|export| export.result.is_some_and(Boundary::optional))
     {
         let mut memory = MemorySection::new();
         memory.memory(MemoryType {
@@ -1089,6 +1514,12 @@ fn adapter(
             page_size_log2: None,
         });
         module.section(&memory);
+    }
+    if has_strings
+        || exports
+            .iter()
+            .any(|export| export.result.is_some_and(Boundary::optional))
+    {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
     if option_schema {
@@ -1242,9 +1673,14 @@ fn lower_scalar(
 }
 
 fn boundary_error(body: &mut Function, local: u32, name: &str) {
-    let message = format!("WIT export {name} returned an incompatible scalar value")
-        .encode_utf16()
-        .collect::<Vec<_>>();
+    boundary_error_message(
+        body,
+        local,
+        &format!("WIT export {name} returned an incompatible scalar value"),
+    );
+}
+fn boundary_error_message(body: &mut Function, local: u32, message: &str) {
+    let message = message.encode_utf16().collect::<Vec<_>>();
     body.instruction(&Instruction::I32Const(message.len() as i32))
         .instruction(&Instruction::Call(4))
         .instruction(&Instruction::LocalSet(local));

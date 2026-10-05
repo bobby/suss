@@ -4,7 +4,7 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, scalar options
+pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, scalar options, strings and string options
 and void results. Parameters use direct canonical signatures with at most16
 flattened fields; larger signatures receive an explicit unsupported diagnostic
 before effectful source macros. Other WIT boundary shapes also receive explicit
@@ -156,5 +156,42 @@ uses a fresh instance. Successful repeated calls and post-return are checked
 separately. Existing scalar13 and async3 tests pass. Both phase bootstrap pairs
 reproduce without Java/Node; bootstrap4 passes. Independent review, the exact
 unfiltered full baseline and final-head CI remain required for this increment.
-Composite/nested options, strings, lists, exact64 and indirect argument lowering
+Composite/nested options, lists, exact64 and indirect argument lowering
 remain unfinished; this is not generic WIT or complete M3 acceptance.
+
+## Owned Unicode strings
+
+String parameters copy canonical UTF-16 units into owned GC arrays before the
+source function runs. Once all arguments are copied, their input transfer blocks
+are released. Source values retained in atoms remain independent of reused linear
+memory. String results require an actual source string and paired UTF-16
+surrogates before output allocation; invalid values raise a decoded language
+boundary exception. Embedded NUL, empty strings, combining characters and astral
+characters retain their units. These checks are distinct from ordinary source
+string indexing, which continues to permit lone UTF-16 surrogates.
+
+The shared owned allocator grows memory with checked arithmetic and reuses freed
+blocks. Synchronous output buffers survive canonical lifting until post-return;
+non-suspending async exports release them after task-return consumes the result.
+String options use `[:none]` and `[:some string]`, preserving Some(empty). None
+has no payload allocation; Some copies and validates its string payload. Their
+canonical result fields are tag/pointer/length with alignment preserved.
+
+Eleven typed component regressions pass with no ignored cases. They exercise
+mixed scalar/string arguments, eight strings at the16-field direct-signature
+limit, rejection of larger signatures before source macro effects, fresh Stores,
+retained input after GC, repeated sync/async transfers, string options and
+once-only finally effects. Malformed bare results independently decode language
+exceptions. Transfer memory remains capped at128KiB while cumulative payloads
+exceed that capacity, establishing reuse rather than bump-only allocation.
+The fixture separately bounds the existing numeric scratch memory and configured
+GC heap at8MiB; Wasmtime uses the same limiter for all three storage mechanisms.
+The helper asserts the artifact's numeric/canonical initial memory sizes before
+applying those separate budgets. The unchanged parent rejects all eleven tests
+as unsupported strings. Existing scalar13/async3/option16 tests pass after the
+adapter module-index and post-return concrete-type-index corrections.
+
+This source is original Rust, with no new upstream forms or ABI layout changes.
+Bootstrap reproduction, independent review, full baseline and final-head CI are
+still required for this working increment. Imports, lists, exact64, nested
+composites, source suspension and the original M3 acceptance remain unfinished.

@@ -486,7 +486,7 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
         );
     }
     let (resolve, selected) =
-        world("package test:unsupported; world api { export f: func(x: string) -> string; }");
+        world("package test:unsupported; world api { export f: func(x: list<string>) -> list<string>; }");
     assert!(
         portable::aot::component(
             std::slice::from_ref(&fragment),
@@ -496,7 +496,7 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
         )
         .unwrap_err()
         .message
-        .contains("bool/f32/f64")
+        .contains("list<string>")
     );
     let (resolve, selected) = world(
         "package test:imports; world api { import host: func(); export f: func(x: f64) -> f64; }",
