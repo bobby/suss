@@ -497,7 +497,18 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         &to_string,
     );
 
-    let mut concat = vec![
+    let mut concat = check(
+        &[
+            LocalGet(0),
+            RefTestNonNull(string),
+            LocalGet(1),
+            RefTestNonNull(string),
+            I32And,
+            I32Eqz,
+        ],
+        &error("String concatenation requires string operands", 4),
+    );
+    concat.extend([
         LocalGet(0),
         RefCastNonNull(string),
         ArrayLen,
@@ -508,7 +519,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         LocalTee(3),
         I32Add,
         LocalSet(4),
-    ];
+    ]);
     concat.extend(check(&[LocalGet(4), LocalGet(2), I32LtU], &allocation));
     concat.extend([
         LocalGet(4),

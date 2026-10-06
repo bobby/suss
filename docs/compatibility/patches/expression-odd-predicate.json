@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "aeef116f58fcbbca7301e8c4757b7dc88c50ca625c7a5ad2d69dde222f92e73d",
+  "replacement": "(def odd?\n\"Returns true if n is odd, throws an exception if n is not an integer\"\n(fn [n] (not (even? n))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+}

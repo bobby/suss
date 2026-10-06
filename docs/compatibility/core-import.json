@@ -1373,6 +1373,56 @@
       "id": "runtime:mod:2976",
       "source-sha256": "9b4da4cf1a510d97cde4786ac20a838ff91a5c8f28dc9496e16e0a99927b517c",
       "patch": "docs/compatibility/patches/metadata-mod.json"
+    },
+    {
+      "id": "runtime:abs:2807",
+      "source-sha256": "769da73fd0eb759e012a484e5b6df7003a56139f65e383fb5107048f3785e25b",
+      "patch": "docs/compatibility/patches/expression-abs.json"
+    },
+    {
+      "id": "runtime:NaN?:2812",
+      "source-sha256": "54323d6088584a272d40861fba10ebb4ed166fb04afaf6f141e44621bada3dca",
+      "patch": "docs/compatibility/patches/expression-NaN-predicate.json"
+    },
+    {
+      "id": "runtime:integer?:2370",
+      "source-sha256": "74e5ab5c584965506e3382864c3e43c33d3cf67ce65ce2e881369b23c2fd505f",
+      "patch": "docs/compatibility/patches/expression-integer-predicate.json"
+    },
+    {
+      "id": "runtime:max:2817",
+      "source-sha256": "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885",
+      "patch": "docs/compatibility/patches/expression-max.json"
+    },
+    {
+      "id": "runtime:min:2829",
+      "source-sha256": "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe",
+      "patch": "docs/compatibility/patches/expression-min.json"
+    },
+    {
+      "id": "runtime:even?:4444",
+      "source-sha256": "bd00f047245484ff36abd6e6b3a7e5dabfebf825a44ce335dafadf3b66c63460",
+      "patch": "docs/compatibility/patches/expression-even-predicate.json"
+    },
+    {
+      "id": "runtime:odd?:4450",
+      "source-sha256": "aeef116f58fcbbca7301e8c4757b7dc88c50ca625c7a5ad2d69dde222f92e73d",
+      "patch": "docs/compatibility/patches/expression-odd-predicate.json"
+    },
+    {
+      "id": "runtime:peek:2181",
+      "source-sha256": "cbe02e42f5edb48cbe2f44fe6bf6b7ac3bf51208312d5fbc7de36f38c4792d3f",
+      "patch": "docs/compatibility/patches/expression-peek.json"
+    },
+    {
+      "id": "runtime:pop:2188",
+      "source-sha256": "6a336adb40cf014d6006b70357959ed8d27a6a047411e64528a75bf39eae3606",
+      "patch": "docs/compatibility/patches/expression-pop.json"
+    },
+    {
+      "id": "runtime:str_:3106",
+      "source-sha256": "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf",
+      "patch": "docs/compatibility/patches/expression-internal-str.json"
     }
   ],
   "loader": {

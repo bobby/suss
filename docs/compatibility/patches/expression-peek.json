@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "cbe02e42f5edb48cbe2f44fe6bf6b7ac3bf51208312d5fbc7de36f38c4792d3f",
+  "replacement": "(def peek\n\"For a list or queue, same as first, for a vector, same as, but much\n  more efficient than, last. If the collection is empty, returns nil.\"\n(fn [coll]\n  (when-not (nil? coll)\n    (-peek coll))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+}

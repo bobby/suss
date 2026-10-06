@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bd00f047245484ff36abd6e6b3a7e5dabfebf825a44ce335dafadf3b66c63460",
+  "replacement": "(def even?\n\"Returns true if n is even, throws an exception if n is not an integer\"\n(fn [n] (if (integer? n)\n         (zero? (bit-and n 1))\n         (throw (suss.bootstrap/error (str_ \"Argument must be an integer: \" n))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Replace only host Error construction with the existing typed GC Error adapter; retain the original str_ error-formatting dependency, whose retained runtime adaptation is prepared but not yet executed. Invalid-input formatting is not certified by valid corpus cases."
+}

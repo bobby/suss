@@ -100,6 +100,15 @@ are decode errors. It does not invoke the Suss printer or equality to decide
 whether a test passes. Decoder layout knowledge is intentionally isolated in
 `tests/support/decode.rs` and must change with the runtime ABI.
 
+The separate [compiled expression observer](../runtime/compiled-expression-observations.md)
+reads ABI2 storage directly. The unchanged 201-case harness now executes all
+201 cases successfully, and twenty-three focused decoder checks pass, including
+an actual before/after ChunkedSeq repair. The original 182-pass/19-failure run
+remains recorded as historical evidence; its unresolved core names have been
+repaired without changing the catalog. This establishes the bounded Session
+corpus, not retirement of the prototype compiler/evaluator or migration of the
+public expression/cache APIs.
+
 When intentionally adding/changing test inputs, regenerate `cases.json` with
 `cargo test -p suss-compile --test conformance record_case_catalog -- --ignored --exact`
 and review removed cases and changed expectations.
@@ -883,3 +892,14 @@ phases after GC. Presence, name/local/method-scope identity, shadows and raw
 false-versus-nil return tags are covered. This does not complete source schemas,
 inference, compiled macro acceptance or any inventory item; see
 [function scope facts](../runtime/compiled-macro-function-scopes.md).
+
+
+The new compiled Session expression harness executes all 201 unchanged reviewed
+cases successfully and independently observes ABI2 storage after GC. Twenty-three
+focused decoder regressions pass, including malformed ChunkedSeq rejection.
+All 56 fresh pinned numeric/stack/internal-string observations match. The original
+parity message regression now passes after the retained formatting dependency and
+immutable descriptor-checked Error.message read; private concatenation errors are
+catchable language errors with operands evaluated once in source order. Public
+expression/cache migration and production evaluator retirement remain incomplete.
+See [compiled expression observations](../runtime/compiled-expression-observations.md).

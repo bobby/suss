@@ -106,6 +106,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
+                        Nominal::CoerceString => { names.insert("coerce-string"); }
+                        Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -265,7 +267,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "language-error-new" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -981,6 +983,8 @@ fn emit_function(
                                 .instruction(&Call(index("object-method-invoke")));
                         }
                         Nominal::Class
+                        | Nominal::CoerceString
+                        | Nominal::ConcatString
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
                         | Nominal::NativeObjectFactory
@@ -1001,6 +1005,8 @@ fn emit_function(
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
+                                Nominal::CoerceString => "coerce-string",
+                                Nominal::ConcatString => "string-concat",
                                 Nominal::LanguageError => "language-error-new",
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
