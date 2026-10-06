@@ -2,6 +2,358 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:keyword:3560"
+  {:source-sha256 "7d4c72514489330c05547cd64cf5836ad8e37805476cfb4bf8139bde7e2143bf"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["Keyword/symbol?/keyword?/string?/name/namespace/str_", "ordered owned UTF-16 keyword-name-parts"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. Replace only the fixed slash separator split storage with an original ordered UTF-16 helper that preserves every part, including empty/trailing/multiple separators. Preserve identity, Symbol conversion, slash special case, parts-count branch, fqn storage and all two-arity namespace/name coercions. This is not general JS split interoperability. Expand the retained multi-argument str_ macro applications to ordered concatenation of single-argument runtime conversions, preserving nil-as-empty per argument and conversion effects before the next argument. The actual first-class runtime str_ nil-first behavior remains unchanged. This does not implement the general analyzer-dependent str_ macro."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-keyword.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:strip-ns:10650"
+  {:source-sha256 "3e0be6a3918cbcd41b831688408ed9bf5753533189248825d245fc90c36c0da3"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["symbol?/symbol/keyword/name"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. The original map key/value print ordering, separators and namespace stripping dispatch are unchanged. Complete collection IPrintWithWriter extensions and full printer acceptance remain unfinished. Expand the retained multi-argument str_ macro applications to ordered concatenation of single-argument runtime conversions, preserving nil-as-empty per argument and conversion effects before the next argument. The actual first-class runtime str_ nil-first behavior remains unchanged. This does not implement the general analyzer-dependent str_ macro."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-strip-ns.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:lift-ns:10656"
+  {:source-sha256 "016148974cd021c7c47f09bdec42f6e8bc6b5f965af8e66012725dd1793e5cd5"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["*print-namespace-maps*/seq/first/next/nth", "keyword?/symbol?/namespace/strip-ns/MapEntry/array/push"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. Replace JS array literals only with owned native array storage. Expand the nested loop binding to explicit first/next/nth-with-default temporaries, preserving map-entry binding values, namespace checks, eager remaining-cursor access, push/recurrence order and nil versus empty result. No formatter branch or namespace lifting rule is omitted. Focused primary and both-phase evidence is required; lazy/custom map cursor effects remain a separate acceptance obligation. Expand when-let to a let and truthy guard, evaluating namespace exactly once and retaining the binding/body scope. Preserve the pinned loop macro expansion's outer initial destructuring as well as each iteration's seq/first/next/nth temporaries. The (seq m) initializer still runs once; the distinct expanded bindings preserve observable custom cursor/indexed-entry effects. A fresh primary custom cursor/entry trace is the acceptance evidence."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-lift-ns.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:print-prefix-map:10674"
+  {:source-sha256 "090a3c55bf06684a015b9a6853f652eea71fe08c8c7576de93cf4979dad31ec4"
+   :visibility :public
+   :arities {:fixed [5] :variadic-min nil}
+   :dependencies ["pr-sequential-writer/key/val/-write/str_"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. The original map key/value print ordering, separators and namespace stripping dispatch are unchanged. Complete collection IPrintWithWriter extensions and full printer acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-print-prefix-map.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:print-map:10684"
+  {:source-sha256 "68fa017f509a9af54245667cab2b83247d91a49bda1a2f4469e560861291ca52"
+   :visibility :public
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["map?/lift-ns/aget/print-prefix-map/str_"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. Expand the single some-> on the already-bound result to a nil guard and one aget, preserving nil handling, lifted prefix, lifted map selection and ordinary map fallback. Expand the retained multi-argument str_ macro applications to ordered concatenation of single-argument runtime conversions, preserving nil-as-empty per argument and conversion effects before the next argument. The actual first-class runtime str_ nil-first behavior remains unchanged. This does not implement the general analyzer-dependent str_ macro."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-print-map.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:object?:300"
+  {:source-sha256 "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["owned native object descriptor guard", "owned constructor property/prototype lookup", "canonical default Object constructor"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, docstring and nil branch. Replace JS constructor identity lookup with actual owned native-object property/prototype lookup and the canonical default Object constructor. The storage guard prevents property reads on scalar, array, closure and nominal representations, whose constructors are distinct from Object. Shadowed native constructors are observed, not inferred from layout. Foreign JS objects, primitive boxing and mutation of host constructor properties on non-native representations remain unfinished interop surfaces; this is a partial adaptation, not complete public host-object compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-object-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json"]}
+  "runtime:pr-writer-impl:10445"
+  {:source-sha256 "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf"
+   :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["IWriter/IPrintWithWriter", "print-meta?/meta", "numeric/string/boolean predicates and coercions", "pr-constructor-writer (unfinished)", "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)", "pr-function-name (unfinished)", "pr-date?/regexp?/js-symbol? (unfinished representations)", "pr-object-constructor-string/pr-constructor-display-name/pr-object-constructor-name/pr-object-constructor (unfinished fallback)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned default printer and branch order, metadata prefix, protocol precedence, numeric exceptional spelling, readable strings, function printing, object/array, Date, regex/symbol and fallback behavior. Expand defn to def/fn. Replace primitive NaN/infinity/empty-string operations with their portable equivalents and constructor storage inspection with the owned descriptor guard. Host storage/regex/constructor/name operations are explicit private dependencies, currently declared but uninitialized; unavailable paths must fail visibly, never fabricate output or return constant false predicates. This is staged source retention, not complete printing compatibility. Date/regexp/JS symbol representations, eager object-key mapping/identifier matching, function and constructor names, generic object properties, constructor printer and collection print-map still need real implementations and individual evidence; no host branch is silently deleted or claimed excluded. The one cond-> application is expanded to an if over the bound key with one predicate evaluation."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-writer-impl.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json"]}
+  "runtime:empty?:2210"
+  {:source-sha256 "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["nil?/ICounted/-count/zero?/seq/not"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-empty-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-writer:10542"
+  {:source-sha256 "e6ccfb4f85f32753bca5fab50fa96ee166ddae43a024125c3c8cec4c1b7d2357"
+   :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies [":alt-impl/:fallback-impl", "-assoc", "pr-writer-impl (retained; storage dependencies unfinished)"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-writer.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-str*:934"
+  {:source-sha256 "7354c4a087662707c0bb86e7e2d173ad380d3df3ecb2cd12e69ccc4a0de4b76a"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["StringBufferWriter/BootstrapStringBuffer", "-pr-writer/-flush", "buffer toString"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. Replace Closure StringBuffer construction only with the original GC-owned UTF-16 buffer; no host import is introduced. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-str-one.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-sb-with-opts:10559"
+  {:source-sha256 "d2673c3e67e74bc8ce8dcd3de9da1f404c40ecca601acfa16f33b05e1440e926"
+   :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["StringBufferWriter/BootstrapStringBuffer", "pr-seq-writer/-flush"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. Replace Closure StringBuffer construction only with the original GC-owned UTF-16 buffer; no host import is introduced. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-sb-with-opts.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-str-with-opts:10566"
+  {:source-sha256 "c25aeaed574809ff85afd2dcf91dc0fc787f3685bf52c619d36d079d533fd10b"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["empty?/str_/pr-sb-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-str-with-opts.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-str:10597"
+  {:source-sha256 "14ac19359c303e2f392efc27760172ec01b49bd08a10a2c3fdac18900f3d3e78"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["pr-str-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-str.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-sequential-writer:10381"
+  {:source-sha256 "e4bb91cf7a10dbb1274889019e822e998d37d22fd40a4ae3c83b4c306b015369"
+   :visibility :public
+   :arities {:fixed [7] :variadic-min nil}
+   :dependencies ["IWriter/-write", "pr-opts-len", "*print-level*", "binding/loop/recur", "seq/first/next/dec/zero?/neg?"]
+   :classification :adapted
+   :rationale "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-sequential-writer.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:print-meta?:10438"
+  {:source-sha256 "3fa3405bddbfd801c7daf7339ea5096a92831dca060583883df53ecb43d7f2a6"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["pr-opts-meta", "boolean", "IMeta/implements?/meta"]
+   :classification :adapted
+   :rationale "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-print-meta-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-seq-writer:10551"
+  {:source-sha256 "3ab03e99f5b760ef04435923d59b46e45d37fc83543f73bf6203b48211ee0f64"
+   :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["pr-writer", "seq/first/next", "IWriter/-write", "loop/recur"]
+   :classification :adapted
+   :rationale "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-seq-writer.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:char-escapes:10419"
+  {:source-sha256 "a5dd8f5a7fc4e42ba84d5faf7906fd48ab1c42b06d176c264cb927116306a936"
+   :visibility :private
+   :arities nil
+   :dependencies ["persistent map literal", "seven pinned character escape entries"]
+   :classification :adapted
+   :rationale "Replace only the JavaScript property-table storage with a persistent string-keyed map. Preserve the entire pinned private declaration and all seven keys and values; no escape mapping is deleted or normalized."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-char-escapes.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:quote-string:10429"
+  {:source-sha256 "cf0761b2969ab7be03474449aac96da92374ba5c4c826d3aab808959d4f30565"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["char-escapes", "get", "checked UTF-16 length/slice/concatenation"]
+   :classification :adapted
+   :rationale "Retain private visibility and the single pinned signature. Replace the global seven-character JavaScript regex replacement with ordered UTF-16 code-unit traversal and the complete pinned escape table. Surround the result with the same quote characters; preserve every other code unit including unpaired surrogates without UTF-8 conversion. This is a string-storage adaptation, not an implementation of public regexp interoperability."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-quote-string.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:StringBufferWriter:929"
+  {:source-sha256 "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834"
+   :visibility :public
+   :arities nil
+   :dependencies ["IWriter/-write/-flush" "buffer append method"]
+   :classification :portable
+   :rationale "Retain the entire pinned writer type and both methods. Original GC-owned UTF-16 buffer storage supplies append identity and toString without a host import; arbitrary Closure StringBuffer interoperability is not claimed. The full printing corpus remains an unfinished acceptance check."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:IWriter:799"
+  {:source-sha256 "ba22278cdf258642a42f381052e468105ecd567bbb33c811d4da88e9786dc4d2"
+   :visibility :public
+   :arities nil
+   :dependencies ["-write (2 arguments)", "-flush (1 argument)"]
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-readably*:121"
+  {:source-sha256 "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-meta*:129"
+  {:source-sha256 "6273282bc799a6ab34f00202b63382500c561fd75733fdfefd26467c5865009f"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-dup*:137"
+  {:source-sha256 "ce416ca858b868615e63a98f3bfeae36569c4d09dea707f44ac29e44377c344e"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-namespace-maps*:145"
+  {:source-sha256 "08d935a5cd887cf2da3d590db823b314700e7bc5369480f758fa772899eea109"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-length*:153"
+  {:source-sha256 "1c9b8ee32617d9efd340f25828391d0dfa5d0486dea8a3be725ae0f0842aa2be"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-level*:165"
+  {:source-sha256 "15f34288bd3b9560dd0d1f6ce0c566ec93b6a4991585223204b3602c7f7f8ea0"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*print-fn-bodies*:178"
+  {:source-sha256 "6ac032459def20b4f6153a15caa8eff4a916bfaa5d72c17be8aa53ad1a28499e"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-opts-readably:280"
+  {:source-sha256 "c73274c9425e79dfb17853973730095645e8ef3f06f313ecd6fcff9e56a222af"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["dynamic printing variable", "keyword lookup", "nil?"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-opts-readably.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-opts-meta:285"
+  {:source-sha256 "8f84cb83d2f5e55b2a8cc7798c851c9a5b91d12d2f489583fb6c97749d8baec0"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["dynamic printing variable", "keyword lookup", "nil?"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-opts-meta.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-opts-dup:290"
+  {:source-sha256 "06835bb2849de032cdae030a6887c561ae10c744cd73b7fc0aaf7cbd21f5f15d"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["dynamic printing variable", "keyword lookup", "nil?"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-opts-dup.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:pr-opts-len:295"
+  {:source-sha256 "5f7bc4c83c92c0b59db5a9a3b79e31a7b04957e4b7f2b4105aadc997d98ff0a9"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["dynamic printing variable", "keyword lookup", "nil?"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-pr-opts-len.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:write-all:10404"
+  {:source-sha256 "914dfc9c211e6ebd0b130d41f6c6779c5c32bc6bbf293d85f82d60e53de4b735"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["IWriter/-write", "seq/first/next", "loop/recur"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-write-all.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
   "runtime:sequence:4394"
   {:source-sha256 "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756"
    :visibility :public

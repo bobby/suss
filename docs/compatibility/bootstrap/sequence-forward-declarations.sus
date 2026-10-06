@@ -43,3 +43,29 @@
 
 ;; Original declarations for retained subvector mutual references.
 (declare Subvec build-subvec subvec seq-iter)
+
+;; Original GC-owned UTF-16 storage for the retained printer's string writes.
+;; This is not an implementation of Closure's general interop StringBuffer API.
+;; The writer retains its actual buffer result, not an atom or a host-side ID.
+(deftype BootstrapStringBuffer [^:mutable contents]
+  Object
+  (append [this text]
+    (set! (.-contents this) (suss.bootstrap/concat-string contents text))
+    this)
+  (toString [_] contents))
+
+;; Mutual printer reference, uninitialized until the retained implementation loads.
+(declare pr-writer)
+
+;; Full default printer dependency still pending; no fabricated fallback.
+(declare pr-writer-impl)
+
+;; Staged default printer dependencies. No placeholder implementation: calls to
+;; unfinished host/storage operations must raise a visible language exception.
+(declare ^:private pr-constructor-writer ^:private pr-object-map
+         ^:private pr-object-keyword? ^:private pr-function-name
+         ^:private pr-date? ^:private pr-object-constructor-string
+         ^:private pr-constructor-display-name ^:private pr-object-constructor-name
+         ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
+
+(declare ^:private keyword-name-parts)

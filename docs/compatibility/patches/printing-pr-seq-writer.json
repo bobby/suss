@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3ab03e99f5b760ef04435923d59b46e45d37fc83543f73bf6203b48211ee0f64",
+  "replacement": "(def pr-seq-writer\n  (fn [objs writer opts]\n  (pr-writer (first objs) writer opts)\n  (loop [objs (next objs)]\n    (when-not (nil? objs)\n      (-write writer \" \")\n      (pr-writer (first objs) writer opts)\n      (recur (next objs))))))",
+  "rationale": "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+}

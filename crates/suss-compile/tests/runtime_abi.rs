@@ -1902,6 +1902,56 @@ fn runtime_abi_closure_properties_keep_assigned_values_through_gc_and_reject_bad
 }
 
 #[test]
+fn runtime_abi_source_closure_names_survive_gc_and_reject_unset_or_invalid_owners() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let function = nominal_value(&mut store, runtime, "predicate-nil", &[]);
+    let get = runtime.get_func(&mut store, "closure-source-name").unwrap();
+    let initialize = runtime.get_func(&mut store, "closure-source-name-initialize").unwrap();
+    // A kernel closure has no known source name. Never turn that unknown into
+    // the successful empty name of a genuine anonymous source function.
+    let error = get.call(&mut store, &[function.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    assert!(!error.is::<wasmtime::Trap>());
+    let expected = [0x61, 0xd800, 0xd83d, 0xde42];
+    {
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut name = [Val::null_any_ref()];
+        runtime.get_func(&mut scope, "string-new").unwrap()
+            .call(&mut scope, &[Val::I32(expected.len() as i32)], &mut name).unwrap();
+        let array = name[0].unwrap_anyref().unwrap().as_array(&scope).unwrap().unwrap();
+        for (index, unit) in expected.iter().enumerate() {
+            array.set(&mut scope, index as u32, Val::I32(*unit)).unwrap();
+        }
+        initialize.call(&mut scope, &[function.clone(), name[0].clone()], &mut []).unwrap();
+    }
+    // The owning closure is the only surviving root for this UTF16 label.
+    store.gc(None).unwrap();
+    let mut result = [Val::null_any_ref()];
+    get.call(&mut store, &[function.clone()], &mut result).unwrap();
+    let name = result[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    assert_eq!(name.len(&store).unwrap(), expected.len() as u32);
+    for (index, unit) in expected.iter().enumerate() {
+        assert_eq!(name.get(&mut store, index as u32).unwrap().unwrap_i32(), *unit);
+    }
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let number = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7f64.to_bits())]);
+    for owner in [nil.clone(), number.clone()] {
+        let error = get.call(&mut store, &[owner], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        assert!(!error.is::<wasmtime::Trap>());
+    }
+    for invalid_name in [nil, number] {
+        let error = initialize.call(&mut store, &[function.clone(), invalid_name], &mut []).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        assert!(!error.is::<wasmtime::Trap>());
+    }
+    let unchanged = nominal_value(&mut store, runtime, "closure-source-name", &[function]);
+    assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), unchanged.unwrap_anyref().unwrap()).unwrap());
+}
+
+#[test]
 fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
     use std::borrow::Cow;
     use wasm_encoder::*;

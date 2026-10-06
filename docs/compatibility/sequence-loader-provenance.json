@@ -149,6 +149,14 @@
       "sha256": "1c560ff1a65fecd35d337dc13fb9b4ad01160d72abd98a43aab57f138f908c53",
       "patch": "docs/compatibility/patches/hash-set-setup-createAsIfByAssoc.json",
       "patch-sha256": "b50bf97b13439853205dbbb56183e62798fb36290ed0d65ba5f70a91c6fcda77"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10692,
+      "end-line": 10810,
+      "sha256": "1180f4c69308bd2578e2bde1583d6e39463ceadc5c1d73cdbf5b96772cd64032",
+      "patch": "docs/compatibility/patches/printing-collection-extensions.json",
+      "patch-sha256": "0f6caaea9a3b7719c25e67d6b151594e92f3a255e6bccd18187a364173df8b32"
     }
   ]
 }

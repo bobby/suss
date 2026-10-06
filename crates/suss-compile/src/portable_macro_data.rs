@@ -109,7 +109,7 @@ impl FormBridge {
                 let closure = fields(&mut store, &value, 5)?;
                 let owner = fields(&mut store, &closure[0], 4)?;
                 let storage = array(&mut store, &owner[1])?;
-                if storage.len() != 2 {
+                if storage.len() != 3 {
                     return Err(error("Invalid class property owner"));
                 }
                 let descriptor = fields(&mut store, &storage[0], 5)?;

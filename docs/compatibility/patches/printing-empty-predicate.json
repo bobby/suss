@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213",
+  "replacement": "(def empty?\n  \"Returns true if coll has no items. To check the emptiness of a seq,\n  please use the idiom (seq x) rather than (not (empty? x))\"\n  (fn [coll]\n  (cond\n    (nil? coll)\n    true\n\n    (satisfies? ICounted coll)\n    (zero? (-count coll))\n\n    :else\n    (not (seq coll)))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+}

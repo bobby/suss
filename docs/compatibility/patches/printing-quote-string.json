@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "cf0761b2969ab7be03474449aac96da92374ba5c4c826d3aab808959d4f30565",
+  "replacement": "(def ^:private quote-string\n  (fn [s]\n    (loop [i 0 result \"\\\"\"]\n      (if (< i (.-length s))\n        (let [unit (suss.bootstrap/string-slice s i (inc i))\n              escaped (get char-escapes unit)]\n          (recur (inc i)\n                 (suss.bootstrap/concat-string result (if escaped escaped unit))))\n        (suss.bootstrap/concat-string result \"\\\"\")))))",
+  "rationale": "Retain private visibility and the single pinned signature. Replace the global seven-character JavaScript regex replacement with ordered UTF-16 code-unit traversal and the complete pinned escape table. Surround the result with the same quote characters; preserve every other code unit including unpaired surrogates without UTF-8 conversion. This is a string-storage adaptation, not an implementation of public regexp interoperability."
+}

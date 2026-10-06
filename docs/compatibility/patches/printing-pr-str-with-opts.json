@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c25aeaed574809ff85afd2dcf91dc0fc787f3685bf52c619d36d079d533fd10b",
+  "replacement": "(def pr-str-with-opts\n  \"Prints a sequence of objects to a string, observing all the\n  options given in opts\"\n  (fn [objs opts]\n  (if (empty? objs)\n    \"\"\n    (str_ (pr-sb-with-opts objs opts)))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+}

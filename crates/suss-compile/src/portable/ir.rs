@@ -107,6 +107,7 @@ pub struct Function {
 }
 #[derive(Debug, Clone)]
 pub struct ClosureBody {
+    pub display_name: Option<Vec<u16>>,
     pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
@@ -114,6 +115,7 @@ pub struct ClosureBody {
 }
 #[derive(Debug, Clone)]
 pub struct GeneralClosureBody {
+    pub display_name: Option<Vec<u16>>,
     pub capture_types: Vec<Type>,
     pub methods: Vec<ClosureBody>,
     pub self_capture: bool,
@@ -387,6 +389,7 @@ impl Lowerer {
                 self.emit(
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
+                            display_name: super::function_names::display_name(hir),
                             variadic: false,
                             capture_types,
                             arity: parameters.len(),
@@ -429,6 +432,7 @@ impl Lowerer {
                         inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
                     }
                     lowered.push(ClosureBody {
+                        display_name: None,
                         variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
@@ -438,6 +442,7 @@ impl Lowerer {
                 self.emit(
                     Operation::MakeGeneralClosure {
                         body: Box::new(GeneralClosureBody {
+                            display_name: super::function_names::display_name(hir),
                             capture_types,
                             methods: lowered,
                             self_capture: self_binding.is_some(),
@@ -522,8 +527,26 @@ impl Lowerer {
             }
             Expression::Let { bindings, body } => {
                 // Binding identities, rather than names, distinguish shadowed values.
-                for binding in bindings {
+                for (index, binding) in bindings.iter().enumerate() {
                     let value = operand!(&binding.value);
+                    // General source functions are wrapped to attach their
+                    // callable signatures. Their actual source callable facts
+                    // belong to the outer node; the first binding constructs the
+                    // owner. Transfer only its display label, without attributing
+                    // those facts to synthetic delegates or adding lexical IDs.
+                    if index == 0
+                        && binding.value.source.is_none()
+                        && matches!(binding.value.kind, Expression::GeneralFunction { .. })
+                        && let Some(name) = super::function_names::display_name(hir)
+                    {
+                        let instruction = self.function.blocks[self.current].instructions.last_mut()
+                            .expect("general function owner instruction");
+                        debug_assert_eq!(instruction.result, value);
+                        let Operation::MakeGeneralClosure { body, .. } = &mut instruction.operation else {
+                            unreachable!("general function owner construction");
+                        };
+                        body.display_name = Some(name);
+                    }
                     if self.bindings.insert(binding.id, value).is_some() {
                         return Err(Diagnostic {
                             span: binding.span.clone(),
@@ -1066,7 +1089,8 @@ fn verify_function(
                 }
                 Operation::MakeClosure { body, captures } => {
                     if body.variadic { return Err(fail("IR fixed closure cannot have variadic entry")); }
-                    if body.arity > i32::MAX as usize
+                    if body.display_name.as_ref().is_some_and(|name| name.len() > i32::MAX as usize)
+                        || body.arity > i32::MAX as usize
                         || body.capture_types.len() != captures.len()
                         || result_ty != Type::Closure(body.arity)
                     {
@@ -1095,7 +1119,7 @@ fn verify_function(
                     verify_function(&body.function, &entry, depth + 1)?;
                 }
                 Operation::MakeGeneralClosure { body, captures } => {
-                    if body.methods.is_empty()
+                    if body.display_name.as_ref().is_some_and(|name| name.len() > i32::MAX as usize) || body.methods.is_empty()
                         || body.capture_types.len() != captures.len()
                         || result_ty != Type::Value
                     {

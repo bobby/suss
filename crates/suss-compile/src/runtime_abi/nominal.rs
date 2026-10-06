@@ -411,6 +411,26 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         Call(b.names["closure-new"]),
     ]);
     b.function("class-value-new", &[VALUE], &[VALUE], &body);
+    // A source type value is a closure owning its descriptor. Ordinary functions
+    // and protocol values also use closures, but own arrays instead. Unwrap the
+    // property storage before inspecting that environment; never infer a type
+    // value from the outer closure layout or a name registered by the host.
+    b.function(
+        "class-value-is",
+        &[VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(4)),
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            Call(b.names["closure-environment"]),
+            RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+            Else,
+            I32Const(0),
+            End,
+        ],
+    );
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
     body.extend([

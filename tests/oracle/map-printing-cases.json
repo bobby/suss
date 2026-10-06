@@ -1,0 +1,876 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "keyword-conversions",
+      "source": "(do\n (defn keyword-facts [k] [(namespace k) (name k) (pr-str k)])\n [(keyword-facts (keyword \"\"))\n  (keyword-facts (keyword \"/\"))\n  (keyword-facts (keyword \"n/a\"))\n  (keyword-facts (keyword \"/a\"))\n  (keyword-facts (keyword \"n/\"))\n  (keyword-facts (keyword \"n/a/b\"))\n  (keyword-facts (keyword \"//\"))\n  (keyword-facts (keyword \"n/\\ud800\"))\n  (keyword-facts (keyword 'n/\ud83d\ude42))\n  (keyword-facts (keyword :x/n 'y/k))\n  (let [k :ready] (identical? k (keyword k)))\n  [(keyword nil) (keyword 42) (keyword false)]\n  (let [trace (atom [])\n        k (keyword (do (swap! trace conj \"ns\") :x/n)\n                   (do (swap! trace conj \"name\") 'y/k))]\n    [(keyword-facts k) @trace])\n  (keyword-facts (keyword \"\" \"a\"))\n  (keyword-facts (keyword nil \"a/b\"))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "string",
+                "units": []
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  47
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  47
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47,
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": []
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  47,
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": []
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47,
+                  97,
+                  47,
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "string",
+                "units": []
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  47,
+                  47
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55296
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47,
+                  55296
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55357,
+                  56898
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47,
+                  55357,
+                  56898
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  110
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  107
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  110,
+                  47,
+                  107
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "string",
+                    "units": [
+                      110
+                    ]
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      107
+                    ]
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      58,
+                      110,
+                      47,
+                      107
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "string",
+                    "units": [
+                      110,
+                      115
+                    ]
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      110,
+                      97,
+                      109,
+                      101
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": []
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  47,
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97,
+                  47,
+                  98
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  97,
+                  47,
+                  98
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-writer-namespace-and-limit-order",
+      "source": "(do\n (deftype MapTraceWriter [events]\n   IWriter\n   (-write [_ text] (swap! events conj text))\n   (-flush [_] nil))\n (defn map-trace [m opts]\n   (let [events (atom [])]\n     (print-map m cljs.core/pr-writer (MapTraceWriter. events) opts)\n     @events))\n [(map-trace {} nil)\n  (map-trace {:x 1} nil)\n  (binding [*print-namespace-maps* true]\n    (map-trace {:alpha/x 1 'alpha/y 2} nil))\n  (binding [*print-namespace-maps* true]\n    (map-trace {:alpha/x 1 :beta/y 2} nil))\n  (binding [*print-namespace-maps* true]\n    (map-trace {:alpha/x 1 :y 2} nil))\n  (binding [*print-namespace-maps* true]\n    (map-trace {} nil))\n  (binding [*print-namespace-maps* true]\n    (map-trace {:alpha/x 1 'alpha/y 2} {:print-length 1}))\n  *print-namespace-maps*])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  120
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  35,
+                  58,
+                  97,
+                  108,
+                  112,
+                  104,
+                  97,
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  120
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  44,
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  121
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  50
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  97,
+                  108,
+                  112,
+                  104,
+                  97,
+                  47,
+                  120
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  44,
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  98,
+                  101,
+                  116,
+                  97,
+                  47,
+                  121
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  50
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  97,
+                  108,
+                  112,
+                  104,
+                  97,
+                  47,
+                  120
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  44,
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  121
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  50
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  35,
+                  58,
+                  97,
+                  108,
+                  112,
+                  104,
+                  97,
+                  123
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  58,
+                  120
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  44,
+                  32
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  46,
+                  46,
+                  46
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  125
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "runtime-internal-string-nil-first",
+      "source": "(let [f cljs.core/str_] [(f nil \"later\") (f \"first\" nil \"last\") (f nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": []
+          },
+          {
+            "tag": "string",
+            "units": [
+              102,
+              105,
+              114,
+              115,
+              116,
+              108,
+              97,
+              115,
+              116
+            ]
+          },
+          {
+            "tag": "string",
+            "units": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-lift-custom-cursor-order",
+      "source": "(do\n (deftype LiftTraceEntry [trace]\n   IIndexed\n   (-nth [_ i]\n     (swap! trace conj (if (= i 0) \"nth0\" \"nth1\"))\n     (if (= i 0) :alpha/x 1))\n   (-nth [_ i not-found]\n     (swap! trace conj (if (= i 0) \"nth0\" \"nth1\"))\n     (if (= i 0) :alpha/x 1)))\n (deftype LiftTraceCursor [entries trace]\n   ISeqable\n   (-seq [this] (swap! trace conj \"seq\") this)\n   ISeq\n   (-first [_] (swap! trace conj \"first\") (first entries))\n   (-rest [_] (rest entries))\n   INext\n   (-next [_]\n     (swap! trace conj \"next\")\n     (let [tail (next entries)]\n       (when tail (LiftTraceCursor. tail trace)))))\n (deftype LiftTraceMap [cursor trace]\n   IMap (-dissoc [this _] this)\n   ISeqable (-seq [_] (swap! trace conj \"map-seq\") cursor))\n (binding [*print-namespace-maps* true]\n   (let [trace (atom [])\n         cursor (LiftTraceCursor. [(LiftTraceEntry. trace)] trace)\n         result (cljs.core/lift-ns (LiftTraceMap. cursor trace))]\n     [(aget result 0) @trace])))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              97,
+              108,
+              112,
+              104,
+              97
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  109,
+                  97,
+                  112,
+                  45,
+                  115,
+                  101,
+                  113
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  115,
+                  101,
+                  113
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  102,
+                  105,
+                  114,
+                  115,
+                  116
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  101,
+                  120,
+                  116
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  116,
+                  104,
+                  48
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  116,
+                  104,
+                  49
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  115,
+                  101,
+                  113
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  102,
+                  105,
+                  114,
+                  115,
+                  116
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  101,
+                  120,
+                  116
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  116,
+                  104,
+                  48
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  110,
+                  116,
+                  104,
+                  49
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

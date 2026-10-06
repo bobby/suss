@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "4f5d2002fb346f03571f6720a2bf55d728ffeb7e34b1d94cf542d88b08a7d408",
-  "reviews-sha256": "29da3979ea30aa68b2932e2cb451ee83d49ab77683e418c03f975e95705acb19",
+  "recipe-sha256": "92a0f7c8d0d9bc733f40dc55d83a7d7d0e1e8a68a2ae144875a5594a915b88ec",
+  "reviews-sha256": "b26b02f46d5c9c03b9c88203bafce8623746a1cae5a26e80fd743bcb1ef2d1b7",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -8908,20 +8908,946 @@
       "semantic-tests": [
         "crates/suss-compile/tests/portable_symbol_conversion.rs"
       ]
+    },
+    {
+      "id": "runtime:IWriter:799",
+      "name": "IWriter",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 799,
+      "end-line": 804,
+      "byte-start": 23409,
+      "byte-end": 23619,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ba22278cdf258642a42f381052e468105ecd567bbb33c811d4da88e9786dc4d2",
+      "extracted": "extracted/0287.cljs",
+      "extracted-sha256": "9bfb0f8e4fd390ecf81e79f291ea0ee9cfb9d41ce36ae452bf633dd214526f0c",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ba22278cdf258642a42f381052e468105ecd567bbb33c811d4da88e9786dc4d2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "-write (2 arguments)",
+        "-flush (1 argument)"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-readably*:121",
+      "name": "*print-readably*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 121,
+      "end-line": 127,
+      "byte-start": 3855,
+      "byte-end": 4082,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51",
+      "extracted": "extracted/0288.cljs",
+      "extracted-sha256": "a8c99a2d4da83241aa8d3f786917f5ddd71fe10ffbe6780245c2f6f7f362df98",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-meta*:129",
+      "name": "*print-meta*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 129,
+      "end-line": 135,
+      "byte-start": 4084,
+      "byte-end": 4294,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6273282bc799a6ab34f00202b63382500c561fd75733fdfefd26467c5865009f",
+      "extracted": "extracted/0289.cljs",
+      "extracted-sha256": "6df078394449d624eaf6d4db13d2c335cc56f540f54ea367831755d8ca5cf600",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "6273282bc799a6ab34f00202b63382500c561fd75733fdfefd26467c5865009f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-dup*:137",
+      "name": "*print-dup*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 137,
+      "end-line": 143,
+      "byte-start": 4296,
+      "byte-end": 4480,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ce416ca858b868615e63a98f3bfeae36569c4d09dea707f44ac29e44377c344e",
+      "extracted": "extracted/0290.cljs",
+      "extracted-sha256": "0e60f180248b098d94bd1e0b1743bba43a30ea58d6d768ba0dc0c41f7b6a827f",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ce416ca858b868615e63a98f3bfeae36569c4d09dea707f44ac29e44377c344e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-namespace-maps*:145",
+      "name": "*print-namespace-maps*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 145,
+      "end-line": 151,
+      "byte-start": 4482,
+      "byte-end": 4696,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "08d935a5cd887cf2da3d590db823b314700e7bc5369480f758fa772899eea109",
+      "extracted": "extracted/0291.cljs",
+      "extracted-sha256": "fbe3399539fa49ad3e58fc5d50459b139f79e22648c6a79866325800f4a1de0e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "08d935a5cd887cf2da3d590db823b314700e7bc5369480f758fa772899eea109",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-length*:153",
+      "name": "*print-length*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 153,
+      "end-line": 163,
+      "byte-start": 4698,
+      "byte-end": 5224,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1c9b8ee32617d9efd340f25828391d0dfa5d0486dea8a3be725ae0f0842aa2be",
+      "extracted": "extracted/0292.cljs",
+      "extracted-sha256": "809bddbc8dbd2eb09808391a0c97be8be9ebcc332aa54e9dd823eda33338c8fc",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "1c9b8ee32617d9efd340f25828391d0dfa5d0486dea8a3be725ae0f0842aa2be",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-level*:165",
+      "name": "*print-level*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 165,
+      "end-line": 176,
+      "byte-start": 5226,
+      "byte-end": 5844,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "15f34288bd3b9560dd0d1f6ce0c566ec93b6a4991585223204b3602c7f7f8ea0",
+      "extracted": "extracted/0293.cljs",
+      "extracted-sha256": "5c7e81db8d93929bea08a8ebc91631d6adb896e17042814e61799d5d8d59097f",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "15f34288bd3b9560dd0d1f6ce0c566ec93b6a4991585223204b3602c7f7f8ea0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:*print-fn-bodies*:178",
+      "name": "*print-fn-bodies*",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 178,
+      "end-line": 182,
+      "byte-start": 5846,
+      "byte-end": 5997,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6ac032459def20b4f6153a15caa8eff4a916bfaa5d72c17be8aa53ad1a28499e",
+      "extracted": "extracted/0294.cljs",
+      "extracted-sha256": "1f632bb50908f5b9e8deb1f2ca02aba02e74b433f13dc0cd65dfaae8c97736ba",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "6ac032459def20b4f6153a15caa8eff4a916bfaa5d72c17be8aa53ad1a28499e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-opts-readably:280",
+      "name": "pr-opts-readably",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 280,
+      "end-line": 283,
+      "byte-start": 7969,
+      "byte-end": 8065,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c73274c9425e79dfb17853973730095645e8ef3f06f313ecd6fcff9e56a222af",
+      "extracted": "extracted/0295.cljs",
+      "extracted-sha256": "4dd9dcf18f56039da9f277294c7dcaf762a45f01ad727b9a662be182b8a2f110",
+      "patch": "docs/compatibility/patches/printing-pr-opts-readably.json",
+      "patch-sha256": "168b3708db9959104946d0499174bd94cfef23428b2033e2f14f1cf5b873bf05",
+      "adapted-form-sha256": "4450cc698363bd937f5aa0b0a8c6a3590f8a3558e06bed8600e8be0904578392",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "dynamic printing variable",
+        "keyword lookup",
+        "nil?"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-opts-meta:285",
+      "name": "pr-opts-meta",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 285,
+      "end-line": 288,
+      "byte-start": 8067,
+      "byte-end": 8151,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8f84cb83d2f5e55b2a8cc7798c851c9a5b91d12d2f489583fb6c97749d8baec0",
+      "extracted": "extracted/0296.cljs",
+      "extracted-sha256": "dbd641e2d319b8a9006e5c8da3748373c82ca73bc6f6c903016624a97355077d",
+      "patch": "docs/compatibility/patches/printing-pr-opts-meta.json",
+      "patch-sha256": "5261da9d54d50a80885f5598d36889e4e03fbfd887fd169447efb1c4bd5cfd5f",
+      "adapted-form-sha256": "6ea5b28ef8ff40c21291765c312f2f8a1e0cb6aaa92a27f7054938a304463a38",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "dynamic printing variable",
+        "keyword lookup",
+        "nil?"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-opts-dup:290",
+      "name": "pr-opts-dup",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 290,
+      "end-line": 293,
+      "byte-start": 8153,
+      "byte-end": 8234,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "06835bb2849de032cdae030a6887c561ae10c744cd73b7fc0aaf7cbd21f5f15d",
+      "extracted": "extracted/0297.cljs",
+      "extracted-sha256": "e832ba6a90f3779131ab8ddcb06b2aee33a109b71b4cf8ed7e123f1ff5ba90b7",
+      "patch": "docs/compatibility/patches/printing-pr-opts-dup.json",
+      "patch-sha256": "d0f5a2f77e1549537ec8866f3258da8bd223fb52dad50f28f4acd80b8430cd56",
+      "adapted-form-sha256": "09f5a87930644ff51ee4cdefa6f1189183ec46ee2afc27db21d82fc95f81e504",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "dynamic printing variable",
+        "keyword lookup",
+        "nil?"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-opts-len:295",
+      "name": "pr-opts-len",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 295,
+      "end-line": 298,
+      "byte-start": 8236,
+      "byte-end": 8329,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5f7bc4c83c92c0b59db5a9a3b79e31a7b04957e4b7f2b4105aadc997d98ff0a9",
+      "extracted": "extracted/0298.cljs",
+      "extracted-sha256": "33cd141bd9f59330bd57d6b4f611083de65101def8af44f533958f358226236e",
+      "patch": "docs/compatibility/patches/printing-pr-opts-len.json",
+      "patch-sha256": "d378394d66eddde5f601785ab77d6f0e75657f23f1737cf2df7480553af07063",
+      "adapted-form-sha256": "72b3c53da32064972c3f7306b2475405f93f9a651ae860b895fa6f480ad154d2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "dynamic printing variable",
+        "keyword lookup",
+        "nil?"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:write-all:10404",
+      "name": "write-all",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10404,
+      "end-line": 10408,
+      "byte-start": 290537,
+      "byte-end": 290672,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "914dfc9c211e6ebd0b130d41f6c6779c5c32bc6bbf293d85f82d60e53de4b735",
+      "extracted": "extracted/0299.cljs",
+      "extracted-sha256": "8618879ef186494ffba6a394702721b5650450388163059fb60ff5b0060cc1ec",
+      "patch": "docs/compatibility/patches/printing-write-all.json",
+      "patch-sha256": "bff390d0c21875b86759d1fd71afece21b7b3d95523b95b11302b78dfe7769b2",
+      "adapted-form-sha256": "bbd9e2893bb15ab2e424d735e9f490eba210c4c0a8cc238de8406f3b7b375443",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IWriter/-write",
+        "seq/first/next",
+        "loop/recur"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:StringBufferWriter:929",
+      "name": "StringBufferWriter",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 929,
+      "end-line": 932,
+      "byte-start": 28319,
+      "byte-end": 28413,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
+      "extracted": "extracted/0300.cljs",
+      "extracted-sha256": "cae31dbc6a391d7d98f6e02fcce395d9aeae3de33c119ee7f1a48dd4b0f53ce1",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IWriter/-write/-flush",
+        "buffer append method"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:char-escapes:10419",
+      "name": "char-escapes",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10419,
+      "end-line": 10427,
+      "byte-start": 290852,
+      "byte-end": 290998,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a5dd8f5a7fc4e42ba84d5faf7906fd48ab1c42b06d176c264cb927116306a936",
+      "extracted": "extracted/0301.cljs",
+      "extracted-sha256": "f52a71b487819030e8361bbaf6a3264e0d5aa061d2e1cec4de0f7594b95edaae",
+      "patch": "docs/compatibility/patches/printing-char-escapes.json",
+      "patch-sha256": "977789058e3ab5ecd907ac19390c6e9279c4a37b71491bd7f5254f3457c4d043",
+      "adapted-form-sha256": "6138b41619a3f2596d72490c565114d1bdb6a384a1781a135405b93436bae51d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "persistent map literal",
+        "seven pinned character escape entries"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:quote-string:10429",
+      "name": "quote-string",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10429,
+      "end-line": 10434,
+      "byte-start": 291000,
+      "byte-end": 291171,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "cf0761b2969ab7be03474449aac96da92374ba5c4c826d3aab808959d4f30565",
+      "extracted": "extracted/0302.cljs",
+      "extracted-sha256": "88774412cf0dcb835be95eb50c8f132fbda75eed55cb2b97f66594e79258cc5e",
+      "patch": "docs/compatibility/patches/printing-quote-string.json",
+      "patch-sha256": "3fb49f11196fab2fae32d7ee006c7217e2b0532756b526801f878c06bbc0cee8",
+      "adapted-form-sha256": "cf26ea51c1d279c0aa1e79ea372eb9c31458ffd7e27e4ed8ec7335292b96748c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "char-escapes",
+        "get",
+        "checked UTF-16 length/slice/concatenation"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-sequential-writer:10381",
+      "name": "pr-sequential-writer",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10381,
+      "end-line": 10402,
+      "byte-start": 289566,
+      "byte-end": 290535,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e4bb91cf7a10dbb1274889019e822e998d37d22fd40a4ae3c83b4c306b015369",
+      "extracted": "extracted/0303.cljs",
+      "extracted-sha256": "411e407085040524a9e23b7590c9892f486e36393a349da72aa6189357928b90",
+      "patch": "docs/compatibility/patches/printing-pr-sequential-writer.json",
+      "patch-sha256": "e2f67e9fb6ed7855b213b43f80b8d19f1634c3dc28f8f9b85d88c4144a25332d",
+      "adapted-form-sha256": "d521da681a89ddf48654638d33b29733e0200198a85a82211234dde8943328c2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IWriter/-write",
+        "pr-opts-len",
+        "*print-level*",
+        "binding/loop/recur",
+        "seq/first/next/dec/zero?/neg?"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:print-meta?:10438",
+      "name": "print-meta?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10438,
+      "end-line": 10441,
+      "byte-start": 291194,
+      "byte-end": 291323,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3fa3405bddbfd801c7daf7339ea5096a92831dca060583883df53ecb43d7f2a6",
+      "extracted": "extracted/0304.cljs",
+      "extracted-sha256": "60395d8b74c43ef4025cf68460f881bfabf49fbb1f85201f3585aebd8b6a6762",
+      "patch": "docs/compatibility/patches/printing-print-meta-predicate.json",
+      "patch-sha256": "3624ecb1fc99a469d4e0d44d51fb9e6c8b5cd44cef2067adddcc1cdd30b4df1c",
+      "adapted-form-sha256": "4e2b25aa4e7783c30f945319c6bb6a08bae7ee9f93caf25f54328d308b1cccf8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "pr-opts-meta",
+        "boolean",
+        "IMeta/implements?/meta"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-seq-writer:10551",
+      "name": "pr-seq-writer",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10551,
+      "end-line": 10557,
+      "byte-start": 295017,
+      "byte-end": 295245,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3ab03e99f5b760ef04435923d59b46e45d37fc83543f73bf6203b48211ee0f64",
+      "extracted": "extracted/0305.cljs",
+      "extracted-sha256": "dec2c75be6734b0bc9d3bf8f83790273a412608fa0d35c665d96a0aaf42c7624",
+      "patch": "docs/compatibility/patches/printing-pr-seq-writer.json",
+      "patch-sha256": "e05f97f5d8268767bd66f2ca873551a56f6f3f9f1bd4c370a3445483579353ec",
+      "adapted-form-sha256": "17ef047b899d615a7b0a4a6c0236de9ba0f49ec7eda20d86c0abf5890db47ab4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "pr-writer",
+        "seq/first/next",
+        "IWriter/-write",
+        "loop/recur"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:empty?:2210",
+      "name": "empty?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2210,
+      "end-line": 2222,
+      "byte-start": 60798,
+      "byte-end": 61076,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213",
+      "extracted": "extracted/0306.cljs",
+      "extracted-sha256": "d16701dda76376c647c1a613145c6fa53d0866d79d7764334e99c5263aac26ef",
+      "patch": "docs/compatibility/patches/printing-empty-predicate.json",
+      "patch-sha256": "8e179fe3b6a02468660994ff2dbc7ebc3b6f0aec395da4da92a12a9d01afb7d8",
+      "adapted-form-sha256": "c1e03a43a52b46c9e52468d330a18dab0624cfc4cecbf9762b3e4033eb4764a0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "nil?/ICounted/-count/zero?/seq/not"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-writer:10542",
+      "name": "pr-writer",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10542,
+      "end-line": 10549,
+      "byte-start": 294674,
+      "byte-end": 295015,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e6ccfb4f85f32753bca5fab50fa96ee166ddae43a024125c3c8cec4c1b7d2357",
+      "extracted": "extracted/0307.cljs",
+      "extracted-sha256": "49c540e20fb1e0b2f0797468ad95686c802f734131bafe3ff26322337d400de0",
+      "patch": "docs/compatibility/patches/printing-pr-writer.json",
+      "patch-sha256": "4246e5540abd1808ac9e4a04490b21df11b1277c99e52497bf1b3279245f7c7c",
+      "adapted-form-sha256": "eb925e384079173e51da4284ed55ee77cdae134181c641c6f5c255fe79b83a46",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        ":alt-impl/:fallback-impl",
+        "-assoc",
+        "pr-writer-impl (retained; storage dependencies unfinished)"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-str*:934",
+      "name": "pr-str*",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 934,
+      "end-line": 942,
+      "byte-start": 28415,
+      "byte-end": 28691,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7354c4a087662707c0bb86e7e2d173ad380d3df3ecb2cd12e69ccc4a0de4b76a",
+      "extracted": "extracted/0308.cljs",
+      "extracted-sha256": "4d5bf51f0bd297975c15821c8a4e83c8fbfaef7266f54a0f30573423b4c3d487",
+      "patch": "docs/compatibility/patches/printing-pr-str-one.json",
+      "patch-sha256": "cba95e62bec6ba12dce0ebd67b7f6763d32d0a233f03a4f7e4325c63b4e41b1e",
+      "adapted-form-sha256": "b4f307af9da6cc935d140d49ef27dc531f3b7361bfa492cfa55fae7ce162cb38",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "StringBufferWriter/BootstrapStringBuffer",
+        "-pr-writer/-flush",
+        "buffer toString"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-sb-with-opts:10559",
+      "name": "pr-sb-with-opts",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10559,
+      "end-line": 10564,
+      "byte-start": 295247,
+      "byte-end": 295415,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d2673c3e67e74bc8ce8dcd3de9da1f404c40ecca601acfa16f33b05e1440e926",
+      "extracted": "extracted/0309.cljs",
+      "extracted-sha256": "a0a941fdf40d1c2906be9f1ec001cfd842283a806429e7d4824d868271f7ac45",
+      "patch": "docs/compatibility/patches/printing-pr-sb-with-opts.json",
+      "patch-sha256": "683fe698b0347f03218d72c95da24429b7c0e798798ba8981a7d893bfd5810e3",
+      "adapted-form-sha256": "90a675ab224ab652413b9627c9b49c1bab3ea976c1c984357abd87438d979dd1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "StringBufferWriter/BootstrapStringBuffer",
+        "pr-seq-writer/-flush"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-str-with-opts:10566",
+      "name": "pr-str-with-opts",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10566,
+      "end-line": 10572,
+      "byte-start": 295417,
+      "byte-end": 295609,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c25aeaed574809ff85afd2dcf91dc0fc787f3685bf52c619d36d079d533fd10b",
+      "extracted": "extracted/0310.cljs",
+      "extracted-sha256": "127437bce5e2fcdf3637c1a82580344b70985609f2dc387c9a209c358588d2d6",
+      "patch": "docs/compatibility/patches/printing-pr-str-with-opts.json",
+      "patch-sha256": "18150631a0d3889e2117eb9776ef2ad5876f528a64d07cfad84ba11e1dc717f0",
+      "adapted-form-sha256": "6e0fc133a18e3a049f3145bdf2b9f8062e86c58b8117009a52c6b94527b8e30a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "empty?/str_/pr-sb-with-opts"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:pr-str:10597",
+      "name": "pr-str",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10597,
+      "end-line": 10600,
+      "byte-start": 296147,
+      "byte-end": 296279,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "14ac19359c303e2f392efc27760172ec01b49bd08a10a2c3fdac18900f3d3e78",
+      "extracted": "extracted/0311.cljs",
+      "extracted-sha256": "4ecf536a4e7f56550b734ce5b7e456f7d3dfe53fc2186e4cf35781ace24102d5",
+      "patch": "docs/compatibility/patches/printing-pr-str.json",
+      "patch-sha256": "32242a3768cc25b5c6f9b89a0054ed743f974738740bd2fc649422834dd045fe",
+      "adapted-form-sha256": "392834e9811b2c524d89c39abf6fb3d5e26b3dcdf97090ba15b9b8ca882035fc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "pr-str-with-opts"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:object?:300",
+      "name": "object?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 300,
+      "end-line": 305,
+      "byte-start": 8331,
+      "byte-end": 8472,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b",
+      "extracted": "extracted/0312.cljs",
+      "extracted-sha256": "09a3b651471cd4692b258ef774e8be4bbe2a9df9f188bfa87fdc8ac357bae6ff",
+      "patch": "docs/compatibility/patches/printing-object-predicate.json",
+      "patch-sha256": "53ae22008cd8f74d3c0701be665b5be084c59587021583c94eb6035517f808e0",
+      "adapted-form-sha256": "2337c33ec618ae92219d4524e3cc8c97700ee0889f56ac20fb97107e7954b988",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "owned native object descriptor guard",
+        "owned constructor property/prototype lookup",
+        "canonical default Object constructor"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs",
+        "tests/oracle/printing-cases.json",
+        "tests/oracle/object-predicate-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pr-writer-impl:10445",
+      "name": "pr-writer-impl",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10445,
+      "end-line": 10540,
+      "byte-start": 291347,
+      "byte-end": 294672,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf",
+      "extracted": "extracted/0313.cljs",
+      "extracted-sha256": "9c31188d2bbda454642894a5c10e757633ce175a9899245df6638c40a9a064cd",
+      "patch": "docs/compatibility/patches/printing-pr-writer-impl.json",
+      "patch-sha256": "5323bd3aefbbfbf4cc78f5a2bce764c20892aeaaf2faa8697118cbe10c15c072",
+      "adapted-form-sha256": "dec531a1c68f9d38694fa430d8d267e86892c60d7ecf94e8e06576cd26e9e6ed",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IWriter/IPrintWithWriter",
+        "print-meta?/meta",
+        "numeric/string/boolean predicates and coercions",
+        "pr-constructor-writer (unfinished)",
+        "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)",
+        "pr-function-name (unfinished)",
+        "pr-date?/regexp?/js-symbol? (unfinished representations)",
+        "pr-object-constructor-string/pr-constructor-display-name/pr-object-constructor-name/pr-object-constructor (unfinished fallback)"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs",
+        "tests/oracle/printing-cases.json",
+        "tests/oracle/object-predicate-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:keyword:3560",
+      "name": "keyword",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3560,
+      "end-line": 3582,
+      "byte-start": 93773,
+      "byte-end": 94831,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7d4c72514489330c05547cd64cf5836ad8e37805476cfb4bf8139bde7e2143bf",
+      "extracted": "extracted/0314.cljs",
+      "extracted-sha256": "fd76e6a34098ba019bb4cff86de873f8d5d553c0b931eda47614f2c079989d00",
+      "patch": "docs/compatibility/patches/printing-keyword.json",
+      "patch-sha256": "21e391f6bc3e8d0e122aa413053e86dfcb08d581ff79f04744906831306c8a86",
+      "adapted-form-sha256": "b7582960b5d9224bb7b0c46c124529be1766f559dfba66098042e6bfa0b11483",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "Keyword/symbol?/keyword?/string?/name/namespace/str_",
+        "ordered owned UTF-16 keyword-name-parts"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:strip-ns:10650",
+      "name": "strip-ns",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10650,
+      "end-line": 10654,
+      "byte-start": 297431,
+      "byte-end": 297541,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3e0be6a3918cbcd41b831688408ed9bf5753533189248825d245fc90c36c0da3",
+      "extracted": "extracted/0315.cljs",
+      "extracted-sha256": "0c237fadf6062d830f94109b42b6e89202001478b489305efcca681c10785c0f",
+      "patch": "docs/compatibility/patches/printing-strip-ns.json",
+      "patch-sha256": "3e0c829937033bd30458818c2953f3f06ceead1c4bf7fb400c52ae7161a390c3",
+      "adapted-form-sha256": "f26649e035a00eee91452a42e7441fe577e326d7344f5b794772f89eb7e1ed10",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "symbol?/symbol/keyword/name"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:lift-ns:10656",
+      "name": "lift-ns",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10656,
+      "end-line": 10672,
+      "byte-start": 297543,
+      "byte-end": 298145,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "016148974cd021c7c47f09bdec42f6e8bc6b5f965af8e66012725dd1793e5cd5",
+      "extracted": "extracted/0316.cljs",
+      "extracted-sha256": "9d098bc76cf796482a1bbb619877132414733a81401cb99bfd97eb3d976e812b",
+      "patch": "docs/compatibility/patches/printing-lift-ns.json",
+      "patch-sha256": "27775526e75b0778b34afed807a583e6280eac0d350ae01815a713d3a5ef780c",
+      "adapted-form-sha256": "2eee3d1fb89e718b291d8fb1d1a435e35916bde29e164134c370a130c4605dbe",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "*print-namespace-maps*/seq/first/next/nth",
+        "keyword?/symbol?/namespace/strip-ns/MapEntry/array/push"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:print-prefix-map:10674",
+      "name": "print-prefix-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10674,
+      "end-line": 10682,
+      "byte-start": 298147,
+      "byte-end": 298410,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "090a3c55bf06684a015b9a6853f652eea71fe08c8c7576de93cf4979dad31ec4",
+      "extracted": "extracted/0317.cljs",
+      "extracted-sha256": "7213275892da5a1997b182449cfd2f259c7a1b065afb61d102135be799c6c82c",
+      "patch": "docs/compatibility/patches/printing-print-prefix-map.json",
+      "patch-sha256": "60ac293c16e2e94d3abf7e80b12745b7a991a4de7119ff3865abccf8f5596a89",
+      "adapted-form-sha256": "15af017597cb629018ca9bbbd563c023060c0ef3a08b353f6ccb0d3d5664f569",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "pr-sequential-writer/key/val/-write/str_"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
+    },
+    {
+      "id": "runtime:print-map:10684",
+      "name": "print-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10684,
+      "end-line": 10690,
+      "byte-start": 298412,
+      "byte-end": 298715,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "68fa017f509a9af54245667cab2b83247d91a49bda1a2f4469e560861291ca52",
+      "extracted": "extracted/0318.cljs",
+      "extracted-sha256": "c9911326d4ac3c5f435d0e661d7a2e26d8fb7f176ab8fc48b96acc7a672d738e",
+      "patch": "docs/compatibility/patches/printing-print-map.json",
+      "patch-sha256": "fad705070bc0bf6f5d9f4f87adbd0764891408e9cf22598161b86e441e348619",
+      "adapted-form-sha256": "f5994f7a082631f70c45a9415654f423d93ec4ef53163c4640721c27aa8a9a00",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "map?/lift-ns/aget/print-prefix-map/str_"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/compiled_printing.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "2704e150f7a4f8fcbb045ead215c55a5f76b5bdf8cb69edfa2cf80408f6da55d"
+      "sha256": "4d938f880bed003f44c8aa8fe05464d4972279bede26d81c5960af9218a07aa3"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
+      "sha256": "a43c375851d1f54197fa847742f7e2d9db7bd3b52051038f90c6fd036f2cfd59"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "0dbd4fe0230aa066c7554ea941864af8c75d113a8463471e2d593e5f3a5d841f"
+      "sha256": "a2e1e1323f36b7e332a3e136878ecdc92446da797391a834b57d9b2fb9fc81d7"
     }
   },
   "files": {
@@ -9214,6 +10140,38 @@
     "extracted/0284.cljs": "951bc46c6470247cb417a6c9e49205b87f6048050420ca06f02f6e935718232f",
     "extracted/0285.cljs": "a8d2a8086f1d6e82f7ba9f6b7b476f1a819f26ad54d73b1a624801185fa74891",
     "extracted/0286.cljs": "5a10565fa96f3976922a7d3a5668696d9db54e02cae46b84d8a83a21d1f55297",
-    "suss/core.sus": "3655a74e20cea04bb2578104ae60df7a88a31e4fbeb5da2ea1e6d06af9255197"
+    "extracted/0287.cljs": "9bfb0f8e4fd390ecf81e79f291ea0ee9cfb9d41ce36ae452bf633dd214526f0c",
+    "extracted/0288.cljs": "a8c99a2d4da83241aa8d3f786917f5ddd71fe10ffbe6780245c2f6f7f362df98",
+    "extracted/0289.cljs": "6df078394449d624eaf6d4db13d2c335cc56f540f54ea367831755d8ca5cf600",
+    "extracted/0290.cljs": "0e60f180248b098d94bd1e0b1743bba43a30ea58d6d768ba0dc0c41f7b6a827f",
+    "extracted/0291.cljs": "fbe3399539fa49ad3e58fc5d50459b139f79e22648c6a79866325800f4a1de0e",
+    "extracted/0292.cljs": "809bddbc8dbd2eb09808391a0c97be8be9ebcc332aa54e9dd823eda33338c8fc",
+    "extracted/0293.cljs": "5c7e81db8d93929bea08a8ebc91631d6adb896e17042814e61799d5d8d59097f",
+    "extracted/0294.cljs": "1f632bb50908f5b9e8deb1f2ca02aba02e74b433f13dc0cd65dfaae8c97736ba",
+    "extracted/0295.cljs": "4dd9dcf18f56039da9f277294c7dcaf762a45f01ad727b9a662be182b8a2f110",
+    "extracted/0296.cljs": "dbd641e2d319b8a9006e5c8da3748373c82ca73bc6f6c903016624a97355077d",
+    "extracted/0297.cljs": "e832ba6a90f3779131ab8ddcb06b2aee33a109b71b4cf8ed7e123f1ff5ba90b7",
+    "extracted/0298.cljs": "33cd141bd9f59330bd57d6b4f611083de65101def8af44f533958f358226236e",
+    "extracted/0299.cljs": "8618879ef186494ffba6a394702721b5650450388163059fb60ff5b0060cc1ec",
+    "extracted/0300.cljs": "cae31dbc6a391d7d98f6e02fcce395d9aeae3de33c119ee7f1a48dd4b0f53ce1",
+    "extracted/0301.cljs": "f52a71b487819030e8361bbaf6a3264e0d5aa061d2e1cec4de0f7594b95edaae",
+    "extracted/0302.cljs": "88774412cf0dcb835be95eb50c8f132fbda75eed55cb2b97f66594e79258cc5e",
+    "extracted/0303.cljs": "411e407085040524a9e23b7590c9892f486e36393a349da72aa6189357928b90",
+    "extracted/0304.cljs": "60395d8b74c43ef4025cf68460f881bfabf49fbb1f85201f3585aebd8b6a6762",
+    "extracted/0305.cljs": "dec2c75be6734b0bc9d3bf8f83790273a412608fa0d35c665d96a0aaf42c7624",
+    "extracted/0306.cljs": "d16701dda76376c647c1a613145c6fa53d0866d79d7764334e99c5263aac26ef",
+    "extracted/0307.cljs": "49c540e20fb1e0b2f0797468ad95686c802f734131bafe3ff26322337d400de0",
+    "extracted/0308.cljs": "4d5bf51f0bd297975c15821c8a4e83c8fbfaef7266f54a0f30573423b4c3d487",
+    "extracted/0309.cljs": "a0a941fdf40d1c2906be9f1ec001cfd842283a806429e7d4824d868271f7ac45",
+    "extracted/0310.cljs": "127437bce5e2fcdf3637c1a82580344b70985609f2dc387c9a209c358588d2d6",
+    "extracted/0311.cljs": "4ecf536a4e7f56550b734ce5b7e456f7d3dfe53fc2186e4cf35781ace24102d5",
+    "extracted/0312.cljs": "09a3b651471cd4692b258ef774e8be4bbe2a9df9f188bfa87fdc8ac357bae6ff",
+    "extracted/0313.cljs": "9c31188d2bbda454642894a5c10e757633ce175a9899245df6638c40a9a064cd",
+    "extracted/0314.cljs": "fd76e6a34098ba019bb4cff86de873f8d5d553c0b931eda47614f2c079989d00",
+    "extracted/0315.cljs": "0c237fadf6062d830f94109b42b6e89202001478b489305efcca681c10785c0f",
+    "extracted/0316.cljs": "9d098bc76cf796482a1bbb619877132414733a81401cb99bfd97eb3d976e812b",
+    "extracted/0317.cljs": "7213275892da5a1997b182449cfd2f259c7a1b065afb61d102135be799c6c82c",
+    "extracted/0318.cljs": "c9911326d4ac3c5f435d0e661d7a2e26d8fb7f176ab8fc48b96acc7a672d738e",
+    "suss/core.sus": "eb792f7f55bffd3ef196701191d60feb5fbd499cd9c79f4ece9224371033b159"
   }
 }

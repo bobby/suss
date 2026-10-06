@@ -1,0 +1,368 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "printing-empty",
+      "source": "(pr-str)",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "printing-nil-booleans",
+      "source": "(pr-str nil true false)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          105,
+          108,
+          32,
+          116,
+          114,
+          117,
+          101,
+          32,
+          102,
+          97,
+          108,
+          115,
+          101
+        ]
+      }
+    },
+    {
+      "id": "printing-numbers",
+      "source": "(pr-str 0 -0.0 1.5 (/ 0.0 0.0) (/ 1.0 0.0) (/ -1.0 0.0))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48,
+          32,
+          48,
+          32,
+          49,
+          46,
+          53,
+          32,
+          35,
+          35,
+          78,
+          97,
+          78,
+          32,
+          35,
+          35,
+          73,
+          110,
+          102,
+          32,
+          35,
+          35,
+          45,
+          73,
+          110,
+          102
+        ]
+      }
+    },
+    {
+      "id": "printing-escaped",
+      "source": "(pr-str \"a\\n\\t\\\"\\\\b\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          34,
+          97,
+          92,
+          110,
+          92,
+          116,
+          92,
+          34,
+          92,
+          92,
+          98,
+          34
+        ]
+      }
+    },
+    {
+      "id": "printing-lone-surrogate",
+      "source": "(pr-str \"\\uD800\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          34,
+          55296,
+          34
+        ]
+      }
+    },
+    {
+      "id": "printing-astral",
+      "source": "(pr-str \"\ud83d\ude42\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          34,
+          55357,
+          56898,
+          34
+        ]
+      }
+    },
+    {
+      "id": "printing-identifiers",
+      "source": "(pr-str 'ns/name :plain :ns/key)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          115,
+          47,
+          110,
+          97,
+          109,
+          101,
+          32,
+          58,
+          112,
+          108,
+          97,
+          105,
+          110,
+          32,
+          58,
+          110,
+          115,
+          47,
+          107,
+          101,
+          121
+        ]
+      }
+    },
+    {
+      "id": "printing-collections",
+      "source": "(pr-str [1 \"a\"] {:x 2} #{3})",
+      "expected": {
+        "tag": "string",
+        "units": [
+          91,
+          49,
+          32,
+          34,
+          97,
+          34,
+          93,
+          32,
+          123,
+          58,
+          120,
+          32,
+          50,
+          125,
+          32,
+          35,
+          123,
+          51,
+          125
+        ]
+      }
+    },
+    {
+      "id": "printing-length",
+      "source": "(binding [*print-length* 2] (pr-str [1 2 3]))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          91,
+          49,
+          32,
+          50,
+          32,
+          46,
+          46,
+          46,
+          93
+        ]
+      }
+    },
+    {
+      "id": "printing-level",
+      "source": "(binding [*print-level* 1] (pr-str [1 [2]]))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          91,
+          49,
+          32,
+          35,
+          93
+        ]
+      }
+    },
+    {
+      "id": "printing-metadata",
+      "source": "(binding [*print-meta* true] (pr-str (with-meta [1] {:flag true})))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          94,
+          123,
+          58,
+          102,
+          108,
+          97,
+          103,
+          32,
+          116,
+          114,
+          117,
+          101,
+          125,
+          32,
+          91,
+          49,
+          93
+        ]
+      }
+    },
+    {
+      "id": "printing-dynamic-recovery",
+      "source": "(do (try (binding [*print-length* 0] (throw 17)) (catch :default error nil)) (pr-str [1 2]))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          91,
+          49,
+          32,
+          50,
+          93
+        ]
+      }
+    },
+    {
+      "id": "printing-writer",
+      "source": "(do (deftype PrintableBox [value] IPrintWithWriter (-pr-writer [this writer opts] (-write writer \"box(\") (pr-seq-writer [value] writer opts) (-write writer \")\"))) (pr-str (->PrintableBox 42)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          98,
+          111,
+          120,
+          40,
+          52,
+          50,
+          41
+        ]
+      }
+    },
+    {
+      "id": "printing-order",
+      "source": "(let [seen (atom 0)] (pr-str (do (swap! seen inc) @seen) (do (swap! seen inc) @seen) @seen))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          32,
+          50,
+          32,
+          50
+        ]
+      }
+    },
+    {
+      "id": "printing-anonymous-function",
+      "source": "(pr-str (fn [x] x))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          35,
+          111,
+          98,
+          106,
+          101,
+          99,
+          116,
+          91,
+          70,
+          117,
+          110,
+          99,
+          116,
+          105,
+          111,
+          110,
+          93
+        ]
+      }
+    },
+    {
+      "id": "printing-named-function",
+      "source": "(pr-str (fn foo [x] x))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          35,
+          111,
+          98,
+          106,
+          101,
+          99,
+          116,
+          91,
+          115,
+          117,
+          115,
+          115,
+          95,
+          111,
+          114,
+          97,
+          99,
+          108,
+          101,
+          36,
+          112,
+          114,
+          105,
+          110,
+          116,
+          105,
+          110,
+          103,
+          95,
+          99,
+          97,
+          115,
+          101,
+          115,
+          36,
+          111,
+          98,
+          115,
+          101,
+          114,
+          118,
+          97,
+          116,
+          105,
+          111,
+          110,
+          115,
+          95,
+          36,
+          95,
+          102,
+          111,
+          111,
+          93
+        ]
+      }
+    }
+  ]
+}

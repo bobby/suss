@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "06835bb2849de032cdae030a6887c561ae10c744cd73b7fc0aaf7cbd21f5f15d",
+  "replacement": "(def ^:private pr-opts-dup\n  (fn [opts]\n  (if-not (nil? opts)\n    (:dup opts)\n    *print-dup*)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn for bootstrap compilation. Preserve every signature, control branch, write order and return value; private option helpers remain private."
+}

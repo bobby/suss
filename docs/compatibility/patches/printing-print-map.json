@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "68fa017f509a9af54245667cab2b83247d91a49bda1a2f4469e560861291ca52",
+  "replacement": "(def print-map\n  (fn [m print-one writer opts]\n  (let [ns&lift-map (when (map? m)\n                      (lift-ns m))\n        ns (if (nil? ns&lift-map) nil (aget ns&lift-map 0))]\n    (if ns\n      (print-prefix-map (suss.bootstrap/concat-string (str_ \"#:\" ) (str_ ns)) (aget ns&lift-map 1) print-one writer opts)\n      (print-prefix-map nil m print-one writer opts)))))",
+  "rationale": "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. Expand the single some-> on the already-bound result to a nil guard and one aget, preserving nil handling, lifted prefix, lifted map selection and ordinary map fallback. Expand the retained multi-argument str_ macro applications to ordered concatenation of single-argument runtime conversions, preserving nil-as-empty per argument and conversion effects before the next argument. The actual first-class runtime str_ nil-first behavior remains unchanged. This does not implement the general analyzer-dependent str_ macro."
+}

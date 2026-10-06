@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a5dd8f5a7fc4e42ba84d5faf7906fd48ab1c42b06d176c264cb927116306a936",
+  "replacement": "(def ^:private char-escapes\n  {\n    \"\\\"\" \"\\\\\\\"\"\n    \"\\\\\" \"\\\\\\\\\"\n    \"\\b\" \"\\\\b\"\n    \"\\f\" \"\\\\f\"\n    \"\\n\" \"\\\\n\"\n    \"\\r\" \"\\\\r\"\n    \"\\t\" \"\\\\t\"})",
+  "rationale": "Replace only the JavaScript property-table storage with a persistent string-keyed map. Preserve the entire pinned private declaration and all seven keys and values; no escape mapping is deleted or normalized."
+}

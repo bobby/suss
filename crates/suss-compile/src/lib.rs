@@ -287,9 +287,7 @@ impl Compiler {
     /// is deferred. This is a fresh compilation, not a source-replaying REPL.
     #[cfg(not(target_family = "wasm"))]
     pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        let prepared = self.prepare_expression(expr_source, &[std::path::PathBuf::from("src")])?;
-        let wasm = prepared.modules().last().expect("expression bootstrap module").to_vec();
-        Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
+        self.compile_expr_with_info(expr_source)
     }
 
     /// Prototype compiler-on-Wasm route, pending compiled host support.
@@ -503,7 +501,12 @@ impl Compiler {
         codegen::generate_component_with_imports(&ir)
     }
 
-    /// Compile a single expression to a WASM module or component
+    /// Compile an expression with the remaining prototype byte-only backend.
+    ///
+    /// This API has not yet migrated to the shared runtime. Native callers that
+    /// need compiled macros and ABI2 semantics should use `compile_expr_with_info`
+    /// and execute its complete owned bundle. Entry bytes from that bundle are
+    /// not a standalone replacement for this API's output.
     ///
     /// This creates a minimal WASM module with a single exported function `eval`
     /// that returns the result of the expression. No WIT file is required.
@@ -519,14 +522,32 @@ impl Compiler {
     /// // Run with wasmtime, call `eval` function, get result
     /// ```
     pub fn compile_expr(&mut self, expr_source: &str) -> CompileResult<Vec<u8>> {
-        let result = self.compile_expr_with_info(expr_source)?;
+        let result = self.compile_prototype_expression(expr_source)?;
         Ok(result.wasm)
     }
 
-    /// Compile a single expression and return info about the result
+    /// Prepare a native expression through the common compiled macro pipeline.
+    /// Runtime initializers are deferred until `CompiledExpr::execute`; the
+    /// complete bundle, not its entry-module inspection copy, is executable.
+    /// Each call has an isolated Macro session and fresh user compilation. The
+    /// reproducible compiled core bootstrap is shared with the cached entrypoint.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
+        let prepared = self.prepare_expression(expr_source, &[std::path::PathBuf::from("src")])?;
+        let wasm = prepared.modules().last().expect("expression bootstrap module").to_vec();
+        Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
+    }
+
+    /// Prototype compiler-on-Wasm entrypoint, pending compiled host support.
+    #[cfg(target_family = "wasm")]
+    pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
+        self.compile_prototype_expression(expr_source)
+    }
+
+    /// Remaining byte-only implementation, retired when its callers migrate.
     ///
     /// Returns both the WASM bytes and whether it's a component (WASI) or core module.
-    pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
+    fn compile_prototype_expression(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         // Load core.sus (auto-injected before user code per Clojure semantics)
         let core_exprs = load_core_exprs()?;
 

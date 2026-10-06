@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3fa3405bddbfd801c7daf7339ea5096a92831dca060583883df53ecb43d7f2a6",
+  "replacement": "(def print-meta?\n  (fn [opts obj]\n  (and (boolean (pr-opts-meta opts))\n       (implements? IMeta obj)\n       (not (nil? (meta obj))))))",
+  "rationale": "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+}

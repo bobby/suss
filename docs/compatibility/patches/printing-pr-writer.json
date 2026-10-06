@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e6ccfb4f85f32753bca5fab50fa96ee166ddae43a024125c3c8cec4c1b7d2357",
+  "replacement": "(def ^:private pr-writer\n  \"Prefer this to pr-seq, because it makes the printing function\n   configurable, allowing efficient implementations such as appending\n   to a StringBuffer.\"\n  (fn [obj writer opts]\n  (if-let [alt-impl (:alt-impl opts)]\n    (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))\n    (pr-writer-impl obj writer opts))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+}

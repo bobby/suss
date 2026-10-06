@@ -20210,3 +20210,646 @@ baseline is actually live in reviewer handle34996, log
 /private/tmp/suss-pr208-review-full.log; no pass is claimed yet. Frozen-head CI
 37382012570 was authoritatively IN_PROGRESS. Reviewer owns sole local heavy;
 root remains light. PR remains draft pending exact full and final-head CI.
+
+M3 next native expression boundary, staged in isolated worktree
+/private/tmp/suss-m3-uncached-expression-entrypoints on branch
+portable/m3-uncached-expression-entrypoints, based on reviewed/rebased PR208 c9dbe180.
+Native compile_expr_with_info now prepares the same complete ABI2 bundle as the
+cached entrypoint; cached delegates to it. The original byte-only compile_expr
+still calls its private prototype helper until its executing callers migrate.
+This is an incremental boundary replacement, not evaluator retirement. The
+cfg(test)-only CLI source-replay cache retains Arc<CompiledExpr> rather than
+discarding the dependency bundle; it is not the shipped persistent REPL.
+
+Three new public regressions cover lexical compiled macros with captured/live
+bindings after GC, deferred owned Runtime exceptions/prompt recovery, and isolated
+Macro namespaces across repeated compilations. A CLI fixture regression executes
+the complete cached artifact after cache eviction. ALL ARE UNEXECUTED so far.
+rustup run 1.98.0 rustfmt --edition 2024 on the new integration file and git diff
+--check passed; these are formatting checks only. No Cargo/JVM/Node run was started
+by root while reviewer208 retains sole heavy in live exact full34996.
+
+Implementation-only patch is preserved at
+/private/tmp/suss-uncached-expression-implementation.patch. After explicit heavy
+release, restore only this worktree's lib.rs and session.rs to HEAD, run the new
+uncached_expression_artifacts integration suite against the original implementation
+and retain actual red output, then apply the preserved implementation patch.
+Regenerate BOTH bootstrap phase pairs because lib.rs changes compiler identity;
+run the unchanged new assertions, CLI cache fixture, relevant old expression
+consumers, bootstrap verifier, Python checks, independent review/full/final-head CI.
+No new commit/PR/readiness or issue closure yet. Full M3 issues12-15 scope stays
+intact, including byte API/Wasm routes, schemas/cache and pending-I/O/live-GC work.
+
+The test_compile example now retains its three original source expressions but
+uses native compile_expr_with_info, executes complete bundles, forces GC and
+displays rooted results. It propagates errors instead of reporting encoding-only
+success. This example is also UNEXECUTED until heavy release/bootstrap regeneration;
+include cargo run -p suss-compile --example test_compile --locked in focused
+validation. Remaining raw-module benchmark/test callers still need actual ABI2
+execution migration before deleting the byte-only prototype route.
+
+Benchmark caller migration is now staged too, retaining the original compilation,
+six execution, nine size and four scaling source inputs. It prepares complete
+CompiledExpr bundles and uses Criterion PerIteration batches for one owning Store
+per execution; no raw GC Val escapes a dropped Store. Initialization measurements
+include preflight/core/dependencies/execution/teardown, while preparation and empty
+Store construction are setup. Bundle size sums all module bytes including core.
+The group names document changed measurement semantics, so no comparison to
+historical standalone-module timing/size is claimed. This is UNEXECUTED; add
+cargo test -p suss-compile --bench performance --locked -- --test to focused
+validation after bootstrap regeneration. Formatter and git diff --check pass only.
+
+Prepared the pinned source checkout by cloning the existing local upstream repo
+into this worktree's clojurescript directory and detaching at c4295f303100bbf5afac449242d30bca1126f1a1;
+no escaping symlink or network reference was used. Read-only provenance checks
+passed: python3 scripts/core_import.py --check verified291 files; python3
+scripts/cljs_reviews.py verified388 reviewed/677 unassessed entries. These checks
+do not establish runtime or bootstrap reproduction results.
+
+Existing conformance consumer now calls compile_expr_with_info rather than the
+cached API. Only that call changed: all201 source/expectation cases, baseline
+failure classification, default20M bounds and the separate100M extra trie check
+remain untouched. Execution of this staged consumer remains pending; include
+cargo test -p suss-compile --test conformance --locked -- --test-threads=2 after
+bootstrap regeneration. The original cached public-artifact checks remain intact.
+
+
+M3 uncached expression migration: executed evidence supersedes the staged/unexecuted
+notes above. Root owns the sole local heavy slot after reviewer208 explicitly
+released it. Exact reviewer208 full34996 ended0:161 groups/1365 passed/0 failed/
+17 unchanged manual ignores/0 filtered, all4 doc groups. The raw redirected log
+has no command text; invocation ownership records the required exact command.
+Rebased206/207/208 final-head hosted CI remains pending; no readiness/merge claim.
+
+The original uncached implementation failed all3 new regressions (process2282,
+/private/tmp/suss-uncached-expression-before.log). After applying the preserved
+implementation patch and generating BOTH bootstrap pairs (54585 exit0), all3
+uncached regressions passed75306. The test-only CLI retained cache check passed
+93658. Original expression consumers34032 ended0: legacy320 pass/12 unchanged
+manual ignores; conformance11 pass/2 unchanged ignores, including all201 original
+source/expectation cases and the separate1057-element fixture. Benchmark61428
+ended0 with30 original smoke inputs successful. Bootstrap verifier88066 ended0:
+two fresh BOTH pairs byte-exact with tracked artifacts, Java/Node absent, identity
+invalidation checked, compiled bootstrap4 pass. Python43908 ended0:178 tests.
+These results predate the subsequent printing foundation; they are not the new
+full-workspace gate or final-head CI.
+
+The unchanged test_compile example86040 ended1 after executing its first two
+expressions as3 and6: the third expression fails unresolved Runtime pr-str.
+Preserve its source/error at /private/tmp/suss-uncached-expression-example.log.
+Do not remove it, fall back to the prototype, or label encoding as execution.
+The shared16-case printing corpus has an actual fresh pinned compile/Node result.
+Primary compile48337 failed only because transport's generated original cases were
+missing; generate them and retry11137 ended0, Node ended0. The first comparison
+failed only the guessed named function spelling; actual qualified upstream name
+was retained, with unchanged source and aligned genuine namespace/outer-function
+context. Strict comparison now reports16 exact matches. Raw primary observations
+are /private/tmp/suss-compiled-printing-primary-observations.json. Native shared
+printing43175 failed the first empty pr-str case; later cases were not executed.
+
+Printing prerequisites now retain14 complete pinned declarations with source
+hashes/EPL notices/overlay entries: IWriter, seven dynamic printing variables,
+four private option helpers, complete write-all loop, and StringBufferWriter.
+Only defn bootstrap spelling is adapted, retaining private visibility/signatures/
+all branches. Original BootstrapStringBuffer owns mutable UTF-16 contents, returns
+itself from append and implements toString; it supplies typed printer storage,
+not arbitrary Closure buffer interoperability. Its loader hash is tracked.
+Writer regression85903 actually failed unresolved IWriter, then61280 passed both
+phases after source import and BOTH-pair generation48952 exit0. Buffer regression
+76050 failed unresolved BootstrapStringBuffer, then38823 passed both phases after
+BOTH-pair generation25999 exit0. Independent decoding follows forced GC; assertions
+include ordered writes, no write after throw, recovery, dynamic binding restore,
+append identity and exact lone-surrogate/astral units. Logs are
+/private/tmp/suss-printing-{writer,buffer}-{before,after}.log.
+Current shared printing17397 ended101:4 pass/1 fail/0 ignored/0 filtered, still
+first empty case unresolved pr-str. Cargo stopped there; the other selected test
+binaries did not execute. Separate owned process70486 runs only uncached/conformance at
+/private/tmp/suss-printing-foundation-expression-consumers.log; actual exit0,
+conformance11 passed/2 unchanged manual ignores/0 filtered (all201 original cases),
+uncached artifacts3 passed/0 ignored/0 filtered.
+Provenance check verifies305 files; overlay402 reviewed/663 unassessed; primary
+strict printing comparison16 matches. Formatting/diff check pass only.
+
+Next unblocked task: complete the pinned printer's pr-writer control/options/
+metadata/string/numeric/custom protocol/collection/function dependencies and
+record each storage/interop adaptation individually. Preserve the full16 shared
+inputs and original third example expression. Both phases must match independently
+decoded exact observations after GC, then rerun associated consumers/bootstrap
+reproduction/full baseline before opening a partial issue14 PR and dispatching
+independent review/final-head CI. Original issues12-15 remain open; byte API,
+CoreCache/Wasm/component routes, rich schemas/cache and rooted stackless pending-I/O
+cancellation/live-heap accounting remain required. No commit/newPR is ready yet.
+
+
+String escaping now retains two more complete pinned declarations (char-escapes
+and quote-string). The map storage adaptation keeps all seven original entries;
+the private quote-string adaptation replaces only regex storage traversal with
+checked UTF-16 slices and ordered concatenation. Exact seven-escape, lone-surrogate
+and astral-unit regression8620 failed unresolved quote-string before import, then
+4556 passed in BOTH phases after GC. BOTH bootstrap generation38126 ended0.
+Provenance verifies307 files; overlay404 reviewed/661 unassessed. All16 original
+shared printing sources/assertions remain intact, including named function context.
+
+New-source bootstrap verifier52795 ended0, log
+/private/tmp/suss-printing-foundation-verify-bootstrap.log: BOTH fresh pairs reproduce
+tracked bytes twice with Java/Node absent, compiler identity invalidation checked,
+all4 executing bootstrap tests pass (10.98s). Python69102 ended0, log
+/private/tmp/suss-printing-foundation-python.log:178 pass. Current exact selected
+consumer invocation17334 uses --no-fail-fast so the known shared printing failure
+cannot prevent the unchanged conformance/uncached binaries from executing:
+RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test compiled_printing
+--test uncached_expression_artifacts --test conformance --no-fail-fast --locked
+-- --test-threads=2. Log /private/tmp/suss-printing-quotes-consumers.log;
+actual terminal101: compiled_printing5 pass/1 fail/0 ignored/0 filtered (only
+shared corpus fails first unresolved pr-str); conformance11 pass/2 unchanged
+manual ignores/0 filtered (all201 original cases); uncached artifacts3 pass/
+0 ignored/0 filtered. No later shared printing case executed. This is not a full
+pass. All root-owned heavy processes this turn are now actually terminal.
+Next remains the full pinned pr-writer dependency graph and original example,
+then associated full/review/final-head CI; all M3 acceptance scope is unchanged.
+
+Issue14 progress comment updated with current executed evidence:
+https://github.com/bobby/suss/issues/14#issuecomment-5985901498.
+Authoritative final-head CI poll still shows206/207/208 IN_PROGRESS respectively
+37382521215/37383282850/37383420162 on heads706c66cf/a9613361/c9dbe180;
+reviewers retain light observation/raw audits. No restart, readiness or merge.
+Current turn is progress: sixteen pinned source dependencies were retained with
+provenance, three actual pre-fix failures now pass in both phases after GC,
+BOTH bootstrap pairs reproduce, and unchanged conformance/uncached consumers pass.
+The original complete M3 goal remains active; missing pr-str remains the next
+unblocked implementation task, not a blocker or a reason to narrow acceptance.
+
+
+M3 printing continuation: source work is still uncommitted in the isolated
+portable/m3-uncached-expression-entrypoints worktree. Root retains sole local heavy.
+Nine further whole pinned declarations are retained with source hashes/EPL and
+partial review status: pr-sequential-writer, print-meta?, pr-seq-writer, empty?,
+pr-writer, pr-str*, pr-sb-with-opts, pr-str-with-opts and pr-str. Every control branch,
+arity, private flag and docstring is retained; only bootstrap defn spelling and
+Closure buffer construction change. pr-writer-impl is an explicit uninitialized
+mutual dependency, not a fabricated fallback. No full printing compatibility claim.
+Provenance now verifies316 files; overlay413 reviewed/652 unassessed.
+
+Sequential regression35728 failed missing dependency; source generation84076 ended0
+and22355 passes BOTH phases: unlimited output, length0/2, level0, custom more-marker,
+no print-one calls for truncated entries, and restored dynamic bindings after GC.
+The original body executes dec(nil) correctly; no guessed coercion patch was needed.
+BOTH entrypoint generation30114 ended0. Full selected printing32400 ended101:
+7 pass/1 fail/0 ignored/0 filtered. Empty printing case now actually passes;
+the second fails before default printing at the aggregate analysis graph bound.
+New alternate-writer test executes in BOTH phases with exact separator/result and
+once-per-object effect observations. Full16 corpus input/assertions remain unchanged.
+
+Graph diagnostic70289 actually failed at65537 recipes/10173 forms/20338 maps/
+8753 vectors/774 declarations/425 namespaces/5855 ASTs. All original graph limits
+remained intact during diagnosis. Snapshot-canonicalization experiment exposed a
+one-node budget duplicate; initial test50277 instead failed stale bootstrap, then
+regen87097 ended0 and true pre-fix97515 failed duplicate charge. Candidate generation
+23862 ended0 and50874 had8 passing sharing tests, but actual corpus7041 still failed
+with424 namespaces (one node saved). This experiment did not solve the real input
+and was removed, retaining its patch/logs under /private/tmp/suss-printing-namespace-*
+for evidence; no canonicalization production change or associated test is retained.
+
+Bounded sizing experiment71985 generated both images;65746 measured the COMPLETE
+graph at66474 recipes,75146 UTF16 units,5957 ASTs,425 namespaces. It passes unchanged
+materialization guards, then actually fails at the expected unfinished default
+printer language exception. This is not a printing pass. Temporary sizing logging
+and experiment capacity were removed. Compile-only retained-source regression
+16455 failed the original65536 graph bound after explicit BOTH regen82842 exit0.
+The final aggregate recipe capacity is now131072, justified by actual unique graph
+size, with original per-form4096/reader-key65536, depth64, UTF16 storage1MiB,
+reader-key32MiB and both materialization1,048,576 work guards unchanged. Diagnostic
+now reports aggregate capacity and actual recipe categories. Cold-budget regression
+still assigns zero nodes and requires rejection; only its aggregate-limit message
+changes. BOTH final generation38393 ended0. An attempted two-filter Cargo invocation
+failed argument parsing and executed no tests; corrected retained-source focus83066
+is actually terminal0 at /private/tmp/suss-printing-capacity-after-focus.log:
+1 passed/0 failed/0 ignored/8 filtered, both phases after GC,29.14s. Unchanged
+sharing/budget guards are now running as owned77307
+at /private/tmp/suss-printing-capacity-guards.log; actual terminal0:7 passed/
+0 failed/0 ignored/98 filtered,2.52s. These include unchanged reader-occurrence,
+sharing, materialization and cold-retained-declaration budget rejection checks.
+
+Reviewer208 final c9 CI37383420162 has ACTUAL SUCCESS (completed2026-10-06T00:02:40Z).
+Independent raw audit161groups/1365pass/0fail/17unchangedignores/0filter/all4docs;
+every ordered suite/test/outcome equals local34996, exact mandated command present
+in hosted raw. Raw/audit /private/tmp/suss-pr208-review-final-ci-37383420162.log and
+/private/tmp/suss-pr208-review-final-ci-audit.json. Reviewer fixed/pushed README
+finding, verified complete faithful-rebase tree, updated body and marked PR208 ready:
+OPEN,isDraft=false,headc9dbe180,basea961336. No merge; all reviewer208 handles terminal,
+reviewer heavy remains released. Do not mutate that head for this new work.
+
+Next: finish final capacity regression and unchanged graph guards, then complete
+full pr-writer-impl source and genuine collection/type/function-name dependencies,
+individually recording interop storage adaptations. Preserve16 corpus/old example,
+validate both phases after GC, reproduction/consumers/exact full before partial
+issue14 PR + independent review/final-head CI. All original M3 issues12-15 remain
+open, including evaluator/cache/Wasm/component migration, rich schemas/dependencies,
+rooted stackless pending-I/O cancellation and distinct live-heap/code accounting.
+
+
+Final source after removing all experimental namespace caching/sizing output:
+BOTH generation79310 actual exit0. Selected --no-fail-fast consumers28756 ended101,
+/private/tmp/suss-printing-entrypoints-consumers.log: printing8 pass/1 fail/
+0 ignored/0 filtered (34.30s); conformance11 pass/2 unchanged manual ignores/
+0 filtered (66.54s), includes all201 unchanged cases; uncached3 pass/0 ignored/
+0 filtered (11.72s). Printing now actually reaches a Runtime language exception
+in the second nil/booleans case; default pr-writer-impl remains uninitialized.
+Later corpus cases are not executed. Do not claim this is a full printing pass.
+Final source verification91982 ended0, /private/tmp/suss-printing-entrypoints-verify-bootstrap.log:
+two fresh BOTH pairs byte-exact tracked/twice with Java/Node absent, identity
+invalidation checks pass, bootstrap4 pass (11.78s). Python5097 ended0:
+178 pass (5.289s). Provenance316 files; overlay413/652; strict primary16 matches;
+git diff --check passes. Original example81276 is actually terminal1 after a separately owned normal dev
+invocation, /private/tmp/suss-printing-entrypoints-example.log: original first two
+sources still return3/6, unchanged third now fails Runtime Language with owned
+payload rather than unresolved pr-str. No claim about the payload text/type is
+made from Debug output. All root-owned heavy handles are now actually terminal. No full-new-head gate, commit/newPR/readiness claimed.
+
+PR206 reviewer final raw CI37382521215 complete audit matches local73562 EVERY
+ordered test/group:156groups1306pass0fail17unchangedignores0filter/all4docs,
+exact mandated full command present. Source review remains valid by complete tree
+identity. Reviewer updated body/markedready; fresh OPEN,isDraftfalse,CLEAN,
+head706c66c/basemain21549db. Raw /private/tmp/suss-pr206-ci-37382521215.log;
+audit /private/tmp/suss-pr206-ci-37382521215-audit.json. Initial approval-review
+capacity failure was resolved by authorized retry, not bypass. No merge; all
+reviewer206 handles terminal, no heavy claim. PR207 final CI37383282850 remains
+live per last direct API; observe its existing job, never restart on timeout.
+
+Original full M3 goal remains active. Next concrete unblocked implementation is
+whole pinned pr-writer-impl and its actual collection/metadata/type/function-name
+storage dependencies, preserving all branch behavior and explicit unfinished host
+surfaces. Keep complete shared16 corpus and original3 example expressions.
+
+
+Printer storage guard continuation (partial #14): HIR/IR/emission now expose the
+existing runtime `native-object?` export as `suss.bootstrap/native-object?`.
+The runtime implementation is unchanged: it checks the actual native descriptor,
+not just the shared user-object layout. It returns a language Boolean and takes
+one operand. This is storage inspection, not the public constructor-based
+`object?`; property shadowing intentionally does not change descriptor identity.
+No new host imports, runtime type group or source-inventory completion is claimed.
+
+Focused regression first failed on the unresolved private operation (90147,
+exit101), then passed (24852, exit0,1 pass/9 filtered). Both Runtime/Macro phases
+independently decode values after forced GC, covering native instances/default
+prototype, scalars, UTF-16 string, closure, array, same-layout nominal object and
+persistent vector. It also checks single evaluation, retained objects after GC,
+constructor-property shadowing, and wrong arities before argument effects.
+Raw logs: /private/tmp/suss-printing-object-guard-{before,after}.log.
+BOTH bootstrap generation17382 ended0. Verifier46900 ended0: two fresh pairs match
+each other and tracked artifacts, build-identity checks pass and4 compiled
+bootstrap tests pass with Java/Node absent (11.32s). Raw log:
+/private/tmp/suss-printing-object-guard-verify-bootstrap.log.
+Unchanged full printing test target34926 ended101:9 pass/1 fail/0 ignored/
+0 filtered (33.90s). Empty shared corpus case passes; Runtime nil/booleans still
+throws with default pr-writer-impl uninitialized. Later14 corpus cases and the
+Macro shared corpus remain unexecuted. Raw log:
+/private/tmp/suss-printing-object-guard-corpus.log. All root heavy handles terminal.
+Next: retain/adapt the complete default printer and actual constructor/type,
+collection/protocol and function-name dependencies, preserving the16 source cases
+and original3 expression example. New work remains uncommitted; no full baseline,
+new PR, independent review or final-head CI for this source is claimed. Original
+M3 issues12-15 and their evaluator/cache/schema/lifecycle requirements remain open.
+
+PR207 existing final-head run37383282850 now actually SUCCESS at a961336.
+Independent reviewer raw audit159groups/1344pass/0fail/17unchangedignores/0filter,
+all4docs, exact full command/inventory/Java-Node-free bootstrap verified. Reviewer
+updated body and markedready, verified OPEN/mergeable/head a961336/base706c66c.
+No merge. All reviewer207 handles terminal; separate root printing source not
+covered by this CI. Raw/audit /private/tmp/suss-pr207-review-final-ci-37383282850.log
+and /private/tmp/suss-pr207-review-final-ci-audit.json.
+
+
+M3 default printer source continuation (partial #14, uncommitted):
+The whole pinned pr-writer-impl10445 and object?300 are extracted with SHA guards,
+original EPL notices, explicit adaptations and in-progress overlay entries.
+Provenance318 files; overlay415 reviewed/650 unassessed; strict original printing16
+and fresh object-predicate1 case/17 constituent observations match primary output.
+The new object fixture's pinned compiler85417 and Node run both exited0; raw copy
+/private/tmp/suss-printing-object-predicate-primary-observations.json. Both native
+phases independently decode the same17 results after forced GC, including actual
+constructor identity/shadowing/null prototypes/inheritance and once-only effects.
+No foreign JS object/boxing compatibility claim follows.
+
+Original runtime class-value-is inspects a closure's actual unwrapped owned
+DESCRIPTOR environment. HIR/IR/emitter expose suss.bootstrap/type-constructor?.
+No global constructor-name registry or descriptor metadata slot reuse. Actual
+focused red52346 exit101 unresolved operation -> generation22855 exit0 ->
+focused13496 exit0,1 pass/10 filtered. Both phases retain captured class values
+through GC, class redeclaration and assigned closure properties, rejecting
+instances/protocol values/ordinary functions/scalars/arrays/native objects.
+Raw /private/tmp/suss-printing-constructor-guard-{before,after}.log.
+
+Default printer retains every branch, metadata and protocol precedence. Numeric
+NaN/infinity/empty-string operations use portable equivalents. Host storage/name,
+constructor printing, eager object-key mapping/identifier matching, Date/regex/JS
+symbol and generic fallback dependencies remain explicitly declared/uninitialized,
+not constant-false or fabricated-output implementations. Private helpers preserve
+private declaration visibility. This is staged source retention, not complete
+printing or deliberate host exclusions. Full collection IPrintWithWriter support
+and print-map dependencies are still missing. cond-> bootstrap attempt89772 and
+keyword bootstrap attempt56343 ended1; cond-> is expanded over the already-bound
+key, and the unfinished keyword dependency is explicit. Generation56278/final39131/
+private66241 all actually ended0; latest BOTH pair matches final source metadata.
+
+Final selected --no-fail-fast consumer47321 actually ended101:
+/private/tmp/suss-printing-default-final-consumers.log. Printing11 pass/1 fail/
+0 ignored/0 filtered (96.90s): first7 original Runtime corpus cases pass including
+NaN/infinities/exact escapes/lone surrogate/astral strings/symbols/keywords, then
+printing-collections raises Runtime Language. Later8 cases and the shared Macro
+corpus are unexecuted. Original16 sources/assertions remain intact. Conformance
+11 pass/0 fail/2 unchanged manual ignores/0 filter (61.96s), including unchanged201
+inputs and extra1057 trie/GC case; uncached3 pass/0 fail/ignore/filter (11.61s).
+All tests in that handle are terminal. Earlier printing73343 ended101 with same
+11/1/0/0 outcome before private dependency metadata, superseded by47321.
+Verifier62285 ended0 (4 bootstrap tests,11.76s), before last private metadata;
+current final source verifier69994 is live and must be observed, not restarted.
+Python90158 ended0,178 tests5.120s before that private loader metadata change.
+Next concrete task: collection protocol writers and pinned print-prefix-map/
+print-map/lift-ns/strip-ns, then actual owned constructor/function display names
+and remaining staged storage branches. Preserve original3 example expressions.
+Exact full workspace gate, commit/newPR, independent review/fixes/final-head CI
+remain required; no new PR is ready. All original M3 issues12-15 remain open,
+including production evaluator/Wasm/cache migration, complete macro schemas and
+rooted stackless pending-I/O cancellation/lifecycle/live-heap versus code accounting.
+
+Final private dependency metadata/source verification69994 is actually terminal0:
+/private/tmp/suss-printing-default-private-verify-bootstrap.log. Two fresh BOTH
+pairs reproduce tracked bytes and each other, build identity invalidation passes,
+4 bootstrap tests pass/0 fail/ignore/filter (11.85s), Java/Node absent.
+Final Python17408 actual0:178 pass (5.032s), raw
+/private/tmp/suss-printing-default-private-python.log. Final provenance/overlay/
+strict primary comparisons all pass318/415/650/original16/object17; diff check pass.
+Original unchanged example57757 actual1, /private/tmp/suss-printing-default-example.log:
+first2 expressions still return3/6; third still raises Runtime Language with an
+owned payload. No payload text/type inference is made from Debug output. All
+root heavy handles are now actually terminal. Preserve the source/assertions and
+finish real collection/name dependencies; no full baseline/newPR/readiness/M3
+completion claim is made. Current source and bootstrap pairs remain uncommitted
+in portable/m3-uncached-expression-entrypoints atop reviewed c9dbe180.
+
+M3 map printer / keyword continuation (partial #14, uncommitted):
+Retained complete pinned keyword3560, strip-ns10650, lift-ns10656,
+print-prefix-map10674 and print-map10684 with source SHA/EPL, explicit patches
+and in-progress reviews. Provenance323 files; overlay420 reviewed/645 unassessed.
+Original fixed-slash UTF16 keyword-name-parts is in the original Suss loader,
+not the licensed standalone sequence loader. Python61978 exposed that loader
+placement error (178 run,1 failure/1 error); relocation restored all178 Python
+checks6325 exit0 (5.140s). No provenance check was skipped or relaxed.
+
+Four fresh shared pinned aggregate fixtures cover15 keyword observations,
+8 map writer/dynamic flag traces, runtime str_ nil-first behavior and custom
+map/cursor/indexed-entry effect order. Primary45031 and Node both exited0;
+strict4-case comparison passes. Raw primary copy:
+/private/tmp/suss-printing-maps-primary-observations.json.
+Pinned str_ macro conversion differs from first-class runtime str_: formatter
+callsite adapters now convert each operand once in order and concatenate; the
+runtime function is unchanged. Pinned loop macro destructuring runs before the
+loop and per iteration. lift-ns preserves those distinct seq/first/next/nth
+callbacks while evaluating (seq m) only once. Both bugs have observed red-to-green
+native evidence (49832 and11827 exit101; final91730 exit0).
+Final relocated-helper focus91730:1 pass/0 fail/ignore/12 filtered,59.69s;
+all4 fixtures independently decoded in both Stores after forced GC. Raw:
+/private/tmp/suss-printing-maps-original-helper-focus.log.
+Final generation29422 exited0, BOTH tracked phase pairs regenerated.
+Verifier95463 handle is missing/terminal; complete raw log confirms both fresh
+pairs match each other/tracked artifacts, build identity checks pass,4 bootstrap
+tests pass/0 fail/ignore/filter,12.97s with Java/Node absent. Raw:
+/private/tmp/suss-printing-maps-original-helper-verify.log.
+
+Selected consumers51836 ended101 BEFORE helper relocation: printing12 pass/1
+fail/0 ignored/filter (129.45s), unchanged first7 Runtime corpus cases pass and
+case8 collections raises Language; later8/Macro shared cases unexecuted.
+Conformance11 pass/0 fail/2 unchanged ignores/0 filter (62.31s), all201 sources
+and extra1057; uncached3 pass/0 fail/ignore/filter (11.78s).
+Raw /private/tmp/suss-printing-maps-consumers.log. These are not final relocated
+loader consumer results. New collection extension work follows; no new full
+baseline, commit/PR/review/CI or original M3 gate completion is claimed.
+
+M3 collection printer continuation (partial #14, uncommitted):
+The complete pinned extend-protocol IPrintWithWriter10692–10810 source form
+is retained in licensed standalone loader provenance. Twenty available nominal
+source-type stanzas install exact upstream method bodies in upstream order;
+16 absent source-type stanzas remain explicit pending work in the patch/README.
+The outer macro expands to ordered extend-type forms, not fabricated type values.
+Bootstrap88888 ended1 (unresolved extend-protocol); expansion8375 ended0.
+Standalone verifier now checks each expansion against exact original target/body
+pairs and rejects reordered, duplicate, invented or rewritten stanzas. Seven
+focused Python provenance tests pass, including that adversarial regression.
+Provenance323 packaged files,22 complete standalone forms; overlay420/645.
+
+Original shared corpus77860 ended101: first12 Runtime source cases pass, then
+printing-writer rejects indexing-reader metadata on type fields (188.91s).
+Independent seven-case fixture range86030 likewise ended101 at that source
+(65.59s); both are real pre-fix failures, not success or skipped cases.
+Pinned analyzer parse-type3614–3649 reads mutation/tag flags independently of
+reader source positions. Our reader attaches file/line/column/end-line/end-column
+metadata to symbols transported through compiled macros. Type analysis now
+retains these source attributes without changing mutability or discarding them.
+Focused mutation guard96983 ended0:1 pass/0 fail/ignore/4 filtered,0.01s;
+immutable assignments, false mutation flags, shadowing and unknown field options
+still reject, and source-position metadata coexists with true mutation flags.
+Generation91324 ended0, BOTH tracked bootstrap pairs regenerated for this source.
+
+Focused collection27123 ended0:1 pass/0 fail/ignore/13 filtered,173.46s.
+All seven unchanged original fixture cases8–14 execute in both phase Stores,
+independently decode exact pinned outputs after GC, and preserve limits, level,
+metadata, dynamic exception recovery, custom IPrintWithWriter and operand order.
+The original16-case shared test and original3 example expressions are intact.
+Raw /private/tmp/suss-printing-collection-field-both-phases.log.
+Python90064 ended0:179 tests7.877s, raw
+/private/tmp/suss-printing-collection-field-python.log.
+Verifier22880 ended0:two fresh BOTH pairs match tracked artifacts and each other,
+build identity invalidation passes;4 bootstrap tests pass/0 fail/ignore/filter,
+12.22s with Java/Node absent. Raw /private/tmp/suss-printing-collection-field-verify.log.
+Core import/standalone provenance/reviews/diff checks all pass on current source.
+
+Current broader consumer handle77575 is live: exact command
+RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-compile --locked --no-fail-fast
+--test compiled_printing --test conformance --test uncached_expression_artifacts
+-- --test-threads=2. Raw /private/tmp/suss-printing-collection-final-consumers.log.
+Observe this handle to actual terminal evidence; do not restart on observation
+failure. This focused validation does not replace the exact full workspace gate.
+Next: observe unchanged full printing corpus to identify remaining actual failure,
+then implement owned function/constructor display names and remaining genuine
+storage dependencies. Pinned compiler fn-self-name98/munge114 and emit*:fn1016
+derive names from real namespace/function scopes; retain original anonymous/named
+function sources and context, with no invented lexical name or output normalization.
+No new PR/commit/readiness or M3 completion is claimed. Source remains uncommitted
+atop c9dbe180; issues12–15 and the full evaluator/schema/cache/pending-I/O/live-heap
+requirements remain open. No PR merged by the agent.
+
+Current selected run77575 has completed its printing target on final source:
+13 pass/1 fail/0 ignored/filter,321.06s. The original sixteen-case shared corpus
+passes the first14 Runtime cases and raises Runtime Language at anonymous
+function case15; named case16 and shared Macro loop remain unexecuted. No exception
+payload text/type inference follows from that error display. Independent seven
+collection fixture cases still pass both Stores in this same run, as do the four
+map fixtures, source graph bounds and all existing writer/storage guards.
+Conformance/uncached targets remain live in77575; observe terminal result.
+The next confirmed source dependency is real owned pr-function-name, not a changed
+fixture, fabricated lexical hint or normalized output. Preserve named case16's
+actual namespace/observations/inner foo spelling and ordinary anonymous fallback.
+
+Selected consumer77575 is now actually terminal101; all targets finished:
+printing13 pass/1 fail/0 ignored/filter (321.06s), as detailed above;
+conformance11 pass/0 fail/2 unchanged manual ignores/0 filter (65.56s), including
+all201 unchanged source/expectation cases and additional1057 trie/GC regression;
+uncached3 pass/0 fail/ignore/filter (12.46s). Only printing target failed.
+Raw /private/tmp/suss-printing-collection-final-consumers.log.
+All root heavy process handles this turn are terminal. Current source diff check
+passes. No full workspace baseline/newPR/review/final-head CI or M3 completion
+claim. Next unblocked implementation is genuine owned function display names;
+original shared anonymous/named cases and third example remain acceptance gates.
+
+M3 source function names continuation (partial #14, uncommitted):
+The last goal turn made authoritative progress:20 source printer stanzas,
+indexing-reader field metadata repair and terminal consumer results. Current
+worktree portable/m3-uncached-expression-entrypoints remains atop c9dbe180.
+The next confirmed failure was original shared case15 anonymous-function printing.
+
+Original Rust backend naming adaptation records pinned compiler.cljc98–148,
+analyzer.cljc2279–2298 and core.cljs378–404 provenance with retained EPL notice.
+Display labels derive from actual SourceCallable/FunctionScope declaration,
+namespace and parent scopes, with pinned munging and canonical public cljs.core.
+Genuine anonymous source functions have empty labels; unknown/synthetic/kernel
+names remain unset and fail visibly on read. No invented lexical ID/global
+constructor-name registry or descriptor metadata/UID slot reuse.
+Owned closure wrapper payload is now[original environment,properties,source name].
+Kernel wrapper/environment/property readers and FormBridge validate3 slots;
+source function labels are rooted with their closure and separate from property
+writes. Fixed/general closures receive labels in emitted code. Signature-wrapper
+source facts are transferred only to the actual general function owner; synthetic
+delegates do not inherit the owner's source facts/name. Large labels use the
+existing bounded UTF16 allocation/unit path instead of a large operand stack.
+
+Observed evidence/fixes, preserving original16 source fixtures:
+check52158 exit0 (16.21s); generation64127/29452/24693 exit0.
+Original focused86866 exit101 (5.10s): host FormBridge still expected2-slot
+wrapper. Reader corrected to3, not relaxed to arbitrary layouts.
+Function focused99116 exit101 (21.96s): anonymous Runtime case passed, named
+source names were unset because actual SourceCallable lives on the outer
+signature wrapper. Transfer now uses those genuine owner facts in Let lowering.
+An intermediate transfer landed in Loop rather than Let; generation46354 exit0
+is superseded after correcting placement, by generation31668 exit0.
+Focused10321 exit0:2 pass/0 fail/ignore/14 filtered,204.17s. Original anonymous
+and named cases both match in both Stores after GC. Eight fresh primary fixtures
+also match both Stores: anonymity, nested scopes, punctuation, parent scopes,
+captured/redefined functions with owned property writes, multiple arities,
+variadics and public core names. Captured functions are re-read/printed/called
+again after collection, not just compared via pre-GC strings.
+Primary33619 and Node run both exit0; strict8-case compare passes. Raw:
+/private/tmp/suss-function-names-primary-observations.json. Driver is development
+only; shipped code adds no Java/Node dependency.
+
+After bounded allocation-path refinement and formatting, final generation10332
+exit0 regenerates BOTH tracked phase pairs. ABI guard48945 exit0:1 pass/0
+fail/ignore/49 filtered,0.16s; exact UTF16 label including surrogate units survives
+with only its closure as owner, and unset/wrong owner/wrong initializer values
+raise language exceptions rather than traps or fake anonymous names.
+Final closure contracts25890 exit0: portable_closures14 pass/0 fail/ignore/filter
+(2.61s), runtime_abi50 pass/0 fail/ignore/filter(5.12s), including foreign raw
+closure environments and all existing property/table/callable guards. Raw:
+/private/tmp/suss-function-names-closure-contracts.log.
+Python7222 exit0:179 tests17.627s; core import323/standalone22/overlay420–645/
+strict8 primary/diff checks pass. Final original-printing/expression consumer
+handle56252 is live, raw /private/tmp/suss-function-names-final-consumers.log:
+cargo test -p suss-compile --locked --no-fail-fast --test compiled_printing
+--test conformance --test uncached_expression_artifacts -- --test-threads=2,
+with the existing Rust1.98/target directory/jobs2 environment and no RUSTFLAGS.
+Observe terminal result, then unchanged3-expression example and final bootstrap
+reproduction. This is not the exact full workspace gate; no new PR/review/CI or
+M3 completion claim. Constructor/synthetic/foreign names, complete printer
+storage/body branches and all original M3 schema/cache/evaluator/lifecycle gates
+remain open. No PR merged by the agent.
+
+Final consumer56252 is now terminal0 on bounded allocation/final source:
+printing16 pass/0 fail/ignore/filter,636.37s. All16 original source cases match
+pinned outputs in BOTH Stores after GC, including the unmodified anonymous and
+named function contexts; original sources/assertions were not normalized or
+replaced. The eight new name fixtures and all existing printer/storage guards
+also pass in this run. Conformance11 pass/0 fail/2 unchanged manual ignores/
+0 filter,62.91s, including all201 unchanged inputs and additional1057 trie/GC;
+uncached3 pass/0 fail/ignore/filter,11.97s. Raw:
+/private/tmp/suss-function-names-final-consumers.log.
+The unchanged3-expression example is now running in handle9073, raw
+/private/tmp/suss-function-names-final-example.log. Observe to terminal, then
+final bootstrap verification; exact full workspace/PR review/final CI still
+remain required. Constructor/synthetic/foreign names and complete storage/body
+printing remain unassessed, not implicitly excluded or declared complete.
+
+Original example9073 is terminal0 on current source, with all three unchanged
+expressions executed as complete bundles and forced GC before displaying values:
+(+ 1 2) =>3; (defn foo [x] (+ x 1)) (foo 5) =>6;
+(pr-str (defn foo [x] (+ x 1)) (foo 5)) =>"#object[user$foo] 6".
+This is the actual native default user namespace, not an invented function name
+or a substituted source expression. Raw /private/tmp/suss-function-names-final-example.log.
+Final verifier47189 is live, raw /private/tmp/suss-function-names-final-verify.log.
+
+Final source verifier47189 is terminal0: two fresh BOTH pairs match tracked
+artifacts and each other; build identity invalidation passes;4 bootstrap tests
+pass/0 fail/ignore/filter,12.47s with Java/Node absent. Raw
+/private/tmp/suss-function-names-final-verify.log.
+An older default-printer patch rationale still described now-implemented
+print-map/keyword/source function-name helpers as staged. A superseding note now
+records their actual evidence and preserves remaining constructor/storage/regex/
+body limitations. Source body is unchanged; importer regenerates manifest
+provenance. Refresh BOTH artifact metadata and reproduce again before full baseline.
+
+Provenance-note refresh98895 is terminal0. Final metadata verifier92187 is
+terminal0: two fresh BOTH phase pairs reproduce each other/tracked bytes, identity
+invalidation checks pass,4 bootstrap tests pass/0 fail/ignore/filter,13.15s with
+Java/Node absent. Raw /private/tmp/suss-function-names-provenance-verify.log.
+The source body and previously passing consumer/example results are unchanged;
+manifest/bootstrap metadata now includes the corrected provenance rationale.
+
+Exact full workspace baseline is now live in handle91887, sole root heavy owner:
+RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2
+Raw /private/tmp/suss-m3-uncached-expression-full-baseline.log.
+Do not claim this pending result as passing; observe the existing handle to
+terminal, do not restart because an observation times out. Once actual full
+baseline passes, commit/push a partial Refs#14 PR based on #208, dispatch its
+independent review, push significant fixes and require final-head CI/raw audit.
+Do not merge. All earlier handles this turn are terminal. The full M3 objective
+remains unchanged, with byte-only/prototype/Wasm/frontend migration, evaluator
+retirement, full macro/schema/cache/reload policy and rooted pending-I/O lifecycle/
+live-heap versus code accounting still required.
+
+### Main ancestry refresh during uncached-entrypoint validation
+
+GitHub now reports #203/#204 and #206/#207/#208 merged, with no open PRs.
+Fetched main at268a12827c72b102dea131397f26a5ab59e72507. Its tree equals
+old #208 headc9dbe18053901a1a884c9397648f6f9ac91dcfaa exactly
+(tree4d174a5a8cb71ee27721c8589d88a49043766071). Rebased ongoing branch
+portable/m3-uncached-expression-entrypoints with
+`git rebase --autostash --onto origin/main HEAD`; all107 pending file hashes
+matched before/after. No source or bootstrap bytes changed; no PR merged by
+the agent. Pending local work is not yet committed or pushed.
+
+Baseline handle91887 remains confirmed live by write_stdin. Strict audit of
+only its completed prefix records22 groups/90 passed/0 failed/ignored/filtered,
+no doctest groups yet; declaration metadata suite is still in progress. Raw
+full log remains /private/tmp/suss-m3-uncached-expression-full-baseline.log;
+prefix audit /private/tmp/suss-m3-baseline-completed-prefix-audit.json.
+This is explicitly not a full baseline success. No source edits or second
+heavy Rust owner were introduced during the run. Existing focused evidence
+therefore remains applicable after this ancestry-only rebase.
+
+Re-read current GitHub acceptance for #12–#15: all four remain OPEN. Next task
+is unchanged: observe91887 to terminal, audit every suite/name/outcome and
+all four doctest groups, then prepare partial Refs#14 PR with independent
+review/significant fixes/final-head CI. Continue byte-only/prototype/Wasm
+frontend migration and evaluator retirement, complete macro/schema/cache
+acceptance, reload/failure isolation, and rooted pending-I/O cleanup with
+separate live-heap/code counters. No M3 completion is claimed.
+
+Draft PR preparation now overlaps the still-live91887 baseline so independent
+source review can proceed while root retains sole heavy-test ownership. The
+source snapshot is unchanged. The PR must remain draft/unready until terminal
+full-workspace audit, significant review fixes and final-head CI are complete.
+Reviewer should begin read-only and coordinate all source changes and Rust
+commands with root; any source fix requires appropriate revalidation.

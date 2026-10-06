@@ -54,6 +54,32 @@
 
 ;; Original declarations for retained subvector mutual references.
 (declare Subvec build-subvec subvec seq-iter)
+
+;; Original GC-owned UTF-16 storage for the retained printer's string writes.
+;; This is not an implementation of Closure's general interop StringBuffer API.
+;; The writer retains its actual buffer result, not an atom or a host-side ID.
+(deftype BootstrapStringBuffer [^:mutable contents]
+  Object
+  (append [this text]
+    (set! (.-contents this) (suss.bootstrap/concat-string contents text))
+    this)
+  (toString [_] contents))
+
+;; Mutual printer reference, uninitialized until the retained implementation loads.
+(declare pr-writer)
+
+;; Full default printer dependency still pending; no fabricated fallback.
+(declare pr-writer-impl)
+
+;; Staged default printer dependencies. No placeholder implementation: calls to
+;; unfinished host/storage operations must raise a visible language exception.
+(declare ^:private pr-constructor-writer ^:private pr-object-map
+         ^:private pr-object-keyword? ^:private pr-function-name
+         ^:private pr-date? ^:private pr-object-constructor-string
+         ^:private pr-constructor-display-name ^:private pr-object-constructor-name
+         ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
+
+(declare ^:private keyword-name-parts)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -5085,6 +5111,410 @@
     ([ns name]
      (let [sym-str (if-not (nil? ns) (str_ ns "/" name) name)]
        (Symbol. ns name sym-str nil nil)))))
+
+(defprotocol IWriter
+  "Protocol for writing. Currently only implemented by StringBufferWriter."
+  (-write [writer s]
+    "Writes s with writer and returns the result.")
+  (-flush [writer]
+    "Flush writer."))
+
+(def
+  ^{:dynamic true
+    :doc "When set to logical false, strings and characters will be printed with
+  non-alphanumeric characters converted to the appropriate escape sequences.
+
+  Defaults to true"}
+  *print-readably* true)
+
+(def
+  ^{:dynamic true
+    :doc "If set to logical true, when printing an object, its metadata will also
+  be printed in a form that can be read back by the reader.
+
+  Defaults to false."}
+  *print-meta* false)
+
+(def
+  ^{:dynamic true
+    :doc "When set to logical true, objects will be printed in a way that preserves
+  their type when read in later.
+
+  Defaults to false."}
+  *print-dup* false)
+
+(def
+  ^{:dynamic true
+    :doc "*print-namespace-maps* controls whether the printer will print
+  namespace map literal syntax.
+
+  Defaults to false, but the REPL binds it to true."}
+  *print-namespace-maps* false)
+
+(def
+  ^{:dynamic true
+    :doc "*print-length* controls how many items of each collection the
+  printer will print. If it is bound to logical false, there is no
+  limit. Otherwise, it must be bound to an integer indicating the maximum
+  number of items of each collection to print. If a collection contains
+  more items, the printer will print items up to the limit followed by
+  '...' to represent the remaining items. The root binding is nil
+  indicating no limit."
+    :jsdoc ["@type {null|number}"]}
+  *print-length* nil)
+
+(def
+  ^{:dynamic true
+    :doc "*print-level* controls how many levels deep the printer will
+  print nested objects. If it is bound to logical false, there is no
+  limit. Otherwise, it must be bound to an integer indicating the maximum
+  level to print. Each argument to print is at level 0; if an argument is a
+  collection, its items are at level 1; and so on. If an object is a
+  collection and is at a level greater than or equal to the value bound to
+  *print-level*, the printer prints '#' to represent it. The root binding
+  is nil indicating no limit."
+    :jsdoc ["@type {null|number}"]}
+  *print-level* nil)
+
+(def
+  ^{:dynamic true
+    :doc "*print-fns-bodies* controls whether functions print their source or
+    only their names."}
+  *print-fn-bodies* false)
+
+(def ^:private pr-opts-readably
+  (fn [opts]
+  (if-not (nil? opts)
+    (:readably opts)
+    *print-readably*)))
+
+(def ^:private pr-opts-meta
+  (fn [opts]
+  (if-not (nil? opts)
+    (:meta opts)
+    *print-meta*)))
+
+(def ^:private pr-opts-dup
+  (fn [opts]
+  (if-not (nil? opts)
+    (:dup opts)
+    *print-dup*)))
+
+(def ^:private pr-opts-len
+  (fn [opts]
+  (if-not (nil? opts)
+    (:print-length opts)
+    *print-length*)))
+
+(def write-all
+  (fn [writer & ss]
+  (loop [ss (seq ss)]
+    (when-not (nil? ss)
+      (-write writer (first ss))
+      (recur (next ss))))))
+
+(deftype StringBufferWriter [sb]
+  IWriter
+  (-write [_ s] (.append sb s))
+  (-flush [_] nil))
+
+(def ^:private char-escapes
+  {
+    "\"" "\\\""
+    "\\" "\\\\"
+    "\b" "\\b"
+    "\f" "\\f"
+    "\n" "\\n"
+    "\r" "\\r"
+    "\t" "\\t"})
+
+(def ^:private quote-string
+  (fn [s]
+    (loop [i 0 result "\""]
+      (if (< i (.-length s))
+        (let [unit (suss.bootstrap/string-slice s i (inc i))
+              escaped (get char-escapes unit)]
+          (recur (inc i)
+                 (suss.bootstrap/concat-string result (if escaped escaped unit))))
+        (suss.bootstrap/concat-string result "\"")))))
+
+(def pr-sequential-writer
+  (fn [writer print-one begin sep end opts coll]
+  (binding [*print-level* (when-not (nil? *print-level*) (dec *print-level*))]
+    (if (and (not (nil? *print-level*)) (neg? *print-level*))
+      (-write writer "#")
+      (do
+        (-write writer begin)
+        (if (zero? (pr-opts-len opts))
+          (when (seq coll)
+            (-write writer (or (:more-marker opts) "...")))
+          (do
+            (when (seq coll)
+              (print-one (first coll) writer opts))
+            (loop [coll (next coll) n (dec (pr-opts-len opts))]
+              (if (and coll (or (nil? n) (not (zero? n))))
+                (do
+                  (-write writer sep)
+                  (print-one (first coll) writer opts)
+                  (recur (next coll) (dec n)))
+                (when (and (seq coll) (zero? n))
+                  (-write writer sep)
+                  (-write writer (or (:more-marker opts) "...")))))))
+        (-write writer end))))))
+
+(def print-meta?
+  (fn [opts obj]
+  (and (boolean (pr-opts-meta opts))
+       (implements? IMeta obj)
+       (not (nil? (meta obj))))))
+
+(def pr-seq-writer
+  (fn [objs writer opts]
+  (pr-writer (first objs) writer opts)
+  (loop [objs (next objs)]
+    (when-not (nil? objs)
+      (-write writer " ")
+      (pr-writer (first objs) writer opts)
+      (recur (next objs))))))
+
+(def empty?
+  "Returns true if coll has no items. To check the emptiness of a seq,
+  please use the idiom (seq x) rather than (not (empty? x))"
+  (fn [coll]
+  (cond
+    (nil? coll)
+    true
+
+    (satisfies? ICounted coll)
+    (zero? (-count coll))
+
+    :else
+    (not (seq coll)))))
+
+(def ^:private pr-writer
+  "Prefer this to pr-seq, because it makes the printing function
+   configurable, allowing efficient implementations such as appending
+   to a StringBuffer."
+  (fn [obj writer opts]
+  (if-let [alt-impl (:alt-impl opts)]
+    (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))
+    (pr-writer-impl obj writer opts))))
+
+(def pr-str*
+  "Support so that collections can implement toString without
+   loading all the printing machinery."
+  (fn [^not-native obj]
+  (let [sb (BootstrapStringBuffer. "")
+        writer (StringBufferWriter. sb)]
+    (-pr-writer obj writer nil)
+    (-flush writer)
+    (.toString sb))))
+
+(def ^:private pr-sb-with-opts
+  (fn [objs opts]
+  (let [sb (BootstrapStringBuffer. "")
+        writer (StringBufferWriter. sb)]
+    (pr-seq-writer objs writer opts)
+    (-flush writer)
+    sb)))
+
+(def pr-str-with-opts
+  "Prints a sequence of objects to a string, observing all the
+  options given in opts"
+  (fn [objs opts]
+  (if (empty? objs)
+    ""
+    (str_ (pr-sb-with-opts objs opts)))))
+
+(def pr-str
+  "pr to a string, returning it. Fundamental entrypoint to IPrintWithWriter."
+  (fn [& objs]
+  (pr-str-with-opts objs nil)))
+
+(def object?
+  "Returns true if x's constructor is Object"
+  (fn [x]
+  (if-not (nil? x)
+    (if (suss.bootstrap/native-object? x)
+      (identical? (suss.bootstrap/object-get x "constructor")
+                  (suss.bootstrap/object-get (suss.bootstrap/object-default-prototype) "constructor"))
+      false)
+    false)))
+
+(def ^:private pr-writer-impl
+  (fn [obj writer opts]
+  (cond
+    (nil? obj) (-write writer "nil")
+    :else
+    (do
+      (when (print-meta? opts obj)
+        (-write writer "^")
+        (pr-writer (meta obj) writer opts)
+        (-write writer " "))
+      (cond
+        ;; FIXME: can we figure out something better here?
+        ;; handle CLJS ctors
+        (suss.bootstrap/type-constructor? obj)
+        (pr-constructor-writer obj writer opts)
+
+        ; Use the new, more efficient, IPrintWithWriter interface when possible.
+        (satisfies? IPrintWithWriter obj)
+        (-pr-writer obj writer opts)
+
+        (or (true? obj) (false? obj))
+        (-write writer (str_ obj))
+
+        (number? obj)
+        (-write writer
+          (cond
+            (not (== obj obj)) "##NaN"
+            (identical? obj ##Inf) "##Inf"
+            (identical? obj ##-Inf) "##-Inf"
+            :else (str_ obj)))
+
+        (object? obj)
+        (do
+          (-write writer "#js ")
+          (print-map
+            (pr-object-map
+              (js-keys obj)
+              (fn [k]
+                (MapEntry.
+                  (if (pr-object-keyword? k) (keyword k) k)
+                  (unchecked-get obj k)
+                  nil)))
+            pr-writer writer opts))
+
+        (array? obj)
+        (pr-sequential-writer writer pr-writer "#js [" " " "]" opts obj)
+
+        (string? obj)
+        (if (pr-opts-readably opts)
+          (-write writer (quote-string obj))
+          (-write writer obj))
+
+        (js-fn? obj)
+        (let [name (pr-function-name obj)
+              name (if (or (nil? name) (= "" name))
+                     "Function"
+                     name)]
+          (write-all writer "#object[" name
+            (if *print-fn-bodies*
+              (str_ " \"" (str_ obj) "\"")
+              "")
+            "]"))
+
+        (pr-date? obj)
+        (let [normalize (fn [n len]
+                          (loop [ns (str_ n)]
+                            (if (< (count ns) len)
+                              (recur (str_ "0" ns))
+                              ns)))]
+          (write-all writer
+            "#inst \""
+            (normalize (.getUTCFullYear obj) 4)     "-"
+            (normalize (inc (.getUTCMonth obj)) 2)  "-"
+            (normalize (.getUTCDate obj) 2)         "T"
+            (normalize (.getUTCHours obj) 2)        ":"
+            (normalize (.getUTCMinutes obj) 2)      ":"
+            (normalize (.getUTCSeconds obj) 2)      "."
+            (normalize (.getUTCMilliseconds obj) 3) "-"
+            "00:00\""))
+
+        (regexp? obj) (write-all writer "#\"" (.-source obj) "\"")
+
+        (js-symbol? obj) (write-all writer "#object[" (.toString obj) "]" )
+
+        :else
+        (if (pr-object-constructor-string obj)
+          (write-all writer
+            "#object[" (pr-constructor-display-name (pr-object-constructor-string obj)) "]")
+          (let [name (pr-object-constructor-name obj)
+                name (if (or (nil? name) (= "" name))
+                       "Object"
+                       name)]
+            (if (nil? (pr-object-constructor obj))
+              (write-all writer "#object[" name "]")
+              (write-all writer "#object[" name " " (str_ obj) "]")))))))))
+
+(def keyword
+  "Returns a Keyword with the given namespace and name.  Do not use :
+  in the keyword strings, it will be added automatically."
+  (fn ([name] (cond
+            (keyword? name) name
+            (symbol? name) (Keyword.
+                             (cljs.core/namespace name)
+                             (cljs.core/name name) (.-str name) nil)
+            (= "/" name) (Keyword. nil name name nil)
+            (string? name) (let [parts (keyword-name-parts name)]
+                             (if (== (alength parts) 2)
+                               (Keyword. (aget parts 0) (aget parts 1) name nil)
+                               (Keyword. nil (aget parts 0) name nil)))))
+  ([ns name]
+   (let [ns   (cond
+                (keyword? ns) (cljs.core/name ns)
+                (symbol? ns)  (cljs.core/name ns)
+                :else ns)
+         name (cond
+                (keyword? name) (cljs.core/name name)
+                (symbol? name) (cljs.core/name name)
+                :else name)]
+     (Keyword. ns name (suss.bootstrap/concat-string (str_ (when ns (suss.bootstrap/concat-string (str_ ns) (str_ "/")))) (str_ name)) nil)))))
+
+(def ^:private strip-ns
+  (fn [named]
+  (if (symbol? named)
+    (symbol nil (name named))
+    (keyword nil (name named)))))
+
+(def ^:private lift-ns
+  "Returns #js [lifted-ns lifted-map] or nil if m can't be lifted."
+  (fn [m]
+  (when *print-namespace-maps*
+    (let [lm (array)
+          initial-cursor (seq m)
+          initial-seq (seq initial-cursor)
+          initial-entry (first initial-seq)
+          initial-entries (next initial-seq)
+          initial-k (nth initial-entry 0 nil)
+          initial-v (nth initial-entry 1 nil)]
+      (loop [ns nil cursor initial-cursor]
+        (let [seq-cursor (seq cursor)
+              entry (first seq-cursor)
+              entries (next seq-cursor)
+              k (nth entry 0 nil)
+              v (nth entry 1 nil)]
+        (if entry
+          (when (or (keyword? k) (symbol? k))
+            (if ns
+              (when (= ns (namespace k))
+                (.push lm (MapEntry. (strip-ns k) v nil))
+                (recur ns entries))
+              (let [new-ns (namespace k)]
+                (when new-ns
+                  (.push lm (MapEntry. (strip-ns k) v nil))
+                  (recur new-ns entries)))))
+          (array ns lm))))))))
+
+(def print-prefix-map
+  (fn [prefix m print-one writer opts]
+  (pr-sequential-writer
+    writer
+    (fn [e w opts]
+      (do (print-one (key e) w opts)
+          (-write w \space)
+          (print-one (val e) w opts)))
+    (suss.bootstrap/concat-string (str_ prefix) (str_ "{")) ", " "}"
+    opts (seq m))))
+
+(def print-map
+  (fn [m print-one writer opts]
+  (let [ns&lift-map (when (map? m)
+                      (lift-ns m))
+        ns (if (nil? ns&lift-map) nil (aget ns&lift-map 0))]
+    (if ns
+      (print-prefix-map (suss.bootstrap/concat-string (str_ "#:" ) (str_ ns)) (aget ns&lift-map 1) print-one writer opts)
+      (print-prefix-map nil m print-one writer opts)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -5255,6 +5685,74 @@
               t (-as-transient (.-EMPTY PersistentHashSet))]
           (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))
           (-persistent! t))))
+
+(do
+(extend-type LazySeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type IndexedSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type RSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type NodeSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type ArrayNodeSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type List IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Cons IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type EmptyList IPrintWithWriter
+  (-pr-writer [coll writer opts] (-write writer "()")))
+
+(extend-type PersistentVector IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type ChunkedCons IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type ChunkedSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Subvec IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type MapEntry IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type KeySeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type PersistentArrayMapSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type PersistentArrayMap IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (print-map coll pr-writer writer opts)))
+
+(extend-type PersistentHashMap IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (print-map coll pr-writer writer opts)))
+
+(extend-type PersistentHashSet IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#{" " " "}" opts coll)))
+
+(extend-type Atom IPrintWithWriter
+  (-pr-writer [a writer opts]
+    (-write writer "#object[cljs.core.Atom ")
+    (pr-writer {:val (.-state a)} writer opts)
+    (-write writer "]")))
+
+(extend-type Var IPrintWithWriter
+  (-pr-writer [a writer opts]
+    (-write writer "#'")
+    (pr-writer (.-sym a) writer opts))))
 ;; Original Suss WIT integer foundations, not extracted upstream source.
 ;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
 ;; Decimal parsing never converts the complete integer through binary64.
@@ -5338,3 +5836,19 @@
           (let [number (+ (* magnitude-high 4294967296) magnitude-low)]
             (if negative (- number) number))
           (throw (suss.bootstrap/error "Exact integer 64-bit wit-to-number exceeds safe binary64 integer range")))))))
+
+;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
+;; Every empty/trailing part is retained. This is not general JS String.split.
+(def ^:private keyword-name-parts
+  (fn [text]
+    (let [parts (array) length (count text)]
+      (loop [index 0 start 0]
+        (if (< index length)
+          (if (== (.charCodeAt text index) 47)
+            (do (.push parts (suss.bootstrap/string-slice text start index))
+                (recur (inc index) (inc index)))
+            (recur (inc index) start))
+          (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
+
+;; Original Suss adaptation: read the source closure's owned UTF16 label.
+(def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))

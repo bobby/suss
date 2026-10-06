@@ -168,6 +168,7 @@ fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
         "^{:mutable false} x",
         "^{:mutable nil} x",
         "^number x",
+        "^{:file \"fields.sus\" :line 2 :column 3 :end-line 2 :end-column 4} x",
         "^{:mutable false} ^:mutable x",
     ] {
         let source =
@@ -200,6 +201,9 @@ fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
             .message
             .contains("Unsupported type field attribute")
     );
+    // Indexing-reader facts must survive macro transport without rejecting an
+    // ordinary field or obscuring its actual mutation flag.
+    portable::compile(&format!("{prefix}(deftype T [^{{:file \"fields.sus\" :line 2 :column 3 :end-line 2 :end-column 4 :mutable true}} x] P (read [this] x) (write [this v] (set! x v)))")).unwrap();
     // Scope metadata does not leak out of a method into unrelated local bindings.
     assert!(portable::compile(&format!("{prefix}(deftype T [^:mutable x] P (read [this] x) (write [this v] (set! x v))) (let [x 1] (set! x 2))")).is_err());
 }

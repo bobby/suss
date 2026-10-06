@@ -481,7 +481,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         );
         guard(&mut body, payload, ARGS);
         array(&mut body, payload);
-        body.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
+        body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
         nominal::error(&mut body);
         body.push(End);
         array(&mut body, payload);

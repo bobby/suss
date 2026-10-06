@@ -55,7 +55,32 @@ def verify_payload(record, source, loader):
                 original_target[1] = '(.-EMPTY_NODE PersistentVector)'
             if original_target == ['set!', '(.-HASHMAP-THRESHOLD PersistentArrayMap)']:
                 original_target[1] = '(.-HASHMAP_THRESHOLD PersistentArrayMap)'
-            if (len(forms) != 1 or forms[0].kind != 'list'
+            if original_target == ['extend-protocol', 'IPrintWithWriter']:
+                # Bootstrap expansion may install the stanzas whose source types
+                # are loaded. Preserve their order, targets and exact methods;
+                # never accept invented types, rewritten bodies or duplicate
+                # dispatch entries through this expansion path.
+                upstream = originals[0].children
+                stanzas = [(text[t.start:t.end], text[m.start:m.end])
+                           for t, m in zip(upstream[2::2], upstream[3::2])]
+                if (len(forms) != 1 or forms[0].kind != 'list'
+                        or len(forms[0].children) < 2
+                        or replacement[forms[0].children[0].start:forms[0].children[0].end] != 'do'
+                        ):
+                    raise ValueError('printer extension requires ordered exact source stanzas')
+                previous = -1
+                for extension in forms[0].children[1:]:
+                    children = extension.children
+                    if (extension.kind != 'list' or len(children) != 4
+                            or replacement[children[0].start:children[0].end] != 'extend-type'
+                            or replacement[children[2].start:children[2].end] != 'IPrintWithWriter'):
+                        raise ValueError('printer extension requires ordered exact source stanzas')
+                    stanza = (replacement[children[1].start:children[1].end],
+                              replacement[children[3].start:children[3].end])
+                    if stanza not in stanzas or stanzas.index(stanza) <= previous:
+                        raise ValueError('printer extension requires ordered exact source stanzas')
+                    previous = stanzas.index(stanza)
+            elif (len(forms) != 1 or forms[0].kind != 'list'
                     or len(forms[0].children) < 2
                     or [replacement[x.start:x.end] for x in forms[0].children[:2]]
                     != original_target):

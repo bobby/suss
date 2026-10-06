@@ -913,3 +913,109 @@ red records. Six identifier tests, public/preflight/GC checks and Java/Node-free
 BOTHphase reproduction pass. The overlay remains partial388reviewed/677unassessed;
 review/full/final-head CI and original M3 acceptance remain pending. See
 [expression artifacts](../runtime/compiled-expression-artifacts.md).
+
+
+Uncached expression migration now retains fourteen additional pinned printing
+prerequisites: `IWriter`, `StringBufferWriter`, the complete `write-all` loop,
+seven dynamic printing variables and four private option helpers. Their source,
+patch and loader hashes and EPL notices are packaged by the importer. Two focused
+native regressions execute in both phases and independently decode after GC:
+ordered writes and throw recovery, dynamic option restoration, append identity and
+UTF-16 buffer contents. This is partial source-port evidence (402 reviewed,
+663 unassessed declarations), not full printing compatibility. The shared sixteen
+printing expressions match a fresh pinned oracle; native execution still fails
+at the first unresolved `pr-str` case. No declaration or M3 issue is complete.
+
+Private `char-escapes` and `quote-string` now retain all seven pinned replacements
+with string-keyed map storage and checked UTF-16 traversal replacing the original
+JS object/regex storage. A third focused regression matches exact escape units,
+lone surrogate and astral units in both phases after GC. Current provenance checks
+verify 307 packaged files and 404 reviewed / 661 unassessed declarations. The
+fresh Java/Node-free two-build bootstrap reproduction and four executing bootstrap
+tests pass; all 178 Python checks pass. The complete printer is still unfinished.
+
+
+Nine further printer dependencies are retained whole, including sequential
+formatting, metadata detection, configurable writer dispatch and public string
+entrypoints. Sequential limits/markers and alternate-writer effect ordering execute
+in both phases after GC. The full 16-case corpus now passes the empty case, but
+default printing remains unfinished. Provenance verifies316 files; overlay413
+reviewed/652 unassessed declarations. Rich retained-core macro environments exposed
+an aggregate graph-capacity failure: the complete graph measures66,474 recipes.
+A compile-only two-phase regression failed the old65,536 limit and passes the new
+bounded131,072 aggregate limit. Per-form, depth, string-storage, key-storage and
+materialization-work guards are unchanged; no full printing/M3 claim follows.
+
+
+Current default printer continuation supersedes the earlier unresolved-entrypoint
+results above. The complete pinned `pr-writer-impl` and `object?` declarations are
+retained with hashes, explicit adaptations and EPL notices:318 packaged files,
+415 reviewed/650 unassessed declarations, both new declarations in-progress.
+No default branch is deleted; unavailable host/storage/name and collection paths
+have explicit unfinished dependencies. A descriptor-owned type-value guard passes
+both-phase GC/redefinition tests. The public constructor-identity predicate has17
+fresh pinned observations matching both phases, including shadowing/null prototypes.
+The shared16 printing corpus passes its first seven Runtime cases and fails at
+collections; later cases and its Macro execution remain unverified. This is partial
+#14 progress, not complete printing, host-object compatibility or M3 acceptance.
+
+
+Map formatter continuation: the complete pinned `keyword`, `strip-ns`, `lift-ns`,
+`print-prefix-map` and `print-map` declarations are retained, with original source
+hashes/EPL notices and explicit in-progress adaptations. Provenance now verifies
+323 packaged files and420 reviewed/645 unassessed declarations. Keyword preserves
+both arities, identity/Symbol conversion, empty/trailing/multiple slash parts,
+namespace/name conversion, and UTF-16 units. Its fixed slash split uses original
+owned UTF-16 storage, not general JavaScript split interoperability.
+
+A fresh pinned oracle exposed the difference between multi-argument `str_` macro
+calls and its first-class runtime function: macro calls convert each argument
+before concatenation; runtime nil-first calls return empty. The retained keyword
+and map formatter call sites now expand the macro behavior to ordered single-
+argument conversions/concatenation. Runtime `str_` remains unchanged, and its
+nil-first behavior has fresh primary/native evidence. General analyzer-dependent
+`str_` macro implementation remains unfinished.
+
+The explicit loop binding expansion also preserves the pinned macro's distinct
+initial and per-iteration destructuring. The `(seq m)` initializer executes once;
+custom seq/first/next/nth callbacks expose both sets of bindings. A shared custom
+cursor/indexed-entry trace agrees with fresh pinned generated/executed code.
+Four shared fixture results match both Runtime/Macro phases after forced GC:
+15 keyword observations, seven map writer traces plus option restoration, three
+runtime string-function calls, and the custom cursor/indexed-entry trace. These
+checks cover formatting/namespace lifting and effects, not full collection
+`IPrintWithWriter` implementations or general lazy/chunked acceptance.
+
+The complete pinned `extend-protocol IPrintWithWriter` form (core.cljs
+10692–10810) is now retained by standalone loader provenance. Its bootstrap
+adapter expands the 20 stanzas for loaded source types into ordered `extend-type`
+forms with unchanged method bodies: LazySeq, IndexedSeq, RSeq, NodeSeq,
+ArrayNodeSeq, List, Cons, EmptyList, PersistentVector, ChunkedCons, ChunkedSeq,
+Subvec, MapEntry, KeySeq, PersistentArrayMapSeq, PersistentArrayMap,
+PersistentHashMap, PersistentHashSet, Atom and Var. The verifier rejects invented
+targets, changed methods, reordered stanzas and duplicates. The remaining 16
+stanzas are explicitly pending their source types: TransformerIterator,
+PersistentQueue, PersistentQueueSeq, PersistentTreeMapSeq, BlackNode, RedNode,
+ValSeq, PersistentTreeMap, PersistentTreeSet, Range, IntegerRange, Cycle, Repeat,
+Iterate, ES6IteratorSeq and Volatile. This source increment does not certify those
+types, complete printing or M3; execution evidence is recorded in the handoff.
+The seven unchanged collection-related printing cases now execute and match
+pinned expectations in both phase Stores after forced GC (173.46s). This includes
+limits, nesting, metadata, dynamic recovery, the actual custom writer protocol and
+left-to-right effects. The custom writer exposed rejection of indexing-reader
+field metadata after compiled macro transport; file/position facts now remain on
+field declarations without changing mutability. Focused mutation checks still
+reject immutable assignment, false flags, local shadowing and unsupported options.
+The full sixteen-case corpus and later function/constructor printing remain open.
+
+Owned source-function names now have eight fresh pinned observations agreeing in
+both Stores after GC, including actual parent scopes, punctuation, arities,
+variadics, public core names and captured/redefined functions with property writes.
+The two original anonymous/named printing cases also agree in both phases. The
+backend adaptation records pinned source locations and the EPL notice. Empty
+labels represent genuine source anonymity; unknown kernel/delegate/foreign names
+are not converted to successful anonymous output. Closure properties and actual
+capture environments remain separate from the rooted UTF16 label. Fourteen
+closure-lowering tests and fifty ABI tests pass, including the owned-label and
+foreign raw-environment regressions. Complete printer constructor/storage/body
+behavior and original M3 acceptance remain open; no declaration is reclassified.

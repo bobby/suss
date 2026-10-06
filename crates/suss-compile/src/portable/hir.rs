@@ -307,6 +307,9 @@ pub enum Nominal {
     CallableGet,
     NamedSet,
     NativeObjectFactory,
+    IsNativeObject,
+    IsTypeConstructor,
+    SourceFunctionName,
     NativeObjectDefaultPrototype,
     NativeObjectGet,
     NativeObjectSet,
@@ -332,6 +335,8 @@ impl Nominal {
             Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
             Self::StringIndexOf => Type::Number,
             Self::IsClosure
+            | Self::IsNativeObject
+            | Self::IsTypeConstructor
             | Self::IsLanguageError
             | Self::Instance
             | Self::Satisfies
@@ -346,7 +351,7 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::LanguageError | Self::IsLanguageError | Self::IsClosure => count == 1,
+                Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::SourceFunctionName => count == 1,
                 Self::CoerceString => count == 1,
                 Self::ConcatString | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1742,6 +1747,9 @@ impl Analyzer<'_> {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
+                "native-object?" => Some(Nominal::IsNativeObject),
+                "type-constructor?" => Some(Nominal::IsTypeConstructor),
+                "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
