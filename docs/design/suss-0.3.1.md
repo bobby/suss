@@ -325,8 +325,8 @@ skipped and unassessed counts separately.
 
 Read this spec, ROADMAP, inventory and handoff before implementation. Select an
 unblocked issue; add a regression before fixing behavior. Implement a bounded
-vertical slice, validate it, then update evidence, known failures and the next
-concrete step. Every milestone closes only when its acceptance evidence exists.
+vertical slice, validate it, then update known failures and post evidence and the
+next concrete step on the GitHub issue. Every milestone closes only when its acceptance evidence exists.
 Record deviations here and change affected tests/docs in the same change.
 
 Decisions accepted 2026-09-29: ClojureScript contract; WASI first; WasmGC required;

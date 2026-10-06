@@ -25,7 +25,7 @@ body:
     id: dependencies
     attributes:
       label: Dependencies
-      description: Milestones and work-package issues, e.g. "M2, #14", or "None".
+      description: 'Milestones and work-package issues, e.g. "M2, #14", or "None".'
     validations:
       required: true
   - type: textarea

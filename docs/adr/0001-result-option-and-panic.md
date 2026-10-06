@@ -7,9 +7,10 @@ Date: 2026-09-29.
 
 The [accepted design](../design/suss-0.3.1.md) targets portable ClojureScript
 semantics, including `nil`, truthiness, and language exceptions. Its WIT boundary
-maps results and options to tagged vectors. The [roadmap](../../ROADMAP.md),
-[compatibility inventory](../compatibility/README.md), and
-[handoff](../roadmap/handoff.md) remain the implementation/evidence authorities.
+maps results and options to tagged vectors. The [roadmap](../../ROADMAP.md) plan,
+[GitHub milestones and issues](https://github.com/bobby/suss/milestones) (status and
+evidence), and the [compatibility inventory](../compatibility/README.md) remain the
+implementation authorities.
 Existing shared-runtime code uses nil/Boolean sentinels and language exception
 tags; this proposal does not establish a replacement runtime.
 
