@@ -20853,3 +20853,38 @@ source snapshot is unchanged. The PR must remain draft/unready until terminal
 full-workspace audit, significant review fixes and final-head CI are complete.
 Reviewer should begin read-only and coordinate all source changes and Rust
 commands with root; any source fix requires appropriate revalidation.
+
+
+### PR #210 independent review: quoted-identifier observer repair
+
+The independent reviewer initially found no significant defect in the inspected
+source at b826135. Root's exact full-workspace baseline91887 subsequently reached
+terminal exit101: the CLI portable_quoted_identifiers suite passed1 and failed2.
+Both failures were its class_id observer's stale two-slot closure wrapper assertion
+(left3/right2, "original environment and property entries"). Raw failure evidence:
+/private/tmp/suss-m3-uncached-expression-full-baseline.log. This is a failed full
+baseline, not a passing prefix or full acceptance result.
+
+The reviewer searched direct wrapper/property readers and found this remaining
+stale observer. It now requires exactly3 entries, independently checks the separate
+property array's key/value shape and the explicitly nil/unavailable source-name
+slot of these kernel type constructors, and forces collection before inspecting
+the rooted constructor. Descriptor identity still comes from the original
+captured environment at slot0. There is no arbitrary-layout fallback or fabricated
+anonymous name. Production source and both bootstrap pairs are unchanged.
+
+First focused repair command85763 was terminal exit101 with Rust E0716 in the new
+observer: a borrowed name outlived its temporary Val. An explicit retained Val
+binding fixes that compilation error. Focused command99898 is terminal exit0:
+RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test portable_quoted_identifiers
+-- --test-threads=2
+All3 tests pass/0 fail/ignored/filtered,2.91s, including all48 unchanged lossless
+primary observations and located error/session-preservation checks. Raw:
+/private/tmp/suss-pr210-review-quoted-identifiers-final.log. Independent Python179,
+core import323, licensed standalone provenance22 and all stored primary printing/
+object/map/function-name comparisons also passed during the earlier read-only
+review. No claim follows that the repaired full workspace or final-head CI has
+passed. Require the exact full baseline and final-head CI/raw audit after this
+reviewer-pushed fix. PR #210 remains draft, partial Refs#14; original M3 acceptance
+and the next byte-only/prototype/Wasm/evaluator/lifecycle work remain open.

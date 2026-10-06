@@ -36,6 +36,7 @@ fn compiled_macro_prerequisite_quotes_keep_real_identifiers_and_lists_through_gc
 
 fn class_id(session: &mut Session, name: &str) -> i64 {
     let value = session.eval(&format!("suss.core/{name}")).unwrap();
+    session.collect().unwrap();
     session
         .inspect(&value, |mut store, value| {
             let constructor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
@@ -59,8 +60,28 @@ fn class_id(session: &mut Session, name: &str) -> i64 {
                 .unwrap();
             assert_eq!(
                 storage.len(&store)?,
-                2,
-                "original environment and property entries"
+                3,
+                "original environment, property entries and source display name"
+            );
+            let properties = storage
+                .get(&mut store, 1)?
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .expect("closure property entries are an array");
+            assert_eq!(properties.len(&store)? % 2, 0, "key/value property entries");
+            // Type constructors are kernel closures, not named source functions.
+            // Their unavailable display name remains nil; never interpret it as
+            // an anonymous source function or as part of the captured descriptor.
+            let source_name_value = storage.get(&mut store, 2)?;
+            let source_name = source_name_value.unwrap_anyref().unwrap();
+            assert_eq!(
+                source_name
+                    .as_i31(&store)?
+                    .expect("unset constructor source name")
+                    .get_u32(),
+                0,
+                "constructor source display name is explicitly unavailable"
             );
             let descriptor = storage
                 .get(&mut store, 0)?
