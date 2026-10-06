@@ -1,0 +1,56 @@
+name: Work package
+description: A roadmap work package with a stable ID and acceptance criteria.
+title: "[Mx-yy] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Replace `Mx-yy` in the title with the next unused ID in the milestone and
+        assign the milestone after creating the issue. Status is the issue's
+        open/closed state; record progress and evidence as comments.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+    validations:
+      required: true
+  - type: input
+    id: spec-sections
+    attributes:
+      label: Specification sections
+      description: Sections of docs/design/suss-0.3.1.md, e.g. "3, 4, 11".
+    validations:
+      required: true
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Milestones and work-package issues, e.g. "M2, #14", or "None".
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Do not close until every criterion has executing evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and interfaces
+      value: >-
+        Only this work package and prerequisite repairs; no unrelated runtime/API
+        changes. Implement the public contracts in the referenced specification;
+        record any changed API/ABI and affected inventory entries with the
+        implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Proposed acceptance command (the suite may need to be created).
+      render: sh
+    validations:
+      required: true

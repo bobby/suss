@@ -7,7 +7,7 @@ semantics, WASI 0.3.1 commands and WIT libraries, and browser ES modules.
 The current compiler is a prototype. It does not yet implement that target:
 WIT support is partial, the REPL replays definitions, and the core library has
 known semantic gaps. See the [accepted specification](docs/design/suss-0.3.1.md),
-[roadmap](ROADMAP.md), [compatibility inventory](docs/compatibility/README.md)
+[roadmap](ROADMAP.md) (status in [milestones](https://github.com/bobby/suss/milestones)), [compatibility inventory](docs/compatibility/README.md)
 and [latest implementation evidence](docs/roadmap/handoff.md).
 
 ## Development
