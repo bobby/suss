@@ -77,6 +77,15 @@ declarations are not a public API completeness claim.
 
 The [source and license policy](PROVENANCE.md) applies before importing core forms.
 
+## jank clojure-test-suite corpus
+
+The vendored [jank-lang/clojure-test-suite](clojure-test-suite.md) is the
+function-level conformance corpus: 248 namespaces and 5,834 assertions recorded
+from the pinned ClojureScript oracle, judged host-side against Suss with an exact
+known-failure baseline. Every namespace currently fails before executing (reader
+conditional splicing, `:refer-macros`, numeric literals, reader dispatch and
+auto-resolved keywords); a harness self-test fixture passes 21 of 21 assertions.
+
 ## Prototype baseline
 
 The current legacy corpus has **201 passing cases, zero known failures and zero

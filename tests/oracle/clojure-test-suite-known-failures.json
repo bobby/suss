@@ -1,0 +1,1097 @@
+{
+ "schema": 1,
+ "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+ "namespaces": {
+  "clojure.core-test.abs": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.abs (Some(\"<root>/clojure/core_test/abs.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 519..528"
+  },
+  "clojure.core-test.aclone": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.aclone (Some(\"<root>/clojure/core_test/aclone.cljc\")): Unsupported reader dispatch at bytes 410..412"
+  },
+  "clojure.core-test.add-watch": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unsupported reader dispatch at bytes 1622..1624"
+  },
+  "clojure.core-test.ancestors": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.ancestors (Some(\"<root>/clojure/core_test/ancestors.cljc\")): Auto-resolved keywords require namespace resolution at bytes 866..874"
+  },
+  "clojure.core-test.and": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.and (Some(\"<root>/clojure/core_test/and.cljc\")): Require option is not supported at bytes 143..156"
+  },
+  "clojure.core-test.any-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.any-qmark (Some(\"<root>/clojure/core_test/any_qmark.cljc\")): Require option is not supported at bytes 149..162"
+  },
+  "clojure.core-test.apply": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.apply (Some(\"<root>/clojure/core_test/apply.cljc\")): Require option is not supported at bytes 145..158"
+  },
+  "clojure.core-test.assoc": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.assoc (Some(\"<root>/clojure/core_test/assoc.cljc\")): Splicing reader conditionals are not implemented at bytes 2635..2638"
+  },
+  "clojure.core-test.assoc-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.assoc-bang (Some(\"<root>/clojure/core_test/assoc_bang.cljc\")): Splicing reader conditionals are not implemented at bytes 1696..1699"
+  },
+  "clojure.core-test.associative-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.associative-qmark (Some(\"<root>/clojure/core_test/associative_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 715..718"
+  },
+  "clojure.core-test.atom": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.atom (Some(\"<root>/clojure/core_test/atom.cljc\")): Unsupported reader dispatch at bytes 494..496"
+  },
+  "clojure.core-test.bigdec": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bigdec (Some(\"<root>/clojure/core_test/bigdec.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 336..338"
+  },
+  "clojure.core-test.bigint": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bigint (Some(\"<root>/clojure/core_test/bigint.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 341..343"
+  },
+  "clojure.core-test.binding": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.binding (Some(\"<root>/clojure/core_test/binding.cljc\")): Splicing reader conditionals are not implemented at bytes 2062..2065"
+  },
+  "clojure.core-test.bit-and": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-and (Some(\"<root>/clojure/core_test/bit_and.cljc\")): Require option is not supported at bytes 190..203"
+  },
+  "clojure.core-test.bit-and-not": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-and-not (Some(\"<root>/clojure/core_test/bit_and_not.cljc\")): Require option is not supported at bytes 194..207"
+  },
+  "clojure.core-test.bit-clear": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-clear (Some(\"<root>/clojure/core_test/bit_clear.cljc\")): Require option is not supported at bytes 141..154"
+  },
+  "clojure.core-test.bit-flip": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-flip (Some(\"<root>/clojure/core_test/bit_flip.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.bit-not": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-not (Some(\"<root>/clojure/core_test/bit_not.cljc\")): Require option is not supported at bytes 139..152"
+  },
+  "clojure.core-test.bit-or": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-or (Some(\"<root>/clojure/core_test/bit_or.cljc\")): Require option is not supported at bytes 189..202"
+  },
+  "clojure.core-test.bit-set": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-set (Some(\"<root>/clojure/core_test/bit_set.cljc\")): Splicing reader conditionals are not implemented at bytes 497..500"
+  },
+  "clojure.core-test.bit-shift-left": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-shift-left (Some(\"<root>/clojure/core_test/bit_shift_left.cljc\")): Require option is not supported at bytes 146..159"
+  },
+  "clojure.core-test.bit-shift-right": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-shift-right (Some(\"<root>/clojure/core_test/bit_shift_right.cljc\")): Require option is not supported at bytes 147..160"
+  },
+  "clojure.core-test.bit-test": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-test (Some(\"<root>/clojure/core_test/bit_test.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.bit-xor": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bit-xor (Some(\"<root>/clojure/core_test/bit_xor.cljc\")): Require option is not supported at bytes 190..203"
+  },
+  "clojure.core-test.boolean": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.boolean (Some(\"<root>/clojure/core_test/boolean.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 716..718"
+  },
+  "clojure.core-test.boolean-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.boolean-qmark (Some(\"<root>/clojure/core_test/boolean_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 666..669"
+  },
+  "clojure.core-test.bound-fn": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bound-fn (Some(\"<root>/clojure/core_test/bound_fn.cljc\")): Require option is not supported at bytes 144..157"
+  },
+  "clojure.core-test.bound-fn-star": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Require option is not supported at bytes 149..162"
+  },
+  "clojure.core-test.butlast": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.butlast (Some(\"<root>/clojure/core_test/butlast.cljc\")): Splicing reader conditionals are not implemented at bytes 539..542"
+  },
+  "clojure.core-test.byte": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.byte (Some(\"<root>/clojure/core_test/byte.cljc\")): Splicing reader conditionals are not implemented at bytes 854..857"
+  },
+  "clojure.core-test.case": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 460..462"
+  },
+  "clojure.core-test.char": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.char (Some(\"<root>/clojure/core_test/char.cljc\")): Require option is not supported at bytes 144..157"
+  },
+  "clojure.core-test.char-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 735..737"
+  },
+  "clojure.core-test.coll-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 528..531"
+  },
+  "clojure.core-test.comment": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.comment (Some(\"<root>/clojure/core_test/comment.cljc\")): Require option is not supported at bytes 147..160"
+  },
+  "clojure.core-test.compare": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.compare (Some(\"<root>/clojure/core_test/compare.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 408..413"
+  },
+  "clojure.core-test.concat": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.concat (Some(\"<root>/clojure/core_test/concat.cljc\")): Require option is not supported at bytes 146..159"
+  },
+  "clojure.core-test.conj": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.conj (Some(\"<root>/clojure/core_test/conj.cljc\")): Splicing reader conditionals are not implemented at bytes 1046..1049"
+  },
+  "clojure.core-test.conj-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.conj-bang (Some(\"<root>/clojure/core_test/conj_bang.cljc\")): Splicing reader conditionals are not implemented at bytes 2596..2599"
+  },
+  "clojure.core-test.cons": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.cons (Some(\"<root>/clojure/core_test/cons.cljc\")): Splicing reader conditionals are not implemented at bytes 557..560"
+  },
+  "clojure.core-test.constantly": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Splicing reader conditionals are not implemented at bytes 421..424"
+  },
+  "clojure.core-test.contains-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.contains-qmark (Some(\"<root>/clojure/core_test/contains_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 3585..3588"
+  },
+  "clojure.core-test.count": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.count (Some(\"<root>/clojure/core_test/count.cljc\")): Splicing reader conditionals are not implemented at bytes 594..597"
+  },
+  "clojure.core-test.counted-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.counted-qmark (Some(\"<root>/clojure/core_test/counted_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 482..485"
+  },
+  "clojure.core-test.cycle": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.cycle (Some(\"<root>/clojure/core_test/cycle.cljc\")): Splicing reader conditionals are not implemented at bytes 559..562"
+  },
+  "clojure.core-test.dec": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.dec (Some(\"<root>/clojure/core_test/dec.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 405..407"
+  },
+  "clojure.core-test.decimal-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.decimal-qmark (Some(\"<root>/clojure/core_test/decimal_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 354..358"
+  },
+  "clojure.core-test.denominator": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.denominator (Some(\"<root>/clojure/core_test/denominator.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 285..288"
+  },
+  "clojure.core-test.derive": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.derive (Some(\"<root>/clojure/core_test/derive.cljc\")): Auto-resolved keywords require namespace resolution at bytes 607..613"
+  },
+  "clojure.core-test.descendants": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.descendants (Some(\"<root>/clojure/core_test/descendants.cljc\")): Auto-resolved keywords require namespace resolution at bytes 582..590"
+  },
+  "clojure.core-test.disj": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.disj (Some(\"<root>/clojure/core_test/disj.cljc\")): Unsupported reader dispatch at bytes 1091..1093"
+  },
+  "clojure.core-test.disj-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.disj-bang (Some(\"<root>/clojure/core_test/disj_bang.cljc\")): Require option is not supported at bytes 143..156"
+  },
+  "clojure.core-test.dissoc": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.dissoc (Some(\"<root>/clojure/core_test/dissoc.cljc\")): Unsupported reader dispatch at bytes 1235..1237"
+  },
+  "clojure.core-test.dissoc-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.dissoc-bang (Some(\"<root>/clojure/core_test/dissoc_bang.cljc\")): Require option is not supported at bytes 145..158"
+  },
+  "clojure.core-test.distinct": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.doseq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.doseq (Some(\"<root>/clojure/core_test/doseq.cljc\")): Require option is not supported at bytes 141..154"
+  },
+  "clojure.core-test.double": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.double (Some(\"<root>/clojure/core_test/double.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 368..370"
+  },
+  "clojure.core-test.double-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.double-qmark (Some(\"<root>/clojure/core_test/double_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 350..353"
+  },
+  "clojure.core-test.drop": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.drop (Some(\"<root>/clojure/core_test/drop.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.drop-last": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Require option is not supported at bytes 155..168"
+  },
+  "clojure.core-test.drop-while": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.drop-while (Some(\"<root>/clojure/core_test/drop_while.cljc\")): Unsupported reader dispatch at bytes 667..669"
+  },
+  "clojure.core-test.empty": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.empty (Some(\"<root>/clojure/core_test/empty.cljc\")): Splicing reader conditionals are not implemented at bytes 703..706"
+  },
+  "clojure.core-test.empty-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.empty-qmark (Some(\"<root>/clojure/core_test/empty_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 742..745"
+  },
+  "clojure.core-test.eq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 469..478"
+  },
+  "clojure.core-test.eval": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 710..712"
+  },
+  "clojure.core-test.even-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.even-qmark (Some(\"<root>/clojure/core_test/even_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 434..438"
+  },
+  "clojure.core-test.every-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.every-qmark (Some(\"<root>/clojure/core_test/every_qmark.cljc\")): Require option is not supported at bytes 86..99"
+  },
+  "clojure.core-test.false-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.false-qmark (Some(\"<root>/clojure/core_test/false_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 735..737"
+  },
+  "clojure.core-test.ffirst": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.ffirst (Some(\"<root>/clojure/core_test/ffirst.cljc\")): Splicing reader conditionals are not implemented at bytes 794..797"
+  },
+  "clojure.core-test.find": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.find (Some(\"<root>/clojure/core_test/find.cljc\")): Require option is not supported at bytes 165..178"
+  },
+  "clojure.core-test.first": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.first (Some(\"<root>/clojure/core_test/first.cljc\")): Require option is not supported at bytes 133..146"
+  },
+  "clojure.core-test.float": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.float (Some(\"<root>/clojure/core_test/float.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 417..419"
+  },
+  "clojure.core-test.float-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.float-qmark (Some(\"<root>/clojure/core_test/float_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 340..343"
+  },
+  "clojure.core-test.fn-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.fn-qmark (Some(\"<root>/clojure/core_test/fn_qmark.cljc\")): Unsupported reader dispatch at bytes 514..516"
+  },
+  "clojure.core-test.fnext": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.fnext (Some(\"<root>/clojure/core_test/fnext.cljc\")): Splicing reader conditionals are not implemented at bytes 940..943"
+  },
+  "clojure.core-test.fnil": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.fnil (Some(\"<root>/clojure/core_test/fnil.cljc\")): Require option is not supported at bytes 132..145"
+  },
+  "clojure.core-test.format": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.format (Some(\"<root>/clojure/core_test/format.cljc\")): Splicing reader conditionals are not implemented at bytes 887..890"
+  },
+  "clojure.core-test.get": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.get (Some(\"<root>/clojure/core_test/get.cljc\")): Require option is not supported at bytes 132..145"
+  },
+  "clojure.core-test.get-in": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.get-in (Some(\"<root>/clojure/core_test/get_in.cljc\")): Require option is not supported at bytes 142..155"
+  },
+  "clojure.core-test.group-by": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.group-by (Some(\"<root>/clojure/core_test/group_by.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.gt": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.gt (Some(\"<root>/clojure/core_test/gt.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 636..638"
+  },
+  "clojure.core-test.gt-eq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.gt-eq (Some(\"<root>/clojure/core_test/gt_eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 646..648"
+  },
+  "clojure.core-test.hash-map": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.hash-map (Some(\"<root>/clojure/core_test/hash_map.cljc\")): Splicing reader conditionals are not implemented at bytes 661..664"
+  },
+  "clojure.core-test.hash-set": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.hash-set (Some(\"<root>/clojure/core_test/hash_set.cljc\")): Require option is not supported at bytes 144..157"
+  },
+  "clojure.core-test.ident-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.ident-qmark (Some(\"<root>/clojure/core_test/ident_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 428..430"
+  },
+  "clojure.core-test.identical-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.identical-qmark (Some(\"<root>/clojure/core_test/identical_qmark.cljc\")): Require option is not supported at bytes 143..156"
+  },
+  "clojure.core-test.identity": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): Unsupported reader dispatch at bytes 627..629"
+  },
+  "clojure.core-test.ifn-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unsupported reader dispatch at bytes 581..583"
+  },
+  "clojure.core-test.inc": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.inc (Some(\"<root>/clojure/core_test/inc.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 421..423"
+  },
+  "clojure.core-test.int": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.int (Some(\"<root>/clojure/core_test/int.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 938..940"
+  },
+  "clojure.core-test.int-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.int-qmark (Some(\"<root>/clojure/core_test/int_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 910..913"
+  },
+  "clojure.core-test.integer-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.integer-qmark (Some(\"<root>/clojure/core_test/integer_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 438..441"
+  },
+  "clojure.core-test.interleave": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.interleave (Some(\"<root>/clojure/core_test/interleave.cljc\")): Splicing reader conditionals are not implemented at bytes 642..645"
+  },
+  "clojure.core-test.intern": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.intern (Some(\"<root>/clojure/core_test/intern.cljc\")): Require option is not supported at bytes 134..147"
+  },
+  "clojure.core-test.interpose": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.interpose (Some(\"<root>/clojure/core_test/interpose.cljc\")): Splicing reader conditionals are not implemented at bytes 524..527"
+  },
+  "clojure.core-test.juxt": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.juxt (Some(\"<root>/clojure/core_test/juxt.cljc\")): Unsupported reader dispatch at bytes 1227..1229"
+  },
+  "clojure.core-test.key": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.key (Some(\"<root>/clojure/core_test/key.cljc\")): Splicing reader conditionals are not implemented at bytes 674..677"
+  },
+  "clojure.core-test.keys": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.keys (Some(\"<root>/clojure/core_test/keys.cljc\")): Splicing reader conditionals are not implemented at bytes 693..696"
+  },
+  "clojure.core-test.keyword": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.keyword (Some(\"<root>/clojure/core_test/keyword.cljc\")): Splicing reader conditionals are not implemented at bytes 2529..2532"
+  },
+  "clojure.core-test.keyword-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.keyword-qmark (Some(\"<root>/clojure/core_test/keyword_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 436..438"
+  },
+  "clojure.core-test.last": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.last (Some(\"<root>/clojure/core_test/last.cljc\")): Splicing reader conditionals are not implemented at bytes 613..616"
+  },
+  "clojure.core-test.lazy-seq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.list": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.list (Some(\"<root>/clojure/core_test/list.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1639..1641"
+  },
+  "clojure.core-test.list-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.list-qmark (Some(\"<root>/clojure/core_test/list_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 490..492"
+  },
+  "clojure.core-test.long": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 887..889"
+  },
+  "clojure.core-test.lt": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.lt (Some(\"<root>/clojure/core_test/lt.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 636..638"
+  },
+  "clojure.core-test.lt-eq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.lt-eq (Some(\"<root>/clojure/core_test/lt_eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 644..646"
+  },
+  "clojure.core-test.make-hierarchy": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.make-hierarchy (Some(\"<root>/clojure/core_test/make_hierarchy.cljc\")): Require option is not supported at bytes 136..149"
+  },
+  "clojure.core-test.map": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Splicing reader conditionals are not implemented at bytes 5709..5712"
+  },
+  "clojure.core-test.map-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.map-qmark (Some(\"<root>/clojure/core_test/map_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 392..395"
+  },
+  "clojure.core-test.mapcat": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.mapcat (Some(\"<root>/clojure/core_test/mapcat.cljc\")): Unsupported reader dispatch at bytes 482..484"
+  },
+  "clojure.core-test.max": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.max (Some(\"<root>/clojure/core_test/max.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 340..342"
+  },
+  "clojure.core-test.merge": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Splicing reader conditionals are not implemented at bytes 3678..3681"
+  },
+  "clojure.core-test.min": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.min (Some(\"<root>/clojure/core_test/min.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 340..342"
+  },
+  "clojure.core-test.min-key": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 638..640"
+  },
+  "clojure.core-test.minus": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.minus (Some(\"<root>/clojure/core_test/minus.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 926..928"
+  },
+  "clojure.core-test.mod": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 712..714"
+  },
+  "clojure.core-test.name": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.name (Some(\"<root>/clojure/core_test/name.cljc\")): Require option is not supported at bytes 136..149"
+  },
+  "clojure.core-test.namespace": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.namespace (Some(\"<root>/clojure/core_test/namespace.cljc\")): Require option is not supported at bytes 141..154"
+  },
+  "clojure.core-test.nan-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nan-qmark (Some(\"<root>/clojure/core_test/nan_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 245..248"
+  },
+  "clojure.core-test.neg-int-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 362..365"
+  },
+  "clojure.core-test.neg-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.neg-qmark (Some(\"<root>/clojure/core_test/neg_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 376..379"
+  },
+  "clojure.core-test.next": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.next (Some(\"<root>/clojure/core_test/next.cljc\")): Splicing reader conditionals are not implemented at bytes 735..738"
+  },
+  "clojure.core-test.nfirst": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nfirst (Some(\"<root>/clojure/core_test/nfirst.cljc\")): Splicing reader conditionals are not implemented at bytes 836..839"
+  },
+  "clojure.core-test.nil-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nil-qmark (Some(\"<root>/clojure/core_test/nil_qmark.cljc\")): Require option is not supported at bytes 149..162"
+  },
+  "clojure.core-test.nnext": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nnext (Some(\"<root>/clojure/core_test/nnext.cljc\")): Require option is not supported at bytes 209..222"
+  },
+  "clojure.core-test.not": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.not (Some(\"<root>/clojure/core_test/not.cljc\")): Unsupported reader dispatch at bytes 465..467"
+  },
+  "clojure.core-test.not-empty": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.not-empty (Some(\"<root>/clojure/core_test/not_empty.cljc\")): Splicing reader conditionals are not implemented at bytes 695..698"
+  },
+  "clojure.core-test.not-eq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.not-eq (Some(\"<root>/clojure/core_test/not_eq.cljc\")): Require option is not supported at bytes 117..130"
+  },
+  "clojure.core-test.not-every-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.not-every-qmark (Some(\"<root>/clojure/core_test/not_every_qmark.cljc\")): Require option is not supported at bytes 144..157"
+  },
+  "clojure.core-test.nth": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nth (Some(\"<root>/clojure/core_test/nth.cljc\")): Unsupported reader dispatch at bytes 1748..1750"
+  },
+  "clojure.core-test.nthnext": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nthnext (Some(\"<root>/clojure/core_test/nthnext.cljc\")): Splicing reader conditionals are not implemented at bytes 750..753"
+  },
+  "clojure.core-test.nthrest": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.nthrest (Some(\"<root>/clojure/core_test/nthrest.cljc\")): Splicing reader conditionals are not implemented at bytes 961..964"
+  },
+  "clojure.core-test.num": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Splicing reader conditionals are not implemented at bytes 669..672"
+  },
+  "clojure.core-test.number-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.number-qmark (Some(\"<root>/clojure/core_test/number_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 578..580"
+  },
+  "clojure.core-test.number-range": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Splicing reader conditionals are not implemented at bytes 37..40"
+  },
+  "clojure.core-test.numerator": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.numerator (Some(\"<root>/clojure/core_test/numerator.cljc\")): Splicing reader conditionals are not implemented at bytes 251..254"
+  },
+  "clojure.core-test.odd-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.odd-qmark (Some(\"<root>/clojure/core_test/odd_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 432..436"
+  },
+  "clojure.core-test.or": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.or (Some(\"<root>/clojure/core_test/or.cljc\")): Require option is not supported at bytes 142..155"
+  },
+  "clojure.core-test.parents": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.parents (Some(\"<root>/clojure/core_test/parents.cljc\")): Auto-resolved keywords require namespace resolution at bytes 551..559"
+  },
+  "clojure.core-test.parse-boolean": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.parse-boolean (Some(\"<root>/clojure/core_test/parse_boolean.cljc\")): Require option is not supported at bytes 150..163"
+  },
+  "clojure.core-test.parse-double": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.parse-double (Some(\"<root>/clojure/core_test/parse_double.cljc\")): Require option is not supported at bytes 149..162"
+  },
+  "clojure.core-test.parse-long": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.parse-long (Some(\"<root>/clojure/core_test/parse_long.cljc\")): Splicing reader conditionals are not implemented at bytes 1199..1202"
+  },
+  "clojure.core-test.parse-uuid": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unsupported reader dispatch at bytes 1114..1116"
+  },
+  "clojure.core-test.partial": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.partial (Some(\"<root>/clojure/core_test/partial.cljc\")): Unsupported reader dispatch at bytes 751..753"
+  },
+  "clojure.core-test.partition": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.partition (Some(\"<root>/clojure/core_test/partition.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1041..1043"
+  },
+  "clojure.core-test.peek": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.peek (Some(\"<root>/clojure/core_test/peek.cljc\")): Require option is not supported at bytes 138..151"
+  },
+  "clojure.core-test.persistent-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.persistent-bang (Some(\"<root>/clojure/core_test/persistent_bang.cljc\")): Splicing reader conditionals are not implemented at bytes 997..1000"
+  },
+  "clojure.core-test.plus": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.plus (Some(\"<root>/clojure/core_test/plus.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1246..1248"
+  },
+  "clojure.core-test.plus-squote": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.plus-squote (Some(\"<root>/clojure/core_test/plus_squote.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 507..509"
+  },
+  "clojure.core-test.pop": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.pop (Some(\"<root>/clojure/core_test/pop.cljc\")): Splicing reader conditionals are not implemented at bytes 491..494"
+  },
+  "clojure.core-test.pop-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.pop-bang (Some(\"<root>/clojure/core_test/pop_bang.cljc\")): Splicing reader conditionals are not implemented at bytes 689..692"
+  },
+  "clojure.core-test.pos-int-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 538..540"
+  },
+  "clojure.core-test.pos-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.pos-qmark (Some(\"<root>/clojure/core_test/pos_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 547..549"
+  },
+  "clojure.core-test.pr-str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.pr-str (Some(\"<root>/clojure/core_test/pr_str.cljc\")): Require option is not supported at bytes 134..147"
+  },
+  "clojure.core-test.print-str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.print-str (Some(\"<root>/clojure/core_test/print_str.cljc\")): Require option is not supported at bytes 137..150"
+  },
+  "clojure.core-test.println-str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.println-str (Some(\"<root>/clojure/core_test/println_str.cljc\")): Require option is not supported at bytes 139..152"
+  },
+  "clojure.core-test.prn-str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.prn-str (Some(\"<root>/clojure/core_test/prn_str.cljc\")): Require option is not supported at bytes 135..148"
+  },
+  "clojure.core-test.qualified-ident-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.qualified-ident-qmark (Some(\"<root>/clojure/core_test/qualified_ident_qmark.cljc\")): Auto-resolved keywords require namespace resolution at bytes 567..578"
+  },
+  "clojure.core-test.qualified-keyword-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.qualified-keyword-qmark (Some(\"<root>/clojure/core_test/qualified_keyword_qmark.cljc\")): Auto-resolved keywords require namespace resolution at bytes 536..547"
+  },
+  "clojure.core-test.qualified-symbol-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.qualified-symbol-qmark (Some(\"<root>/clojure/core_test/qualified_symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 500..502"
+  },
+  "clojure.core-test.quot": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.quot (Some(\"<root>/clojure/core_test/quot.cljc\")): Splicing reader conditionals are not implemented at bytes 507..510"
+  },
+  "clojure.core-test.rand": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rand (Some(\"<root>/clojure/core_test/rand.cljc\")): Unsupported reader dispatch at bytes 653..655"
+  },
+  "clojure.core-test.rand-int": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rand-int (Some(\"<root>/clojure/core_test/rand_int.cljc\")): Unsupported reader dispatch at bytes 372..374"
+  },
+  "clojure.core-test.rand-nth": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rand-nth (Some(\"<root>/clojure/core_test/rand_nth.cljc\")): Unsupported reader dispatch at bytes 704..706"
+  },
+  "clojure.core-test.random-sample": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.random-sample (Some(\"<root>/clojure/core_test/random_sample.cljc\")): Unsupported reader dispatch at bytes 473..475"
+  },
+  "clojure.core-test.random-uuid": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.random-uuid (Some(\"<root>/clojure/core_test/random_uuid.cljc\")): Unsupported reader dispatch at bytes 467..469"
+  },
+  "clojure.core-test.ratio-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.ratio-qmark (Some(\"<root>/clojure/core_test/ratio_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 574..576"
+  },
+  "clojure.core-test.rational-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rational-qmark (Some(\"<root>/clojure/core_test/rational_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 440..442"
+  },
+  "clojure.core-test.rationalize": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rationalize (Some(\"<root>/clojure/core_test/rationalize.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 565..567"
+  },
+  "clojure.core-test.realized-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.realized-qmark (Some(\"<root>/clojure/core_test/realized_qmark.cljc\")): Require option is not supported at bytes 150..163"
+  },
+  "clojure.core-test.reduce": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.reduce (Some(\"<root>/clojure/core_test/reduce.cljc\")): Splicing reader conditionals are not implemented at bytes 1498..1501"
+  },
+  "clojure.core-test.rem": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rem (Some(\"<root>/clojure/core_test/rem.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 505..507"
+  },
+  "clojure.core-test.remove": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.remove (Some(\"<root>/clojure/core_test/remove.cljc\")): Unsupported reader dispatch at bytes 1204..1206"
+  },
+  "clojure.core-test.remove-watch": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.repeat": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.repeat (Some(\"<root>/clojure/core_test/repeat.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.repeatedly": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.repeatedly (Some(\"<root>/clojure/core_test/repeatedly.cljc\")): Unsupported reader dispatch at bytes 377..379"
+  },
+  "clojure.core-test.rest": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rest (Some(\"<root>/clojure/core_test/rest.cljc\")): Splicing reader conditionals are not implemented at bytes 714..717"
+  },
+  "clojure.core-test.reverse": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.reverse (Some(\"<root>/clojure/core_test/reverse.cljc\")): Splicing reader conditionals are not implemented at bytes 603..606"
+  },
+  "clojure.core-test.reversible-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.reversible-qmark (Some(\"<root>/clojure/core_test/reversible_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 399..402"
+  },
+  "clojure.core-test.rseq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.rseq (Some(\"<root>/clojure/core_test/rseq.cljc\")): Splicing reader conditionals are not implemented at bytes 475..478"
+  },
+  "clojure.core-test.run-bang": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.run-bang (Some(\"<root>/clojure/core_test/run_bang.cljc\")): Require option is not supported at bytes 83..96"
+  },
+  "clojure.core-test.second": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.second (Some(\"<root>/clojure/core_test/second.cljc\")): Require option is not supported at bytes 134..147"
+  },
+  "clojure.core-test.select-keys": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.select-keys (Some(\"<root>/clojure/core_test/select_keys.cljc\")): Splicing reader conditionals are not implemented at bytes 905..908"
+  },
+  "clojure.core-test.seq": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.seq (Some(\"<root>/clojure/core_test/seq.cljc\")): Splicing reader conditionals are not implemented at bytes 577..580"
+  },
+  "clojure.core-test.seq-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.seq-qmark (Some(\"<root>/clojure/core_test/seq_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 466..469"
+  },
+  "clojure.core-test.seqable-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.seqable-qmark (Some(\"<root>/clojure/core_test/seqable_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 545..547"
+  },
+  "clojure.core-test.sequential-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.sequential-qmark (Some(\"<root>/clojure/core_test/sequential_qmark.cljc\")): Require option is not supported at bytes 145..158"
+  },
+  "clojure.core-test.set": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.set (Some(\"<root>/clojure/core_test/set.cljc\")): Splicing reader conditionals are not implemented at bytes 752..755"
+  },
+  "clojure.core-test.set-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.set-qmark (Some(\"<root>/clojure/core_test/set_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 351..354"
+  },
+  "clojure.core-test.short": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): Splicing reader conditionals are not implemented at bytes 537..540"
+  },
+  "clojure.core-test.shuffle": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.shuffle (Some(\"<root>/clojure/core_test/shuffle.cljc\")): Splicing reader conditionals are not implemented at bytes 958..961"
+  },
+  "clojure.core-test.simple-ident-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.simple-ident-qmark (Some(\"<root>/clojure/core_test/simple_ident_qmark.cljc\")): Auto-resolved keywords require namespace resolution at bytes 459..470"
+  },
+  "clojure.core-test.simple-keyword-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.simple-keyword-qmark (Some(\"<root>/clojure/core_test/simple_keyword_qmark.cljc\")): Auto-resolved keywords require namespace resolution at bytes 418..429"
+  },
+  "clojure.core-test.simple-symbol-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.simple-symbol-qmark (Some(\"<root>/clojure/core_test/simple_symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 488..490"
+  },
+  "clojure.core-test.slash": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.slash (Some(\"<root>/clojure/core_test/slash.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 385..387"
+  },
+  "clojure.core-test.some": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.some (Some(\"<root>/clojure/core_test/some.cljc\")): Unsupported reader dispatch at bytes 1168..1170"
+  },
+  "clojure.core-test.some-fn": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.some-fn (Some(\"<root>/clojure/core_test/some_fn.cljc\")): Unsupported reader dispatch at bytes 473..475"
+  },
+  "clojure.core-test.some-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.some-qmark (Some(\"<root>/clojure/core_test/some_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 388..391"
+  },
+  "clojure.core-test.sort": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.sort (Some(\"<root>/clojure/core_test/sort.cljc\")): Unsupported reader dispatch at bytes 718..720"
+  },
+  "clojure.core-test.sort-by": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.sort-by (Some(\"<root>/clojure/core_test/sort_by.cljc\")): Unsupported reader dispatch at bytes 2101..2103"
+  },
+  "clojure.core-test.sorted-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1101..1103"
+  },
+  "clojure.core-test.special-symbol-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.special-symbol-qmark (Some(\"<root>/clojure/core_test/special_symbol_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 432..435"
+  },
+  "clojure.core-test.star": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.star (Some(\"<root>/clojure/core_test/star.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1119..1121"
+  },
+  "clojure.core-test.star-squote": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.star-squote (Some(\"<root>/clojure/core_test/star_squote.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 487..514"
+  },
+  "clojure.core-test.str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.str (Some(\"<root>/clojure/core_test/str.cljc\")): Splicing reader conditionals are not implemented at bytes 348..351"
+  },
+  "clojure.core-test.string-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.string-qmark (Some(\"<root>/clojure/core_test/string_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 488..491"
+  },
+  "clojure.core-test.subs": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.subs (Some(\"<root>/clojure/core_test/subs.cljc\")): Splicing reader conditionals are not implemented at bytes 966..969"
+  },
+  "clojure.core-test.subvec": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.subvec (Some(\"<root>/clojure/core_test/subvec.cljc\")): Splicing reader conditionals are not implemented at bytes 1027..1030"
+  },
+  "clojure.core-test.symbol": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.symbol (Some(\"<root>/clojure/core_test/symbol.cljc\")): Splicing reader conditionals are not implemented at bytes 2632..2635"
+  },
+  "clojure.core-test.symbol-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.symbol-qmark (Some(\"<root>/clojure/core_test/symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 432..434"
+  },
+  "clojure.core-test.take": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.take (Some(\"<root>/clojure/core_test/take.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.take-last": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.take-last (Some(\"<root>/clojure/core_test/take_last.cljc\")): Require option is not supported at bytes 149..162"
+  },
+  "clojure.core-test.take-nth": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.take-nth (Some(\"<root>/clojure/core_test/take_nth.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.take-while": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.take-while (Some(\"<root>/clojure/core_test/take_while.cljc\")): Unsupported reader dispatch at bytes 287..289"
+  },
+  "clojure.core-test.taps": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.taps (Some(\"<root>/clojure/core_test/taps.cljc\")): Require option is not supported at bytes 68..81"
+  },
+  "clojure.core-test.transient": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.transient (Some(\"<root>/clojure/core_test/transient.cljc\")): Splicing reader conditionals are not implemented at bytes 657..660"
+  },
+  "clojure.core-test.true-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.true-qmark (Some(\"<root>/clojure/core_test/true_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 730..732"
+  },
+  "clojure.core-test.underive": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.underive (Some(\"<root>/clojure/core_test/underive.cljc\")): Auto-resolved keywords require namespace resolution at bytes 294..302"
+  },
+  "clojure.core-test.unsigned-bit-shift-right": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.unsigned-bit-shift-right (Some(\"<root>/clojure/core_test/unsigned_bit_shift_right.cljc\")): Splicing reader conditionals are not implemented at bytes 696..699"
+  },
+  "clojure.core-test.update": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.update (Some(\"<root>/clojure/core_test/update.cljc\")): Splicing reader conditionals are not implemented at bytes 2993..2996"
+  },
+  "clojure.core-test.uuid-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unsupported reader dispatch at bytes 345..347"
+  },
+  "clojure.core-test.val": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.val (Some(\"<root>/clojure/core_test/val.cljc\")): Splicing reader conditionals are not implemented at bytes 673..676"
+  },
+  "clojure.core-test.vals": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.vals (Some(\"<root>/clojure/core_test/vals.cljc\")): Splicing reader conditionals are not implemented at bytes 691..694"
+  },
+  "clojure.core-test.var-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.var-qmark (Some(\"<root>/clojure/core_test/var_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 765..768"
+  },
+  "clojure.core-test.vec": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.vec (Some(\"<root>/clojure/core_test/vec.cljc\")): Splicing reader conditionals are not implemented at bytes 772..775"
+  },
+  "clojure.core-test.vector": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.vector (Some(\"<root>/clojure/core_test/vector.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1449..1451"
+  },
+  "clojure.core-test.vector-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.vector-qmark (Some(\"<root>/clojure/core_test/vector_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 580..582"
+  },
+  "clojure.core-test.when": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.when (Some(\"<root>/clojure/core_test/when.cljc\")): Require option is not supported at bytes 140..153"
+  },
+  "clojure.core-test.when-first": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.when-first (Some(\"<root>/clojure/core_test/when_first.cljc\")): Require option is not supported at bytes 150..163"
+  },
+  "clojure.core-test.when-let": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.when-let (Some(\"<root>/clojure/core_test/when_let.cljc\")): Require option is not supported at bytes 148..161"
+  },
+  "clojure.core-test.when-not": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.when-not (Some(\"<root>/clojure/core_test/when_not.cljc\")): Require option is not supported at bytes 144..157"
+  },
+  "clojure.core-test.with-out-str": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Require option is not supported at bytes 153..166"
+  },
+  "clojure.core-test.with-precision": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.with-precision (Some(\"<root>/clojure/core_test/with_precision.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 352..354"
+  },
+  "clojure.core-test.zero-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.zero-qmark (Some(\"<root>/clojure/core_test/zero_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 384..388"
+  },
+  "clojure.core-test.zipmap": {
+   "stage": "dependency",
+   "diagnostic": "clojure.core-test.zipmap (Some(\"<root>/clojure/core_test/zipmap.cljc\")): Splicing reader conditionals are not implemented at bytes 424..427"
+  },
+  "clojure.edn-test.read-string": {
+   "stage": "dependency",
+   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 6211..6213"
+  },
+  "clojure.string-test.blank-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.blank-qmark (Some(\"<root>/clojure/string_test/blank_qmark.cljc\")): Require option is not supported at bytes 199..212"
+  },
+  "clojure.string-test.capitalize": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.capitalize (Some(\"<root>/clojure/string_test/capitalize.cljc\")): Require option is not supported at bytes 189..202"
+  },
+  "clojure.string-test.ends-with-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.ends-with-qmark (Some(\"<root>/clojure/string_test/ends_with_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 849..852"
+  },
+  "clojure.string-test.escape": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.escape (Some(\"<root>/clojure/string_test/escape.cljc\")): Require option is not supported at bytes 185..198"
+  },
+  "clojure.string-test.lower-case": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.lower-case (Some(\"<root>/clojure/string_test/lower_case.cljc\")): Require option is not supported at bytes 189..202"
+  },
+  "clojure.string-test.replace": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.replace (Some(\"<root>/clojure/string_test/replace.cljc\")): Splicing reader conditionals are not implemented at bytes 1451..1454"
+  },
+  "clojure.string-test.reverse": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.reverse (Some(\"<root>/clojure/string_test/reverse.cljc\")): Require option is not supported at bytes 186..199"
+  },
+  "clojure.string-test.split-lines": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.split-lines (Some(\"<root>/clojure/string_test/split_lines.cljc\")): Require option is not supported at bytes 186..199"
+  },
+  "clojure.string-test.starts-with-qmark": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.starts-with-qmark (Some(\"<root>/clojure/string_test/starts_with_qmark.cljc\")): Splicing reader conditionals are not implemented at bytes 1345..1348"
+  },
+  "clojure.string-test.upper-case": {
+   "stage": "dependency",
+   "diagnostic": "clojure.string-test.upper-case (Some(\"<root>/clojure/string_test/upper_case.cljc\")): Require option is not supported at bytes 189..202"
+  }
+ },
+ "tests": {},
+ "assertions": {},
+ "skip-mismatches": [
+  [
+   "clojure.core-test.bigdec",
+   "bigdec",
+   null
+  ],
+  [
+   "clojure.core-test.bigint",
+   "bigint",
+   null
+  ],
+  [
+   "clojure.core-test.bound-fn",
+   "bound-fn",
+   null
+  ],
+  [
+   "clojure.core-test.bound-fn-star",
+   "bound-fn*",
+   null
+  ],
+  [
+   "clojure.core-test.decimal-qmark",
+   "decimal?",
+   null
+  ],
+  [
+   "clojure.core-test.denominator",
+   "denominator",
+   null
+  ],
+  [
+   "clojure.core-test.format",
+   "format",
+   null
+  ],
+  [
+   "clojure.core-test.ifn-qmark",
+   "promise",
+   "clojure.core-test.ifn-qmark/test-ifn?"
+  ],
+  [
+   "clojure.core-test.intern",
+   "intern",
+   null
+  ],
+  [
+   "clojure.core-test.num",
+   "num",
+   null
+  ],
+  [
+   "clojure.core-test.numerator",
+   "numerator",
+   null
+  ],
+  [
+   "clojure.core-test.plus-squote",
+   "+'",
+   null
+  ],
+  [
+   "clojure.core-test.ratio-qmark",
+   "ratio?",
+   null
+  ],
+  [
+   "clojure.core-test.rational-qmark",
+   "rational?",
+   null
+  ],
+  [
+   "clojure.core-test.rationalize",
+   "rationalize",
+   null
+  ],
+  [
+   "clojure.core-test.realized-qmark",
+   "future",
+   "clojure.core-test.realized-qmark/test-realized?"
+  ],
+  [
+   "clojure.core-test.realized-qmark",
+   "promise",
+   "clojure.core-test.realized-qmark/test-realized?"
+  ],
+  [
+   "clojure.core-test.star-squote",
+   "*'",
+   null
+  ],
+  [
+   "clojure.core-test.with-precision",
+   "with-precision",
+   null
+  ]
+ ]
+}

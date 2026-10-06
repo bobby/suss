@@ -62,3 +62,22 @@ class ReviewOverlayTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class SuiteReferenceTests(unittest.TestCase):
+    def test_reviews_cite_existing_suite_tests_and_assertions(self):
+        ids = {'clojure.core-test.conj/test-conj', 'clojure.core-test.conj/test-conj#3'}
+        for cited in sorted(ids):
+            with self.subTest(cited=cited):
+                review = REVIEW.replace(':tests []', f':tests ["clojure-test-suite:{cited}"]')
+                self.assertEqual(validate(overlay(review), RECORDS, ids), (1, 0))
+        review = REVIEW.replace(':tests []', ':tests ["clojure-test-suite:clojure.core-test.conj/test-conj#999"]')
+        with self.assertRaisesRegex(ValueError, 'unknown clojure-test-suite'):
+            validate(overlay(review), RECORDS, ids)
+
+    def test_checked_in_reference_provides_citable_ids(self):
+        from cljs_reviews import suite_identities
+        ids = suite_identities()
+        self.assertIn('clojure.core-test.conj/test-conj', ids)
+        self.assertIn('clojure.core-test.conj/test-conj#1', ids)
+

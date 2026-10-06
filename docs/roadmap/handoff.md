@@ -20208,3 +20208,38 @@ baseline is actually live in reviewer handle34996, log
 /private/tmp/suss-pr208-review-full.log; no pass is claimed yet. Frozen-head CI
 37382012570 was authoritatively IN_PROGRESS. Reviewer owns sole local heavy;
 root remains light. PR remains draft pending exact full and final-head CI.
+
+## jank clojure-test-suite conformance corpus (#211) — 2026-10-06
+
+Status lives on issue #211; this records commands and limitations. The suite is
+vendored at `95d4a91` (MPL-2.0, byte-exact lock), with the oracle-only
+`when-var-exists` patch kept separate. See
+[docs/compatibility/clojure-test-suite.md](../compatibility/clojure-test-suite.md).
+
+```sh
+python3 scripts/clojure_test_suite.py            # lock + js/ classification
+python3 scripts/clojure_test_suite.py overlap    # legacy overlap current
+python3 scripts/clojure_test_suite.py oracle --write [--suite fixture]   # Java/Node, review diff
+cargo test -p suss-compile --test clojure_test_suite --locked
+SUSS_CLOJURE_TEST_SUITE_WRITE=1 cargo test -p suss-compile --test clojure_test_suite --locked  # re-record
+```
+
+Oracle: 231 tests, 5,834 assertions, 0 fail/0 error under four seeds; 52
+randomized, 20 skips. Two oracle defects were fixed while building it: encoding
+forced an infinite lazy sequence (now opaque, never realized), and the async
+`taps` test finished after output was written (now written at end-run-tests).
+
+Suss: all 248 namespaces fail before executing; first blockers are `#?@` (82),
+`:refer-macros` (72), ratio/precision literals (57), `#(`/`#"` dispatch (28) and
+`::k` (9). The harness fixture passes 21/21 (one verdict-only) with one matched
+skip. Added `Session::new_repl_with_options` (shipped core with caller source
+roots) with a namespace_session regression; this required regenerating both
+bootstrap images (`cargo run --profile test -p suss-cli --bin suss-bootstrap --
+runtime/bootstrap`, then `scripts/verify-bootstrap.sh`, 4/4).
+
+Limitations found and reported on #14: quadratic `defn` expansion, full `&env`
+materialization per expansion (the fixture namespace takes ~90 s to compile in
+release, ~6 min in debug), unquote-splicing outside `defmacro`, and the analysis
+graph bound. These make the full suite impractical to compile until fixed.
+Next: finish PR #210, then address `&env` materialization and the reader
+blockers above so suite namespaces can load.

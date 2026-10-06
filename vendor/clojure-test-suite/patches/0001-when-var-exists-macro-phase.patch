@@ -1,0 +1,30 @@
+--- a/test/clojure/core_test/portability.cljc
++++ b/test/clojure/core_test/portability.cljc
+@@ -4,15 +4,18 @@
+   (:require #?(:cljs [cljs.test :as t]
+                :default [clojure.test :as t])))
+ 
+-(defmacro when-var-exists [var-sym & body]
+-  (let [cljs? (some? (:ns &env))
+-        exists? (boolean (if cljs?
+-                           ((resolve 'cljs.analyzer.api/resolve) &env var-sym)
+-                           (resolve var-sym)))]
+-    (if exists?
+-      `(do
+-         ~@body)
+-      `(println "SKIP -" '~var-sym))))
++;; Suss patch: expand only in the macro (Clojure) phase; stock ClojureScript
++;; otherwise analyzes this macro body as runtime code.
++#?(:clj
++ (defmacro when-var-exists [var-sym & body]
++   (let [cljs? (some? (:ns &env))
++         exists? (boolean (if cljs?
++                            ((resolve 'cljs.analyzer.api/resolve) &env var-sym)
++                            (resolve var-sym)))]
++     (if exists?
++       `(do
++          ~@body)
++       `(println "SKIP -" '~var-sym)))))
+ 
+ (defn big-int? [n]
+   ;; In CLJS, all numbers are really doubles and integer? and int?
