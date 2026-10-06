@@ -1,8 +1,9 @@
 # Suss 0.3.1 specification
 
 Status: accepted target design, 2026-09-29. **This describes the intended system,
-not features already implemented.** Implementation evidence lives in
-[the roadmap](../../ROADMAP.md) and [the session handoff](../roadmap/handoff.md).
+not features already implemented.** Implementation status lives in
+[GitHub milestones and issues](https://github.com/bobby/suss/milestones); the plan is
+[the roadmap](../../ROADMAP.md) and session notes are in [the handoff](../roadmap/handoff.md).
 
 [ADR-0001](../adr/0001-result-option-and-panic.md) proposes a staged move to nominal
 Result/Option types and eventually native semantics without nil or throw/catch.
@@ -324,8 +325,8 @@ skipped and unassessed counts separately.
 
 Read this spec, ROADMAP, inventory and handoff before implementation. Select an
 unblocked issue; add a regression before fixing behavior. Implement a bounded
-vertical slice, validate it, then update evidence, known failures and the next
-concrete step. Every milestone closes only when its acceptance evidence exists.
+vertical slice, validate it, then update known failures and post evidence and the
+next concrete step on the GitHub issue. Every milestone closes only when its acceptance evidence exists.
 Record deviations here and change affected tests/docs in the same change.
 
 Decisions accepted 2026-09-29: ClojureScript contract; WASI first; WasmGC required;
