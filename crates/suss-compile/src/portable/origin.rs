@@ -10,9 +10,7 @@ pub struct SourceOrigin {
     text: Arc<str>,
     path: Option<PathBuf>,
     line_starts: Arc<[usize]>,
-    metadata_forms: Arc<
-        OnceLock<Result<(Vec<suss_reader::forms::Form>, Vec<suss_reader::forms::Form>), String>>,
-    >,
+    metadata_forms: Arc<OnceLock<Result<form_metadata::MetadataSnapshot, String>>>,
     // Private, immutable correspondence installed only by verified reader
     // expansion/lowering. It never mutates the original cached source snapshot.
     reader_forms: Option<Arc<(suss_reader::forms::Form, suss_reader::forms::Form)>>,
@@ -62,7 +60,7 @@ impl SourceOrigin {
     /// Position of a source symbol token, excluding its metadata prefixes.
     /// Expansion declarations without matching source syntax remain unknown.
     pub fn symbol_position(&self, form: &suss_reader::forms::Form) -> Option<SourcePosition> {
-        use suss_reader::forms::{read_forms, resolve_conditionals, Kind};
+        use suss_reader::forms::{Kind, read_forms, resolve_conditionals};
         let Kind::Symbol(symbol) = &form.kind else {
             return None;
         };
