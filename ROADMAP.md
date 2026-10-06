@@ -1,8 +1,12 @@
 # Suss roadmap
 
 The accepted target is [the design specification](docs/design/suss-0.3.1.md).
-The prototype has not reached the WASI alpha gate. Work below is dependency ordered;
-status is evidence-based and is not a calendar promise. See the [handoff](docs/roadmap/handoff.md).
+Work is dependency ordered and is not a calendar promise.
+
+**Status lives only in GitHub.** Open/closed [milestones](https://github.com/bobby/suss/milestones)
+and [issues](https://github.com/bobby/suss/issues) are the single source of
+completion state; progress and evidence are recorded as issue comments and linked
+PRs. This file holds the plan, not status; do not add per-package progress here.
 
 [ADR-0001](docs/adr/0001-result-option-and-panic.md) proposes separate tactical and
 strategic adoption of Result/Option/panic semantics. Its
@@ -12,452 +16,39 @@ The proposal has not changed this roadmap's accepted semantics or release gates.
 
 | Milestone | Depends on | Exit gate |
 | --- | --- | --- |
-| M0: Contract and feasibility | — | All M0 acceptance criteria pass |
-| M1: Trustworthy evidence | M0 | All M1 acceptance criteria pass |
-| M2: Compiler and runtime foundation | M0, M1 | All M2 acceptance criteria pass |
-| M3: Persistent development environment | M2 | All M3 acceptance criteria pass |
-| M4: Portable persistent collections | M2 | All M4 acceptance criteria pass |
-| M5: Generic WIT interoperability | M2, M4 | All M5 acceptance criteria pass |
-| M6: WASI 0.3.1 alpha | M3, M4, M5 | All M6 acceptance criteria pass |
-| M7: Portable compatibility beta | M6 | All M7 acceptance criteria pass |
-| M8: Browser beta | M6 | All M8 acceptance criteria pass |
-| M9: CSP extension | M6, M7 | All M9 acceptance criteria pass |
+| [M0: Contract and feasibility](https://github.com/bobby/suss/milestone/1) | — | All M0 acceptance criteria pass |
+| [M1: Trustworthy evidence](https://github.com/bobby/suss/milestone/2) | M0 | All M1 acceptance criteria pass |
+| [M2: Compiler and runtime foundation](https://github.com/bobby/suss/milestone/3) | M0, M1 | All M2 acceptance criteria pass |
+| [M3: Persistent development environment](https://github.com/bobby/suss/milestone/4) | M2 | All M3 acceptance criteria pass |
+| [M4: Portable persistent collections](https://github.com/bobby/suss/milestone/5) | M2 | All M4 acceptance criteria pass |
+| [M5: Generic WIT interoperability](https://github.com/bobby/suss/milestone/6) | M2, M4 | All M5 acceptance criteria pass |
+| [M6: WASI 0.3.1 alpha](https://github.com/bobby/suss/milestone/7) | M3, M4, M5 | All M6 acceptance criteria pass |
+| [M7: Portable compatibility beta](https://github.com/bobby/suss/milestone/8) | M6 | All M7 acceptance criteria pass |
+| [M8: Browser beta](https://github.com/bobby/suss/milestone/9) | M6 | All M8 acceptance criteria pass |
+| [M9: CSP extension](https://github.com/bobby/suss/milestone/10) | M6, M7 | All M9 acceptance criteria pass |
 
 M4 and M5 can overlap after their foundations; M8 feasibility happens in M0,
 with browser product delivery after the WASI alpha. CSP is deliberately last.
 
 ## Work packages
 
-[Machine-readable issues](docs/roadmap/issues.json) contain stable IDs, dependencies,
-objectives, acceptance criteria, scope and proposed validation commands. Commands
-for planned suites are **acceptance targets**, not existing runnable scripts.
-Published: [10 milestones](https://github.com/bobby/suss/milestones) and
-[39 issues](https://github.com/bobby/suss/issues). Stable IDs map to remote URLs in
-[github.json](docs/roadmap/github.json). The publisher creates missing entries and
-preserves existing issue bodies.
+Each work package is one GitHub issue in its milestone. Its title begins with a
+stable ID such as `[M3-05]`; never renumber or reuse an ID. The issue body holds
+the objective, specification sections, dependencies, acceptance criteria, scope
+and proposed validation command. Commands for planned suites are **acceptance
+targets**, not existing runnable scripts. Create new packages with the
+[work package issue form](.github/ISSUE_TEMPLATE/work-package.yml) and assign the
+milestone.
 
-### M0: Contract and feasibility
-
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 206 source declarations now have in-progress manual reviews; 859 remain unassessed for M4/M7 implementation.
-- **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
-- **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
-- **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
-
-### M1: Trustworthy evidence
-
-- **M1-01 — Strict conformance decoding and baseline** (completed). Executing negative regressions reject wrong/malformed/unknown results, missing cases, changed failures and unexpected passes; 201 reviewed legacy cases pass.
-- **M1-02 — ClojureScript oracle and semantic regressions** (completed). Fresh pinned Node and independently decoded Suss artifacts compare one corpus covering ordered effects, binary64 bits, UTF-16, arities and exceptions: 9 differential passes, 7 exact failures, 0 skips. This completes the evidence harness; repairing semantic failures and broader compatibility remain M2/M4/M7 work.
-- **M1-03 — Bounded CI and reproducible baseline** (completed). Lockfiles, shared engines, bounded fuel/traversal, two workers and an initial 25-minute CI budget are exercised by successful reviewed-head and merged-main full baselines. Ignored/manual tests remain explicit.
-
-The [acceptance audit](docs/roadmap/acceptance-m0-m1.md) maps every M0/M1 criterion
-to merged implementation, executing evidence and its scope. Reconciliation PR #43
-merged with explicit closing links; GitHub issues #1–#7 and milestones M0/M1 are
-closed after their exit gates were rechecked. M2 foundation was accepted through
-merged PR #115/#116; issues #8–#11 and milestone M2 are now closed. M3–M9 remain open.
-
-### M2: Compiler and runtime foundation
-
-- **M2-01 — Reader forms, metadata and namespace phases** (completed foundation). Located forms/metadata, deterministic source ambiguity and feature ordering, separate executed Runtime/Macro phase imports and canonical cljs.core aliases satisfy issue #8. Source compiled macro loading remains M3.
-- **M2-02 — Explicit evaluation-order IR** (completed foundation). Executed calls, conditions, collection entry interfaces, dispatch and recur preserve once-only order; arity/type diagnostics and legacy receiver/bitwise/hash operand repairs satisfy issue #9. Literal constructor fixtures establish evaluation behavior; persistent collection implementations remain M4.
-- **M2-03 — Runtime ABI v1 and closures** (completed foundation, now ABI2). Shared rooted values, universal invocation/arity, binary64/UTF-16 and pre-execution ABI rejection satisfy issue #10. The accepted ABI2 identity extension requires rebuilt artifacts.
-- **M2-04 — Nominal types, protocols and exceptions** (completed foundation). Same-layout nominal identity, cross-fragment protocol extensions, try/catch/finally, dynamic bindings and unknown-type diagnostics satisfy issue #11. Complete core/error/printing surfaces remain later compatibility work.
-
-The [criterion-by-criterion audit](docs/roadmap/acceptance-m2.md) maps all21 published
-foundation criteria to executing evidence. User-merged #115/#116 place the reviewed
-implementation on main. #116 reviewed-head CI36912150217 passed; merged main7a9010b
-has the identical entire file tree. Required full baseline passed843/0/17existing
-ignores; the named focused acceptance passed529/0/12existing ignores. This does not
-claim M3 compiled macros/frontends, M4 persistent collections, runtime metadata or
-any release gate complete.
-
-### M3: Persistent development environment
-
-The native uncached `compile_expr_with_info` migration uses the common compiled
-expression bundle pipeline. Three focused regressions, the retained-artifact CLI
-cache check, all 201 original conformance cases and 30 benchmark smoke inputs have
-executing evidence. All three unchanged example expressions now execute their
-complete bundles after GC, returning3,6 and the printed function/result string. The complete default printer body is now retained. The shared16-case
-corpus originally failed at collections. The unchanged seven collection-related
-cases now pass independently in both phases after GC, including limits, metadata,
-custom protocol writing and evaluation order. That increment also repairs
-indexing-reader field metadata rejection after macro transport. The complete
-sixteen-case corpus now passes in both phases after GC. Eight additional fresh
-pinned function-name fixtures establish actual scoped/munged labels, arities,
-public core identity and captured functions across redefinition and property
-writes. Fourteen closure tests and fifty ABI tests pass; labels remain owned by
-their closures, with unknown kernel/synthetic names kept explicitly unavailable. Constructor storage and public object-constructor identity
-have two-phase GC evidence, with17 fresh pinned object-predicate observations. Sequential
-limits/markers, alternate writer effects and retained-source macro capacity now
-have two-phase executing evidence. The complete map formatter/namespace lifting
-and keyword conversion now have four fresh pinned/native two-phase fixtures,
-including custom cursor/indexed-entry effects. Printer extensions now install 20
-loaded source-type stanzas with exact upstream method bodies; 16 other type
-stanzas, constructor/synthetic names and remaining printer storage/body behavior
-remain unfinished. The byte-only API, prototype cache and compiler-on-Wasm routes still
-require migration before evaluator retirement (partial issue #14).
-
-- **M3-01 — Incremental compiled REPL** (in-progress). Replace source replay with one runtime and compiled input fragments. The native command uses one persistent compiled session. Eight command tests and four atom tests establish persistence/reset prerequisites; six new command/host macro regressions integrate standalone compiled definitions, source reload and two-phase reset ([macro prompt](docs/runtime/compiled-repl-macros.md)); complete frontend/core acceptance remains; see [session host](docs/runtime/portable-session.md).
-- **M3-02 — Namespace loading and redefinition** (in-progress). Implement live binding cells, namespace loading, defonce and reload semantics. Source graph preparation and eleven executing module tests now establish compiler prerequisites; The native command now supplies load/reload/reload-all/in-ns, with four executing namespace tests; source reload metadata, compiled macro/cache/privacy policy remain; see [module preparation](docs/runtime/portable-modules.md).
-- **M3-03 — Compiled macro bootstrap** (in-progress). Run macros in a separate compiled phase session and remove the temporary evaluator. Native phase sessions now execute retained core, globals and source dependencies in separate Stores with phase-qualified cells and reset; see [phase execution](docs/runtime/compiled-phase-session.md). Reader forms and actual GC data now cross the same compiled macro/runtime pipeline without source printing/rereading; see [macro form transport](docs/runtime/compiled-macro-forms.md). Explicitly registered source macro functions now execute in the isolated Store and expand in lexical HIR analysis, including source dependencies; see [source macro execution](docs/runtime/compiled-source-macros.md). Source definitions now support multiple signatures, docs/source attributes and macro-body expansion in the same phase Store. Explicit source macro imports now execute dependencies in the isolated Store with aliases/refers/renames; see [phase imports](docs/runtime/compiled-macro-imports.md). Macro libspec reload/reload-all now refreshes reachable phase source while preserving old Runtime expansions; see [macro reload](docs/runtime/compiled-macro-reload.md). Persistent vector macro data now uses complete retained source types/trie/transient algorithms, quoted large-vector factory construction and canonical GC transport; 40 fresh primary observations match both native phases ([vector data](docs/runtime/compiled-macro-vectors.md)). Persistent array-map macro data now executes retained types with canonical GC transport; 24 fresh primary observations match both native phases ([map data](docs/runtime/compiled-macro-maps.md)). Retained HAMT/transient source and canonical hash-map transport now have focused executing evidence, including 35 pinned observations in both phases; full baseline, review and CI are pending ([hash-map prerequisites](docs/runtime/compiled-macro-hash-maps.md)). Canonical HAMT sequence cursors now have 27 fresh exact pinned observations in both phases, with retained collection conversion/completion dependencies ([sequence transport](docs/runtime/compiled-macro-hamt-sequences.md)); full validation remains pending. Complete ordinary reload/privacy/cache policy and bootstrap remain unfinished. Six bounded checked control-macro expansions now establish retained-source prerequisites; this is not compiled macro acceptance. See [control macros](docs/runtime/control-flow.md). Forward declarations now preserve source undefined reads and defonce initialization; see [declarations](docs/runtime/forward-declarations.md). The bounded caching-hash dependency now has38 fresh scalar observations and located recovery guards; full compiled macros and List hashing remain open; see [hash caching](docs/runtime/caching-hash.md).
-  Compiler analysis now retains actual lexical, namespace and source-position facts as prerequisites for rich `&env`; eight pinned position observations and seven focused native tests have executing evidence. Source macros now receive rooted compiler data as implicit &env; the complete portable schema remains unfinished. See [environment facts](docs/runtime/compiled-macro-environment-facts.md).
-  Explicit analyzer contexts and actual field/shadow records now have focused executing evidence; 24 pinned ordered context observations and 15 result strings agree in both Stores. Runtime and compile-phase try ordering are tested separately. Full child validation and rich source-level `&env` remain open; see [context and field facts](docs/runtime/compiled-macro-analysis-context.md).
-  Actual named function scopes now preserve source declarations, phase namespaces, parent scopes and real self/shadow bindings; definition hints introduce no lexical binding ID. Focused native execution and independent review establish this prerequisite. Rich source-level `&env` and original M3 acceptance remain open; see [function scope facts](docs/runtime/compiled-macro-function-scopes.md).
-  Function name ASTs now share genuine name/local/method-scope records, preserve nullable shadows and raw non-nil return tags, and keep anonymous nodes distinct from their inherited environments. Seven selected fresh pinned/native observations agree in both caller phases after GC; full schema and original M3 acceptance remain open ([function scope facts](docs/runtime/compiled-macro-function-scopes.md)).
-  Method binding facts now distinguish physical IDs from source receiver/argument roles, retaining actual type declarations and original protocol argument shadows. Six pinned observations and four executed results agree in both Stores; rich `&env` remains open. See [method binding roles](docs/runtime/compiled-macro-method-roles.md).
-  Staged definition initializer syntax and named function source forms now remain available before body analysis, with an executing fixed/variadic two-phase regression. Portable method metadata and inference remain unfinished; source macro invocation now passes the rooted graph as &env.
-  Actual reader/expansion syntax now accompanies analyzed HIR, with explicit absence on compiler-only nodes. Focused executing evidence passes; full source AST/inference and canonical rich `&env` transport remain unfinished ([source analysis records](docs/runtime/compiled-macro-source-analysis.md)).
-  Immutable source snapshots and native canonical form construction now have focused executing evidence, including GC, bounds, duplicate keys and unchanged resident code counts. A fresh upstream rich environment oracle matches sixteen observations and thirteen executed results. The source invocation now supplies the rooted graph as `&env`; the complete portable schema and original M3 gates remain open.
-  A queued native analysis graph now preserves shared records across deep initializer environments and GC, with actual declaration scopes and aggregate bounds. Three compiled graph inspections pass; complete portable schema/inference remains open; source invocation passes this graph ([analysis graph](docs/runtime/compiled-macro-analysis-graph.md)).
-  Retained persistent/transient set and KeySeq prerequisites now have 39 fresh pinned observations agreeing with independently decoded native values in both Stores. Canonical namespace `:excludes` sets, textual literal order, HAMT size thresholds and captured set reconstruction after class redefinition have executing regressions. Public empty/vec helpers, generic ES6/printing, full portable environment schema remain pending; the set prerequisite full baseline passes998/0/17; no issue is complete.
-  Compiler namespace graphs now preserve the six ordinary/macro require, use and rename maps, including explicit unchanged-name and dual-role referrals. Fresh pinned observations preserve nullable shape and presence for18 fields; independently decoded native queries match in both phases after GC. Default/reload/implicit namespace policy and full portable declaration/AST/inference remain open; source invocation passes this namespace data as &env ([namespace data](docs/runtime/compiled-macro-namespace-data.md)).
-  Source macros now receive implicit &form/&env in every signature. Three executing regressions inspect lexical init/shadow/context, function scope, and staged namespace snapshots in both phases; three shared fresh pinned projections match native execution. Actual definition forms and analysis completion are retained separately from runtime initialization. Full portable declaration/AST/inference, &form metadata and bootstrap remain open; see [source environments](docs/runtime/compiled-macro-source-environment.md).
-  Genuine control source analysis now retains conditional/recur/throw operands,
-  binding declarations and analyzed function/try bodies before lowering. Fifteen
-  selected primary/native cases pass in both caller phases after GC, with an
-  explicit compiler-private catch-name correspondence. Seven additional method
-  observations now agree in both phases: entry snapshots before parameters,
-  body markers and accepted own-target recurrence; all executions return42.
-  Full schemas/inference,
-  evaluator retirement and milestone acceptance remain open; see
-  [control source ASTs](docs/runtime/compiled-macro-control-source-asts.md).
-- **M3-04 — Session lifecycle and interruption** (in-progress). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
-
-Source inference now matches 32 selected pinned observations and 11 executed
-projections in both caller Stores, with once-only initializer effects and
-inferred tags independent of storage. Quoted union sets use the retained set
-constructor/factory; existing set effect/GC tests remain passing. Complete
-AST/declaration/function/method metadata and remaining inference are still open;
-see [source inference](docs/runtime/compiled-macro-source-inference.md).
-
-Named self locals now retain actual parameter-only first-pass declarations before
-method bodies expand, including future methods. Both original pinned observations
-match all eight selected local fields and the explicit portable binding view in
-both caller phases after GC; actual fixed/variadic calls remain correct. Full
-portable environments/inference and original M3 acceptance remain open; see
-[self-local method evidence](docs/runtime/compiled-macro-self-local-methods.md).
-
-Retained cached string hashing now matches64 fresh pinned observations over owned GC
-objects, with aliases/live dependencies and40 ABI checks. Public hash/equality and
-persistent collections remain unfinished; see [cached hashing](docs/runtime/cached-string-hashing.md).
-
-### M4: Portable persistent collections
-
-- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Seven bootstrap identity/not/boolean/some?/inc/dec/fn? forms and twenty-one retained Fn/sequence/collection protocol declarations execute with GC/redefinition/order regressions and separate 117-case function /65-case interface primary corpora. Retained bit-count and int-rotate-left add two source algorithms with explicit bootstrap patches; scalar bitwise/imul and bounded macros have70 fresh primary/native observations. Retained scalar Murmur algorithms/constants and zero? now have57 exact observations and ten additional source forms, supported by bounded threading/zero expansion. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
-- **M4-02 — Sequences, lists and vectors** (in-progress). Direct-only protocol implements? now has33 fresh primary/native observations and phase/GC/namespace guards; see [implementation predicate](docs/runtime/implements.md). GC-owned mutable array storage, scoped nominal field mutation and bounded source macro/runtime adaptations now establish prerequisites for IndexedSeq, list and variadic rest; see [array foundations](docs/runtime/arrays.md). UTF-16 alength/aget now provide string storage access required by retained IndexedSeq; see [indexed strings](docs/runtime/indexed-strings.md). Persistent sequence/list/vector/subvector/map-entry and lazy/chunked acceptance remain unfinished.
-- **M4-03 — Maps, sets, queues, records and sorted types** (planned). Port HAMTs, sorted collections, queues and record behavior.
-- **M4-04 — Hashing, metadata, transients and reduction** (planned). Complete shared collection protocols and all reduction paths.
-
-### M5: Generic WIT interoperability
-
-- **M5-01 — Generate bindings from resolved WIT** (in-progress). Replace hardcoded WASI names with selected-world binding generation.
-- **M5-02 — Resource ownership and scopes** (planned). Implement constructors, methods, statics, own/borrow and explicit close.
-- **M5-03 — Canonical memory allocation and cleanup** (planned). Implement checked realloc/free, post-return and async transfer lifetimes.
-- **M5-04 — Bidirectional Rust interoperability fixtures** (planned). Generate an independent Rust host/guest corpus for all WIT boundary shapes.
-
-### M6: WASI 0.3.1 alpha
-
-- **M6-01 — Continuation scheduler and future API** (planned). Implement future/await with GC continuation state machines and a cooperative scheduler.
-- **M6-02 — Canonical async, futures and streams** (planned). Connect continuations to canonical async imports/exports and future/stream values.
-- **M6-03 — Complete official WASI capability bindings** (planned). Generate and exercise the entire pinned WASI 0.3.1 package graph.
-- **M6-04 — CLI commands, HTTP applications and interactive I/O** (planned). Deliver command/library workflows and alpha release gate.
-
-### M7: Portable compatibility beta
-
-- **M7-01 — Finish portable public core and macros** (planned). Review and implement every remaining portable inventory item.
-- **M7-02 — Sequence and transducer behavior** (planned). Complete higher-order arities, transducers, chunking and laziness effects.
-- **M7-03 — State, delays, multimethods and printing** (planned). Complete atoms/watches/validators/CAS, volatiles, delays, multimethods and printer contracts.
-- **M7-04 — Compatibility and migration release report** (planned). Publish evidence and retire superseded prototype paths.
-
-### M8: Browser beta
-
-- **M8-01 — ES module and declaration packaging** (planned). Produce distributable browser modules using the validated M0 path.
-- **M8-02 — DOM, fetch, events and Promise bridge** (planned). Implement typed browser host APIs and shared async semantics.
-- **M8-03 — Browser application and library examples** (planned). Ship examples demonstrating both browser usage modes.
-- **M8-04 — Cross-browser corpus and distribution** (planned). Run the shared compatibility corpus in declared browser versions.
-
-### M9: CSP extension
-
-- **M9-01 — Channels, buffers and selection** (planned). Implement CSP channels over the established scheduler.
-- **M9-02 — go state machines** (planned). Implement core.async-style go lowering using continuation infrastructure.
-- **M9-03 — Future and stream channel adapters** (planned). Provide explicit adapters between CSP and component async values.
-- **M9-04 — core.async compatibility corpus** (planned). Port selected core.async tests with documented scope.
+Status and evidence recorded in this repository before 2026-10-06 were moved
+verbatim into a `suss-roadmap-archive` comment on each affected issue.
+Criterion-by-criterion acceptance audits remain under [docs/roadmap](docs/roadmap).
 
 ## Completion discipline
 
 Every implementation session adds a failing regression, makes the smallest coherent
-change, executes its relevant checks, and updates evidence/handoff. A package
-is complete only when its acceptance criteria pass. A known-failure baseline
-does not certify compatibility. Toolchain limitations remain explicit blockers,
-not reasons to silently weaken the contract.
-
-
-Sequence/list foundation progress: retained source List/EmptyList/Cons/IndexedSeq,
-canonical empty literals and persistent variadic rest now execute against75 fresh
-primary observations. All original51 are preserved. Imported68/72 artifacts and
-157 partial/908 unassessed reviews remain prerequisites, not M4 acceptance; full
-method dependencies and surrounding release gates remain incomplete. See
-[sequence evidence](docs/runtime/sequences.md).
-
-Retained sequential equality now closes the List/EmptyList/Cons/IndexedSeq helper
-boundary with source `=`/equiv-sequential and native number/default IEquiv setup.
-Fresh131 observations retain the prior75;159 partial reviews/906 unassessed and
-70 selections/74 licensed artifacts remain prerequisites. Hashing/reduction and
-remaining collection/macro/release gates stay open; see
-[sequential equality](docs/runtime/sequential-equality.md).
-
-Retained reduction now supplies IDeref/Reduced and source sequence/array/string/
-iterator helpers, with65 fresh primary/native observations and81 control cases
-including bounded if-let. Selection82/artifacts86 and172 partial/893 unassessed
-reviews remain prerequisites; complete collection/transducer/macro/release gates
-stay open. See [reduction evidence](docs/runtime/sequence-reduction.md).
-
-Retained IndexedSeqIterator/RSeq and reversible?/rseq now execute against59 shared
-fresh primary/native observations plus1 explicit named length-write boundary.
-Selection86/artifacts90/reviews176partial+889unassessed remain prerequisites;
-hash/printing/index helpers, generic reverse, other collections and compiled
-macro/release gates remain open. See [iteration evidence](docs/runtime/sequence-iteration.md).
-
-Identity hashing prerequisites now have34 fresh primary observations,33 matching
-native relations and1 exact strict-arity contract boundary across4 native tests. Owner-held UID storage advances the shared layout to ABI2 with explicit
-old-artifact rejection; complete retained IFn/MetaFn/with-meta/meta dependencies
-bring selection to96 forms/100 licensed artifacts and189 partial reviews/876
-unassessed. Public/default and collection hashing, general IFn invocation, apply,
-full metadata and milestone gates remain open. See
-[identity evidence](docs/runtime/identity-hashing.md).
-
-
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
-boolean/nil equality tables with selector-once evaluation and live qualified
-core equality. There are 40 fresh pinned/native value matches and one separately
-asserted pinned empty-group parse failure; native rejects that input with a
-located compile diagnostic. Actual fragments execute in Runtime and Macro
-phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain
-prerequisites. Full compiled macros, complete case/case*, public hash Date
-handling, collections and release gates remain unfinished. See
-[scalar case evidence](docs/runtime/scalar-case.md).
-
-
-Retained public scalar hash now preserves all pinned source branches, including
-an explicit descriptor-backed numeric Date storage adaptation. Fresh42 pinned/
-native observations and4 native tests cover scalar bits, UTF16 composition,
-protocol priority, default identity and Date normalization/GC. Selection98/
-artifacts102 and193 partial/872 unassessed reviews remain prerequisites. Full
-Date/Inst/reader/printing, collection composition, compiled macros and release
-gates remain open; see [public scalar hash evidence](docs/runtime/public-scalar-hash.md).
-
-
-Retained ordered/unordered collection hash helpers and the empty unordered hash
-initializer now execute through the retained source pipeline. Fresh55 pinned/
-native observations and5 native tests cover sequential hash agreement, nested
-values, UTF16, duplicates/count, caches/metadata, effects and GC recovery. Core
-selection101/artifacts105 and196 partial/869 unassessed reviews remain
-prerequisites. Persistent vectors/maps/sets/map entries, collision nodes and
-compiled macro/release gates remain required; see
-[collection hashing evidence](docs/runtime/collection-hashing.md).
-
-
-Vector trie prerequisites retain the complete pinned VectorNode and nine private
-node/path/update helpers. Selection111/artifacts115 and206 partial/859 unassessed
-reviews do not establish full PersistentVector or M4 acceptance. Fresh23 exact
-oracle values and four native tests cover shallow ownership, structural sharing,
-GC, tail boundaries, recursive association/removal and exception recovery.
-See [vector trie evidence](docs/runtime/vector-trie.md).
-
-
-M2-02 collection expression lowering now has19 fresh pinned/native observations:
-15 shared values and4 separately asserted observations of the accepted textual
-map/set evaluation-order variance,0 skips. Five native tests guard constructor
-interfaces, method capture, thrown-entry order, GC and located missing-class
-diagnostics. This is a compiler prerequisite using development-only fixtures;
-full collection/core and M2 acceptance remain open. See
-[collection literals](docs/runtime/collection-literals.md).
-
-
-[M2 acceptance candidate](docs/roadmap/acceptance-m2.md) maps every published
-foundation criterion to actual source and executing guards. The runnable focused
-command is `sh scripts/test-m2-foundation.sh`; future compiled macros, complete
-collections and production frontend migration remain separate gates. M2 statuses
-stay in progress pending independent criterion review and final-head CI.
-
-M3-01 native command frontend now evaluates each complete input in the persistent
-Session instead of accumulating/replaying source. Executing command tests cover
-once-only initializers/defonce, old function captures, compile/runtime recovery,
-multiline input, exact scalar display and reset. Atoms, namespace command/reload
-policy, compiled macro bootstrap, interruption and live heap acceptance remain
-open; see [compiled REPL frontend](docs/runtime/compiled-repl.md).
-
-Compiled macro reader input now has focused source-location evidence: eight
-exact pinned projections match after GC in both Stores, with a separate canonical
-loaded-file assertion. Conditional/prefix/tag metadata, generated-syntax absence,
-located snapshot failures, compile isolation and metadata non-reexecution are
-covered. Independent review and full final-head validation remain required; see
-[reader metadata](docs/runtime/compiled-macro-reader-metadata.md). Original M3
-gates and complete portable schema/inference remain open.
-
-Retained LazySeq/IPending are an executing dependency for compiled syntax quote.
-The complete pinned type/protocol declarations retain source hashes and EPL
-packaging. Twelve actual pinned/native shared observations cover deferred and
-repeated realization, metadata and failed-thunk retry in both caller Stores.
-Subsequent retained concat/chunked helpers and constructors now have50 fresh
-pinned/native observations. Compiled syntax quote has18 fresh shared execution
-observations, actual reader provenance and staged gensym state. A live-cell
-coercion edge, full baseline/review/CI and original M3/M4 gates remain open; see
-[reader integration](docs/runtime/syntax-quote-reader.md) and
-[lazy sequence evidence](docs/runtime/lazy-sequences.md).
-
-
-The working [versioned compiled bootstrap](docs/runtime/compiled-bootstrap.md)
-uses phase-specific shipped Wasm images and immutable compiler facts. Its verifier
-reproduces both images in fresh processes and executes four regressions with
-Java/Node unavailable on PATH;66 compiler and83 affected native tests pass.
-Final full baseline, independent PR review and exact-head CI remain required.
-User macro cache invalidation, remaining schema, temporary evaluator removal and
-lifecycle acceptance remain open; this closes neither #14 nor M3.
-
-The working [native module cache](docs/runtime/native-module-cache.md) reuses only
-compiled code with exact Wasm bytes and engine identity. Source analysis, macro
-effects, instance creation and initialization still run normally. Focused and
-affected validation passes70 tests with no failures or ignores; full baseline,
-independent review and final-head CI remain required. Source/macro graph
-cache keys and the other original M3 gates remain open; this is partial issue14
-progress.
-
-The working [shared declaration graphs](docs/runtime/shared-declaration-graphs.md)
-now execute a full retained core-namespace macro declaration projection in both
-phases within the original graph limits. Immutable revisions and canonical reader
-subtrees share data without dropping fields.73 affected tests and23 final bounds/
-graph/core checks pass; full baseline, independent review and final-head CI remain
-required. Complete portable schema, source/macro cache and evaluator/lifecycle
-acceptance remain open.
-
-Selected portable function declaration fields now come from immutable source callable facts and reader metadata, with executing fixed/variadic/duplicate/alias/redefinition and file-position projections in both phases. The expanded pinned corpus preserves29 declaration observations,2 local observations and37 executed results. Complete portable schema, cache invalidation, evaluator retirement and original M3 acceptance remain open; independent review/full baseline/final-head CI are required. See [function declaration facts](docs/runtime/compiled-macro-declaration-functions.md).
-
-The unchanged 29-case corpus now has an executing comparison of all 18 selected
-declaration fields, in namespace snapshots and live catalogs, in both caller
-phases after GC. Provisional metadata, completed reader provenance, docstring
-precedence, declaration field presence and known direct-function return tags
-remain distinct from runtime values. See [declaration metadata](docs/runtime/compiled-macro-declaration-metadata.md).
-Independent review, full baseline and final-head CI remain required; complete
-schema/cache/evaluator/lifecycle acceptance and original M3 issues remain open.
-
-
-Repeated declarations now preserve existing source records for no-initializer truthy `:declared` forms, including completed functions and forward declarations. An actual pinned analyzer probe and a before/after native regression establish the bounded policy; full validation and original M3 gates remain open. See [declaration preservation](docs/runtime/compiled-macro-repeated-declarations.md).
-
-
-Completed scalar/function references and invocations now distinguish raw tag presence from inferred values and provisional records. An actual 18-row pinned/native before/after regression matches both caller phases after GC, with 15 executed storage/effect checks per phase. Full validation and original M3 gates remain open. See [source hint boundaries](docs/runtime/compiled-macro-source-hint-boundaries.md).
-
-Native expression and file entry points are moving onto the shared compiled phase
-pipeline, with original source origins, staged runtime compilation and bounded
-canonical result display. Focused execution covers macro redefinition, lexical
-environments, file positions and late compile-error isolation; full validation
-and original M3 gates remain open. See [native entry points](docs/runtime/compiled-native-entrypoints.md).
-
-Native compiled macro hosts now reuse bounded emitted artifacts after executing
-analysis and macros. Keys include immutable source/macro graph snapshots,
-compiler/ABI/phase/target identity and actual lowered IR; executing tests preserve
-effects, explicit reload, old captures and failed-declaration provenance. See
-[source artifact cache](docs/runtime/source-artifact-cache.md). Review, full
-baseline and final-head CI remain pending; published artifact, evaluator and
-lifecycle gates and original issues12–15 remain open.
-
-Portable artifacts now record compiler build/ABI/target identity and selected
-source/macro versions. Native loaders reject incompatible compiler builds before
-allocating cells, and bootstrap restoration checks its actual source graph.
-Regression-first and focused/54affected tests pass; review/full/final CI remain
-required. See [artifact identities](docs/runtime/artifact-identities.md). Complete
-published dependency loading, component/AOT, evaluator retirement and scheduler
-criteria remain open original M3 work.
-
-Core cell initialization now executes as a reusable shared-ABI artifact for
-native and AOT hosts. The compiler includes phase-checked unbound source cells,
-while native code accounting separates base runtime and user fragments. Three
-direct compiler tests,72 affected native tests,7 lifecycle guards and Java-free
-bootstrap4 pass. Independent review/full baseline/final CI remain pending; this does not migrate AOT
-commands or remove the legacy evaluator. See
-[core binding initialization](docs/runtime/compiled-core-bindings.md).
-
-Portable prepared Runtime artifacts now assemble into actual scalar WIT components
-with explicit source-var mappings and ordered initialization. Five executing
-compiler tests pass, including a reproduced duplicate import followed by shared
-cell import repair. See [AOT components](docs/runtime/compiled-aot-components.md).
-This development API does not migrate existing compile commands or certify full
-selected-WIT adapters, evaluator retirement, published dependency policy or M3.
-
-Native scripts and AOT source preparation now share reader and staged compilation,
-including source macro definitions and Runtime dependency catalogs. Two actual
-source-to-component tests and24 affected native tests pass; Java-free bootstrap4
-and Python118 pass. See [shared source preparation](docs/runtime/compiled-aot-source-preparation.md).
-Review/full baseline/final CI remain required. Existing compile commands, full
-selected-WIT adapters, evaluator retirement and original M3 criteria remain open.
-
-Checked small integer AOT adapters now have focused executing evidence for all
-six u8/s8/u16/s16/u32/s32 boundaries, finite integral result checks, GC and
-exactly-once source calls. All8 compiler AOT tests pass; Java-free reproduction/bootstrap4, Python118,
-affected CLI60 and compiler15 pass. Full baseline and independent review/final
-CI remain pending. This supports frontend
-migration prerequisites; no M3 issue is complete. See [AOT components](docs/runtime/compiled-aot-components.md).
-
-Exported scalar WIT interfaces now have focused executing evidence for preserved
-versioned names, inline and named aliases, empty interfaces, shared cells and GC.
-All11 compiler AOT and4 source-preparation tests pass, including a real compiled
-macro feeding a versioned interface. Java-free reproduction/bootstrap4 and
-Python118 pass. Independent review, full baseline and final-head CI remain
-required. Interface types/external-id and complete WIT/frontend/M3 acceptance
-remain open. See [AOT components](docs/runtime/compiled-aot-components.md).
-
-Native CLI file compilation now uses isolated compiled source preparation and
-portable component assembly, with WIT package/world selection and explicit
-export mappings. Three actual command/artifact regressions pass, including typed
-interface invocation and rejection of malformed inputs previously coerced to zero.
-Affected CLI15, Python118 and Java-free reproduction/bootstrap4 pass. Independent
-review, unfiltered full baseline and final-head CI remain pending. Namespace,
-project, main and component-host migration, evaluator retirement and original M3
-acceptance remain open. See [native file compilation](docs/runtime/compiled-aot-source-preparation.md).
-
-Native namespace compilation now shares portable file-mode source preparation
-and component assembly. Three executing regressions pass for canonical source
-lookup, portable conditionals, imported compiled macros, separate phase effects,
-GC/fresh Stores, pre-effect declaration errors and deferred Runtime exceptions.
-Both regenerated bootstrap images reproduce without Java; bootstrap4 passes.
-Independent review/full baseline/exact-head CI remain pending. Explicit export
-mappings are required; project/main/component-host migration, evaluator retirement
-and original M3 acceptance remain open. See [namespace entrypoints](docs/runtime/compiled-aot-source-preparation.md).
-
-Selected quote records now expose genuine quote syntax, a literal const child,
-shared datum/environment identity and distinct nullable child tags. Fourteen
-fresh pinned observations match native execution in both caller phases after
-GC; quoted effects stay unexecuted. Both phase image pairs regenerate and
-reproduce without Java. Independent review/full baseline/final-head CI and
-remaining original M3 requirements stay open; see
-[quote AST evidence](docs/runtime/compiled-macro-quote-asts.md).
-
-
-Source field references now preserve actual lexical AST/info identity and raw
-nullable mutability flags/hints with original declaration positions. Nine fresh
-pinned observations match both native caller phases after GC; complete source
-schemas and original M3 acceptance remain open. Independent review, unfiltered
-baseline and final-head CI are required. See
-[field reference facts](docs/runtime/compiled-macro-field-reference-asts.md).
-
-
-Selected collection source ASTs now retain original vector/map/set entries before
-constructor/factory lowering, metadata expression/map children, and effectful
-`do`/global `set!`/invocation operands. Fourteen pinned projections agree with
-native compiled macro results in both caller phases after GC, using explicit
-textual-order and arithmetic adaptations while preserving raw reference evidence.
-Nine effectful set entries and nine map pairs execute once in textual order;
-all28affected native and150Python checks pass. Both bootstrap phase pairs
-regenerate and reproduce without Java. Full portable schemas, evaluator retirement
-and original M3 acceptance remain open; independent review, full workspace
-baseline and final-head CI are still required. See
-[collection source facts](docs/runtime/compiled-macro-collection-source-asts.md).
-
-
-Native cached-expression artifacts now prepare isolated compiled macros and owned
-ABI2 bootstrap/dependency plans, then execute in the caller's persistent Runtime
-Store. Focused public/preflight/GC tests pass; the unchanged201 corpus and fresh16
-lossless differential expressions agree. Retained symbol/Var dependencies match
-40 fresh pinned observations in both phases. Bootstrap pairs reproduce without
-Java/Node. Independent review, exact full/final-head CI and the remaining uncached/
-cache/component/schema/lifecycle migration gates remain open. This is partial
-issue #14 work; see [expression artifacts](docs/runtime/compiled-expression-artifacts.md).
+change, executes its relevant checks, and records evidence on the relevant issue.
+A package is complete only when its acceptance criteria pass; close the issue
+(and its milestone, once every issue is closed) only then. A known-failure
+baseline does not certify compatibility. Toolchain limitations remain explicit
+blockers, not reasons to silently weaken the contract.

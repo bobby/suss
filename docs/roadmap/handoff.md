@@ -319,13 +319,11 @@ on164, dispatch independent review and explicitly transfer the sole heavy slot.
 
 ## Start here
 
-The requested design and roadmap are now repository artifacts:
-[specification](../design/suss-0.3.1.md), [roadmap](../../ROADMAP.md),
-[39 work packages](issues.json), [upstream inventory](../compatibility/README.md).
-All 10 milestones and 39 issues were published in
-[bobby/suss](https://github.com/bobby/suss/milestones); IDs/URLs are in
-[github.json](github.json). The publisher is idempotent and preserves existing
-issue bodies. Its default operation is an offline preview.
+Read the [specification](../design/suss-0.3.1.md), [roadmap](../../ROADMAP.md)
+and [upstream inventory](../compatibility/README.md). Milestone and work-package
+status, evidence and the next unblocked task live only in
+[GitHub milestones and issues](https://github.com/bobby/suss/milestones); dated
+entries in this handoff are historical session notes, not status.
 
 The language resurrection itself is **not complete**. The current work establishes
 an executable, measurable prototype baseline and feasibility evidence. WASI 0.3.1,

@@ -40,7 +40,7 @@ Reviewed #158 complete core-namespace graph construction now passes in both call
 # Current requirement audit after the official command review
 
 The objective is all of M3 in [the accepted design](../design/suss-0.3.1.md),
-with stable work packages [M3-01–M3-04](issues.json) linked to issues
+with stable work packages [M3-01–M3-04](https://github.com/bobby/suss/milestone/4) linked to issues
 [#12](https://github.com/bobby/suss/issues/12),
 [#13](https://github.com/bobby/suss/issues/13),
 [#14](https://github.com/bobby/suss/issues/14) and
