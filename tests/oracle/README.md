@@ -43,18 +43,24 @@ NaN payloads, except the two canonical arithmetic NaN signs are accepted as
 permitted by WebAssembly. Raw bits remain in the observations, and storage/
 boundary tests require exact NaN bits. This is observation comparison, not guest
 numeric equality.
-Malformed transport and absent cases fail. `known-failures.json` separately
-records seven reviewed failures with exact stages/diagnostics or expected/actual
-observations. A changed failure, new failure or unexpected pass fails the suite.
-The present corpus reports **9 passing, 7 failing, 0 skipped**. A stable baseline
-does not establish compatibility or satisfy the future numeric/string ABI.
+Malformed transport and absent cases fail. `known-failures.json` records reviewed exact failures; a changed failure, new
+failure or unexpected pass fails the suite. The migrated native expression
+artifact now reports **16 passing, 0 failing, 0 skipped** against both the retained
+reference and a fresh pinned compiler/Node execution. The fresh reference exactly
+matches the retained JSON values, numeric bits, UTF-16 units and effects. All
+original corpus expressions remain unchanged. The host wrapper now uses portable
+`(catch :default error ...)` syntax; the prototype wrapper omitted `:default`.
+The direct observer reads canonical ABI2 storage, including nominal ExceptionInfo
+message/data/cause, without guest printing or equality.
 
-Failures: large integer arithmetic returns 1 instead of the binary64-rounded
-9007199254740992; unary subtraction loses negative zero; surrogate escape forms
-fail parsing; quoted sequence and variadic rest values decode as vectors; and
-`ex-info` is undefined. The old 201-case legacy baseline is unchanged. Manual
-observation capture uses the explicitly ignored `record_observations` Cargo test
-with `SUSS_ORACLE_OUTPUT`; it never updates expected failures automatically.
+The seven former failures—binary64 rounding, signed zero, surrogate escape forms,
+quoted sequence and variadic rest collection kinds, and ExceptionInfo—are resolved
+in this bounded corpus. Their original failure records remain in Git at parent
+`88abea7` and the migration handoff retains the actual unexpected-pass failure
+before baseline reconciliation. An empty current failure file proves this corpus
+only; it does not establish full core compatibility or complete M3 acceptance.
+Manual observation capture still uses the explicitly ignored `record_observations`
+Cargo test with `SUSS_ORACLE_OUTPUT`; it never updates expected failures automatically.
 
 These source files and transport tests are original repository code. The
 development compiler uses the existing pinned upstream submodule, whose source
@@ -70,17 +76,16 @@ from caught language throws; fuel/time failures are never language exceptions.
 
 M1-02's bounded evidence-harness acceptance is complete after the merged
 implementation audit in [acceptance-m0-m1.md](../../docs/roadmap/acceptance-m0-m1.md).
-The named differential cases exist and their exact failures remain visible; this
-does not certify compatibility or comprehensive semantic/arity coverage. Those
-repairs remain M2/M4/M7 work. The GitHub issue remains open until the reconciliation
-PR merges with its closing link. ExceptionInfo itself still fails at compilation;
-implementing its data/message/cause and descriptor behavior belongs with M2's runtime exception foundation.
-On a Wasm trap or failed decoding, the prototype cannot recover the partial
-trace; that limitation is explicit. The current production integer/UTF-8
-representation cannot claim the binary64/UTF-16 contract from these reference
-results. CI checks transport/comparator regressions and executes the shared Suss
-corpus against the reference snapshot; it does not build or run the JVM/Node
-oracle. The ordinary 201-case legacy baseline remains separate and unchanged.
+The historical 9-pass/7-failure result established that evidence harness; it did
+not certify compatibility. The native cached expression route now executes the
+shared ABI2 pipeline and independently observes all 16 cases successfully,
+including ExceptionInfo. Other prototype routes and comprehensive semantic/arity
+coverage remain unfinished. See [compiled expression artifacts](../../docs/runtime/compiled-expression-artifacts.md).
+On a Wasm trap or failed decoding, the runner cannot recover the partial trace;
+that limitation remains explicit. CI checks transport/comparator regressions and
+executes the shared Suss corpus against the reference snapshot; it does not build
+or run the JVM/Node oracle. The ordinary 201-case baseline retains its original
+inputs and expected values and now executes through the native cached bundle API.
 
 ## Portable reader boundary
 
@@ -89,8 +94,9 @@ corpus in the pinned compiler's tools.reader 1.3.6 dependency and Node, comparin
 binary64 bits and UTF-16 units exactly. Rust reads the same sources and transfers
 parsed scalars into generated ABI runtime objects, inspecting them after GC.
 These are reader-boundary observations, not additional compiler compatibility
-passes; the shared full-source corpus remains 9 passing/7 exact failures/0 skips.
-The legacy compiler still uses its EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).
+passes; the shared full-source corpus now has 16 passing/0 failures/0 skips
+through the native cached expression route. Remaining prototype compiler routes
+still use their EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).
 
 ## Portable compiler bootstrap
 
@@ -100,7 +106,8 @@ strict typed observations, then executes generated shared-ABI fragments in Rust.
 It uses an ignored generated `.cljc` fixture so reader conditionals are allowed.
 This source oracle covers the current scalar/let/do/if/numeric bootstrap only.
 The 16-case legacy source corpus and 14-case reader corpus retain their separate
-counts and purposes; known failures are unchanged. See the
+counts and purposes; the 16-case baseline was reconciled only after fresh
+pinned agreement, as recorded above. See the
 [compiler contract](../../docs/runtime/portable-pipeline.md) for remaining work.
 
 ## Primitive numeric helper matrix

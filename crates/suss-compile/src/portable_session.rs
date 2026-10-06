@@ -331,6 +331,44 @@ fn execution_error(
 }
 
 impl Session {
+    pub(crate) fn execute_expression_artifact<T>(
+        &mut self,
+        artifact: crate::portable_expression::ExpressionArtifact,
+        core_ready: impl FnOnce(&mut Session) -> Result<T, SessionError>,
+    ) -> Result<(Option<SessionValue>, T), SessionError> {
+        if self.phase != Phase::Runtime || !self.resident.is_empty() {
+            return Err(SessionError::Host(wasmtime::Error::msg(
+                "Expression artifacts require an empty Runtime session",
+            )));
+        }
+        // Preflight the complete bundle before the first initializer. Retain
+        // dependency plans instead of flattening away their load-once identities.
+        for bytes in artifact.modules() {
+            runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
+                .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+            portable::artifact_identity::verify(bytes, portable::artifact_identity::Expected {
+                phase: Some(Phase::Runtime), ..Default::default()
+            }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+            crate::portable_module_cache::compile(&self.engine, bytes)?;
+        }
+        self.eval_prepared(portable::modules::PreparedInput {
+            modules: Vec::new(), fragment: artifact.core,
+        })?;
+        self.bootstrap_core = true;
+        let core = ModuleIdentity::new(Phase::Runtime, "suss.core")
+            .map_err(SessionError::Compile)?;
+        self.provided.insert(core);
+        let identity = self.identity;
+        let observation = core_ready(self)?;
+        if self.identity != identity {
+            return Err(SessionError::ForeignValue);
+        }
+        let mut result = None;
+        for input in artifact.inputs {
+            result = Some(self.eval_prepared(input)?);
+        }
+        Ok((result, observation))
+    }
     pub fn new() -> Result<Self, SessionError> {
         Self::with_options(SessionOptions::default())
     }

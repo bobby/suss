@@ -313,6 +313,8 @@ pub enum Nominal {
     NativeObjectStrictSet,
     CoerceString,
     ConcatString,
+    StringIndexOf,
+    StringSlice,
     LanguageError,
     IsLanguageError,
     ObjectSet,
@@ -327,7 +329,8 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::CoerceString | Self::ConcatString => Type::String,
+            Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
+            Self::StringIndexOf => Type::Number,
             Self::IsClosure
             | Self::IsLanguageError
             | Self::Instance
@@ -345,7 +348,8 @@ impl Nominal {
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::LanguageError | Self::IsLanguageError | Self::IsClosure => count == 1,
                 Self::CoerceString => count == 1,
-                Self::ConcatString => count == 2,
+                Self::ConcatString | Self::StringIndexOf => count == 2,
+                Self::StringSlice => count == 3,
                 Self::BindCallable => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -1741,6 +1745,8 @@ impl Analyzer<'_> {
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
+                "string-index-of" => Some(Nominal::StringIndexOf),
+                "string-slice" => Some(Nominal::StringSlice),
                 "error" => Some(Nominal::LanguageError),
                 "error?" => Some(Nominal::IsLanguageError),
                 "object-get" => Some(Nominal::NativeObjectGet),

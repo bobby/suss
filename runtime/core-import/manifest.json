@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "c8d319fcfca0031ecfd7d268b28a2c1ab64b0c6f4f19ad0ad881765cec9c5e5d",
-  "reviews-sha256": "c3500abe2699c69865d5776f4af8e5c2aac1d0bbb6686d26d37c37bee47455bc",
+  "recipe-sha256": "4f5d2002fb346f03571f6720a2bf55d728ffeb7e34b1d94cf542d88b08a7d408",
+  "reviews-sha256": "29da3979ea30aa68b2932e2cb451ee83d49ab77683e418c03f975e95705acb19",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -8818,6 +8818,96 @@
         "crates/suss-compile/tests/portable_core_expression_dependencies.rs",
         "tests/oracle/expression-core-cases.json"
       ]
+    },
+    {
+      "id": "runtime:Var:1187",
+      "name": "Var",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1187,
+      "end-line": 1253,
+      "byte-start": 35340,
+      "byte-end": 37308,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5ca19b6580d26841019772cf2abbe7d925e6280785f44dbb93c82d398349e265",
+      "extracted": "extracted/0284.cljs",
+      "extracted-sha256": "951bc46c6470247cb417a6c9e49205b87f6048050420ca06f02f6e935718232f",
+      "patch": "docs/compatibility/patches/expression-Var.json",
+      "patch-sha256": "ec3a6971ffe0697ed2c16c375d6c74b80b0d28731d20d918c97f6aa9f264826b",
+      "adapted-form-sha256": "40a9eaffd0c5308c986b5ae58fd006e9f30ea71a2767c98b9569eb2b4c847b2d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "Object.isMacro/toString",
+        "IDeref/IMeta/IWithMeta/IEquiv/IHash/Fn/IFn",
+        "Symbol/hash-symbol/str_/apply",
+        "nominal descriptors and closure-property storage"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_symbol_conversion.rs"
+      ]
+    },
+    {
+      "id": "runtime:var?:1163",
+      "name": "var?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1163,
+      "end-line": 1166,
+      "byte-start": 34502,
+      "byte-end": 34596,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0a9c23320fd575756ec652d6ea71e44759efde674c6fb55ca841c019d976dda4",
+      "extracted": "extracted/0285.cljs",
+      "extracted-sha256": "a8d2a8086f1d6e82f7ba9f6b7b476f1a819f26ad54d73b1a624801185fa74891",
+      "patch": "docs/compatibility/patches/expression-var-predicate.json",
+      "patch-sha256": "8006d66ee22d77ae33b0119a811f2d515e6a98f28ae3b01fce0f3fcf67a9a676",
+      "adapted-form-sha256": "f0596ba6dbff3860dfddf570185b2f71cf88945b62d5afe013fee1e2152c6771",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "Var nominal descriptor"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_symbol_conversion.rs"
+      ]
+    },
+    {
+      "id": "runtime:symbol:1168",
+      "name": "symbol",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1168,
+      "end-line": 1185,
+      "byte-start": 34598,
+      "byte-end": 35338,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a028c666e38cc95c26ecbdeb7ef2a37bde44619d80fad92d6d20b9193d8aba2b",
+      "extracted": "extracted/0286.cljs",
+      "extracted-sha256": "5a10565fa96f3976922a7d3a5668696d9db54e02cae46b84d8a83a21d1f55297",
+      "patch": "docs/compatibility/patches/expression-symbol.json",
+      "patch-sha256": "c80573e95a105e04c28e3a2c09bfed680c1450752c07b633cff880096144728d",
+      "adapted-form-sha256": "8bf1163e4cbdb69d8f694239d429196c48bb09421ce049dd7b82015fbad1bf73",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "symbol?/string?/var?/keyword?",
+        "Var/Symbol/str_",
+        "private UTF-16 index-of and bounded slice",
+        "typed GC Error"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_symbol_conversion.rs"
+      ]
     }
   ],
   "loader": {
@@ -9121,6 +9211,9 @@
     "extracted/0281.cljs": "cfe0db67d526a7792fe694fbccc19e06753413eefd74abf18ef49a0fe4f33dee",
     "extracted/0282.cljs": "ae0ab7c1a1d3910ec46087e6117b3d808306a78da68c12cc911b0db73a70704b",
     "extracted/0283.cljs": "4abe6482527e9bc9ba8a70c01886b4ec633ce0785917c5680f197763f3efd330",
-    "suss/core.sus": "800b5f173a4af38eb7294a2dc865e29f270321b95c0b9b98a0ef247c9f6f8d96"
+    "extracted/0284.cljs": "951bc46c6470247cb417a6c9e49205b87f6048050420ca06f02f6e935718232f",
+    "extracted/0285.cljs": "a8d2a8086f1d6e82f7ba9f6b7b476f1a819f26ad54d73b1a624801185fa74891",
+    "extracted/0286.cljs": "5a10565fa96f3976922a7d3a5668696d9db54e02cae46b84d8a83a21d1f55297",
+    "suss/core.sus": "3655a74e20cea04bb2578104ae60df7a88a31e4fbeb5da2ea1e6d06af9255197"
   }
 }

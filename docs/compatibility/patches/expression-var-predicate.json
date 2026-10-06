@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "0a9c23320fd575756ec652d6ea71e44759efde674c6fb55ca841c019d976dda4",
+  "replacement": "(def var?\n  \"Returns true if v is of type cljs.core.Var\"\n  (fn [v] (instance? Var v)))",
+  "rationale": "Expand defn to def/fn for the bootstrap and resolve the canonical Var descriptor directly. Preserve the pinned nominal predicate and documentation, including its Var branch; do not replace it with a constant or conflate symbols and Vars."
+}

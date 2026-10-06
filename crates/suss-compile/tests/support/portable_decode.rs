@@ -15,6 +15,11 @@ pub enum Observation {
     List(Vec<Observation>),
     Map(Vec<(Observation, Observation)>),
     Set(Vec<Observation>),
+    ExceptionInfo {
+        message: Box<Observation>,
+        data: Box<Observation>,
+        cause: Box<Observation>,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -36,6 +41,7 @@ enum Class {
     BitmapNode,
     ArrayNode,
     CollisionNode,
+    ExceptionInfo,
 }
 
 struct Canonical {
@@ -113,6 +119,10 @@ impl Decoder {
             (
                 "(new suss.core/HashCollisionNode nil 0 0 (suss.core/array))",
                 Class::CollisionNode,
+            ),
+            (
+                "(new suss.core/ExceptionInfo \"decoder\" nil nil)",
+                Class::ExceptionInfo,
             ),
         ] {
             let anchor = session.eval(source)?;
@@ -221,6 +231,13 @@ impl Decoder {
             if fields.len() == 4 {
                 let (class, args) = self.object(store, value)?;
                 match class {
+                    Class::ExceptionInfo => {
+                        return Ok(Observation::ExceptionInfo {
+                            message: Box::new(self.value(store, &args[0], depth + 1)?),
+                            data: Box::new(self.value(store, &args[1], depth + 1)?),
+                            cause: Box::new(self.value(store, &args[2], depth + 1)?),
+                        });
+                    }
                     Class::Keyword | Class::Symbol => {
                         let keyword = class == Class::Keyword;
                         if args.len() != if keyword { 4 } else { 5 } {
@@ -310,7 +327,8 @@ impl Decoder {
                     | Class::MapEntry
                     | Class::HashSet
                     | Class::BitmapNode
-                    | Class::ArrayNode => 3,
+                    | Class::ArrayNode
+                    | Class::ExceptionInfo => 3,
                     Class::SourceArray | Class::EmptyList => 1,
                 };
                 if args.len(&*store)? != expected {

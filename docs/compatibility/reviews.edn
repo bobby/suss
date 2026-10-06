@@ -3713,4 +3713,39 @@
    :adaptation-path "docs/compatibility/patches/expression-internal-str.json"
    :alternative nil
    :tests ["crates/suss-compile/tests/portable_core_expression_dependencies.rs" "tests/oracle/expression-core-cases.json"]}
+
+
+  "runtime:Var:1187"
+  {:source-sha256 "5ca19b6580d26841019772cf2abbe7d925e6280785f44dbb93c82d398349e265"
+   :visibility :public
+   :arities nil
+   :dependencies ["Object.isMacro/toString" "IDeref/IMeta/IWithMeta/IEquiv/IHash/Fn/IFn" "Symbol/hash-symbol/str_/apply" "nominal descriptors and closure-property storage"]
+   :classification :adapted
+   :rationale "Preserve the entire pinned Var declaration, every field, Object method, protocol implementation and all twenty-two IFn method signatures. Normalize only the general dot property-read spelling to the supported explicit named property form, preserving one thunk invocation and the same closure-property key. No method or branch is omitted. This is an in-progress conversion dependency, not acceptance of compiler var forms, complete runtime Var behavior or general JavaScript properties."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-Var.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_symbol_conversion.rs"]}
+  "runtime:var?:1163"
+  {:source-sha256 "0a9c23320fd575756ec652d6ea71e44759efde674c6fb55ca841c019d976dda4"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["Var nominal descriptor"]
+   :classification :adapted
+   :rationale "Expand defn to def/fn for the bootstrap and resolve the canonical Var descriptor directly. Preserve the pinned nominal predicate and documentation, including its Var branch; do not replace it with a constant or conflate symbols and Vars."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-var-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_symbol_conversion.rs"]}
+  "runtime:symbol:1168"
+  {:source-sha256 "a028c666e38cc95c26ecbdeb7ef2a37bde44619d80fad92d6d20b9193d8aba2b"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["symbol?/string?/var?/keyword?" "Var/Symbol/str_" "private UTF-16 index-of and bounded slice" "typed GC Error"]
+   :classification :adapted
+   :rationale "Expand defn to def/fn and preserve both public arities, all conversion branches and the pinned documentation. Replace first string search and bounded substring storage with private UTF-16 operations. The source supplies integral ordered in-range offsets, so the private slice does not need public JavaScript substring argument normalization. Keep identity for existing Symbols, Var sym lookup, keyword fqn tail recurrence, namespace/name construction and the exact error message using typed GC Error. Full identifier compatibility and Var special-form lowering remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-symbol.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_symbol_conversion.rs"]}
 }}

@@ -1,13 +1,17 @@
-//! Independent prototype observations of the shared development oracle corpus.
-mod support;
+//! Independent ABI2 observations of the unchanged development oracle corpus.
+#[path = "support/portable_decode.rs"]
+mod portable_decode;
 
+use portable_decode::{Decoder, Observation};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::{path::PathBuf, process::Command, sync::OnceLock};
-use support::decode::Decoder;
-use suss_compile::Compiler;
+use suss_compile::{
+    Compiler,
+    portable_session::{Session, SessionError, SessionOptions},
+};
 use suss_core::{Edn, Number};
-use wasmtime::{Config, Engine, Linker, Module, Store, Val};
+use wasmtime::{Config, Engine};
 
 const PIN: &str = "c4295f303100bbf5afac449242d30bca1126f1a1";
 
@@ -96,74 +100,111 @@ fn failure(stage: &str, error: impl std::fmt::Display) -> Failure {
     (stage.into(), error.to_string())
 }
 
+fn observed_tagged(value: &Observation) -> Value {
+    let units = |units: &[u16]| json!({"tag": "string", "units": units});
+    match value {
+        Observation::Nil => json!({"tag":"nil"}),
+        Observation::Bool(value) => json!({"tag":"bool", "value":value}),
+        Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
+        Observation::String(value) => units(value),
+        Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {
+            let tag = if matches!(value, Observation::Keyword(..)) {
+                "keyword"
+            } else {
+                "symbol"
+            };
+            json!({"tag":tag, "namespace":namespace.as_ref().map(|value| units(value))
+                .unwrap_or(json!({"tag":"nil"})), "name":units(name)})
+        }
+        Observation::Vector(items) | Observation::List(items) | Observation::Set(items) => {
+            let tag = match value {
+                Observation::Vector(_) => "vector",
+                Observation::List(_) => "seq",
+                _ => "set",
+            };
+            json!({"tag":tag, "items":items.iter().map(observed_tagged).collect::<Vec<_>>()})
+        }
+        Observation::Map(entries) => json!({"tag":"map", "entries":entries.iter()
+            .map(|(key, value)| vec![observed_tagged(key), observed_tagged(value)])
+            .collect::<Vec<_>>()}),
+        Observation::ExceptionInfo {
+            message,
+            data,
+            cause,
+        } => json!({
+            "tag":"exception-info", "message":observed_tagged(message),
+            "data":observed_tagged(data), "cause":observed_tagged(cause),
+        }),
+    }
+}
+
 fn observe(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<Value, Failure> {
-    // The body is identical to ClojureScript; only the test runner wrapper differs.
+    // Preserve every original corpus expression and outcome/trace envelope.
+    // Use the portable catch clause; the prototype wrapper omitted :default.
+    // Observations come from storage, not guest printing or equality.
     let source = format!(
-        "(let [trace (atom [])] (let [outcome (try [false {}] (catch error [true error]))] [outcome (deref trace)]))",
+        "(let [trace (atom [])] (let [outcome (try [false {}] (catch :default error [true error]))] [outcome (deref trace)]))",
         case.expr
     );
     let artifact = compiler
         .compile_expr_cached(&source)
-        .map_err(|e| failure("compile", e))?;
-    if artifact.is_component {
-        return Err(failure("artifact", "expected core module"));
-    }
-    let module =
-        Module::new(engine, &artifact.wasm).map_err(|e| failure("validation", format!("{e:#}")))?;
-    let mut store = Store::new(engine, ());
-    store.set_fuel(20_000_000).unwrap();
-    let mut linker = Linker::new(engine);
-    linker
-        .func_wrap("suss", "print_str", |_: i32, _: i32| {})
-        .unwrap();
-    let instance = linker
-        .instantiate(&mut store, &module)
-        .map_err(|e| failure("instantiate", format!("{e:#}")))?;
-    let eval = instance
-        .get_func(&mut store, "eval")
-        .ok_or_else(|| failure("artifact", "missing eval"))?;
-    let mut result = [Val::null_any_ref()];
-    eval.call(&mut store, &[], &mut result).map_err(|e| {
-        let stage = if e.downcast_ref::<wasmtime::Trap>().is_some() {
-            "trap"
-        } else {
-            "execution"
-        };
-        failure(stage, format!("{e:#}"))
-    })?;
-    let decoded = Decoder::new(compiler)
-        .decode(&mut store, &result[0])
-        .map_err(|e| failure("decode", e))?;
-    let Edn::Vector(parts) = decoded else {
+        .map_err(|error| failure("compile", error))?;
+    let mut session = Session::with_engine(
+        engine.clone(),
+        SessionOptions {
+            fuel_per_operation: 20_000_000,
+            ..Default::default()
+        },
+    )
+    .map_err(|error| failure("host", error))?;
+    let (result, mut decoder) = artifact
+        .execute_with_core(&mut session, |session| Decoder::capture(session, 100_000))
+        .map_err(|error| match error {
+            SessionError::Trap(error) => failure("trap", format!("{error:#}")),
+            SessionError::Language(_) => failure(
+                "execution",
+                "uncaught language exception outside observation wrapper",
+            ),
+            SessionError::Compile(error) => failure("compile", error),
+            SessionError::Module(error) => failure("dependency", error),
+            error => failure("host", error),
+        })?;
+    let result = result.ok_or_else(|| failure("artifact", "missing expression result"))?;
+    session.collect().map_err(|error| failure("gc", error))?;
+    let decoded = decoder
+        .decode_session(&mut session, &result)
+        .map_err(|error| failure("decode", error))?;
+    let Observation::Vector(parts) = decoded else {
         return Err(failure("decode", "malformed observation envelope"));
     };
     if parts.len() != 2 {
         return Err(failure("decode", "wrong observation envelope length"));
     }
-    let Edn::Vector(effects) = &parts[1] else {
+    let Observation::Vector(effects) = &parts[1] else {
         return Err(failure("decode", "malformed effect trace"));
     };
-    let Edn::Vector(outcome) = &parts[0] else {
+    let Observation::Vector(outcome) = &parts[0] else {
         return Err(failure("decode", "malformed outcome"));
     };
     if outcome.len() != 2 {
         return Err(failure("decode", "wrong outcome length"));
     }
-    let effects = effects
-        .iter()
-        .map(tagged)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| failure("decode", e))?;
-    let payload = tagged(&outcome[1]).map_err(|e| failure("decode", e))?;
+    let effects = effects.iter().map(observed_tagged).collect::<Vec<_>>();
+    let payload = observed_tagged(&outcome[1]);
     match outcome[0] {
-        Edn::Bool(false) => {
+        Observation::Bool(false) => {
             Ok(json!({"id":case.id,"status":"value","value":payload,"effects":effects}))
         }
-        // These independently decoded prototype values are not Error or
-        // ExceptionInfo objects. Pinned cljs ex-data/ex-message return nil for
-        // non-Errors; preserve the exact thrown value instead of discarding it.
-        Edn::Bool(true) => Ok(json!({"id":case.id,"status":"exception","thrown":payload,
-            "data":{"tag":"nil"},"message":{"tag":"nil"},"effects":effects})),
+        Observation::Bool(true) => {
+            let (data, message) = match &outcome[1] {
+                Observation::ExceptionInfo { data, message, .. } => {
+                    (observed_tagged(data), observed_tagged(message))
+                }
+                _ => (json!({"tag":"nil"}), json!({"tag":"nil"})),
+            };
+            Ok(json!({"id":case.id,"status":"exception","thrown":payload,
+                "data":data,"message":message,"effects":effects}))
+        }
         _ => Err(failure("decode", "invalid outcome discriminator")),
     }
 }

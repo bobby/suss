@@ -108,6 +108,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
+                        Nominal::StringIndexOf => { names.insert("string-index-of"); }
+                        Nominal::StringSlice => { names.insert("string-slice"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -271,7 +273,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "callable-property-get" | "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
+            "string-slice" | "callable-property-get" | "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
@@ -985,6 +987,8 @@ fn emit_function(
                         Nominal::Class
                         | Nominal::CoerceString
                         | Nominal::ConcatString
+                        | Nominal::StringIndexOf
+                        | Nominal::StringSlice
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
                         | Nominal::NativeObjectFactory
@@ -1007,6 +1011,8 @@ fn emit_function(
                                 Nominal::Class => "class-value-new",
                                 Nominal::CoerceString => "coerce-string",
                                 Nominal::ConcatString => "string-concat",
+                                Nominal::StringIndexOf => "string-index-of",
+                                Nominal::StringSlice => "string-slice",
                                 Nominal::LanguageError => "language-error-new",
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",

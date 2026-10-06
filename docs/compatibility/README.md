@@ -903,3 +903,13 @@ immutable descriptor-checked Error.message read; private concatenation errors ar
 catchable language errors with operands evaluated once in source order. Public
 expression/cache migration and production evaluator retirement remain incomplete.
 See [compiled expression observations](../runtime/compiled-expression-observations.md).
+
+
+The native cached-expression API now has executing shared-ABI artifact evidence:
+original201 inputs, fresh16 lossless differential expressions, and40 fresh pinned
+symbol/Var observations in both phases. The old7 oracle failure records were
+reconciled only after fresh exact agreement; parent88abea7 retains the historical
+red records. Six identifier tests, public/preflight/GC checks and Java/Node-free
+BOTHphase reproduction pass. The overlay remains partial388reviewed/677unassessed;
+review/full/final-head CI and original M3 acceptance remain pending. See
+[expression artifacts](../runtime/compiled-expression-artifacts.md).
