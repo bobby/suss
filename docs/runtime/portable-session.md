@@ -92,6 +92,29 @@ actual JIT bytes or retained raw Wasm. Handle counts exclude internal cell/runti
 roots; heap capacity is not live-object usage. These counters separate residency
 from caller-owned roots but do not prove absence of leaks or full M3-04 acceptance.
 
+Live GC heap bytes (the Wasm GC heap only, not host tables, session maps or
+numeric scratch memory) are measured separately, in tests only. Pinned Wasmtime 49.0.1
+has no public live-heap counter, but after each completed collection
+`runtime/vm/gc.rs` logs the exact `GcHeap::allocated_bytes()` result at trace
+level. [`session_live_heap.rs`](../../crates/suss-compile/tests/session_live_heap.rs)
+installs a test-only logger that reads exactly that record for one synchronous
+`Session::collect` on the calling thread; a missing, duplicate or malformed record
+fails. In both the Runtime and Macro Stores it shows that:
+
+* live bytes return exactly to the baseline after a handle-held graph, a
+  self-referential atom and a graph retained only through a global cell are released;
+* live bytes stay above the baseline while those graphs are retained, by an
+  identical amount in every round;
+* resident fragments, artifact bytes, cells, modules and handles stay unchanged;
+* after repeated `reset`s following retained state, the replacement Store's live
+  bytes and resident code equal a fresh session's, so nothing accumulates across
+  generations (the test does not observe the old Store's drop itself).
+
+The collector `Collector::Auto` selects for this build (copying) reclaims cycles; the
+cycle assertion would fail under a collector that does not. `SessionStats` deliberately has no
+live-bytes field: no public Wasmtime API supplies one, and a production logger
+would be process-global.
+
 Options supply source paths and one fuel budget per complete input/load/invocation,
 including its dependencies. A shared configured engine is reused. Caller-supplied
 engines must enable GC/function references/tail calls/exceptions and fuel.
@@ -127,7 +150,7 @@ separate evidence, and nine arithmetic/nominal declarations are reviewed as in-p
 Production REPL/command frontend migration and printing, atoms/types/collections,
 extended closure signatures, object coercions and complete source core/macros, complete
 ExceptionInfo/effect IR, reload/cache/privacy policy, compiled macro sessions,
-async I/O/cancellation and live heap accounting remain unfinished. Unsupported
+async I/O/cancellation remains unfinished; live heap accounting is test-only (above). Unsupported
 source forms still return located diagnostics. Source declaration/unbound-var
 semantics are not fully certified. Do not close #10/#12/#13/#15 from this API alone.
 Next connect the actual REPL frontend to this host as portable lowering/printing
