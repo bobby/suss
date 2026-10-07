@@ -574,10 +574,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.pos-qmark (Some(\"<root>/clojure/core_test/pos_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 547..549"
   },
-  "clojure.core-test.pr-str": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.pr-str (Some(\"<root>/clojure/core_test/pr_str.cljc\")): Unresolved Runtime name pr-str at bytes 224..862"
-  },
   "clojure.core-test.print-str": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.print-str (Some(\"<root>/clojure/core_test/print_str.cljc\")): Unresolved Runtime name print-str at bytes 227..609"
