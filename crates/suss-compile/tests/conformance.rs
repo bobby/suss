@@ -286,7 +286,8 @@ fn comparison_rejects_wrong_values_and_collections() {
     };
     let number = |value: f64| Number(value.to_bits());
     let keyword = |name: &str| Keyword(None, name.encode_utf16().collect());
-    let cases: [(&str, Observation, bool); 10] = [
+    let cases: [(&str, Observation, bool); 11] = [
+        ("[1 2]", List(vec![number(1.0), number(2.0)]), true),
         ("[1 2]", Vector(vec![number(1.0), number(3.0)]), false),
         ("{:a 1}", Map(vec![(keyword("a"), number(2.0))]), false),
         ("#{1 2}", Set(vec![number(1.0), number(3.0)]), false),

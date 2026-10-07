@@ -20887,28 +20887,33 @@ passed. Require the exact full baseline and final-head CI/raw audit after this
 reviewer-pushed fix. PR #210 remains draft, partial Refs#14; original M3 acceptance
 and the next byte-only/prototype/Wasm/evaluator/lifecycle work remain open.
 
-## Tree-walking macro evaluator removed (#14) — 2026-10-07
+## Tree-walking macro evaluator removed (#14) — 2026-10-06
 
 Status lives on issue #14. Stacked on PR #210. Removed `eval.rs`
-(`MacroEvaluator`), `expand.rs`, the prototype `src/core.sus` and its core cache,
-the byte-only `Compiler::compile_expr`, the compiler-on-Wasm prototype methods,
-the dangling component CLI (no repository crate implemented its `suss:eval`
-evaluator component), `compose.wac`, the evaluator WIT and the test-only
-source-replaying REPL fixtures. The reader component keeps its WIT world.
+(`MacroEvaluator`), `expand.rs`, the prototype `src/core.sus` route with its core
+cache, the prototype expression codegen it fed (`analyze`, `lower`, `codegen`,
+`ir`, `component` and the prototype `wasi` bindings), the byte-only
+`Compiler::compile_expr`, the compiler-on-Wasm prototype methods, the dangling
+component CLI (no repository crate implemented its `suss:eval` component),
+`compose.wac`, the evaluator WIT and the test-only source-replaying REPL
+fixtures. The reader component keeps its WIT world.
 
-The 311 remaining `tests/compile_expr.rs` tests now compile through
+The 311 remaining `tests/compile_expr.rs` tests compile through
 `compile_expr_with_info`, execute the bundle in a fresh Session and decode with
-the independent ABI2 decoder. 277 pass. Expectations that encoded prototype
-value decoding were corrected to ClojureScript values (booleans and nil), and
-three were corrected with fresh pinned observations: `(hash "")` is 0 and the
-pinned `<` macro evaluates the middle argument of `(< a b c)` twice (4 and 2).
-37 tests are ignored with the exact missing compiled-pipeline feature (`str`,
-`comp`, `partial`, `range`, `take`, `doseq`, `cond->`, `some->`, `lazy-seq`,
-`when-first`, `constantly`, `set-validator!`, destructuring and printing);
-`prototype_cases_awaiting_compiled_support` asserts each exact diagnostic so a
-landed feature fails the ratchet. Static wrong-arity diagnostics (design section
-4) are missing from the compiled pipeline: wrong arity is a runtime language
-exception; `static_arity_diagnostics_are_not_yet_compiled` records this.
+the independent ABI2 decoder: 277 pass. Prototype 0/1 value decoding became
+ClojureScript booleans and nil, and two expectations were corrected with fresh
+pinned observations: `(hash "")` is 0, and the pinned `<` macro evaluates the
+middle operand of `(< a b c)` twice (4 and 2). 37 tests are ignored with the exact
+missing compiled-pipeline feature (`str`, `comp`, `partial`, `range`, `take`,
+`doseq`, `cond->`, `some->`, `lazy-seq`, `when-first`, `constantly`,
+`set-validator!`, destructuring and printing);
+`prototype_cases_awaiting_compiled_support` asserts each exact diagnostic.
+Static wrong-arity diagnostics (design section 4) are missing for global calls:
+wrong arity is a runtime arity exception, recorded by
+`static_arity_diagnostics_are_not_yet_compiled`.
+
+Note: this environment's RUSTFLAGS suppresses warnings, so dead code is invisible
+to local builds; check removals with `cargo check --workspace --all-targets`.
 
 ```sh
 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap

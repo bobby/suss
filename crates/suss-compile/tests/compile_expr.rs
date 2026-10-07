@@ -1,11 +1,6 @@
-//! Tests for compile_expr() - compiles expressions and runs with wasmtime
-//!
-//! Uses WASM GC for value representation:
-//! - Small integers: i31ref with encoding (n << 1) | 1
-//! - nil: i31ref(0), false: i31ref(2), true: i31ref(4)
-//! - Large integers: structref (LARGE_INT type)
-//! - Floats: structref (FLOAT type)
-//! - Strings: arrayref (STRING type)
+//! Expression tests migrated from the removed prototype route. Each expression
+//! compiles through the compiled Macro/Runtime pipeline, executes as a complete
+//! bundle in a fresh Session and is decoded independently on the host.
 
 use suss_compile::{Compiler, portable_session::Session};
 
@@ -2692,10 +2687,23 @@ fn static_arity_diagnostics_are_not_yet_compiled() {
             .compile_expr_with_info(expression)
             .unwrap_or_else(|error| panic!("{expression} now fails to compile: {error}"));
         let mut session = Session::new().expect("runtime session");
-        assert!(
-            matches!(compiled.execute(&mut session), Err(suss_compile::portable_session::SessionError::Language(_))),
-            "{expression} no longer raises a runtime arity exception"
-        );
+        let mut decoder = None;
+        let payload = match compiled.execute_with_core(&mut session, |session| {
+            decoder = Some(Decoder::capture(session, 1_000_000)?);
+            Ok(())
+        }) {
+            Err(suss_compile::portable_session::SessionError::Language(payload)) => payload,
+            other => panic!("{expression} no longer raises a runtime exception: {:?}", other.map(|_| ())),
+        };
+        // Read the thrown value's message as a program would, then decode it.
+        let ex_message = session.eval("ex-message").expect("ex-message");
+        let message = session.invoke(&ex_message, &[&payload]).expect("message");
+        session.collect().expect("collect");
+        let message = match decoder.unwrap().decode_session(&mut session, &message) {
+            Ok(Observation::String(units)) => String::from_utf16_lossy(&units),
+            other => panic!("{expression}: undecodable exception message {other:?}"),
+        };
+        assert!(message.to_lowercase().contains("arity"), "{expression}: {message}");
     }
 }
 
