@@ -12,6 +12,11 @@ pub struct CompiledMacros {
     bridge: FormBridge,
     declaration_values: DeclarationValues,
     definitions: BTreeMap<(String, String), SessionValue>,
+    // Macros whose definitions cannot read their implicit &env parameter.
+    environment_free: BTreeSet<(String, String)>,
+    environment_materializations: u64,
+    // Source macro expansions performed by this host, in any context.
+    source_expansions: u64,
     declaration_sources: BTreeMap<(String, String), String>,
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
@@ -32,6 +37,37 @@ fn failure(form: &Form, message: &str) -> SessionError {
         span: form.span.clone(),
         message: message.into(),
     })
+}
+pub(crate) type MacroCheckpoint = (
+    crate::portable_session::BindingCheckpoint,
+    BTreeMap<(String, String), SessionValue>,
+    BTreeMap<(String, String), String>,
+    BTreeSet<(String, String)>,
+);
+
+/// Whether a definition contains a symbol named &env anywhere, including in
+/// quoted or syntax-quoted data. Together with source-macro expansions observed
+/// while its body compiles, this decides whether a macro may read &env.
+fn mentions_environment(form: &Form) -> bool {
+    let mut pending = vec![form];
+    while let Some(form) = pending.pop() {
+        pending.extend(&form.metadata);
+        match &form.kind {
+            Kind::Symbol(symbol) if symbol.name == "&env" => return true,
+            Kind::List(items)
+            | Kind::Vector(items)
+            | Kind::Set(items)
+            | Kind::Map(items)
+            | Kind::Conditional(items) => pending.extend(items),
+            Kind::Discard(target) => pending.push(target.as_ref()),
+            Kind::Prefix { operator, target } => {
+                pending.push(operator.as_ref());
+                pending.push(target.as_ref());
+            }
+            _ => {}
+        }
+    }
+    false
 }
 fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, SessionError> {
     let Some(parameters) = parts.first() else {
@@ -68,6 +104,9 @@ impl CompiledMacros {
             bridge,
             declaration_values: Default::default(),
             definitions: BTreeMap::new(),
+            environment_free: BTreeSet::new(),
+            environment_materializations: 0,
+            source_expansions: 0,
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
@@ -81,15 +120,17 @@ impl CompiledMacros {
         macros.artifact_cache = Default::default();
         Ok(macros)
     }
-    pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {
-        Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone()))
+    pub(crate) fn binding_checkpoint(&mut self) -> Result<MacroCheckpoint, SessionError> {
+        Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone(), self.environment_free.clone()))
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(&mut self, checkpoint: MacroCheckpoint, globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
         self.session.restore_bindings(checkpoint.0, globals)?;
         for global in globals {
             let key = (global.namespace().to_owned(), global.name().to_owned());
             if let Some(value) = checkpoint.1.get(&key) { self.definitions.insert(key.clone(), value.clone()); }
             else { self.definitions.remove(&key); }
+            if checkpoint.3.contains(&key) { self.environment_free.insert(key.clone()); }
+            else { self.environment_free.remove(&key); }
             if let Some(source) = checkpoint.2.get(&key) { self.declaration_sources.insert(key, source.clone()); }
             else { self.declaration_sources.remove(&key); }
         }
@@ -236,7 +277,7 @@ impl CompiledMacros {
             return Err(failure(form, "Expected source defmacro"));
         };
         if items.len() < 3
-            || !matches!(&items[0].kind, Kind::Symbol(s) if s.name == "defmacro" && (s.namespace.is_none() || matches!(s.namespace.as_deref(), Some("suss.core" | "cljs.core"))))
+            || !matches!(&items[0].kind, Kind::Symbol(s) if s.name == "defmacro" && (s.namespace.is_none() || matches!(s.namespace.as_deref(), Some("suss.core" | "cljs.core" | "clojure.core"))))
         {
             return Err(failure(form, "Expected defmacro name parameters and body"));
         }
@@ -305,12 +346,25 @@ impl CompiledMacros {
             metadata: form.metadata.clone(),
             kind: Kind::List(definition),
         };
+        // A macro observes &env only through a lexical reference to its
+        // implicit parameter: written in its definition, or produced by a source
+        // macro expanded while its body compiles (through any rename, alias or
+        // form rewrite). Compiler-implemented forms never introduce one. A macro
+        // with neither cannot observe &env, so it receives nil.
+        let expansions = self.source_expansions;
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
+        let reads_environment =
+            mentions_environment(form) || self.source_expansions != expansions;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
-        self.definitions
-            .insert((namespace.clone(), name.name.clone()), value.clone());
+        let key = (namespace.clone(), name.name.clone());
+        if reads_environment {
+            self.environment_free.remove(&key);
+        } else {
+            self.environment_free.insert(key.clone());
+        }
+        self.definitions.insert(key, value.clone());
         let provenance = format!("{form:?}:{}:{:?}", origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
         self.declaration_sources.insert((namespace.clone(), name.name.clone()), crate::portable::bootstrap::sha256(provenance.as_bytes()));
         let exports = self
@@ -326,6 +380,10 @@ impl CompiledMacros {
 impl CompiledMacros {
     pub fn artifact_cache_stats(&self) -> crate::portable::artifact_cache::CacheStats {
         self.artifact_cache.stats()
+    }
+    /// Expansions that materialized a caller &env analysis graph.
+    pub fn environment_materializations(&self) -> u64 {
+        self.environment_materializations
     }
 }
 impl ExpansionHost for CompiledMacros {
@@ -443,13 +501,21 @@ impl ExpansionHost for CompiledMacros {
         let Some(function) = self.definitions.get(&target).cloned() else {
             return Ok(None);
         };
+        self.source_expansions += 1;
         let result = (|| -> Result<Form, SessionError> {
             let caller_data = context.origin.map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
                 .map_err(SessionError::Compile)?;
             let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
-            let caller_environment = AnalysisGraph::with_declaration_values(
-                &self.bridge, &mut self.session, &mut self.declaration_values,
-            ).expansion(context)?;
+            // A macro that cannot read &env receives nil instead of a
+            // materialized analysis graph; nothing else can observe it.
+            let caller_environment = if self.environment_free.contains(&target) {
+                self.bridge.quote(&mut self.session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
+            } else {
+                self.environment_materializations += 1;
+                AnalysisGraph::with_declaration_values(
+                    &self.bridge, &mut self.session, &mut self.declaration_values,
+                ).expansion(context)?
+            };
             let mut arguments = vec![caller_form, caller_environment];
             let Kind::List(caller_items) = &caller_data.kind else { unreachable!("matched macro call") };
             for argument in &caller_items[1..] {

@@ -35,6 +35,8 @@ jobs:
           python3 scripts/bitwise_provenance.py
           python3 scripts/wasi_lock.py
           python3 scripts/numeric_runtime.py --check
+          python3 scripts/clojure_test_suite.py
+          python3 scripts/clojure_test_suite.py overlap
       - name: Reproduce and execute versioned bootstrap without Java
         run: scripts/verify-bootstrap.sh
       - name: Test libraries, binaries, examples and documentation

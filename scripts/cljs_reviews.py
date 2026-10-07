@@ -74,7 +74,18 @@ def choice(value, choices, label):
         raise ValueError(f'{label} must be one of: {choices}')
 
 
-def validate(source, records):
+SUITE_PREFIX = 'clojure-test-suite:'
+SUITE_REFERENCE = ROOT / 'tests/oracle/clojure-test-suite-observations.json'
+
+
+def suite_identities(path=SUITE_REFERENCE):
+    """Test and assertion IDs a review may cite as `clojure-test-suite:<id>`."""
+    import json
+    reference = json.loads(path.read_text())
+    return set(reference['tests']) | {entry['id'] for entry in reference['assertions']}
+
+
+def validate(source, records, suite_ids=None):
     forms = Scanner(source).all()
     if len(forms) != 1:
         raise ValueError('review overlay must contain exactly one data form')
@@ -101,6 +112,13 @@ def validate(source, records):
         text(review['rationale'], 'rationale')
         text_list(review['dependencies'], 'dependencies')
         text_list(review['tests'], 'tests')
+        for reference in review['tests']:
+            if reference.startswith(SUITE_PREFIX):
+                cited = reference[len(SUITE_PREFIX):]
+                if suite_ids is None:
+                    suite_ids = suite_identities()
+                if cited not in suite_ids:
+                    raise ValueError(f'unknown clojure-test-suite test or assertion: {cited}')
         for name in ('adaptation-path', 'alternative'):
             if review[name] is not None:
                 text(review[name], name)

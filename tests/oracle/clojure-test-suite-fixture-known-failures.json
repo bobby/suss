@@ -1,0 +1,20 @@
+{
+ "schema": 1,
+ "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+ "namespaces": {
+  "clojure.harness-test.skips": {
+   "stage": "namespace",
+   "diagnostic": "clojure.harness-test.skips (Some(\"<root>/clojure/harness_test/skips.cljc\")): Unresolved Runtime name host-only-fn at bytes 371..455"
+  }
+ },
+ "tests": {},
+ "assertions": {},
+ "skip-mismatches": [
+  [
+   "clojure.harness-test.skips",
+   "host-only-fn",
+   null,
+   1
+  ]
+ ]
+}

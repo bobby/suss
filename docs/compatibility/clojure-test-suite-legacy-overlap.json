@@ -1,0 +1,1866 @@
+{
+ "schema": 1,
+ "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+ "summary": {
+  "cases": 201,
+  "with-suite-coverage": 171,
+  "legacy-only": 30
+ },
+ "cases": {
+  "collections/empty-collections-equal": {
+   "expression": "(= [] [])",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/empty-map-set-not-equal": {
+   "expression": "(= {} #{})",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/list-cons": {
+   "expression": "(cons 1 [2 3])",
+   "functions": [
+    "cons"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.cons"
+   ]
+  },
+  "collections/list-cons-nil": {
+   "expression": "(cons 1 nil)",
+   "functions": [
+    "cons"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.cons"
+   ]
+  },
+  "collections/list-literal": {
+   "expression": "'(1 2 3)",
+   "functions": [
+    "1"
+   ],
+   "suite-namespaces": []
+  },
+  "collections/map-assoc-chain": {
+   "expression": "(get (assoc (assoc (assoc {} :a 1) :b 2) :c 3) :b)",
+   "functions": [
+    "assoc",
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc",
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/map-assoc-multiple": {
+   "expression": "(assoc {} :a 1 :b 2 :c 3)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/map-assoc-new": {
+   "expression": "(assoc {} :a 1)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/map-assoc-update": {
+   "expression": "(assoc {:a 1} :a 2)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/map-chained-assoc": {
+   "expression": "(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3) (get :b))",
+   "functions": [
+    "->",
+    "assoc",
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc",
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/map-contains-false": {
+   "expression": "(contains? {:a 1 :b 2} :c)",
+   "functions": [
+    "contains?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.contains-qmark"
+   ]
+  },
+  "collections/map-contains-true": {
+   "expression": "(contains? {:a 1 :b 2} :a)",
+   "functions": [
+    "contains?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.contains-qmark"
+   ]
+  },
+  "collections/map-count": {
+   "expression": "(count {:a 1 :b 2 :c 3})",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/map-count-empty": {
+   "expression": "(count {})",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/map-dissoc": {
+   "expression": "(dissoc {:a 1 :b 2} :a)",
+   "functions": [
+    "dissoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.dissoc"
+   ]
+  },
+  "collections/map-dissoc-missing": {
+   "expression": "(dissoc {:a 1 :b 2} :c)",
+   "functions": [
+    "dissoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.dissoc"
+   ]
+  },
+  "collections/map-dissoc-multiple": {
+   "expression": "(dissoc {:a 1 :b 2 :c 3} :a :c)",
+   "functions": [
+    "dissoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.dissoc"
+   ]
+  },
+  "collections/map-empty-literal": {
+   "expression": "{}",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/map-equality": {
+   "expression": "(= {:a 1 :b 2} {:b 2 :a 1})",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/map-get": {
+   "expression": "(get {:a 1 :b 2} :a)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/map-get-default": {
+   "expression": "(get {:a 1 :b 2} :c :default)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/map-get-missing": {
+   "expression": "(get {:a 1 :b 2} :c)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/map-inequality": {
+   "expression": "(= {:a 1 :b 2} {:a 1 :b 3})",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/map-large-count": {
+   "expression": "(count (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)))",
+   "functions": [
+    "+",
+    "<",
+    "assoc",
+    "count",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc",
+    "clojure.core-test.count",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/map-large-get": {
+   "expression": "(get (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)) 25)",
+   "functions": [
+    "+",
+    "<",
+    "assoc",
+    "get",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc",
+    "clojure.core-test.get",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/map-literal": {
+   "expression": "{:a 1 :b 2}",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/map-nested": {
+   "expression": "{:a {:b 1}}",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/set-conj": {
+   "expression": "(conj #{1 2} 3)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/set-conj-duplicate": {
+   "expression": "(conj #{1 2 3} 2)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/set-conj-empty": {
+   "expression": "(conj #{} 1)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/set-contains-false": {
+   "expression": "(contains? #{1 2 3} 4)",
+   "functions": [
+    "contains?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.contains-qmark"
+   ]
+  },
+  "collections/set-contains-true": {
+   "expression": "(contains? #{1 2 3} 2)",
+   "functions": [
+    "contains?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.contains-qmark"
+   ]
+  },
+  "collections/set-count": {
+   "expression": "(count #{1 2 3})",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/set-count-empty": {
+   "expression": "(count #{})",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/set-disj": {
+   "expression": "(disj #{1 2 3} 2)",
+   "functions": [
+    "disj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.disj"
+   ]
+  },
+  "collections/set-disj-missing": {
+   "expression": "(disj #{1 2 3} 4)",
+   "functions": [
+    "disj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.disj"
+   ]
+  },
+  "collections/set-empty-literal": {
+   "expression": "#{}",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/set-equality": {
+   "expression": "(= #{1 2 3} #{3 2 1})",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/set-inequality": {
+   "expression": "(= #{1 2 3} #{1 2 4})",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/set-large-contains": {
+   "expression": "(contains? (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)) 25)",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "contains?",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.contains-qmark",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/set-large-count": {
+   "expression": "(count (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)))",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "count",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.count",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/set-literal": {
+   "expression": "#{1 2 3}",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/vector-assoc": {
+   "expression": "(assoc [1 2 3] 1 :x)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/vector-assoc-first": {
+   "expression": "(assoc [1 2 3] 0 :x)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/vector-assoc-last": {
+   "expression": "(assoc [1 2 3] 2 :x)",
+   "functions": [
+    "assoc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.assoc"
+   ]
+  },
+  "collections/vector-conj-empty": {
+   "expression": "(conj [] 1)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/vector-conj-multiple": {
+   "expression": "(conj [1] 2 3 4)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/vector-conj-single": {
+   "expression": "(conj [1 2] 3)",
+   "functions": [
+    "conj"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj"
+   ]
+  },
+  "collections/vector-count-empty": {
+   "expression": "(count [])",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/vector-count-three": {
+   "expression": "(count [1 2 3])",
+   "functions": [
+    "count"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.count"
+   ]
+  },
+  "collections/vector-empty-literal": {
+   "expression": "[]",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/vector-equality": {
+   "expression": "(= [1 2 3] [1 2 3])",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/vector-first": {
+   "expression": "(first [1 2 3])",
+   "functions": [
+    "first"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.first"
+   ]
+  },
+  "collections/vector-first-empty": {
+   "expression": "(first [])",
+   "functions": [
+    "first"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.first"
+   ]
+  },
+  "collections/vector-get": {
+   "expression": "(get [1 2 3] 1)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/vector-get-default": {
+   "expression": "(get [1 2 3] 10 :default)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/vector-get-missing": {
+   "expression": "(get [1 2 3] 10)",
+   "functions": [
+    "get"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.get"
+   ]
+  },
+  "collections/vector-inequality": {
+   "expression": "(= [1 2 3] [1 2 4])",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/vector-inequality-length": {
+   "expression": "(= [1 2 3] [1 2])",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "collections/vector-large-count": {
+   "expression": "(count (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "count",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.count",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/vector-large-first": {
+   "expression": "(first (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "first",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.first",
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/vector-large-nth": {
+   "expression": "(nth (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)) 50)",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "if",
+    "loop",
+    "nth",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.lt",
+    "clojure.core-test.nth",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/vector-large-peek": {
+   "expression": "(peek (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+   "functions": [
+    "+",
+    "<",
+    "conj",
+    "if",
+    "loop",
+    "peek",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.conj",
+    "clojure.core-test.lt",
+    "clojure.core-test.peek",
+    "clojure.core-test.plus"
+   ]
+  },
+  "collections/vector-literal": {
+   "expression": "[1 2 3]",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/vector-nested": {
+   "expression": "[[1 2] [3 4]]",
+   "functions": [],
+   "suite-namespaces": []
+  },
+  "collections/vector-nth-default": {
+   "expression": "(nth [1 2 3] 10 :not-found)",
+   "functions": [
+    "nth"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nth"
+   ]
+  },
+  "collections/vector-nth-first": {
+   "expression": "(nth [1 2 3] 0)",
+   "functions": [
+    "nth"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nth"
+   ]
+  },
+  "collections/vector-nth-last": {
+   "expression": "(nth [1 2 3] 2)",
+   "functions": [
+    "nth"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nth"
+   ]
+  },
+  "collections/vector-nth-middle": {
+   "expression": "(nth [1 2 3] 1)",
+   "functions": [
+    "nth"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nth"
+   ]
+  },
+  "collections/vector-peek": {
+   "expression": "(peek [1 2 3])",
+   "functions": [
+    "peek"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.peek"
+   ]
+  },
+  "collections/vector-peek-single": {
+   "expression": "(peek [1])",
+   "functions": [
+    "peek"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.peek"
+   ]
+  },
+  "collections/vector-pop": {
+   "expression": "(pop [1 2 3])",
+   "functions": [
+    "pop"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.pop"
+   ]
+  },
+  "collections/vector-pop-single": {
+   "expression": "(pop [1])",
+   "functions": [
+    "pop"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.pop"
+   ]
+  },
+  "collections/vector-rest": {
+   "expression": "(rest [1 2 3])",
+   "functions": [
+    "rest"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.rest"
+   ]
+  },
+  "collections/vector-rest-empty": {
+   "expression": "(rest [])",
+   "functions": [
+    "rest"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.rest"
+   ]
+  },
+  "collections/vector-rest-single": {
+   "expression": "(rest [1])",
+   "functions": [
+    "rest"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.rest"
+   ]
+  },
+  "core/abs-negative": {
+   "expression": "(abs -5)",
+   "functions": [
+    "abs"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.abs"
+   ]
+  },
+  "core/abs-positive": {
+   "expression": "(abs 5)",
+   "functions": [
+    "abs"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.abs"
+   ]
+  },
+  "core/abs-zero": {
+   "expression": "(abs 0)",
+   "functions": [
+    "abs"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.abs"
+   ]
+  },
+  "core/add-many-args": {
+   "expression": "(+ 1 2 3 4 5)",
+   "functions": [
+    "+"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/add-negative": {
+   "expression": "(+ 10 -3)",
+   "functions": [
+    "+"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/add-one-arg": {
+   "expression": "(+ 5)",
+   "functions": [
+    "+"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/add-two-args": {
+   "expression": "(+ 1 2)",
+   "functions": [
+    "+"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/add-zero-args": {
+   "expression": "(+)",
+   "functions": [
+    "+"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/and-empty": {
+   "expression": "(and)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-returns-falsy": {
+   "expression": "(and 1 nil 3)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-returns-last": {
+   "expression": "(and 1 2 3)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-short-circuit": {
+   "expression": "(and false (/ 1 0))",
+   "functions": [
+    "/",
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and",
+    "clojure.core-test.slash"
+   ]
+  },
+  "core/and-single-false": {
+   "expression": "(and false)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-single-true": {
+   "expression": "(and true)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-two-false": {
+   "expression": "(and true false)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/and-two-true": {
+   "expression": "(and true true)",
+   "functions": [
+    "and"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.and"
+   ]
+  },
+  "core/case-default": {
+   "expression": "(case 5 1 :one 2 :two 3 :three :default)",
+   "functions": [
+    "case"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.case"
+   ]
+  },
+  "core/case-first": {
+   "expression": "(case 1 1 :one 2 :two :default)",
+   "functions": [
+    "case"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.case"
+   ]
+  },
+  "core/case-match": {
+   "expression": "(case 2 1 :one 2 :two 3 :three :default)",
+   "functions": [
+    "case"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.case"
+   ]
+  },
+  "core/cond-else": {
+   "expression": "(cond false 1 false 2 :else 3)",
+   "functions": [
+    "cond"
+   ],
+   "suite-namespaces": []
+  },
+  "core/cond-first": {
+   "expression": "(cond true 1 true 2)",
+   "functions": [
+    "cond"
+   ],
+   "suite-namespaces": []
+  },
+  "core/cond-none": {
+   "expression": "(cond false 1 false 2)",
+   "functions": [
+    "cond"
+   ],
+   "suite-namespaces": []
+  },
+  "core/cond-second": {
+   "expression": "(cond false 1 true 2)",
+   "functions": [
+    "cond"
+   ],
+   "suite-namespaces": []
+  },
+  "core/dec": {
+   "expression": "(dec 5)",
+   "functions": [
+    "dec"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.dec"
+   ]
+  },
+  "core/dec-to-negative": {
+   "expression": "(dec 0)",
+   "functions": [
+    "dec"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.dec"
+   ]
+  },
+  "core/defn-recursive": {
+   "expression": "(do (defn fact [n] (if (<= n 1) 1 (* n (fact (- n 1))))) (fact 5))",
+   "functions": [
+    "*",
+    "-",
+    "<=",
+    "defn",
+    "do",
+    "fact",
+    "if"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt-eq",
+    "clojure.core-test.minus",
+    "clojure.core-test.star"
+   ]
+  },
+  "core/defn-simple": {
+   "expression": "(do (defn double [x] (* x 2)) (double 5))",
+   "functions": [
+    "*",
+    "defn",
+    "do",
+    "double"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.double",
+    "clojure.core-test.star"
+   ]
+  },
+  "core/div-many-args": {
+   "expression": "(/ 100 2 5)",
+   "functions": [
+    "/"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.slash"
+   ]
+  },
+  "core/div-one-arg": {
+   "expression": "(/ 2)",
+   "functions": [
+    "/"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.slash"
+   ]
+  },
+  "core/div-two-args": {
+   "expression": "(/ 10 2)",
+   "functions": [
+    "/"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.slash"
+   ]
+  },
+  "core/do-multiple": {
+   "expression": "(do 1 2 3)",
+   "functions": [
+    "do"
+   ],
+   "suite-namespaces": []
+  },
+  "core/do-single": {
+   "expression": "(do 42)",
+   "functions": [
+    "do"
+   ],
+   "suite-namespaces": []
+  },
+  "core/do-with-side-effects": {
+   "expression": "(do (+ 1 2) (+ 3 4))",
+   "functions": [
+    "+",
+    "do"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/eq-keywords": {
+   "expression": "(= :foo :foo)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-keywords-false": {
+   "expression": "(= :foo :bar)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-many-false": {
+   "expression": "(= 5 5 5 6)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-many-true": {
+   "expression": "(= 5 5 5 5)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-nil": {
+   "expression": "(= nil nil)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-numbers": {
+   "expression": "(= 1 1)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/eq-numbers-false": {
+   "expression": "(= 1 2)",
+   "functions": [
+    "="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.eq"
+   ]
+  },
+  "core/even-pred-false": {
+   "expression": "(even? 5)",
+   "functions": [
+    "even?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.even-qmark"
+   ]
+  },
+  "core/even-pred-true": {
+   "expression": "(even? 4)",
+   "functions": [
+    "even?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.even-qmark"
+   ]
+  },
+  "core/falsy-false": {
+   "expression": "(if false :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/falsy-nil": {
+   "expression": "(if nil :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/fn-add": {
+   "expression": "((fn [a b] (+ a b)) 3 4)",
+   "functions": [
+    "+",
+    "fn"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/fn-closure": {
+   "expression": "(let [add5 (fn [x] (+ x 5))] (add5 10))",
+   "functions": [
+    "+",
+    "add5",
+    "fn",
+    "let"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/fn-higher-order": {
+   "expression": "(let [apply-twice (fn [f x] (f (f x)))] (apply-twice inc 0))",
+   "functions": [
+    "apply-twice",
+    "f",
+    "fn",
+    "let"
+   ],
+   "suite-namespaces": []
+  },
+  "core/fn-identity": {
+   "expression": "((fn [x] x) 42)",
+   "functions": [
+    "fn"
+   ],
+   "suite-namespaces": []
+  },
+  "core/fn-nested": {
+   "expression": "((fn [x] ((fn [y] (+ x y)) 10)) 5)",
+   "functions": [
+    "+",
+    "fn"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/gt-equal": {
+   "expression": "(> 1 1)",
+   "functions": [
+    ">"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt"
+   ]
+  },
+  "core/gt-false": {
+   "expression": "(> 1 2)",
+   "functions": [
+    ">"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt"
+   ]
+  },
+  "core/gt-many-true": {
+   "expression": "(> 4 3 2 1)",
+   "functions": [
+    ">"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt"
+   ]
+  },
+  "core/gt-true": {
+   "expression": "(> 2 1)",
+   "functions": [
+    ">"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt"
+   ]
+  },
+  "core/gte-equal": {
+   "expression": "(>= 2 2)",
+   "functions": [
+    ">="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt-eq"
+   ]
+  },
+  "core/gte-greater": {
+   "expression": "(>= 2 1)",
+   "functions": [
+    ">="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt-eq"
+   ]
+  },
+  "core/gte-less": {
+   "expression": "(>= 1 2)",
+   "functions": [
+    ">="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.gt-eq"
+   ]
+  },
+  "core/if-false": {
+   "expression": "(if false 1 2)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/if-nil": {
+   "expression": "(if nil 1 2)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/if-no-else": {
+   "expression": "(if false 1)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/if-number-truthy": {
+   "expression": "(if 0 1 2)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/if-true": {
+   "expression": "(if true 1 2)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/inc": {
+   "expression": "(inc 5)",
+   "functions": [
+    "inc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.inc"
+   ]
+  },
+  "core/inc-negative": {
+   "expression": "(inc -1)",
+   "functions": [
+    "inc"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.inc"
+   ]
+  },
+  "core/let-multiple": {
+   "expression": "(let [x 1 y 2] (+ x y))",
+   "functions": [
+    "+",
+    "let"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/let-nested": {
+   "expression": "(let [x 1] (let [y 2] (+ x y)))",
+   "functions": [
+    "+",
+    "let"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/let-sequential": {
+   "expression": "(let [x 1 y (+ x 1)] y)",
+   "functions": [
+    "+",
+    "let"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/let-shadow": {
+   "expression": "(let [x 1] (let [x 2] x))",
+   "functions": [
+    "let"
+   ],
+   "suite-namespaces": []
+  },
+  "core/let-single": {
+   "expression": "(let [x 1] x)",
+   "functions": [
+    "let"
+   ],
+   "suite-namespaces": []
+  },
+  "core/loop-factorial": {
+   "expression": "(loop [n 5 acc 1] (if (<= n 1) acc (recur (- n 1) (* acc n))))",
+   "functions": [
+    "*",
+    "-",
+    "<=",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt-eq",
+    "clojure.core-test.minus",
+    "clojure.core-test.star"
+   ]
+  },
+  "core/loop-simple": {
+   "expression": "(loop [x 0] (if (< x 5) (recur (+ x 1)) x))",
+   "functions": [
+    "+",
+    "<",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/loop-sum": {
+   "expression": "(loop [i 0 sum 0] (if (< i 10) (recur (+ i 1) (+ sum i)) sum))",
+   "functions": [
+    "+",
+    "<",
+    "if",
+    "loop",
+    "recur"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt",
+    "clojure.core-test.plus"
+   ]
+  },
+  "core/lt-equal": {
+   "expression": "(< 1 1)",
+   "functions": [
+    "<"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt"
+   ]
+  },
+  "core/lt-false": {
+   "expression": "(< 2 1)",
+   "functions": [
+    "<"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt"
+   ]
+  },
+  "core/lt-many-false": {
+   "expression": "(< 1 2 2 4)",
+   "functions": [
+    "<"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt"
+   ]
+  },
+  "core/lt-many-true": {
+   "expression": "(< 1 2 3 4)",
+   "functions": [
+    "<"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt"
+   ]
+  },
+  "core/lt-true": {
+   "expression": "(< 1 2)",
+   "functions": [
+    "<"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt"
+   ]
+  },
+  "core/lte-equal": {
+   "expression": "(<= 2 2)",
+   "functions": [
+    "<="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt-eq"
+   ]
+  },
+  "core/lte-greater": {
+   "expression": "(<= 3 2)",
+   "functions": [
+    "<="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt-eq"
+   ]
+  },
+  "core/lte-less": {
+   "expression": "(<= 1 2)",
+   "functions": [
+    "<="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.lt-eq"
+   ]
+  },
+  "core/max-many": {
+   "expression": "(max 10 3 7 1 5)",
+   "functions": [
+    "max"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.max"
+   ]
+  },
+  "core/max-two": {
+   "expression": "(max 3 5)",
+   "functions": [
+    "max"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.max"
+   ]
+  },
+  "core/min-many": {
+   "expression": "(min 10 3 7 1 5)",
+   "functions": [
+    "min"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.min"
+   ]
+  },
+  "core/min-two": {
+   "expression": "(min 3 5)",
+   "functions": [
+    "min"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.min"
+   ]
+  },
+  "core/mod-negative-dividend": {
+   "expression": "(mod -10 3)",
+   "functions": [
+    "mod"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.mod"
+   ]
+  },
+  "core/mod-positive": {
+   "expression": "(mod 10 3)",
+   "functions": [
+    "mod"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.mod"
+   ]
+  },
+  "core/mod-zero": {
+   "expression": "(mod 9 3)",
+   "functions": [
+    "mod"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.mod"
+   ]
+  },
+  "core/mul-many-args": {
+   "expression": "(* 2 3 4 5)",
+   "functions": [
+    "*"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.star"
+   ]
+  },
+  "core/mul-one-arg": {
+   "expression": "(* 5)",
+   "functions": [
+    "*"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.star"
+   ]
+  },
+  "core/mul-two-args": {
+   "expression": "(* 3 4)",
+   "functions": [
+    "*"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.star"
+   ]
+  },
+  "core/mul-zero-args": {
+   "expression": "(*)",
+   "functions": [
+    "*"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.star"
+   ]
+  },
+  "core/neg-pred-false": {
+   "expression": "(neg? 5)",
+   "functions": [
+    "neg?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.neg-qmark"
+   ]
+  },
+  "core/neg-pred-true": {
+   "expression": "(neg? -5)",
+   "functions": [
+    "neg?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.neg-qmark"
+   ]
+  },
+  "core/nil-pred-false": {
+   "expression": "(nil? 1)",
+   "functions": [
+    "nil?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nil-qmark"
+   ]
+  },
+  "core/nil-pred-true": {
+   "expression": "(nil? nil)",
+   "functions": [
+    "nil?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.nil-qmark"
+   ]
+  },
+  "core/not-eq-false": {
+   "expression": "(not= 1 1)",
+   "functions": [
+    "not="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not-eq"
+   ]
+  },
+  "core/not-eq-true": {
+   "expression": "(not= 1 2)",
+   "functions": [
+    "not="
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not-eq"
+   ]
+  },
+  "core/not-false": {
+   "expression": "(not false)",
+   "functions": [
+    "not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not"
+   ]
+  },
+  "core/not-nil": {
+   "expression": "(not nil)",
+   "functions": [
+    "not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not"
+   ]
+  },
+  "core/not-number": {
+   "expression": "(not 1)",
+   "functions": [
+    "not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not"
+   ]
+  },
+  "core/not-true": {
+   "expression": "(not true)",
+   "functions": [
+    "not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not"
+   ]
+  },
+  "core/not-zero": {
+   "expression": "(not 0)",
+   "functions": [
+    "not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.not"
+   ]
+  },
+  "core/odd-pred-false": {
+   "expression": "(odd? 4)",
+   "functions": [
+    "odd?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.odd-qmark"
+   ]
+  },
+  "core/odd-pred-true": {
+   "expression": "(odd? 5)",
+   "functions": [
+    "odd?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.odd-qmark"
+   ]
+  },
+  "core/or-empty": {
+   "expression": "(or)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/or-returns-first-truthy": {
+   "expression": "(or nil false 1 2)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/or-short-circuit": {
+   "expression": "(or true (/ 1 0))",
+   "functions": [
+    "/",
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or",
+    "clojure.core-test.slash"
+   ]
+  },
+  "core/or-single-false": {
+   "expression": "(or false)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/or-single-true": {
+   "expression": "(or true)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/or-two-false": {
+   "expression": "(or false false)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/or-two-true": {
+   "expression": "(or false true)",
+   "functions": [
+    "or"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.or"
+   ]
+  },
+  "core/pos-pred-false": {
+   "expression": "(pos? -5)",
+   "functions": [
+    "pos?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.pos-qmark"
+   ]
+  },
+  "core/pos-pred-true": {
+   "expression": "(pos? 5)",
+   "functions": [
+    "pos?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.pos-qmark"
+   ]
+  },
+  "core/sub-many-args": {
+   "expression": "(- 100 10 20 30)",
+   "functions": [
+    "-"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.minus"
+   ]
+  },
+  "core/sub-one-arg": {
+   "expression": "(- 5)",
+   "functions": [
+    "-"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.minus"
+   ]
+  },
+  "core/sub-two-args": {
+   "expression": "(- 10 3)",
+   "functions": [
+    "-"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.minus"
+   ]
+  },
+  "core/truthy-empty-map": {
+   "expression": "(if {} :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/truthy-empty-string": {
+   "expression": "(if \"\" :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/truthy-empty-vector": {
+   "expression": "(if [] :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/truthy-zero": {
+   "expression": "(if 0 :truthy :falsy)",
+   "functions": [
+    "if"
+   ],
+   "suite-namespaces": []
+  },
+  "core/when-false": {
+   "expression": "(when false 42)",
+   "functions": [
+    "when"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.when"
+   ]
+  },
+  "core/when-not-false": {
+   "expression": "(when-not false 42)",
+   "functions": [
+    "when-not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.when-not"
+   ]
+  },
+  "core/when-not-true": {
+   "expression": "(when-not true 42)",
+   "functions": [
+    "when-not"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.when-not"
+   ]
+  },
+  "core/when-true": {
+   "expression": "(when true 42)",
+   "functions": [
+    "when"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.when"
+   ]
+  },
+  "core/zero-pred-false": {
+   "expression": "(zero? 1)",
+   "functions": [
+    "zero?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.zero-qmark"
+   ]
+  },
+  "core/zero-pred-true": {
+   "expression": "(zero? 0)",
+   "functions": [
+    "zero?"
+   ],
+   "suite-namespaces": [
+    "clojure.core-test.zero-qmark"
+   ]
+  }
+ }
+}

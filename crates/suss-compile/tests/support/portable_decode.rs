@@ -57,6 +57,11 @@ pub struct Decoder {
 }
 
 impl Decoder {
+    /// Reset the node budget, e.g. per independently decoded test run.
+    #[allow(dead_code)]
+    pub fn refill(&mut self, remaining: usize) {
+        self.remaining = remaining;
+    }
     pub fn new(remaining: usize) -> Self {
         Self {
             remaining,
