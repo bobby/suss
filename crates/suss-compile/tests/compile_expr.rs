@@ -2680,5 +2680,3 @@ fn prototype_cases_awaiting_compiled_support() {
         }
     }
 }
-
-
