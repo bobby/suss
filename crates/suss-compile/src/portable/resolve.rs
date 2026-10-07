@@ -277,6 +277,16 @@ pub struct Environment {
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
 }
+/// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
+/// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
+/// before any alias is consulted; otherwise an alias wins. Namespace
+/// declarations themselves keep their own names.
+fn symbol_namespace<'a>(alias: Option<&'a String>, namespace: &'a str) -> &'a str {
+    if namespace == "clojure.core" {
+        return "suss.core";
+    }
+    alias.map_or_else(|| canonical(namespace), |alias| canonical(alias))
+}
 pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
         "suss.core"
@@ -881,12 +891,12 @@ impl Environment {
         let scope = self.scope(phase);
         let target = if let Some(namespace) = &symbol.namespace {
             (
-                canonical(
+                symbol_namespace(
                     scope
                         .macro_aliases
                         .get(namespace)
-                        .or_else(|| scope.aliases.get(namespace))
-                        .map_or(namespace.as_str(), String::as_str),
+                        .or_else(|| scope.aliases.get(namespace)),
+                    namespace,
                 )
                 .into(),
                 symbol.name.clone(),
@@ -912,11 +922,8 @@ impl Environment {
     pub fn resolves_bootstrap_name(&self, phase: Phase, symbol: &Symbol, name: &str) -> bool {
         let scope = self.scope(phase);
         if let Some(namespace) = &symbol.namespace {
-            let namespace = scope
-                .aliases
-                .get(namespace)
-                .map_or(namespace.as_str(), String::as_str);
-            return canonical(namespace) == "suss.core" && symbol.name == name;
+            return symbol_namespace(scope.aliases.get(namespace), namespace) == "suss.core"
+                && symbol.name == name;
         }
         if let Some(target) = scope.refers.get(&symbol.name) {
             return target.namespace == "suss.core" && target.name == name;
@@ -937,11 +944,7 @@ impl Environment {
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
         let name = if let Some(namespace) = &symbol.namespace {
-            let namespace = scope
-                .aliases
-                .get(namespace)
-                .map_or(namespace.as_str(), String::as_str);
-            (canonical(namespace) == "suss.core"
+            (symbol_namespace(scope.aliases.get(namespace), namespace) == "suss.core"
                 && matches!(
                     symbol.name.as_str(),
                     "let"
@@ -1296,10 +1299,7 @@ impl Environment {
             let namespace = if matches!(namespace.as_str(), "suss.core" | "cljs.core") {
                 canonical(namespace)
             } else {
-                scope
-                    .aliases
-                    .get(namespace)
-                    .map_or(namespace.as_str(), String::as_str)
+                symbol_namespace(scope.aliases.get(namespace), namespace)
             };
             Global {
                 phase,
