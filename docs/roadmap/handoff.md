@@ -20886,3 +20886,32 @@ review. No claim follows that the repaired full workspace or final-head CI has
 passed. Require the exact full baseline and final-head CI/raw audit after this
 reviewer-pushed fix. PR #210 remains draft, partial Refs#14; original M3 acceptance
 and the next byte-only/prototype/Wasm/evaluator/lifecycle work remain open.
+
+## Draft PR CI timeout repair — 2026-10-07
+
+Downloaded final-head CI logs for drafts #210 (37547746167), #215
+(37626986147), #217 (37629263809), and #218 (37633467188). All were cancelled
+at the 120-minute job limit, with test suites still producing passing results;
+no assertion failure was observed in these logs. Cancellation is not a pass.
+
+The workflow now discovers all integration targets from locked Cargo metadata
+and distributes complete suites across eight jobs with two test workers each,
+max-parallel four. Libraries/binaries/examples, doctests, source/provenance checks
+and reproducible Java/Node-free bootstrap execute in the foundation job. The
+existing required `test` check aggregates every job and fails on any failure,
+cancellation or skip. Each test job is bounded to 45 minutes; no tests were
+filtered, removed, ignored or baseline-reconciled. The standard local full gate
+remains `cargo test --workspace --locked -- --test-threads=2`.
+
+Local `python3 -m unittest discover -s scripts -p test_ci_test_shards.py`:
+four pass, covering complete disjoint assignment, newly added targets,
+dependency exclusion, same-named targets across packages, deterministic ordering,
+invalid/empty/duplicate catalogs
+and bounded workspace-wide Cargo invocation (preserving feature unification). Actual locked metadata at #210 lists
+153 integration suites, assigned once with sizes 20/20/20/18/20/18/19/18.
+The last #218 log supplies about 7–21 observed runtime minutes per partition;
+unfinished suites and runner variation remain unmeasured until final-head CI.
+`--plan` and `git diff --check` pass. These are scheduler checks, not evidence
+that the four PRs' runtime acceptance or final-head CI has passed. Independent
+review and new final-head CI remain required. Track progress on milestone issues;
+do not close any M3 issue or merge these drafts from this repair alone.
