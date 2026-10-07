@@ -5,7 +5,7 @@ use std::{
     fmt,
     path::PathBuf,
     sync::{
-        atomic::{AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
         Arc, OnceLock,
     },
 };
@@ -20,7 +20,8 @@ use crate::{
 };
 use wasmtime::{
     AnyRef, AsContextMut, Config, Engine, Func, Global, GlobalType, Instance, Linker, Memory,
-    Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, Val, ValType,
+    Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, UpdateDeadline, Val,
+    ValType,
 };
 
 #[derive(Clone, Debug)]
@@ -38,6 +39,37 @@ impl Default for SessionOptions {
     }
 }
 
+/// Interrupts one session's running operation from any thread (design section 7:
+/// explicit cancellation). A request made while the session is idle is discarded
+/// when its next operation starts; the handle stays valid across `reset`.
+/// Requires an engine with epoch interruption, as the shared session engine has.
+#[derive(Clone)]
+pub struct InterruptHandle {
+    engine: Engine,
+    requested: Arc<AtomicBool>,
+}
+impl InterruptHandle {
+    pub fn interrupt(&self) {
+        self.requested.store(true, Ordering::SeqCst);
+        // Every Store on this engine checks its own request at the next epoch;
+        // only the requesting session traps.
+        self.engine.increment_epoch();
+    }
+}
+/// Install the session's epoch callback: trap only for this session's request,
+/// consuming it so post-trap dynamic restoration runs uninterrupted.
+fn install_interrupt(store: &mut Store<()>, requested: &Arc<AtomicBool>) {
+    let requested = requested.clone();
+    store.set_epoch_deadline(1);
+    store.epoch_deadline_callback(move |_| {
+        if requested.swap(false, Ordering::SeqCst) {
+            Err(wasmtime::Trap::Interrupt.into())
+        } else {
+            Ok(UpdateDeadline::Continue(1))
+        }
+    });
+}
+
 #[derive(Debug)]
 pub enum SessionError {
     Compile(Diagnostic),
@@ -53,6 +85,7 @@ impl fmt::Display for SessionError {
             Self::Compile(error) => write!(f, "{error}"),
             Self::Module(error) => write!(f, "{error}"),
             Self::Language(_) => f.write_str("Uncaught language exception"),
+            Self::Trap(_) if self.is_interrupt() => f.write_str("Interrupted"),
             Self::Trap(error) => write!(f, "Runtime trap: {error}"),
             Self::Host(error) => write!(f, "Host error: {error}"),
             Self::ForeignValue => {
@@ -69,6 +102,13 @@ impl std::error::Error for SessionError {
             Self::Trap(error) | Self::Host(error) => Some(error.as_ref()),
             Self::Language(_) | Self::ForeignValue => None,
         }
+    }
+}
+impl SessionError {
+    /// The operation was stopped through its session's `InterruptHandle`.
+    pub fn is_interrupt(&self) -> bool {
+        matches!(self, Self::Trap(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt))
     }
 }
 impl From<wasmtime::Error> for SessionError {
@@ -133,6 +173,7 @@ pub struct Session {
     options: SessionOptions,
     identity: u64,
     handles: Arc<AtomicUsize>,
+    interrupt: Arc<AtomicBool>,
     store: Store<()>,
     runtime: Instance,
     numeric_memory: Memory,
@@ -200,7 +241,8 @@ fn engine() -> Result<Engine, SessionError> {
                 .wasm_function_references(true)
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
-                .consume_fuel(true);
+                .consume_fuel(true)
+                .epoch_interruption(true);
             Engine::new(&config).map_err(|error| error.to_string())
         })
         .clone()
@@ -407,7 +449,8 @@ impl Session {
     pub fn with_options_in(options: SessionOptions, phase: Phase) -> Result<Self, SessionError> {
         Self::with_engine_in(engine()?, options, phase)
     }
-    /// Caller-supplied engines must enable ABI features and fuel consumption.
+    /// Caller-supplied engines must enable ABI features and fuel consumption;
+    /// interruption additionally requires epoch interruption.
     pub fn with_engine(engine: Engine, options: SessionOptions) -> Result<Self, SessionError> {
         Self::with_engine_in(engine, options, Phase::Runtime)
     }
@@ -420,6 +463,8 @@ impl Session {
         let identity = NEXT_ID.fetch_add(1, Ordering::Relaxed);
         let mut store = Store::new(&engine, ());
         store.set_fuel(u64::MAX)?;
+        let interrupt = Arc::new(AtomicBool::new(false));
+        install_interrupt(&mut store, &interrupt);
         let runtime_bytes = runtime_abi::module();
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
@@ -458,6 +503,7 @@ impl Session {
             options,
             identity,
             handles: Arc::new(AtomicUsize::new(0)),
+            interrupt,
             store,
             runtime,
             numeric_memory,
@@ -487,7 +533,7 @@ impl Session {
     // recompiles or re-evaluates the input to print its already-rooted result.
     pub(crate) fn number_text(&mut self, value: &SessionValue) -> Result<String, SessionError> {
         self.check(value)?;
-        self.store.set_fuel(self.options.fuel_per_operation)?;
+        self.budget()?;
         let runtime = self.runtime;
         self.inspect(value, |mut store, value| {
             let function = runtime
@@ -524,6 +570,13 @@ impl Session {
             numeric_memory_capacity: self.numeric_memory.data_size(&self.store),
         }
     }
+    /// A thread-safe handle that interrupts this session's running operation.
+    pub fn interrupt_handle(&self) -> InterruptHandle {
+        InterruptHandle {
+            engine: self.engine.clone(),
+            requested: self.interrupt.clone(),
+        }
+    }
     pub fn collect(&mut self) -> Result<(), SessionError> {
         self.store.gc(None).map_err(Into::into)
     }
@@ -536,6 +589,9 @@ impl Session {
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         let mut replacement =
             Self::with_engine_in(self.engine.clone(), self.options.clone(), self.phase)?;
+        // Existing interrupt handles keep addressing this session after reset.
+        replacement.interrupt = self.interrupt.clone();
+        install_interrupt(&mut replacement.store, &replacement.interrupt);
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
@@ -613,6 +669,9 @@ impl Session {
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {
+        // A request made while idle does not cancel the next operation.
+        self.interrupt.store(false, Ordering::SeqCst);
+        self.store.set_epoch_deadline(1);
         self.store
             .set_fuel(self.options.fuel_per_operation)
             .map_err(Into::into)

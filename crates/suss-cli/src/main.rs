@@ -18,8 +18,8 @@ fn main() {
 
 fn run_command(cmd: args::Command) {
     match cmd {
-        args::Command::Repl => {
-            run_repl();
+        args::Command::Repl { fuel } => {
+            run_repl(fuel);
         }
         args::Command::Eval { expr } => {
             run_eval(&expr);
@@ -591,8 +591,43 @@ fn parse_component_argument(
     }
 }
 
+/// SIGINT interrupts the running evaluation (Runtime or macro phase) and returns
+/// to the prompt; line editing handles Ctrl-C at the prompt itself.
+#[cfg(all(unix, not(all(feature = "component", target_family = "wasm"))))]
+mod repl_interrupt {
+    use nix::sys::signal::{sigaction, SaFlags, SigAction, SigHandler, SigSet, Signal};
+    use std::sync::OnceLock;
+    use suss_cli::portable_session::InterruptHandle;
+
+    static HANDLES: OnceLock<[InterruptHandle; 2]> = OnceLock::new();
+
+    extern "C" fn on_sigint(_: nix::libc::c_int) {
+        // Async-signal-safe: an atomic store and an atomic epoch increment.
+        if let Some(handles) = HANDLES.get() {
+            for handle in handles {
+                handle.interrupt();
+            }
+        }
+    }
+
+    pub fn install(runtime: InterruptHandle, macros: InterruptHandle) {
+        if HANDLES.set([runtime, macros]).is_err() {
+            return;
+        }
+        let action = SigAction::new(
+            SigHandler::Handler(on_sigint),
+            SaFlags::SA_RESTART,
+            SigSet::empty(),
+        );
+        // SAFETY: the handler only performs async-signal-safe atomic operations.
+        if let Err(error) = unsafe { sigaction(Signal::SIGINT, &action) } {
+            eprintln!("Warning: Ctrl-C cannot interrupt evaluation: {error}");
+        }
+    }
+}
+
 /// Run each input in the same Store using independently compiled fragments.
-fn run_repl() {
+fn run_repl(fuel: Option<u64>) {
     use std::io::{self, BufRead, IsTerminal};
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
 
@@ -610,6 +645,14 @@ fn run_repl() {
             return;
         }
     };
+    // Both phases share the budget; reset keeps it with the session options.
+    if let Some(fuel) = fuel {
+        session.set_operation_fuel(fuel);
+        macros.set_operation_fuel(fuel);
+    }
+    // Reset replaces both sessions in place and keeps their interrupt handles.
+    #[cfg(unix)]
+    repl_interrupt::install(session.interrupt_handle(), macros.interrupt_handle());
     let mut display = portable_repl::NativeDisplay::default();
     let interactive = io::stdin().is_terminal();
     let mut editor = if interactive {

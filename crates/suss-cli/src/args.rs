@@ -8,8 +8,8 @@ use lexopt::prelude::*;
 /// Commands supported by the Suss CLI
 #[derive(Debug)]
 pub enum Command {
-    /// Start the REPL (default)
-    Repl,
+    /// Start the REPL (default); `fuel` overrides each input's execution budget
+    Repl { fuel: Option<u64> },
     /// Evaluate an expression and print the result
     Eval { expr: String },
     /// Run a file
@@ -78,13 +78,13 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
 
     // Check for subcommand or flags first
     match parser.next()? {
-        None => Ok(Command::Repl),
+        None => Ok(Command::Repl { fuel: None }),
 
         Some(Short('h')) | Some(Long("help")) => Ok(Command::Help),
 
         Some(Short('V')) | Some(Long("version")) => Ok(Command::Version),
 
-        Some(Short('r')) => Ok(Command::Repl),
+        Some(Short('r')) => parse_repl(&mut parser),
 
         Some(Short('e')) => {
             let expr = parser.value()?.string()?;
@@ -94,7 +94,7 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
         Some(Value(val)) => {
             let val_str = val.string()?;
             match val_str.as_str() {
-                "repl" => Ok(Command::Repl),
+                "repl" => parse_repl(&mut parser),
                 "compile" => parse_compile(&mut parser),
                 "run" => parse_run(&mut parser),
                 _ => Ok(Command::RunFile { path: val_str }),
@@ -287,6 +287,17 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
 /// When `--invoke` is omitted, defaults to `"run"` (the WASI CLI entry point).
 /// Extra positional args after the wasm path become WASI argv (for `run`)
 /// or function parameters (for explicit `--invoke`).
+fn parse_repl(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
+    let mut fuel = None;
+    while let Some(arg) = parser.next()? {
+        match arg {
+            Long("fuel") => fuel = Some(parser.value()?.parse()?),
+            _ => return Err(arg.unexpected()),
+        }
+    }
+    Ok(Command::Repl { fuel })
+}
+
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut component_path: Option<String> = None;
     let mut invoke: Option<String> = None;
@@ -338,7 +349,9 @@ USAGE:
     suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...]  (run specific function)
 
 OPTIONS:
-    -r              Start the REPL (default if no arguments)
+    -r, repl        Start the REPL (default if no arguments)
+        --fuel <N>      Execution budget per input (default 10000000);
+                        Ctrl-C interrupts a running input
     -e <EXPR>       Evaluate an expression and print the result
     -h, --help      Print this help message
     -V, --version   Print version information
