@@ -20908,9 +20908,10 @@ missing compiled-pipeline feature (`str`, `comp`, `partial`, `range`, `take`,
 `doseq`, `cond->`, `some->`, `lazy-seq`, `when-first`, `constantly`,
 `set-validator!`, destructuring and printing);
 `prototype_cases_awaiting_compiled_support` asserts each exact diagnostic.
-Static wrong-arity diagnostics (design section 4) are missing for global calls:
-wrong arity is a runtime arity exception, recorded by
-`static_arity_diagnostics_are_not_yet_compiled`.
+Wrong arity to a known global function compiles, as in pinned ClojureScript,
+and raises a catchable runtime language exception after argument evaluation
+(decision on #216): `known_function_wrong_arity_raises_runtime_exceptions`.
+Call-site source annotation of that exception remains open.
 
 Note: this environment's RUSTFLAGS suppresses warnings, so dead code is invisible
 to local builds; check removals with `cargo check --workspace --all-targets`.

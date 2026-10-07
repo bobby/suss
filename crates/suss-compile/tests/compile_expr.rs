@@ -2532,18 +2532,6 @@ fn arithmetic_and_equality_preserve_argument_effect_order() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: wrong known arity is a runtime language exception, not the source-located static diagnostic design section 4 requires; see static_arity_diagnostics_are_not_yet_compiled"]
-fn known_function_arity_errors_are_compile_diagnostics() {
-    for expression in ["(defn f [x] x) (f)", "(defn f [x] x) (f 1 2)", "(reduce +)"] {
-        let error = Compiler::new()
-            .compile_expr_with_info(expression)
-            .expect_err(expression)
-            .to_string();
-        assert!(error.contains("Invalid arity"), "{expression}: {error}");
-    }
-}
-
-#[test]
 fn lexical_callees_shadow_global_and_intrinsic_names() {
     assert_eq!(
         run_expr_i32("(defn f [x] x) (let [f (fn [x y] (+ x y))] (f 20 22))"),
@@ -2648,11 +2636,13 @@ fn prototype_cases_awaiting_compiled_support() {
     }
 }
 
-/// Records the current compiled-pipeline arity behavior until the required
-/// static diagnostics exist: these compile and then throw at run time. When this
-/// fails, re-enable known_function_arity_errors_are_compile_diagnostics.
+/// Wrong arity to a known function compiles, as pinned ClojureScript does
+/// (its :fn-arity check is only a warning), and raises a catchable language
+/// exception at run time after the arguments are evaluated (design section 4:
+/// an error, never nil or a trap). Call-site source annotation of the runtime
+/// exception remains open (docs/runtime/portable-pipeline.md).
 #[test]
-fn static_arity_diagnostics_are_not_yet_compiled() {
+fn known_function_wrong_arity_raises_runtime_exceptions() {
     for expression in ["(defn f [x] x) (f)", "(defn f [x] x) (f 1 2)", "(reduce +)"] {
         let compiled = Compiler::new()
             .compile_expr_with_info(expression)
