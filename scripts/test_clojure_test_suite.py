@@ -34,8 +34,8 @@ def observed(assertions, namespaces=None, test_failures=(), skips=()):
             'test-failures': list(test_failures), 'skips': list(skips), 'assertions': assertions}
 
 
-def suss_predicate(ordinal=1, operands=(NUMBER_ONE, NUMBER_ONE), verdict='pass'):
-    return {'test': 'a.b-test/t', 'ordinal': ordinal, 'kind': 'predicate', 'verdict': verdict,
+def suss_predicate(ordinal=1, operands=(NUMBER_ONE, NUMBER_ONE), verdict='pass', head='='):
+    return {'test': 'a.b-test/t', 'ordinal': ordinal, 'kind': 'predicate', 'verdict': verdict, 'head': head,
             'result': {'tag': 'bool', 'value': verdict == 'pass'}, 'operands': list(operands)}
 
 
@@ -59,6 +59,18 @@ class Normalize(unittest.TestCase):
         entry = suite.normalize(first, second, suite='fixture')['assertions'][0]
         self.assertFalse(entry['deterministic'])
         self.assertNotIn('operands', entry)
+
+    def test_oracle_failures_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'must pass every assertion'):
+            suite.normalize(run([oracle_assertion()], summary={'test': 1, 'pass': 0, 'fail': 1, 'error': 0}),
+                            suite='fixture')
+
+    def test_gensym_counters_are_canonical(self):
+        entry = dict(oracle_assertion(), form='(every? (fn* [p1__22266#] (pos? p1__22266#)) x)')
+        self.assertEqual(reference(entry)['assertions'][0]['form'], '(every? (fn* [p1__N#] (pos? p1__N#)) x)')
+        other = dict(entry, form='(every? (fn* [p1__22978#] (pos? p1__22978#)) x)')
+        self.assertEqual(suite.normalize(run([entry]), run([other]), suite='fixture')['assertions'][0]['form'],
+                         '(every? (fn* [p1__N#] (pos? p1__N#)) x)')
 
     def test_reporter_errors_and_incomplete_runs_are_rejected(self):
         with self.assertRaisesRegex(ValueError, 'reporter failed'):
@@ -98,9 +110,12 @@ class Decide(unittest.TestCase):
         del expected['operands']
         self.assertEqual(suite.decide(expected, suss_predicate()), (None, False))
 
+    def test_head_mismatch_fails_even_with_matching_operands(self):
+        self.assertEqual(suite.decide(self.expected, suss_predicate(head='not=')), ('head:not=', False))
+
     def test_kind_and_thrown_mismatches_fail(self):
         thrown = dict(self.expected, kind='thrown', threw=True)
-        actual = {'kind': 'thrown', 'verdict': 'pass', 'threw': False}
+        actual = {'kind': 'thrown', 'verdict': 'pass', 'threw': False, 'head': '='}
         self.assertEqual(suite.decide(thrown, actual), ('observation:threw', False))
         self.assertEqual(suite.decide(thrown, suss_predicate()), ('kind:predicate', False))
 
@@ -111,8 +126,20 @@ class Compare(unittest.TestCase):
 
     def test_all_passing(self):
         counts, failures = suite.compare(self.reference, observed([suss_predicate(1), suss_predicate(2)]))
-        self.assertEqual((counts['pass'], counts['fail']), (2, 0))
+        self.assertEqual((counts['pass'], counts['guest-judged'], counts['fail']), (2, 0, 0))
         self.assertEqual(failures['assertions'], {})
+
+    def test_verdict_only_passes_are_not_counted_as_host_decided(self):
+        reference = suite.normalize(run([oracle_assertion(operands=(OPAQUE,))]), suite='fixture')
+        counts, _ = suite.compare(reference, observed([suss_predicate(1, operands=(OPAQUE,))]))
+        self.assertEqual((counts['pass'], counts['guest-judged']), (0, 1))
+
+    def test_count_divergence_fails_the_whole_test(self):
+        # One assertion missing mid-test: ordinal 2 would otherwise be compared
+        # against the oracle's second assertion with identical operands.
+        counts, failures = suite.compare(self.reference, observed([suss_predicate(1)]))
+        self.assertEqual(failures['assertions'], {'a.b-test/t#1': 'count:1/2', 'a.b-test/t#2': 'count:1/2'})
+        self.assertEqual((counts['pass'], counts['fail']), (0, 2))
 
     def test_failed_namespace_accounts_for_all_assertions(self):
         failed = [{'namespace': 'a.b-test', 'status': 'failure', 'stage': 'compile', 'diagnostic': 'x'}]
@@ -124,20 +151,32 @@ class Compare(unittest.TestCase):
     def test_missing_assertions_name_the_test_failure(self):
         test_failure = [{'test': 'a.b-test/t', 'stage': 'trap', 'diagnostic': 'fuel'}]
         counts, failures = suite.compare(self.reference, observed([suss_predicate(1)], test_failures=test_failure))
-        self.assertEqual(failures['assertions'], {'a.b-test/t#2': 'test:trap'})
-        self.assertEqual((counts['pass'], counts['not-executed']), (1, 1))
+        # The assertions before the trap may already have diverged, so a short
+        # record never passes; the unreached assertion names the test failure.
+        self.assertEqual(failures['assertions'], {'a.b-test/t#1': 'count:1/2', 'a.b-test/t#2': 'test:trap'})
+        self.assertEqual((counts['pass'], counts['fail'], counts['not-executed']), (0, 1, 1))
 
     def test_unexpected_assertions_and_skips_are_failures(self):
         skip = {'namespace': 'a.b-test', 'symbol': 'x', 'test': None, 'phase': 'load'}
         counts, failures = suite.compare(
             self.reference, observed([suss_predicate(1), suss_predicate(2), suss_predicate(3)], skips=[skip]))
-        self.assertEqual(failures['assertions'], {'a.b-test/t#3': 'unexpected-assertion'})
-        self.assertEqual(failures['skip-mismatches'], [['a.b-test', 'x', None]])
-        self.assertEqual(counts['fail'], 1)
+        self.assertEqual(failures['assertions'], {'a.b-test/t#1': 'count:3/2', 'a.b-test/t#2': 'count:3/2',
+                                                  'a.b-test/t#3': 'unexpected-assertion'})
+        self.assertEqual(failures['skip-mismatches'], [['a.b-test', 'x', None, 1]])
+        self.assertEqual(counts['fail'], 4)
+
+    def test_skips_compare_as_multisets(self):
+        skip = {'namespace': 'a.b-test', 'symbol': 'future', 'test': 'a.b-test/t', 'phase': 'run'}
+        reference = suite.normalize(run([oracle_assertion(1), oracle_assertion(2)], skips=[skip, skip]),
+                                    suite='fixture')
+        counts, failures = suite.compare(reference, observed([suss_predicate(1), suss_predicate(2)], skips=[skip]))
+        self.assertEqual(failures['skip-mismatches'], [['a.b-test', 'future', 'a.b-test/t', 1]])
+        self.assertEqual((counts['skipped'], counts['fail']), (1, 1))
 
     def test_namespace_coverage_and_duplicates_are_rejected(self):
-        with self.assertRaisesRegex(ValueError, 'every suite namespace'):
-            suite.compare(self.reference, observed([], namespaces=[{'namespace': 'other', 'status': 'loaded'}]))
+        for namespaces in ([{'namespace': 'other', 'status': 'loaded'}], []):
+            with self.assertRaisesRegex(ValueError, 'every suite namespace'):
+                suite.compare(self.reference, observed([], namespaces=namespaces))
         with self.assertRaisesRegex(ValueError, 'duplicate'):
             suite.compare(self.reference, observed([suss_predicate(1), suss_predicate(1)]))
 

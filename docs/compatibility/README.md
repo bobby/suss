@@ -82,9 +82,10 @@ The [source and license policy](PROVENANCE.md) applies before importing core for
 The vendored [jank-lang/clojure-test-suite](clojure-test-suite.md) is the
 function-level conformance corpus: 248 namespaces and 5,834 assertions recorded
 from the pinned ClojureScript oracle, judged host-side against Suss with an exact
-known-failure baseline. Every namespace currently fails before executing (reader
-conditional splicing, `:refer-macros`, numeric literals, reader dispatch and
-auto-resolved keywords); a harness self-test fixture passes 21 of 21 assertions.
+known-failure baseline. Currently 12 namespaces load and all 99 of their
+assertions pass; 236 fail before running (mostly reader gaps and missing core
+vars), with each first blocker recorded. A harness self-test fixture passes 22 of
+23 assertions; the remaining one demonstrates the skip-mismatch path.
 
 ## Prototype baseline
 

@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# If a copy of the MPL was not distributed with this file, You can obtain one at
+# https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for the stock
+# ClojureScript oracle: when-var-exists expands only in the Clojure macro phase.
 --- a/test/clojure/core_test/portability.cljc
 +++ b/test/clojure/core_test/portability.cljc
 @@ -4,15 +4,18 @@

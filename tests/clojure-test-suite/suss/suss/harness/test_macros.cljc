@@ -45,6 +45,9 @@
 (defmacro testing [_label & body]
   `(do ~@body))
 
+(defmacro use-fixtures [kind & fixtures]
+  `(suss.harness.test/use-fixtures! ~kind [~@fixtures]))
+
 (defmacro deftest [name & body]
   `(do
      (def ~name (fn ~name [] ~@body))
@@ -92,29 +95,44 @@
 ;; unquote-splicing in ordinary functions of a macro namespace. `is` is last
 ;; because later definitions' analysis environments would otherwise include its
 ;; large expansion and exceed the bounded macro analysis graph (issue #14).
+;; Each observation also records the assertion's head symbol so the host can
+;; detect assertions that diverge from the oracle's at the same ordinal. Like
+;; cljs.test, `is` evaluates its message after the assertion and returns the
+;; predicate result, the value, or (for thrown?) the thrown value.
 (defmacro is
   ([form] `(is ~form nil))
-  ([form _message]
-   (cond
-     (thrown-assertion? form)
-     `(try
-        (let [threw# (try (do ~@(rest form)) false (catch :default _# true))]
-          (suss.harness.test/record! :thrown (if threw# :pass :fail) [threw#]))
-        (catch :default error#
-          (suss.harness.test/record! :error :error [error#])))
+  ([form message]
+   (let [head (when (and (seq? form) (symbol? (first form))) (first form))]
+     (cond
+       (thrown-assertion? form)
+       `(try
+          (let [outcome# (try [false (do ~@(rest form))] (catch :default e# [true e#]))
+                threw# (nth outcome# 0)]
+            ~message
+            (suss.harness.test/record! :thrown (if threw# :pass :fail) [threw#] '~head)
+            (nth outcome# 1))
+          (catch :default error#
+            (suss.harness.test/record! :error :error [error#] '~head)
+            error#))
 
-     (predicate? form)
-     `(try
-        (let [values# (list ~@(rest form))
-              result# (apply ~(first form) values#)]
-          (suss.harness.test/record! :predicate (if result# :pass :fail)
-                                     (into [result#] values#)))
-        (catch :default error#
-          (suss.harness.test/record! :error :error [error#])))
+       (predicate? form)
+       `(try
+          (let [values# (list ~@(rest form))
+                result# (apply ~(first form) values#)]
+            ~message
+            (suss.harness.test/record! :predicate (if result# :pass :fail)
+                                       (into [result#] values#) '~head)
+            result#)
+          (catch :default error#
+            (suss.harness.test/record! :error :error [error#] '~head)
+            error#))
 
-     :else
-     `(try
-        (let [result# ~form]
-          (suss.harness.test/record! :value (if result# :pass :fail) [result#]))
-        (catch :default error#
-          (suss.harness.test/record! :error :error [error#]))))))
+       :else
+       `(try
+          (let [result# ~form]
+            ~message
+            (suss.harness.test/record! :value (if result# :pass :fail) [result#] '~head)
+            result#)
+          (catch :default error#
+            (suss.harness.test/record! :error :error [error#] '~head)
+            error#))))))

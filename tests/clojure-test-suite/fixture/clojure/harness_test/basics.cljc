@@ -1,10 +1,7 @@
 (ns clojure.harness-test.basics
   "Harness self-test in the suite's shape, limited to what Suss executes today."
-  #?(:suss (:require [suss.harness.test])
-     :cljs (:require [cljs.test] [clojure.core-test.portability :as p]))
-  #?(:suss (:require-macros [suss.harness.test-macros :refer [deftest is are testing]])
-     :cljs (:require-macros [cljs.test :refer [deftest is are testing]]
-                            [clojure.core-test.portability])))
+  (:require [clojure.test :as t :refer [are deftest is testing]]
+            [clojure.core-test.portability #?(:cljs :refer-macros :default :refer) [when-var-exists] :as p]))
 
 ;; Each top-level form that expands harness macros currently costs one
 ;; complete &env materialization (#14), so cases share few deftests.

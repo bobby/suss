@@ -10,6 +10,7 @@ ClojureScript observations with Java/Node (a development-only dependency) and
 fails unless they equal the reviewed reference; `--write` records them instead.
 """
 import argparse
+import collections
 import hashlib
 import io
 import json
@@ -46,6 +47,7 @@ SUITES = {
                 'baseline': ORACLE / 'clojure-test-suite-fixture-known-failures.json'},
 }
 ORACLE_PATCHES = ('0001-when-var-exists-macro-phase.patch',)
+SUSS_PATCHES = ('0002-number-range-suss-branches.patch',)
 PORTABILITY = 'clojure.core-test.portability'
 # Math.random is seeded per run; assertions whose observations differ across
 # these seeds are nondeterministic and keep only their kind and verdict.
@@ -221,6 +223,25 @@ def generate_oracle(suite):
     return names
 
 
+def generate_suss_sources(suite, output):
+    """Write the Suss harness source tree: the suite with its Suss patches (or
+    the fixture), overlaid by the harness namespaces, which replace the upstream
+    portability helpers with their Suss counterparts."""
+    output = Path(output)
+    if output.exists() and any(output.iterdir()):
+        raise ValueError(f'Suss source output must be empty: {output}')
+    sources = SUITES[suite]['sources']
+    shutil.copytree(sources, output, dirs_exist_ok=True)
+    if suite == 'suite':
+        staging = output.parent / f'{output.name}-patch'
+        shutil.copytree(UPSTREAM / 'test', staging / 'test')
+        apply_patches(staging, SUSS_PATCHES)
+        shutil.copytree(staging / 'test', output, dirs_exist_ok=True)
+        shutil.rmtree(staging)
+    shutil.copytree(HARNESS / 'suss', output, dirs_exist_ok=True)
+    return output
+
+
 def run_oracle(suite):
     """Compile with the pinned ClojureScript and execute once per seed in Node."""
     pin = subprocess.check_output(['git', '-C', str(ROOT / 'clojurescript'), 'rev-parse', 'HEAD'], text=True).strip()
@@ -257,6 +278,17 @@ OBSERVATION_KEYS = {'thrown': ('threw',), 'predicate': ('operands',), 'value': (
                     'error': ('thrown', 'message')}
 
 
+def canonical_form(form):
+    """Printed forms embed process-global auto-gensym counters (`p1__22266#`)."""
+    return re.sub(r'__\d+', '__N', form)
+
+
+def form_head(form):
+    """Head symbol of a printed assertion form, or None for non-list forms."""
+    match = re.match(r'\(([^\s()\[\]{}"]+)', form)
+    return match[1] if match else None
+
+
 def normalize(*runs, suite='suite'):
     """Merge seeded runs into the reviewed reference, flagging nondeterministic assertions."""
     first = runs[0]
@@ -269,10 +301,12 @@ def normalize(*runs, suite='suite'):
         if summary is None or summary['test'] != len(run['tests']) or \
            summary['pass'] + summary['fail'] + summary['error'] != len(run['assertions']):
             raise ValueError(f'oracle run is incomplete: {summary}')
+        if summary['fail'] or summary['error']:
+            raise ValueError(f'the oracle must pass every assertion it records: {summary}')
         if [run[k] for k in ('namespaces', 'tests', 'skips')] != [first[k] for k in ('namespaces', 'tests', 'skips')]:
             raise ValueError('oracle runs disagree on namespaces, tests or skips')
-        if [(a['test'], a['ordinal'], a['kind'], a['form']) for a in run['assertions']] != \
-           [(a['test'], a['ordinal'], a['kind'], a['form']) for a in first['assertions']]:
+        if [(a['test'], a['ordinal'], a['kind'], canonical_form(a['form'])) for a in run['assertions']] != \
+           [(a['test'], a['ordinal'], a['kind'], canonical_form(a['form'])) for a in first['assertions']]:
             raise ValueError('oracle runs disagree on assertion order')
     assertions, seen = [], set()
     for variants in zip(*(run['assertions'] for run in runs)):
@@ -289,7 +323,7 @@ def normalize(*runs, suite='suite'):
         deterministic = stable and not randomized
         entry = {'id': identity, 'test': left['test'], 'ordinal': left['ordinal'], 'kind': left['kind'],
                  'verdict': left['verdict'], 'deterministic': deterministic,
-                 'form': left['form'], 'line': left['line'], 'column': left['column'],
+                 'form': canonical_form(left['form']), 'line': left['line'], 'column': left['column'],
                  'contexts': left['contexts']}
         if deterministic:
             entry.update({k: left[k] for k in keys})
@@ -329,6 +363,8 @@ def decide(expected, actual):
         actual = dict(actual, kind='value', value=actual['result'])
     if actual['kind'] != expected['kind']:
         return f"kind:{actual['kind']}", False
+    if actual.get('head') != form_head(expected['form']):
+        return f"head:{actual.get('head')}", False
     if actual['verdict'] != expected['verdict']:
         return f"verdict:{actual['verdict']}", False
     if not expected['deterministic']:
@@ -355,52 +391,67 @@ def decide(expected, actual):
 
 
 def compare(reference, observed):
-    """Decide every oracle assertion from Suss observations; return counts and failures."""
+    """Decide every oracle assertion from Suss observations; return counts and failures.
+
+    Counts: `pass` (decided host-side), `guest-judged` (verdict only: randomized
+    or opaque oracle operands), `fail` (executed with a wrong kind, head,
+    verdict or observation; a test whose assertion count differs from the
+    oracle's; unexpected assertions; skip mismatches) and `not-executed`.
+    """
     if observed.get('schema') != 1 or observed.get('suite') != COMMIT:
         raise ValueError('unexpected Suss observation identity')
-    if observed['namespaces'] and [n['namespace'] for n in observed['namespaces']] != reference['namespaces']:
+    if [n['namespace'] for n in observed['namespaces']] != reference['namespaces']:
         raise ValueError('Suss observations must cover every suite namespace in order')
     namespace_failures = {n['namespace']: {'stage': n['stage'], 'diagnostic': n['diagnostic']}
                           for n in observed['namespaces'] if n['status'] != 'loaded'}
     test_failures = {t['test']: {'stage': t['stage'], 'diagnostic': t['diagnostic']}
                      for t in observed['test-failures']}
-    actual = {}
+    actual, per_test = {}, collections.Counter()
     for entry in observed['assertions']:
         identity = f"{entry['test']}#{entry['ordinal']}"
         if identity in actual:
             raise ValueError(f'duplicate Suss assertion: {identity}')
         actual[identity] = entry
-    expected_ids = {entry['id'] for entry in reference['assertions']}
-    # pass: decided host-side (guest-judged counts the verdict-only subset);
-    # fail: executed with a wrong verdict or observation; not-executed: its
-    # namespace or test did not run, or control flow never reached it.
-    failures, counts = {}, {'pass': 0, 'guest-judged': 0, 'fail': 0, 'not-executed': 0}
+        per_test[entry['test']] += 1
+    expected_per_test = collections.Counter(entry['test'] for entry in reference['assertions'])
+    failures = {}
+    counts = {'pass': 0, 'guest-judged': 0, 'fail': 0, 'not-executed': 0}
     for entry in reference['assertions']:
-        namespace = entry['test'].split('/')[0]
+        test = entry['test']
+        namespace = test.split('/')[0]
         found = actual.get(entry['id'])
         if namespace in namespace_failures:
             reason = f"namespace:{namespace_failures[namespace]['stage']}"
-            judged = False
+        elif test in test_failures and found is None:
+            reason = f"test:{test_failures[test]['stage']}"
+        elif per_test[test] != expected_per_test[test] and per_test[test]:
+            # Ordinals no longer align once control flow diverges; no assertion
+            # of this test may pass by coincidence against a shifted record.
+            reason = f'count:{per_test[test]}/{expected_per_test[test]}'
         elif found is None:
-            failure = test_failures.get(entry['test'])
-            reason, judged = (f"test:{failure['stage']}" if failure else 'missing'), False
+            reason = 'missing'
         else:
             reason, judged = decide(entry, found)
-        if reason:
-            counts['not-executed' if reason.startswith(('namespace:', 'test:', 'missing')) else 'fail'] += 1
-            # A failed namespace's entry already accounts for all of its assertions.
-            if namespace not in namespace_failures:
-                failures[entry['id']] = reason
+            if not reason:
+                counts['guest-judged' if judged else 'pass'] += 1
+                continue
+        if reason.startswith(('namespace:', 'test:', 'missing')):
+            counts['not-executed'] += 1
         else:
-            counts['pass'] += 1
-            counts['guest-judged'] += judged
-    for identity in sorted(set(actual) - expected_ids):
+            counts['fail'] += 1
+        # A failed namespace's entry already accounts for all of its assertions.
+        if namespace not in namespace_failures:
+            failures[entry['id']] = reason
+    for identity in sorted(set(actual) - {entry['id'] for entry in reference['assertions']}):
         failures[identity] = 'unexpected-assertion'
         counts['fail'] += 1
-    oracle_skips = {(k['namespace'], k['symbol'], k['test']) for k in reference['skips']}
-    suss_skips = {(k['namespace'], k['symbol'], k['test']) for k in observed['skips']}
-    skip_mismatches = sorted(map(list, oracle_skips ^ suss_skips), key=str)
-    counts['skipped'] = len(oracle_skips & suss_skips)
+    skip = lambda k: (k['namespace'], k['symbol'], k['test'])
+    oracle_skips = collections.Counter(map(skip, reference['skips']))
+    suss_skips = collections.Counter(map(skip, observed['skips']))
+    mismatches = (oracle_skips - suss_skips) + (suss_skips - oracle_skips)
+    skip_mismatches = sorted(([*key, count] for key, count in mismatches.items()), key=str)
+    counts['skipped'] = sum((oracle_skips & suss_skips).values())
+    counts['fail'] += sum(mismatches.values())
     counts['namespaces-failed'] = len(namespace_failures)
     return counts, {'schema': 1, 'suite': COMMIT, 'namespaces': dict(sorted(namespace_failures.items())),
                     'tests': dict(sorted(test_failures.items())), 'assertions': dict(sorted(failures.items())),
@@ -422,11 +473,12 @@ def counts_line(counts):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', nargs='?', default='check',
-                        choices=('check', 'lock', 'oracle', 'compare', 'overlap'))
+                        choices=('check', 'lock', 'oracle', 'compare', 'overlap', 'suss-sources'))
     parser.add_argument('--suite', default='suite', choices=sorted(SUITES))
     parser.add_argument('--write', action='store_true', help='record instead of comparing')
     parser.add_argument('--git', type=Path, help='also verify against an upstream checkout')
     parser.add_argument('--observations', type=Path, help='Suss observations to compare')
+    parser.add_argument('--output', type=Path, help='empty directory for suss-sources')
     args = parser.parse_args()
     if args.command == 'lock' and args.write:
         LOCK.write_text(json.dumps(lock_data(manifest(UPSTREAM)), indent=2) + '\n')
@@ -435,6 +487,9 @@ def main():
     if args.git and git_manifest(args.git) != lock['files']:
         raise SystemExit(f'vendored files differ from {REPOSITORY}@{COMMIT}')
     suite = SUITES[args.suite]
+    if args.command == 'suss-sources':
+        generate_suss_sources(args.suite, args.output)
+        return
     if args.command == 'overlap':
         text = json.dumps(legacy_overlap(), indent=1, ensure_ascii=True) + '\n'
         if args.write:

@@ -2,38 +2,119 @@
  "schema": 1,
  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
  "entries": [
-  {"file": "clojure/core_test/number_range.cljc", "lines": [8, 15, 32, 40], "classification": "suss-branch",
+  {
+   "file": "clojure/core_test/number_range.cljc",
+   "lines": [
+    8,
+    15,
+    32,
+    40
+   ],
+   "classification": "suss-branch",
    "rationale": "JavaScript Number range constants select binary64 values that Suss shares (max/min safe integer, max/min value).",
-   "alternative": "Add :suss branches with the same binary64 literals in a reviewed MPL patch."},
-  {"file": "clojure/core_test/portability.cljc", "lines": [30], "classification": "suss-branch",
-   "rationale": "The suite's sleep helper delegates to js/setTimeout.",
-   "alternative": "Provide a :suss branch over the WASI/browser scheduler once M6 futures exist."},
-  {"file": "clojure/core_test/portability.cljc", "lines": [179], "classification": "harness",
+   "alternative": "vendor/clojure-test-suite/patches/0002-number-range-suss-branches.patch adds :suss branches with the same binary64 literals."
+  },
+  {
+   "file": "clojure/core_test/portability.cljc",
+   "lines": [
+    30
+   ],
+   "classification": "harness",
+   "rationale": "The suite's sleep helper delegates to js/setTimeout; the harness replaces the portability namespace for Suss.",
+   "alternative": "tests/clojure-test-suite/suss/clojure/core_test/portability.cljc returns immediately, as the ClojureScript helper does."
+  },
+  {
+   "file": "clojure/core_test/portability.cljc",
+   "lines": [
+    179
+   ],
+   "classification": "harness",
    "rationale": "Clojure-side cljs.test assert-expr catching js/Error; it never runs in Suss.",
-   "alternative": "The Suss harness implements p/thrown? itself."},
-  {"file": "clojure/core_test/boolean_qmark.cljc", "lines": [27, 28, 29], "classification": "host-specific",
+   "alternative": "The Suss harness implements p/thrown? itself."
+  },
+  {
+   "file": "clojure/core_test/boolean_qmark.cljc",
+   "lines": [
+    27,
+    28,
+    29
+   ],
+   "classification": "host-specific",
    "rationale": "JavaScript boxed Boolean objects have no portable counterpart.",
-   "alternative": "None needed; Suss booleans are always primitive."},
-  {"file": "clojure/core_test/ancestors.cljc", "lines": [8], "classification": "host-specific",
+   "alternative": "None needed; Suss booleans are always primitive."
+  },
+  {
+   "file": "clojure/core_test/ancestors.cljc",
+   "lines": [
+    8
+   ],
+   "classification": "host-specific",
    "rationale": "Uses the JavaScript Object constructor as a hierarchy type tag.",
-   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."},
-  {"file": "clojure/core_test/descendants.cljc", "lines": [71, 118, 121], "classification": "host-specific",
+   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."
+  },
+  {
+   "file": "clojure/core_test/descendants.cljc",
+   "lines": [
+    71,
+    118,
+    121
+   ],
+   "classification": "host-specific",
    "rationale": "Uses the JavaScript Object constructor as a hierarchy type tag.",
-   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."},
-  {"file": "clojure/core_test/derive.cljc", "lines": [16, 35, 36, 37, 77, 81], "classification": "host-specific",
+   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."
+  },
+  {
+   "file": "clojure/core_test/derive.cljc",
+   "lines": [
+    16,
+    35,
+    36,
+    37,
+    77,
+    81
+   ],
+   "classification": "host-specific",
    "rationale": "Uses the JavaScript String constructor as a hierarchy type tag.",
-   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."},
-  {"file": "clojure/core_test/nil_qmark.cljc", "lines": [22], "classification": "host-specific",
+   "alternative": "A :suss branch using a nominal Suss type once hierarchies accept type tags."
+  },
+  {
+   "file": "clojure/core_test/nil_qmark.cljc",
+   "lines": [
+    22
+   ],
+   "classification": "host-specific",
    "rationale": "JavaScript undefined has no portable counterpart.",
-   "alternative": "None needed; Suss has only nil."},
-  {"file": "clojure/core_test/some_qmark.cljc", "lines": [12], "classification": "host-specific",
+   "alternative": "None needed; Suss has only nil."
+  },
+  {
+   "file": "clojure/core_test/some_qmark.cljc",
+   "lines": [
+    12
+   ],
+   "classification": "host-specific",
    "rationale": "JavaScript undefined has no portable counterpart.",
-   "alternative": "None needed; Suss has only nil."},
-  {"file": "clojure/core_test/empty.cljc", "lines": [26], "classification": "host-specific",
+   "alternative": "None needed; Suss has only nil."
+  },
+  {
+   "file": "clojure/core_test/empty.cljc",
+   "lines": [
+    26
+   ],
+   "classification": "host-specific",
    "rationale": "JavaScript Date objects are host values.",
-   "alternative": "A host-neutral time value when a portable time API exists."},
-  {"file": "clojure/core_test/taps.cljc", "lines": [17, 26, 28, 39], "classification": "host-specific",
+   "alternative": "A host-neutral time value when a portable time API exists."
+  },
+  {
+   "file": "clojure/core_test/taps.cljc",
+   "lines": [
+    17,
+    26,
+    28,
+    39
+   ],
+   "classification": "host-specific",
    "rationale": "The asynchronous tap test is written against JavaScript Promise and setTimeout.",
-   "alternative": "A :suss branch over Suss futures (M6) with the same tap ordering assertions."}
+   "alternative": "A :suss branch over Suss futures (M6) with the same tap ordering assertions."
+  }
  ]
 }
