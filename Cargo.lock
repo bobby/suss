@@ -1835,6 +1835,7 @@ name = "suss-compile"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "log",
  "num-traits",
  "pretty_assertions",
  "serde",
