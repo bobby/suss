@@ -21216,3 +21216,5 @@ checkout; no checker was weakened. Submodule14670 checked out exactc4295f30;
 unchanged Python rerun97657 passes219 (8.998s), log
 /private/tmp/suss-constructor-review-python-pinned.log. Full review-head baseline
 and final-head CI remain required; combined1315pass evidence is distinct.
+
+PR220 rebase onto origin/main85b6218 after #210/#215 merged: only constructor commits replayed with `git rebase --onto origin/main 75aff37`, excluding the merged dependency stack. Constructor production delta, focused tests and oracle fixtures are identical to prior reviewed fbc9a4b; both phase pairs regenerated without changes. Five compiler tests and two executing native tests pass, zero failures/ignores/filters; native suite completed in154.66s (`/private/tmp/suss-rebase220-compiler-tests.log`, `/private/tmp/suss-rebase220-native-tests.log`). Java/Node-free fresh pair reproduction and identity checks pass; all four bootstrap execution tests pass in13.03s (`/private/tmp/suss-rebase220-verify.log`). Exact final-head CI remains required.
