@@ -168,3 +168,41 @@ fn compiled_source_macros_preserve_true_loop_special_form_priority() {
         "Qualified macro name remains an ordinary macro lookup"
     );
 }
+#[test]
+fn compiled_source_macros_materialize_env_only_for_macros_that_can_read_it() {
+    let mut macros = CompiledMacros::new().unwrap();
+    // No &env reference: expansion never needs the caller's analysis graph.
+    macros.define("(defmacro plain [x] (list '+ x 1))").unwrap();
+    // A direct reference observes a genuine environment map.
+    macros
+        .define("(defmacro direct [] (if (map? &env) 1 0))")
+        .unwrap();
+    // A source macro expanded inside a body may supply the reference, so a body
+    // calling one is conservatively treated as reading &env.
+    macros.define("(defmacro env-ref [] '&env)").unwrap();
+    macros
+        .define("(defmacro indirect [] (if (map? (env-ref)) 1 0))")
+        .unwrap();
+    // Compiling indirect's body expanded env-ref, which reads &env: that one
+    // materialization happened in the macro session. Count runtime uses after it.
+    let defined = macros.environment_materializations();
+    assert_eq!(defined, 1);
+    let mut runtime = Session::new_repl().unwrap();
+    assert_eq!(number(&mut runtime, "(plain 41)", &mut macros), 42f64.to_bits());
+    assert_eq!(macros.environment_materializations(), defined);
+    assert_eq!(number(&mut runtime, "(direct)", &mut macros), 1f64.to_bits());
+    assert_eq!(macros.environment_materializations(), defined + 1);
+    assert_eq!(number(&mut runtime, "(indirect)", &mut macros), 1f64.to_bits());
+    assert_eq!(macros.environment_materializations(), defined + 2);
+    // The compiled defn bootstrap macro cannot read &env: definitions in a
+    // namespace no longer rebuild the growing caller environment per form.
+    let definitions = (0..32)
+        .map(|i| format!("(defn f{i} [x] (+ x {i}))"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    runtime
+        .eval_with_macros(&format!("(do {definitions} nil)"), &mut macros)
+        .unwrap();
+    assert_eq!(macros.environment_materializations(), defined + 2);
+    assert_eq!(number(&mut runtime, "(f31 11)", &mut macros), 42f64.to_bits());
+}
