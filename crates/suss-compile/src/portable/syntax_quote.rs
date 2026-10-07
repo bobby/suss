@@ -530,7 +530,9 @@ pub(crate) fn reader_sequence_initializer(
     let Kind::Symbol(symbol) = &head.kind else {
         return Ok(None);
     };
-    if symbol.namespace.as_deref() != Some("cljs.core")
+    // Lowered reader output names cljs.core; reader data that passed through a
+    // macro (for example a defn body) still carries the reader's clojure.core.
+    if !matches!(symbol.namespace.as_deref(), Some("cljs.core" | "clojure.core"))
         || symbol.name != "sequence"
         || head.span.start < form.span.start
         || head.span.end != form.span.end

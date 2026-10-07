@@ -375,7 +375,12 @@ impl Session {
     /// Compiled core for the native REPL. This is the bounded, provenance-tracked
     /// bootstrap artifact, not complete portable core compatibility.
     pub fn new_repl() -> Result<Self, SessionError> {
-        let mut session = Self::new()?;
+        Self::new_repl_with_options(SessionOptions::default())
+    }
+    /// The shipped compiled core with caller-supplied source roots and fuel,
+    /// for embedders that load namespaces from their own directories.
+    pub fn new_repl_with_options(options: SessionOptions) -> Result<Self, SessionError> {
+        let mut session = Self::with_options(options)?;
         session.provision_core()?;
         Ok(session)
     }

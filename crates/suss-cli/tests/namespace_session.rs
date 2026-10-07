@@ -216,3 +216,29 @@ fn namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependenc
     assert_eq!(session.stats(), before);
     assert_eq!(number(&mut session, "target/value"), 23f64.to_bits());
 }
+
+#[test]
+fn namespace_session_shipped_core_loads_from_supplied_source_roots() {
+    let project = tempfile::tempdir().unwrap();
+    std::fs::create_dir(project.path().join("app")).unwrap();
+    // Core collection functions come from the shipped compiled core; the
+    // namespace comes from the caller's root, not the default ./src.
+    std::fs::write(
+        project.path().join("app/data.cljc"),
+        "(ns app.data) (def total (count (conj [1 2] #?(:suss 3 :cljs 4))))",
+    )
+    .unwrap();
+    let mut session = suss_cli::portable_session::Session::new_repl_with_options(
+        suss_cli::portable_session::SessionOptions {
+            source_paths: vec![project.path().to_owned()],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    session.load_namespace("app.data").unwrap();
+    assert_eq!(f64::from_bits(number(&mut session, "app.data/total")), 3.0);
+    let missing = suss_cli::portable_session::Session::new_repl()
+        .unwrap()
+        .load_namespace("app.data");
+    assert!(missing.is_err(), "the default root must not see the supplied project");
+}
