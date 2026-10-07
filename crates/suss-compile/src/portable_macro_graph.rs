@@ -1077,6 +1077,13 @@ impl<'a> AnalysisGraph<'a> {
                 })
             };
             let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
+            if let Some(count) = info.type_fields {
+                fields.extend([
+                    ("type", self.flag(true)?),
+                    ("num-fields", self.number(count)?),
+                    ("record", self.flag(false)?),
+                ]);
+            }
             // Namespace declaration records do not have the :ns field of a
             // resolved var AST. Preserve observed raw metadata in either stage.
             for field in [
@@ -1095,6 +1102,7 @@ impl<'a> AnalysisGraph<'a> {
                 "arglists",
                 "arglists-meta",
                 "export",
+                "type", "num-fields", "record",
             ] {
                 if let Some(value) = property(field) {
                     fields.retain(|(name, _)| *name != field);
@@ -1164,7 +1172,9 @@ impl<'a> AnalysisGraph<'a> {
             let callable = source.and_then(|source| source.callable.as_ref());
             // parse-def chooses a callable return independently of dynamic
             // var-reference inference. False hints fall through just like nil.
-            let completed_tag = if provisional {
+            let completed_tag = if info.type_fields.is_some() {
+                hir::declaration_tag(info).map_err(SessionError::Compile)?
+            } else if provisional {
                 None
             } else if callable.is_some() {
                 property("tag")
@@ -1868,6 +1878,7 @@ impl<'a> AnalysisGraph<'a> {
                 hir::SourceNode::Throw(exception) => ("throw", vec![], vec![("exception", exception.as_ref())]),
                 hir::SourceNode::Assign { target, value } => ("set!", vec![], vec![("target", target.as_ref()), ("val", value.as_ref())]),
                 hir::SourceNode::Invoke { callee, arguments } => ("invoke", vec![("args", arguments.as_ref())], vec![("fn", callee.as_ref())]),
+                hir::SourceNode::Construct { class, arguments } => ("new", vec![("args", arguments.as_ref())], vec![("class", class.as_ref())]),
                 _ => ("", vec![], vec![]),
             };
             if !operation.is_empty() {
@@ -1880,6 +1891,7 @@ impl<'a> AnalysisGraph<'a> {
                     "throw" => &["exception"],
                     "set!" => &["target", "val"],
                     "invoke" => &["fn", "args"],
+                    "new" => &["class", "args"],
                     _ => unreachable!(),
                 };
                 for (name, children) in many {

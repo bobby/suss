@@ -526,6 +526,7 @@ pub enum SourceNode {
     },
     Assign { target: std::sync::Arc<Hir>, value: std::sync::Arc<Hir> },
     Invoke { callee: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
+    Construct { class: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
     WithMeta {
         expression: std::sync::Arc<Hir>,
         metadata: std::sync::Arc<Hir>,
@@ -1222,6 +1223,7 @@ impl Analyzer<'_> {
             origin: self.origin.clone(),
             initializer_form: init.cloned(),
             initializer: None,
+            type_fields: None,
             once,
         };
         if !preserve_declaration {
@@ -1856,13 +1858,21 @@ impl Analyzer<'_> {
                 unreachable!()
             };
             name.name.pop();
-            let mut arguments = vec![self.form(&constructor)?];
-            arguments.extend(
-                args.iter()
-                    .map(|argument| self.form(argument))
-                    .collect::<Result<Vec<_>, _>>()?,
-            );
-            return Ok(self.nominal(form, Nominal::Construct, arguments));
+            // Pinned macroexpand-1 rewrites Foo. to genuine (new Foo ...)
+            // syntax before analysis. Keep that source record, not the lowered
+            // descriptor call or the original shorthand invocation.
+            constructor.metadata.clear();
+            let mut parts = vec![Form {
+                kind: Kind::Symbol(suss_reader::Symbol::new("new")),
+                span: items[0].span.clone(), metadata: vec![],
+            }, constructor];
+            parts.extend_from_slice(args);
+            let expanded = Form { kind: Kind::List(parts), ..form.clone() };
+            // This fixed rewrite cannot recurse through another trailing dot;
+            // preserve the existing source-depth bound like let/loop rewrites.
+            return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                self.expand_or_analyze(&expanded, context, tail, name_hint)
+            });
         }
         if bare && symbol.name == "new" {
             if args.is_empty() {
@@ -1872,6 +1882,10 @@ impl Analyzer<'_> {
                 .iter()
                 .map(|argument| self.form(argument))
                 .collect::<Result<Vec<_>, _>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Construct {
+                class: std::sync::Arc::new(arguments[0].clone()),
+                arguments: arguments[1..].to_vec().into(),
+            }));
             return Ok(self.nominal(form, Nominal::Construct, arguments));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "quote-form" {

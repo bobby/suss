@@ -21066,3 +21066,140 @@ PR218 rebased onto origin/main85b6218 after #210/#215 merged. CLI conflict retai
 ### PR #218 rebase after #217 merge (2026-10-07)
 
 Rebased onto origin/main `4c3bb6d72c66600e35ca4c09b6e52e55ca1f7a8a` and regenerated both bootstrap image/manifest pairs. Validation: `cargo test -p suss-compile --locked --test session_interrupt -- --test-threads=2` (7 passed), `cargo test -p suss-cli --locked --test repl_interrupt -- --test-threads=2` (1 passed), and `scripts/verify-bootstrap.sh` (4 passed). Bootstrap generation used `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`. Independent source rebase review found no material findings. Final-head CI must pass before merge; the full workspace baseline was not rerun for this rebase. Next unblocked task: verify final-head CI and user review.
+### Constructor source records (2026-10-07)
+
+Isolated source branch portable/m3-constructor-source-asts is based on combined
+candidate b58ccc8. Parent compiled command returns [nil nil] for constructor
+operation/children; a source macro asserting :new/[:class :args] exits1 with
+a located macro-expansion error. Logs: /private/tmp/suss-constructor-source-parent.log
+and /private/tmp/suss-constructor-source-parent-regression.log. Parent executable
+SHA256: 8727c442f6cc70be34fa8b5d7224f3ef33fab3df4e121b385c5e7e81641bc879.
+
+Five fresh pinned constructor observations match raw analyzer and actual Node
+execution, including initialized field values, class declaration facts and eight
+ordered effects. Primary log: /private/tmp/suss-constructor-source-oracle-class-facts.log.
+Six strict checker tests pass; complete Python suite: 219 pass (7.713s), log
+/private/tmp/suss-constructor-source-python.log. Earlier exploratory failures
+(core Box/Empty name collisions and computed-new Node execution) remain failed
+logs /private/tmp/suss-constructor-source-oracle.log and
+/private/tmp/suss-constructor-source-oracle-fixed.log; no computed-constructor
+runtime success is inferred from its analysis-only record.
+
+Source patch retains :new/class/args children, source-expanded trailing-dot
+syntax and declaration-derived type facts/tags without operand reanalysis.
+New compiler/native regressions and docs/runtime/compiled-macro-constructor-source-asts.md
+are written. These Rust tests have not compiled/run yet; no native pass is
+claimed. Frozen combined baseline53754 remains live; avoid a concurrent Cargo
+graph. Next run the two focused constructor suites, fix any failures, regenerate
+both bootstrap pairs and verify reproduction/affected suites, then independent
+final review, complete workspace validation and final-head CI.
+
+Independent prevalidation source review found an invented result tag on a
+constructor invocation and stale type metadata under :declared preservation.
+Both source defects are repaired with dedicated compiler regressions, and
+source JS hint precedence now follows pinned parse-new. Expanded primary data
+has eight actual analyzer/Node cases (including current false tag and foreign/
+primitive JS hint data); field values and all eight effects agree. Full Python
+suite passes219 checks (10.927s), /private/tmp/suss-constructor-source-python-eight.log.
+Rust checks remain uncompiled; follow-up independent source review is pending.
+Combined b58ccc8 independent review found no material integration defect; its
+full baseline53754 is still live. All four original PR final-head CI runs are
+now SUCCESS (recorded on issue14 comment6044122890); no PR was merged.
+
+The exact new native regression was also executed against unchanged b58ccc8
+source with only its new test/fixture copied into an isolated parent. It fails
+at constructor case0: op/tag/children/class-info are absent, exactly as the
+regression targets. Terminal101, 0passed/1failed/0ignored/0filtered,76.77s;
+/private/tmp/suss-constructor-source-parent-native.log (host25602). This is a
+semantic failure, not an encoding/compile failure. The related review finding
+about losing old metadata without :declared is repaired by capturing the
+namespace revision before ordinary definition. The primary corpus now has nine
+actual pinned/Node rows, including preserved private metadata without :declared.
+All fields/values and eight ordered effects agree; six checker tests pass.
+Compiler-focused native validation is the current sole Cargo graph; bootstrap
+regeneration and the repaired same native test follow it.
+
+Constructor compiler validation completed: five passed, zero failed/ignored/filtered
+(0.01s), /private/tmp/suss-constructor-source-compiler-focused.log. Both bootstrap
+pairs regenerated successfully with the locked suss-bootstrap command; log
+/private/tmp/suss-constructor-source-bootstrap.log. The repaired native macro
+regression is running as the sole Cargo graph (host34476), log
+/private/tmp/suss-constructor-source-native.log; no native pass is claimed yet.
+The combined parent full baseline is terminal success: 1309 passed, zero failed,
+41 tracked ignores, zero filtered across 167 result groups; log
+/private/tmp/suss-m3-integrated-full.log. This does not prove full M3 acceptance.
+
+Native constructor regression host34476 is terminal101: zero passed, one failed,
+zero ignored/filtered (14.59s). Macro expansion traps at source span607..636;
+/private/tmp/suss-constructor-source-native.log. Compiler checks remain passing,
+but repaired execution is unproven. Next diagnose this trap before bootstrap
+reproduction, broader validation or publishing this candidate.
+
+The native constructor fuel probe completed successfully (host87289 terminal0):
+one passed, zero failed/ignored/filtered,154.49s. All nine frozen observations
+agree in Runtime and Macro caller phases after GC, including declaration facts,
+initialized field values and exactly eight ordered effects. It uses an explicit
+finite100M macro-operation test allowance; production defaults and projection
+depth are unchanged. The default10M failure remains recorded. Log:
+/private/tmp/suss-constructor-source-native-fuel-probe.log. Next bootstrap
+reproduction and affected-source suites, independent final review and full baseline.
+
+Bootstrap verification is terminal0 (host66738): both freshly generated phase
+pairs match each other and tracked artifacts byte-for-byte with Java/Node absent;
+identity/invalidation checks and four executing bootstrap tests pass (12.76s).
+Log: /private/tmp/suss-constructor-source-bootstrap-verify.log. Constructor
+evidence is recorded on issue14 comment6044406618. Ten affected integration
+targets are running sequentially as the sole Cargo graph (host43450), log
+/private/tmp/suss-constructor-source-affected.log. Independent source/test review
+has been requested; final committed-head review and full baseline remain required.
+
+Independent precommit review found no material source/test findings. The finite
+100M allowance establishes the exact native corpus under that budget without
+changing defaults, depth or assertions; it does not prove default-budget success.
+The stale outstanding-bootstrap sentence was corrected. Affected suite43450
+remains live; collection source ASTs completed3passed0failed0ignored0filtered
+(50.39s), control ASTs are now running. Keep one Cargo graph.
+
+Review stack rebase: constructor source/tests now apply directly to reviewed
+PR215 head75aff37. Integrated f764080 evidence above describes the combined
+parent including PR217/218, not this rebased review head. Bootstrap artifacts
+must be regenerated for this exact base; do not publish or claim matching
+identity before regeneration, execution and exact-head CI.
+
+Combined constructor headf764080 full baseline65015 is confirmed live; current
+log /private/tmp/suss-constructor-source-full.log is executing the constructor
+regression, not terminal. No full pass claimed. Review-stack source/test data
+match that head byte-for-byte; wait for the sole Cargo graph before regenerating
+review-base bootstrap pairs and completing this cherry-pick.
+
+A bounded native entrypoint probe on the current compiled CLI (SHA256
+988de5363465d774560bda451aa9f7cec8b891005ac5c00c285257a3523c6cfe)
+evaluates42 successfully, but future/await names are unresolved. Raw exact
+observations: /private/tmp/suss-m3-async-entrypoint-probe.json. This proves the
+probed entrypoints are unavailable, not that an arbitrary user-supplied library
+could not define these names. Source inspection confirms portable/aot.rs:980
+handles non-suspending canonical callbacks only, HIR has no suspension node and
+Session has no scheduler. Await-outside currently fails name resolution, which
+is not the required contextual diagnostic. Source suspendable bodies, rooted
+locals/handlers/dynamic bindings, at-most-once ready dispatch and pending-I/O
+cancellation/cleanup/race/fairness execution remain original issue15 work.
+
+A native default-fuel smoke probe50338 completed successfully: original
+constructor-op/children macro returns [[:new [:class :args]]42] and initialized
+field42 at the shipped10M defaults, exit0 with empty stderr. Raw exact source
+and output: /private/tmp/suss-constructor-source-default-fuel-probe.json. This
+is bounded native CLI execution on the combined candidate, not a substitute
+for the nine-case100M projection. A second independently decoded regression
+now checks this simple observation after GC in both caller phases on the review
+branch without fuel overrides. That new Rust regression is NOT compiled/run
+yet; include it in exact review-base validation after artifact regeneration.
+
+Combined f764080 exact full baseline65015 is terminal0. Independent log audit
+reconciles every running count, named outcome and result summary across169 groups:
+1315passed,0failed,41tracked ignores,0filtered; all4 crate doctest groups present.
+Log: /private/tmp/suss-constructor-source-full.log. New default-budget regression
+on the review branch is not part of that frozen head and remains unrun. Exact
+review-base bootstrap regeneration is the sole current Cargo graph (host74915),
+log /private/tmp/suss-constructor-review-bootstrap.log. After regeneration,
+finish this cherry-pick and run both constructor targets and verify-bootstrap
+on the new head; independent final review and final-head CI are still required.

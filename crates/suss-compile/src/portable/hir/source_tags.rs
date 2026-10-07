@@ -10,7 +10,7 @@
 // Source inference adaptation of cljs/analyzer.cljc get-tag, infer-if,
 // infer-invoke, infer-tag and fn inferred-ret-tag, and canonicalize-type, pinned
 // at c4295f303100bbf5afac449242d30bca1126f1a1 (1529–1659, 1008–1022, 2359–2364,
-// 2630–2655 and 4444–4465).
+// 2630–2696, 3614–3649 and 4444–4465).
 // Upstream analyzer.cljc SHA-256:
 // 297802c627474434f1ef868e31f5f9913c290a4e80c509a40c704dced95bbf47.
 // The native operation representation is original. No JS AST is fabricated and
@@ -183,6 +183,9 @@ pub fn declaration_tag(
     info: &super::super::resolve::DefinitionInfo,
 ) -> Result<Option<Form>, Diagnostic> {
     let raw = metadata(&info.declaration, "tag")?;
+    // parse-type merges source metadata over its default function tag,
+    // including explicit nil/false. Type declarations precede method analysis.
+    if info.type_fields.is_some() { return Ok(raw.or_else(|| Some(named("function")))) }
     if provisional(info)? { return Ok(raw) }
     // Function vars retain their raw/overlaid tag, including present nil and
     // false. Dynamic affects scalar inference, not function var-reference tags.
@@ -420,6 +423,44 @@ pub(super) fn source_tags(
                         _ => None,
                     };
                     method_tag.or(global_tag).or(Some(named("any")))
+                }
+                Expression::Nominal { operation: Nominal::Construct, arguments } => {
+                    // parse-new derives the result from source resolution,
+                    // not the physical runtime constructor/descriptor value.
+                    // Resolution on an invocation belongs to its callee, not
+                    // the value of the constructor expression. Only reference
+                    // ASTs carry the :info read by pinned parse-new.
+                    let class = arguments.first().and_then(|class| class.source.as_ref())
+                        .filter(|class| matches!(class.form.kind, Kind::Symbol(_)));
+                    let class_tag = class.map(|class| resolved_tag(class.resolved.as_ref()))
+                        .transpose()?.flatten();
+                    let name = match class.and_then(|class| class.resolved.as_ref()) {
+                        Some(SourceBinding::Global { global, .. }) => Some(named(&format!("{}/{}", global.namespace(), global.name()))),
+                        Some(SourceBinding::Local(binding)) => Some(binding.declaration.clone()),
+                        Some(SourceBinding::Field(binding)) => Some(binding.declaration.clone()),
+                        _ => None,
+                    };
+                    let primitive = |tag: &Form| {
+                        if let Kind::Symbol(symbol) = &tag.kind
+                            && symbol.namespace.as_deref() == Some("js")
+                        {
+                            match symbol.name.as_str() {
+                                "Object" => Some("object"), "String" => Some("string"),
+                                "Array" => Some("array"), "Number" => Some("number"),
+                                "Function" => Some("function"), "Boolean" => Some("boolean"),
+                                _ => None,
+                            }
+                        } else { None }
+                    };
+                    let js_tag = class_tag.as_ref().is_some_and(|tag| matches!(&tag.kind,
+                        Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("js")
+                            || (symbol.namespace.is_none() && symbol.name == "js")));
+                    if js_tag && class_tag.as_ref().and_then(primitive).is_none() {
+                        Some(named("js"))
+                    } else {
+                        Some(name.and_then(|name| primitive(&name).map(named).or(Some(name)))
+                            .unwrap_or(Form { kind: Kind::Nil, span: 0..0, metadata: vec![] }))
+                    }
                 }
                 _ => None,
             },
