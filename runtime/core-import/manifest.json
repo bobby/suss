@@ -6,7 +6,7 @@
   "tool": "scripts/core_import.py",
   "tool-sha256": "b34411c7b816e19ef21f291d5070e71f7031f3b81d085a59d58126f13b6c1d68",
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
-  "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
+  "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "4f5d2002fb346f03571f6720a2bf55d728ffeb7e34b1d94cf542d88b08a7d408",
   "reviews-sha256": "29da3979ea30aa68b2932e2cb451ee83d49ab77683e418c03f975e95705acb19",
