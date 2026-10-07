@@ -161,6 +161,77 @@ fn completed_callable(info: &super::super::resolve::DefinitionInfo) -> Result<Op
         info.initializer.as_ref().and_then(|init| callable(init))
     })
 }
+/// The pinned analyzer's `invalid-arity?` over a var's published declaration
+/// fields (`:fn-var`, `:variadic?`, `:max-fixed-arity`, `:method-params`),
+/// selected as the declaration catalog selects them: raw metadata for
+/// provisional or non-callable initializers, `:top-fn` overlays on raw
+/// metadata, or the completed source callable. Unavailable `:method-params`
+/// are assumed valid, as `valid-arity?` does; malformed field data is not
+/// checked here.
+pub fn invalid_declared_arity(
+    info: &super::super::resolve::DefinitionInfo,
+    argc: usize,
+) -> Result<bool, Diagnostic> {
+    let raw = |name| metadata(&info.declaration, name);
+    let macro_flag = raw("macro")?.as_ref().is_some_and(truthy);
+    let callable = completed_callable(info)?;
+    let top = metadata(&info.declaration, "top-fn")?.filter(|top| !matches!(top.kind, Kind::Nil));
+    let (fn_var, variadic, max_fixed, method_params) = match (callable, top) {
+        (Some(_), Some(_)) => {
+            let field = |name| -> Result<Option<Form>, Diagnostic> {
+                Ok(top_function_property(info, name)?.or(raw(name)?))
+            };
+            (
+                top_function_property(info, "fn-var")?.as_ref().map_or(!macro_flag, truthy),
+                field("variadic?")?.as_ref().is_some_and(truthy),
+                field("max-fixed-arity")?,
+                field("method-params")?,
+            )
+        }
+        (Some(callable), None) => {
+            let counts = callable.methods.iter().map(|method| method.parameters.len());
+            if !macro_flag && !counts.clone().any(|count| count == argc) {
+                let variadic = callable.variadic();
+                let fixed = callable.max_fixed_arity().unwrap_or(0);
+                return Ok(!variadic || argc < fixed);
+            }
+            return Ok(false);
+        }
+        (None, _) => (
+            raw("fn-var")?.as_ref().is_some_and(truthy),
+            raw("variadic?")?.as_ref().is_some_and(truthy),
+            raw("max-fixed-arity")?,
+            raw("method-params")?,
+        ),
+    };
+    if !fn_var {
+        return Ok(false);
+    }
+    let counts = match method_params.map(|params| params.kind) {
+        None | Some(Kind::Nil) => return Ok(false),
+        Some(Kind::List(methods) | Kind::Vector(methods)) => {
+            let mut counts = Vec::with_capacity(methods.len());
+            for method in methods {
+                match method.kind {
+                    Kind::List(parameters) | Kind::Vector(parameters) => counts.push(parameters.len()),
+                    _ => return Ok(false),
+                }
+            }
+            counts
+        }
+        Some(_) => return Ok(false),
+    };
+    if counts.contains(&argc) {
+        return Ok(false);
+    }
+    if !variadic {
+        return Ok(true);
+    }
+    Ok(match max_fixed.map(|value| value.kind) {
+        Some(Kind::Number(fixed)) => (argc as f64) < fixed,
+        _ => false,
+    })
+}
 // Pinned analyzer.cljc2092–2175 merges raw metadata before callable top-fn
 // overlays and computed return fields. Original Rust policy; never treat a
 // provisional initializer as a published callable declaration.

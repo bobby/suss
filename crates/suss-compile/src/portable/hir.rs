@@ -1119,6 +1119,31 @@ impl Analyzer<'_> {
                 ));
             }
         }
+        // Design section 4: wrong arity is a located error. This is the pinned
+        // analyzer's :fn-arity check (parse-invoke*), promoted from a warning.
+        let invalid = match &callee.kind {
+            Expression::Global(global) => self
+                .environment
+                .definition_info(global)
+                .map(|info| source_tags::invalid_declared_arity(info, arguments.len()))
+                .transpose()?
+                .unwrap_or(false)
+                .then(|| format!("{}/{}", global.namespace(), global.name())),
+            // Only literal keyword callees; tag-inferred keyword values are not checked.
+            _ => match &items[0].kind {
+                Kind::Keyword(key) if !matches!(arguments.len(), 1 | 2) => Some(match &key.namespace {
+                    Some(namespace) => format!(":{namespace}/{}", key.name),
+                    None => format!(":{}", key.name),
+                }),
+                _ => None,
+            },
+        };
+        if let Some(name) = invalid {
+            return Err(fail(
+                form.span.clone(),
+                format!("Wrong number of args ({}) passed to {name}", arguments.len()),
+            ));
+        }
         *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
             callee: std::sync::Arc::new(callee.as_ref().clone()),
             arguments: arguments.clone().into(),

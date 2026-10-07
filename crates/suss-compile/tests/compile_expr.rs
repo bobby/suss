@@ -2532,14 +2532,47 @@ fn arithmetic_and_equality_preserve_argument_effect_order() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: wrong known arity is a runtime language exception, not the source-located static diagnostic design section 4 requires; see static_arity_diagnostics_are_not_yet_compiled"]
+fn known_function_arities_accept_every_declared_signature() {
+    // Variadic minimums, multiple fixed signatures and the latest redefinition.
+    assert_eq!(run_expr_i32("(defn f [x & more] (count more)) (f 1 2 3)"), 2);
+    assert_eq!(run_expr_i32("(defn f [x & more] (count more)) (f 1)"), 0);
+    assert_eq!(run_expr_i32("(defn f ([] 0) ([x] x) ([x y] (+ x y))) (+ (f) (f 4) (f 5 6))"), 15);
+    assert_eq!(run_expr_i32("(defn f [x] x) (defn f [x y] (+ x y)) (f 20 22)"), 42);
+    assert_eq!(run_expr_i32("(:a {:a 7})"), 7);
+    assert_eq!(run_expr_i32("(:a {} 9)"), 9);
+}
+
+/// Pinned `parse-invoke*` :fn-arity, promoted to a located error (design section 4).
+fn assert_wrong_arity(expression: &str, diagnostic: &str) {
+    let error = Compiler::new()
+        .compile_expr_with_info(expression)
+        .expect_err(expression)
+        .to_string();
+    assert!(error.contains(diagnostic), "{expression}: {error}");
+    assert!(error.contains(" at bytes "), "{expression}: unlocated {error}");
+}
+
+#[test]
+fn known_function_arities_reject_calls_no_signature_accepts() {
+    for (expression, diagnostic) in [
+        ("(defn f [x & more] x) (f)", "Wrong number of args (0) passed to user/f"),
+        ("(defn f ([] 0) ([x y] (+ x y))) (f 1)", "Wrong number of args (1) passed to user/f"),
+        ("(defn f [x] x) (defn f [x y] (+ x y)) (f 1)", "Wrong number of args (1) passed to user/f"),
+        ("(:a)", "Wrong number of args (0) passed to :a"),
+        ("(:a {} 1 2)", "Wrong number of args (3) passed to :a"),
+    ] {
+        assert_wrong_arity(expression, diagnostic);
+    }
+}
+
+#[test]
 fn known_function_arity_errors_are_compile_diagnostics() {
-    for expression in ["(defn f [x] x) (f)", "(defn f [x] x) (f 1 2)", "(reduce +)"] {
-        let error = Compiler::new()
-            .compile_expr_with_info(expression)
-            .expect_err(expression)
-            .to_string();
-        assert!(error.contains("Invalid arity"), "{expression}: {error}");
+    for (expression, diagnostic) in [
+        ("(defn f [x] x) (f)", "Wrong number of args (0) passed to user/f"),
+        ("(defn f [x] x) (f 1 2)", "Wrong number of args (2) passed to user/f"),
+        ("(reduce +)", "Wrong number of args (1) passed to suss.core/reduce"),
+    ] {
+        assert_wrong_arity(expression, diagnostic);
     }
 }
 
@@ -2648,33 +2681,4 @@ fn prototype_cases_awaiting_compiled_support() {
     }
 }
 
-/// Records the current compiled-pipeline arity behavior until the required
-/// static diagnostics exist: these compile and then throw at run time. When this
-/// fails, re-enable known_function_arity_errors_are_compile_diagnostics.
-#[test]
-fn static_arity_diagnostics_are_not_yet_compiled() {
-    for expression in ["(defn f [x] x) (f)", "(defn f [x] x) (f 1 2)", "(reduce +)"] {
-        let compiled = Compiler::new()
-            .compile_expr_with_info(expression)
-            .unwrap_or_else(|error| panic!("{expression} now fails to compile: {error}"));
-        let mut session = Session::new().expect("runtime session");
-        let mut decoder = None;
-        let payload = match compiled.execute_with_core(&mut session, |session| {
-            decoder = Some(Decoder::capture(session, 1_000_000)?);
-            Ok(())
-        }) {
-            Err(suss_compile::portable_session::SessionError::Language(payload)) => payload,
-            other => panic!("{expression} no longer raises a runtime exception: {:?}", other.map(|_| ())),
-        };
-        // Read the thrown value's message as a program would, then decode it.
-        let ex_message = session.eval("ex-message").expect("ex-message");
-        let message = session.invoke(&ex_message, &[&payload]).expect("message");
-        session.collect().expect("collect");
-        let message = match decoder.unwrap().decode_session(&mut session, &message) {
-            Ok(Observation::String(units)) => String::from_utf16_lossy(&units),
-            other => panic!("{expression}: undecodable exception message {other:?}"),
-        };
-        assert!(message.to_lowercase().contains("arity"), "{expression}: {message}");
-    }
-}
 
