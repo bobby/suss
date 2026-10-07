@@ -3,8 +3,6 @@
 use std::sync::OnceLock;
 use wasmtime::{Config, Engine};
 
-
-
 pub fn engine() -> Engine {
     static ENGINE: OnceLock<Engine> = OnceLock::new();
     ENGINE

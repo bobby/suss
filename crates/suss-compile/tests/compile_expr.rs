@@ -11,9 +11,6 @@ mod support;
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
 
-
-
-
 /// Compile through the shared compiled Macro/Runtime pipeline, execute the
 /// complete bundle in a fresh Runtime session and decode the value on the host.
 fn observe(expr: &str) -> Observation {
@@ -62,8 +59,6 @@ fn run_expr_bool(expr: &str) -> bool {
 fn test_integer_literal() {
     assert_eq!(run_expr_i32("42"), 42);
 }
-
-
 
 #[test]
 fn test_addition() {
@@ -169,7 +164,6 @@ fn run_expr_string(expr: &str) -> String {
     }
 }
 
-
 #[test]
 fn test_vector_literal() {
     // Vector literals should compile to PERSISTENT_VECTOR structs
@@ -204,7 +198,6 @@ fn test_map_get_empty() {
     // Get on empty map returns nil
     assert_eq!(observe("(get {} 1)"), Observation::Nil);
 }
-
 
 #[test]
 fn test_set_literal() {
@@ -1780,11 +1773,6 @@ fn test_variadic_div_chain() {
     assert_eq!(run_expr_f64("(/ 100.0 2.0 5.0)"), 10.0);
 }
 
-
-
-
-
-
 // =============================================================================
 // Variadic Apply Tests (Part 2)
 // =============================================================================
@@ -1874,22 +1862,6 @@ fn test_apply_variadic_let_bound() {
     assert_eq!(run_expr_i32("(let [f +] (apply f [1 2 3 4]))"), 10);
     assert_eq!(run_expr_i32("(let [f *] (apply f [2 3 4]))"), 24);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ============================================================
 // Keyword 3-arg form tests
@@ -2293,7 +2265,6 @@ fn test_str_with_nil() {
 fn test_str_empty() {
     assert_eq!(run_expr_string("(str)"), "");
 }
-
 
 /// Printing has no compiled-pipeline counterpart yet: println/print/prn are
 /// unresolved and the session has no stdout capture. Execute the expression so

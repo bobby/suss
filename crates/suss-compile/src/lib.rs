@@ -100,12 +100,9 @@ impl CompiledExpr {
     }
 }
 
-
 use suss_core::Edn;
 use suss_reader::ParserState;
 use wit_parser::Resolve;
-
-
 
 /// The Suss static compiler: expression artifacts and AOT components, all
 /// through the compiled Macro/Runtime pipeline and the shipped bootstrap.
@@ -128,9 +125,6 @@ impl Compiler {
         Self {}
     }
 
-
-
-
     /// Compile an expression bundle using the cached compiled core bootstrap.
     /// User macros execute in an isolated compiled phase; Runtime initialization
     /// is deferred. This is a fresh compilation, not a source-replaying REPL.
@@ -138,10 +132,6 @@ impl Compiler {
     pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         self.compile_expr_with_info(expr_source)
     }
-
-
-
-
 
     /// Prepare a native expression through the common compiled macro pipeline.
     /// Runtime initializers are deferred until `CompiledExpr::execute`; the
@@ -154,17 +144,6 @@ impl Compiler {
         let wasm = prepared.modules().last().expect("expression bootstrap module").to_vec();
         Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
     }
-
-
-
-
-
-
-
-
-
-
-
 
     /// Compile Suss source code to a WASM component
     ///
@@ -663,7 +642,6 @@ impl Default for Compiler {
     }
 }
 
-
 #[cfg(test)]
 mod deftype_tests {
     use super::*;
@@ -753,17 +731,20 @@ mod deftype_tests {
     }
 
     #[test]
-    fn test_deftype_reserved_type_id() {
+    fn test_deftype_rejects_metadata_on_a_number() {
         let mut compiler = Compiler::new();
-        // Use reserved type ID (for core.sus bootstrap types)
+        // The prototype's `^:type-id N` reserved-id convention is not part of
+        // the design; metadata cannot apply to a number (design section 4).
         let source = "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
-        let result = compiler.compile_expr_with_info(source);
-        if let Err(e) = &result {
-            eprintln!("Compilation error: {:?}", e);
-        }
-        assert!(result.is_ok(), "Should compile deftype with reserved type-id");
+        let error = match compiler.compile_expr_with_info(source) {
+            Ok(_) => panic!("metadata on a number literal must not compile"),
+            Err(error) => error.to_string(),
+        };
+        assert!(
+            error.contains("Metadata requires a symbol or collection at bytes 19..21"),
+            "unexpected diagnostic: {error}"
+        );
     }
-
 
     #[test]
     fn test_deftype_mutable_field() {
