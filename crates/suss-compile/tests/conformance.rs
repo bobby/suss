@@ -7,7 +7,6 @@ mod support;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::OnceLock;
-use support::decode::{Decoder, values_match};
 use suss_compile::{
     Compiler,
     portable_session::{Session, SessionError, SessionOptions},
@@ -278,25 +277,30 @@ fn record_known_failures() {
 }
 
 #[test]
-fn comparison_rejects_opaque_values_and_wrong_collections() {
+fn comparison_rejects_wrong_values_and_collections() {
+    use portable_decode::Observation::{self, *};
     let read = |s| {
         parse_all(s, &mut ParserState::new("suss"))
             .unwrap()
             .remove(0)
     };
-    assert!(!values_match(&read("42"), &read("<gc-struct>")));
-    assert!(!values_match(&read("[1 2]"), &read("[1 3]")));
-    assert!(!values_match(&read("{:a 1}"), &read("{:a 2}")));
-    assert!(!values_match(&read("#{1 2}"), &read("#{1 3}")));
-    assert!(values_match(&read("{:a 1 :b 2}"), &read("{:b 2 :a 1}")));
-    assert!(values_match(&read("[1 2]"), &read("(1 2)")));
-    assert!(!values_match(&read("false"), &read("nil")));
-    assert!(!values_match(&read("1.0"), &read("1.00001")));
-    assert!(!values_match(
-        &read("9007199254740993"),
-        &read("9007199254740992.0")
-    ));
-    assert!(!values_match(&read("0"), &read("-0.0")));
+    let number = |value: f64| Number(value.to_bits());
+    let keyword = |name: &str| Keyword(None, name.encode_utf16().collect());
+    let cases: [(&str, Observation, bool); 10] = [
+        ("[1 2]", Vector(vec![number(1.0), number(3.0)]), false),
+        ("{:a 1}", Map(vec![(keyword("a"), number(2.0))]), false),
+        ("#{1 2}", Set(vec![number(1.0), number(3.0)]), false),
+        ("{:a 1 :b 2}", Map(vec![(keyword("b"), number(2.0)), (keyword("a"), number(1.0))]), true),
+        ("#{1 2}", Set(vec![number(2.0), number(1.0)]), true),
+        ("false", Nil, false),
+        ("nil", Bool(false), false),
+        ("1.0", number(1.00001), false),
+        ("9007199254740993", number(9007199254740992.0), false),
+        ("0", number(-0.0), false),
+    ];
+    for (expected, actual, matching) in cases {
+        assert_eq!(portable_compare::matches(&read(expected), &actual), matching, "{expected} vs {actual:?}");
+    }
 }
 
 #[test]
@@ -405,44 +409,6 @@ fn malformed_case_fields_do_not_become_passing_cases() {
     }
 }
 
-#[test]
-fn decoder_rejects_executed_unknown_and_malformed_gc_layouts() {
-    let engine = engine();
-    let mut compiler = Compiler::new();
-    for (body, expected) in [
-        (
-            "(func (export \"eval\") (result (ref null eq)) (ref.i31 (i32.const 6)))",
-            "unknown i31 tag",
-        ),
-        (
-            "(type $v (struct (field i32) (field i32))) (func (export \"eval\") (result (ref null eq)) (struct.new $v (i32.const 99999) (i32.const 42)))",
-            "unsupported GC value tag",
-        ),
-        (
-            "(type $v (struct (field i32) (field i32))) (func (export \"eval\") (result (ref null eq)) (struct.new $v (i32.const 1) (i32.const 42)))",
-            "malformed Float64",
-        ),
-        (
-            "(type $v (array i32)) (func (export \"eval\") (result (ref null eq)) (array.new_fixed $v 1 (i32.const 42)))",
-            "raw non-string array",
-        ),
-    ] {
-        let module = Module::new(&engine, format!("(module {body})")).unwrap();
-        let mut store = Store::new(&engine, ());
-        store.set_fuel(100_000).unwrap();
-        let instance = wasmtime::Instance::new(&mut store, &module, &[]).unwrap();
-        let mut result = [Val::null_any_ref()];
-        instance
-            .get_func(&mut store, "eval")
-            .unwrap()
-            .call(&mut store, &[], &mut result)
-            .unwrap();
-        let error = Decoder::new(&mut compiler)
-            .decode(&mut store, &result[0])
-            .unwrap_err();
-        assert!(error.contains(expected), "{error}");
-    }
-}
 
 #[test]
 fn evidence_maps_reject_duplicates_and_changed_failures() {

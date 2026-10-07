@@ -41,8 +41,6 @@ mod codegen;
 mod component;
 mod config;
 mod error;
-mod eval;
-mod expand;
 mod ir;
 mod lower;
 mod wasi;
@@ -115,58 +113,14 @@ use suss_core::Edn;
 use suss_reader::ParserState;
 use wit_parser::Resolve;
 
-/// Bundled core.sus source - automatically loaded before user code (per Clojure semantics)
-const CORE_SOURCE: &str = include_str!("core.sus");
 
-/// Cached core.sus analysis for REPL performance
-///
-/// Core.sus is ~2000 lines and takes significant time to parse, expand, and analyze.
-/// By caching this work, we can avoid repeating it on every REPL expression.
-#[derive(Clone)]
-pub struct CoreCache {
-    /// Parsed core.sus expressions (before macro expansion)
-    pub parsed: Vec<Edn>,
-    /// Analyzed function definitions from core.sus
-    pub functions: Vec<analyze::AnalyzedFunction>,
-    /// Analyzed deftype definitions from core.sus
-    pub deftypes: Vec<analyze::AnalyzedDeftype>,
-    /// Analyzed protocol definitions from core.sus
-    pub protocols: Vec<analyze::AnalyzedProtocol>,
-    /// Analyzed extend-type definitions from core.sus
-    pub extensions: Vec<analyze::AnalyzedExtension>,
-}
 
 /// The Suss static compiler
 ///
 /// For REPL usage, create a single Compiler instance and reuse it across expressions.
 /// This enables core.sus caching for significant performance improvement.
-pub struct Compiler {
-    /// Cached core.sus analysis (lazily initialized)
-    core_cache: Option<CoreCache>,
-}
+pub struct Compiler {}
 
-/// Parse core.sus and return its expressions
-fn load_core_exprs() -> CompileResult<Vec<Edn>> {
-    // Handle empty/comments-only core.sus gracefully
-    let trimmed = CORE_SOURCE
-        .lines()
-        .filter(|line| {
-            let line = line.trim();
-            !line.is_empty() && !line.starts_with(";;")
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    if trimmed.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    let mut parser_state = ParserState::new("core");
-    let result = suss_reader::parse_all(CORE_SOURCE, &mut parser_state)
-        .map_err(|e| CompileError::Parse(format!("core.sus: {}", e)))?;
-
-    Ok(result)
-}
 
 /// Inject the `suss` runtime interface into a WIT source string.
 ///
@@ -237,50 +191,11 @@ impl Compiler {
     /// For REPL usage, create one Compiler and reuse it for all expressions.
     /// This enables core.sus caching.
     pub fn new() -> Self {
-        Self { core_cache: None }
+        Self {}
     }
 
-    /// Ensure core.sus is loaded and cached
-    ///
-    /// This parses, expands, and analyzes core.sus once, caching the results.
-    /// Subsequent calls return the cached data immediately.
-    pub fn ensure_core_loaded(&mut self) -> CompileResult<&CoreCache> {
-        if self.core_cache.is_none() {
-            // Parse core.sus
-            let core_exprs = load_core_exprs()?;
 
-            // Expand macros
-            let expanded = expand::expand_all(core_exprs.clone(), None)?;
 
-            // Extract definitions
-            let (functions, deftypes, protocols, extensions, _remaining) =
-                Self::extract_core_definitions(expanded)?;
-
-            self.core_cache = Some(CoreCache {
-                parsed: core_exprs,
-                functions,
-                deftypes,
-                protocols,
-                extensions,
-            });
-        }
-        Ok(self.core_cache.as_ref().unwrap())
-    }
-
-    /// Get the cached core.sus data without loading
-    ///
-    /// Returns None if core.sus hasn't been loaded yet.
-    pub fn get_core_cache(&self) -> Option<&CoreCache> {
-        self.core_cache.as_ref()
-    }
-
-    /// Preload core.sus cache
-    ///
-    /// Call this during REPL startup to front-load the parsing cost.
-    pub fn preload_core(&mut self) -> CompileResult<()> {
-        self.ensure_core_loaded()?;
-        Ok(())
-    }
 
     /// Compile an expression bundle using the cached compiled core bootstrap.
     /// User macros execute in an isolated compiled phase; Runtime initialization
@@ -290,104 +205,6 @@ impl Compiler {
         self.compile_expr_with_info(expr_source)
     }
 
-    /// Prototype compiler-on-Wasm route, pending compiled host support.
-    ///
-    /// This method uses pre-analyzed core.sus definitions, avoiding the cost of
-    /// re-parsing and re-analyzing core.sus on every expression. For a typical
-    /// REPL session, this provides ~50-70% speedup.
-    ///
-    /// # Arguments
-    ///
-    /// * `expr_source` - The user's expression(s) to compile
-    ///
-    /// # Returns
-    ///
-    /// Compiled WASM bytes and metadata
-    #[cfg(target_family = "wasm")]
-    pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        // Ensure core.sus is cached
-        let core = self.ensure_core_loaded()?.clone();
-
-        // Parse only user expressions
-        let mut parser_state = ParserState::new("suss");
-        let user_exprs = suss_reader::parse_all(expr_source, &mut parser_state)
-            .map_err(|e| CompileError::Parse(e.to_string()))?;
-
-        // Combine core + user for macro expansion (macros may reference each other)
-        let mut all_exprs = core.parsed.clone();
-        all_exprs.extend(user_exprs);
-
-        // Expand macros on combined expressions
-        let expanded = expand::expand_all(all_exprs, None)?;
-
-        // Extract user definitions (skip core definitions which are already in cache)
-        // We need to re-extract to get the expanded user definitions
-        let (all_fns, all_deftypes, all_protocols, all_extensions, user_expr) =
-            Self::extract_core_definitions(expanded)?;
-
-        // Partition: core definitions (by name) vs user definitions
-        // User definitions may override core definitions, so we take all and dedupe later
-        let core_fn_names: std::collections::HashSet<_> =
-            core.functions.iter().map(|f| f.name.as_str()).collect();
-
-        let mut functions = core.functions.clone();
-        for func in all_fns {
-            if !core_fn_names.contains(func.name.as_str()) {
-                functions.push(func);
-            }
-        }
-
-        let core_deftype_names: std::collections::HashSet<_> =
-            core.deftypes.iter().map(|d| d.name.as_str()).collect();
-
-        let mut deftypes = core.deftypes.clone();
-        for dt in all_deftypes {
-            if !core_deftype_names.contains(dt.name.as_str()) {
-                deftypes.push(dt);
-            }
-        }
-
-        let core_protocol_names: std::collections::HashSet<_> =
-            core.protocols.iter().map(|p| p.name.as_str()).collect();
-
-        let mut protocols = core.protocols.clone();
-        for proto in all_protocols {
-            if !core_protocol_names.contains(proto.name.as_str()) {
-                protocols.push(proto);
-            }
-        }
-
-        // Extensions are additive (can extend same type multiple times)
-        let mut extensions = core.extensions.clone();
-        extensions.extend(all_extensions);
-
-        // Detect WASI calls in the expression
-        let wasi_calls = wasi::collect_wasi_calls(&user_expr);
-
-        if wasi_calls.is_empty() {
-            // No WASI calls - compile as core module
-            let wasm = self.compile_expr_core_from_analyzed(
-                user_expr, functions, deftypes, protocols, extensions
-            )?;
-            Ok(CompiledExpr {
-                wasm,
-                is_component: false,
-                #[cfg(not(target_family = "wasm"))]
-                prepared: None,
-            })
-        } else {
-            // WASI calls detected - compile as component with imports
-            let wasm = self.compile_expr_with_wasi_from_analyzed(
-                user_expr, wasi_calls, functions, deftypes, protocols, extensions
-            )?;
-            Ok(CompiledExpr {
-                wasm,
-                is_component: true,
-                #[cfg(not(target_family = "wasm"))]
-                prepared: None,
-            })
-        }
-    }
 
     /// Compile expression as core WASM module from pre-analyzed definitions
     #[cfg(target_family = "wasm")]
@@ -501,30 +318,6 @@ impl Compiler {
         codegen::generate_component_with_imports(&ir)
     }
 
-    /// Compile an expression with the remaining prototype byte-only backend.
-    ///
-    /// This API has not yet migrated to the shared runtime. Native callers that
-    /// need compiled macros and ABI2 semantics should use `compile_expr_with_info`
-    /// and execute its complete owned bundle. Entry bytes from that bundle are
-    /// not a standalone replacement for this API's output.
-    ///
-    /// This creates a minimal WASM module with a single exported function `eval`
-    /// that returns the result of the expression. No WIT file is required.
-    ///
-    /// If the expression contains WASI calls (e.g., `(wasi.random/get-random-u64)`),
-    /// returns a WASM Component with appropriate imports. Otherwise returns a core module.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let compiler = Compiler::new();
-    /// let wasm = compiler.compile_expr("(+ 1 2)")?;
-    /// // Run with wasmtime, call `eval` function, get result
-    /// ```
-    pub fn compile_expr(&mut self, expr_source: &str) -> CompileResult<Vec<u8>> {
-        let result = self.compile_prototype_expression(expr_source)?;
-        Ok(result.wasm)
-    }
 
     /// Prepare a native expression through the common compiled macro pipeline.
     /// Runtime initializers are deferred until `CompiledExpr::execute`; the
@@ -538,269 +331,8 @@ impl Compiler {
         Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
     }
 
-    /// Prototype compiler-on-Wasm entrypoint, pending compiled host support.
-    #[cfg(target_family = "wasm")]
-    pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        self.compile_prototype_expression(expr_source)
-    }
 
-    /// Remaining byte-only implementation, retired when its callers migrate.
-    ///
-    /// Returns both the WASM bytes and whether it's a component (WASI) or core module.
-    fn compile_prototype_expression(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        // Load core.sus (auto-injected before user code per Clojure semantics)
-        let core_exprs = load_core_exprs()?;
 
-        // Parse all expressions in the source
-        let mut parser_state = ParserState::new("suss");
-        let user_exprs = suss_reader::parse_all(expr_source, &mut parser_state)
-            .map_err(|e| CompileError::Parse(e.to_string()))?;
-
-        // Combine core + user expressions
-        let mut all_exprs = core_exprs;
-        all_exprs.extend(user_exprs);
-
-        // Expand macros on combined expressions
-        let expanded = expand::expand_all(all_exprs, None)?;
-
-        // Separate defn/deftype/extend-type forms from the final expression
-        let (core_fns, deftypes, protocols, extensions, user_expr) = Self::extract_core_definitions(expanded)?;
-
-        // Detect WASI calls in the expression
-        let wasi_calls = wasi::collect_wasi_calls(&user_expr);
-
-        if wasi_calls.is_empty() {
-            // No WASI calls - compile as core module (existing behavior)
-            let wasm = self.compile_expr_core(user_expr, core_fns, deftypes, protocols, extensions)?;
-            Ok(CompiledExpr {
-                wasm,
-                is_component: false,
-                #[cfg(not(target_family = "wasm"))]
-                prepared: None,
-            })
-        } else {
-            // WASI calls detected - compile as component with imports
-            let wasm = self.compile_expr_with_wasi(user_expr, wasi_calls, core_fns, deftypes, protocols, extensions)?;
-            Ok(CompiledExpr {
-                wasm,
-                is_component: true,
-                #[cfg(not(target_family = "wasm"))]
-                prepared: None,
-            })
-        }
-    }
-
-    /// Extract defn, deftype, defprotocol, and extend-type forms from expressions
-    /// Returns (functions, deftypes, protocols, extensions, final_expr)
-    fn extract_core_definitions(
-        exprs: Vec<Edn>,
-    ) -> CompileResult<(
-        Vec<analyze::AnalyzedFunction>,
-        Vec<analyze::AnalyzedDeftype>,
-        Vec<analyze::AnalyzedProtocol>,
-        Vec<analyze::AnalyzedExtension>,
-        Edn,
-    )> {
-        let mut functions = Vec::new();
-        let mut deftypes = Vec::new();
-        let mut protocols = Vec::new();
-        let mut extensions = Vec::new();
-        let mut remaining = Vec::new();
-
-        for expr in exprs {
-            if let Edn::List(ref items) = expr {
-                if let Some(Edn::Symbol(sym)) = items.first() {
-                    // Skip namespace declarations (metadata only)
-                    if sym.name == "ns" {
-                        continue;
-                    }
-                    // Handle (do ...) blocks by recursively extracting definitions
-                    if sym.name == "do" && items.len() > 1 {
-                        let inner_exprs: Vec<Edn> = items[1..].to_vec();
-                        let (inner_fns, inner_deftypes, inner_protocols, inner_extensions, inner_remaining) =
-                            Self::extract_core_definitions(inner_exprs)?;
-                        functions.extend(inner_fns);
-                        deftypes.extend(inner_deftypes);
-                        protocols.extend(inner_protocols);
-                        extensions.extend(inner_extensions);
-                        // Keep the remaining expressions in a do block (or just the expression if single)
-                        if inner_remaining != Edn::Nil {
-                            remaining.push(inner_remaining);
-                        }
-                        continue;
-                    }
-                    // Extract protocol declarations (needed for return type hints)
-                    if sym.name == "defprotocol" {
-                        if let Some(protocol) = Self::extract_protocol(items)? {
-                            protocols.push(protocol);
-                            continue;
-                        }
-                    }
-                    // Extract extend-type forms
-                    if sym.name == "extend-type" && items.len() >= 2 {
-                        if let Some(extension) = Self::extract_extension(items)? {
-                            extensions.push(extension);
-                            continue;
-                        }
-                    }
-                    // Extract deftype forms
-                    if sym.name == "deftype" && items.len() >= 3 {
-                        if let Some(deftype) = Self::extract_deftype(items)? {
-                            deftypes.push(deftype);
-                            continue;
-                        }
-                    }
-                    // Handle (def name value) or (def name "docstring" (fn ...)) forms
-                    if sym.name == "def" && items.len() >= 3 {
-                        // Skip metadata symbols (^:export, etc.)
-                        let mut idx = 1;
-                        let mut is_exported = false;
-                        while idx < items.len() {
-                            if let Edn::Symbol(s) = &items[idx] {
-                                if s.name.starts_with('^') {
-                                    if s.name == "^:export" {
-                                        is_exported = true;
-                                    }
-                                    idx += 1;
-                                    continue;
-                                }
-                            }
-                            break;
-                        }
-                        if let Some(Edn::Symbol(name_sym)) = items.get(idx) {
-                            idx += 1;
-
-                            // Check for optional docstring after name
-                            let docstring = if let Some(Edn::String(doc)) = items.get(idx) {
-                                idx += 1;
-                                Some(doc.clone())
-                            } else {
-                                None
-                            };
-
-                            if let Some(value) = items.get(idx) {
-                                // Check if value is an fn form: (def name [docstring] (fn [params] body))
-                                if let Edn::List(fn_items) = value {
-                                    if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
-                                        if fn_sym.name == "fn" && fn_items.len() >= 3 {
-                                            if let Some(mut extracted) = Self::extract_def_fn(
-                                                &name_sym.name,
-                                                is_exported,
-                                                &fn_items[1..],
-                                            )? {
-                                                // Preserve docstring from defn expansion
-                                                extracted.docstring = docstring;
-                                                functions.push(extracted);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                // Plain def: (def name value) - wrap as zero-arg fn
-                                functions.push(analyze::AnalyzedFunction {
-                                    name: name_sym.name.clone(),
-                                    exported: is_exported,
-                                    export_name: None,
-                                    params: vec![],
-                                    rest_param: None,
-                                    return_type: ir::Type::GcRef,
-                                    return_type_hint: None,
-                                    docstring,
-                                    body: value.clone(),
-                                });
-                                continue;
-                            }
-                        }
-                    }
-                    // Legacy: Handle raw defn forms (for backwards compatibility)
-                    if sym.name == "defn" && items.len() >= 3 {
-                        // Extract: (defn name [params...] body...)
-                        //      or: (defn name "docstring" [params...] body...)
-                        if let Edn::Symbol(name_sym) = &items[1] {
-                            // Find params vector (skip optional docstring)
-                            let (params_idx, body_start, docstring) = if let Edn::String(doc) = &items[2] {
-                                // Has docstring: (defn name "doc" [params] body...)
-                                (3, 4, Some(doc.clone()))
-                            } else {
-                                // No docstring: (defn name [params] body...)
-                                (2, 3, None)
-                            };
-
-                            if params_idx < items.len() {
-                                if let Edn::Vector(params_vec) = &items[params_idx] {
-                                    // Parse params, handling & for variadic
-                                    let mut params: Vec<(String, ir::Type)> = Vec::new();
-                                    let mut rest_param: Option<String> = None;
-                                    let mut found_amp = false;
-
-                                    for p in params_vec {
-                                        if let Edn::Symbol(s) = p {
-                                            if s.name == "&" {
-                                                found_amp = true;
-                                            } else if found_amp {
-                                                rest_param = Some(s.name.clone());
-                                                break;
-                                            } else {
-                                                params.push((s.name.clone(), ir::Type::GcRef));
-                                            }
-                                        }
-                                    }
-
-                                    // Body is either single expr or implicit do
-                                    let body = if items.len() == body_start + 1 {
-                                        items[body_start].clone()
-                                    } else if items.len() > body_start {
-                                        // Wrap multiple body expressions in do
-                                        Edn::List(
-                                            std::iter::once(Edn::Symbol(suss_core::Symbol::new(
-                                                "do",
-                                            )))
-                                            .chain(items[body_start..].iter().cloned())
-                                            .collect(),
-                                        )
-                                    } else {
-                                        // No body - return nil
-                                        Edn::Nil
-                                    };
-
-                                    functions.push(analyze::AnalyzedFunction {
-                                        name: name_sym.name.clone(),
-                                        exported: false,
-                                        export_name: None,
-                                        params,
-                                        rest_param,
-                                        return_type: ir::Type::GcRef,
-                                        return_type_hint: None,
-                                        docstring,
-                                        body,
-                                    });
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            remaining.push(expr);
-        }
-
-        // The final expression is all remaining expressions combined
-        // If no expressions remain (file with only definitions), return nil
-        let user_expr = if remaining.is_empty() {
-            Edn::Nil
-        } else if remaining.len() == 1 {
-            remaining.pop().unwrap()
-        } else {
-            // Wrap multiple expressions in a do block
-            Edn::List(
-                std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
-                    .chain(remaining.into_iter())
-                    .collect(),
-            )
-        };
-
-        Ok((functions, deftypes, protocols, extensions, user_expr))
-    }
 
     /// Extract a defprotocol form into an AnalyzedProtocol
     fn extract_protocol(items: &[Edn]) -> CompileResult<Option<analyze::AnalyzedProtocol>> {
@@ -1835,10 +1367,6 @@ impl Default for Compiler {
     }
 }
 
-/// Export load_core_exprs for external use (e.g., symbol extraction)
-pub fn load_core_exprs_public() -> CompileResult<Vec<Edn>> {
-    load_core_exprs()
-}
 
 #[cfg(test)]
 mod deftype_tests {
@@ -1848,70 +1376,55 @@ mod deftype_tests {
     fn test_deftype_basic() {
         let mut compiler = Compiler::new();
         let source = "(deftype Point [x y]) 42";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile successfully");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_test.wasm", &wasm).unwrap();
     }
 
     #[test]
     fn test_deftype_constructor() {
         let mut compiler = Compiler::new();
         let source = "(deftype Point [x y]) (->Point 10 20)";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile successfully");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_constructor.wasm", &wasm).unwrap();
     }
 
     #[test]
     fn test_deftype_field_access() {
         let mut compiler = Compiler::new();
         let source = "(deftype Point [x y]) (.-x (->Point 10 20))";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile successfully");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_field.wasm", &wasm).unwrap();
     }
 
     #[test]
     fn test_deftype_typed_i32_fields() {
         let mut compiler = Compiler::new();
         let source = "(deftype Vec2 [^i32 x ^i32 y]) (+ (.-x (->Vec2 100 200)) (.-y (->Vec2 100 200)))";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile typed i32 fields");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_typed_i32.wasm", &wasm).unwrap();
     }
 
     #[test]
     fn test_deftype_typed_f64_field() {
         let mut compiler = Compiler::new();
         let source = "(deftype Floaty [^f64 val]) (.-val (->Floaty 3.14))";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile typed f64 field");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_typed_f64.wasm", &wasm).unwrap();
     }
 
     #[test]
@@ -1919,14 +1432,11 @@ mod deftype_tests {
         let mut compiler = Compiler::new();
         // Mixed: i32 typed field + eqref (default) field
         let source = r#"(deftype Mixed [^i32 count name]) (.-count (->Mixed 42 "test"))"#;
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile mixed field types");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_mixed.wasm", &wasm).unwrap();
     }
 
     #[test]
@@ -1939,14 +1449,11 @@ mod deftype_tests {
               (-count [this] (.-value this)))
             (-count (->Counter 42))
         "#;
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile deftype with protocol");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_protocol.wasm", &wasm).unwrap();
     }
 
     #[test]
@@ -1954,28 +1461,13 @@ mod deftype_tests {
         let mut compiler = Compiler::new();
         // Use reserved type ID (for core.sus bootstrap types)
         let source = "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile deftype with reserved type-id");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_reserved.wasm", &wasm).unwrap();
     }
 
-    #[test]
-    fn dump_apply_wasm() {
-        let source = "(apply + [1 2])";
-        let mut compiler = Compiler::new();
-        match compiler.compile_expr(source) {
-            Ok(wasm) => {
-                std::fs::write("/tmp/apply_debug.wasm", &wasm).unwrap();
-                eprintln!("WASM written to /tmp/apply_debug.wasm");
-            }
-            Err(e) => eprintln!("Compile error: {:?}", e),
-        }
-    }
 
     #[test]
     fn test_deftype_mutable_field() {
@@ -1986,13 +1478,10 @@ mod deftype_tests {
               (set! (.-val b) 99)
               (.-val b))
         "#;
-        let result = compiler.compile_expr(source);
+        let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
         }
         assert!(result.is_ok(), "Should compile mutable field set");
-
-        let wasm = result.unwrap();
-        std::fs::write("/tmp/deftype_mutable.wasm", &wasm).unwrap();
     }
 }

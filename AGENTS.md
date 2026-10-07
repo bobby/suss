@@ -29,4 +29,5 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 * Update docs/roadmap/handoff.md with commands, results and limitations.
 
 Existing crates: `suss-core` (forms), `suss-reader`, `suss-compile`, `suss-cli`.
-There is no `suss-eval` crate. `core.sus` is the active prototype library.
+The tree-walking macro evaluator and prototype expression route are removed;
+all compilation uses the compiled Macro/Runtime pipeline and the shipped bootstrap.

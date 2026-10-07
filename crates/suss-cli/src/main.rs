@@ -3,16 +3,6 @@
 //! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
-// Retained prototype regression fixtures; the shipped native REPL uses Session.
-#[cfg(test)]
-mod completer;
-#[cfg(test)]
-mod repl;
-#[cfg(test)]
-mod session;
-
-#[cfg(all(feature = "component", target_family = "wasm"))]
-mod component;
 
 use rustyline::{error::ReadlineError, DefaultEditor};
 
@@ -29,21 +19,12 @@ fn main() {
 fn run_command(cmd: args::Command) {
     match cmd {
         args::Command::Repl => {
-            #[cfg(all(feature = "component", target_family = "wasm"))]
-            component::run_repl();
-            #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_repl();
         }
         args::Command::Eval { expr } => {
-            #[cfg(all(feature = "component", target_family = "wasm"))]
-            component::run_eval(&expr);
-            #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_eval(&expr);
         }
         args::Command::RunFile { path } => {
-            #[cfg(all(feature = "component", target_family = "wasm"))]
-            component::run_file(&path);
-            #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_file(&path);
         }
         args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize } => {
@@ -73,7 +54,6 @@ fn run_command(cmd: args::Command) {
 }
 
 /// Evaluate a single expression using WASM compilation and wasmtime
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_eval(expr: &str) {
     match run_eval_compiled(expr, None) {
         Ok(()) => {}
@@ -85,7 +65,6 @@ fn run_eval(expr: &str) {
 }
 
 /// Execute native source with the same isolated compiled phases as the REPL.
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_eval_compiled(source: &str, path: Option<std::path::PathBuf>) -> Result<(), String> {
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
     let mut runtime = Session::new_repl().map_err(|error| error.to_string())?;
@@ -97,7 +76,6 @@ fn run_eval_compiled(source: &str, path: Option<std::path::PathBuf>) -> Result<(
 }
 
 /// Run a Suss file using WASM compilation
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_file(path: &str) {
     let contents = match std::fs::read_to_string(path) {
         Ok(c) => c,
@@ -347,7 +325,6 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
 }
 
 /// Run a compiled WASM component with WASI support
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_component(path: &str, invoke: &str, command_mode: bool, args: &[String]) {
     match run_component_impl(path, invoke, command_mode, args) {
         Ok(()) => {}
@@ -359,7 +336,6 @@ fn run_component(path: &str, invoke: &str, command_mode: bool, args: &[String]) 
 }
 
 /// Implementation of component runner with wasmtime
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_component_impl(
     path: &str,
     invoke: &str,
@@ -574,7 +550,6 @@ fn run_component_impl(
 }
 
 /// Parse against the component's declared parameter type, with no fallback value.
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn parse_component_argument(
     ty: &wasmtime::component::Type,
     value: &str,
@@ -617,7 +592,6 @@ fn parse_component_argument(
 }
 
 /// Run each input in the same Store using independently compiled fragments.
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
     use std::io::{self, BufRead, IsTerminal};
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};

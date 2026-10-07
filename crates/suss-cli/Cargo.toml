@@ -14,7 +14,6 @@ suss-compile = { path = "../suss-compile" }
 ariadne = { workspace = true }
 lexopt = "0.3"
 serde_json = "1"
-wit-bindgen = { workspace = true, optional = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 rustyline = { workspace = true }
@@ -27,5 +26,3 @@ tempfile = { workspace = true }
 
 [features]
 default = []
-# Component build - uses WIT bindings instead of direct library calls
-component = ["dep:wit-bindgen"]
