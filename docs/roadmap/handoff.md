@@ -20991,3 +20991,21 @@ tracked bytes with Java/Node absent, compiled identity checks pass, and all four
 bootstrap tests pass (12.39s). All 213 Python checks pass. Four scheduler tests
 and locked metadata confirm 154 suites are partitioned exactly once. These are
 focused/reproduction results; final merge-head review and CI remain required.
+
+
+PR210 dependency repair evidence (retained during stack integration):
+The first repair push revealed GitHub merge conflicts, which suppress pull-request
+CI. Integrated main 5830b31; production source changes merged automatically,
+handoff preserves both sides, and regenerated both bootstrap pairs for the
+combined source graph. `scripts/verify-bootstrap.sh` exits 0: two fresh pairs
+match tracked bytes and one another with Java/Node absent, identity checks pass,
+and four executing bootstrap regressions pass (13.55s). All 213 Python tests
+pass, source extraction and the corpus lock/overlap checks pass. Merged metadata
+discovers 154 suites. Earlier workspace-selected aot_source_preparation executes
+four tests successfully (11.60s); it does not certify the merged full baseline.
+Final merge-head independent review and CI are still required.
+
+Stack follow-up: PR215 targets PR210, so additionally integrated repaired PR210
+483ddc1. No compiler/runtime source changed in this stack integration. Retained
+PR215's regenerated artifacts; repeated Java/Node-free bootstrap verification
+exits 0 with two byte-identical fresh pairs and four passing execution tests.
