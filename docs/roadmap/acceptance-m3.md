@@ -139,3 +139,17 @@ The next gate is independent review of the file/project migration, its unfiltere
 workspace baseline and final-head CI. Remaining expression/cache and component
 frontend evaluator retirement and lifecycle requirements remain separate gates.
 No issue is closed, no PR is merged, and M3 is not complete.
+
+## Evaluator removal, 2026-10-06
+
+PR #215 (stacked on #210) removes `eval.rs` (`MacroEvaluator`), `expand.rs`, the
+prototype core route and expression codegen (`analyze`, `lower`, `codegen`, `ir`,
+`component`, prototype `wasi`), the byte-only `compile_expr`, and the component
+CLI whose `suss:eval` evaluator component no repository crate implemented. Rows
+above that say `expand.rs` still owns `MacroEvaluator` or that the component
+evaluator route remains describe the state before that PR. Wrong arity to a
+known global function compiles, as pinned ClojureScript does, and raises a
+catchable runtime language exception after argument evaluation (decision on
+#216); see `known_function_wrong_arity_raises_runtime_exceptions`. Call-site
+source annotation of that exception remains open.
+

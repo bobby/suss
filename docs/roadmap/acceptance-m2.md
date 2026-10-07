@@ -149,3 +149,10 @@ explicitly; unlike the originally proposed `evaluation_order` name filter, it
 does not silently select zero tests. Run with the shared target and two build
 workers. This focused command does not replace the required
 `cargo test --workspace --locked -- --test-threads=2` or fresh pinned oracle runs.
+
+Note, 2026-10-06: PR #215 removes the prototype codegen cited in the "Old
+emitter reevaluation is removed" row. The variadic comparison test it cites was
+renamed `comparison_arguments_follow_pinned_variadic_macro_expansion` and now
+asserts the pinned `cljs.core` `<` macro's double evaluation of middle operands
+(fresh pinned observations 4 and 2); each expanded form still runs once.
+

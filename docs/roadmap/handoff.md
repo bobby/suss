@@ -20887,6 +20887,42 @@ passed. Require the exact full baseline and final-head CI/raw audit after this
 reviewer-pushed fix. PR #210 remains draft, partial Refs#14; original M3 acceptance
 and the next byte-only/prototype/Wasm/evaluator/lifecycle work remain open.
 
+## Tree-walking macro evaluator removed (#14) — 2026-10-06
+
+Status lives on issue #14. Stacked on PR #210. Removed `eval.rs`
+(`MacroEvaluator`), `expand.rs`, the prototype `src/core.sus` route with its core
+cache, the prototype expression codegen it fed (`analyze`, `lower`, `codegen`,
+`ir`, `component` and the prototype `wasi` bindings), the byte-only
+`Compiler::compile_expr`, the compiler-on-Wasm prototype methods, the dangling
+component CLI (no repository crate implemented its `suss:eval` component),
+`compose.wac`, the evaluator WIT and the test-only source-replaying REPL
+fixtures. The reader component keeps its WIT world.
+
+The 311 remaining `tests/compile_expr.rs` tests compile through
+`compile_expr_with_info`, execute the bundle in a fresh Session and decode with
+the independent ABI2 decoder: 277 pass. Prototype 0/1 value decoding became
+ClojureScript booleans and nil, and two expectations were corrected with fresh
+pinned observations: `(hash "")` is 0, and the pinned `<` macro evaluates the
+middle operand of `(< a b c)` twice (4 and 2). 37 tests are ignored with the exact
+missing compiled-pipeline feature (`str`, `comp`, `partial`, `range`, `take`,
+`doseq`, `cond->`, `some->`, `lazy-seq`, `when-first`, `constantly`,
+`set-validator!`, destructuring and printing);
+`prototype_cases_awaiting_compiled_support` asserts each exact diagnostic.
+Wrong arity to a known global function compiles, as in pinned ClojureScript,
+and raises a catchable runtime language exception after argument evaluation
+(decision on #216): `known_function_wrong_arity_raises_runtime_exceptions`.
+Call-site source annotation of that exception remains open.
+
+Note: this environment's RUSTFLAGS suppresses warnings, so dead code is invisible
+to local builds; check removals with `cargo check --workspace --all-targets`.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --test compile_expr --test conformance --locked
+```
+
+
+
 ## Draft PR CI timeout repair — 2026-10-07
 
 Downloaded final-head CI logs for drafts #210 (37547746167), #215
@@ -20948,6 +20984,16 @@ functions or atoms; Suss `when-var-exists` never skips. Compiled-macro costs
 reported on #14 (quadratic `defn`, per-expansion `&env` materialization) make the
 fixture take ~90 s in release and ~6 min in debug.
 
+CI conflict follow-up: merged main 5830b31 without production source conflicts,
+preserved both handoff records and regenerated both bootstrap pairs for the
+combined tree. `scripts/verify-bootstrap.sh` exits 0: two fresh pairs reproduce
+tracked bytes with Java/Node absent, compiled identity checks pass, and all four
+bootstrap tests pass (12.39s). All 213 Python checks pass. Four scheduler tests
+and locked metadata confirm 154 suites are partitioned exactly once. These are
+focused/reproduction results; final merge-head review and CI remain required.
+
+
+PR210 dependency repair evidence (retained during stack integration):
 The first repair push revealed GitHub merge conflicts, which suppress pull-request
 CI. Integrated main 5830b31; production source changes merged automatically,
 handoff preserves both sides, and regenerated both bootstrap pairs for the
@@ -20958,6 +21004,11 @@ pass, source extraction and the corpus lock/overlap checks pass. Merged metadata
 discovers 154 suites. Earlier workspace-selected aot_source_preparation executes
 four tests successfully (11.60s); it does not certify the merged full baseline.
 Final merge-head independent review and CI are still required.
+
+Stack follow-up: PR215 targets PR210, so additionally integrated repaired PR210
+483ddc1. No compiler/runtime source changed in this stack integration. Retained
+PR215's regenerated artifacts; repeated Java/Node-free bootstrap verification
+exits 0 with two byte-identical fresh pairs and four passing execution tests.
 
 ### CI corpus ratchet correction (2026-10-07)
 
@@ -20970,6 +21021,12 @@ assertions, oracle observations, other failures or fixture baseline changed.
 
 `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-ci-repair-210/target
 cargo test --workspace --locked --test clojure_test_suite -- --test-threads=2`
-passes all five tests (137.03s), with zero failures, ignores or filtered
+passes all five tests (104.40s), with zero failures, ignores or filtered
 tests on this PR tree. Comparator Python tests: 28 pass; corpus pin/lock and
 classification checks pass. Final-head CI remains required after upload.
+
+Integrated the independently reviewed PR210 ratchet correction b9422c7 into
+this stack. Conflict resolution preserves this branch's 104.40s result and
+the prior stack verification record; PR210 independently passed in 137.03s.
+All files other than this handoff are byte-identical to reviewed 9daee0d.
+Final merge-head review and CI remain required.

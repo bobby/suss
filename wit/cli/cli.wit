@@ -1,9 +1,0 @@
-package suss:cli;
-
-/// CLI world that imports reader and evaluator
-/// WASI interfaces come from the wasm32-wasip2 target automatically
-world suss-command {
-    import suss:lang/types;
-    import suss:lang/reader;
-    import suss:lang/evaluator;
-}
