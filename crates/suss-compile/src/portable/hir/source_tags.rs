@@ -164,8 +164,9 @@ fn completed_callable(info: &super::super::resolve::DefinitionInfo) -> Result<Op
 /// The pinned analyzer's `invalid-arity?` over a var's published declaration
 /// fields (`:fn-var`, `:variadic?`, `:max-fixed-arity`, `:method-params`),
 /// selected as the declaration catalog selects them: raw metadata for
-/// provisional or non-callable initializers, `:top-fn` overlays on raw
-/// metadata, or the completed source callable. Unavailable `:method-params`
+/// provisional or non-callable initializers (with completed forward
+/// declarations' `:arglists`), `:top-fn` overlays on raw metadata, or the
+/// completed source callable. Unavailable `:method-params`
 /// are assumed valid, as `valid-arity?` does; malformed field data is not
 /// checked here.
 pub fn invalid_declared_arity(
@@ -197,12 +198,33 @@ pub fn invalid_declared_arity(
             }
             return Ok(false);
         }
-        (None, _) => (
-            raw("fn-var")?.as_ref().is_some_and(truthy),
-            raw("variadic?")?.as_ref().is_some_and(truthy),
-            raw("max-fixed-arity")?,
-            raw("method-params")?,
-        ),
+        (None, _) => {
+            let declared_arglists = if provisional(info)? || !raw("declared")?.as_ref().is_some_and(truthy) {
+                None
+            } else {
+                raw("arglists")?.filter(truthy)
+            };
+            match declared_arglists {
+                // A completed forward declaration publishes fn-var and parse-def's
+                // `second` of its retained :arglists reader value, as the catalog does.
+                Some(arglists) => (
+                    true,
+                    raw("variadic?")?.as_ref().is_some_and(truthy),
+                    raw("max-fixed-arity")?,
+                    match arglists.kind {
+                        Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => items.into_iter().nth(1),
+                        // Map entries and string units are never parameter vectors.
+                        _ => return Ok(false),
+                    },
+                ),
+                None => (
+                    raw("fn-var")?.as_ref().is_some_and(truthy),
+                    raw("variadic?")?.as_ref().is_some_and(truthy),
+                    raw("max-fixed-arity")?,
+                    raw("method-params")?,
+                ),
+            }
+        }
     };
     if !fn_var {
         return Ok(false);

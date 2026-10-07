@@ -2566,6 +2566,58 @@ fn known_function_arities_reject_calls_no_signature_accepts() {
 }
 
 #[test]
+fn declared_arities_follow_the_published_declaration_fields() {
+    // Accepted: unavailable method-params, disabled fn-var, provisional
+    // self-recursion, non-fn initializers and the variadic minimum.
+    for expression in [
+        "(def ^{:top-fn {}} f (fn [x] x)) (f 1 2)",
+        "(def ^{:top-fn {:fn-var false}} f (fn [x] x)) (f 1 2)",
+        "(def ^{:declared true} f) (f 1 2)",
+        "(defn f [x] (if (zero? x) 0 (f (dec x) 1))) 0",
+        "(def f (let [] (fn [x] x))) (f 1 2)",
+        "(defn f ([x] x) ([x y z & more] x)) (f 1 2 3 4)",
+    ] {
+        Compiler::new()
+            .compile_expr_with_info(expression)
+            .unwrap_or_else(|error| panic!("{expression}: {error}"));
+    }
+    for (expression, diagnostic) in [
+        ("(def ^{:top-fn nil} f (fn [x] x)) (f 1 2)", "Wrong number of args (2) passed to user/f"),
+        ("(def ^{:top-fn {:method-params ([a b])}} f (fn [x] x)) (f 1)", "Wrong number of args (1) passed to user/f"),
+        ("(def ^{:declared true :arglists '([x])} f) (f 1 2)", "Wrong number of args (2) passed to user/f"),
+        ("(declare ^{:arglists '([x])} f) (defn g [] (f 1 2))", "Wrong number of args (2) passed to user/f"),
+        ("(defn f ([x] x) ([x y z & more] x)) (f 1 2)", "Wrong number of args (2) passed to user/f"),
+        ("(def f (fn [x] x)) (f)", "Wrong number of args (0) passed to user/f"),
+    ] {
+        assert_wrong_arity(expression, diagnostic);
+    }
+}
+
+#[test]
+fn wrong_arity_diagnostics_locate_the_invoke_form() {
+    let error = |source: &str| Compiler::new().compile_expr_with_info(source).expect_err(source).to_string();
+    // The span is the invoke form itself, including a call rewritten by a
+    // macro, which keeps its original source form's location.
+    assert!(error("(defn f [x] x) (f)").ends_with("at bytes 15..18"), "{}", error("(defn f [x] x) (f)"));
+    let threaded = error("(defn f [x] x) (-> 1 (f 2))");
+    assert!(threaded.contains("Wrong number of args (2) passed to user/f"), "{threaded}");
+    assert!(threaded.ends_with("at bytes 21..26"), "{threaded}");
+}
+
+#[test]
+fn rebinding_a_function_var_keeps_its_declared_arity() {
+    // Pinned ClojureScript only warns here and runs the rebound function.
+    // Suss reports the declared arity (design section 4); this test records
+    // that compatibility decision.
+    for expression in [
+        "(def ^:dynamic f (fn [x] x)) (binding [f (fn [x y] y)] (f 1 2))",
+        "(defn f [x] x) (with-redefs [f (fn [x y] y)] (f 1 2))",
+    ] {
+        assert_wrong_arity(expression, "Wrong number of args (2) passed to user/f");
+    }
+}
+
+#[test]
 fn known_function_arity_errors_are_compile_diagnostics() {
     for (expression, diagnostic) in [
         ("(defn f [x] x) (f)", "Wrong number of args (0) passed to user/f"),
