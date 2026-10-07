@@ -21203,3 +21203,16 @@ review-base bootstrap regeneration is the sole current Cargo graph (host74915),
 log /private/tmp/suss-constructor-review-bootstrap.log. After regeneration,
 finish this cherry-pick and run both constructor targets and verify-bootstrap
 on the new head; independent final review and final-head CI are still required.
+
+Exact review head efba071a7873610c5401dd9a94a34184998a2e1b has independent
+review with no material findings. Focused39923 is terminal0: compiler5 and native2
+pass with no failures/ignores/filters (native206.08s); the added default10M
+regression passes both phases after GC. Log /private/tmp/suss-constructor-review-focused.log.
+Bootstrap17988 terminal0 reproduces both pairs byte-for-byte with Java/Node
+absent and executes4passing tests (20.03s); log
+/private/tmp/suss-constructor-review-bootstrap-verify.log. Python35174 initially
+failed215checks with8errors because this new worktree lacked the pinned upstream
+checkout; no checker was weakened. Submodule14670 checked out exactc4295f30;
+unchanged Python rerun97657 passes219 (8.998s), log
+/private/tmp/suss-constructor-review-python-pinned.log. Full review-head baseline
+and final-head CI remain required; combined1315pass evidence is distinct.

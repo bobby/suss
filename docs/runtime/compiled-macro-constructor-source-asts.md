@@ -36,8 +36,8 @@ bootstrap pairs have been regenerated. The native regression passes in both call
 phases with a finite 100M macro-operation test allowance (154.49s); the initial
 default 10M run trapped. Production budgets and projection depth are unchanged. A separate native CLI
 smoke observation reads operation/children and the initialized field at default
-10M fuel; the corresponding two-phase, post-GC Rust regression on the review
-branch has not yet run.
+10M fuel; the corresponding two-phase, post-GC Rust regression also passes on the review
+branch with no fuel override.
 
 The parent compiled command returns `[nil nil]` for constructor operation/children
 and exits1 on the explicit constructor-schema assertion. The first exploratory
@@ -58,8 +58,9 @@ Both fresh bootstrap phase pairs reproduce byte-for-byte with Java and Node
 absent; identity checks and four executing bootstrap tests pass. On the frozen combined candidate, ten affected suites pass39 tests and the
 full workspace baseline passes1315 with zero failures,41 tracked ignores and
 zero filtered tests. The review branch is rebased directly on PR215 and adds a
-default-budget regression: its regenerated artifacts, native tests and bootstrap
-reproduction require exact review-base validation. Independent final review and
-final-head CI remain required. These selected records do not prove the
+default-budget regression. Exact review-base validation passes seven constructor
+regressions with zero failures/ignores/filters, all219 Python checks, byte-for-byte
+Java/Node-free bootstrap reproduction and four executing bootstrap tests. The
+review-branch full workspace baseline and exact final-head CI remain required. These selected records do not prove the
 complete portable analyzer schema or inference policy. Pending-I/O continuations,
 cancellation and remaining original M3 acceptance obligations are unchanged.
