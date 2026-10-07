@@ -20958,3 +20958,18 @@ pass, source extraction and the corpus lock/overlap checks pass. Merged metadata
 discovers 154 suites. Earlier workspace-selected aot_source_preparation executes
 four tests successfully (11.60s); it does not certify the merged full baseline.
 Final merge-head independent review and CI are still required.
+
+### CI corpus ratchet correction (2026-10-07)
+
+The sharded CI reached the strict corpus ratchet and exposed an unexpected
+namespace-load success for `clojure.core-test.pr-str`. Removed only that
+namespace failure entry: its two unchanged oracle assertions now execute and
+pass, bringing the reviewed result to 13 loaded namespaces, 101 assertion
+passes, 235 namespace failures and 5733 assertions not executed. No source
+assertions, oracle observations, other failures or fixture baseline changed.
+
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-ci-repair-210/target
+cargo test --workspace --locked --test clojure_test_suite -- --test-threads=2`
+passes all five tests (137.03s), with zero failures, ignores or filtered
+tests on this PR tree. Comparator Python tests: 28 pass; corpus pin/lock and
+classification checks pass. Final-head CI remains required after upload.

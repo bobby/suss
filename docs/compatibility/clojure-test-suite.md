@@ -133,11 +133,11 @@ Python unit tests cover the remaining failure paths.
 
 ## Current suite result
 
-At this commit 12 suite namespaces load and run (`bit-clear`, `bit-flip`,
+At this printing-profile commit 13 suite namespaces load and run (`bit-clear`, `bit-flip`,
 `bit-not`, `bit-shift-left`, `bit-shift-right`, `bit-test`, `disj!`, `dissoc!`,
-`hash-set`, `identical?`, `name`, `namespace`). Their **99 assertions all pass**
-host-side against the oracle. The other 236 namespaces fail before their tests
-run, so 5,735 assertions are not executed; the 20 failures are the oracle's 20
+`hash-set`, `identical?`, `name`, `namespace`, `pr-str`). Their **101 assertions all pass**
+host-side against the oracle. The other 235 namespaces fail before their tests
+run, so 5,733 assertions are not executed; the 20 failures are the oracle's 20
 skips, which Suss does not make. Namespace failures by stage:
 
 | Namespaces | Stage | Blocker |
@@ -146,16 +146,19 @@ skips, which Suss does not make. Namespace failures by stage:
 | 58 | read | ratio or precision-suffix literals (`1/2`, `1N`, `1.0M`), including in unselected branches |
 | 28 | read | reader dispatch: `#(...)` and `#"..."` |
 | 9 | read | auto-resolved keywords (`::k`) |
-| 51 | namespace | missing `cljs.core` vars or macros (`range`, `str`, `take`, `constantly`, `volatile!`, `letfn`, `when-let`, printing, ...) and `clojure.string`/`clojure.core` namespaces |
+| 50 | namespace | missing `cljs.core` vars or macros (`range`, `str`, `take`, `constantly`, `volatile!`, `letfn`, `when-let`, printing, ...) and `clojure.string`/`clojure.core` namespaces |
 | 4 | macro | compiled macro data limits and invalid macro data |
 
-The harness also measured compiled-macro costs that block running the suite at
-scale (reported on #14): `defn` expansion grows quadratically with preceding
-definitions; every macro expansion materializes the complete `&env` analysis
+When the corpus was first adopted, the harness measured compiled-macro costs
+(reported on #14): `defn` expansion grows quadratically with preceding
+definitions; every macro expansion then materialized the complete `&env` analysis
 graph, which grows with the enclosing form and namespace; unquote-splicing is
 not expanded in ordinary functions of a macro namespace; and moderately sized
 macro namespaces exceed the 65,536-node analysis graph bound. The harness avoids
-`defn` and keeps syntax quote inside `defmacro` bodies for these reasons.
+`defn` and keeps syntax quote inside `defmacro` bodies for these reasons. The
+later lazy-environment change on main 5830b31 now skips `&env` materialization
+for macros and dependency helpers that cannot read it; these original timings
+and graph-limit observations are historical, not current performance guarantees.
 
 ## Host interop and legacy overlap
 
@@ -187,3 +190,14 @@ python3 scripts/clojure_test_suite.py overlap            # legacy overlap is cur
 python3 scripts/clojure_test_suite.py oracle [--suite fixture] [--write]
 cargo test -p suss-compile --test clojure_test_suite --locked
 ```
+
+
+Printing support transition (2026-10-07): the unchanged deterministic assertions
+`clojure.core-test.pr-str/test-pr-str#1` and `#2` now execute and match the pinned
+oracle's tagged UTF-16 operands. The only known-failure change removes this
+namespace's previous unresolved `pr-str` load error. All other namespace/test/
+assertion/skip failures, fixture baselines, oracle expectations and source inputs
+are unchanged. This printing profile has 13 loaded namespaces, 101 host-decided
+passes, 235 namespace failures, 5,733 assertions not executed and 20 unchanged
+skip mismatches; no Suss skip or guest-judged assertion is counted as a pass.
+These counts describe this bounded profile, not M3 or portable core completion.
