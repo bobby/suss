@@ -92,7 +92,8 @@ actual JIT bytes or retained raw Wasm. Handle counts exclude internal cell/runti
 roots; heap capacity is not live-object usage. These counters separate residency
 from caller-owned roots but do not prove absence of leaks or full M3-04 acceptance.
 
-Live GC heap bytes are measured separately, in tests only. Pinned Wasmtime 49.0.1
+Live GC heap bytes (the Wasm GC heap only, not host tables, session maps or
+numeric scratch memory) are measured separately, in tests only. Pinned Wasmtime 49.0.1
 has no public live-heap counter, but after each completed collection
 `runtime/vm/gc.rs` logs the exact `GcHeap::allocated_bytes()` result at trace
 level. [`session_live_heap.rs`](../../crates/suss-compile/tests/session_live_heap.rs)
@@ -105,10 +106,12 @@ fails. In both the Runtime and Macro Stores it shows that:
 * live bytes stay above the baseline while those graphs are retained, by an
   identical amount in every round;
 * resident fragments, artifact bytes, cells, modules and handles stay unchanged;
-* after repeated `reset`s following retained state, live bytes and resident code
-  equal a fresh session's.
+* after repeated `reset`s following retained state, the replacement Store's live
+  bytes and resident code equal a fresh session's, so nothing accumulates across
+  generations (the test does not observe the old Store's drop itself).
 
-The default copying collector reclaims cycles. `SessionStats` deliberately has no
+The collector `Collector::Auto` selects for this build (copying) reclaims cycles; the
+cycle assertion would fail under a collector that does not. `SessionStats` deliberately has no
 live-bytes field: no public Wasmtime API supplies one, and a production logger
 would be process-global.
 

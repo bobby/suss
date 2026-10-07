@@ -25,7 +25,10 @@ impl log::Log for PostCollectionProbe {
         if record.module_path() == Some(GC_MODULE) && self.enabled(record.metadata()) {
             let message = record.args().to_string();
             if message.starts_with(PREFIX) {
-                RECORDS.lock().unwrap().push((std::thread::current().id(), message));
+                RECORDS
+                    .lock()
+                    .unwrap()
+                    .push((std::thread::current().id(), message));
             }
         }
     }
@@ -44,7 +47,10 @@ fn install_probe() {
 /// Live bytes after exactly one completed collection of this session's Store.
 fn live_bytes(session: &mut Session) -> usize {
     let thread = std::thread::current().id();
-    RECORDS.lock().unwrap().retain(|(owner, _)| *owner != thread);
+    RECORDS
+        .lock()
+        .unwrap()
+        .retain(|(owner, _)| *owner != thread);
     session.collect().expect("collect");
     let mut records = RECORDS.lock().unwrap();
     let mine = records
@@ -53,7 +59,11 @@ fn live_bytes(session: &mut Session) -> usize {
         .map(|(_, message)| message.clone())
         .collect::<Vec<_>>();
     records.retain(|(owner, _)| *owner != thread);
-    assert_eq!(mine.len(), 1, "expected one post-collection record: {mine:?}");
+    assert_eq!(
+        mine.len(),
+        1,
+        "expected one post-collection record: {mine:?}"
+    );
     let hex = mine[0]
         .strip_prefix(PREFIX)
         .and_then(|rest| rest.strip_suffix(" bytes"))
@@ -108,29 +118,57 @@ fn released_values_return_live_bytes_to_baseline(mut session: Session) {
     // 300 vectors and atoms are far larger than this bound.
     let graph = 300 * 16;
     // Identical rounds allocate identical graphs: live bytes are deterministic.
-    let mut first: Option<(usize, usize)> = None;
+    let mut first: Option<(usize, usize, usize)> = None;
     for round in 0..3 {
         let value = session.invoke(&build, &[&count]).unwrap();
         let held = live_bytes(&mut session);
-        assert!(held >= baseline + graph, "round {round}: handle-held graph {held} vs {baseline}");
+        assert!(
+            held >= baseline + graph,
+            "round {round}: handle-held graph {held} vs {baseline}"
+        );
         drop(value);
-        assert_eq!(live_bytes(&mut session), baseline, "round {round}: released handle");
+        assert_eq!(
+            live_bytes(&mut session),
+            baseline,
+            "round {round}: released handle"
+        );
 
         let value = session.invoke(&cycle, &[&count]).unwrap();
-        assert!(live_bytes(&mut session) >= baseline + graph, "round {round}: cycle");
+        let cyclic = live_bytes(&mut session);
+        // The same graph plus the self-referential atom and its pair vector.
+        assert!(
+            cyclic > held,
+            "round {round}: cycle {cyclic} vs graph {held}"
+        );
         drop(value);
-        assert_eq!(live_bytes(&mut session), baseline, "round {round}: released cycle");
+        assert_eq!(
+            live_bytes(&mut session),
+            baseline,
+            "round {round}: released cycle"
+        );
 
         let value = session.invoke(&build, &[&count]).unwrap();
         drop(session.invoke(&retain, &[&value]).unwrap());
         drop(value);
         let retained = live_bytes(&mut session);
-        assert!(retained >= baseline + graph, "round {round}: cell-retained graph {retained}");
+        assert_eq!(
+            retained, held,
+            "round {round}: the cell retains the same graph"
+        );
         drop(session.invoke(&retain, &[&nil]).unwrap());
-        assert_eq!(live_bytes(&mut session), baseline, "round {round}: cell cleared");
+        assert_eq!(
+            live_bytes(&mut session),
+            baseline,
+            "round {round}: cell cleared"
+        );
 
-        assert_eq!(*first.get_or_insert((held, retained)), (held, retained), "round {round}");
-        assert_eq!(residency(session.stats()), code, "round {round}: resident code");
+        let readings = (held, cyclic, retained);
+        assert_eq!(*first.get_or_insert(readings), readings, "round {round}");
+        assert_eq!(
+            residency(session.stats()),
+            code,
+            "round {round}: resident code"
+        );
     }
 }
 
@@ -144,8 +182,10 @@ fn macro_store_live_bytes_return_to_baseline_separately_from_code() {
     released_values_return_live_bytes_to_baseline(Session::new_macro().unwrap());
 }
 
-/// Reset discards the old Store: after repeated resets that each follow
-/// retained state, live bytes and resident code equal a fresh session's.
+/// After repeated resets that each follow retained state, the replacement
+/// Store's live bytes and resident code equal a fresh session's: nothing
+/// accumulates across generations. The old Store is dropped by value
+/// (`*self = replacement`); this test does not observe that drop itself.
 #[test]
 fn repeated_reset_returns_live_bytes_and_code_to_a_fresh_session() {
     install_probe();
@@ -155,12 +195,27 @@ fn repeated_reset_returns_live_bytes_and_code_to_a_fresh_session() {
     let mut session = Session::new_repl().unwrap();
     for round in 0..3 {
         let mut macros = CompiledMacros::new().unwrap();
-        eval(&mut session, &mut macros, "(def keep (atom (loop [i 0 acc []] (if (< i 300) (recur (+ i 1) (conj acc (atom i))) acc))))");
+        eval(
+            &mut session,
+            &mut macros,
+            "(def keep (atom (loop [i 0 acc []] (if (< i 300) (recur (+ i 1) (conj acc (atom i))) acc))))",
+        );
         let held = eval(&mut session, &mut macros, "keep");
-        assert!(live_bytes(&mut session) > fresh_live, "round {round}: retained state");
+        assert!(
+            live_bytes(&mut session) > fresh_live,
+            "round {round}: retained state"
+        );
         session.reset().unwrap();
         drop(held);
-        assert_eq!(live_bytes(&mut session), fresh_live, "round {round}: reset live bytes");
-        assert_eq!(residency(session.stats()), fresh_code, "round {round}: reset code");
+        assert_eq!(
+            live_bytes(&mut session),
+            fresh_live,
+            "round {round}: reset live bytes"
+        );
+        assert_eq!(
+            residency(session.stats()),
+            fresh_code,
+            "round {round}: reset code"
+        );
     }
 }
