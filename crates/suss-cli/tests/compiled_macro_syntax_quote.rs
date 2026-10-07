@@ -341,3 +341,54 @@ fn compiled_macro_lazy_undefined_sequence_tail_is_empty() {
         );
     }
 }
+
+#[test]
+fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
+    // The helper's body passes through the compiled defn macro, so its
+    // syntax-quote output reaches analysis as reader data naming clojure.core.
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir(root.path().join("demo")).unwrap();
+    std::fs::write(
+        root.path().join("demo/helpers.cljc"),
+        "(ns demo.helpers)\n(defn helper [xs] `(list ~@xs))\n(defmacro via [& xs] (helper xs))\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.path().join("demo/use.cljc"),
+        "(ns demo.use (:require-macros [demo.helpers :refer [via]]))\n(def total (count (via 1 2 3)))\n(def qualified (clojure.core/inc 41))\n",
+    )
+    .unwrap();
+    let mut session = suss_cli::portable_session::Session::with_options(
+        suss_cli::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    let mut macros = suss_cli::portable_macros::CompiledMacros::new().unwrap();
+    session
+        .load_namespace_with_macros("demo.use", &mut macros)
+        .unwrap();
+    for (name, expected) in [("demo.use/total", 3.0), ("demo.use/qualified", 42.0)] {
+        let value = session.eval(name).unwrap();
+        let bits = session
+            .inspect(&value, |mut store, value| {
+                let fields = value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap()
+                    .fields(&mut store)?
+                    .collect::<Vec<_>>();
+                let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
+                    panic!("Number");
+                };
+                Ok(*bits)
+            })
+            .unwrap();
+        assert_eq!(f64::from_bits(bits), expected, "{name}");
+    }
+}

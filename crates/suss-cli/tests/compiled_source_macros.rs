@@ -206,3 +206,47 @@ fn compiled_source_macros_materialize_env_only_for_macros_that_can_read_it() {
     assert_eq!(macros.environment_materializations(), defined + 2);
     assert_eq!(number(&mut runtime, "(f31 11)", &mut macros), 42f64.to_bits());
 }
+#[test]
+fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions() {
+    // A helper macro yields the &env reference. Each caller reaches it in a way
+    // a textual scan of the caller cannot see: a renamed refer, an alias, or a
+    // threading step that the compiler rewrites into a call.
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("helper.sus"), "(ns helper) (defmacro env-ref [& _] '&env)").unwrap();
+    std::fs::write(
+        root.path().join("tools.sus"),
+        "(ns tools (:require [helper :as h :refer [env-ref] :rename {env-ref e}]))\n\
+         (defmacro direct [] (if (map? &env) 1 0))\n\
+         (defmacro aliased [] (if (map? (h/env-ref)) 1 0))\n\
+         (defmacro renamed [] (if (map? (e)) 1 0))\n\
+         (defmacro threaded [] (if (map? (-> 1 h/env-ref)) 1 0))\n",
+    )
+    .unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let mut runtime = suss_cli::portable_session::Session::with_options(
+        suss_cli::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    runtime
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    runtime
+        .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)
+        .unwrap();
+    for name in ["direct", "aliased", "renamed", "threaded"] {
+        assert_eq!(
+            number(&mut runtime, &format!("(t/{name})"), &mut macros),
+            1f64.to_bits(),
+            "{name} must receive a genuine &env"
+        );
+    }
+    // The same rewrite in a REPL definition.
+    macros.define("(defmacro env-ref2 [& _] '&env)").unwrap();
+    macros
+        .define("(defmacro threaded2 [] (if (map? (-> 1 env-ref2)) 1 0))")
+        .unwrap();
+    assert_eq!(number(&mut runtime, "(threaded2)", &mut macros), 1f64.to_bits());
+}

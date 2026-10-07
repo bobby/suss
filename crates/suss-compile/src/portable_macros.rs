@@ -15,6 +15,8 @@ pub struct CompiledMacros {
     // Macros whose definitions cannot read their implicit &env parameter.
     environment_free: BTreeSet<(String, String)>,
     environment_materializations: u64,
+    // Source macro expansions performed by this host, in any context.
+    source_expansions: u64,
     declaration_sources: BTreeMap<(String, String), String>,
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
@@ -43,29 +45,20 @@ pub(crate) type MacroCheckpoint = (
     BTreeSet<(String, String)>,
 );
 
-/// Whether a macro definition might read its implicit &env parameter. A macro
-/// observes &env only through a lexical reference to that parameter, which its
-/// body can contain directly or obtain from a source macro expanded while the
-/// body compiles. Compiler-implemented forms never introduce one. Any symbol
-/// named &env, including quoted or syntax-quoted data, or any call whose head
-/// names a currently defined source macro conservatively counts as a read.
-fn may_read_environment(form: &Form, source_macros: &BTreeSet<&str>) -> bool {
+/// Whether a definition contains a symbol named &env anywhere, including in
+/// quoted or syntax-quoted data. Together with source-macro expansions observed
+/// while its body compiles, this decides whether a macro may read &env.
+fn mentions_environment(form: &Form) -> bool {
     let mut pending = vec![form];
     while let Some(form) = pending.pop() {
         pending.extend(&form.metadata);
         match &form.kind {
             Kind::Symbol(symbol) if symbol.name == "&env" => return true,
-            Kind::List(items) => {
-                if matches!(items.first().map(|head| &head.kind),
-                    Some(Kind::Symbol(head)) if source_macros.contains(head.name.as_str()))
-                {
-                    return true;
-                }
-                pending.extend(items);
-            }
-            Kind::Vector(items) | Kind::Set(items) | Kind::Map(items) | Kind::Conditional(items) => {
-                pending.extend(items)
-            }
+            Kind::List(items)
+            | Kind::Vector(items)
+            | Kind::Set(items)
+            | Kind::Map(items)
+            | Kind::Conditional(items) => pending.extend(items),
             Kind::Discard(target) => pending.push(target.as_ref()),
             Kind::Prefix { operator, target } => {
                 pending.push(operator.as_ref());
@@ -113,6 +106,7 @@ impl CompiledMacros {
             definitions: BTreeMap::new(),
             environment_free: BTreeSet::new(),
             environment_materializations: 0,
+            source_expansions: 0,
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
@@ -352,14 +346,16 @@ impl CompiledMacros {
             metadata: form.metadata.clone(),
             kind: Kind::List(definition),
         };
-        // Decide before compiling: only macros defined so far can expand inside
-        // this body.
-        let reads_environment = may_read_environment(
-            form,
-            &self.definitions.keys().map(|(_, name)| name.as_str()).collect(),
-        );
+        // A macro observes &env only through a lexical reference to its
+        // implicit parameter: written in its definition, or produced by a source
+        // macro expanded while its body compiles (through any rename, alias or
+        // form rewrite). Compiler-implemented forms never introduce one. A macro
+        // with neither cannot observe &env, so it receives nil.
+        let expansions = self.source_expansions;
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
+        let reads_environment =
+            mentions_environment(form) || self.source_expansions != expansions;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
@@ -505,6 +501,7 @@ impl ExpansionHost for CompiledMacros {
         let Some(function) = self.definitions.get(&target).cloned() else {
             return Ok(None);
         };
+        self.source_expansions += 1;
         let result = (|| -> Result<Form, SessionError> {
             let caller_data = context.origin.map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
                 .map_err(SessionError::Compile)?;
