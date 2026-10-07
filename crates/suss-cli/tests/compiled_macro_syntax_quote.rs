@@ -346,6 +346,8 @@ fn compiled_macro_lazy_undefined_sequence_tail_is_empty() {
 fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
     // The helper's body passes through the compiled defn macro, so its
     // syntax-quote output reaches analysis as reader data naming clojure.core.
+    // As in the pinned analyzer, clojure.core/inc names core even when an alias
+    // named clojure.core exists.
     let root = tempfile::tempdir().unwrap();
     std::fs::create_dir(root.path().join("demo")).unwrap();
     std::fs::write(
@@ -355,9 +357,10 @@ fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
     .unwrap();
     std::fs::write(
         root.path().join("demo/use.cljc"),
-        "(ns demo.use (:require-macros [demo.helpers :refer [via]]))\n(def total (count (via 1 2 3)))\n(def qualified (clojure.core/inc 41))\n",
+        "(ns demo.use (:require-macros [demo.helpers :refer [via]]) (:require [demo.other :as clojure.core]))\n(def total (count (via 1 2 3)))\n(def qualified (clojure.core/inc 41))\n",
     )
     .unwrap();
+    std::fs::write(root.path().join("demo/other.cljc"), "(ns demo.other)\n(def inc (fn [_] 0))\n").unwrap();
     let mut session = suss_cli::portable_session::Session::with_options(
         suss_cli::portable_session::SessionOptions {
             source_paths: vec![root.path().to_owned()],

@@ -277,7 +277,7 @@ impl CompiledMacros {
             return Err(failure(form, "Expected source defmacro"));
         };
         if items.len() < 3
-            || !matches!(&items[0].kind, Kind::Symbol(s) if s.name == "defmacro" && (s.namespace.is_none() || matches!(s.namespace.as_deref(), Some("suss.core" | "cljs.core"))))
+            || !matches!(&items[0].kind, Kind::Symbol(s) if s.name == "defmacro" && (s.namespace.is_none() || matches!(s.namespace.as_deref(), Some("suss.core" | "cljs.core" | "clojure.core"))))
         {
             return Err(failure(form, "Expected defmacro name parameters and body"));
         }

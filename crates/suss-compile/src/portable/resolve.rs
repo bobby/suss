@@ -277,15 +277,15 @@ pub struct Environment {
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
 }
-/// Namespace of a qualified symbol, as the pinned analyzer resolves it: an
-/// alias wins; otherwise `clojure.core` names `cljs.core`, which is `suss.core`.
-/// Namespace declarations themselves keep their own names.
+/// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
+/// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
+/// before any alias is consulted; otherwise an alias wins. Namespace
+/// declarations themselves keep their own names.
 fn symbol_namespace<'a>(alias: Option<&'a String>, namespace: &'a str) -> &'a str {
-    match alias {
-        Some(alias) => canonical(alias),
-        None if namespace == "clojure.core" => "suss.core",
-        None => canonical(namespace),
+    if namespace == "clojure.core" {
+        return "suss.core";
     }
+    alias.map_or_else(|| canonical(namespace), |alias| canonical(alias))
 }
 pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
