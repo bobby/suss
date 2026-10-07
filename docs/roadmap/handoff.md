@@ -21024,3 +21024,9 @@ cargo test --workspace --locked --test clojure_test_suite -- --test-threads=2`
 passes all five tests (104.40s), with zero failures, ignores or filtered
 tests on this PR tree. Comparator Python tests: 28 pass; corpus pin/lock and
 classification checks pass. Final-head CI remains required after upload.
+
+Integrated the independently reviewed PR210 ratchet correction b9422c7 into
+this stack. Conflict resolution preserves this branch's 104.40s result and
+the prior stack verification record; PR210 independently passed in 137.03s.
+All files other than this handoff are byte-identical to reviewed 9daee0d.
+Final merge-head review and CI remain required.
