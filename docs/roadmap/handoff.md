@@ -21059,3 +21059,5 @@ unfinished suites and runner variation remain unmeasured until final-head CI.
 that the four PRs' runtime acceptance or final-head CI has passed. Independent
 review and new final-head CI remain required. Track progress on milestone issues;
 do not close any M3 issue or merge these drafts from this repair alone.
+
+PR217 rebase onto origin/main85b6218 (merged #210/#215): source commits replayed, generated bootstrap conflicts resolved by fresh regeneration, inherited CI configuration unchanged; both historical handoff records retained. `session_live_heap`: three passes, zero failures/ignores/filters. Java/Node-free `scripts/verify-bootstrap.sh`: fresh pairs match tracked bytes, build identity checks pass and four executing bootstrap tests pass (12.71s). Final rebased-head independent review and CI remain required. No M3 acceptance scope change.
