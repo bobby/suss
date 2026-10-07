@@ -46,9 +46,10 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             LocalGet(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
+            I32Const(0), RefI31, // source display name is unset for kernel closures
             ArrayNewFixed {
                 array_type_index: ARGS,
-                array_size: 2,
+                array_size: 3,
             },
             I32Const(0),
             RefI31,
@@ -69,7 +70,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
     field(&mut body, 1, 7, 1);
     body.push(LocalSet(1));
     array(&mut body, 1);
-    body.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
+    body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.push(End);
     array(&mut body, 1);
@@ -96,7 +97,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
     field(&mut body, 1, 7, 1);
     body.push(LocalSet(1));
     array(&mut body, 1);
-    body.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
+    body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.extend([End, LocalGet(1), Return, End, End]);
     nil(&mut body);
@@ -107,6 +108,20 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
         &[(1, VALUE)],
         &body,
     );
+    let mut body = vec![LocalGet(0), Call(fields), LocalSet(1)];
+    guard(&mut body, 1, ARGS);
+    array(&mut body, 1);
+    body.extend([I32Const(2), ArrayGet(ARGS), LocalSet(1)]);
+    // An unset kernel name must fail visibly; it is not an anonymous source fn.
+    guard(&mut body, 1, super::STRING);
+    body.push(LocalGet(1));
+    b.function_with_locals("closure-source-name", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    let mut body = vec![LocalGet(0), Call(fields), LocalSet(2)];
+    guard(&mut body, 2, ARGS);
+    guard(&mut body, 1, super::STRING);
+    array(&mut body, 2);
+    body.extend([I32Const(2), LocalGet(1), ArraySet(ARGS)]);
+    b.function_with_locals("closure-source-name-initialize", &[VALUE, VALUE], &[], &[(1, VALUE)], &body);
     for writing in [false, true] {
         // Params: function, native kind, optional assigned value. Locals follow.
         let owner = if writing { 3 } else { 2 };

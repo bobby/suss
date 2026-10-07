@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "090a3c55bf06684a015b9a6853f652eea71fe08c8c7576de93cf4979dad31ec4",
+  "replacement": "(def print-prefix-map\n  (fn [prefix m print-one writer opts]\n  (pr-sequential-writer\n    writer\n    (fn [e w opts]\n      (do (print-one (key e) w opts)\n          (-write w \\space)\n          (print-one (val e) w opts)))\n    (suss.bootstrap/concat-string (str_ prefix) (str_ \"{\")) \", \" \"}\"\n    opts (seq m))))",
+  "rationale": "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. The original map key/value print ordering, separators and namespace stripping dispatch are unchanged. Complete collection IPrintWithWriter extensions and full printer acceptance remain unfinished. Expand the retained multi-argument str_ macro applications to ordered concatenation of single-argument runtime conversions, preserving nil-as-empty per argument and conversion effects before the next argument. The actual first-class runtime str_ nil-first behavior remains unchanged. This does not implement the general analyzer-dependent str_ macro."
+}

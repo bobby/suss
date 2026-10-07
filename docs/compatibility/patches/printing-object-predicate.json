@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b",
+  "replacement": "(def object?\n  \"Returns true if x's constructor is Object\"\n  (fn [x]\n  (if-not (nil? x)\n    (if (suss.bootstrap/native-object? x)\n      (identical? (suss.bootstrap/object-get x \"constructor\")\n                  (suss.bootstrap/object-get (suss.bootstrap/object-default-prototype) \"constructor\"))\n      false)\n    false)))",
+  "rationale": "Retain the complete pinned declaration, docstring and nil branch. Replace JS constructor identity lookup with actual owned native-object property/prototype lookup and the canonical default Object constructor. The storage guard prevents property reads on scalar, array, closure and nominal representations, whose constructors are distinct from Object. Shadowed native constructors are observed, not inferred from layout. Foreign JS objects, primitive boxing and mutation of host constructor properties on non-native representations remain unfinished interop surfaces; this is a partial adaptation, not complete public host-object compatibility."
+}

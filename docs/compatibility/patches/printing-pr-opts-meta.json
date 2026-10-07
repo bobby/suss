@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8f84cb83d2f5e55b2a8cc7798c851c9a5b91d12d2f489583fb6c97749d8baec0",
+  "replacement": "(def ^:private pr-opts-meta\n  (fn [opts]\n  (if-not (nil? opts)\n    (:meta opts)\n    *print-meta*)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn for bootstrap compilation. Preserve every signature, control branch, write order and return value; private option helpers remain private."
+}

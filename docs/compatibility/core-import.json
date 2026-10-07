@@ -1438,20 +1438,180 @@
       "id": "runtime:symbol:1168",
       "source-sha256": "a028c666e38cc95c26ecbdeb7ef2a37bde44619d80fad92d6d20b9193d8aba2b",
       "patch": "docs/compatibility/patches/expression-symbol.json"
+    },
+    {
+      "id": "runtime:IWriter:799",
+      "source-sha256": "ba22278cdf258642a42f381052e468105ecd567bbb33c811d4da88e9786dc4d2",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-readably*:121",
+      "source-sha256": "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-meta*:129",
+      "source-sha256": "6273282bc799a6ab34f00202b63382500c561fd75733fdfefd26467c5865009f",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-dup*:137",
+      "source-sha256": "ce416ca858b868615e63a98f3bfeae36569c4d09dea707f44ac29e44377c344e",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-namespace-maps*:145",
+      "source-sha256": "08d935a5cd887cf2da3d590db823b314700e7bc5369480f758fa772899eea109",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-length*:153",
+      "source-sha256": "1c9b8ee32617d9efd340f25828391d0dfa5d0486dea8a3be725ae0f0842aa2be",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-level*:165",
+      "source-sha256": "15f34288bd3b9560dd0d1f6ce0c566ec93b6a4991585223204b3602c7f7f8ea0",
+      "patch": null
+    },
+    {
+      "id": "runtime:*print-fn-bodies*:178",
+      "source-sha256": "6ac032459def20b4f6153a15caa8eff4a916bfaa5d72c17be8aa53ad1a28499e",
+      "patch": null
+    },
+    {
+      "id": "runtime:pr-opts-readably:280",
+      "source-sha256": "c73274c9425e79dfb17853973730095645e8ef3f06f313ecd6fcff9e56a222af",
+      "patch": "docs/compatibility/patches/printing-pr-opts-readably.json"
+    },
+    {
+      "id": "runtime:pr-opts-meta:285",
+      "source-sha256": "8f84cb83d2f5e55b2a8cc7798c851c9a5b91d12d2f489583fb6c97749d8baec0",
+      "patch": "docs/compatibility/patches/printing-pr-opts-meta.json"
+    },
+    {
+      "id": "runtime:pr-opts-dup:290",
+      "source-sha256": "06835bb2849de032cdae030a6887c561ae10c744cd73b7fc0aaf7cbd21f5f15d",
+      "patch": "docs/compatibility/patches/printing-pr-opts-dup.json"
+    },
+    {
+      "id": "runtime:pr-opts-len:295",
+      "source-sha256": "5f7bc4c83c92c0b59db5a9a3b79e31a7b04957e4b7f2b4105aadc997d98ff0a9",
+      "patch": "docs/compatibility/patches/printing-pr-opts-len.json"
+    },
+    {
+      "id": "runtime:write-all:10404",
+      "source-sha256": "914dfc9c211e6ebd0b130d41f6c6779c5c32bc6bbf293d85f82d60e53de4b735",
+      "patch": "docs/compatibility/patches/printing-write-all.json"
+    },
+    {
+      "id": "runtime:StringBufferWriter:929",
+      "source-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
+      "patch": null
+    },
+    {
+      "id": "runtime:char-escapes:10419",
+      "source-sha256": "a5dd8f5a7fc4e42ba84d5faf7906fd48ab1c42b06d176c264cb927116306a936",
+      "patch": "docs/compatibility/patches/printing-char-escapes.json"
+    },
+    {
+      "id": "runtime:quote-string:10429",
+      "source-sha256": "cf0761b2969ab7be03474449aac96da92374ba5c4c826d3aab808959d4f30565",
+      "patch": "docs/compatibility/patches/printing-quote-string.json"
+    },
+    {
+      "id": "runtime:pr-sequential-writer:10381",
+      "source-sha256": "e4bb91cf7a10dbb1274889019e822e998d37d22fd40a4ae3c83b4c306b015369",
+      "patch": "docs/compatibility/patches/printing-pr-sequential-writer.json"
+    },
+    {
+      "id": "runtime:print-meta?:10438",
+      "source-sha256": "3fa3405bddbfd801c7daf7339ea5096a92831dca060583883df53ecb43d7f2a6",
+      "patch": "docs/compatibility/patches/printing-print-meta-predicate.json"
+    },
+    {
+      "id": "runtime:pr-seq-writer:10551",
+      "source-sha256": "3ab03e99f5b760ef04435923d59b46e45d37fc83543f73bf6203b48211ee0f64",
+      "patch": "docs/compatibility/patches/printing-pr-seq-writer.json"
+    },
+    {
+      "id": "runtime:empty?:2210",
+      "source-sha256": "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213",
+      "patch": "docs/compatibility/patches/printing-empty-predicate.json"
+    },
+    {
+      "id": "runtime:pr-writer:10542",
+      "source-sha256": "e6ccfb4f85f32753bca5fab50fa96ee166ddae43a024125c3c8cec4c1b7d2357",
+      "patch": "docs/compatibility/patches/printing-pr-writer.json"
+    },
+    {
+      "id": "runtime:pr-str*:934",
+      "source-sha256": "7354c4a087662707c0bb86e7e2d173ad380d3df3ecb2cd12e69ccc4a0de4b76a",
+      "patch": "docs/compatibility/patches/printing-pr-str-one.json"
+    },
+    {
+      "id": "runtime:pr-sb-with-opts:10559",
+      "source-sha256": "d2673c3e67e74bc8ce8dcd3de9da1f404c40ecca601acfa16f33b05e1440e926",
+      "patch": "docs/compatibility/patches/printing-pr-sb-with-opts.json"
+    },
+    {
+      "id": "runtime:pr-str-with-opts:10566",
+      "source-sha256": "c25aeaed574809ff85afd2dcf91dc0fc787f3685bf52c619d36d079d533fd10b",
+      "patch": "docs/compatibility/patches/printing-pr-str-with-opts.json"
+    },
+    {
+      "id": "runtime:pr-str:10597",
+      "source-sha256": "14ac19359c303e2f392efc27760172ec01b49bd08a10a2c3fdac18900f3d3e78",
+      "patch": "docs/compatibility/patches/printing-pr-str.json"
+    },
+    {
+      "id": "runtime:object?:300",
+      "source-sha256": "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b",
+      "patch": "docs/compatibility/patches/printing-object-predicate.json"
+    },
+    {
+      "id": "runtime:pr-writer-impl:10445",
+      "source-sha256": "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf",
+      "patch": "docs/compatibility/patches/printing-pr-writer-impl.json"
+    },
+    {
+      "id": "runtime:keyword:3560",
+      "source-sha256": "7d4c72514489330c05547cd64cf5836ad8e37805476cfb4bf8139bde7e2143bf",
+      "patch": "docs/compatibility/patches/printing-keyword.json"
+    },
+    {
+      "id": "runtime:strip-ns:10650",
+      "source-sha256": "3e0be6a3918cbcd41b831688408ed9bf5753533189248825d245fc90c36c0da3",
+      "patch": "docs/compatibility/patches/printing-strip-ns.json"
+    },
+    {
+      "id": "runtime:lift-ns:10656",
+      "source-sha256": "016148974cd021c7c47f09bdec42f6e8bc6b5f965af8e66012725dd1793e5cd5",
+      "patch": "docs/compatibility/patches/printing-lift-ns.json"
+    },
+    {
+      "id": "runtime:print-prefix-map:10674",
+      "source-sha256": "090a3c55bf06684a015b9a6853f652eea71fe08c8c7576de93cf4979dad31ec4",
+      "patch": "docs/compatibility/patches/printing-print-prefix-map.json"
+    },
+    {
+      "id": "runtime:print-map:10684",
+      "source-sha256": "68fa017f509a9af54245667cab2b83247d91a49bda1a2f4469e560861291ca52",
+      "patch": "docs/compatibility/patches/printing-print-map.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "2704e150f7a4f8fcbb045ead215c55a5f76b5bdf8cb69edfa2cf80408f6da55d"
+      "sha256": "4d938f880bed003f44c8aa8fe05464d4972279bede26d81c5960af9218a07aa3"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
+      "sha256": "a43c375851d1f54197fa847742f7e2d9db7bd3b52051038f90c6fd036f2cfd59"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "0dbd4fe0230aa066c7554ea941864af8c75d113a8463471e2d593e5f3a5d841f"
+      "sha256": "a2e1e1323f36b7e332a3e136878ecdc92446da797391a834b57d9b2fb9fc81d7"
     }
   }
 }

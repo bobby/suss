@@ -168,3 +168,71 @@
               t (-as-transient (.-EMPTY PersistentHashSet))]
           (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))
           (-persistent! t))))
+
+(do
+(extend-type LazySeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type IndexedSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type RSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type NodeSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type ArrayNodeSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type List IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Cons IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type EmptyList IPrintWithWriter
+  (-pr-writer [coll writer opts] (-write writer "()")))
+
+(extend-type PersistentVector IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type ChunkedCons IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type ChunkedSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Subvec IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type MapEntry IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type KeySeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type PersistentArrayMapSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type PersistentArrayMap IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (print-map coll pr-writer writer opts)))
+
+(extend-type PersistentHashMap IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (print-map coll pr-writer writer opts)))
+
+(extend-type PersistentHashSet IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#{" " " "}" opts coll)))
+
+(extend-type Atom IPrintWithWriter
+  (-pr-writer [a writer opts]
+    (-write writer "#object[cljs.core.Atom ")
+    (pr-writer {:val (.-state a)} writer opts)
+    (-write writer "]")))
+
+(extend-type Var IPrintWithWriter
+  (-pr-writer [a writer opts]
+    (-write writer "#'")
+    (pr-writer (.-sym a) writer opts))))

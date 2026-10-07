@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "object-constructor-identity",
+      "source": "(let [seen (atom 0)]\n  [(object? nil) (object? false) (object? true) (object? 42)\n   (object? \"\\ud800\") (object? (fn [] nil)) (object? (array 1))\n   (object? [1]) (object? (js-obj))\n   (object? (js-obj \"constructor\" nil))\n   (object? (js-obj \"constructor\" (fn [] nil)))\n   (object? (js-obj \"constructor\" (.-constructor (js-obj))))\n   (object? (js-obj \"__proto__\" nil))\n   (object? (js-obj \"__proto__\" (js-obj \"constructor\" nil)))\n   (object? (js-obj \"__proto__\" (js-obj)))\n   (object? (do (swap! seen inc) (js-obj))) @seen])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

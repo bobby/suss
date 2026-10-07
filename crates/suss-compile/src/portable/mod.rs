@@ -2,6 +2,7 @@
 //! Native sessions use this pipeline; AOT and source macro integration remain incomplete.
 //! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
+mod function_names;
 pub mod hir;
 pub mod ir;
 pub mod modules;

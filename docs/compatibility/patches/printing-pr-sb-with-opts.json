@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d2673c3e67e74bc8ce8dcd3de9da1f404c40ecca601acfa16f33b05e1440e926",
+  "replacement": "(def ^:private pr-sb-with-opts\n  (fn [objs opts]\n  (let [sb (BootstrapStringBuffer. \"\")\n        writer (StringBufferWriter. sb)]\n    (pr-seq-writer objs writer opts)\n    (-flush writer)\n    sb)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. Replace Closure StringBuffer construction only with the original GC-owned UTF-16 buffer; no host import is introduced. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+}

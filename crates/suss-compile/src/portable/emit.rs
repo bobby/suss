@@ -82,7 +82,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("binding-set");
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
-                        names.insert("closure-new");
+                        names.extend(["closure-new", "closure-source-name-initialize", "string-new", "string-set-unit"]);
                         names.insert("arity-error");
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
@@ -90,7 +90,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                     }
                     Operation::MakeClosure { .. } => {
-                        names.insert("closure-new");
+                        names.extend(["closure-new", "closure-source-name-initialize", "string-new", "string-set-unit"]);
                     }
                     Operation::Call { .. } => {
                         names.insert("invoke");
@@ -113,6 +113,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
+                        Nominal::IsNativeObject => { names.insert("native-object?"); }
+                        Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
+                        Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
@@ -214,7 +217,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "language-error-is" => (vec![VALUE], vec![ValType::I32]),
+            "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -255,6 +258,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
             "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
+            "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
                 vec![
                     VALUE,
@@ -767,6 +772,23 @@ fn emit_function(
                         .instruction(&I32Const(body.arity as i32))
                         .instruction(&Call(index("closure-new")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    if let Some(name) = &body.display_name {
+                        // Use the existing bounded UTF16 literal allocation path;
+                        // large source names must not require a large operand stack.
+                        function.instruction(&I32Const(name.len() as i32))
+                            .instruction(&Call(index("string-new")))
+                            .instruction(&LocalSet(scratch));
+                        for (unit_index, unit) in name.iter().enumerate() {
+                            function.instruction(&LocalGet(scratch))
+                                .instruction(&I32Const(unit_index as i32))
+                                .instruction(&I32Const(i32::from(*unit)))
+                                .instruction(&Call(index("string-set-unit")))
+                                .instruction(&Drop);
+                        }
+                        function.instruction(&LocalGet(inst.result.0 as u32 + offset))
+                            .instruction(&LocalGet(scratch))
+                            .instruction(&Call(index("closure-source-name-initialize")));
+                    }
                 }
                 Operation::MakeGeneralClosure { body, captures } => {
                     for value in captures {
@@ -809,6 +831,23 @@ fn emit_function(
                             .instruction(&I32Const(captures.len() as i32))
                             .instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&ArraySet(runtime_abi::ARGS));
+                    }
+                    if let Some(name) = &body.display_name {
+                        // Use the existing bounded UTF16 literal allocation path;
+                        // large source names must not require a large operand stack.
+                        function.instruction(&I32Const(name.len() as i32))
+                            .instruction(&Call(index("string-new")))
+                            .instruction(&LocalSet(scratch));
+                        for (unit_index, unit) in name.iter().enumerate() {
+                            function.instruction(&LocalGet(scratch))
+                                .instruction(&I32Const(unit_index as i32))
+                                .instruction(&I32Const(i32::from(*unit)))
+                                .instruction(&Call(index("string-set-unit")))
+                                .instruction(&Drop);
+                        }
+                        function.instruction(&LocalGet(inst.result.0 as u32 + offset))
+                            .instruction(&LocalGet(scratch))
+                            .instruction(&Call(index("closure-source-name-initialize")));
                     }
                 }
                 Operation::NilTest(value) => {
@@ -991,6 +1030,9 @@ fn emit_function(
                         | Nominal::StringSlice
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
+                        | Nominal::IsNativeObject
+                        | Nominal::IsTypeConstructor
+                        | Nominal::SourceFunctionName
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
                         | Nominal::NativeObjectGet
@@ -1016,6 +1058,9 @@ fn emit_function(
                                 Nominal::LanguageError => "language-error-new",
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
+                                Nominal::IsNativeObject => "native-object?",
+                                Nominal::IsTypeConstructor => "class-value-is",
+                                Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",

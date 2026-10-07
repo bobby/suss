@@ -1,25 +1,29 @@
-use suss_compile::Compiler;
+//! Prepare and execute complete expression bundles in the native reference host.
+#[cfg(not(target_family = "wasm"))]
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use suss_compile::{Compiler, portable_repl, portable_session::Session};
 
+    let mut compiler = Compiler::new();
+    for source in [
+        "(+ 1 2)",
+        "(defn foo [x] (+ x 1)) (foo 5)",
+        "(pr-str (defn foo [x] (+ x 1)) (foo 5))",
+    ] {
+        let artifact = compiler.compile_expr_with_info(source)?;
+        let mut session = Session::new()?;
+        let value = artifact
+            .execute(&mut session)?
+            .ok_or("expected an expression result")?;
+        session.collect()?;
+        println!(
+            "{source} => {}",
+            portable_repl::display(&mut session, &value)?
+        );
+    }
+    Ok(())
+}
+
+#[cfg(target_family = "wasm")]
 fn main() {
-    let mut c = Compiler::new();
-    
-    // Test 1: Simple expression (should work)
-    match c.compile_expr("(+ 1 2)") {
-        Ok(w) => println!("Test 1 OK: {} bytes", w.len()),
-        Err(e) => println!("Test 1 FAIL: {}", e),
-    }
-    
-    // Test 2: defn + call
-    let mut c2 = Compiler::new();
-    match c2.compile_expr("(defn foo [x] (+ x 1)) (foo 5)") {
-        Ok(w) => println!("Test 2 OK: {} bytes", w.len()),
-        Err(e) => println!("Test 2 FAIL: {}", e),
-    }
-    
-    // Test 3: pr-str wrapped defn
-    let mut c3 = Compiler::new();
-    match c3.compile_expr("(pr-str (defn foo [x] (+ x 1)) (foo 5))") {
-        Ok(w) => println!("Test 3 OK: {} bytes", w.len()),
-        Err(e) => println!("Test 3 FAIL: {}", e),
-    }
+    panic!("This example requires the native reference host");
 }

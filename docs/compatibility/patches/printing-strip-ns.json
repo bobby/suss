@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3e0be6a3918cbcd41b831688408ed9bf5753533189248825d245fc90c36c0da3",
+  "replacement": "(def ^:private strip-ns\n  (fn [named]\n  (if (symbol? named)\n    (symbol nil (name named))\n    (keyword nil (name named)))))",
+  "rationale": "Retain the complete pinned declaration, docstring, visibility, every arity and branch; expand defn to def/fn for the bounded bootstrap. The original map key/value print ordering, separators and namespace stripping dispatch are unchanged. Complete collection IPrintWithWriter extensions and full printer acceptance remain unfinished."
+}

@@ -5,6 +5,30 @@ import sequence_provenance as provenance
 
 
 class SequenceProvenance(unittest.TestCase):
+    def test_printer_expansion_rejects_rewritten_reordered_and_invented_stanzas(self):
+        statement = next(s for s in self.record['statements']
+                         if s.get('patch') == 'docs/compatibility/patches/printing-collection-extensions.json')
+        original = provenance.json_data(
+            provenance.repository_file(provenance.ROOT, statement['patch']).read_bytes())
+        forms = provenance.Scanner(original['replacement']).all()[0].children[1:]
+        first, second = [original['replacement'][f.start:f.end] for f in forms[:2]]
+        for replacement in [
+            original['replacement'].replace('LazySeq', 'InventedSeq', 1),
+            original['replacement'].replace('opts coll)', 'opts nil)', 1),
+            '(do ' + second + first + ')',
+            '(do ' + first + first + ')',
+            '(do)',
+        ]:
+            changed = copy.deepcopy(original)
+            changed['replacement'] = replacement
+            decode = provenance.json_data
+            def changed_patch(raw):
+                value = decode(raw)
+                return changed if value == original else value
+            with patch.object(provenance, 'json_data', side_effect=changed_patch):
+                with self.assertRaisesRegex(ValueError, 'ordered exact source stanzas'):
+                    provenance.verify_payload(self.record, self.source, self.loader)
+
     def setUp(self):
         self.record = provenance.json_data((provenance.ROOT / provenance.PROVENANCE).read_bytes())
         self.source = (provenance.ROOT / 'clojurescript/src/main/cljs/cljs/core.cljs').read_text()

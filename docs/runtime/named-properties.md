@@ -87,3 +87,13 @@ Pinned constructors assign this.__proto__, invoking its inherited setter rather
 than creating an own field. Source type declarations reject this spelling before
 physical protocol slots can fabricate a field; host-created schemas reject named
 get/set through checked language exceptions. The existing64-case corpus is unchanged.
+
+Source closure display names now live in the same GC-owned wrapper, in a third
+private payload slot beside the original environment and property table. They do
+not share the mutable property table or a nominal descriptor's metadata/UID slots.
+All wrapper readers validate the new three-slot payload; raw foreign closure
+environments still follow the existing separate path. A source function has its
+real scoped/munged UTF16 name, or an empty name when genuinely anonymous. Unset
+kernel names remain unavailable and raise a language exception when queried.
+This does not certify names for synthetic protocol/delegate/foreign callbacks,
+constructor display names or general JavaScript function-property interop.

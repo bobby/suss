@@ -21,6 +21,11 @@ type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
 type DeclarationKey = (portable::resolve::Global, usize);
 
+// Aggregate graph capacity, distinct from the unchanged per-form and traversal
+// guards. Retained printer source facts require 66,474 recipes in a real macro
+// environment with existing identity sharing, exceeding the former 65,536 capacity.
+const MAX_ANALYSIS_RECIPES: usize = 131_072;
+
 /// Same-Store declaration metadata roots, owned by one compiled macro session.
 /// Weak source owners prevent dead revisions from accumulating or address reuse
 /// from mistaking a new declaration for an old one. Never an artifact cache.
@@ -290,7 +295,7 @@ impl<'a> AnalysisGraph<'a> {
         Self {
             bridge,
             session,
-            nodes: 65_536,
+            nodes: MAX_ANALYSIS_RECIPES,
             units: 1_048_576,
             reader_key_bytes: 32 * 1024 * 1024,
             retained: None,
@@ -570,7 +575,11 @@ impl<'a> AnalysisGraph<'a> {
     }
     fn charge(&mut self, units: usize) -> Result<()> {
         self.nodes = self.nodes.checked_sub(1).ok_or_else(|| {
-            SessionError::Host(wasmtime::Error::msg("Analysis graph exceeds 65536 nodes"))
+            SessionError::Host(wasmtime::Error::msg(format!(
+                "Analysis graph exceeds {} nodes ({} recipes, {} forms, {} maps, {} vectors, {} declarations, {} namespaces, {} ASTs)",
+                MAX_ANALYSIS_RECIPES, self.recipes.len(), self.forms.len(), self.maps.len(), self.vectors.len(),
+                self.declarations.len(), self.namespaces.len(), self.asts.len(),
+            )))
         })?;
         self.units = self.units.checked_sub(units).ok_or_else(|| {
             SessionError::Host(wasmtime::Error::msg(
@@ -2258,7 +2267,7 @@ mod sharing_tests {
         assert_eq!(retained.metadata.len(), 1);
         session.collect().unwrap();
         for (nodes, units, expected) in [
-            (0, 1_048_576, "65536 nodes"),
+            (0, 1_048_576, "131072 nodes"),
             (65_536, 0, "UTF-16 storage bound"),
         ] {
             let mut graph =

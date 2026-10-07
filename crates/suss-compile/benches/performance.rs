@@ -2,51 +2,17 @@
 //!
 //! Measures:
 //! 1. Compilation time - How long to compile expressions to WASM
-//! 2. Execution time - How long WASM operations take
-//! 3. WASM size - Binary size of compiled output
+//! 2. Artifact initialization - Preflight, core/dependencies and expression execution
+//! 3. Bundle Wasm size - All emitted module bytes, including the core bootstrap
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use suss_compile::Compiler;
-use wasmtime::{Config, Engine, Linker, Module, Store, Val};
+use criterion::{BatchSize, BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use suss_compile::{CompiledExpr, Compiler, portable_session::Session};
 
-/// Create a GC-enabled wasmtime engine
-fn gc_engine() -> Engine {
-    let mut config = Config::new();
-    config.wasm_gc(true);
-    config.wasm_function_references(true);
-    config.wasm_tail_call(true);
-    config.wasm_exceptions(true);
-    Engine::new(&config).expect("engine creation failed")
-}
-
-/// Compile an expression and return the WASM bytes
-fn compile_expr(expr: &str) -> Vec<u8> {
-    let mut compiler = Compiler::new();
-    compiler.compile_expr(expr).expect("compilation failed")
-}
-
-/// Instantiate a WASM module with print_str host import support
-fn instantiate_with_print(engine: &Engine, module: &Module, store: &mut Store<()>) -> wasmtime::Instance {
-    let mut linker: Linker<()> = Linker::new(engine);
-    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
-        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
-            let mut buf = vec![0u8; len as usize];
-            let _ = memory.read(&caller, ptr as usize, &mut buf);
-        }
-    }).expect("linker func_wrap failed");
-    linker.instantiate(store, module).expect("instantiation failed")
-}
-
-/// Compile, load, and run an expression
-fn run_expr(engine: &Engine, expr: &str) -> Val {
-    let wasm_bytes = compile_expr(expr);
-    let module = Module::new(engine, &wasm_bytes).expect("module failed");
-    let mut store = Store::new(engine, ());
-    let instance = instantiate_with_print(engine, &module, &mut store);
-    let eval_fn = instance.get_func(&mut store, "eval").expect("eval not found");
-    let mut results = vec![Val::null_any_ref()];
-    eval_fn.call(&mut store, &[], &mut results).expect("call failed");
-    results.remove(0)
+/// Compile the complete shared-runtime bundle, including isolated macro expansion.
+fn compile_expr(expr: &str) -> CompiledExpr {
+    Compiler::new()
+        .compile_expr_with_info(expr)
+        .expect("compilation failed")
 }
 
 // =============================================================================
@@ -57,13 +23,9 @@ fn bench_compilation(c: &mut Criterion) {
     let mut group = c.benchmark_group("compilation");
 
     // Simple expressions
-    group.bench_function("literal_int", |b| {
-        b.iter(|| compile_expr(black_box("42")))
-    });
+    group.bench_function("literal_int", |b| b.iter(|| compile_expr(black_box("42"))));
 
-    group.bench_function("add_2", |b| {
-        b.iter(|| compile_expr(black_box("(+ 1 2)")))
-    });
+    group.bench_function("add_2", |b| b.iter(|| compile_expr(black_box("(+ 1 2)"))));
 
     group.bench_function("nested_arithmetic", |b| {
         b.iter(|| compile_expr(black_box("(+ (* 3 4) (- 10 5))")))
@@ -78,9 +40,7 @@ fn bench_compilation(c: &mut Criterion) {
         b.iter(|| compile_expr(black_box("{1 2 3 4 5 6}")))
     });
 
-    group.bench_function("set_3", |b| {
-        b.iter(|| compile_expr(black_box("#{1 2 3}")))
-    });
+    group.bench_function("set_3", |b| b.iter(|| compile_expr(black_box("#{1 2 3}"))));
 
     // Control flow
     group.bench_function("if_simple", |b| {
@@ -113,95 +73,42 @@ fn bench_compilation(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_execution(c: &mut Criterion) {
-    let engine = gc_engine();
-    let mut group = c.benchmark_group("execution");
-
-    // Pre-compile modules for execution benchmarks
-    let add_wasm = compile_expr("(+ 1 2)");
-    let add_module = Module::new(&engine, &add_wasm).unwrap();
-
-    let nested_wasm = compile_expr("(+ (* 3 4) (- 10 5))");
-    let nested_module = Module::new(&engine, &nested_wasm).unwrap();
-
-    let vector_wasm = compile_expr("[1 2 3]");
-    let vector_module = Module::new(&engine, &vector_wasm).unwrap();
-
-    let conj_wasm = compile_expr("(conj [1 2] 3)");
-    let conj_module = Module::new(&engine, &conj_wasm).unwrap();
-
-    let if_wasm = compile_expr("(if true 1 2)");
-    let if_module = Module::new(&engine, &if_wasm).unwrap();
-
-    let loop_wasm = compile_expr("(loop [x 0] (if (< x 10) (recur (+ x 1)) x))");
-    let loop_module = Module::new(&engine, &loop_wasm).unwrap();
-
-    // Benchmark execution of pre-compiled modules
-    group.bench_function("add_2_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &add_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
-    group.bench_function("nested_arithmetic_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &nested_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
-    group.bench_function("vector_create_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &vector_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
-    group.bench_function("vector_conj_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &conj_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
-    group.bench_function("if_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &if_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
-    group.bench_function("loop_10_exec", |b| {
-        b.iter(|| {
-            let mut store = Store::new(&engine, ());
-            let instance = instantiate_with_print(&engine, &loop_module, &mut store);
-            let eval_fn = instance.get_func(&mut store, "eval").unwrap();
-            let mut results = vec![Val::null_any_ref()];
-            eval_fn.call(&mut store, &[], &mut results).unwrap();
-            black_box(results)
-        })
-    });
-
+    let mut group = c.benchmark_group("artifact_initialization");
+    // Preparation and empty-Store creation happen outside the measured routine.
+    // The measurement includes bundle preflight, core/dependency initialization
+    // execution and Store teardown. It is not comparable to the old standalone-
+    // module benchmark.
+    for (name, source) in [
+        ("add_2_exec", "(+ 1 2)"),
+        ("nested_arithmetic_exec", "(+ (* 3 4) (- 10 5))"),
+        ("vector_create_exec", "[1 2 3]"),
+        ("vector_conj_exec", "(conj [1 2] 3)"),
+        ("if_exec", "(if true 1 2)"),
+        (
+            "loop_10_exec",
+            "(loop [x 0] (if (< x 10) (recur (+ x 1)) x))",
+        ),
+    ] {
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                || {
+                    (
+                        compile_expr(source),
+                        Session::new().expect("session creation failed"),
+                    )
+                },
+                |(artifact, mut session)| {
+                    let value = artifact
+                        .execute(&mut session)
+                        .expect("execution failed")
+                        .expect("missing expression result");
+                    // Keep the result's owning Store alive through observation.
+                    black_box((&session, &value));
+                },
+                BatchSize::PerIteration,
+            )
+        });
+    }
     group.finish();
 }
 
@@ -210,7 +117,7 @@ fn bench_execution(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_wasm_size(c: &mut Criterion) {
-    let mut group = c.benchmark_group("wasm_size");
+    let mut group = c.benchmark_group("bundle_wasm_size");
 
     let expressions = [
         ("literal", "42"),
@@ -228,7 +135,14 @@ fn bench_wasm_size(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("size", name), &expr, |b, expr| {
             b.iter(|| {
                 let wasm = compile_expr(black_box(expr));
-                black_box(wasm.len())
+                let bytes = wasm
+                    .prepared
+                    .as_ref()
+                    .expect("missing bundle")
+                    .modules()
+                    .map(<[u8]>::len)
+                    .sum::<usize>();
+                black_box(bytes)
             })
         });
     }

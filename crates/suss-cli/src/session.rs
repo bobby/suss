@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::SystemTime;
 
 use suss_compile::{CompiledExpr, Compiler};
@@ -77,7 +78,7 @@ pub struct SessionState {
 
 /// A cached compilation entry
 struct CacheEntry {
-    compiled: CompiledExpr,
+    compiled: Arc<CompiledExpr>,
 }
 
 impl SessionState {
@@ -276,8 +277,10 @@ impl SessionState {
 
     /// Compile an expression with caching
     ///
-    /// Returns (compiled bytes, is_component, was_cache_hit)
-    pub fn compile_cached(&mut self, expr: &str) -> Result<(Vec<u8>, bool, bool), String> {
+    /// Retain the complete artifact, including shared-runtime dependency modules.
+    /// Returns (compiled artifact, was_cache_hit). This source-replay fixture is
+    /// not the shipped persistent REPL.
+    pub fn compile_cached(&mut self, expr: &str) -> Result<(Arc<CompiledExpr>, bool), String> {
         let full_source = self.build_source(expr);
         let hash = hash_source(&full_source);
 
@@ -289,24 +292,21 @@ impl SessionState {
                 self.cache_order.remove(pos);
             }
             self.cache_order.push(hash);
-            return Ok((entry.compiled.wasm.clone(), entry.compiled.is_component, true));
+            return Ok((Arc::clone(&entry.compiled), true));
         }
 
         // Cache miss - compile
         self.cache_misses += 1;
-        let compiled = self.compiler
+        let compiled = Arc::new(self.compiler
             // This module is retained only as prototype regression fixtures.
             // The shipped REPL uses portable_session, never this source replay.
             .compile_expr_with_info(&full_source)
-            .map_err(|e| format!("{}", e))?;
-
-        let wasm = compiled.wasm.clone();
-        let is_component = compiled.is_component;
+            .map_err(|e| format!("{}", e))?);
 
         // Cache result
-        self.cache_insert(hash, CacheEntry { compiled });
+        self.cache_insert(hash, CacheEntry { compiled: Arc::clone(&compiled) });
 
-        Ok((wasm, is_component, false))
+        Ok((compiled, false))
     }
 
     /// Insert into cache with LRU eviction
@@ -451,6 +451,29 @@ mod tests {
 
         assert_eq!(hash_source(source1), hash_source(source2));
         assert_ne!(hash_source(source1), hash_source(source3));
+    }
+
+    #[test]
+    fn test_compilation_cache_retains_complete_artifact() {
+        let mut state = SessionState::new();
+        let source = "(defmacro answer [] 42) (answer)";
+        let (first, hit) = state.compile_cached(source).unwrap();
+        assert!(!hit);
+        let (cached, hit) = state.compile_cached(source).unwrap();
+        assert!(hit);
+        assert!(Arc::ptr_eq(&first, &cached));
+        assert!(first.prepared.as_ref().unwrap().modules().count() > 1);
+        state.clear_cache();
+        drop(cached);
+        let artifact = Arc::try_unwrap(first).unwrap();
+        let mut session = suss_compile::portable_session::Session::new().unwrap();
+        let value = artifact.execute(&mut session).unwrap().unwrap();
+        session.collect().unwrap();
+        let observed = session.inspect(&value, |mut store, value| {
+            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            Ok(number.field(&mut store, 0)?.unwrap_f64())
+        }).unwrap();
+        assert_eq!(observed, 42.0);
     }
 
     #[test]

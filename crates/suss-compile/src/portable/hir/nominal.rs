@@ -365,7 +365,10 @@ impl Analyzer<'_> {
                     "mutable" => flags[0] = value,
                     "unsynchronized-mutable" => flags[1] = value,
                     "volatile-mutable" => flags[2] = value,
-                    "tag" => {}
+                    // Compiled macros return indexing-reader metadata on field
+                    // symbols. These source facts do not change mutability;
+                    // keep them on the declaration for source analysis.
+                    "tag" | "file" | "line" | "column" | "end-line" | "end-column" => {}
                     _ => {
                         return Err(fail(
                             metadata.span.clone(),

@@ -81,3 +81,19 @@
           (let [number (+ (* magnitude-high 4294967296) magnitude-low)]
             (if negative (- number) number))
           (throw (suss.bootstrap/error "Exact integer 64-bit wit-to-number exceeds safe binary64 integer range")))))))
+
+;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
+;; Every empty/trailing part is retained. This is not general JS String.split.
+(def ^:private keyword-name-parts
+  (fn [text]
+    (let [parts (array) length (count text)]
+      (loop [index 0 start 0]
+        (if (< index length)
+          (if (== (.charCodeAt text index) 47)
+            (do (.push parts (suss.bootstrap/string-slice text start index))
+                (recur (inc index) (inc index)))
+            (recur (inc index) start))
+          (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
+
+;; Original Suss adaptation: read the source closure's owned UTF16 label.
+(def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))

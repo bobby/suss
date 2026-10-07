@@ -12,17 +12,17 @@ env:
   CARGO_BUILD_JOBS: 2
 
 jobs:
-  test:
+  foundation:
     runs-on: ubuntu-latest
-    # Run 37265512292 reached 90 minutes after 137 passing workspace groups.
-    # Allow the remaining groups/doc-tests plus bounded runner/cache headroom.
-    timeout-minutes: 120
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace-tests
       - name: Verify upstream inventory and scanner
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py'
@@ -39,5 +39,41 @@ jobs:
           python3 scripts/clojure_test_suite.py overlap
       - name: Reproduce and execute versioned bootstrap without Java
         run: scripts/verify-bootstrap.sh
-      - name: Test prototype, strict conformance baseline and runtime probe
-        run: cargo test --workspace --locked -- --test-threads=2
+      - name: Test libraries, binaries, examples and documentation
+        run: |
+          cargo test --workspace --locked --lib --bins --examples -- --test-threads=2
+          cargo test --workspace --locked --doc -- --test-threads=2
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace-tests
+      - name: Execute complete integration suites in this partition
+        run: python3 scripts/ci_test_shards.py --count 8 --index ${{ matrix.shard }}
+
+  # Preserve the required check name; skipped/cancelled partitions cannot pass it.
+  test:
+    if: always()
+    needs: [foundation, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every verification job to succeed
+        env:
+          FOUNDATION_RESULT: ${{ needs.foundation.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+        run: |
+          test "$FOUNDATION_RESULT" = success
+          test "$INTEGRATION_RESULT" = success

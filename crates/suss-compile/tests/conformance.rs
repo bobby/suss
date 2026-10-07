@@ -181,7 +181,7 @@ fn run(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<(), Fail
 
 fn run_with_fuel(compiler: &mut Compiler, engine: &Engine, case: &Case, fuel: u64) -> Result<(), Failure> {
     let compiled = compiler
-        .compile_expr_cached(&case.expr)
+        .compile_expr_with_info(&case.expr)
         .map_err(|error| failure("compile", error))?;
     let mut session = Session::with_engine(
         engine.clone(),

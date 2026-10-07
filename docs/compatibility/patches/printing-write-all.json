@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "914dfc9c211e6ebd0b130d41f6c6779c5c32bc6bbf293d85f82d60e53de4b735",
+  "replacement": "(def write-all\n  (fn [writer & ss]\n  (loop [ss (seq ss)]\n    (when-not (nil? ss)\n      (-write writer (first ss))\n      (recur (next ss))))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn for bootstrap compilation. Preserve every signature, control branch, write order and return value; private option helpers remain private."
+}
