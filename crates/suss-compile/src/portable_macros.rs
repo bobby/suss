@@ -256,6 +256,10 @@ impl CompiledMacros {
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.session.set_operation_fuel(fuel);
     }
+    /// Interrupts a running macro expansion in this compiled macro session.
+    pub fn interrupt_handle(&self) -> crate::portable_session::InterruptHandle {
+        self.session.interrupt_handle()
+    }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         Self::with_bootstrap(self.session.replacement()?)
     }

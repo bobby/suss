@@ -12,7 +12,13 @@ without a banner or prompts. The actual portable reader supplies an explicit
 continuation hint for unfinished collections, strings and prefixes. Complete
 malformed inputs are reported immediately; incomplete EOF never executes a partial
 input. Comment/discard-only input produces no result. Ctrl-C at readline discards
-an unfinished input; it does not yet interrupt executing code or pending I/O.
+an unfinished input. On Unix, Ctrl-C (SIGINT) while an input executes interrupts
+it in either phase (Runtime evaluation or macro expansion), prints
+`Error: Interrupted` and returns to the prompt; effects before the interrupt are
+not rolled back ([`repl_interrupt.rs`](../../crates/suss-cli/tests/repl_interrupt.rs)).
+`suss repl --fuel <N>` sets each input's execution budget (default 10,000,000),
+so long computations can run until interrupted. Pending I/O cancellation awaits
+the design section 9 scheduler.
 
 The native command now uses `Session::new_repl()`, loading the provenance-tracked
 core artifact once per Store generation. [Atom storage](atoms.md) persists across

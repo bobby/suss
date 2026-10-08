@@ -50,6 +50,19 @@ is an engine trap, distinct from wrong arity/type language errors. A fresh opera
 budget lets the next input execute after either kind of error. This is synchronous
 runtime recovery, not cancellation or an asynchronous scheduler.
 
+`Session::interrupt_handle()` (and `CompiledMacros::interrupt_handle()` for the
+macro phase) returns a thread-safe `InterruptHandle`. `interrupt()` traps the
+session's running operation with `Trap::Interrupt`: `SessionError::is_interrupt()`
+is true and the error displays as `Interrupted`. The shared engine enables epoch
+interruption; each Store's epoch callback traps only when its own session's
+request is set and consumes it, so other sessions on the engine keep running and
+post-trap dynamic restoration completes. A request made while idle is discarded
+when the next operation starts, and handles stay valid across `reset`. As with
+fuel traps, effects before the interrupt are not rolled back and the next input
+executes normally ([`session_interrupt.rs`](../../crates/suss-compile/tests/session_interrupt.rs)).
+This interrupts running synchronous code only; cooperative cancellation of
+pending I/O needs the design section 9 scheduler.
+
 ## Owned values and lifecycle
 
 Every returned `SessionValue` owns its GC root. Values and captures survive later
