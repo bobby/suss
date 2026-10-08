@@ -404,13 +404,15 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
     body.extend([
-        LocalGet(0),
-        RefFunc(ordinary_type),
-        I32Const(0),
-        I32Const(-1),
-        Call(b.names["closure-new"]),
+        LocalGet(0), GlobalGet(type_values::KEY_GLOBAL), Call(method_get), LocalSet(1),
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(4)), If(BlockType::Empty),
+        LocalGet(1), Return, End,
+        LocalGet(0), RefFunc(ordinary_type), I32Const(0), I32Const(-1),
+        Call(b.names["closure-new"]), LocalSet(1),
+        LocalGet(0), GlobalGet(type_values::KEY_GLOBAL), LocalGet(1), Call(method_set),
+        LocalGet(1),
     ]);
-    b.function("class-value-new", &[VALUE], &[VALUE], &body);
+    b.function_with_locals("class-value-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
     // A source type value is a closure owning its descriptor. Ordinary functions
     // and protocol values also use closures, but own arrays instead. Unwrap the
     // property storage before inspecting that environment; never infer a type

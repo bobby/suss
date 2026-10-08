@@ -22157,9 +22157,32 @@ a current-base pass. Independent rebase review, focused gates and the required
 full baseline/final-head CI are pending. Next: validate the rebased experiment
 against new bootstrap content; no MLIR adoption or full M4 completion claimed.
 
-
 ### 2026-10-09 — post-merge MLIR evidence packaging (documentation lane)
 
 Created isolated `/private/tmp/suss-m4-mlir-postmerge-evidence` from verified latest main `f4b13f306ad354c6cbe5bc0c49cc44975249396d`. Preserve the separate running prerequisite baseline at `0f2e3a6` (session50970); no second local Cargo graph or source edits in its frozen worktree. Packaged completed MLIR gates at PR #227 head `b82ad94cf7545a4f80315af3a6f677e57fc4bd13` under `experiments/mlir/evidence/post228`, keeping historical receipts unchanged. Before documentation changes, all 184 experiment files, 120 production files and four bootstrap artifacts matched the executed manifest. Independently hashed/summed the full baseline log: 207 result blocks, 1,550 passed, zero failed, 41 existing ignored, SHA256 dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377. Nine post-rebase gates completed exit0; ten final-head CI checks succeeded in run37875362660. Raw CI capture predates local baseline completion; its pending field remains historical and is explicitly superseded by terminal receipt/full log.
 
 Audit maps all seven #188 criteria to bounded evidence and limitations. Updated README/decision/acceptance work record to distinguish completed historical execution from this documentation head's pending publication gates. Fresh post-#228 paired emission medians: native original/mutated 5.841/5.907ms, MLIR 19.014/19.128ms; excludes builds, execution and absent source-to-MLIR conversion, no performance superiority claim. Deferral remains the recommendation; adoption requires a separate reviewed architectural decision. No shipped implementation changes, no M5–M7 advance, no original M4 issue closed. New documentation checkpoint review, unchanged workspace baseline and final-head CI remain required before promotion. Next: independent evidence-link/hash/audit review; wait for the existing Cargo graph, then run this checkpoint's required gates and publish for user review.
+Sorted prerequisite current-main refresh onto4e0f00d: source copied exactly from
+reviewedcheckpoint8429c26; preserved all325mainrecipeentries/426reviews, add3whole
+protocol/type forms. Five Rustproductionpatches unchanged. Refreshreceipt at
+/private/tmp/suss-m4-sorted-after-queue-refresh.json. NoCargo/native/updatedbootstrap
+pass yet. Typeadapter array/function/nativeObject constructor/ToPrimitive boundary
+still unsupported; fullcompare/tree/record original18scope remains open.
+Map/filter228frozen5f19cf8 fullbaseline99452 is onlySussCargo graph; no secondgraph.
+Next freshprovenance/primary/source review then nativeafterCargo slotfree.
+
+Sorted currentqueue refresh30820terminal0:332imports reproduce,429reviews636
+unassessed,23licensedsetup forms, rustfmt five newRustfiles/diffchecks pass; fresh
+pinned27interfaceobservationsmatch log/private/tmp/suss-m4-sorted-after-queue-primary.log.
+NoCargo/bootstrap/nativeexecution occurred for this refresh; oldcompiler-prototype
+comments and protocol-only numeric observations do not prove sortedcollections.
+Currentdoclabels oldindices/counts historical. Independent source refresh review
+pending; full array/function constructors/ToPrimitive/comparator/tree/record scope
+unchanged. Queuebaseall325recipe426reviewentries preserved; codehashreceipt saved.
+
+Sorted current-main refresh review: no material source defect; verifiedall325base
+selections426reviews/extractedbytes preserved and fiveproductionpatches/twohelpers
+byte-identical to8429c26, reproduced27primary observations. Older22723b4docsection
+markedhistorical/superseded by4e0f00d snapshot. FullPython231pass7.896s, zerofailures.
+This checkpoint has no newnative/bootstrap/fulltype/comparator acceptance claim.
+RequiredCargo slot currentlyownedby228fullbaseline99452; do notstartsecondgraph.

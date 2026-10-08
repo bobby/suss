@@ -1,0 +1,31 @@
+;; Original development-only nominal dispatch probe, not a sorted collection.
+;; Scalar results expose every operand and direction without implementing a tree.
+(def sorted-interface-trace (array 0))
+(def sorted-interface-mark
+  (fn [digit value]
+    (aset sorted-interface-trace 0 (+ (* 10 (aget sorted-interface-trace 0)) digit))
+    value))
+(def sorted-interface-comparator (fn [x y] (- x y)))
+(deftype SortedInterfaceProbe [value comparator]
+  cljs.core/ISorted
+  (-sorted-seq [this ascending?]
+    (sorted-interface-mark 4 (if ascending? value (- 0 value))))
+  (-sorted-seq-from [this k ascending?]
+    (sorted-interface-mark 4 (if ascending? (+ value k) (- value k))))
+  (-entry-key [this entry]
+    (sorted-interface-mark 4 (+ value entry)))
+  (-comparator [this]
+    (sorted-interface-mark 4 comparator))
+  cljs.core/IComparable
+  (-compare [this other]
+    (sorted-interface-mark 4 (comparator value other))))
+(def sorted-interface-probe (SortedInterfaceProbe. 17 sorted-interface-comparator))
+(def saved-sorted-seq cljs.core/-sorted-seq)
+(def saved-sorted-from cljs.core/-sorted-seq-from)
+(def saved-entry-key cljs.core/-entry-key)
+(def saved-comparator cljs.core/-comparator)
+(def saved-compare cljs.core/-compare)
+(deftype UnsortedInterfaceProbe [value comparator])
+(def unsorted-interface-probe (UnsortedInterfaceProbe. 17 sorted-interface-comparator))
+(def saved-sorted-protocol cljs.core/ISorted)
+(def saved-comparable-protocol cljs.core/IComparable)

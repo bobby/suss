@@ -111,6 +111,10 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, .. } => match operation {
+                        Nominal::IsNumber | Nominal::IsString => {
+                            names.insert(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" });
+                            names.insert("invoke");
+                        }
                         Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -121,6 +125,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
+                        Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
@@ -260,6 +265,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "protocol-value-new"
             | "constructor-new"
             | "source-constructor-new"
+            | "value-constructor"
             | "constructor-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "source-array-new"
@@ -268,7 +274,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-array-length-args"
             | "source-array-get-indices"
             | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
-            "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
+            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -985,6 +991,19 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::IsNumber | Nominal::IsString => {
+                            // Reuse the runtime factory, never a mutable public cell.
+                            // Arguments are already evaluated once in source order.
+                            function
+                                .instruction(&Call(index(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" })))
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 })
+                                .instruction(&Call(index("invoke")))
+                                .instruction(&RefCastNonNull(HeapType::I31))
+                                .instruction(&I31GetU)
+                                .instruction(&I32Const(4))
+                                .instruction(&I32Eq);
+                        }
                         Nominal::IsClosure => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -1107,6 +1126,7 @@ fn emit_function(
                         | Nominal::IsLanguageError
                         | Nominal::IsNativeObject
                         | Nominal::IsTypeConstructor
+                        | Nominal::ValueConstructor
                         | Nominal::SourceFunctionName
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
@@ -1135,6 +1155,7 @@ fn emit_function(
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::IsNativeObject => "native-object?",
                                 Nominal::IsTypeConstructor => "class-value-is",
+                                Nominal::ValueConstructor => "value-constructor",
                                 Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
                                 Nominal::NativeObjectGet => "native-object-property-get",

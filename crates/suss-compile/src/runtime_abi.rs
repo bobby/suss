@@ -26,6 +26,8 @@ mod native_object_methods;
 mod native_object_factory;
 mod native_object_properties;
 mod nominal;
+mod type_values;
+mod primitive_constructors;
 mod numeric;
 mod numeric_hash;
 mod identity_hash;
@@ -679,6 +681,8 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
     arithmetic_functions.extend(async_library::functions(&mut b));
+    arithmetic_functions.extend(primitive_constructors::functions(&mut b));
+    type_values::functions(&mut b);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -931,6 +935,8 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::i64_const(1));
     r#async::append_descriptor(&mut globals);
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
+    type_values::append_globals(&mut globals);
+    primitive_constructors::append_globals(&mut globals);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

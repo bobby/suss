@@ -176,16 +176,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     ordinary_body.push(GlobalGet(ORDINARY_ROOT));
     let ordinary = callback(b, &[], &ordinary_body);
     declared.push(ordinary);
-    b.function(
-        "core-exception-info-class",
-        &[],
-        &[VALUE],
-        &[
-            GlobalGet(DESCRIPTOR_GLOBAL),
-            RefFunc(ordinary),
-            I32Const(0),
-            I32Const(-1),
-            Call(b.names["closure-new"]),
+    b.function_with_locals(
+        "core-exception-info-class", &[], &[VALUE], &[(1, VALUE)], &[
+            GlobalGet(DESCRIPTOR_GLOBAL), GlobalGet(type_values::KEY_GLOBAL),
+            Call(b.names["protocol-method-get"]), LocalSet(0),
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(4)), If(BlockType::Empty),
+            LocalGet(0), Return, End,
+            GlobalGet(DESCRIPTOR_GLOBAL), RefFunc(ordinary), I32Const(0), I32Const(-1),
+            Call(b.names["closure-new"]), LocalSet(0),
+            GlobalGet(DESCRIPTOR_GLOBAL), GlobalGet(type_values::KEY_GLOBAL), LocalGet(0),
+            Call(b.names["protocol-method-set"]), LocalGet(0),
         ],
     );
     let binding_get = b.names["binding-get"];

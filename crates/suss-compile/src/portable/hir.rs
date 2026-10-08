@@ -289,6 +289,9 @@ impl Bitwise {
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nominal {
+    /// Immutable private tests; public predicate cells remain live.
+    IsNumber,
+    IsString,
     IsClosure,
     BindCallable,
     LiveDispatcher,
@@ -309,6 +312,7 @@ pub enum Nominal {
     NativeObjectFactory,
     IsNativeObject,
     IsTypeConstructor,
+    ValueConstructor,
     SourceFunctionName,
     NativeObjectDefaultPrototype,
     NativeObjectGet,
@@ -334,7 +338,9 @@ impl Nominal {
         match self {
             Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
             Self::StringIndexOf => Type::Number,
-            Self::IsClosure
+            Self::IsNumber
+            | Self::IsString
+            | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
             | Self::IsLanguageError
@@ -351,7 +357,7 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsString | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
                 Self::CoerceString => count == 1,
                 Self::ConcatString | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1817,9 +1823,12 @@ impl Analyzer<'_> {
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
+                "number?" => Some(Nominal::IsNumber),
+                "string?" => Some(Nominal::IsString),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
+                "value-constructor" => Some(Nominal::ValueConstructor),
                 "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),

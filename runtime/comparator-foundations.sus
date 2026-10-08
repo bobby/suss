@@ -1,0 +1,16 @@
+;; Original Suss prerequisite, not an imported compare declaration.
+;; Scalar-only re-expression of Closure goog.array.defaultCompare's > then <.
+;; Reviewed oracle dependency: CLJS c4295f303100bbf5afac449242d30bca1126f1a1.
+;; This file is not yet wired into the generated core import/bootstrap artifacts.
+;; Objects/arrays require ordered ToPrimitive and are explicitly rejected here.
+(def ^:private default-compare-scalar
+  (let [scalar? (fn [x]
+                  (or (suss.bootstrap/number? x)
+                      (suss.bootstrap/string? x)
+                      (suss.bootstrap/nil? x)
+                      (cljs.core/== x true)
+                      (cljs.core/== x false)))]
+    (fn [a b]
+      (if (and (scalar? a) (scalar? b))
+        (if (cljs.core/> a b) 1 (if (cljs.core/< a b) -1 0))
+        (throw (suss.bootstrap/error "Scalar comparator requires scalar operands"))))))
