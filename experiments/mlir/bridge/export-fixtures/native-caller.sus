@@ -1,0 +1,2 @@
+;; Original comparison source, MIT/Apache-2.0; same live-cell call as producer-caller.mlir.
+(bridge/producer 2)

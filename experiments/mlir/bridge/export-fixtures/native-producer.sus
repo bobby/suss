@@ -1,0 +1,2 @@
+;; Original comparison source, MIT/Apache-2.0; same closure/capture as producer-caller.mlir.
+(let [^{:tag number :marker false :nil-marker nil} x 7 f (fn [y] (+ x y))] f)

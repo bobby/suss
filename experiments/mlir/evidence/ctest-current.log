@@ -1,0 +1,11 @@
+Test project /private/tmp/suss-m4-mlir-toolchain/build-export-pinned
+    Start 1: suss-dialect-fixtures
+1/3 Test #1: suss-dialect-fixtures ............   Passed    2.14 sec
+    Start 2: suss-verified-graph-export
+2/3 Test #2: suss-verified-graph-export .......   Passed    0.62 sec
+    Start 3: suss-effects-export
+3/3 Test #3: suss-effects-export ..............   Passed    0.54 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =   3.31 sec

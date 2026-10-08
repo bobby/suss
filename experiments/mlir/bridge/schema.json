@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "verified_mlir",
+    "producer",
+    "caller",
+    "expected_bits"
+  ],
+  "properties": {
+    "schema": {
+      "const": "suss.mlir.bridge.v1"
+    },
+    "verified_mlir": {
+      "const": true
+    },
+    "producer": {
+      "$ref": "#/$defs/graph"
+    },
+    "caller": {
+      "$ref": "#/$defs/graph"
+    },
+    "expected_bits": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    }
+  },
+  "$defs": {
+    "type": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "f64"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "arity",
+            "captures"
+          ],
+          "properties": {
+            "kind": {
+              "const": "closure"
+            },
+            "arity": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            },
+            "captures": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "#/$defs/type"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parameters",
+        "operations",
+        "return_value"
+      ],
+      "properties": {
+        "parameters": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        },
+        "operations": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "op",
+                  "bits"
+                ],
+                "properties": {
+                  "op": {
+                    "const": "suss.const"
+                  },
+                  "bits": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{16}$"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "op",
+                  "lhs",
+                  "rhs"
+                ],
+                "properties": {
+                  "op": {
+                    "const": "suss.add"
+                  },
+                  "lhs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  },
+                  "rhs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "op",
+                  "captures",
+                  "arity",
+                  "body"
+                ],
+                "properties": {
+                  "op": {
+                    "const": "suss.closure"
+                  },
+                  "captures": {
+                    "type": "array",
+                    "maxItems": 32,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 8191
+                    }
+                  },
+                  "arity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32
+                  },
+                  "body": {
+                    "$ref": "#/$defs/graph"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "op",
+                  "callee",
+                  "arguments"
+                ],
+                "properties": {
+                  "op": {
+                    "const": "suss.call"
+                  },
+                  "callee": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  },
+                  "arguments": {
+                    "type": "array",
+                    "maxItems": 32,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 8191
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "return_value": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8191
+        }
+      }
+    }
+  }
+}

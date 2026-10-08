@@ -1,0 +1,513 @@
+{
+  "cells": [
+    {
+      "initial_bits": "0000000000000000",
+      "name": "journal",
+      "namespace": "effects"
+    },
+    {
+      "initial_bits": "0000000000000000",
+      "name": "count",
+      "namespace": "effects"
+    }
+  ],
+  "entry": {
+    "operations": [
+      {
+        "captures": [],
+        "function": {
+          "operations": [
+            {
+              "captures": [],
+              "function": {
+                "operations": [
+                  {
+                    "id": 0,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "read",
+                    "result_type": {
+                      "kind": "value"
+                    }
+                  },
+                  {
+                    "bits": "4024000000000000",
+                    "id": 1,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 2,
+                    "kind": "multiply",
+                    "lhs": 0,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 1
+                  },
+                  {
+                    "bits": "3ff0000000000000",
+                    "id": 3,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 4,
+                    "kind": "add",
+                    "lhs": 2,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 3
+                  },
+                  {
+                    "id": 5,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "write",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "value": 4
+                  },
+                  {
+                    "id": 6,
+                    "name": "count",
+                    "namespace": "effects",
+                    "op": "read",
+                    "result_type": {
+                      "kind": "value"
+                    }
+                  },
+                  {
+                    "bits": "3ff0000000000000",
+                    "id": 7,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 8,
+                    "kind": "add",
+                    "lhs": 6,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 7
+                  },
+                  {
+                    "id": 9,
+                    "name": "count",
+                    "namespace": "effects",
+                    "op": "write",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "value": 8
+                  },
+                  {
+                    "id": 10,
+                    "op": "bool",
+                    "result_type": {
+                      "kind": "bool"
+                    },
+                    "value": true
+                  }
+                ],
+                "parameters": [],
+                "terminator": {
+                  "op": "return",
+                  "value": 10
+                }
+              },
+              "id": 0,
+              "op": "closure",
+              "result_type": {
+                "arity": 0,
+                "captures": [],
+                "kind": "effect_closure"
+              }
+            },
+            {
+              "arguments": [],
+              "callee": 0,
+              "id": 1,
+              "op": "call",
+              "result_type": {
+                "kind": "value"
+              }
+            },
+            {
+              "id": 2,
+              "op": "bool",
+              "result_type": {
+                "kind": "bool"
+              },
+              "value": true
+            },
+            {
+              "id": 3,
+              "lhs": 1,
+              "op": "equal",
+              "result_type": {
+                "kind": "bool"
+              },
+              "rhs": 2
+            },
+            {
+              "alternative": {
+                "operations": [
+                  {
+                    "id": 12,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "read",
+                    "result_type": {
+                      "kind": "value"
+                    }
+                  },
+                  {
+                    "bits": "4024000000000000",
+                    "id": 13,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 14,
+                    "kind": "multiply",
+                    "lhs": 12,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 13
+                  },
+                  {
+                    "bits": "401c000000000000",
+                    "id": 15,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 16,
+                    "kind": "add",
+                    "lhs": 14,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 15
+                  },
+                  {
+                    "id": 17,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "write",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "value": 16
+                  },
+                  {
+                    "bits": "4020000000000000",
+                    "id": 18,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  }
+                ],
+                "parameters": [],
+                "terminator": {
+                  "op": "yield",
+                  "value": 18
+                }
+              },
+              "condition": 3,
+              "consequent": {
+                "operations": [
+                  {
+                    "id": 5,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "read",
+                    "result_type": {
+                      "kind": "value"
+                    }
+                  },
+                  {
+                    "bits": "4024000000000000",
+                    "id": 6,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 7,
+                    "kind": "multiply",
+                    "lhs": 5,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 6
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "id": 8,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  },
+                  {
+                    "id": 9,
+                    "kind": "add",
+                    "lhs": 7,
+                    "op": "dynamic_arithmetic",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "rhs": 8
+                  },
+                  {
+                    "id": 10,
+                    "name": "journal",
+                    "namespace": "effects",
+                    "op": "write",
+                    "result_type": {
+                      "kind": "value"
+                    },
+                    "value": 9
+                  },
+                  {
+                    "bits": "401c000000000000",
+                    "id": 11,
+                    "op": "const",
+                    "result_type": {
+                      "kind": "f64"
+                    }
+                  }
+                ],
+                "parameters": [],
+                "terminator": {
+                  "op": "yield",
+                  "value": 11
+                }
+              },
+              "id": 4,
+              "op": "if",
+              "result_type": {
+                "kind": "value"
+              }
+            }
+          ],
+          "parameters": [],
+          "terminator": {
+            "op": "return",
+            "value": 4
+          }
+        },
+        "id": 0,
+        "op": "closure",
+        "result_type": {
+          "arity": 0,
+          "captures": [],
+          "kind": "effect_closure"
+        }
+      },
+      {
+        "captures": [],
+        "function": {
+          "operations": [
+            {
+              "id": 1,
+              "name": "journal",
+              "namespace": "effects",
+              "op": "read",
+              "result_type": {
+                "kind": "value"
+              }
+            },
+            {
+              "bits": "4024000000000000",
+              "id": 2,
+              "op": "const",
+              "result_type": {
+                "kind": "f64"
+              }
+            },
+            {
+              "id": 3,
+              "kind": "multiply",
+              "lhs": 1,
+              "op": "dynamic_arithmetic",
+              "result_type": {
+                "kind": "value"
+              },
+              "rhs": 2
+            },
+            {
+              "bits": "4008000000000000",
+              "id": 4,
+              "op": "const",
+              "result_type": {
+                "kind": "f64"
+              }
+            },
+            {
+              "id": 5,
+              "kind": "add",
+              "lhs": 3,
+              "op": "dynamic_arithmetic",
+              "result_type": {
+                "kind": "value"
+              },
+              "rhs": 4
+            },
+            {
+              "id": 6,
+              "name": "journal",
+              "namespace": "effects",
+              "op": "write",
+              "result_type": {
+                "kind": "value"
+              },
+              "value": 5
+            }
+          ],
+          "parameters": [
+            {
+              "id": 0,
+              "type": {
+                "kind": "value"
+              }
+            }
+          ],
+          "terminator": {
+            "op": "return",
+            "value": 0
+          }
+        },
+        "id": 1,
+        "op": "closure",
+        "result_type": {
+          "arity": 1,
+          "captures": [],
+          "kind": "effect_closure"
+        }
+      },
+      {
+        "captures": [],
+        "function": {
+          "operations": [
+            {
+              "id": 0,
+              "name": "journal",
+              "namespace": "effects",
+              "op": "read",
+              "result_type": {
+                "kind": "value"
+              }
+            },
+            {
+              "bits": "4024000000000000",
+              "id": 1,
+              "op": "const",
+              "result_type": {
+                "kind": "f64"
+              }
+            },
+            {
+              "id": 2,
+              "kind": "multiply",
+              "lhs": 0,
+              "op": "dynamic_arithmetic",
+              "result_type": {
+                "kind": "value"
+              },
+              "rhs": 1
+            },
+            {
+              "bits": "4010000000000000",
+              "id": 3,
+              "op": "const",
+              "result_type": {
+                "kind": "f64"
+              }
+            },
+            {
+              "id": 4,
+              "kind": "add",
+              "lhs": 2,
+              "op": "dynamic_arithmetic",
+              "result_type": {
+                "kind": "value"
+              },
+              "rhs": 3
+            },
+            {
+              "id": 5,
+              "name": "journal",
+              "namespace": "effects",
+              "op": "write",
+              "result_type": {
+                "kind": "value"
+              },
+              "value": 4
+            },
+            {
+              "bits": "0000000000000000",
+              "id": 6,
+              "op": "const",
+              "result_type": {
+                "kind": "f64"
+              }
+            }
+          ],
+          "parameters": [],
+          "terminator": {
+            "op": "return",
+            "value": 6
+          }
+        },
+        "id": 2,
+        "op": "closure",
+        "result_type": {
+          "arity": 0,
+          "captures": [],
+          "kind": "effect_closure"
+        }
+      },
+      {
+        "body": 0,
+        "cleanup": 2,
+        "handler": 1,
+        "id": 3,
+        "op": "try",
+        "result_type": {
+          "kind": "value"
+        }
+      }
+    ],
+    "parameters": [],
+    "terminator": {
+      "op": "return",
+      "value": 3
+    }
+  },
+  "schema": "suss.mlir.effects.v1"
+}

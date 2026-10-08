@@ -1,0 +1,67 @@
+{
+  "schema": "suss.mlir.bridge.v1",
+  "verified_mlir": true,
+  "producer": {
+    "parameters": [],
+    "operations": [
+      {
+        "op": "suss.const",
+        "bits": "401c000000000000"
+      },
+      {
+        "op": "suss.closure",
+        "captures": [
+          0
+        ],
+        "arity": 1,
+        "body": {
+          "parameters": [
+            {
+              "kind": "f64"
+            },
+            {
+              "kind": "f64"
+            }
+          ],
+          "operations": [
+            {
+              "op": "suss.add",
+              "lhs": 0,
+              "rhs": 1
+            }
+          ],
+          "return_value": 2
+        }
+      }
+    ],
+    "return_value": 1
+  },
+  "caller": {
+    "parameters": [
+      {
+        "kind": "closure",
+        "arity": 1,
+        "captures": [
+          {
+            "kind": "f64"
+          }
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "op": "suss.const",
+        "bits": "4000000000000000"
+      },
+      {
+        "op": "suss.call",
+        "callee": 0,
+        "arguments": [
+          1
+        ]
+      }
+    ],
+    "return_value": 2
+  },
+  "expected_bits": "4022000000000000"
+}
