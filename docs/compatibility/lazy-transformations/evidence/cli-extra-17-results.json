@@ -1,0 +1,104 @@
+[
+  {
+    "id": "map-ordered-2-inputs",
+    "exit": 0,
+    "stdout": "[11 [1 2 9] 22 [1 2 9 9]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-ordered-3-inputs",
+    "exit": 0,
+    "stdout": "[111 [1 2 3 9] 222 [1 2 3 9 9]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-ordered-4-inputs",
+    "exit": 0,
+    "stdout": "[1111 [1 2 3 4 9] 2222 [1 2 3 4 9 9]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "chunk-buffer-sharing-finalization",
+    "exit": 0,
+    "stdout": "[true true 2 2 2 true 2 nil false true]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-transducer-reduced-identity",
+    "exit": 0,
+    "stdout": "[true true 7 [1 2]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-transducer-reduced-identity",
+    "exit": 0,
+    "stdout": "[true true 7 [1 2]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-transducer-callback-throw-order",
+    "exit": 0,
+    "stdout": "[false [1]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-transducer-reducer-throw-order",
+    "exit": 0,
+    "stdout": "[nil [1 2]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-live-first-helper",
+    "exit": 0,
+    "stdout": "[21]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-live-first-helper",
+    "exit": 0,
+    "stdout": "[21]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-chunk-read-mutation",
+    "exit": 0,
+    "stdout": "[1 2 [1 2]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-live-recursive-helper",
+    "exit": 0,
+    "stdout": "[1 77]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-live-chunk-helper",
+    "exit": 0,
+    "stdout": "[0 [9]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-chunk-read-mutation",
+    "exit": 0,
+    "stdout": "[99 2 [1 2]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-live-recursive-helper",
+    "exit": 0,
+    "stdout": "[1 77]\n",
+    "stderr": ""
+  },
+  {
+    "id": "filter-live-chunk-helper",
+    "exit": 0,
+    "stdout": "[0 [9]]\n",
+    "stderr": ""
+  },
+  {
+    "id": "map-transducer-live-variadic-apply",
+    "exit": 0,
+    "stdout": "[77]\n",
+    "stderr": ""
+  }
+]

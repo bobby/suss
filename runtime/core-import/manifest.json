@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "0cedba45b0f502afa011a5980e3160ae593748ed0056fc1e0466c01ae1f67f01",
-  "reviews-sha256": "66840efd556a08db19777a4240ba4c29912b994fb07e6e7b0ccbaf197bb43370",
+  "reviews-sha256": "89bd26948cfe7ae9aa6ef8a8e203b1afa78ddeb8e1f7f2a2233c8fd71678690c",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10061,8 +10061,8 @@
         "owned mutable nominal fields/Object method dispatch"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     },
@@ -10094,8 +10094,8 @@
         "existing owned-array macro adapter"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     },
@@ -10125,8 +10125,8 @@
         "live nominal Object method dispatch on ChunkBuffer"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     },
@@ -10156,8 +10156,8 @@
         "live nominal Object method dispatch on ChunkBuffer"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     },
@@ -10194,8 +10194,8 @@
         "live callback/protocol dependencies"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     },
@@ -10232,8 +10232,8 @@
         "live callback/protocol dependencies"
       ],
       "semantic-tests": [
-        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary observations pass; native pending)",
-        "crates/suss-cli/tests/portable_lazy_transformations.rs (authored; native execution pending)",
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
     }

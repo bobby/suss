@@ -1,0 +1,29 @@
+1065 upstream declarations; inventory verified
+Review overlay verified: 432 reviewed, 633 unassessed declarations
+23 complete licensed sequence setup forms verified
+335 core import files verified
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 1.37s
+     Running tests/core_import.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/core_import-a854accabe37fa63)
+
+running 17 tests
+test bootstrap_nil_test_captures_values_across_fragments_and_loop_edges ... ok
+test bootstrap_nil_test_evaluates_once_and_propagates_exceptions ... ok
+test imported_boolean_port_arguments_run_once_before_arity_errors ... ok
+test imported_boolean_ports_keep_original_behavior_and_canonical_live_bindings ... ok
+test imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload ... ok
+test imported_boolean_ports_use_cljs_truthiness_for_primitives_and_objects ... ok
+test imported_core_aliases_and_captured_function_observe_live_redefinition ... ok
+test imported_core_matches_independently_decoded_pinned_scalar_corpus ... ok
+test imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity ... ok
+test imported_identity_preserves_exact_values_and_object_identity_across_gc ... ok
+test imported_inc_dec_alias_calls_capture_callee_before_mutating_operand ... ok
+test imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover ... ok
+test imported_inc_dec_unsupported_object_coercion_is_typed_and_recovers ... ok
+test imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings ... ok
+test imported_some_evaluates_arguments_once_before_arity_error ... ok
+test imported_some_distinguishes_nil_from_false_and_survives_gc ... ok
+test imported_some_ignores_redefined_predicate_and_not_vars ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.01s
+

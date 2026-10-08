@@ -21877,3 +21877,46 @@ pass. Portable post226-cpp-gates.json/log retained in MLIR recovery evidence wit
 source/base/SDKarchive/binary/log hashes and exact command argv. New main Rust/
 Wasmtime/genuine-source/measurement/fullbaseline gates remain pending. SDKrestore
 used unchanged documented acquisition/configure/gate procedure; no RUSTFLAGS.
+
+Lazy bootstrap49767terminal0: generation finished after12m22s initialbuild; both
+Runtime/Macro pairs changed and written. Focused native95665terminal0:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target/m4-lazy-current cargo test -p suss-cli --test portable_lazy_transformations --locked -- --test-threads=2`
+4passed0failed/ignored/filtered14.63s; allfourrunbothphases, complete41cases plus
+fragmented GC captures/cache, solehosthandles, rawArrayChunk backingidentity.
+Actualcompiledbuild-script identity probe also passes; no100Mdefaultbudget or
+measuredfuelclaim. Reproducibility/coreimport/affectedgates65754currentlylive.
+Its queued affected-suite argument mistakenly names nonexistent
+compiled_macro_lazy_sequences; actual targetportable_lazy_sequences identified
+beforethatqueuedcommandexecutes. Let repro/import finish; retain selection failure
+ifitoccurs then rerun exactcorrecttargets onceownerterminal. No secondCargoGraph.
+
+Bootstrap/import65754 completed reproductions andnativegates before the queued
+invalidtargetselection failed: bothartifactpairs byte-identical twice/noJavaNode,
+identityinvalidationpass, compiled_bootstrap4pass38.40s; core_import17pass37.24s.
+Then Cargo rejected nonexistent compiled_macro_lazy_sequences, terminal101 with
+nosemantic testexecuted. Corrected actualtargets portable_chunk_effects,
+portable_lazy_sequences, portable_reduction nowowner52405; allassertionsunchanged.
+Logs under /Users/bobby/code/github/bobby/suss/target/m4-evidence. No known failure
+replaced with success. Draft PRbody prepared /private/tmp/suss-m4-lazy-pr-body.md
+withRefs16/17/19 and fullbaseline/review/CIstillpending; notpublishedyet.
+
+Affected52405terminal0: chunk2pass10.65s/lazy4pass12.47s/reduction3pass16.92s,
+all0failed/ignored/filtered. Six review evidence references updated from authored/
+pending to actual41primary/native andfourbothphaseGCpasses; statuses remain
+in-progress for full original M4. Regenerated importer335/reviews432 and dependency
+manifest. Manifest is embedded by portable/bootstrap.rs; therefore regenerated
+bootstrap again58149terminal0 (7.41s build) after this metadata-only update. Final
+four native + bootstraprepro + coreimport nowrunsequentially in oneCargo owner,
+with lazy-final-* logs under/Users/bobby/code/github/bobby/suss/target/m4-evidence.
+No semantic/sourcefunction change, no assertions removed, no arbitrarybudget
+increase. Freeze/commit/publishdraft and exactheadfullbaseline/finalreviewCI after
+these final-identity gates. #188currentmainRust/native/fullbaseline stillpending;
+noM4complete/noPRmergeclaim. Validation commands/procedure unchanged peruser.
+
+Final-identity gate72285terminal0: native4pass20.96s, bootstrapbytepairs reproducible
+withJavaNodeabsent/identityinvalidation/fourtests23.43s, coreimport17pass26.01s,
+zero failures/ignores/filters. Retained source/primary/CLI/failure/native/provenance
+logs with hashes underdocs/compatibility/lazy-transformations/evidence, including
+wrongoriginalexpectations and rejection failures; missing captures explicit.
+Nextfreezecommit exactverifiedsource/artifacts, startrequiredfullworkspacebaseline,
+independentfinalheadreview anddraftPR/CI. No16–19completion orM4scopechange.

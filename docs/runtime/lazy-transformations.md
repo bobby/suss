@@ -2,7 +2,8 @@
 
 This draft retains complete pinned ClojureScript `map` and `filter` declarations
 and their whole `ChunkBuffer` dependency. It is original M4 work for #16–#19;
-portable compatibility remains unproven until the pending native gates execute.
+native tests now execute the full retained declarations; final publication gates
+and the original M4 acceptance criteria remain open.
 
 The upstream pin is `c4295f303100bbf5afac449242d30bca1126f1a1`. Originals,
 notices, source hashes, ranges, patches and adapted hashes are reproduced by
@@ -72,9 +73,10 @@ for both Runtime and Macro phases:
 - Inspect actual Wasmtime references to prove an ArrayChunk retains the same
   backing array after GC, independently of guest identity or printing.
 
-These tests are currently uncompiled/unexecuted. Their finite 100M operation
-allowance follows the existing sequence stress policy but remains unmeasured.
-Bootstrap regeneration must finish before native execution. Full provenance,
+All four native tests passed in 14.63s with zero failures/ignores/filters after
+bootstrap regeneration; each test executes both phases. Their finite 100M
+operation allowance follows the existing sequence stress policy but remains
+unmeasured, so no default-budget claim is made. Full provenance,
 bootstrap reproducibility, unfiltered workspace baseline, independent final-head
 review and final-head CI remain required for PR readiness.
 
