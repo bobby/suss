@@ -3779,7 +3779,7 @@ fn runtime_abi2_rejects_real_abi1_layouts_and_manifests_before_initializers() {
 
 #[test]
 fn runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners() {
-    // Development fixture adds access to the final scalar allocator global;
+    // Development fixture adds access to the scalar UID allocator global;
     // the production runtime deliberately exports no allocator mutation API.
     use wasm_encoder::{ExportKind, ExportSection, Module as EncodedModule, RawSection};
     let original = runtime_abi::module();
@@ -3788,7 +3788,19 @@ fn runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners() {
     for payload in wasmparser::Parser::new(0).parse_all(&original) {
         let payload = payload.unwrap();
         if let wasmparser::Payload::GlobalSection(ref globals) = payload {
-            counter = Some(globals.count() - 1);
+            for (index, global) in globals.clone().into_iter().enumerate() {
+                let global = global.unwrap();
+                if global.ty.mutable && global.ty.content_type == wasmparser::ValType::I64 {
+                    let mut initializer = global.init_expr.get_operators_reader();
+                    if matches!(initializer.read().unwrap(), wasmparser::Operator::I64Const { value: 1 })
+                        && matches!(initializer.read().unwrap(), wasmparser::Operator::End)
+                        && initializer.eof()
+                    {
+                        assert!(counter.replace(u32::try_from(index).unwrap()).is_none(),
+                            "UID allocator fixture must identify exactly one seeded i64 counter");
+                    }
+                }
+            }
         }
         if let wasmparser::Payload::ExportSection(ref exports) = payload {
             let mut section = ExportSection::new();

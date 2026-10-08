@@ -292,7 +292,8 @@ fn active_request_is_counted_before_dispatch_and_deduplicates_ordinary_owner_row
     let mut h = RetiringHarness::new();
     h.source("(def trace 0)");
     assert_eq!(h.enter(1), 0);
-    h.source("(def parent (suss.async/future* (set! trace (+ trace 1)) (suss.async/cancel! parent) ((fn [] (loop [] (recur))))))");
+    // This raw runtime fixture installs private ABI bindings, not async.sus.
+    h.source("(def parent (suss.async/future* (set! trace (+ trace 1)) (suss.internal.async/cancel! parent) ((fn [] (loop [] (recur))))))");
     assert_eq!(h.enter(2), 1);
     h.store.set_fuel(100_000).unwrap();
     let error = h
