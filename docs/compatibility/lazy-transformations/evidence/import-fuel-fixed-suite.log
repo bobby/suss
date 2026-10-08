@@ -1,0 +1,15 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 2.41s
+     Running tests/generated_async_import_bridge.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/generated_async_import_bridge-b1e8adf546eb721b)
+
+running 8 tests
+test component_caller_event6_drains_source_finally_before_cancellation_ack ... ok
+test component_caller_event6_closes_real_pending_read_before_cancellation_ack ... ok
+test parent_return_drains_cancelled_child_finally_before_retiring_invocation ... ok
+test public_component_host_abandoned_pending_call_retains_quarantine ... ok
+test generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer ... ok
+test retirement_cancel_wave_drains_unawaited_child_spawned_in_finally ... ok
+test source_completion_cancel_drains_canonical_host_operation_before_return ... ok
+test public_component_host_quarantines_import_error_and_preserves_primary_error ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.27s

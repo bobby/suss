@@ -72,6 +72,22 @@
     "cli-extra-17-results.json": {
       "bytes": 1987,
       "sha256": "7bc85e7895ab13f1fb3fad98d993bcb220c1b42a6ae7c28ccb48c36de20535f3"
+    },
+    "baseline-failed-5f19cf8.log": {
+      "bytes": 120516,
+      "sha256": "3dde1c88f149dd6c1d7a92c1e554c8cb6d6104408d67762a07bc3139c700e7a8"
+    },
+    "import-exact-reproduction.log": {
+      "bytes": 1007,
+      "sha256": "52675046e7aede40e3a6d982040a18bca84d73ccf87478137ba17b15d2f1e60d"
+    },
+    "import-fuel-measurement.log": {
+      "bytes": 3003,
+      "sha256": "db5645c559c1a03ee56d9a31171fb9134fab42dd04466cab541bc6f547090383"
+    },
+    "import-fuel-fixed-suite.log": {
+      "bytes": 1100,
+      "sha256": "fb128bf3fc55ef1f193d37a6080f976fce7b21522b92b3940772a07530f1c88d"
     }
   },
   "missing_at_capture": [],

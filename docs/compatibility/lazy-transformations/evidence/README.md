@@ -24,3 +24,14 @@ The two CLI result files total 41 complete-source probes. They exited zero with
 no stderr and matching closed printed values; they do not replace the lossless
 FormBridge/native Wasmtime assertions. The finite 100M focused corpus allowance
 is not a measured default-budget guarantee. Original M4 scope remains open.
+
+The baseline at5f19cf8 exited101 on scalar async-import fuel exhaustion.
+Exact testbinary reproduced it. Diagnostic10M measurement (notacceptedbound)
+retains initializer1711536, calls78296/78258/78258/78258, GC0, polls2/4/6/8.
+Total2024606 exceeds oldshared2M. Original testsource restored; initialization
+stays2M and one additional2M is shared across allfour calls. Assertions
+unchanged. Focused fixedsuite/review/finalhead baseline andCI pending.
+
+Fixed focusedsuite50519 terminal0:8passed/0failed/ignored/filtered23.27s.
+Independent fixreview confirms measurement/boundedbudget/assertionsunchanged.
+Final-head fullbaseline andCI remain pending after commit.

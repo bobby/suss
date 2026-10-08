@@ -1,0 +1,24 @@
+
+running 1 test
+
+thread 'generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer' (8794409) panicked at crates/suss-compile/tests/generated_async_import_bridge.rs:160:10:
+called `Result::unwrap()` on an `Err` value: error while executing at wasm backtrace:
+    0:  0x17dd6 - <unknown>!<wasm function 371>
+    1:  0x183c7 - <unknown>!<wasm function 375>
+    2:  0x193c7 - <unknown>!<wasm function 408>
+    3:  0x19734 - <unknown>!<wasm function 410>
+    4: 0x19b1c8 - <unknown>!<wasm function 29>
+    5: 0x19b36d - <unknown>!<wasm function 31>
+
+Caused by:
+    wasm trap: all fuel consumed by WebAssembly
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer ... FAILED
+
+failures:
+
+failures:
+    generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 3.72s

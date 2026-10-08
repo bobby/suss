@@ -21920,3 +21920,27 @@ logs with hashes underdocs/compatibility/lazy-transformations/evidence, includin
 wrongoriginalexpectations and rejection failures; missing captures explicit.
 Nextfreezecommit exactverifiedsource/artifacts, startrequiredfullworkspacebaseline,
 independentfinalheadreview anddraftPR/CI. No16–19completion orM4scopechange.
+
+Lazy final-head baseline99452 terminal101 at5f19cf8: scalar generated async
+import exhausted shared2M fuel at testline160,7neighboring tests pass. Full log
+target/m4-evidence/lazy-full-workspace-baseline.log retained. Exact existing
+binary reproduction61431 exits101/3.72s; separate reprolog retained. PR228
+body updated with failure; remainsdraft despite reviewedhead/10greenCI.
+Temporary diagnostic10M measurement keeps every result/poll assertion and
+reports initializer/per-call/GC fuel. Focused Cargo46378 sole live graph in
+existing lazy target/jobs2; no productionrepair/defaultbudgetchange yet.
+Restore original source after terminal measurement, then measured bounded fix
+with independent review and new finalhead baseline/CI. No blanketskip/fuelpatch.
+
+Fuelmeasurement46378 exits0/5.62s: initializer1711536, fourcalls313070 total,
+GC0, polls2/4/6/8; combined2024606>2M. Restoredoriginalsource removed10M
+diagnostics, added once-only2Mreset after successful init, retained2Minit and
+cumulativefourcall2M. Everyassertion unchanged. Full8testfocused50519live;
+independent fixreview dispatched. Failedbaseline/exactrepro/measurement logs
+retained in lazy-transformations/evidence with hashes. Newfinalhead baseline
+andCI required. No productionruntime/defaultbudget change.
+
+Fuel fix focused50519 terminal0: complete8tests pass23.27s/no failures or
+ignores/filters. Independent review no materialfindings; diagnosticsremoved,
+finite2Minit andshared2Mfourcalls preserveeveryassertion. Retainedfixedsuite
+log/hash. Next commit/push newhead then full lockedworkspacebaseline/finalCI.

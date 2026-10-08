@@ -1,0 +1,74 @@
+   Compiling syn v2.0.111
+   Compiling hashbrown v0.17.1
+   Compiling wasmtime-internal-core v49.0.1
+   Compiling cranelift-bitset v0.136.1
+   Compiling indexmap v2.14.2
+   Compiling anyhow v1.0.104
+   Compiling wasmparser v0.258.0
+   Compiling serde_derive v1.0.228
+   Compiling thiserror-impl v2.0.17
+   Compiling thiserror v2.0.17
+   Compiling pulley-macros v49.0.1
+   Compiling serde v1.0.228
+   Compiling smallvec v1.15.1
+   Compiling cranelift-entity v0.136.1
+   Compiling cobs v0.3.0
+   Compiling wasmtime-internal-versioned-export-macros v49.0.1
+   Compiling postcard v1.1.3
+   Compiling cranelift-bforest v0.136.1
+   Compiling pulley-interpreter v49.0.1
+   Compiling wasm-encoder v0.258.0
+   Compiling cranelift-codegen-meta v0.136.1
+   Compiling cranelift-codegen v0.136.1
+   Compiling wasmprinter v0.258.0
+   Compiling regalloc2 v0.15.2
+   Compiling rustix v1.1.5
+   Compiling wasmtime-environ v49.0.1
+   Compiling errno v0.3.14
+   Compiling wit-parser v0.258.0
+   Compiling wasm-metadata v0.258.0
+   Compiling zerocopy-derive v0.8.31
+   Compiling wast v258.0.0
+   Compiling zerocopy v0.8.31
+   Compiling wit-component v0.258.0
+   Compiling wasmtime-internal-jit-debug v49.0.1
+   Compiling wasmtime-internal-fiber v49.0.1
+   Compiling dirs-sys-next v0.1.2
+   Compiling directories-next v2.0.0
+   Compiling wasmtime-internal-wit-bindgen v49.0.1
+   Compiling stacker v0.1.22
+   Compiling half v2.7.1
+   Compiling wasmtime-internal-unwinder v49.0.1
+   Compiling getrandom v0.3.4
+   Compiling wat v1.258.0
+   Compiling cranelift-frontend v0.136.1
+   Compiling cranelift-native v0.136.1
+   Compiling wasmtime v49.0.1
+   Compiling wasmtime-internal-cache v49.0.1
+   Compiling tempfile v3.27.0
+   Compiling ciborium-ll v0.2.2
+   Compiling chumsky v1.0.0-alpha.8
+   Compiling wasmtime-internal-cranelift v49.0.1
+   Compiling wasmtime-internal-component-macro v49.0.1
+   Compiling wasm-compose v0.258.0
+   Compiling fxprof-processed-profile v0.8.1
+   Compiling wasmtime-internal-jit-icache-coherence v49.0.1
+   Compiling async-trait v0.1.89
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-reader)
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling criterion v0.5.1
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 3m 56s
+     Running tests/generated_async_import_bridge.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/generated_async_import_bridge-b1e8adf546eb721b)
+
+running 1 test
+MEASURE initializer=1711536
+MEASURE input=40 invocation=78296 gc=0 polls=2
+MEASURE input=17 invocation=78258 gc=0 polls=4
+MEASURE input=0 invocation=78258 gc=0 polls=6
+MEASURE input=4294967293 invocation=78258 gc=0 polls=8
+test generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 5.62s
