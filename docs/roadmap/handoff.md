@@ -21776,3 +21776,56 @@ session49148 exited0, 8passed/0failed/ignored/filtered,11.20s. Rustfmt and diff
 checks passed. Independent review found no material findings; finite initializer
 and cumulative invocation limits retained, every cleanup/outcome assertion intact.
 New exact-head full baseline and CI remain pending; do not promote yet.
+
+M4 full map/filter refresh onto merged #226 main4e0f00d: preserved every current
+recipe/review and queue/bootstrap source, additively carried six complete pinned
+forms and explicit hashbound patches plus expanded34-case primary/native sources.
+Fresh prior-worktree primary34match; original failed expectations/raw observations
+retained under/private/tmp. Livefirst result21 comes from body plus LazySeq.-first
+live dispatch, initial11 expectation retained as failure. New bothphase unforced
+GC/capture/cache test authored, not compiled/executed. Refresh receipt
+/private/tmp/suss-m4-lazy-current-refresh.json records copied hashes. Bootstrap
+regeneration/focused actual native/provenance/fullbaseline/review/CI still needed.
+MLIR baseline51551 continues frozen54c5ce6; do not start second Cargo graph.
+Old24-case CLI probe53077 still runs against complete-source file inputs; it does
+not certify regenerated current-main bootstrap or the ten added cases.
+
+Current-main map/filter expanded gate: all41 shared cases match fresh pinned
+ClojureScript (force/cache-analysis-false), terminal0 log
+/private/tmp/suss-m4-lazy-current-primary-live-shaped.log. Original34cases retained;
+added repeated filter -nth read under callback backing mutation (99 vs map1), live
+recursive map/filter and chunk helper dispatch, variadic transducer apply. First
+single-arity replacements failed pinned generated arity entrypoints with TypeError;
+retained source /private/tmp/suss-m4-lazy-live-single-arity-replacements.json and
+/private/tmp/suss-m4-lazy-current-primary-live.log. Multi-arity replacements preserve
+that call shape and pass. Current provenance335files/432reviews633unassessed;
+231Python pass12.771s. Four native tests now authored:41cases bothphases/postGC,
+fragmented captured lazy callbacks with pre-demand GC, solehosthandle retention,
+independent raw Wasmtime ArrayChunk backing ref_eq afterGC. All remain uncompiled/
+unexecuted pending bootstrap regeneration; no native acceptance inferred.
+Owned queue baseline cache had no Cargo owner (active Cargo37564 is unrelated
+Everwood; do not touch it). With disk685MiB, retained suss/bootstrap in-place and
+copied/hashes at/private/tmp/suss-m4-queue-retained-binaries, removed ONLY inactive
+owned queue debug deps/build/.fingerprint/incremental; disk7.8GiB. Raw logs/source
+untouched; currentCLI53077stillusespreservedbinary. MLIR51551 tests nowexecute
+frozen54c5ce6, not terminal. Independent current-draft review dispatched. Full
+original M4 sorted/record/sequence/reduction criteria remain open; no goal scope
+change and no PR merge performed by agent.
+
+Old complete-source CLI24probe session53077 terminal0: each subprocess exited0,
+no stderr, every closed printed vector/f64/bool/nil observation matches original
+24case expectations (bounded strict parser rejects unknown tokens/trailing data).
+Logs/results at/private/tmp/suss-m4-lazy-native-cases. These numeric observations
+are finite exact integers; printed equality is supplemental evidence, not the
+independent canonical storage/bothphase/bootstrap gate. Additional17current-main
+complete-source cases now queued against retained unchanged compiler CLI, results
+/private/tmp/suss-m4-lazy-current-native-extra. Cargo51551stillowns baseline.
+
+Independent current-base whole-form/source/test review completed: no material
+findings. Confirmed every325base recipe selection and426review unchanged/inorder,
+331total selections335artifacts, allfivepatches preserved, baseextractedbytes
+unchanged,41freshprimary reproduced, solehostGC/rawbackingidentity tests sound.
+Reviewer explicitly requires regenerated bootstrap and execution of allfourtests;
+100M authored finite corpus allowance remains unmeasured. Next after51551Cargo
+owner terminates: reconcile227withmain4e0f00d/evidence, regeneratecurrentlazy
+bootstrap in isolatedtarget, focusednative first, then fullbaseline/finalreviewCI.

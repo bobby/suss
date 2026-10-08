@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2a70931729b2d2d1f92bd6c7998df902beae7a1aaca8f3d49072382ebe7775ef",
+  "replacement": "(def chunk-buffer (fn [capacity] (ChunkBuffer. (make-array capacity) 0)))",
+  "rationale": "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+}
