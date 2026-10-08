@@ -26,7 +26,7 @@ use suss_compile::{
         SessionError, SessionValue,
     },
 };
-use suss_reader::{Symbol, forms::Kind};
+use suss_reader::{forms::Kind, Symbol};
 
 #[derive(Clone, Copy)]
 struct InputIdentity {
@@ -181,9 +181,13 @@ pub struct NativeReplHost<Out: Write, Err: Write> {
     #[cfg(test)]
     injected_ownerless_mutation_interrupt: bool,
     #[cfg(test)]
+    injected_cancel_mutation_interrupt: bool,
+    #[cfg(test)]
     reset_preflight: bool,
     #[cfg(test)]
     injected_observation_interrupt: Option<(&'static str, usize)>,
+    #[cfg(test)]
+    repeat_observation_interrupt: bool,
 }
 impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
     /// The caller installs signal/terminal handling and owns main linkage. This
@@ -226,9 +230,13 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
             #[cfg(test)]
             injected_ownerless_mutation_interrupt: false,
             #[cfg(test)]
+            injected_cancel_mutation_interrupt: false,
+            #[cfg(test)]
             reset_preflight: false,
             #[cfg(test)]
             injected_observation_interrupt: None,
+            #[cfg(test)]
+            repeat_observation_interrupt: false,
         })
     }
     pub fn interrupt_handles(
@@ -281,7 +289,12 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
         {
             let (_, remaining) = self.injected_observation_interrupt.as_mut().unwrap();
             if *remaining == 0 {
-                self.injected_observation_interrupt = None;
+                self.injected_observation_interrupt = if self.repeat_observation_interrupt {
+                    self.repeat_observation_interrupt = false;
+                    Some((_site, 0))
+                } else {
+                    None
+                };
                 Err(SessionError::Trap(wasmtime::Trap::Interrupt.into()))
             } else {
                 *remaining -= 1;
@@ -734,10 +747,23 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         })
     }
     fn request_cancel_pending(&mut self) -> Result<(), SessionError> {
+        // Classification belongs to this call, never to a preceding pump.
+        self.deferred_observation_interrupt = false;
         self.cancelling = true;
-        self.track_tasks()?;
-        if self.session.async_retiring_count()? == 0 {
+        let tracking = self.track_tasks();
+        self.getter_result("cancel-tracking", tracking)?;
+        let retiring = self.session.async_retiring_count();
+        let retiring = self.getter_result("cancel-retiring-count", retiring)?;
+        // From this point cancellation is mutation. Even an Interrupt cannot
+        // authorize observer retry or reuse a scheduler recovery receipt.
+        self.deferred_observation_interrupt = false;
+        if retiring == 0 {
             self.session.request_cancel_pending_tasks()?;
+            #[cfg(test)]
+            if self.injected_cancel_mutation_interrupt {
+                self.injected_cancel_mutation_interrupt = false;
+                return Err(SessionError::Trap(wasmtime::Trap::Interrupt.into()));
+            }
         }
         Ok(())
     }
@@ -898,11 +924,10 @@ mod tests {
             "both producer requests remain owned"
         );
         assert_eq!(host.session.stats().pending_host_requests, 2);
-        assert!(
-            host.endpoints
-                .iter()
-                .all(|endpoint| endpoint.file.is_none())
-        );
+        assert!(host
+            .endpoints
+            .iter()
+            .all(|endpoint| endpoint.file.is_none()));
         host.session.set_operation_fuel(1_000_000);
         host.poll_completions().unwrap();
         assert!(host.endpoints.is_empty());
@@ -1031,11 +1056,10 @@ mod tests {
         assert_eq!(host.endpoints.len(), 2);
         assert_eq!(host.requests.pending(), 0);
         assert_eq!(host.session.stats().pending_host_requests, 2);
-        assert!(
-            host.endpoints
-                .iter()
-                .all(|endpoint| endpoint.file.is_none() && endpoint.payload.is_none())
-        );
+        assert!(host
+            .endpoints
+            .iter()
+            .all(|endpoint| endpoint.file.is_none() && endpoint.payload.is_none()));
         for index in 0..host.endpoints.len() {
             assert_eq!(
                 host.session
@@ -1074,11 +1098,10 @@ mod tests {
         let error = host.pump_one().unwrap_err();
         assert!(host.observation_interrupted(&error));
         assert_eq!(host.tasks.len(), 2);
-        assert!(
-            host.session
-                .values_identical(&host.tasks[0], &retained)
-                .unwrap()
-        );
+        assert!(host
+            .session
+            .values_identical(&host.tasks[0], &retained)
+            .unwrap());
         assert_eq!(host.session.async_task_counts().unwrap(), (3, 3, 0));
         host.track_tasks().unwrap();
         assert_eq!(host.tasks.len(), 3);
@@ -1292,6 +1315,141 @@ mod tests {
         assert!(!host.errors.is_empty());
     }
     #[test]
+    fn cancellation_preflight_interrupt_preserves_intent_and_buffered_source() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        for site in ["cancel-tracking", "cancel-retiring-count"] {
+            for intent in ["interrupt", "reset", "exit", "eof"] {
+                let mut host = host();
+                drop(host.submit("(def cancel-effects 0) (def cancelling-owner (suss.async/future* (try (suss.async/await* (suss.internal.async/pending)) (finally (suss.async/await* (suss.async/future* (set! cancel-effects (+ cancel-effects 1))))))))").unwrap());
+                assert!(host.pump_one().unwrap());
+                assert_eq!(host.session.async_task_counts().unwrap(), (1, 0, 0));
+                let old_nil = host.session.eval("nil").unwrap();
+                let owner = host.session.eval("cancelling-owner").unwrap();
+                host.injected_observation_interrupt = Some((site, 0));
+                host.repeat_observation_interrupt = true;
+                let initial = match intent {
+                    "interrupt" => InputEvent::Interrupt,
+                    "reset" => InputEvent::Line(":reset".into()),
+                    "exit" => InputEvent::Line(":quit".into()),
+                    _ => InputEvent::Eof,
+                };
+                let buffered = if intent == "interrupt" {
+                    "(+ 48600 cancel-effects)"
+                } else {
+                    "(+ 48600 1)"
+                };
+                let mut input = InterruptInput {
+                    events: std::collections::VecDeque::from([
+                        initial,
+                        InputEvent::Line(buffered.into()),
+                        InputEvent::Interrupt,
+                        InputEvent::Interrupt,
+                        InputEvent::Eof,
+                    ]),
+                };
+                session_event_loop::run(&mut host, &mut input).unwrap();
+                assert!(
+                    host.injected_observation_interrupt.is_none(),
+                    "{site}/{intent}"
+                );
+                assert_eq!(host.session.async_task_counts().unwrap(), (0, 0, 0));
+                let output = String::from_utf8_lossy(&host.output);
+                assert_eq!(
+                    output.matches("^C").count(),
+                    if intent == "interrupt" { 3 } else { 2 },
+                    "one acknowledgment per actual input signal: {site}/{intent}"
+                );
+                if matches!(intent, "exit" | "eof") {
+                    assert!(!output.contains("48601"), "exit intent survives preflight");
+                    let effects = host.session.eval("cancel-effects").unwrap();
+                    assert_eq!(
+                        host.display.display(&mut host.session, &effects).unwrap(),
+                        "1",
+                        "awaited cleanup runs once"
+                    );
+                } else {
+                    assert_eq!(
+                        output.matches("48601").count(),
+                        1,
+                        "buffered source executes once after retirement: {site}/{intent}"
+                    );
+                }
+                if intent == "reset" {
+                    assert!(
+                        matches!(
+                            host.session.future_status(&old_nil),
+                            Err(SessionError::ForeignValue)
+                        ),
+                        "reset intent survives preflight"
+                    );
+                } else {
+                    assert_eq!(
+                        host.session.future_status(&owner).unwrap(),
+                        Some(FutureStatus::Cancelled)
+                    );
+                }
+                assert!(host.errors.is_empty(), "{site}/{intent}: {:?}", host.errors);
+            }
+        }
+    }
+
+    #[test]
+    fn cancellation_mutation_interrupt_clears_stale_observation_and_stops_input() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        drop(
+            host.submit("(suss.async/future* (suss.async/await* (suss.internal.async/pending)))")
+                .unwrap(),
+        );
+        assert!(host.pump_one().unwrap());
+        host.deferred_observation_interrupt = true;
+        host.last_pump_recovered = true;
+        host.injected_cancel_mutation_interrupt = true;
+        // This call mutates real task cancellation state, then models a trap
+        // without a proven recovery receipt. It must never be observer-retried.
+        let error = host.request_cancel_pending().unwrap_err();
+        assert!(error.is_interrupt());
+        assert!(!host.observation_interrupted(&error));
+        assert!(
+            !host.tasks.is_empty(),
+            "retain owners for conservative teardown"
+        );
+        // Exercise the loop caller too, after a fresh Session and stale flags.
+        let mut host = self::host();
+        drop(
+            host.submit("(suss.async/future* (suss.async/await* (suss.internal.async/pending)))")
+                .unwrap(),
+        );
+        assert!(host.pump_one().unwrap());
+        host.deferred_observation_interrupt = true;
+        host.last_pump_recovered = true;
+        host.injected_cancel_mutation_interrupt = true;
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Interrupt,
+                InputEvent::Line("(must-not-run)".into()),
+                InputEvent::Interrupt,
+            ]),
+        };
+        let error = match session_event_loop::run(&mut host, &mut input) {
+            Err(session_event_loop::LoopError::Host(error)) => error,
+            other => panic!("mutation interruption must terminate: {other:?}"),
+        };
+        assert!(error.is_interrupt());
+        assert!(!host.observation_interrupted(&error));
+        assert_eq!(
+            input.events.len(),
+            2,
+            "no input or source retry after mutation trap"
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&host.output).matches("^C").count(),
+            1
+        );
+        assert!(!host.tasks.is_empty());
+    }
+
+    #[test]
     fn pending_fifo_idle_proof_skips_dispatch_and_defers_signal_until_cleanup() {
         use super::super::{session_event_loop, terminal_input::InputEvent};
         let directory = tempfile::tempdir().unwrap();
@@ -1339,6 +1497,63 @@ mod tests {
         assert_eq!(output.matches("^C").count(), 1);
         assert_eq!(
             output.matches("48001").count(),
+            1,
+            "awaited cancellation cleanup precedes buffered source"
+        );
+        assert!(host.errors.is_empty());
+    }
+
+    #[test]
+    fn pending_stream_and_fifo_idle_proof_preserves_cancellation_cleanup() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("pending");
+        let cpath = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(cpath.as_ptr(), 0o600) }, 0);
+        // Keep a writer open with no bytes, so the actual reader stays Pending.
+        let _writer = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .custom_flags(libc::O_NONBLOCK)
+            .open(&path)
+            .unwrap();
+        let mut host = host();
+        let path = serde_json::to_string(path.to_str().unwrap()).unwrap();
+        drop(host.submit(&format!("(def idle-effects 0) (def pair (suss.internal.async/stream-pair 1)) (def reader (suss.internal.async/stream-pair-reader pair)) (def idle-owner (suss.async/future* (try (suss.async/await* (suss.io/read-byte {path})) (finally (suss.async/await* (suss.async/future* (set! idle-effects (+ idle-effects 1)))))))) (def reading (suss.async/future* (try (suss.async/await* (suss.internal.async/stream-operation-future (suss.internal.async/stream-begin-read reader 1))) (finally (set! idle-effects (+ idle-effects 1))))))")).unwrap());
+        assert!(host.pump_one().unwrap());
+        assert!(host.pump_one().unwrap());
+        host.poll_completions().unwrap();
+        assert_eq!(host.endpoints.len(), 1);
+        let slot = host.endpoints[0].file.as_ref().unwrap().clone();
+        assert!(slot.lock().unwrap().is_some());
+        assert_eq!(host.session.pending_stream_operation_count().unwrap(), 1);
+        let dispatched = host.dispatched_turns;
+        for _ in 0..16 {
+            assert!(!host.pump_one().unwrap());
+        }
+        assert_eq!(host.dispatched_turns, dispatched, "pending is not runnable");
+        assert_eq!(host.session.async_task_counts().unwrap(), (2, 0, 0));
+        host.injected_observation_interrupt = Some(("dispatch-needed", 0));
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line("(+ 48500 idle-effects)".into()),
+                InputEvent::Interrupt,
+                InputEvent::Eof,
+            ]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.injected_observation_interrupt.is_none());
+        assert!(
+            slot.lock().unwrap().is_none(),
+            "native read fd closes despite retained controller root"
+        );
+        assert_eq!(host.session.async_task_counts().unwrap(), (0, 0, 0));
+        assert_eq!(host.session.stats().pending_host_requests, 0);
+        assert_eq!(host.session.pending_stream_operation_count().unwrap(), 0);
+        let output = String::from_utf8_lossy(&host.output);
+        assert_eq!(output.matches("^C").count(), 1);
+        assert_eq!(
+            output.matches("48502").count(),
             1,
             "awaited cancellation cleanup precedes buffered source"
         );

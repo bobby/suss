@@ -61,7 +61,7 @@ pub trait FrontendHost {
         AsyncErrorDisposition::Quarantine
     }
     /// True only for an interrupted pure observation at the immediately
-    /// preceding pump/counts/retirement boundary. It is not scheduler recovery: input's
+    /// preceding pump/counts/retirement/cancellation-preflight boundary. It is not scheduler recovery: input's
     /// self-pipe must acknowledge the signal before any further host operation.
     fn observation_interrupted(&self, _error: &Self::Error) -> bool {
         false
@@ -121,7 +121,7 @@ enum Retirement {
 
 // Do not invent task counts or submit buffered source while waiting for the
 // corresponding signal wake. Roots and reports remain with the concrete host.
-fn await_observation_interrupt<H: FrontendHost, I: FrontendInput>(
+fn acknowledge_observation_interrupt<H: FrontendHost, I: FrontendInput>(
     host: &mut H,
     input: &mut I,
     source: &mut String,
@@ -151,13 +151,40 @@ fn await_observation_interrupt<H: FrontendHost, I: FrontendInput>(
             source.clear();
             input.before_output().map_err(LoopError::Input)?;
             host.report(HostReport::Interrupted);
-            // Mutation/teardown errors here still propagate; only the preceding
-            // pure observation was deferred, never a cancellation operation.
-            host.request_cancel_pending().map_err(LoopError::Host)?;
             input.redraw().map_err(LoopError::Input)?;
             return Ok(());
         }
     }
+}
+
+// Retry only cancellation's pure preflight. While awaiting the input wake,
+// preserve buffered events and perform no other host operations. A mutation
+// error is returned immediately, regardless of its error type.
+fn cancel_pending<H: FrontendHost, I: FrontendInput>(
+    host: &mut H,
+    input: &mut I,
+    source: &mut String,
+    buffered: &mut VecDeque<InputEvent>,
+) -> Result<(), LoopError<H::Error>> {
+    loop {
+        match host.request_cancel_pending() {
+            Ok(()) => return Ok(()),
+            Err(error) if host.observation_interrupted(&error) => {
+                acknowledge_observation_interrupt(host, input, source, buffered)?;
+            }
+            Err(error) => return Err(LoopError::Host(error)),
+        }
+    }
+}
+
+fn await_observation_interrupt<H: FrontendHost, I: FrontendInput>(
+    host: &mut H,
+    input: &mut I,
+    source: &mut String,
+    buffered: &mut VecDeque<InputEvent>,
+) -> Result<(), LoopError<H::Error>> {
+    acknowledge_observation_interrupt(host, input, source, buffered)?;
+    cancel_pending(host, input, source, buffered)
 }
 
 /// Own one frontend host for this call. A bounded ready batch gives input and
@@ -303,7 +330,7 @@ pub fn run<H: FrontendHost, I: FrontendInput>(
                 source.clear();
                 input.before_output().map_err(LoopError::Input)?;
                 host.report(HostReport::Interrupted);
-                host.request_cancel_pending().map_err(LoopError::Host)?;
+                cancel_pending(host, input, &mut source, &mut buffered)?;
                 retirement = Some(Retirement::Interrupt);
             }
             InputEvent::Eof => {
@@ -311,12 +338,12 @@ pub fn run<H: FrontendHost, I: FrontendInput>(
                     input.before_output().map_err(LoopError::Input)?;
                     host.report(HostReport::IncompleteEof(std::mem::take(&mut source)));
                 }
-                host.request_cancel_pending().map_err(LoopError::Host)?;
+                cancel_pending(host, input, &mut source, &mut buffered)?;
                 retirement = Some(Retirement::Exit);
             }
             InputEvent::Line(line) => {
                 if source.is_empty() && matches!(line.trim(), ":quit" | ":reset") {
-                    host.request_cancel_pending().map_err(LoopError::Host)?;
+                    cancel_pending(host, input, &mut source, &mut buffered)?;
                     retirement = Some(if line.trim() == ":quit" {
                         Retirement::Exit
                     } else {
@@ -447,6 +474,7 @@ mod tests {
                 self.observation_waiting = false;
             }
             if let Some(error) = self.cancel_error.take() {
+                self.deferred_observation = false;
                 return Err(error);
             }
             self.cancels += 1;

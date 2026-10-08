@@ -167,8 +167,10 @@ impl Session {
     /// Observe every global scheduler/stream root and this Session's native
     /// registry. No callback, settlement, pruning or cancellation hook runs.
     /// The Store owner must not mutate it between this observation and dispatch.
-    /// Cancellation/start/yield readiness, rooted stream journals and consumed
-    /// native hooks conservatively require dispatch. Not all blocked cleanup
+    /// Cancellation/start/yield readiness, actionable stream journals and consumed
+    /// native hooks conservatively require dispatch. Waiting stream transfers
+    /// may remain rooted without service when no readiness condition holds.
+    /// Not all blocked cleanup
     /// states qualify as idle, even when no source callback can currently run.
     pub fn observe_async_dispatch(&mut self) -> Result<AsyncDispatch, SessionError> {
         let requests = registry_lock(&self.pending_host_futures).clone();
@@ -422,6 +424,146 @@ mod tests {
         );
     }
 
+    // Explicit in-place readiness fixtures isolate readiness from dispatch.
+    // They do not claim to reproduce a particular interrupt/fuel window.
+    fn inject_stream_state(
+        session: &mut Session,
+        operation: &SessionValue,
+        slot: u32,
+        number: u32,
+    ) {
+        session
+            .inspect(operation, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = object
+                    .field(&mut store, 1)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                let state = fields
+                    .get(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap();
+                let state_fields = state
+                    .field(&mut store, 1)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                let snapshot = state_fields
+                    .get(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                let number =
+                    wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(number).unwrap());
+                snapshot.set(&mut store, slot, Val::AnyRef(Some(number)))?;
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn blocked_stream_read_becomes_actionable_on_data_close_or_cancel() {
+        for change in 0..5 {
+            let mut session = Session::new().unwrap();
+            session.eval("(def pair (suss.internal.async/stream-pair 1)) (def reader (suss.internal.async/stream-pair-reader pair)) (def gate (suss.internal.async/pending)) (def op nil) (def owner (suss.async/future* (set! op (suss.internal.async/stream-begin-read reader 1)) (suss.async/await* gate)))").unwrap();
+            assert!(session.run_async_turn().unwrap());
+            let op = session.eval("op").unwrap();
+            let completion = session
+                .eval("(suss.internal.async/stream-operation-future op)")
+                .unwrap();
+            assert_eq!(session.async_task_counts().unwrap(), (1, 0, 0));
+            assert_eq!(session.pending_stream_operation_count().unwrap(), 1);
+            assert_eq!(
+                session.observe_async_dispatch().unwrap(),
+                AsyncDispatch::NoDispatchNeeded
+            );
+            match change {
+                // Inject an occupied buffer slot; its default nil is valid data.
+                0 => inject_stream_state(&mut session, &op, 1, 1),
+                1 => inject_stream_state(&mut session, &op, 2, 1),
+                2 => {
+                    session.request_cancel_pending_tasks().unwrap();
+                }
+                3 => inject_stream_state(&mut session, &op, 2, 2),
+                _ => inject_stream_state(&mut session, &op, 3, 1),
+            }
+            assert_eq!(
+                session.observe_async_dispatch().unwrap(),
+                AsyncDispatch::Required
+            );
+            session.run_async_turn().unwrap();
+            assert_eq!(session.pending_stream_operation_count().unwrap(), 0);
+            assert_eq!(
+                session.future_status(&completion).unwrap(),
+                Some(if change == 2 {
+                    FutureStatus::Cancelled
+                } else if change >= 3 {
+                    FutureStatus::Failed
+                } else {
+                    FutureStatus::Ready
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn backpressured_write_is_idle_until_capacity_or_terminal_state_changes() {
+        for terminal in [false, true] {
+            let mut session = Session::new().unwrap();
+            session.eval("(def pair (suss.internal.async/stream-pair 1)) (def writer (suss.internal.async/stream-pair-writer pair)) (def gate (suss.internal.async/pending)) (def op nil) (def owner (suss.async/future* (let [chunk (suss.internal.async/stream-chunk-new 1)] (suss.internal.async/stream-chunk-set chunk 0 29) (suss.async/await* (suss.internal.async/stream-operation-future (suss.internal.async/stream-begin-write writer chunk))) (set! op (suss.internal.async/stream-begin-write writer chunk)) (suss.async/await* gate))))").unwrap();
+            // The first write fills capacity; resume its owner to begin the
+            // second write and suspend on the independent gate.
+            for _ in 0..8 {
+                if session.async_task_counts().unwrap().1 == 0 {
+                    break;
+                }
+                session.run_async_turn().unwrap();
+            }
+            let op = session.eval("op").unwrap();
+            let completion = session
+                .eval("(suss.internal.async/stream-operation-future op)")
+                .unwrap();
+            assert_eq!(session.async_task_counts().unwrap(), (1, 0, 0));
+            assert_eq!(session.pending_stream_operation_count().unwrap(), 1);
+            assert_eq!(
+                session.future_status(&completion).unwrap(),
+                Some(FutureStatus::Pending)
+            );
+            assert_eq!(
+                session.observe_async_dispatch().unwrap(),
+                AsyncDispatch::NoDispatchNeeded
+            );
+            // Model acceptance of a read (capacity restored), or writer close,
+            // by changing the current snapshot in place before service.
+            inject_stream_state(
+                &mut session,
+                &op,
+                if terminal { 2 } else { 1 },
+                if terminal { 1 } else { 0 },
+            );
+            assert_eq!(
+                session.observe_async_dispatch().unwrap(),
+                AsyncDispatch::Required
+            );
+            assert!(!session.run_async_turn().unwrap());
+            assert_eq!(session.pending_stream_operation_count().unwrap(), 0);
+            assert_eq!(
+                session.future_status(&completion).unwrap(),
+                Some(if terminal {
+                    FutureStatus::Failed
+                } else {
+                    FutureStatus::Ready
+                })
+            );
+        }
+    }
+
     #[test]
     fn stream_journal_roots_require_service_even_without_source_queue() {
         let mut session = Session::new().unwrap();
@@ -442,6 +584,23 @@ mod tests {
         );
         assert_eq!(session.async_task_counts().unwrap(), (1, 0, 0));
         assert_eq!(session.pending_stream_operation_count().unwrap(), 1);
+        assert_eq!(
+            session.observe_async_dispatch().unwrap(),
+            AsyncDispatch::NoDispatchNeeded,
+            "a rooted empty read with an open writer is blocked, not actionable"
+        );
+        INTERRUPT_OBSERVATION.with(|flag| flag.set(true));
+        assert!(session.observe_async_dispatch().unwrap_err().is_interrupt());
+        session.collect().unwrap();
+        assert_eq!(session.pending_stream_operation_count().unwrap(), 1);
+        assert_eq!(
+            session.future_status(&completion).unwrap(),
+            Some(FutureStatus::Pending)
+        );
+        assert_eq!(
+            session.observe_async_dispatch().unwrap(),
+            AsyncDispatch::NoDispatchNeeded
+        );
         // Produce a real prepared withdrawal journal through the same runtime
         // operation used by service. Stop before snapshot commit/settlement;
         // this is an explicit journal fixture, not a claim about a fuel window.

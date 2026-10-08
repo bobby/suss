@@ -2529,7 +2529,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
         &[LocalGet(0), I32Const(1), Call(run)],
     );
     // Pure idle proof over private global scheduler state. Queue length alone
-    // misses ready dependencies, cancellation, terminal rows and stream journals.
+    // misses ready dependencies, cancellation, terminal rows and actionable stream service.
     let mut body = vec![GlobalGet(SCHEDULER_GLOBAL), LocalSet(0)];
     item(&mut body, 0, 3);
     body.extend([I32Const(0), RefI31, RefEq, I32Eqz]);
@@ -2538,7 +2538,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
         RefCastNonNull(HeapType::Concrete(ARGS)),
         ArrayLen,
         I32Or,
-        Call(b.names["stream-pending-count"]),
+        Call(b.names["stream-service-needed"]),
         I32Or,
         If(BlockType::Empty),
         I32Const(1),

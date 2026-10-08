@@ -814,7 +814,117 @@ fn recover_receipts(b: &mut Builder, base: u32) -> u32 {
         &v,
     )
 }
+// Pure counterpart to service's phase-one readiness predicates. A rooted
+// blocked transfer is not itself actionable. Every journal/retirement phase
+// remains service work, even if its future or source owner is still Pending.
+fn service_needed(b: &mut Builder, base: u32, status: u32, cancelled: u32) {
+    // i=0, op=1, fields=2, snapshot=3; all getters below are read-only.
+    let mut v = vec![
+        I32Const(0),
+        LocalSet(0),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(0),
+        I32Const(ROOT_LIMIT),
+        I32GeU,
+        BrIf(1),
+        GlobalGet(base + 7),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(0),
+        ArrayGet(ARGS),
+        LocalTee(1),
+        RefIsNull,
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    fields(&mut v, 1);
+    v.push(LocalSet(2));
+    int(&mut v, 2, 6);
+    v.extend([
+        I32Const(1),
+        I32Ne,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    field(&mut v, 2, 4);
+    v.extend([Call(status), I32Eqz, I32Eqz]);
+    field(&mut v, 2, 4);
+    v.push(Call(cancelled));
+    int(&mut v, 2, 12);
+    v.extend([I32Eqz, I32And, I32Or]);
+    // A terminal completion cannot justify treating an owned operation as idle.
+    field(&mut v, 2, 5);
+    v.extend([
+        Call(status),
+        I32Eqz,
+        I32Eqz,
+        I32Or,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    field(&mut v, 2, 0);
+    v.push(LocalSet(3));
+    fields(&mut v, 3);
+    v.push(LocalSet(3));
+    snap(&mut v, 3);
+    v.push(LocalSet(3));
+    // Reader closure or writer failure rejects pending transfers. Writer close
+    // rejects writes, while reads consume buffered data before reporting EOF.
+    int(&mut v, 3, 3);
+    int(&mut v, 3, 2);
+    v.extend([
+        I32Const(2),
+        I32Eq,
+        I32Or,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    int(&mut v, 2, 1);
+    v.push(If(BlockType::Empty));
+    int(&mut v, 3, 2);
+    v.extend([If(BlockType::Empty), I32Const(1), Return, End]);
+    field(&mut v, 3, 0);
+    v.extend([RefCastNonNull(HeapType::Concrete(ARGS)), ArrayLen]);
+    int(&mut v, 3, 1);
+    v.push(I32Sub);
+    int(&mut v, 2, 2);
+    v.extend([I32GeU, If(BlockType::Empty), I32Const(1), Return, End, Else]);
+    int(&mut v, 3, 1);
+    int(&mut v, 3, 2);
+    v.extend([
+        I32Or,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+        End,
+        End,
+        LocalGet(0),
+        I32Const(1),
+        I32Add,
+        LocalSet(0),
+        Br(0),
+        End,
+        End,
+        I32Const(0),
+    ]);
+    b.function_with_locals(
+        "stream-service-needed",
+        &[],
+        &[ValType::I32],
+        &[(1, ValType::I32), (3, VALUE)],
+        &v,
+    );
+}
+
 fn service(b: &mut Builder, base: u32, status: u32, cancelled: u32) {
+    service_needed(b, base, status, cancelled);
     let recover = recover_receipts(b, base);
     let withdrawal = withdraw(b, base);
     let preparation = prepare(b, base);
