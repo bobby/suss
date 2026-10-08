@@ -1,0 +1,31 @@
+;; Original development fixture shared unchanged by pinned ClojureScript and Suss.
+(def reduction-boundary-next 0)
+(def reduction-boundary-count 0)
+(def reduction-boundary-sum 0)
+(def reduction-boundary-step
+  (fn [stop terminal acc x]
+    (if (> x stop) (throw 901) nil)
+    (if (== x reduction-boundary-next) nil (throw 902))
+    (if (== acc (/ (* x (dec x)) 2)) nil (throw 903))
+    (set! reduction-boundary-next (inc reduction-boundary-next))
+    (set! reduction-boundary-count (inc reduction-boundary-count))
+    (set! reduction-boundary-sum (+ reduction-boundary-sum x))
+    (if (== x stop) (reduced terminal) (+ acc x))))
+(def reduction-boundary-probe
+  (fn [mode stop terminal]
+    (set! reduction-boundary-next (if (== mode 1) 1 0))
+    (set! reduction-boundary-count 0)
+    (set! reduction-boundary-sum 0)
+    (let [v (loop [v [] i 0]
+              (if (< i 35) (recur (conj v i) (inc i)) v))
+          result
+          (if (== mode 2)
+            (reduce-kv
+              (fn [acc k x]
+                (if (== k x) nil (throw 904))
+                (reduction-boundary-step stop terminal acc x))
+              0 v)
+            (if (== mode 1)
+              (reduce (fn [acc x] (reduction-boundary-step stop terminal acc x)) v)
+              (reduce (fn [acc x] (reduction-boundary-step stop terminal acc x)) 0 v)))]
+      [result reduction-boundary-count reduction-boundary-next reduction-boundary-sum])))

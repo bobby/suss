@@ -1,2 +1,45 @@
 (deftype CollisionKey [id] IHash (-hash [_] 7) IEquiv (-equiv [_ other] (and (instance? CollisionKey other) (== id (.-id other)))))
 (def collision-map {(CollisionKey. 0) 100 (CollisionKey. 1) 101 (CollisionKey. 2) 102 (CollisionKey. 3) 103 (CollisionKey. 4) 104 (CollisionKey. 5) 105 (CollisionKey. 6) 106 (CollisionKey. 7) 107 (CollisionKey. 8) 108 (CollisionKey. 9) 109 (CollisionKey. 10) 110 (CollisionKey. 11) 111 (CollisionKey. 12) 112 (CollisionKey. 13) 113 (CollisionKey. 14) 114 (CollisionKey. 15) 115 (CollisionKey. 16) 116 (CollisionKey. 17) 117 (CollisionKey. 18) 118 (CollisionKey. 19) 119})
+
+;; Original Suss development probes (MIT/Apache-2.0), not upstream implementation.
+;; Constant collision hashes reuse CollisionKey above; SlotKey controls root slots
+;; independently of host numeric hashing so packing must retain high slots 25..31.
+(deftype SlotKey [id] IHash (-hash [_] id) IEquiv
+  (-equiv [_ other] (and (instance? SlotKey other) (== id (.-id other)))))
+(def deletion-collision-old (with-meta collision-map {:deletion 17}))
+(def deletion-collision-one
+  (loop [m deletion-collision-old i 0]
+    (if (< i 19) (recur (dissoc m (CollisionKey. i)) (inc i)) m)))
+(def deletion-collision-empty (dissoc deletion-collision-one (CollisionKey. 19)))
+(def deletion-collision-reinserted (assoc deletion-collision-empty (CollisionKey. 3) 303))
+(def deletion-collision-transient-one
+  (persistent! (loop [m (transient collision-map) i 0]
+    (if (< i 19) (recur (dissoc! m (CollisionKey. i)) (inc i)) m))))
+(def deletion-collision-transient-empty
+  (persistent! (dissoc! (transient deletion-collision-transient-one) (CollisionKey. 19))))
+(def deletion-dense-old
+  (with-meta (loop [m {} i 0]
+    (if (< i 32) (recur (assoc m (SlotKey. i) (+ i 100)) (inc i)) m)) {:deletion 18}))
+(def deletion-dense-eight
+  (loop [m deletion-dense-old i 0]
+    (if (< i 24) (recur (dissoc m (SlotKey. i)) (inc i)) m)))
+(def deletion-dense-seven (dissoc deletion-dense-eight (SlotKey. 24)))
+(def deletion-dense-empty
+  (loop [m deletion-dense-seven i 25]
+    (if (< i 32) (recur (dissoc m (SlotKey. i)) (inc i)) m)))
+(def deletion-dense-regrown
+  (loop [m deletion-dense-seven i 0]
+    (if (< i 25) (recur (assoc m (SlotKey. i) (+ i 100)) (inc i)) m)))
+(def deletion-dense-transient-seven
+  (persistent! (loop [m (transient deletion-dense-old) i 0]
+    (if (< i 25) (recur (dissoc! m (SlotKey. i)) (inc i)) m))))
+(def deletion-dense-transient-empty
+  (persistent! (loop [m (transient deletion-dense-transient-seven) i 25]
+    (if (< i 32) (recur (dissoc! m (SlotKey. i)) (inc i)) m))))
+;; Exactly eight entries before conversion; nil and false are distinct keys.
+(def deletion-small {nil 700 false 701 0 100 1 101 2 102 3 103 4 104 5 105})
+(def deletion-grown (assoc deletion-small 6 106))
+(def deletion-shrunk (dissoc deletion-grown 6))
+(def deletion-nil-removed (dissoc deletion-grown nil))
+(def deletion-false-removed (dissoc deletion-grown false))
+(def deletion-converted-transient (persistent! (assoc! (transient deletion-small) 6 106)))

@@ -19,8 +19,11 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 }
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
+    boolean(session, &value)
+}
+fn boolean(session: &mut Session, value: &SessionValue) -> bool {
     session
-        .inspect(&value, |store, value| {
+        .inspect(value, |store, value| {
             match value
                 .unwrap_anyref()
                 .unwrap()
@@ -119,4 +122,54 @@ fn reduced_values_and_saved_reducers_survive_gc_and_language_errors() {
         ),
         36.0f64.to_bits()
     );
+}
+
+#[test]
+fn reduced_stops_vector_callbacks_at_chunk_boundaries_in_both_phases() {
+    use suss_cli::portable_session::SessionOptions;
+    use suss_compile::portable::resolve::Phase;
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/reduction-boundary-cases.json"
+    ))
+    .unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 108);
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        session.set_operation_fuel(100_000_000);
+        session
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .unwrap();
+        session.enter_namespace("user").unwrap();
+        session
+            .eval(include_str!(
+                "../../../tests/oracle/fixtures/reduction-boundary-probe.sus"
+            ))
+            .unwrap();
+        let mut ids = std::collections::BTreeSet::new();
+        for case in cases {
+            let id = case["id"].as_str().unwrap();
+            assert!(ids.insert(id));
+            let source = case["source"].as_str().unwrap();
+            let value = session
+                .eval(source)
+                .unwrap_or_else(|error| panic!("{phase:?}, {id}: {error}"));
+            session.collect().unwrap();
+            let actual = match case["expected"]["tag"].as_str().unwrap() {
+                "bool" => {
+                    serde_json::json!({"tag":"bool", "value":boolean(&mut session, &value)})
+                }
+                "f64" => {
+                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}",number(&mut session, &value))})
+                }
+                tag => panic!("unexpected boundary observation tag {tag}"),
+            };
+            assert_eq!(actual, case["expected"], "{phase:?}, {id}: {source}");
+        }
+    }
 }

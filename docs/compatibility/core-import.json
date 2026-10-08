@@ -1598,6 +1598,11 @@
       "id": "runtime:print-map:10684",
       "source-sha256": "68fa017f509a9af54245667cab2b83247d91a49bda1a2f4469e560861291ca52",
       "patch": "docs/compatibility/patches/printing-print-map.json"
+    },
+    {
+      "id": "runtime:empty:1887",
+      "source-sha256": "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76",
+      "patch": "docs/compatibility/patches/collection-empty.json"
     }
   ],
   "loader": {

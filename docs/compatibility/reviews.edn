@@ -2,6 +2,14 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:empty:1887"
+  {:source-sha256 "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:when-not:427" "macro:nil?:923" "macro:cond:159" "macro:implements?:2227" "macro:satisfies?:2253" "runtime:IEmptyableCollection:624" "live -empty protocol dispatcher" "private nil? bootstrap lowering"]
+   :classification :adapted
+   :rationale "Retain the full pinned public form/documentation/arity, nil when-not guard, implements? and satisfies? branches, both live -empty calls and final nil. Explicit def/fn bootstrap and immutable qualified nil? preserve macro semantics under public predicate redefinition. Direct nominal and native/default protocol fallback use existing bounded adapters, not a method-only substitute. Focused Runtime/Macro tests are authored; regeneration and native acceptance remain pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/collection-empty.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_empty.rs" "crates/suss-cli/tests/portable_subvector.rs"]}
   "runtime:keyword:3560"
   {:source-sha256 "7d4c72514489330c05547cd64cf5836ad8e37805476cfb4bf8139bde7e2143bf"
    :visibility :public

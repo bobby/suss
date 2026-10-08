@@ -2,7 +2,7 @@ use suss_cli::{
     portable_macro_data::FormBridge,
     portable_session::{Session, SessionError},
 };
-use suss_reader::forms::{read_forms, Kind};
+use suss_reader::forms::{Kind, read_forms};
 use wasmtime::Val;
 
 fn number(session: &mut Session, source: &str) -> f64 {
@@ -174,7 +174,7 @@ fn compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_pers
 fn compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/hash-map-cases.json")).unwrap();
-    assert_eq!(corpus["cases"].as_array().unwrap().len(), 35);
+    assert_eq!(corpus["cases"].as_array().unwrap().len(), 111);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
         session
@@ -236,7 +236,10 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             let error = bridge.read(&mut session, &value, 70..80).unwrap_err();
-            assert!(matches!(error, SessionError::Compile(ref diagnostic) if diagnostic.span == (70..80)), "{source}: {error:?}");
+            assert!(
+                matches!(error, SessionError::Compile(ref diagnostic) if diagnostic.span == (70..80)),
+                "{source}: {error:?}"
+            );
         }
         // Bit 31 is a signed JS bitmap. Nil is stored outside the trie and
         // precedes entries in the actual pinned hash-map sequence.
@@ -250,5 +253,57 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
         assert!(matches!(entries[1].kind, Kind::Number(9.0)));
         assert!(matches!(entries[2].kind, Kind::Number(7.0)));
         assert!(matches!(entries[3].kind, Kind::Number(8.0)));
+    }
+}
+
+/// Private storage witnesses complement the public pinned corpus: prove the
+/// selected deletions actually cross collision/dense/array-map representations.
+/// This test is authored but native execution remains pending coordinator scheduling.
+#[test]
+fn compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        session
+            .eval(include_str!("../../../tests/oracle/hash-map-fixture.sus"))
+            .unwrap();
+        session.collect().unwrap();
+        for source in [
+            "(instance? HashCollisionNode (aget (.-arr (.-root deletion-collision-old)) 1))",
+            "(instance? HashCollisionNode (aget (.-arr (.-root deletion-collision-one)) 1))",
+            "(nil? (.-root deletion-collision-empty))",
+            "(instance? ArrayNode (.-root deletion-dense-old))",
+            "(instance? ArrayNode (.-root deletion-dense-eight))",
+            "(instance? BitmapIndexedNode (.-root deletion-dense-seven))",
+            "(instance? BitmapIndexedNode (.-root deletion-dense-transient-seven))",
+            "(nil? (.-root deletion-dense-empty))",
+            "(nil? (.-root deletion-dense-transient-empty))",
+            "(instance? ArrayNode (.-root deletion-dense-regrown))",
+            "(instance? PersistentArrayMap deletion-small)",
+            "(instance? PersistentHashMap deletion-grown)",
+            "(instance? PersistentHashMap deletion-shrunk)",
+            "(instance? PersistentHashMap deletion-converted-transient)",
+        ] {
+            assert_eq!(
+                number(&mut session, &format!("(if {source} 1 0)")),
+                1.0,
+                "{source}"
+            );
+        }
+        for (source, expected) in [
+            (
+                "(.-cnt (aget (.-arr (.-root deletion-collision-old)) 1))",
+                20.0,
+            ),
+            (
+                "(.-cnt (aget (.-arr (.-root deletion-collision-one)) 1))",
+                1.0,
+            ),
+            ("(.-cnt (.-root deletion-dense-old))", 32.0),
+            ("(.-cnt (.-root deletion-dense-eight))", 8.0),
+            ("(alength (.-arr (.-root deletion-dense-seven)))", 14.0),
+            ("(.-bitmap (.-root deletion-dense-seven))", -33_554_432.0),
+        ] {
+            assert_eq!(number(&mut session, source), expected, "{source}");
+        }
     }
 }
