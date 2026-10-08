@@ -8,7 +8,7 @@ execution or full-baseline gates, which remain pending after cleanup interrupted
 the previous baseline. The `22723b4` records below remain evidence at that base;
 their bootstrap identity projection deliberately differs from new main.
 
-Current-base results use main `22723b432c5fb4792c39302d3739b73a44fa87ff`.
+The earlier retained results below use main `22723b432c5fb4792c39302d3739b73a44fa87ff`.
 `current-main-gate-commands.json` records actual command arguments, terminal
 statuses and log names for CMake setup/build, CTest, genuine facts, effects
 roundtrip and fresh source/effects oracles. `identity-current-main.json` binds
