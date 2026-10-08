@@ -1,0 +1,141 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "canonical-array-type",
+      "source": "(identical? (type (array)) (type (array 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-arity",
+      "source": "(let [ctor (type (array))] (= (alength (ctor)) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-numeric-length-holes",
+      "source": "(let [ctor (type (array)) a (ctor 3)] (and (= (alength a) 3) (undefined? (aget a 0)) (undefined? (aget a 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-false-element",
+      "source": "(let [ctor (type (array)) a (ctor false)] (and (= (alength a) 1) (false? (aget a 0))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-nil-element",
+      "source": "(let [ctor (type (array)) a (ctor nil)] (and (= (alength a) 1) (nil? (aget a 0)) (not (undefined? (aget a 0)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "multiple-elements",
+      "source": "(let [ctor (type (array)) a (ctor 3 false nil)] (and (= (alength a) 3) (= (aget a 0) 3) (false? (aget a 1)) (nil? (aget a 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-string-element",
+      "source": "(let [ctor (type (array)) a (ctor \"3\")] (and (= (alength a) 1) (= (aget a 0) \"3\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-zero-length",
+      "source": "(let [ctor (type (array))] (= (alength (ctor -0.0)) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-length-negative",
+      "source": "(let [ctor (type (array)) effects (atom 0)] (try (ctor (do (swap! effects inc) -1)) false (catch :default e (and (= @effects 1) (= (.-message e) \"Invalid array length\")))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-length-fractional",
+      "source": "(let [ctor (type (array)) effects (atom 0)] (try (ctor (do (swap! effects inc) 1.5)) false (catch :default e (and (= @effects 1) (= (.-message e) \"Invalid array length\")))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-length-nan",
+      "source": "(let [ctor (type (array)) effects (atom 0)] (try (ctor (do (swap! effects inc) ##NaN)) false (catch :default e (and (= @effects 1) (= (.-message e) \"Invalid array length\")))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-length-infinite",
+      "source": "(let [ctor (type (array)) effects (atom 0)] (try (ctor (do (swap! effects inc) ##Inf)) false (catch :default e (and (= @effects 1) (= (.-message e) \"Invalid array length\")))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-length-overflow",
+      "source": "(let [ctor (type (array)) effects (atom 0)] (try (ctor (do (swap! effects inc) 4294967296)) false (catch :default e (and (= @effects 1) (= (.-message e) \"Invalid array length\")))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "multiple-argument-effect-order",
+      "source": "(let [ctor (type (array)) trace (atom []) a (ctor (do (swap! trace conj :a) 3) (do (swap! trace conj :b) false) (do (swap! trace conj :c) nil))] (and (= @trace [:a :b :c]) (= (alength a) 3) (= (aget a 0) 3) (false? (aget a 1)) (nil? (aget a 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-array-element-identity",
+      "source": "(let [ctor (type (array)) element (array 1 2) a (ctor element)] (and (= (alength a) 1) (identical? (aget a 0) element)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-object-element-identity",
+      "source": "(let [ctor (type (array)) element {:a 1} a (ctor element)] (and (= (alength a) 1) (identical? (aget a 0) element)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "single-undefined-element",
+      "source": "(let [ctor (type (array)) element (aget (array) 0) a (ctor element)] (and (= (alength a) 1) (undefined? (aget a 0))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

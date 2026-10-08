@@ -22186,3 +22186,43 @@ byte-identical to8429c26, reproduced27primary observations. Older22723b4docsecti
 markedhistorical/superseded by4e0f00d snapshot. FullPython231pass7.896s, zerofailures.
 This checkpoint has no newnative/bootstrap/fulltype/comparator acceptance claim.
 RequiredCargo slot currentlyownedby228fullbaseline99452; do notstartsecondgraph.
+
+Independent sorted-plan review at82bee29 finds no new material source defect,
+native prerequisites still pending. Next implementation after nativeproof is
+canonical Array constructor identity/lookup (primitive predicate steps already
+authored). Full comparison requires array/function/native constructor identity,
+ordered fresh ToPrimitive for > then <, array string conversion with captured
+length/holes/nesting/cycles, live type/array?/-compare and ordered errorformat
+with arbitrary throw preservation. Comparator wrappers must retain unchanged
+numeric results and CLJS truthiness for reversed0/NaN; compare-indexed order/
+arities remain required. Full tree order/deletion/invariants/persistence/meta/
+equality and records remain original18requirements. No sortedCargo/newsource
+execution. Baseline99452 confirmedlive in conformance suite.
+
+Canonical Array constructor prerequisite regressions authored: six shared
+cases cover actual typeidentity/callable0arity, numeric length/undefinedholes,
+singlefalse/nil element and multipleelements. Fresh pinned compile41017 exits0,
+Node ordered6alltrue; strict drivercompare and3 failclosed harness tests pass.
+Retained primaryobservations/hash under array-constructor/evidence.
+Both-phase native test independently decodesBoolean afterGC, uncompiled.
+Full Array constructor implementation, invalid-length/effect cases and retained
+constructor GC/reload remain pending; notfullsorted acceptance.
+Fuelmeasurement46378 remainssoleCargo; no sortednative started.
+
+Array constructor corpus expanded13: string notnumericlength, -0length0 and
+fiveinvalidnumericlengths throw exact Invalid array length after argument
+effectonce. Fresh pinnedrunner88043 terminal0/13matches;3harnesspass.
+Native13IDs aligned, uncompiled. Retained13results/log/hash; independent
+source/harnessreview pending. Fuelmeasurement46378 stilllive soleCargo.
+
+Array review reproduces13primary/3harness, no material defect; identified hole
+property absence, RangeErroridentity, large sparse validlength gaps. Expanded
+17cases with multiplearg effects and singlearray/object/undefined identity;
+fresh runner38715 exits0/17matches,3harnesspass. Sole-host constructorGC and
+separate invocation identity test authored/uncompiled. Retained17evidencehashes;
+fullconstructor and originalsorted acceptance remain pending. Fuel46378live.
+
+Sorted/Array fullPython81447 terminal0, retained arrayconstructor evidence
+python-suite.log/hash. Allnewnative tests remain uncompiled while228new
+fullbaseline94838 runs on frozen ebdbc16. Next nativeprereqbootstrap execution
+still required before claiming constructor identity or full comparison support.
