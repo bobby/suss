@@ -8,6 +8,7 @@ pub mod ir;
 pub mod modules;
 pub mod resolve;
 mod source;
+mod stdlib;
 mod origin;
 pub mod syntax_quote;
 pub mod bootstrap;

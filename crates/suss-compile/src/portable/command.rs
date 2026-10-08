@@ -9,6 +9,8 @@ pub(super) mod memory;
 mod shape;
 mod adapter;
 mod assembly;
+pub mod async_bridge;
+pub mod async_component;
 mod exit;
 pub use assembly::{component, component_with_exit};
 

@@ -1,5 +1,11 @@
 # ClojureScript compatibility evidence
 
+For current original M3 acceptance and lifecycle evidence, see the
+[M3 acceptance record](../roadmap/acceptance-m3.md). The dated prerequisite
+notes below describe their inspected snapshots; older absence/pending statements
+are superseded by that current record. M3 session acceptance does not reclassify
+unassessed core declarations or establish full upstream compatibility.
+
 The native command REPL now uses one persistent portable Session and displays
 already-rooted scalar results without source reexecution. Eight process-level
 regressions establish bounded frontend persistence/recovery/reset/reader evidence.
@@ -1036,3 +1042,37 @@ capture environments remain separate from the rooted UTF16 label. Fourteen
 closure-lowering tests and fifty ABI tests pass, including the owned-label and
 foreign raw-environment regressions. Complete printer constructor/storage/body
 behavior and original M3 acceptance remain open; no declaration is reclassified.
+
+The bundled `suss.async` runtime source now defines resolved/rejected futures,
+completion construction, first-terminal settlement and cooperative `cancel!` via
+private ABI2 callable adapters. Root executed all four `compiled_async_runtime_api` regressions successfully
+(9.27s), alongside seven Session lifecycle tests (11.19s). Java/Node-free
+bootstrap reproduction/identity verification and four execution tests passed
+(13.74s). Logs: `/private/tmp/suss-public-async-session-first.log` and
+`/private/tmp/suss-public-async-bootstrap-verify.log`. The subsequent host
+task-owned settlement guard still requires fresh regeneration and execution.
+This evidence does not establish complete async, canonical callback ABI or M3
+lifecycle acceptance.
+
+Original Suss bounded stream API (2026-10-07): `stream-pair`, `read-chunk`,
+`write-chunk`, `close!`, writer-only `fail!` and `stream-eof?` execute through
+compiled continuations. Reads return a nonempty immutable vector or a nominal
+EOF token; `[nil]` remains data. Capacity is 1–4096 elements and an operation
+is bounded to min(capacity, 256). One pending operation per endpoint, whole-chunk
+backpressure, accepted-data drainage on writer close, reader-close discard,
+first-terminal failure reason preservation and cancellation withdrawal are
+covered by 12/12 source tests (32.71s, no filters/ignores) on the current repair
+snapshot. Chunk copying yields inside the future under the default operation
+budget. Three display tests passed (7.00s), keeping streams/futures nominal and
+opaque; log `/private/tmp/suss-m3-cancel-display-focused.log`.
+
+Raw runtime stream tests passed 9/9 on the preceding stream snapshot, including
+cross-operation recovery ordering. The retained-receipt fixture reproduces
+publication state deterministically; it is not evidence of an observed exact
+post-publication engine fuel-trap window. Actual post-GC stream live bytes returned
+to a warmed baseline across three rounds while resident code remained unchanged
+(`/private/tmp/suss-stream-live-heap-first.log`). The source stream implementation
+is original Suss code, not a port of upstream core. Generic canonical WIT stream
+transport remains later interoperability work. Final integrated lifecycle,
+workspace, bootstrap and CI gates remain pending; a newly reviewed canonical
+export event-6 cancellation defect is being repaired.

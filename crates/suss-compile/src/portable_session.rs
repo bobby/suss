@@ -1,28 +1,32 @@
 //! Persistent native execution of portable fragments and source module plans.
 //! No source history is replayed. The native command REPL uses this host.
+use crate::{
+    portable::{
+        self, Diagnostic, PreparedFragment,
+        modules::{ModuleDiagnostic, ModuleIdentity, PreparedModule},
+        resolve::{Environment, Global as CellIdentity, Phase},
+    },
+    runtime_abi,
+};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
     path::PathBuf,
     sync::{
+        Arc, Mutex, OnceLock,
         atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
-        Arc, OnceLock,
     },
-};
-use crate::{
-    portable::{
-        self,
-        modules::{ModuleDiagnostic, ModuleIdentity, PreparedModule},
-        resolve::{Environment, Global as CellIdentity, Phase},
-        Diagnostic, PreparedFragment,
-    },
-    runtime_abi,
 };
 use wasmtime::{
     AnyRef, AsContextMut, Config, Engine, Func, Global, GlobalType, Instance, Linker, Memory,
     Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, UpdateDeadline, Val,
     ValType,
 };
+
+mod frontend;
+pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
+mod native_async;
+pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 
 #[derive(Clone, Debug)]
 pub struct SessionOptions {
@@ -78,6 +82,8 @@ pub enum SessionError {
     Trap(wasmtime::Error),
     Host(wasmtime::Error),
     ForeignValue,
+    /// Reset requested cancellation but bounded cleanup has not retired yet.
+    ResetPending,
 }
 impl fmt::Display for SessionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -86,10 +92,13 @@ impl fmt::Display for SessionError {
             Self::Module(error) => write!(f, "{error}"),
             Self::Language(_) => f.write_str("Uncaught language exception"),
             Self::Trap(_) if self.is_interrupt() => f.write_str("Interrupted"),
-            Self::Trap(error) => write!(f, "Runtime trap: {error}"),
+            Self::Trap(error) => write!(f, "Runtime trap: {error:#}"),
             Self::Host(error) => write!(f, "Host error: {error}"),
             Self::ForeignValue => {
                 f.write_str("Value belongs to another session or a previous reset")
+            }
+            Self::ResetPending => {
+                f.write_str("Reset pending: complete outstanding cleanup and retry")
             }
         }
     }
@@ -100,7 +109,7 @@ impl std::error::Error for SessionError {
             Self::Compile(error) => Some(error),
             Self::Module(error) => Some(error),
             Self::Trap(error) | Self::Host(error) => Some(error.as_ref()),
-            Self::Language(_) | Self::ForeignValue => None,
+            Self::Language(_) | Self::ForeignValue | Self::ResetPending => None,
         }
     }
 }
@@ -129,7 +138,10 @@ pub struct SessionValue {
     handles: Arc<AtomicUsize>,
 }
 impl SessionValue {
-    pub(crate) fn rooted(&self, store: &mut wasmtime::StoreContextMut<'_, ()>) -> wasmtime::Rooted<AnyRef> {
+    pub(crate) fn rooted(
+        &self,
+        store: &mut wasmtime::StoreContextMut<'_, ()>,
+    ) -> wasmtime::Rooted<AnyRef> {
         self.value.to_rooted(store)
     }
 }
@@ -160,6 +172,8 @@ pub struct SessionStats {
     pub binding_cells: usize,
     pub loaded_modules: usize,
     pub external_value_handles: usize,
+    /// Native pending-operation roots, independent of caller-owned handles.
+    pub pending_host_requests: usize,
     /// Allocated GC heap capacity; this is not a live-object or leak counter.
     pub gc_heap_capacity: usize,
     /// Private runtime numeric memory capacity (stack/data/scratch), separate
@@ -185,6 +199,24 @@ pub struct Session {
     base_runtime_artifact_bytes: usize,
     artifact_bytes: usize,
     bootstrap_core: bool,
+    pending_host_futures: SharedPendingRegistry,
+    native_factories: Vec<native_async::FactoryProfile>,
+    last_async_recovered_owner: Option<OwnedRooted<AnyRef>>,
+}
+struct PendingHostFuture {
+    root: OwnedRooted<AnyRef>,
+    cancel: Mutex<Option<Box<dyn FnOnce() + Send + 'static>>>,
+}
+type SharedPendingRegistry = Arc<Mutex<Vec<Arc<PendingHostFuture>>>>;
+fn registry_lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+impl PendingHostFuture {
+    fn take_cancel(&self) -> Option<Box<dyn FnOnce() + Send + 'static>> {
+        registry_lock(&self.cancel).take()
+    }
 }
 /// Binding/catalog transaction only: reachable object effects and resident code are retained.
 pub(crate) struct BindingCheckpoint {
@@ -206,14 +238,22 @@ impl CompilationSnapshot {
         source_paths: Vec<PathBuf>,
         provided: BTreeSet<ModuleIdentity>,
     ) -> Self {
-        Self { environment, phase, source_paths, provided }
+        Self {
+            environment,
+            phase,
+            source_paths,
+            provided,
+        }
     }
     pub(crate) fn phase(&self) -> Phase {
         self.phase
     }
     pub(crate) fn prepare_with_origin(
-        &self, forms: Vec<suss_reader::forms::Form>, span: std::ops::Range<usize>,
-        expander: &mut dyn portable::ExpansionHost, origin: Option<&portable::SourceOrigin>,
+        &self,
+        forms: Vec<suss_reader::forms::Form>,
+        span: std::ops::Range<usize>,
+        expander: &mut dyn portable::ExpansionHost,
+        origin: Option<&portable::SourceOrigin>,
     ) -> Result<portable::modules::PreparedInput, SessionError> {
         portable::modules::prepare_input_forms_with_origin(
             forms,
@@ -388,17 +428,23 @@ impl Session {
         for bytes in artifact.modules() {
             runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
                 .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            portable::artifact_identity::verify(bytes, portable::artifact_identity::Expected {
-                phase: Some(Phase::Runtime), ..Default::default()
-            }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+            portable::artifact_identity::verify(
+                bytes,
+                portable::artifact_identity::Expected {
+                    phase: Some(Phase::Runtime),
+                    ..Default::default()
+                },
+            )
+            .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
             crate::portable_module_cache::compile(&self.engine, bytes)?;
         }
         self.eval_prepared(portable::modules::PreparedInput {
-            modules: Vec::new(), fragment: artifact.core,
+            modules: Vec::new(),
+            fragment: artifact.core,
         })?;
         self.bootstrap_core = true;
-        let core = ModuleIdentity::new(Phase::Runtime, "suss.core")
-            .map_err(SessionError::Compile)?;
+        let core =
+            ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?;
         self.provided.insert(core);
         let identity = self.identity;
         let observation = core_ready(self)?;
@@ -436,8 +482,12 @@ impl Session {
     fn provision_core(&mut self) -> Result<(), SessionError> {
         let namespace = self.current_namespace().to_owned();
         let fragment = portable::bootstrap::shipped(self.phase)
-            .map_err(SessionError::Compile)?.clone();
-        self.eval_prepared(portable::modules::PreparedInput { modules: Vec::new(), fragment })?;
+            .map_err(SessionError::Compile)?
+            .clone();
+        self.eval_prepared(portable::modules::PreparedInput {
+            modules: Vec::new(),
+            fragment,
+        })?;
         self.enter_namespace(&namespace)?;
         self.bootstrap_core = true;
         Ok(())
@@ -460,7 +510,11 @@ impl Session {
         phase: Phase,
     ) -> Result<Self, SessionError> {
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
-        let identity = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        let identity = NEXT_ID
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+                next.checked_add(1)
+            })
+            .map_err(|_| wasmtime::Error::msg("Session identity exhausted"))?;
         let mut store = Store::new(&engine, ());
         store.set_fuel(u64::MAX)?;
         let interrupt = Arc::new(AtomicBool::new(false));
@@ -483,15 +537,27 @@ impl Session {
         let bindings = portable::core_bindings::compile(phase).map_err(SessionError::Compile)?;
         runtime_abi::verify_artifact(&bindings.wasm, &runtime_abi::Manifest::default())
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-        portable::artifact_identity::verify(&bindings.wasm, portable::artifact_identity::Expected {
-            phase: Some(phase), macro_dependencies: Some(&[]), ..Default::default()
-        }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+        portable::artifact_identity::verify(
+            &bindings.wasm,
+            portable::artifact_identity::Expected {
+                phase: Some(phase),
+                macro_dependencies: Some(&[]),
+                ..Default::default()
+            },
+        )
+        .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
         let module = crate::portable_module_cache::compile(&engine, &bindings.wasm)?;
         let initialized = linker.instantiate(&mut store, &module)?;
         for identity in bindings.cells {
-            let global = initialized.get_global(&mut store, &identity.import_name())
+            let global = initialized
+                .get_global(&mut store, &identity.import_name())
                 .ok_or_else(|| wasmtime::Error::msg("Missing compiled core binding"))?;
-            linker.define(&store, identity.import_module(), &identity.import_name(), global)?;
+            linker.define(
+                &store,
+                identity.import_module(),
+                &identity.import_name(),
+                global,
+            )?;
             cells.insert(identity, global);
         }
         let provided = BTreeSet::from([
@@ -515,6 +581,9 @@ impl Session {
             base_runtime_artifact_bytes: runtime_bytes.len() + bindings.wasm.len(),
             artifact_bytes: 0,
             bootstrap_core: false,
+            pending_host_futures: Arc::new(Mutex::new(Vec::new())),
+            native_factories: Vec::new(),
+            last_async_recovered_owner: None,
         })
     }
     pub fn phase(&self) -> Phase {
@@ -566,6 +635,7 @@ impl Session {
             binding_cells: self.cells.len(),
             loaded_modules: self.provided.len() - 1,
             external_value_handles: self.handles.load(Ordering::Relaxed),
+            pending_host_requests: registry_lock(&self.pending_host_futures).len(),
             gc_heap_capacity: self.store.gc_heap_capacity(),
             numeric_memory_capacity: self.numeric_memory.data_size(&self.store),
         }
@@ -577,14 +647,325 @@ impl Session {
             requested: self.interrupt.clone(),
         }
     }
+    /// Run at most one queued compiled continuation under the operation budget.
+    /// A runtime trap is returned after finite scheduler recovery; source effects
+    /// are never replayed by recovery and the original trap remains observable.
+    pub fn run_async_turn(&mut self) -> Result<bool, SessionError> {
+        self.last_async_recovered_owner = None;
+        self.budget()?;
+        #[cfg(test)]
+        let recovery_interrupt = self.interrupt_handle();
+        let runtime = self.runtime;
+        let mut scope = RootScope::new(&mut self.store);
+        let checkpoint = dynamic_checkpoint(&mut scope, runtime)?;
+        let runner = runtime
+            .get_func(&mut scope, "async-scheduler-run-one")
+            .ok_or_else(|| wasmtime::Error::msg("Missing async scheduler"))?;
+        let mut result = [Val::I32(0)];
+        let outcome = runner.call(&mut scope, &[], &mut result);
+        let mut recovered_owner = None;
+        let outcome = match outcome {
+            Ok(()) => Ok(result[0].unwrap_i32() != 0),
+            Err(error) => {
+                let original =
+                    execution_error(&mut scope, runtime, error, self.identity, &self.handles);
+                let recovery = (|| -> wasmtime::Result<()> {
+                    let fuel = scope.as_context_mut().get_fuel()?;
+                    // Both attempts execute checked runtime retirement only,
+                    // never the consumed source continuation or its effects.
+                    scope.as_context_mut().set_fuel(u64::MAX)?;
+                    // Capture only owners still Pending at the trapped boundary.
+                    // Recovery can transition exactly its active owner to the
+                    // private marker, excluding unrelated earlier failures.
+                    let candidates = native_async::recovery_candidates(&mut scope, runtime);
+                    let recovery = (|| -> wasmtime::Result<()> {
+                        let function = runtime
+                            .get_func(&mut scope, "async-scheduler-recover")
+                            .ok_or_else(|| wasmtime::Error::msg("Missing async recovery"))?;
+                        #[cfg(test)]
+                        tests::before_async_recovery(&recovery_interrupt);
+                        let result = function.call(&mut scope, &[], &mut []);
+                        #[cfg(test)]
+                        tests::observe_async_recovery(&result);
+                        if matches!(&result, Err(error)
+                            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt))
+                        {
+                            scope.as_context_mut().take_pending_exception();
+                            self.interrupt.store(false, Ordering::SeqCst);
+                            scope.as_context_mut().set_epoch_deadline(1);
+                            return function.call(&mut scope, &[], &mut []);
+                        }
+                        result
+                    })();
+                    if recovery.is_ok() {
+                        if let Ok(candidates) = candidates {
+                            recovered_owner = native_async::recovered_owner(&mut scope, runtime, &candidates).ok().flatten();
+                        }
+                    }
+                    scope.as_context_mut().set_fuel(fuel)?;
+                    recovery
+                })();
+                if recovery.is_err() {
+                    recovered_owner = None;
+                    // A secondary recovery exception must not poison the Store
+                    // or replace the source turn's original execution error.
+                    scope.as_context_mut().take_pending_exception();
+                }
+                Err(original)
+            }
+        };
+        let restoration = restore_dynamic(&mut scope, runtime, &checkpoint);
+        if restoration.is_ok() && !scope.as_context_mut().has_pending_exception() {
+            self.last_async_recovered_owner = recovered_owner;
+        }
+        let outcome = match outcome {
+            Err(original) => Err(original),
+            Ok(value) => restoration.map(|()| value),
+        };
+        drop(scope);
+        let retirement = self.retire_host_futures();
+        if retirement.is_err() {
+            self.last_async_recovered_owner = None;
+        }
+        match outcome {
+            Err(original) => Err(original),
+            Ok(value) => retirement.map(|()| value),
+        }
+    }
+    /// Create rooted pending storage for a host operation. Completion only
+    /// publishes its outcome; compiled waiters run on later scheduler turns.
+    pub fn pending_future(&mut self) -> Result<SessionValue, SessionError> {
+        self.pending_future_with_cancel(|| {})
+    }
+    /// Root a native pending operation until terminal settlement or reset.
+    /// Cancellation hooks must be nonblocking and must not execute Suss source.
+    /// Reset invokes each hook at most once, including across reset retries.
+    pub fn pending_future_with_cancel(
+        &mut self,
+        cancel: impl FnOnce() + Send + 'static,
+    ) -> Result<SessionValue, SessionError> {
+        self.budget()?;
+        let mut scope = RootScope::new(&mut self.store);
+        let function = self
+            .runtime
+            .get_func(&mut scope, "future-pending-new")
+            .ok_or_else(|| wasmtime::Error::msg("Missing pending future storage"))?;
+        let future = call(
+            &mut scope,
+            self.runtime,
+            function,
+            &[],
+            self.identity,
+            &self.handles,
+        )?;
+        registry_lock(&self.pending_host_futures).push(Arc::new(PendingHostFuture {
+            root: future.value.clone(),
+            cancel: Mutex::new(Some(Box::new(cancel))),
+        }));
+        Ok(future)
+    }
+    pub fn resolve_future(
+        &mut self,
+        future: &SessionValue,
+        value: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        self.complete_host_future(future, value, "future-resolve")
+    }
+    pub fn reject_future(
+        &mut self,
+        future: &SessionValue,
+        value: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        self.complete_host_future(future, value, "future-reject")
+    }
+    fn complete_host_future(
+        &mut self,
+        future: &SessionValue,
+        value: &SessionValue,
+        operation: &str,
+    ) -> Result<bool, SessionError> {
+        self.check(future)?;
+        self.check(value)?;
+        self.budget()?;
+        let ownership = self
+            .runtime
+            .get_func(&mut self.store, "async-future-task-owned")
+            .ok_or_else(|| wasmtime::Error::msg("Missing future ownership guard"))?;
+        let stream_ownership = self
+            .runtime
+            .get_func(&mut self.store, "stream-operation-owned")
+            .ok_or_else(|| wasmtime::Error::msg("Missing stream ownership guard"))?;
+        let task_owned = self.inspect(future, |mut store, future| {
+            let mut result = [Val::I32(0)];
+            ownership.call(&mut store, &[future], &mut result)?;
+            if result[0].unwrap_i32() != 0 {
+                return Ok(true);
+            }
+            stream_ownership.call(&mut store, &[future], &mut result)?;
+            Ok(result[0].unwrap_i32() != 0)
+        })?;
+        if task_owned {
+            let mut scope = RootScope::new(&mut self.store);
+            let nil = self
+                .runtime
+                .get_func(&mut scope, "nil")
+                .ok_or_else(|| wasmtime::Error::msg("Missing runtime nil"))?;
+            let payload = call(
+                &mut scope,
+                self.runtime,
+                nil,
+                &[],
+                self.identity,
+                &self.handles,
+            )?;
+            return Err(SessionError::Language(payload));
+        }
+        let function = self
+            .runtime
+            .get_func(&mut self.store, operation)
+            .ok_or_else(|| wasmtime::Error::msg("Missing future completion"))?;
+        {
+            // Calling native completion transfers the finished producer, even if
+            // Wasm publication later traps. Consume its hook before publication;
+            // a retry may publish storage, but must never cancel completed I/O.
+            let mut scope = RootScope::new(&mut self.store);
+            let target = future.value.to_rooted(&mut scope);
+            let requests = registry_lock(&self.pending_host_futures).clone();
+            for request in requests {
+                let candidate = request.root.to_rooted(&mut scope);
+                if wasmtime::Rooted::ref_eq(&scope, &target, &candidate)? {
+                    request.take_cancel();
+                    break;
+                }
+            }
+        }
+        let completed = self.inspect(future, |mut store, future| {
+            let value = Val::AnyRef(Some(value.rooted(&mut store)));
+            let mut result = [Val::I32(0)];
+            function.call(&mut store, &[future, value], &mut result)?;
+            Ok(result[0].unwrap_i32() != 0)
+        })?;
+        self.retire_host_futures()?;
+        Ok(completed)
+    }
+    /// Request cooperative cancellation. Cleanup may suspend, so acceptance
+    /// of the request does not imply that the future is terminal yet.
+    pub fn cancel_future(&mut self, future: &SessionValue) -> Result<bool, SessionError> {
+        self.check(future)?;
+        self.budget()?;
+        let function = self
+            .runtime
+            .get_func(&mut self.store, "async-task-cancel")
+            .ok_or_else(|| wasmtime::Error::msg("Missing async cancellation"))?;
+        self.inspect(future, |mut store, value| {
+            let mut result = [Val::I32(0)];
+            function.call(&mut store, &[value], &mut result)?;
+            Ok(result[0].unwrap_i32() != 0)
+        })
+    }
     pub fn collect(&mut self) -> Result<(), SessionError> {
+        self.retire_host_futures()?;
         self.store.gc(None).map_err(Into::into)
     }
     /// Create the replacement before discarding the old Store. No replay or retained
     /// fragment state crosses reset, and old/foreign handles are checked before use.
     pub fn reset(&mut self) -> Result<(), SessionError> {
-        *self = self.replacement()?;
+        let replacement = self.replacement()?;
+        self.retire_for_reset()?;
+        self.discard_native_requests();
+        *self = replacement;
         Ok(())
+    }
+    fn retire_host_futures(&mut self) -> Result<(), SessionError> {
+        self.budget()?;
+        let status = self
+            .runtime
+            .get_func(&mut self.store, "future-status")
+            .ok_or_else(|| wasmtime::Error::msg("Missing future status"))?;
+        let mut scope = RootScope::new(&mut self.store);
+        let requests = registry_lock(&self.pending_host_futures).clone();
+        for request in requests {
+            let future = request.root.to_rooted(&mut scope);
+            let mut result = [Val::I32(0)];
+            status.call(&mut scope, &[Val::AnyRef(Some(future))], &mut result)?;
+            if result[0].unwrap_i32() != 0 {
+                // Consume before invoking native teardown; no lock spans a hook
+                // or Wasm call, and retry cannot replay a completed hook.
+                if let Some(hook) = request.take_cancel() {
+                    hook();
+                }
+                registry_lock(&self.pending_host_futures)
+                    .retain(|candidate| !Arc::ptr_eq(candidate, &request));
+            }
+        }
+        drop(scope);
+        self.sweep_native_requests();
+        Ok(())
+    }
+    fn cancel_host_requests(&mut self) -> Result<(), SessionError> {
+        self.retire_host_futures()?;
+        let cancel = self
+            .runtime
+            .get_func(&mut self.store, "future-cancel")
+            .ok_or_else(|| wasmtime::Error::msg("Missing future cancellation"))?;
+        let mut scope = RootScope::new(&mut self.store);
+        let requests = registry_lock(&self.pending_host_futures).clone();
+        for request in requests {
+            // Consume before invocation: interrupted settlement cannot replay a
+            // host cancellation hook on the next reset attempt.
+            if let Some(hook) = request.take_cancel() {
+                hook();
+            }
+            let future = request.root.to_rooted(&mut scope);
+            cancel.call(&mut scope, &[Val::AnyRef(Some(future))], &mut [Val::I32(0)])?;
+        }
+        drop(scope);
+        self.retire_host_futures()
+    }
+    /// Shared gate for direct Session and two-phase compiled REPL reset.
+    /// Cancellation effects persist on ResetPending; the old Store stays usable.
+    pub(crate) fn retire_for_reset(&mut self) -> Result<(), SessionError> {
+        self.budget()?;
+        let cancel_all = self
+            .runtime
+            .get_func(&mut self.store, "async-scheduler-cancel-all")
+            .ok_or_else(|| wasmtime::Error::msg("Missing scheduler cancellation"))?;
+        cancel_all.call(&mut self.store, &[], &mut [Val::I32(0)])?;
+        self.cancel_host_requests()?;
+        for _ in 0..64 {
+            let ran = self.run_async_turn()?;
+            self.cancel_host_requests()?;
+            self.budget()?;
+            let pending = self
+                .runtime
+                .get_func(&mut self.store, "async-scheduler-pending-task-count")
+                .ok_or_else(|| wasmtime::Error::msg("Missing scheduler task count"))?;
+            let counts = self
+                .runtime
+                .get_func(&mut self.store, "async-scheduler-counts")
+                .ok_or_else(|| wasmtime::Error::msg("Missing scheduler counts"))?;
+            let mut tasks = [Val::I32(-1)];
+            let mut roots = [Val::I32(-1), Val::I32(-1)];
+            pending.call(&mut self.store, &[], &mut tasks)?;
+            counts.call(&mut self.store, &[], &mut roots)?;
+            let streams = self
+                .runtime
+                .get_func(&mut self.store, "stream-pending-count")
+                .ok_or_else(|| wasmtime::Error::msg("Missing stream operation count"))?;
+            let mut operations = [Val::I32(-1)];
+            streams.call(&mut self.store, &[], &mut operations)?;
+            if operations[0].unwrap_i32() == 0
+                && tasks[0].unwrap_i32() == 0
+                && roots.iter().all(|v| v.unwrap_i32() == 0)
+                && registry_lock(&self.pending_host_futures).is_empty()
+            {
+                return Ok(());
+            }
+            if !ran && roots[1].unwrap_i32() == 0 {
+                return Err(SessionError::ResetPending);
+            }
+        }
+        Err(SessionError::ResetPending)
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         let mut replacement =
@@ -594,6 +975,9 @@ impl Session {
         install_interrupt(&mut replacement.store, &replacement.interrupt);
         if self.bootstrap_core {
             replacement.provision_core()?;
+        }
+        for profile in &self.native_factories {
+            replacement.install_native_profile(profile.clone())?;
         }
         Ok(replacement)
     }
@@ -688,9 +1072,14 @@ impl Session {
         for bytes in bytes {
             runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
                 .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            portable::artifact_identity::verify(bytes, portable::artifact_identity::Expected {
-                phase: Some(self.phase), ..Default::default()
-            }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+            portable::artifact_identity::verify(
+                bytes,
+                portable::artifact_identity::Expected {
+                    phase: Some(self.phase),
+                    ..Default::default()
+                },
+            )
+            .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
             compiled.push(crate::portable_module_cache::compile(&self.engine, bytes)?);
         }
         let mut linker = self.linker.clone();
@@ -797,19 +1186,39 @@ impl Session {
         let mut values = BTreeMap::new();
         let mut scope = RootScope::new(&mut self.store);
         for (identity, global) in &self.cells {
-            let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
-            let value = cell.field(&mut scope, 0)?.unwrap_anyref().unwrap().to_owned_rooted(&mut scope)?;
+            let cell = global
+                .get(&mut scope)
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&scope)?
+                .unwrap();
+            let value = cell
+                .field(&mut scope, 0)?
+                .unwrap_anyref()
+                .unwrap()
+                .to_owned_rooted(&mut scope)?;
             let bound = cell.field(&mut scope, 1)?.unwrap_i32();
             values.insert(identity.clone(), (value, bound));
         }
-        Ok(BindingCheckpoint { environment: self.environment.clone(),
-            values })
+        Ok(BindingCheckpoint {
+            environment: self.environment.clone(),
+            values,
+        })
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: BindingCheckpoint, globals: &[CellIdentity]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(
+        &mut self,
+        checkpoint: BindingCheckpoint,
+        globals: &[CellIdentity],
+    ) -> Result<(), SessionError> {
         let mut scope = RootScope::new(&mut self.store);
         for identity in globals {
             if let Some(global) = self.cells.get(identity) {
-                let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+                let cell = global
+                    .get(&mut scope)
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&scope)?
+                    .unwrap();
                 if let Some((value, bound)) = checkpoint.values.get(identity) {
                     let value = Val::AnyRef(Some(value.to_rooted(&mut scope)));
                     cell.set_field(&mut scope, 0, value)?;
@@ -821,7 +1230,8 @@ impl Session {
                 }
             }
         }
-        self.environment.restore_declarations(&checkpoint.environment, globals, self.phase);
+        self.environment
+            .restore_declarations(&checkpoint.environment, globals, self.phase);
         // Keep initialized dependency cells/modules and resident code. Unpublished
         // fresh cells remain unbound and reusable under their stable identity.
         Ok(())
@@ -845,9 +1255,12 @@ impl Session {
                 message: error.message,
             })
         })?;
-        let prepared = self
-            .compilation_snapshot()
-            .prepare_with_origin(forms, 0..source.len(), expander, Some(&portable::SourceOrigin::new(source, None)))?;
+        let prepared = self.compilation_snapshot().prepare_with_origin(
+            forms,
+            0..source.len(),
+            expander,
+            Some(&portable::SourceOrigin::new(source, None)),
+        )?;
         self.eval_prepared(prepared)
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
@@ -1014,12 +1427,17 @@ impl Session {
     }
     /// Allocate compiler data scalars through the shared runtime without compiling
     /// source, replaying initializers or adding resident fragments.
-    pub(crate) fn data_scalar(&mut self, literal: &portable::hir::Literal) -> Result<SessionValue, SessionError> {
+    pub(crate) fn data_scalar(
+        &mut self,
+        literal: &portable::hir::Literal,
+    ) -> Result<SessionValue, SessionError> {
         use portable::hir::Literal;
         self.budget()?;
         let mut scope = RootScope::new(&mut self.store);
         match literal {
-            Literal::Undefined => Err(SessionError::Host(wasmtime::Error::msg("Compiler data has no undefined source literal"))),
+            Literal::Undefined => Err(SessionError::Host(wasmtime::Error::msg(
+                "Compiler data has no undefined source literal",
+            ))),
             Literal::Nil | Literal::Bool(_) => {
                 let sentinel = match literal {
                     Literal::Nil => 0,
@@ -1027,18 +1445,49 @@ impl Session {
                     Literal::Bool(true) => 4,
                     _ => unreachable!(),
                 };
-                let value = Val::AnyRef(Some(AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(sentinel).expect("runtime sentinel fits i31"))));
+                let value = Val::AnyRef(Some(AnyRef::from_i31(
+                    &mut scope,
+                    wasmtime::I31::new_u32(sentinel).expect("runtime sentinel fits i31"),
+                )));
                 own(&mut scope, value, self.identity, &self.handles)
             }
             Literal::Number(value) => {
-                let function = self.runtime.get_func(&mut scope, "number-box").expect("shared runtime number constructor");
-                call(&mut scope, self.runtime, function, &[Val::F64(value.to_bits())], self.identity, &self.handles)
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "number-box")
+                    .expect("shared runtime number constructor");
+                call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &[Val::F64(value.to_bits())],
+                    self.identity,
+                    &self.handles,
+                )
             }
             Literal::String(units) => {
-                let length = i32::try_from(units.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data string exceeds runtime length")))?;
-                let function = self.runtime.get_func(&mut scope, "string-new").expect("shared runtime string constructor");
-                let value = call(&mut scope, self.runtime, function, &[Val::I32(length)], self.identity, &self.handles)?;
-                let array = value.value.to_rooted(&mut scope).as_array(&scope)?.expect("runtime string is a UTF-16 array");
+                let length = i32::try_from(units.len()).map_err(|_| {
+                    SessionError::Host(wasmtime::Error::msg(
+                        "Compiler data string exceeds runtime length",
+                    ))
+                })?;
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "string-new")
+                    .expect("shared runtime string constructor");
+                let value = call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &[Val::I32(length)],
+                    self.identity,
+                    &self.handles,
+                )?;
+                let array = value
+                    .value
+                    .to_rooted(&mut scope)
+                    .as_array(&scope)?
+                    .expect("runtime string is a UTF-16 array");
                 for (index, unit) in units.iter().enumerate() {
                     array.set(&mut scope, index as u32, Val::I32(i32::from(*unit)))?;
                 }
@@ -1048,45 +1497,110 @@ impl Session {
     }
     /// Build a language source array from already rooted values. The runtime
     /// clones the internal argument buffer, preserving element identities.
-    pub(crate) fn data_array(&mut self, values: &[&SessionValue]) -> Result<SessionValue, SessionError> {
-        for value in values { self.check(value)?; }
-        let length = i32::try_from(values.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data array exceeds runtime length")))?;
+    pub(crate) fn data_array(
+        &mut self,
+        values: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        for value in values {
+            self.check(value)?;
+        }
+        let length = i32::try_from(values.len()).map_err(|_| {
+            SessionError::Host(wasmtime::Error::msg(
+                "Compiler data array exceeds runtime length",
+            ))
+        })?;
         self.budget()?;
         let mut scope = RootScope::new(&mut self.store);
         let mut result = [Val::null_any_ref()];
-        self.runtime.get_func(&mut scope, "args-new").expect("shared runtime argument constructor")
+        self.runtime
+            .get_func(&mut scope, "args-new")
+            .expect("shared runtime argument constructor")
             .call(&mut scope, &[Val::I32(length)], &mut result)?;
-        let array = result[0].unwrap_anyref().unwrap().as_array(&scope)?.expect("runtime argument array");
+        let array = result[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&scope)?
+            .expect("runtime argument array");
         for (index, value) in values.iter().enumerate() {
             let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
-        let function = self.runtime.get_func(&mut scope, "source-array-new").expect("shared runtime source array constructor");
-        call(&mut scope, self.runtime, function, &result, self.identity, &self.handles)
+        let function = self
+            .runtime
+            .get_func(&mut scope, "source-array-new")
+            .expect("shared runtime source array constructor");
+        call(
+            &mut scope,
+            self.runtime,
+            function,
+            &result,
+            self.identity,
+            &self.handles,
+        )
     }
     /// Follow the compiler's `new` path using a captured canonical class value.
-    pub(crate) fn data_construct(&mut self, class: &SessionValue, arguments: &[&SessionValue]) -> Result<SessionValue, SessionError> {
+    pub(crate) fn data_construct(
+        &mut self,
+        class: &SessionValue,
+        arguments: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
         self.check(class)?;
-        for argument in arguments { self.check(argument)?; }
+        for argument in arguments {
+            self.check(argument)?;
+        }
         self.budget()?;
         let constructor = {
             let mut scope = RootScope::new(&mut self.store);
-            let function = self.runtime.get_func(&mut scope, "constructor-descriptor").expect("shared runtime class descriptor");
+            let function = self
+                .runtime
+                .get_func(&mut scope, "constructor-descriptor")
+                .expect("shared runtime class descriptor");
             let value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
-            let descriptor = call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)?;
-            let function = self.runtime.get_func(&mut scope, "source-constructor-new").expect("shared runtime source constructor");
+            let descriptor = call(
+                &mut scope,
+                self.runtime,
+                function,
+                &[value],
+                self.identity,
+                &self.handles,
+            )?;
+            let function = self
+                .runtime
+                .get_func(&mut scope, "source-constructor-new")
+                .expect("shared runtime source constructor");
             let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
-            call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)?
+            call(
+                &mut scope,
+                self.runtime,
+                function,
+                &[value],
+                self.identity,
+                &self.handles,
+            )?
         };
         self.invoke(&constructor, arguments)
     }
-    pub(crate) fn data_descriptor(&mut self, value: &SessionValue, class: bool) -> Result<SessionValue, SessionError> {
+    pub(crate) fn data_descriptor(
+        &mut self,
+        value: &SessionValue,
+        class: bool,
+    ) -> Result<SessionValue, SessionError> {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
         let value = value.value.to_rooted(&mut scope);
         if class {
-            let function = self.runtime.get_func(&mut scope, "constructor-descriptor").expect("shared runtime class descriptor");
-            call(&mut scope, self.runtime, function, &[Val::AnyRef(Some(value))], self.identity, &self.handles)
+            let function = self
+                .runtime
+                .get_func(&mut scope, "constructor-descriptor")
+                .expect("shared runtime class descriptor");
+            call(
+                &mut scope,
+                self.runtime,
+                function,
+                &[Val::AnyRef(Some(value))],
+                self.identity,
+                &self.handles,
+            )
         } else {
             let object = value.as_struct(&scope)?.expect("canonical compiler object");
             let descriptor = object.field(&mut scope, 0)?;
@@ -1162,6 +1676,420 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    std::thread_local! {
+        static INTERRUPT_ASYNC_RECOVERY: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+        static OBSERVED_RECOVERY_INTERRUPT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    }
+    pub(super) fn before_async_recovery(handle: &InterruptHandle) {
+        if INTERRUPT_ASYNC_RECOVERY.with(|armed| armed.replace(false)) {
+            // This raises the real engine epoch and exercises the Store callback.
+            // It runs immediately before the real runtime recovery call.
+            handle.interrupt();
+        }
+    }
+    pub(super) fn observe_async_recovery(result: &wasmtime::Result<()>) {
+        if matches!(result, Err(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt))
+        {
+            OBSERVED_RECOVERY_INTERRUPT.with(|observed| observed.set(true));
+        }
+    }
+
+    #[test]
+    fn session_lifecycle_secondary_interrupt_preserves_async_fuel_trap_and_retires_roots() {
+        fn value(
+            scope: &mut RootScope<&mut Store<()>>,
+            runtime: Instance,
+            name: &str,
+            args: &[Val],
+        ) -> Val {
+            let mut result = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut *scope, name)
+                .unwrap()
+                .call(&mut *scope, args, &mut result)
+                .unwrap();
+            result[0].clone()
+        }
+        let mut session = Session::new().unwrap();
+        session
+            .eval("(def effects 0) (def ^:dynamic *value* 1)")
+            .unwrap();
+        let resume = session.eval(
+            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (loop [] (recur)))))",
+        ).unwrap();
+        let runtime = session.runtime;
+        let (producer, token, caller) = {
+            let mut scope = RootScope::new(&mut session.store);
+            let caller = dynamic_checkpoint(&mut scope, runtime).unwrap();
+            let producer = value(&mut scope, runtime, "future-pending-new", &[]);
+            let slots = value(&mut scope, runtime, "args-new", &[Val::I32(0)]);
+            let unwind = value(&mut scope, runtime, "args-new", &[Val::I32(0)]);
+            let frame = value(&mut scope, runtime, "dynamic-fork", &[]);
+            let nil = value(&mut scope, runtime, "nil", &[]);
+            // Continuation pc/generation/event fields are raw i31 scalars.
+            let zero = nil.clone();
+            let state = value(&mut scope, runtime, "args-new", &[Val::I32(8)]);
+            let array = state
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&scope)
+                .unwrap()
+                .unwrap();
+            for (index, item) in [
+                zero.clone(),
+                slots,
+                unwind,
+                frame,
+                producer.clone(),
+                zero.clone(),
+                zero,
+                nil,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                array.set(&mut scope, index as u32, item).unwrap();
+            }
+            let continuation = value(&mut scope, runtime, "async-continuation-new", &[state]);
+            let resume = Val::AnyRef(Some(resume.value.to_rooted(&mut scope)));
+            let token = value(
+                &mut scope,
+                runtime,
+                "async-task-start",
+                &[continuation, resume],
+            );
+            (
+                own(&mut scope, producer, session.identity, &session.handles).unwrap(),
+                own(&mut scope, token, session.identity, &session.handles).unwrap(),
+                caller,
+            )
+        };
+        session.set_operation_fuel(50_000);
+        OBSERVED_RECOVERY_INTERRUPT.with(|observed| observed.set(false));
+        INTERRUPT_ASYNC_RECOVERY.with(|armed| armed.set(true));
+        let error = session.run_async_turn().unwrap_err();
+        assert!(
+            matches!(&error, SessionError::Trap(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+            "{error:?}"
+        );
+        assert!(
+            !error.is_interrupt(),
+            "secondary interrupt must not replace OutOfFuel"
+        );
+        assert!(
+            OBSERVED_RECOVERY_INTERRUPT.with(|observed| observed.replace(false)),
+            "the real recovery call must actually receive Interrupt"
+        );
+        assert!(!INTERRUPT_ASYNC_RECOVERY.with(|armed| armed.get()));
+        assert!(!session.interrupt.load(Ordering::SeqCst));
+        assert!(!session.store.has_pending_exception());
+        {
+            let mut scope = RootScope::new(&mut session.store);
+            let current = dynamic_checkpoint(&mut scope, runtime).unwrap();
+            let current = current.to_rooted(&mut scope);
+            let caller = caller.to_rooted(&mut scope);
+            assert!(wasmtime::Rooted::ref_eq(&scope, &current, &caller).unwrap());
+        }
+        session.set_operation_fuel(1_000_000);
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "next turn must finish retirement without replay"
+        );
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "retirement is idempotent"
+        );
+        assert!(!session.store.has_pending_exception());
+        let mut counts = [Val::I32(-1), Val::I32(-1)];
+        runtime
+            .get_func(&mut session.store, "async-scheduler-counts")
+            .unwrap()
+            .call(&mut session.store, &[], &mut counts)
+            .unwrap();
+        assert_eq!((counts[0].unwrap_i32(), counts[1].unwrap_i32()), (0, 0));
+        // Even with the old token retained by a host root, it cannot reenqueue.
+        session
+            .inspect(&token, |mut store, token| {
+                let mut result = [Val::I32(-1)];
+                runtime
+                    .get_func(&mut store, "async-registration-enqueue")
+                    .unwrap()
+                    .call(&mut store, &[token, Val::I32(0)], &mut result)?;
+                assert_eq!(result[0].unwrap_i32(), 0);
+                Ok(())
+            })
+            .unwrap();
+        session
+            .inspect(&producer, |mut store, producer| {
+                let mut status = [Val::I32(-1)];
+                runtime
+                    .get_func(&mut store, "future-status")
+                    .unwrap()
+                    .call(&mut store, &[producer], &mut status)?;
+                assert_eq!(status[0].unwrap_i32(), 2, "trapped producer is failed");
+                Ok(())
+            })
+            .unwrap();
+        for (source, expected) in [("effects", "1"), ("*value*", "1"), ("(+ 20 22)", "42")] {
+            let result = session.eval(source).unwrap();
+            assert_eq!(
+                crate::portable_repl::display(&mut session, &result).unwrap(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup() {
+        let mut session = Session::new_repl().unwrap();
+        let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        session.eval_with_macros(
+            "(ns reset-callback-test (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
+            &mut macros,
+        ).unwrap();
+        session.eval("(def effects 0)").unwrap();
+        let make = session.eval_with_macros(
+            "(fn [dependency cleanup] (suss.async/future (try (suss.async/await* dependency) (finally (suss.async/await* cleanup) (set! effects (+ effects 1))))))",
+            &mut macros,
+        ).unwrap();
+        let dependency = session.pending_future().unwrap();
+        // Source completion has no native cancellation hook/known host producer.
+        let cleanup = session.eval("(suss.async/completion)").unwrap();
+        let task = session.invoke(&make, &[&dependency, &cleanup]).unwrap();
+        assert!(session.run_async_turn().unwrap());
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "task is awaiting host completion"
+        );
+        assert!(session.cancel_future(&task).unwrap());
+        assert!(session.run_async_turn().unwrap());
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "cancellation cleanup is suspended too"
+        );
+        session.collect().unwrap();
+
+        let identity = session.identity;
+        assert!(matches!(session.reset(), Err(SessionError::ResetPending)));
+        assert_eq!(session.identity, identity);
+        assert!(
+            matches!(
+                crate::portable_repl::reset_compiled(&mut session, &mut macros),
+                Err(SessionError::ResetPending)
+            ),
+            "compiled REPL cannot bypass retirement"
+        );
+        assert_eq!(session.identity, identity);
+        let effects = session.eval("effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "0"
+        );
+        let old_payload = session.eval("42").unwrap();
+        assert!(
+            session.resolve_future(&cleanup, &old_payload).unwrap(),
+            "old Store remains available for explicit cleanup completion"
+        );
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        let effects = session.eval("effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "1"
+        );
+        crate::portable_repl::reset_compiled(&mut session, &mut macros).unwrap();
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "old scheduler work cannot cross reset"
+        );
+        session.eval("(def effects 0)").unwrap();
+        let payload = session.eval("42").unwrap();
+        let before = session.stats();
+        // A fresh payload avoids rejection merely because the payload is stale:
+        // the old pending target itself must fail before runtime settlement.
+        for old in [&dependency, &cleanup, &task] {
+            assert!(matches!(
+                session.resolve_future(old, &payload),
+                Err(SessionError::ForeignValue)
+            ));
+            assert!(matches!(
+                session.reject_future(old, &payload),
+                Err(SessionError::ForeignValue)
+            ));
+            assert!(matches!(
+                session.cancel_future(old),
+                Err(SessionError::ForeignValue)
+            ));
+            assert_eq!(session.stats(), before);
+            assert!(!session.store.has_pending_exception());
+        }
+        assert!(
+            !session.run_async_turn().unwrap(),
+            "late callbacks cannot queue an old continuation"
+        );
+        let effects = session.eval("effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "0"
+        );
+
+        session.eval_with_macros(
+            "(ns reset-callback-test (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
+            &mut macros,
+        ).unwrap();
+        let make = session.eval_with_macros(
+            "(fn [dependency] (suss.async/future (suss.async/await* dependency) (set! user/effects (+ user/effects 1))))",
+            &mut macros,
+        ).unwrap();
+        let pending = session.pending_future().unwrap();
+        let fresh_task = session.invoke(&make, &[&pending]).unwrap();
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        assert!(session.resolve_future(&pending, &payload).unwrap());
+        assert!(!session.reject_future(&pending, &payload).unwrap());
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        session.collect().unwrap();
+        let effects = session.eval("user/effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "1"
+        );
+        drop(fresh_task);
+        // This covers native generation checks, not disposal of real host I/O
+        // resources or transport of canonical component callbacks.
+    }
+
+    #[test]
+    fn session_lifecycle_reset_host_hook_once_and_cleanup_catches_cancellation() {
+        struct ReadGuard(Arc<AtomicUsize>);
+        impl Drop for ReadGuard {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        let calls = Arc::new(AtomicUsize::new(0));
+        let drops = Arc::new(AtomicUsize::new(0));
+        let mut session = Session::new_repl().unwrap();
+        let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        session.eval_with_macros(
+            "(ns hooked-reset (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
+            &mut macros,
+        ).unwrap();
+        session.eval("(def effects 0)").unwrap();
+        let make = session.eval_with_macros(
+            "(fn [dependency cleanup gate] (suss.async/future (try (suss.async/await* dependency) (finally (try (suss.async/await* cleanup) (catch :default cancelled (set! effects (+ effects 10)))) (suss.async/await* gate) (set! effects (+ effects 1))))))",
+            &mut macros,
+        ).unwrap();
+        let dependency = session.pending_future().unwrap();
+        let guard = ReadGuard(drops.clone());
+        let called = calls.clone();
+        let cleanup = session
+            .pending_future_with_cancel(move || {
+                called.fetch_add(1, Ordering::SeqCst);
+                drop(guard);
+            })
+            .unwrap();
+        let gate = session.eval("(suss.async/completion)").unwrap();
+        let task = session
+            .invoke(&make, &[&dependency, &cleanup, &gate])
+            .unwrap();
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        let identity = session.identity;
+        assert!(matches!(session.reset(), Err(SessionError::ResetPending)));
+        assert_eq!(session.identity, identity);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            drops.load(Ordering::SeqCst),
+            1,
+            "captured host read guard is released"
+        );
+        assert_eq!(session.stats().pending_host_requests, 0);
+        let effects = session.eval("effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "10",
+            "cleanup must catch a cancellation event, not a fabricated Ready"
+        );
+        assert!(matches!(session.reset(), Err(SessionError::ResetPending)));
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            1,
+            "reset retries never replay host hooks"
+        );
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+        let payload = session.eval("42").unwrap();
+        assert!(
+            !session.resolve_future(&cleanup, &payload).unwrap(),
+            "cancelled cleanup stays terminal"
+        );
+        assert!(session.resolve_future(&gate, &payload).unwrap());
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        let effects = session.eval("effects").unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &effects).unwrap(),
+            "11",
+            "the old Store executes the remaining cleanup exactly once"
+        );
+        session.reset().unwrap();
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+        assert!(matches!(
+            session.cancel_future(&task),
+            Err(SessionError::ForeignValue)
+        ));
+        assert!(!session.run_async_turn().unwrap());
+    }
+
+    #[test]
+    fn session_lifecycle_host_registry_roots_are_independent_and_completion_releases_hook() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let mut session = Session::new().unwrap();
+        let called = calls.clone();
+        let settled = session
+            .pending_future_with_cancel(move || {
+                called.fetch_add(1, Ordering::SeqCst);
+            })
+            .unwrap();
+        assert_eq!(session.stats().pending_host_requests, 1);
+        assert_eq!(session.stats().external_value_handles, 1);
+        let payload = session.eval("42").unwrap();
+        assert!(session.resolve_future(&settled, &payload).unwrap());
+        assert_eq!(session.stats().pending_host_requests, 0);
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            0,
+            "normal completion must not cancel host I/O"
+        );
+        drop(settled);
+        drop(payload);
+        let called = calls.clone();
+        let pending = session
+            .pending_future_with_cancel(move || {
+                called.fetch_add(1, Ordering::SeqCst);
+            })
+            .unwrap();
+        drop(pending);
+        assert_eq!(session.stats().external_value_handles, 0);
+        assert_eq!(
+            session.stats().pending_host_requests,
+            1,
+            "host registry independently owns its root"
+        );
+        session.collect().unwrap();
+        assert_eq!(session.stats().pending_host_requests, 1);
+        session.reset().unwrap();
+        assert_eq!(session.stats().pending_host_requests, 0);
+        assert_eq!(session.stats().external_value_handles, 0);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        session.reset().unwrap();
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+    }
+
     #[test]
     fn session_lifecycle_native_callback_trap_restores_dynamic_context() {
         let mut session = Session::new().unwrap();
@@ -1347,38 +2275,53 @@ mod tests {
             let mut value = 0usize;
             let mut shift = 0;
             loop {
-                let byte = bytes[*offset]; *offset += 1;
+                let byte = bytes[*offset];
+                *offset += 1;
                 value |= ((byte & 127) as usize) << shift;
-                if byte & 128 == 0 { return value; }
+                if byte & 128 == 0 {
+                    return value;
+                }
                 shift += 7;
             }
         }
         fn write_uleb(mut value: usize, bytes: &mut Vec<u8>) {
             loop {
-                let mut byte = (value & 127) as u8; value >>= 7;
-                if value != 0 { byte |= 128; }
+                let mut byte = (value & 127) as u8;
+                value >>= 7;
+                if value != 0 {
+                    byte |= 128;
+                }
                 bytes.push(byte);
-                if value == 0 { break; }
+                if value == 0 {
+                    break;
+                }
             }
         }
         let mut session = Session::new().unwrap();
         session.eval("(def keep 17)").unwrap();
-        let prepared = portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime).unwrap();
+        let prepared =
+            portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
+                .unwrap();
         // Remove the source identity section if emitted, keeping every other
         // byte intact. This fixture runs before and after the production gate.
         let mut wasm = prepared.wasm[..8].to_vec();
         let mut offset = 8;
         while offset < prepared.wasm.len() {
             let start = offset;
-            let id = prepared.wasm[offset]; offset += 1;
+            let id = prepared.wasm[offset];
+            offset += 1;
             let length = read_uleb(&prepared.wasm, &mut offset);
             let end = offset + length;
             let skip = if id == 0 {
                 let mut name_offset = offset;
                 let name_length = read_uleb(&prepared.wasm, &mut name_offset);
                 &prepared.wasm[name_offset..name_offset + name_length] == b"suss.source-artifact"
-            } else { false };
-            if !skip { wasm.extend_from_slice(&prepared.wasm[start..end]); }
+            } else {
+                false
+            };
+            if !skip {
+                wasm.extend_from_slice(&prepared.wasm[start..end]);
+            }
             offset = end;
         }
         let abi = runtime_abi::Manifest::default();
@@ -1405,18 +2348,33 @@ mod tests {
         write_uleb(data.len(), &mut wasm);
         wasm.extend_from_slice(&data);
         let before = session.stats();
-        let result = session.install(&[&prepared.wasm, &wasm], prepared.environment, &prepared.cells);
-        let error = result.expect_err("same package version with incompatible compiler bytes must be rejected");
-        assert!(error.to_string().contains("compiler build identity"), "{error}");
+        let result = session.install(
+            &[&prepared.wasm, &wasm],
+            prepared.environment,
+            &prepared.cells,
+        );
+        let error = result
+            .expect_err("same package version with incompatible compiler bytes must be rejected");
+        assert!(
+            error.to_string().contains("compiler build identity"),
+            "{error}"
+        );
         assert_eq!(session.stats(), before);
-        assert!(matches!(session.eval("ghost"), Err(SessionError::Compile(_))));
+        assert!(matches!(
+            session.eval("ghost"),
+            Err(SessionError::Compile(_))
+        ));
         let keep = session.eval("keep").unwrap();
-        let bits = session.inspect(&keep, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else { panic!("Expected ordinary number") };
-            Ok(*bits)
-        }).unwrap();
+        let bits = session
+            .inspect(&keep, |mut store, value| {
+                let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = number.fields(&mut store)?.collect::<Vec<_>>();
+                let [Val::F64(bits)] = fields.as_slice() else {
+                    panic!("Expected ordinary number")
+                };
+                Ok(*bits)
+            })
+            .unwrap();
         assert_eq!(bits, 17.0f64.to_bits());
     }
 
@@ -1424,25 +2382,47 @@ mod tests {
     fn session_lifecycle_phase_identity_rejects_entire_batch_before_publication() {
         let mut session = Session::new().unwrap();
         session.eval("(def keep 17)").unwrap();
-        let prepared = portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime).unwrap();
+        let prepared =
+            portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
+                .unwrap();
         let wrong_phase = portable::artifact_identity::annotate_source(
-            &prepared.wasm, Phase::Macro,
-            Some(&portable::SourceOrigin::new("(def ghost 7)", None)), Some(&[]),
-        ).unwrap();
+            &prepared.wasm,
+            Phase::Macro,
+            Some(&portable::SourceOrigin::new("(def ghost 7)", None)),
+            Some(&[]),
+        )
+        .unwrap();
         // These are valid executable bytes with a valid body digest, but belong
         // to the other isolated phase. Even the preceding valid fragment must
         // not allocate or publish its staged bindings on this failure.
         portable::artifact_identity::verify(&wrong_phase, Default::default()).unwrap();
         let before = session.stats();
-        let result = session.install(&[&prepared.wasm, &wrong_phase], prepared.environment, &prepared.cells);
-        assert!(result.unwrap_err().to_string().contains("phase identity mismatch"));
+        let result = session.install(
+            &[&prepared.wasm, &wrong_phase],
+            prepared.environment,
+            &prepared.cells,
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("phase identity mismatch")
+        );
         assert_eq!(session.stats(), before);
-        assert!(matches!(session.eval("ghost"), Err(SessionError::Compile(_))));
+        assert!(matches!(
+            session.eval("ghost"),
+            Err(SessionError::Compile(_))
+        ));
         let keep = session.eval("keep").unwrap();
-        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "17");
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &keep).unwrap(),
+            "17"
+        );
         // A failed batch must leave the ordinary loader usable.
         let recovered = session.eval("(def ghost 23)").unwrap();
-        assert_eq!(crate::portable_repl::display(&mut session, &recovered).unwrap(), "23");
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &recovered).unwrap(),
+            "23"
+        );
     }
-
 }

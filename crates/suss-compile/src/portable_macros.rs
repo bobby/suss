@@ -263,6 +263,12 @@ impl CompiledMacros {
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         Self::with_bootstrap(self.session.replacement()?)
     }
+    pub(crate) fn retire_for_reset(&mut self) -> Result<(), SessionError> {
+        self.session.retire_for_reset()
+    }
+    pub(crate) fn display_value(&mut self, value: &SessionValue) -> Result<String, SessionError> {
+        crate::portable_repl::display(&mut self.session, value)
+    }
     pub(crate) fn define_form_display(
         &mut self,
         form: Form,
@@ -272,7 +278,7 @@ impl CompiledMacros {
         let value = self.define_form_with_origin(form, span, origin)?;
         crate::portable_repl::display(&mut self.session, &value)
     }
-    fn define_form_with_origin(
+    pub(crate) fn define_form_with_origin(
         &mut self, form: Form, span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {

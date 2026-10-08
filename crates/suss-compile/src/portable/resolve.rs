@@ -431,6 +431,38 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Core { global, export });
             }
+            // Private callable adapters used by the bundled compiled async library.
+            for (name, export) in [
+                ("pending", "async-source-pending-function"),
+                ("resolve!", "async-source-resolve!-function"),
+                ("reject!", "async-source-reject!-function"),
+                ("cancel!", "async-source-cancel!-function"),
+                ("status", "async-source-status-function"),
+                ("result", "async-source-result-function"),
+                ("stream-pair", "async-source-stream-pair-function"),
+                ("stream-pair-reader", "async-source-stream-pair-reader-function"),
+                ("stream-pair-writer", "async-source-stream-pair-writer-function"),
+                ("stream-read-limit", "async-source-stream-read-limit-function"),
+                ("stream-write-limit", "async-source-stream-write-limit-function"),
+                ("stream-begin-read", "async-source-stream-begin-read-function"),
+                ("stream-begin-write", "async-source-stream-begin-write-function"),
+                ("stream-operation-future", "async-source-stream-operation-future-function"),
+                ("stream-operation-retire", "async-source-stream-operation-retire-function"),
+                ("stream-chunk-new", "async-source-stream-chunk-new-function"),
+                ("stream-chunk-set", "async-source-stream-chunk-set-function"),
+                ("stream-chunk-count", "async-source-stream-chunk-count-function"),
+                ("stream-chunk-nth", "async-source-stream-chunk-nth-function"),
+                ("stream-eof?", "async-source-stream-eof?-function"),
+                ("stream-close!", "async-source-stream-close!-function"),
+                ("stream-fail!", "async-source-stream-fail!-function"),
+            ] {
+                let global = Global {
+                    phase,
+                    namespace: "suss.internal.async".into(),
+                    name: name.into(),
+                };
+                env.bindings.insert(global.clone(), Binding::Core { global, export });
+            }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
                 ("defprotocol", NominalForm::Defprotocol),
@@ -1347,6 +1379,19 @@ pub fn locate_source(
     roots: &[impl AsRef<Path>],
     span: Range<usize>,
 ) -> Result<PathBuf, Diagnostic> {
+    locate_source_if_present(namespace, roots, span.clone())?.ok_or_else(|| Diagnostic {
+        span,
+        message: format!("No source for namespace {}", canonical(namespace)),
+    })
+}
+
+/// Absence alone permits an embedded-library fallback. Ambiguity, invalid names
+/// and filesystem failures remain errors rather than becoming library successes.
+pub(crate) fn locate_source_if_present(
+    namespace: &str,
+    roots: &[impl AsRef<Path>],
+    span: Range<usize>,
+) -> Result<Option<PathBuf>, Diagnostic> {
     valid_namespace(namespace).map_err(|mut error| {
         error.span = span.clone();
         error
@@ -1361,8 +1406,36 @@ pub fn locate_source(
                 Ok(path) if path.is_file() => {
                     matches.insert(path);
                 }
-                Ok(_) => {}
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Ok(path) => {
+                    return Err(Diagnostic {
+                        span,
+                        message: format!("Namespace source is not a file: {}", path.display()),
+                    });
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    match std::fs::symlink_metadata(&path) {
+                        Err(missing) if missing.kind() == std::io::ErrorKind::NotFound => {
+                            // A missing leaf beneath a broken directory link is
+                            // a configured source error, not absent source.
+                            for ancestor in path.ancestors().skip(1) {
+                                if let Ok(metadata) = std::fs::symlink_metadata(ancestor) {
+                                    if metadata.file_type().is_symlink() {
+                                        if let Err(error) = ancestor.canonicalize() {
+                                            return Err(Diagnostic {
+                                                span,
+                                                message: format!("Cannot resolve namespace source: {error}"),
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => return Err(Diagnostic {
+                            span,
+                            message: format!("Cannot resolve namespace source: {error}"),
+                        }),
+                    }
+                }
                 Err(error) => {
                     return Err(Diagnostic {
                         span,
@@ -1373,11 +1446,8 @@ pub fn locate_source(
         }
     }
     match matches.len() {
-        1 => Ok(matches.into_iter().next().unwrap()),
-        0 => Err(Diagnostic {
-            span,
-            message: format!("No source for namespace {namespace}"),
-        }),
+        1 => Ok(Some(matches.into_iter().next().unwrap())),
+        0 => Ok(None),
         _ => Err(Diagnostic {
             span,
             message: format!(

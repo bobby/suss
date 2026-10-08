@@ -1879,6 +1879,8 @@ impl<'a> AnalysisGraph<'a> {
                 hir::SourceNode::Assign { target, value } => ("set!", vec![], vec![("target", target.as_ref()), ("val", value.as_ref())]),
                 hir::SourceNode::Invoke { callee, arguments } => ("invoke", vec![("args", arguments.as_ref())], vec![("fn", callee.as_ref())]),
                 hir::SourceNode::Construct { class, arguments } => ("new", vec![("args", arguments.as_ref())], vec![("class", class.as_ref())]),
+                hir::SourceNode::Future(body) => ("suss/future", vec![], vec![("body", body.as_ref())]),
+                hir::SourceNode::Await(value) => ("suss/await", vec![], vec![("value", value.as_ref())]),
                 _ => ("", vec![], vec![]),
             };
             if !operation.is_empty() {
@@ -1892,6 +1894,8 @@ impl<'a> AnalysisGraph<'a> {
                     "set!" => &["target", "val"],
                     "invoke" => &["fn", "args"],
                     "new" => &["class", "args"],
+                    "suss/future" => &["body"],
+                    "suss/await" => &["value"],
                     _ => unreachable!(),
                 };
                 for (name, children) in many {
@@ -2113,6 +2117,13 @@ impl<'a> AnalysisGraph<'a> {
     fn lowering_record(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
         let (operation, children): (&str, Vec<&Hir>) = match &hir.kind {
+            Expression::Future { body, .. } => ("future", vec![body]),
+            Expression::Await { value } => ("await", vec![value]),
+            Expression::AsyncTry { body, handler, cleanup, .. } => (
+                "async-try", std::iter::once(body.as_ref())
+                    .chain(handler.iter().map(|h| h.as_ref()))
+                    .chain(cleanup.iter().map(|h| h.as_ref())).collect(),
+            ),
             Expression::Literal(_) => ("literal", vec![]),
             Expression::Local(_) => ("local", vec![]),
             Expression::Global(_) => ("global", vec![]),
@@ -2165,6 +2176,11 @@ impl<'a> AnalysisGraph<'a> {
             Expression::GeneralFunction { methods, .. } => (
                 "function",
                 methods.iter().map(|method| method.body.as_ref()).collect(),
+            ),
+            Expression::AsyncDynamicScope { bindings, body } => (
+                "async-dynamic-scope",
+                bindings.iter().map(|(_, value)| value)
+                    .chain(std::iter::once(body.as_ref())).collect(),
             ),
             Expression::DynamicScope { bindings, body } => (
                 "dynamic-scope",

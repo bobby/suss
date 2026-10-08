@@ -1,8 +1,8 @@
 //! Bounded native transport between reader forms and real compiled macro values.
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
+use crate::portable::Diagnostic;
 use crate::portable_session::{Session, SessionError, SessionValue};
 use std::{collections::BTreeMap, ops::Range};
-use crate::portable::Diagnostic;
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, Rooted, StoreContextMut, Val};
 
@@ -41,6 +41,151 @@ pub(crate) enum MetadataShape {
     Map { large: bool },
     Set,
 }
+
+/// Display-only data, never fabricated reader/macro syntax.
+pub(crate) enum DisplayDatum {
+    Plain(Form),
+    Collection(DisplayCollection, Vec<DisplayDatum>),
+    Opaque(DisplayLeaf),
+}
+#[derive(Clone, Copy)]
+pub(crate) enum DisplayCollection {
+    List,
+    Vector,
+    Map,
+    Set,
+}
+#[derive(Clone, Copy)]
+pub(crate) enum DisplayLeaf {
+    Future(crate::portable_session::FutureStatus),
+    StreamReader,
+    StreamWriter,
+    StreamEof,
+}
+impl DisplayLeaf {
+    pub(crate) fn text(self) -> &'static str {
+        use crate::portable_session::FutureStatus;
+        match self {
+            Self::Future(FutureStatus::Pending) => "#<future pending>",
+            Self::Future(FutureStatus::Ready) => "#<future ready>",
+            Self::Future(FutureStatus::Failed) => "#<future failed>",
+            Self::Future(FutureStatus::Cancelled) => "#<future cancelled>",
+            Self::StreamReader => "#<stream reader>",
+            Self::StreamWriter => "#<stream writer>",
+            Self::StreamEof => "#<stream eof>",
+        }
+    }
+}
+#[derive(Clone, Copy)]
+struct DisplayCalls {
+    future_is: wasmtime::Func,
+    future_status: wasmtime::Func,
+    stream_kind: wasmtime::Func,
+}
+impl DisplayCalls {
+    fn read(
+        self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: Val,
+    ) -> wasmtime::Result<Option<DisplayLeaf>> {
+        let mut result = [Val::I32(0)];
+        self.future_is.call(&mut *store, &[value], &mut result)?;
+        if result[0].unwrap_i32() != 0 {
+            self.future_status
+                .call(&mut *store, &[value], &mut result)?;
+            use crate::portable_session::FutureStatus;
+            return Ok(Some(DisplayLeaf::Future(match result[0].unwrap_i32() {
+                0 => FutureStatus::Pending,
+                1 => FutureStatus::Ready,
+                2 => FutureStatus::Failed,
+                3 => FutureStatus::Cancelled,
+                _ => return Err(error("Invalid nominal future status in display")),
+            })));
+        }
+        self.stream_kind.call(&mut *store, &[value], &mut result)?;
+        Ok(match result[0].unwrap_i32() {
+            0 => None,
+            1 => Some(DisplayLeaf::StreamReader),
+            2 => Some(DisplayLeaf::StreamWriter),
+            3 => Some(DisplayLeaf::StreamEof),
+            _ => return Err(error("Invalid nominal stream kind in display")),
+        })
+    }
+}
+fn display_calls(session: &mut Session) -> Result<DisplayCalls, SessionError> {
+    let (future_is, future_status, stream_kind) = session.display_runtime_exports()?;
+    Ok(DisplayCalls {
+        future_is,
+        future_status,
+        stream_kind,
+    })
+}
+pub(crate) fn display_leaf(
+    session: &mut Session,
+    value: &SessionValue,
+) -> Result<Option<DisplayLeaf>, SessionError> {
+    let calls = display_calls(session)?;
+    session.inspect(value, |mut store, value| calls.read(&mut store, value))
+}
+trait DatumTarget: Sized {
+    fn plain(form: Form) -> Self;
+    fn collection(
+        kind: DisplayCollection,
+        items: Vec<Self>,
+        span: Range<usize>,
+        metadata: Vec<Form>,
+    ) -> Self;
+    fn opaque(leaf: DisplayLeaf) -> wasmtime::Result<Self>;
+}
+impl DatumTarget for Form {
+    fn plain(form: Form) -> Self {
+        form
+    }
+    fn collection(
+        kind: DisplayCollection,
+        items: Vec<Self>,
+        span: Range<usize>,
+        metadata: Vec<Form>,
+    ) -> Self {
+        Self {
+            span,
+            metadata,
+            kind: match kind {
+                DisplayCollection::List => Kind::List(items),
+                DisplayCollection::Vector => Kind::Vector(items),
+                DisplayCollection::Map => Kind::Map(items),
+                DisplayCollection::Set => Kind::Set(items),
+            },
+        }
+    }
+    fn opaque(_: DisplayLeaf) -> wasmtime::Result<Self> {
+        Err(error("Opaque runtime values are not macro syntax"))
+    }
+}
+impl DatumTarget for DisplayDatum {
+    fn plain(form: Form) -> Self {
+        Self::Plain(form)
+    }
+    fn collection(
+        kind: DisplayCollection,
+        items: Vec<Self>,
+        _: Range<usize>,
+        _: Vec<Form>,
+    ) -> Self {
+        Self::Collection(kind, items)
+    }
+    fn opaque(leaf: DisplayLeaf) -> wasmtime::Result<Self> {
+        Ok(Self::Opaque(leaf))
+    }
+}
+enum DecodedKind<T> {
+    Plain(Kind),
+    List(Vec<T>),
+    Vector(Vec<T>),
+    Map(Vec<T>),
+    Set(Vec<T>),
+}
+
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
 pub struct FormBridge {
@@ -139,7 +284,10 @@ impl FormBridge {
             }
         })?;
         let descriptor = session.data_descriptor(&value, false)?;
-        if classes.insert(id, (Class::SourceArray, descriptor)).is_some() {
+        if classes
+            .insert(id, (Class::SourceArray, descriptor))
+            .is_some()
+        {
             return Err(SessionError::Host(error(
                 "Duplicate macro data array identity",
             )));
@@ -186,7 +334,9 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         if entries.len() > 65_536 {
-            return Err(SessionError::Host(error("Compiler map construction exceeds 65536 entries")));
+            return Err(SessionError::Host(error(
+                "Compiler map construction exceeds 65536 entries",
+            )));
         }
         if entries.is_empty() {
             return Ok(self.factories["empty-map"].clone());
@@ -212,7 +362,9 @@ impl FormBridge {
             }
             // Array maps compare keys directly and do not call their hash
             // protocols. Preserve that observable behavior at the threshold.
-            let hash = if entries.len() <= 8 { 0 } else {
+            let hash = if entries.len() <= 8 {
+                0
+            } else {
                 let hash = session.invoke(&self.factories["hash"], &[key])?;
                 session.inspect(&hash, |mut store, hash| {
                     let data = fields(&mut store, &hash, 1)?;
@@ -222,7 +374,11 @@ impl FormBridge {
                     let value = f64::from_bits(*bits);
                     // ECMAScript ToUint32: truncation followed by modulo 2^32,
                     // with nonfinite numbers and signed zero mapped to zero.
-                    Ok(if value.is_finite() { value.trunc().rem_euclid(4_294_967_296.0) as u32 } else { 0 })
+                    Ok(if value.is_finite() {
+                        value.trunc().rem_euclid(4_294_967_296.0) as u32
+                    } else {
+                        0
+                    })
                 })?
             };
             let mut existing = None;
@@ -231,10 +387,14 @@ impl FormBridge {
                     SessionError::Host(error("Compiler map key comparisons exceed bound"))
                 })?;
                 let equal = if let Some(identifier) = self.identifier_key(session, key)? {
-                    self.identifier_key(session, &pairs[index].1)?.is_some_and(|other| other == identifier)
+                    self.identifier_key(session, &pairs[index].1)?
+                        .is_some_and(|other| other == identifier)
                 } else {
-                    let equal = session.invoke(&self.factories["key-test"], &[key, &pairs[index].1])?;
-                    session.inspect(&equal, |store, value| Ok(sentinel(&store, &value)? == Some(4)))?
+                    let equal =
+                        session.invoke(&self.factories["key-test"], &[key, &pairs[index].1])?;
+                    session.inspect(&equal, |store, value| {
+                        Ok(sentinel(&store, &value)? == Some(4))
+                    })?
                 };
                 if equal {
                     existing = Some(index);
@@ -287,19 +447,41 @@ impl FormBridge {
     }
     // Identifier equality is independent of metadata and live constructor
     // globals. Other user values retain the captured observable key-test path.
-    fn identifier_key(&self, session: &mut Session, value: &SessionValue) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
+    fn identifier_key(
+        &self,
+        session: &mut Session,
+        value: &SessionValue,
+    ) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
         session.inspect(value, |mut store, value| {
-            let Some(structure) = reference(&value)?.as_struct(&store)? else { return Ok(None); };
+            let Some(structure) = reference(&value)?.as_struct(&store)? else {
+                return Ok(None);
+            };
             let storage = structure.fields(&mut store)?.collect::<Vec<_>>();
-            if storage.len() != 4 { return Ok(None); }
+            if storage.len() != 4 {
+                return Ok(None);
+            }
             let descriptor = fields(&mut store, &storage[0], 5)?;
-            let Val::I64(id) = descriptor[0] else { return Ok(None); };
-            if !self.classes.get(&id).is_some_and(|(class, _)| matches!(class, Class::Symbol | Class::Keyword)) { return Ok(None); }
+            let Val::I64(id) = descriptor[0] else {
+                return Ok(None);
+            };
+            if !self
+                .classes
+                .get(&id)
+                .is_some_and(|(class, _)| matches!(class, Class::Symbol | Class::Keyword))
+            {
+                return Ok(None);
+            }
             let (class, data) = object(&mut store, &value, &self.classes)?;
             if data.len() != if class == Class::Symbol { 5 } else { 4 } {
                 return Err(error("Invalid compiler identifier key layout"));
             }
-            let mut budget = Budget { include_metadata: true, nodes: 4096, units: 1_048_576, calls: None };
+            let mut budget = Budget {
+                display: None,
+                include_metadata: true,
+                nodes: 4096,
+                units: 1_048_576,
+                calls: None,
+            };
             Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
         })
     }
@@ -365,7 +547,9 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        if items.is_empty() { return Ok(self.factories["empty-set"].clone()); }
+        if items.is_empty() {
+            return Ok(self.factories["empty-set"].clone());
+        }
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         self.set_with_metadata(session, items, &nil)
     }
@@ -377,7 +561,10 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
-        let entries = items.iter().map(|item| (item.clone(), nil.clone())).collect::<Vec<_>>();
+        let entries = items
+            .iter()
+            .map(|item| (item.clone(), nil.clone()))
+            .collect::<Vec<_>>();
         let map = self.map_values(session, &entries)?;
         session.data_construct(
             &self.roots[self.constructors[&Class::PersistentHashSet]],
@@ -391,7 +578,9 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         if items.len() > 65_536 {
-            return Err(SessionError::Host(error("Compiler vector construction exceeds 65536 entries")));
+            return Err(SessionError::Host(error(
+                "Compiler vector construction exceeds 65536 entries",
+            )));
         }
         use crate::portable::hir::Literal;
         let nil = self.scalar(session, &Literal::Nil)?;
@@ -489,9 +678,9 @@ impl FormBridge {
         )?;
         let hash = self.scalar(
             session,
-            &crate::portable::hir::Literal::Number(
-                crate::portable::hir::identifier_hash(namespace, name, keyword) as f64,
-            ),
+            &crate::portable::hir::Literal::Number(crate::portable::hir::identifier_hash(
+                namespace, name, keyword,
+            ) as f64),
         )?;
         if keyword {
             if metadata.is_some() {
@@ -513,6 +702,7 @@ impl FormBridge {
     pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         let mut budget = Budget {
+            display: None,
             include_metadata: true,
             nodes: 4096,
             units: 1_048_576,
@@ -601,7 +791,8 @@ impl FormBridge {
                 self.map_values(session, &entries)?
             }
             Kind::Set(items) => {
-                let items = items.iter()
+                let items = items
+                    .iter()
                     .map(|item| self.form_value(session, item, depth + 1, budget))
                     .collect::<Result<Vec<_>, _>>()?;
                 if form.metadata.is_empty() {
@@ -628,8 +819,8 @@ impl FormBridge {
         ) {
             return Err(failure("Metadata requires a symbol or collection"));
         }
-        let pairs = crate::portable::hir::reader_metadata_pairs(form)
-            .map_err(SessionError::Compile)?;
+        let pairs =
+            crate::portable::hir::reader_metadata_pairs(form).map_err(SessionError::Compile)?;
         let metadata = Form {
             span: form.span.clone(),
             metadata: vec![],
@@ -670,8 +861,34 @@ impl FormBridge {
         &self,
         session: &mut Session,
         value: &SessionValue,
-    ) -> Result<Form, SessionError> {
-        self.read_with_metadata(session, value, 0..0, false)
+    ) -> Result<DisplayDatum, SessionError> {
+        self.check(session)?;
+        let display = display_calls(session)?;
+        session.data_inspect_calls(
+            value,
+            &self.factories["lazy-sval"],
+            |mut store, value, args_new, invoke, function| {
+                let mut budget = Budget {
+                    include_metadata: false,
+                    display: Some(display),
+                    nodes: 4096,
+                    units: 1_048_576,
+                    calls: Some(ReadCalls {
+                        args_new,
+                        invoke,
+                        function,
+                    }),
+                };
+                decode_datum::<DisplayDatum>(
+                    &mut store,
+                    &value,
+                    &self.classes,
+                    &(0..0),
+                    0,
+                    &mut budget,
+                )
+            },
+        )
     }
     fn read_with_metadata(
         &self,
@@ -687,6 +904,7 @@ impl FormBridge {
                 &self.factories["lazy-sval"],
                 |mut store, value, args_new, invoke, function| {
                     let mut budget = Budget {
+                        display: None,
                         include_metadata,
                         nodes: 4096,
                         units: 1_048_576,
@@ -702,7 +920,11 @@ impl FormBridge {
             .map_err(|failure| match failure {
                 SessionError::Host(failure) => SessionError::Compile(Diagnostic {
                     span,
-                    message: if include_metadata { format!("Invalid or unsupported compiled macro data: {failure}") } else { format!("Invalid or unsupported value display: {failure}") },
+                    message: if include_metadata {
+                        format!("Invalid or unsupported compiled macro data: {failure}")
+                    } else {
+                        format!("Invalid or unsupported value display: {failure}")
+                    },
                 }),
                 failure => failure,
             })
@@ -720,28 +942,55 @@ mod identity_tests {
     fn macro_data_rejects_copied_descriptor_ids_after_gc() {
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
             let bridge = FormBridge::new(&mut session).unwrap();
-            for source in ["#{1 2}", "(keys {1 10 2 20})", "'symbol", "[1 2]", "{:a 1}", "'(1 2)"] {
+            for source in [
+                "#{1 2}",
+                "(keys {1 10 2 20})",
+                "'symbol",
+                "[1 2]",
+                "{:a 1}",
+                "'(1 2)",
+            ] {
                 let original = session.eval(source).unwrap();
-                let fake = session.inspect(&original, |mut store, value| {
-                    let object = reference(&value)?.as_struct(&store)?.unwrap();
-                    let mut object_fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                    let descriptor = reference(&object_fields[0])?.as_struct(&store)?.unwrap();
-                    let descriptor_fields = descriptor.fields(&mut store)?.collect::<Vec<_>>();
-                    let ty = descriptor.ty(&store)?;
-                    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
-                    let copied = wasmtime::StructRef::new(&mut store, &allocator, &descriptor_fields)?;
-                    object_fields[0] = Val::AnyRef(Some(copied.to_anyref()));
-                    let ty = object.ty(&store)?;
-                    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
-                    let fake = wasmtime::StructRef::new(&mut store, &allocator, &object_fields)?;
-                    fake.to_anyref().to_owned_rooted(&mut store)
-                }).unwrap();
+                let fake = session
+                    .inspect(&original, |mut store, value| {
+                        let object = reference(&value)?.as_struct(&store)?.unwrap();
+                        let mut object_fields = object.fields(&mut store)?.collect::<Vec<_>>();
+                        let descriptor = reference(&object_fields[0])?.as_struct(&store)?.unwrap();
+                        let descriptor_fields = descriptor.fields(&mut store)?.collect::<Vec<_>>();
+                        let ty = descriptor.ty(&store)?;
+                        let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+                        let copied =
+                            wasmtime::StructRef::new(&mut store, &allocator, &descriptor_fields)?;
+                        object_fields[0] = Val::AnyRef(Some(copied.to_anyref()));
+                        let ty = object.ty(&store)?;
+                        let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+                        let fake =
+                            wasmtime::StructRef::new(&mut store, &allocator, &object_fields)?;
+                        fake.to_anyref().to_owned_rooted(&mut store)
+                    })
+                    .unwrap();
                 session.collect().unwrap();
                 bridge.read(&mut session, &original, 0..1).unwrap();
-                let rejected = session.inspect(&original, |mut store, _| {
-                    let value = Val::AnyRef(Some(fake.to_rooted(&mut store)));
-                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { include_metadata: true, nodes: 4096, units: 1_048_576, calls: None }).is_err())
-                }).unwrap();
+                let rejected = session
+                    .inspect(&original, |mut store, _| {
+                        let value = Val::AnyRef(Some(fake.to_rooted(&mut store)));
+                        Ok(decode(
+                            &mut store,
+                            &value,
+                            &bridge.classes,
+                            &(0..1),
+                            0,
+                            &mut Budget {
+                                display: None,
+                                include_metadata: true,
+                                nodes: 4096,
+                                units: 1_048_576,
+                                calls: None,
+                            },
+                        )
+                        .is_err())
+                    })
+                    .unwrap();
                 assert!(rejected, "copied descriptor identity accepted for {source}");
             }
         }
@@ -792,7 +1041,9 @@ fn metadata(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Form>> {
-    if !budget.include_metadata { return Ok(vec![]); }
+    if !budget.include_metadata {
+        return Ok(vec![]);
+    }
     if nil(store, value)? {
         return Ok(vec![]);
     }
@@ -849,11 +1100,14 @@ fn object(
     let Val::I64(id) = descriptor[0] else {
         return Err(error("Invalid nominal descriptor identity"));
     };
-    let (class, canonical) = classes.get(&id)
+    let (class, canonical) = classes
+        .get(&id)
         .ok_or_else(|| error("Unrecognized nominal macro data type"))?;
     let expected = canonical.rooted(store);
     if !Rooted::ref_eq(&*store, reference(&storage[0])?, &expected)? {
-        return Err(error("Macro data descriptor is not the captured canonical identity"));
+        return Err(error(
+            "Macro data descriptor is not the captured canonical identity",
+        ));
     }
     Ok((*class, array(store, &storage[1])?))
 }
@@ -867,10 +1121,18 @@ struct ReadCalls {
     function: Val,
 }
 struct Budget {
+    display: Option<DisplayCalls>,
     include_metadata: bool,
     calls: Option<ReadCalls>,
     nodes: usize,
     units: usize,
+}
+fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
+    if budget.display.is_some() {
+        error(&format!("Value display does not yet support {name}"))
+    } else {
+        error(&format!("{name} are not macro syntax"))
+    }
 }
 fn spend(budget: &mut Budget) -> wasmtime::Result<()> {
     budget.nodes = budget
@@ -887,28 +1149,43 @@ fn decode(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Form> {
+    decode_datum::<Form>(store, value, classes, span, depth, budget)
+}
+fn decode_datum<T: DatumTarget>(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<T> {
     if depth >= 64 {
         return Err(error("Macro data nesting exceeds 64"));
     }
     spend(budget)?;
+    if let Some(calls) = budget.display {
+        if let Some(leaf) = calls.read(store, *value)? {
+            return T::opaque(leaf);
+        }
+    }
     let reference = reference(value)?;
     let mut reader_metadata = vec![];
     let kind = if let Some(sentinel) = sentinel(store, value)? {
         match sentinel {
-            0 => Kind::Nil,
-            2 => Kind::Bool(false),
-            4 => Kind::Bool(true),
+            0 => DecodedKind::Plain(Kind::Nil),
+            2 => DecodedKind::Plain(Kind::Bool(false)),
+            4 => DecodedKind::Plain(Kind::Bool(true)),
             _ => return Err(error("Unknown language sentinel")),
         }
     } else if reference.as_array(&*store)?.is_some() {
-        Kind::String(text(store, value, budget)?)
+        DecodedKind::Plain(Kind::String(text(store, value, budget)?))
     } else {
         let structure = reference
             .as_struct(&*store)?
             .ok_or_else(|| error("Unsupported macro value"))?;
         let values = structure.fields(&mut *store)?.collect::<Vec<_>>();
         if let [Val::F64(bits)] = values.as_slice() {
-            Kind::Number(f64::from_bits(*bits))
+            DecodedKind::Plain(Kind::Number(f64::from_bits(*bits)))
         } else {
             let (class, data) = object(store, value, classes)?;
             let slot = match class {
@@ -945,13 +1222,13 @@ fn decode(
                     };
                     let name = name(store, &data[1], budget)?;
                     if count == 5 {
-                        Kind::Symbol(suss_reader::Symbol { namespace, name })
+                        DecodedKind::Plain(Kind::Symbol(suss_reader::Symbol { namespace, name }))
                     } else {
-                        Kind::Keyword(suss_reader::Keyword { namespace, name })
+                        DecodedKind::Plain(Kind::Keyword(suss_reader::Keyword { namespace, name }))
                     }
                 }
                 Class::PersistentVector => {
-                    Kind::Vector(vector(store, &data, classes, span, depth, budget)?)
+                    DecodedKind::Vector(vector(store, &data, classes, span, depth, budget)?)
                 }
                 Class::PersistentArrayMap => {
                     if data.len() != 4 {
@@ -962,15 +1239,17 @@ fn decode(
                     if entries.len() != count * 2 || entries.len() > budget.nodes {
                         return Err(error("Map count disagrees with bounded pair storage"));
                     }
-                    Kind::Map(
+                    DecodedKind::Map(
                         entries
                             .iter()
-                            .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                            .map(|entry| {
+                                decode_datum(store, entry, classes, span, depth + 1, budget)
+                            })
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
                 }
                 Class::PersistentHashMap => {
-                    Kind::Map(hash_map(store, &data, classes, span, depth, budget)?)
+                    DecodedKind::Map(hash_map(store, &data, classes, span, depth, budget)?)
                 }
                 Class::PersistentHashSet => {
                     if data.len() != 3 {
@@ -978,33 +1257,46 @@ fn decode(
                     }
                     let (map_class, map_data) = object(store, &data[1], classes)?;
                     let entries = match map_class {
-                        Class::PersistentHashMap => hash_map_pairs(store, &map_data, classes, budget)?,
+                        Class::PersistentHashMap => {
+                            hash_map_pairs(store, &map_data, classes, budget)?
+                        }
                         Class::PersistentArrayMap => {
-                            if map_data.len() != 4 { return Err(error("Invalid set array map layout")); }
+                            if map_data.len() != 4 {
+                                return Err(error("Invalid set array map layout"));
+                            }
                             let count = integer(store, &map_data[1])?;
                             let entries = source_elements(store, &map_data[2], classes)?;
                             if entries.len() != count * 2 || count > budget.nodes {
-                                return Err(error("Set count disagrees with bounded array map storage"));
+                                return Err(error(
+                                    "Set count disagrees with bounded array map storage",
+                                ));
                             }
                             entries
                         }
                         _ => return Err(error("Set needs a canonical persistent backing map")),
                     };
-                    Kind::Set(entries.chunks_exact(2)
-                        .map(|pair| decode(store, &pair[0], classes, span, depth + 1, budget))
-                        .collect::<wasmtime::Result<Vec<_>>>()?)
+                    DecodedKind::Set(
+                        entries
+                            .chunks_exact(2)
+                            .map(|pair| {
+                                decode_datum(store, &pair[0], classes, span, depth + 1, budget)
+                            })
+                            .collect::<wasmtime::Result<Vec<_>>>()?,
+                    )
                 }
                 Class::BitmapIndexedNode | Class::ArrayNode | Class::HashCollisionNode => {
-                    return Err(error("Hash trie nodes are not macro syntax"));
+                    return Err(unsupported_datum(budget, "Hash trie nodes"));
                 }
                 Class::MapEntry => {
                     if data.len() != 3 {
                         return Err(error("Invalid map entry field layout"));
                     }
-                    Kind::Vector(
+                    DecodedKind::Vector(
                         data[..2]
                             .iter()
-                            .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                            .map(|entry| {
+                                decode_datum(store, entry, classes, span, depth + 1, budget)
+                            })
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
                 }
@@ -1012,41 +1304,67 @@ fn decode(
                 | Class::ChunkedSeq
                 | Class::NodeSeq
                 | Class::ArrayNodeSeq => {
-                    Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                    DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
                 Class::KeySeq => {
-                    if data.len() != 2 { return Err(error("Invalid key sequence field layout")); }
-                    Kind::List(map_sequence_pairs(store, &data[0], classes, 0, budget)?
-                        .chunks_exact(2)
-                        .map(|pair| decode(store, &pair[0], classes, span, depth + 1, budget))
-                        .collect::<wasmtime::Result<Vec<_>>>()?)
+                    if data.len() != 2 {
+                        return Err(error("Invalid key sequence field layout"));
+                    }
+                    DecodedKind::List(
+                        map_sequence_pairs(store, &data[0], classes, 0, budget)?
+                            .chunks_exact(2)
+                            .map(|pair| {
+                                decode_datum(store, &pair[0], classes, span, depth + 1, budget)
+                            })
+                            .collect::<wasmtime::Result<Vec<_>>>()?,
+                    )
                 }
-                Class::ArrayChunk => return Err(error("Array chunks are not macro syntax")),
+                Class::ArrayChunk => return Err(unsupported_datum(budget, "Array chunks")),
                 Class::LazySeq | Class::ChunkedCons => {
-                    Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                    DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
-                Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
-                Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
+                Class::VectorNode => return Err(unsupported_datum(budget, "Vector trie nodes")),
+                Class::SourceArray => return Err(unsupported_datum(budget, "Raw source arrays")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
-                    Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                    DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
             }
         }
     };
-    Ok(Form {
-        span: span.clone(),
-        metadata: reader_metadata,
-        kind,
+    Ok(match kind {
+        DecodedKind::Plain(kind) => T::plain(Form {
+            span: span.clone(),
+            metadata: reader_metadata,
+            kind,
+        }),
+        DecodedKind::List(items) => T::collection(
+            DisplayCollection::List,
+            items,
+            span.clone(),
+            reader_metadata,
+        ),
+        DecodedKind::Vector(items) => T::collection(
+            DisplayCollection::Vector,
+            items,
+            span.clone(),
+            reader_metadata,
+        ),
+        DecodedKind::Map(items) => {
+            T::collection(DisplayCollection::Map, items, span.clone(), reader_metadata)
+        }
+        DecodedKind::Set(items) => {
+            T::collection(DisplayCollection::Set, items, span.clone(), reader_metadata)
+        }
     })
 }
-fn sequence(
+fn sequence<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
-) -> wasmtime::Result<Vec<Form>> {
+) -> wasmtime::Result<Vec<T>> {
     if depth >= 64 {
         return Err(error("Macro sequence nesting exceeds 64"));
     }
@@ -1062,11 +1380,11 @@ fn sequence(
         if reference(&cursor)?.as_array(&*store)?.is_some() {
             for unit in text(store, &cursor, budget)? {
                 spend(budget)?;
-                items.push(Form {
+                items.push(T::plain(Form {
                     span: span.clone(),
                     metadata: vec![],
                     kind: Kind::String(vec![unit]),
-                });
+                }));
             }
             break;
         }
@@ -1122,7 +1440,14 @@ fn sequence(
                     return Err(error("Invalid bounded array chunk cursor"));
                 }
                 for entry in &entries[start..end] {
-                    items.push(decode(store, entry, classes, span, depth + 1, budget)?);
+                    items.push(decode_datum(
+                        store,
+                        entry,
+                        classes,
+                        span,
+                        depth + 1,
+                        budget,
+                    )?);
                 }
                 cursor = data[1].clone();
             }
@@ -1157,14 +1482,33 @@ fn sequence(
                     };
                     counts.push((items.len(), f64::from_bits(*bits)));
                 }
-                items.push(decode(store, &data[1], classes, span, depth + 1, budget)?);
+                items.push(decode_datum(
+                    store,
+                    &data[1],
+                    classes,
+                    span,
+                    depth + 1,
+                    budget,
+                )?);
                 cursor = data[2].clone();
             }
             Class::KeySeq => {
-                if data.len() != 2 { return Err(error("Invalid key sequence field layout")); }
-                if !first_segment { metadata(store, &data[1], classes, span, depth, budget)?; }
-                for pair in map_sequence_pairs(store, &data[0], classes, 0, budget)?.chunks_exact(2) {
-                    items.push(decode(store, &pair[0], classes, span, depth + 1, budget)?);
+                if data.len() != 2 {
+                    return Err(error("Invalid key sequence field layout"));
+                }
+                if !first_segment {
+                    metadata(store, &data[1], classes, span, depth, budget)?;
+                }
+                for pair in map_sequence_pairs(store, &data[0], classes, 0, budget)?.chunks_exact(2)
+                {
+                    items.push(decode_datum(
+                        store,
+                        &pair[0],
+                        classes,
+                        span,
+                        depth + 1,
+                        budget,
+                    )?);
                 }
                 break;
             }
@@ -1218,13 +1562,14 @@ fn sequence(
                     spend(budget)?;
                     let pair = pair
                         .iter()
-                        .map(|entry| decode(store, entry, classes, span, depth + 2, budget))
+                        .map(|entry| decode_datum(store, entry, classes, span, depth + 2, budget))
                         .collect::<wasmtime::Result<Vec<_>>>()?;
-                    items.push(Form {
-                        span: span.clone(),
-                        metadata: vec![],
-                        kind: Kind::Vector(pair),
-                    });
+                    items.push(T::collection(
+                        DisplayCollection::Vector,
+                        pair,
+                        span.clone(),
+                        vec![],
+                    ));
                 }
                 break;
             }
@@ -1250,13 +1595,14 @@ fn sequence(
                         .iter()
                         // The generated entry vector is one syntax level below
                         // this sequence; its key/value children are another.
-                        .map(|entry| decode(store, entry, classes, span, depth + 2, budget))
+                        .map(|entry| decode_datum(store, entry, classes, span, depth + 2, budget))
                         .collect::<wasmtime::Result<Vec<_>>>()?;
-                    items.push(Form {
-                        span: span.clone(),
-                        metadata: vec![],
-                        kind: Kind::Vector(pair),
-                    });
+                    items.push(T::collection(
+                        DisplayCollection::Vector,
+                        pair,
+                        span.clone(),
+                        vec![],
+                    ));
                 }
                 break;
             }
@@ -1288,7 +1634,14 @@ fn sequence(
                         return Err(error("Invalid bounded chunked vector sequence node"));
                     }
                     for entry in &node[offset..] {
-                        items.push(decode(store, entry, classes, span, depth + 1, budget)?);
+                        items.push(decode_datum(
+                            store,
+                            entry,
+                            classes,
+                            span,
+                            depth + 1,
+                            budget,
+                        )?);
                     }
                     index += node.len();
                     if index == count {
@@ -1318,14 +1671,14 @@ fn sequence(
     Ok(items)
 }
 
-fn append_indexed(
+fn append_indexed<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
-    items: &mut Vec<Form>,
+    items: &mut Vec<T>,
 ) -> wasmtime::Result<()> {
     if data.len() != 3 {
         return Err(error("Invalid IndexedSeq field layout"));
@@ -1381,13 +1734,20 @@ fn append_indexed(
             let Val::I32(unit) = value else {
                 return Err(error("Invalid UTF16 indexed unit"));
             };
-            items.push(Form {
+            items.push(T::plain(Form {
                 span: span.clone(),
                 metadata: vec![],
                 kind: Kind::String(vec![unit as u16]),
-            });
+            }));
         } else {
-            items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+            items.push(decode_datum(
+                store,
+                &value,
+                classes,
+                span,
+                depth + 1,
+                budget,
+            )?);
         }
     }
     Ok(())
@@ -1432,14 +1792,14 @@ fn node_elements(
     }
     Ok(items)
 }
-fn vector(
+fn vector<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
-) -> wasmtime::Result<Vec<Form>> {
+) -> wasmtime::Result<Vec<T>> {
     if data.len() != 6 {
         return Err(error("Invalid persistent vector layout"));
     }
@@ -1473,11 +1833,25 @@ fn vector(
             level -= 5;
         }
         for value in node {
-            items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+            items.push(decode_datum(
+                store,
+                &value,
+                classes,
+                span,
+                depth + 1,
+                budget,
+            )?);
         }
     }
     for value in tail {
-        items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+        items.push(decode_datum(
+            store,
+            &value,
+            classes,
+            span,
+            depth + 1,
+            budget,
+        )?);
     }
     Ok(items)
 }
@@ -1524,14 +1898,14 @@ fn vector_leaf(
 // Traverse the pinned inode ordering directly, without invoking user protocols.
 // Canonical descriptors, logical counts, bounded depth and the shared budget
 // guard this transport even when source code mutates a node's physical fields.
-fn hash_map(
+fn hash_map<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
-) -> wasmtime::Result<Vec<Form>> {
+) -> wasmtime::Result<Vec<T>> {
     if data.len() != 6 {
         return Err(error("Invalid persistent hash map field layout"));
     }
@@ -1540,7 +1914,7 @@ fn hash_map(
     }
     hash_map_pairs(store, data, classes, budget)?
         .iter()
-        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+        .map(|entry| decode_datum(store, entry, classes, span, depth + 1, budget))
         .collect()
 }
 fn hash_map_pairs(
@@ -1587,14 +1961,20 @@ fn map_sequence_pairs(
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
-    if cursor_depth >= 64 { return Err(error("Key sequence cursor nesting exceeds 64")); }
-    if nil(store, value)? { return Ok(Vec::new()); }
+    if cursor_depth >= 64 {
+        return Err(error("Key sequence cursor nesting exceeds 64"));
+    }
+    if nil(store, value)? {
+        return Ok(Vec::new());
+    }
     spend(budget)?;
     let (class, data) = object(store, value, classes)?;
     let mut pairs = Vec::new();
     match class {
         Class::PersistentArrayMapSeq => {
-            if data.len() != 3 { return Err(error("Invalid array map key cursor layout")); }
+            if data.len() != 3 {
+                return Err(error("Invalid array map key cursor layout"));
+            }
             let index = integer(store, &data[1])?;
             let entries = source_elements(store, &data[0], classes)?;
             if entries.len() % 2 != 0 || index % 2 != 0 || index >= entries.len() {
@@ -1603,50 +1983,77 @@ fn map_sequence_pairs(
             pairs.extend_from_slice(&entries[index..]);
         }
         Class::NodeSeq | Class::ArrayNodeSeq => {
-            if data.len() != 5 { return Err(error("Invalid hash key cursor layout")); }
+            if data.len() != 5 {
+                return Err(error("Invalid hash key cursor layout"));
+            }
             let nodes = source_elements(store, &data[1], classes)?;
             let index = integer(store, &data[2])?;
             let is_array = matches!(class, Class::ArrayNodeSeq);
-            if index > nodes.len() || (is_array && nodes.len() != 32)
-                || (!is_array && (nodes.len() % 2 != 0 || index % 2 != 0)) {
+            if index > nodes.len()
+                || (is_array && nodes.len() != 32)
+                || (!is_array && (nodes.len() % 2 != 0 || index % 2 != 0))
+            {
                 return Err(error("Invalid hash key cursor range"));
             }
             if !absent(store, &data[3])? {
-                let current = map_sequence_pairs(store, &data[3], classes, cursor_depth + 1, budget)?;
-                if current.is_empty() { return Err(error("Hash key cursor retains an empty child")); }
+                let current =
+                    map_sequence_pairs(store, &data[3], classes, cursor_depth + 1, budget)?;
+                if current.is_empty() {
+                    return Err(error("Hash key cursor retains an empty child"));
+                }
                 pairs.extend(current);
             } else if is_array || index == nodes.len() || absent(store, &nodes[index])? {
                 return Err(error("Hash key cursor has no current entry"));
             }
             if is_array {
                 for node in &nodes[index..] {
-                    if !absent(store, node)? { hash_node(store, node, classes, 0, budget, &mut pairs)?; }
+                    if !absent(store, node)? {
+                        hash_node(store, node, classes, 0, budget, &mut pairs)?;
+                    }
                 }
             } else {
                 for pair in nodes[index..].chunks_exact(2) {
                     if absent(store, &pair[0])? {
-                        if !absent(store, &pair[1])? { hash_node(store, &pair[1], classes, 0, budget, &mut pairs)?; }
-                    } else { pairs.extend_from_slice(pair); }
-                    if pairs.len() > budget.nodes { return Err(error("Key cursor exceeds bounded pair storage")); }
+                        if !absent(store, &pair[1])? {
+                            hash_node(store, &pair[1], classes, 0, budget, &mut pairs)?;
+                        }
+                    } else {
+                        pairs.extend_from_slice(pair);
+                    }
+                    if pairs.len() > budget.nodes {
+                        return Err(error("Key cursor exceeds bounded pair storage"));
+                    }
                 }
             }
         }
         Class::List | Class::Cons => {
             let expected = if matches!(class, Class::List) { 5 } else { 4 };
-            if data.len() != expected { return Err(error("Invalid key cursor list layout")); }
+            if data.len() != expected {
+                return Err(error("Invalid key cursor list layout"));
+            }
             let (entry_class, entry) = object(store, &data[1], classes)?;
             if !matches!(entry_class, Class::MapEntry) || entry.len() != 3 {
                 return Err(error("Key cursor list needs canonical map entries"));
             }
             pairs.extend_from_slice(&entry[..2]);
-            pairs.extend(map_sequence_pairs(store, &data[2], classes, cursor_depth + 1, budget)?);
+            pairs.extend(map_sequence_pairs(
+                store,
+                &data[2],
+                classes,
+                cursor_depth + 1,
+                budget,
+            )?);
         }
         Class::EmptyList => {
-            if data.len() != 1 { return Err(error("Invalid empty key cursor layout")); }
+            if data.len() != 1 {
+                return Err(error("Invalid empty key cursor layout"));
+            }
         }
         _ => return Err(error("Key sequence needs a canonical map cursor")),
     }
-    if pairs.len() > budget.nodes { return Err(error("Key cursor exceeds bounded pair storage")); }
+    if pairs.len() > budget.nodes {
+        return Err(error("Key cursor exceeds bounded pair storage"));
+    }
     Ok(pairs)
 }
 fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {

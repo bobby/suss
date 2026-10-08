@@ -4,6 +4,9 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod r#async;
+mod async_library;
+mod streams;
 mod arrays;
 mod array_methods;
 mod array_push;
@@ -625,6 +628,7 @@ fn build_module() -> Vec<u8> {
     ]);
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
+    dynamic::switching(&mut b);
     let primitives = numeric::intrinsics(&mut b, numeric_info);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
@@ -673,6 +677,8 @@ fn build_module() -> Vec<u8> {
     native_object_properties::functions(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
+    r#async::intrinsics(&mut b);
+    arithmetic_functions.extend(async_library::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -923,6 +929,8 @@ fn build_module() -> Vec<u8> {
     // Scalar-only UID allocator; no global reference table retains owners.
     globals.global(GlobalType { val_type: ValType::I64, mutable: true, shared: false },
         &ConstExpr::i64_const(1));
+    r#async::append_descriptor(&mut globals);
+    streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

@@ -1,155 +1,97 @@
-# M3 acceptance audit in progress
+# M3 acceptance evidence
 
-This audit preserves the published requirements of issues #12–#15 and accepted
-design sections 6–7/9. M3 is not complete. Passing foundation tests do not prove
-unimplemented macro, cancellation or accounting behavior. Each PR requires an
-independent subagent review, significant fixes and successful exact final-head CI;
-PRs are opened for user review and are not merged by the agent.
+This record covers the original work packages M3-01–M3-04, issues #12–#15,
+and accepted design sections 6–7 and the lifecycle requirements of section 9.
+Implementation is delivered through PR #221. The closure target is independently
+reviewed implementation, complete workspace verification, green exact final-head
+CI and promotion for Bobby's review. Merge remains a separate decision.
 
-| Requirement | Current evidence | Remaining work |
-| --- | --- | --- |
-| #12: atoms and closures persist | `persistent_repl.rs` executes the actual native command; `portable_atoms.rs` retains real atoms/old contents across fragments and forced GC | Merged #119 has independent review and exact-head CI; complete artifact/core acceptance remains distinct |
-| #12: initializers do not replay | Command effect counter/defonce and `persistent_session_initializers_execute_once_and_defonce_skips_effects` | Preserve this behavior through namespace reload and macro integration |
-| #12: old values remain usable | Owned native roots, old callable contents, captured old atom owners and functions survive rebinding/GC | Preserve through remaining M3 integration |
-| #12: fragments import stable ABI | Production Session validates and links ABI2 artifacts before initializers; compiler/runtime ABI and negative import/layout tests | Reconfirm final integrated acceptance head |
-| #13: globals see redefinitions; captured function values stay stable | Native command and session live-cell/capture regressions execute actual fragments | Merged #120 executes four namespace_session acceptance tests; macro phase/cache/private integration remains |
-| #13: compile failure/failed initializer preserve bindings | Command and session regressions distinguish compilation from executing language errors, preserve old binding and preceding effects | Verify actual reloaded namespace failure/retry and phase integration |
-| #13: deterministic namespace errors | Immutable graph tests execute require order/reuse and assert located ambiguity/mismatch/missing/cycle errors | Merged #120 proves native load/reload and deterministic errors; macro import/cache/private policy remains |
-| #14: isolated compiled macro session | Native Session now executes artifacts in separate Runtime/Macro Stores with phase-qualified cells; three compiled_phase_session tests execute core/state/root/dependency/reload/reset behavior. Explicit source defmacro registration now compiles bodies in Macro Store and expands runtime/dependency forms through HIR; three compiled_source_macros tests execute nested/variadic/shadowing/&form/redefinition/error behavior. Six compiled_repl_macros regressions now execute native prompt definitions/calls, load/reload, source aliases/conditionals and two-phase reset failure. Explicit source macro imports now execute through the isolated Store with source-order dependency initialization and separate aliases/refers; legacy `expand.rs` still invokes `MacroEvaluator` | Preserve executing source defmacro and macro-data integration while completing versioned bootstrap acceptance; remove the temporary evaluator only after replacement bootstrap tests pass |
-| #14: syntax quote/unquote/splicing, deterministic gensyms, &form/&env | Compiled transformers receive actual caller forms and rooted compiler environment graphs. Executing suites cover persistent vector/map/set/sequence metadata data, local/declaration/function/method records, selected source inference and reader positions. [Source inference](../runtime/compiled-macro-source-inference.md) retains 32 pinned facts plus 11 executing results; reviewed PR #153 passed clean local and final-head CI at `1874372`, 1,015/0/17 existing ignores. [Reader metadata](../runtime/compiled-macro-reader-metadata.md) has nine actual primary observations, eight exact native projections and a separate canonical file assertion; reviewed PR #154 focused reader32/native10 passes at `a4fa3e2`, with full1027/0/17 baseline and final-head CI37101260084 passed. Reviewed #155 executes eleven compiled syntax-quote/transport tests, eighteen shared pinned macro observations and fifty lazy/constructor observations; eight live-cell regressions cover both caller phases. Reader namespace qualification, scoped phase-separated gensyms, nested quotes, splicing and metadata have focused coverage. PR #155 final-head0f3c160 has independent review fixes, full1063/0/17 baseline and successful CI37114173950; it is ready for user review without merging | Complete remaining portable environment/schema behavior and bootstrap acceptance; passing selected records does not certify the full requirement |
-| #14: phase dependencies | Compiler module plans retain phase-qualified identities | Explicit source phase loading/isolation/failure tests execute; explicit macro libspec reload/reload-all executes source refresh and helper isolation; complete ordinary reload/privacy/inference/cache policy remains |
-| #14: reproducible bootstrap without Java | Working versioned runtime/macro images restore immutable compiler facts and execute in fresh Stores. `scripts/verify-bootstrap.sh` passes exact two-process generation and four executing regressions with Java/Node unavailable on PATH; affected66 compiler/83 native pass. Independent PR #156 review fixed embedded numeric runtime identity and strengthened Store/reset isolation; final-head8dbcc679 full baseline1067/0/17 passes | Exact-head CI37117694147 succeeded; PR #156 is ready for user review. Remaining macro-cache/schema/evaluator acceptance stays open |
-| #14: cache invalidation on macro changes | Reviewed #157 adds bounded native Module reuse after expansion/emission, keyed by exact Wasm bytes and Engine identity. Final head f528159a passed independent review, full1072/0/17 baseline and CI37119275510; it is ready for user review. It does not skip macro execution or cache source analysis | Keys include source/compiler/ABI/macro graph/target/flags; changed-macro and unchanged-cache execution tests |
-| #15: exceptions return to prompt | Actual command proceeds after compile/initializer/language errors; native host also recovers after fuel traps | Preserve through scheduler/async implementation |
-| #15: cancellation cleans up, including pending interactive I/O | Running synchronous code is interruptible: `InterruptHandle` traps only the requesting session (Runtime or macro phase), effects are not rolled back, the session accepts the next input, other sessions keep running and handles survive reset (`session_interrupt.rs`); REPL Ctrl-C interrupts a running input (`repl_interrupt.rs`) | Pending-I/O cancellation, rooted continuations, try/finally/dynamic scope, at-most-once resume/race tests (design §9) |
-| #15: reset releases session state | Replacement Store discards bindings/module identities/instances, rejects stale handles; failed atom core reprovisioning preserves old session | Integrated runtime/scheduler/resource cleanup proof |
-| #15: code/heap counters distinguish retained code from leaked values | Resident fragments/input artifact sizes and external handles are distinct; heap capacity explicitly is not live memory. `session_live_heap.rs` measures exact post-collection live bytes (test-only, from pinned Wasmtime's collection record): released handle-held, cyclic and cell-retained graphs return exactly to baseline in both Stores while code counters stay fixed, and after repeated reset the replacement Store matches a fresh session (the old Store's drop is not observed) | A production live-bytes counter (no public Wasmtime API); live accounting with suspended tasks once §9 exists |
+## Criterion-by-criterion evidence
 
-Proposed named acceptance commands remain required: `cargo test -p suss-cli
-persistent_session`, `cargo test -p suss-cli namespace_session`,
-`scripts/verify-bootstrap.sh`, and `cargo test -p suss-cli session_lifecycle`.
-A missing/empty suite is not passing evidence. Run focused regressions first and
-then `cargo test --workspace --locked -- --test-threads=2` on frozen final code.
-Issue closure requires a final requirement-by-requirement audit, not this progress
-matrix. Full portable atoms/collections and target release gates retain their
-separate milestone scope; no future work is marked complete here.
-
-Reviewed #158 complete core-namespace graph construction now passes in both caller phases at5d15a0d, with duplicate reader callback/result and metadata-set ordering fixes. Full1079/0/17 baseline and exact-head CI37124594996 succeeded; PR ready without merging. Selected function declaration field projections are the next partial schema change and remain subject to independent review/full baseline/CI.
-
-
-# Current requirement audit after the official command review
-
-The objective is all of M3 in [the accepted design](../design/suss-0.3.1.md),
-with stable work packages [M3-01–M3-04](https://github.com/bobby/suss/milestone/4) linked to issues
-[#12](https://github.com/bobby/suss/issues/12),
-[#13](https://github.com/bobby/suss/issues/13),
-[#14](https://github.com/bobby/suss/issues/14) and
-[#15](https://github.com/bobby/suss/issues/15). None is complete on the evidence
-below. This audit records requirements and gaps, rather than treating a green
-prerequisite stack as milestone acceptance. M2 remains a declared dependency.
-
-The inspected source baseline is PR #182's independently reviewed
-`383d2062b80973135d767cc68a3398147ae46692`. Its required full baseline terminated0 with1178 passed/0 failed/17 existing
-ignores/0 filtered across136 groups. Root independently counted the complete log.
-Exact-head CI is still running at this audit point; the new scalar AST increment
-has focused execution only, not a full baseline at its own final head. Earlier reviewed heads have counted
-full-baseline and CI evidence in [the handoff](handoff.md). A named test below
-identifies targeted executing coverage; it does not certify all cases of the
-requirement or substitute for acceptance at the final integrated head.
-
-| Requirement | Current evidence and remaining acceptance |
+| Work package and original criterion | Executing evidence |
 | --- | --- |
-| One long-lived Store, shared runtime and incremental fragments; no source replay | Native `portable_session::Session` owns the Store, cells and installed instances. `persistent_session` and `persistent_repl` cover once-only initialization, later inputs and command recovery. Final integrated acceptance remains required. |
-| Atoms, closures, nominal types and old values remain rooted and usable across fragments/GC | Existing atom process tests, `persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc`, nominal identity/extension tests and owned-handle checks cover targeted cases. Inspect all required public session paths in the final audit. Full atom compatibility is separate M7 work. |
-| Every fragment imports the stable recursive ABI; incompatible artifacts fail before initialization | Shared `runtime_abi`, artifact identity and native preflight checks have executing tests. Regenerated Runtime/Macro pairs and Java-free checks validate the compiler identity. The final audit must also prove no active production path uses an incompatible prototype backend. |
-| Globals see redefinition, while captured function values retain old behavior | Native cell/rebinding, namespace and live-command tests exercise these separately. Source cache reuse must preserve the distinction. |
-| Compile failure publishes no session bindings | Transactional input/module preparation and `persistent_session_compile_failure_is_atomic_and_language_failure_recovers` cover native cases. Macro graph replacement and failed declaration provenance have separate regressions. Audit all entry points, including component-host paths. |
-| Failed definition initializer preserves its old binding; preceding effects are not rolled back | Persistent session, namespace retry and source definition regressions execute this distinction. Dependency initialization completed before the error is preserved. |
-| `defonce` and initializers execute once, including bound nil/false | Named persistent session tests and dependency diamond/retry tests execute these cases; reload must not replay unrelated completed initializers. |
-| Namespace/phase resolution, reload and errors are deterministic | `namespace_session`, macro import/reload tests and namespace/declaration oracle corpora cover aliases, source selection, ambiguity and selected policies. Published dependency loading is still explicitly rejected; final namespace/cache/policy acceptance is open. |
-| Macros execute compiled Suss in a separate phase Store and namespace graph | `CompiledMacros`, `compiled_phase_session`, imports/reload and source command tests execute phase isolation and retained expansions. Runtime-only command exit access is denied in Macro tests. |
-| `&form` retains reader data, explicit metadata and actual source provenance | `compiled_macro_form_source_metadata` and source-position tests compare selected pinned observations, including generated syntax with unknown locations. Keep all declared bounds/errors and verify the complete accepted contract. |
-| `&env` exposes genuine portable source facts | Rooted `AnalysisGraph` and source environment/declaration/tag corpora cover selected records. Portable initializer AST operation/value/children schema remains incomplete; source callable/method/declaration metadata and remaining inference rules require complete evidence. The new five-case scalar trace passes fresh pinned analysis, and both new native regressions pass after repair; this remains partial schema evidence. |
-| Syntax quote/unquote/splicing and deterministic gensyms | `compiled_macro_syntax_quote` and `compiled_bootstrap` execute selected forms, state across fragments, failed-input stability, lazy output and collection data. Complete contract acceptance still requires an explicit scope audit. |
-| Bounded bootstrap expander and reproducible versioned artifacts without Java | Both phase pairs reproduce and execute through `scripts/verify-bootstrap.sh`; input mutation/corruption checks reject stale identity. Development JVM/Node oracles are not shipped dependencies. |
-| Cache keys include source, compiler/runtime ABI, macro dependency graph, target and flags; macro changes invalidate appropriately | Artifact identity, `compiled_source_artifact_cache` and `compiled_module_cache` execute targeted graph reload, declaration recovery, cross-Store and reset behavior. Complete published dependency/target cache policy remains open. |
-| Remove the tree-walking macro evaluator after compiled bootstrap succeeds | **Incomplete:** `suss-compile/src/expand.rs` still owns `MacroEvaluator`; public prototype Compiler paths remain. `suss-cli/src/component.rs` still calls an evaluator WIT interface. Native command migration alone does not meet removal. |
-| Runtime exceptions return control to the prompt | Native REPL recovery and typed language exception tests execute this. Traps/host errors remain separately classified. Final acceptance must include errors across pending I/O/resumption. |
-| Reset releases session state and invalidates old/foreign owned handles | Native reset/handle/phase/cache tests execute targeted cases. First-release generated code may stay resident until reset, as allowed by the design; pending task/resource cleanup is not yet implemented. |
-| Cancellation while interactive I/O is pending cleans up and resumes at most once | **Incomplete:** the native Session has no rooted source continuation/pending-I/O scheduler. Running synchronous code can be interrupted (`session_interrupt.rs`, `repl_interrupt.rs`), but that is a trap, not cooperative cancellation of suspended work. Official async command completion is synchronous source execution and does not prove suspension. |
-| Pending/Ready/Failed/Cancelled transitions preserve locals, handlers, dynamic scope and cleanup; handle races/reentry/fairness | **Incomplete:** design §9 is a prerequisite for the pending-I/O lifecycle gate. Need actual source future/await lowering and scheduler/adapter regressions, including finally, dynamic bindings, cancellation races and fairness. Generic synchronous callback success does not prove these. |
-| Code residency and live GC/leak accounting are distinguished | **Test evidence, no production counter:** `SessionStats` reports fragment/artifact bytes, cells, external handles, GC heap *capacity* and numeric scratch capacity, not live objects. `crates/suss-compile/tests/session_live_heap.rs` reads the exact post-collection `allocated_bytes` record that pinned Wasmtime 49.0.1 logs, and shows exact return to baseline for released, cyclic and cell-retained graphs in both Stores, fixed code counters, and fresh-session equality of the replacement Store after repeated reset (the old Store's drop itself is not observed). Wasmtime exposes no public live-heap API, so `SessionStats` has no live-bytes field. Accounting for suspended tasks awaits §9. |
+| #12: atoms, closures and old values persist | `portable_atoms::persistent_session_atoms_and_old_contents_remain_rooted_across_fragments_and_gc`; `persistent_session::persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc`; nominal type/descriptor and owned-handle suites. |
+| #12: initializers do not replay | `persistent_session_initializers_execute_once_and_defonce_skips_effects`; `persistent_session_failed_module_retries_without_replaying_successful_dependencies`; dependency-diamond source preparation and persistent REPL tests. Nil and false count as initialized bindings. |
+| #12: fragments import the stable ABI | `runtime_abi_generated_fragments_share_scalar_types_and_gc_roots`; `runtime_abi_manifest_gate_precedes_initializer_effects`; cross-fragment roots, nominal identity and compiler/runtime artifact identity checks. |
+| #13: globals observe redefinition; captured functions stay stable | `namespace_session_command_loads_once_and_keeps_live_globals_and_old_captures`; persistent closure and cell/rebinding tests. |
+| #13: compilation and failed initialization preserve old bindings | `persistent_session_compile_failure_is_atomic_and_language_failure_recovers`; `namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failure`; macro declaration recovery and phase transaction tests. Already-performed effects are preserved, not rolled back. |
+| #13: deterministic namespace errors | `namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependencies_provided`; namespace acceptance, alias, ambiguity, reload ordering and source-origin tests. |
+| #14: syntax quote and gensyms | `compiled_macro_syntax_quote_executes_unquote_and_sequence_splicing`; `compiled_macro_syntax_quote_reuses_auto_gensyms_and_evaluates_input_once`; syntax quote state/failure stability and bootstrap execution. |
+| #14: genuine `&form` and `&env` | `compiled_source_macro_form_retains_reader_positions_on_nested_syntax`; `compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution`; compiled source AST/tag/position/declaration corpora with pinned observations. Unknown generated locations remain explicit. |
+| #14: compiled isolated phase dependencies | `namespace_session_compiled_macro_imports_execute_phase_dependencies_and_aliases`; compiled phase session, macro imports/reload and runtime-only command denial tests. Current production paths contain no tree-walking `MacroEvaluator` or `expand::expand_all`. |
+| #14: Java-free reproducible bootstrap and macro cache invalidation | `scripts/verify-bootstrap.sh` reproduces Runtime/Macro pairs twice with Java/Node absent, checks shipped artifacts and identity, and executes four bootstrap tests; `source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all`, module-cache and reset/cross-Store tests. Keys incorporate the supported target/profile, flags, source/compiler/ABI and macro graph. |
+| #15: exceptions return to prompt | Persistent REPL compilation/language recovery, native I/O catchable failures and recovered fuel-trap process tests. Language exceptions, runtime traps and typed host errors retain distinct handling. |
+| #15: cancellation cleans up during pending interactive I/O | Real FIFO native I/O and PTY tests, including `session_lifecycle_cli_sigint_cancels_pending_streams_awaits_finally_and_retires_native_fds` and `session_lifecycle_interactive_utf8_redraw_history_and_pending_sigint_cleanup_are_preserved`; source finally/dynamic/fairness and canonical event-6 caller cancellation tests. |
+| #15: reset releases session state | `session_lifecycle_cli_reset_waits_for_pending_stream_cleanup_and_late_bytes_cannot_cross_stores`; `cancellation_preflight_interrupt_preserves_intent_and_buffered_source` proves reset/exit intent and buffered input survive repeated getter interruptions; `cancellation_mutation_interrupt_clears_stale_observation_and_stops_input` proves uncertain mutation remains fatal; reset interruption/pending hook tests; two-phase/cache/handle invalidation and `repeated_reset_returns_live_bytes_and_code_to_a_fresh_session`. Cleanup blocked on input retains the old Store as `ResetPending`. |
+| #15: resident code versus leaked values | Exact post-GC pinned Wasmtime live-byte tests for retained/released graphs, suspended tasks, streams and repeated reset; `dead_capture_graph_is_released_at_await_while_owner_remains_pending`; `ten_thousand_varied_tasks_retire_waiters_and_return_live_heap_to_baseline` uses independent Rust payload decoding and fixed code/handle counters. Production capacity counters are not mislabeled as live bytes. |
 
-The milestone's planned filter commands are `cargo test -p suss-cli
-persistent_session`, `cargo test -p suss-cli namespace_session`,
-`scripts/verify-bootstrap.sh` and `cargo test -p suss-cli session_lifecycle`.
-Existing lifecycle tests live in several modules; a passing filter with no
-pending-I/O tests cannot close #15. Focused commands come first; every PR still
-requires independent review/fixes, the unfiltered
-`cargo test --workspace --locked -- --test-threads=2` baseline and exact final-head
-CI. Use `Refs` for partial progress. `Closes` is reserved for the full issue gate.
-No PR may be merged without a later explicit user instruction.
+## Verification gates
 
-Next finish genuine source AST transport with executed native/pinned evidence,
-then audit and retire the remaining evaluator paths and implement rooted
-continuations/pending-I/O cancellation plus live memory accounting. Keep this
-matrix aligned with implementation, inventory and actual terminal evidence;
-do not turn outstanding requirements into exclusions to make M3 complete.
+The independently reviewed production implementation head is
+`9e77ffcaaf2190c1bf6cf62df81b6829c2eab9d2`. Its required unfiltered local
+workspace baseline completed successfully. The final head adds a reviewed test-only
+SIGINT synchronization repair and this evidence reconciliation; production code is
+unchanged. Promotion requires successful CI on that exact final head. Its terminal
+outcome is recorded on PR #221 rather than requiring a self-referential commit.
 
-The subsequent source-local reference increment adds actual `:local` operation,
-selected binding fields and shared declaration/initializer identity, with six
-fresh pinned observations and both caller-phase native execution. This narrows
-the unfinished reference schema; global/field references and full portable AST
-schema remain open. It does not change any original M3 acceptance requirement.
-See [scope/evidence](../runtime/compiled-macro-local-reference-asts.md).
+- Full baseline: PASS, `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m3-source-futures/target cargo test --workspace --locked -- --test-threads=2`, exit 0. 201 terminal suite records: 1,531 passed, zero failed, 41 ignored, zero filtered. Toolchain and doc tests completed.
+- Implementation-head [CI run 37740573919](https://github.com/bobby/suss/actions/runs/37740573919): terminal FAILURE; foundation and seven integration partitions passed. Partition 5 evaluated dependent input before SIGINT acknowledgment (`7500` before `^C`). The test-only repair waits for acknowledgment and a real pending cleanup FIFO reader, retains exact results and deadline, and adds once-only output and both FD-retirement checks. This transcript does not establish a production cleanup stall.
+- Exact final-head CI: REQUIRED before promotion; foundation, all eight integration partitions and aggregate test must succeed. Consult PR #221 for the final-head result.
+- Repaired real native I/O suite: 8/8 passed, 52.40s, zero failed/ignored/filtered.
+- Bootstrap: Java/Node-free Runtime/Macro reproduction twice, shipped artifact comparison, identity verification and 4/4 execution tests passed (13.93s); zero failures/ignores/filters.
+- Production repair focus: frontend 7/7 (0.27s); native host 18/18 (52.25s); event loop 7/7; native I/O 8/8 (36.78s); PTY 1/1 (7.15s); persistent REPL 8/8 (43.47s). These also execute within the passing unfiltered baseline. Unit selectors filter unrelated tests and are not whole-package execution.
+- Independent full-diff, repair, fixture and original-criterion reviews: no unresolved material findings or missing original criterion. Author repairs were reviewed independently. The full-baseline pass supports the implementation criteria; final-head CI and promotion remain separate required gates.
 
-Resolved global-symbol ASTs now retain genuine operation/name/namespace/info from
-captured declaration revisions, with eleven exact fresh pinned/executed projections
-and native GC/effect evidence in both caller phases. This narrows the unfinished
-reference schema; field/quote/compound/invocation/children and complete portable
-source records remain open. The identity docstring mismatch was repaired in the
-provenance-tracked source adaptation, with both phase images regenerated. Full
-review/baseline/final CI remain required for this new increment. No original M3
-gate is removed; see [scope/evidence](../runtime/compiled-macro-global-reference-asts.md).
+Commands, failures, interrupted obsolete runs and terminal logs are preserved in
+[handoff](handoff.md). Interrupted baselines and prior-head green checks are not
+final acceptance. The workspace baseline also retains pre-existing, individually
+explained ignores: 37 legacy prototype cases awaiting compiled support, three
+manual evidence-recording commands, and one pre-existing compiler documentation
+example. None is counted as passing or bypasses an original M3 acceptance criterion. These are not counted as passing tests;
+no ignore attribute is added by this PR. The active
+`prototype_cases_awaiting_compiled_support` guard checks recorded unsupported
+compilation diagnostics and fails when they change or compilation succeeds;
+it does not establish semantic support.
+Original M3 acceptance regressions execute rather than being skipped. The first two CI runs exposed fixture assumptions, insufficient
+fuel sweep horizons and Linux SIGINT races; assertions were retained while the
+setups and production observer/idle-dispatch behavior were repaired.
 
-## Production entry-point audit, 2026-10-05
+## Contract boundaries and precision
 
-The original GitHub issues #12–#15 were reread and remain open with their
-published acceptance criteria. This inspection uses the reviewed PR197 repair
-`a853b14070a994fa91e56cf8d65652de24f94ee2` plus the uncommitted public command
-migration. It supersedes earlier source ownership references, not the original
-requirements or historical test results. PR195 is ready and unmerged after its
-independent review and audited exact-head CI37249501965: all149 local/CI result
-tuples match,1220 passed/0 failed/17 existing ignores/0 filtered, with all four
-doctest suites. PR197's full workspace baseline and exact-head CI remain pending.
+The native Unix frontend has one Store owner and explicit pending I/O producers.
+Pure interrupted observations retain roots and wait for signal acknowledgment.
+The dispatch probe skips scheduler service only after proving it unnecessary;
+terminal dependency, cancellation/yield, actionable stream service and native
+retirement work keep dispatch required. Blocked reads and backpressured writes
+retain their roots without unnecessary service. Cancellation-preflight interruptions
+retry after input acknowledgment, preserving reset/exit intent and buffered Source.
+Classification clears before cancellation mutation; uncertain mutation stays fatal.
+The getter tests inject interruptions after successful real observations and prove
+classification/control flow rather than an exact external-signal timing window. Interrupted post-submit tracking retains the completed result and retries
+observation without replaying Source. Uncertain ownerless
+mutation/teardown remains quarantined. Ordinary language errors recover.
 
-| Production path | Current inspected state | Required acceptance |
-| --- | --- | --- |
-| Native REPL, expression and file execution | `suss-cli/src/main.rs` uses `suss-compile`'s compiled Runtime/Macro hosts through CLI reexports. Host ownership moved into the compiler crate in PR195. | Final integrated persistence, namespace and lifecycle acceptance; remaining core/schema requirements are unchanged. |
-| Native CLI file/namespace/project/main AOT | Source preparation uses compiled macro sessions and portable artifact assembly. Existing command tests validate and execute the supported boundary profiles. | Preserve dependency, phase, source-origin and initialization behavior through the remaining public API migration. Unsupported later-milestone WIT shapes remain diagnosed, not claimed implemented. |
-| Native public `Compiler::compile` | PR197 routes selected-WIT source through the shared compiled pipeline. Its reviewer repaired reset discarding the compiled `defn` macro; public12/profile8/bootstrap4 and macro-import5/REPL-macro6 checks pass. | PR197 exact unfiltered baseline and reviewed-head CI, then final integrated acceptance. Other methods are not implicitly migrated. |
-| Public `Compiler::compile_for_main` | Draft PR198 routes source through shared official command preparation and validates the requested namespace before Macro effects. Its main-only prototype extractor is deleted. | Seven new executing regressions pass on the replacement; six fail on the unchanged parent. Both typed compiler command6 and CLI public command5 groups pass, with zero failures/ignores/filters, as do the existing official CLI command6. Both bootstrap pairs are regenerated and reproduce without Java/Node; bootstrap4 passes. Independent execution review, unfiltered baseline and final-head CI remain required. |
-| Public file/namespace/project methods | The prepared uncommitted increment delegates `compile_files`, `compile_with_namespaces` and `compile_project` to the shared compiled host with typed boundary errors, original source origins and configured project selection. | All nine final regressions fail on the unchanged reviewed parent; the integrated public_files9 and existing component30 now pass with actual typed results, retaining assertions while aligning source fixtures to the accepted contracts. Both bootstrap pairs reproduce without Java/Node; bootstrap4 passes. Earlier failures remain recorded in the handoff. Independent review, full baseline and final-head CI remain outstanding. |
-| Public expression/cache methods | `ensure_core_loaded`, `compile_expr_cached` and `compile_expr_with_info` still reach `expand::expand_all`; `compile_expr` delegates to the legacy expression method. | Migrate or retire these active production paths with actual artifact/value regressions. Do not infer semantics from encoding-only prototype tests. |
-| Tree-walking macro evaluator | `suss-compile/src/expand.rs` still owns `eval::MacroEvaluator`, reached by those public methods. | Remove this production evaluator after replacement entry-point/bootstrap acceptance. A compiled native CLI alone does not prove removal. |
-| Component-target CLI evaluator | `suss-cli/src/component.rs` still imports reader/evaluator WIT bindings and invokes `evaluator::eval_to_string`. `main.rs` selects this path under the component feature on Wasm targets. | This remains an actual unfinished route. Native migration does not certify the component-target frontend or permit calling it retired. |
-| Session lifecycle/accounting | `Session` now lives in `suss-compile/src/portable_session.rs`; CLI reexports retain embedding paths. Existing lifecycle tests cover roots/reset, numeric capacity and trap recovery. `SessionStats::gc_heap_capacity` explicitly is not live-object accounting. | Rooted source continuations and pending-I/O cancellation/cleanup, at-most-once transitions, finally/dynamic scope, races/fairness and live GC versus resident generated-code accounting remain unimplemented acceptance work. |
+Compiled source streams provide bounded chunk reads/writes, backpressure, single
+endpoint ownership, explicit EOF distinct from nil, close/failure and cancellation.
+Read/write readiness transitions use in-place injected snapshot states, not
+production snapshot publication. The frontend withdrawal-journal fixture explicitly establishes an unpublished
+prepared phase-2 state and proves idle detection requires dispatch. Separately,
+`later_published_write_receipt_survives_earlier_read_service_or_retirement`
+constructs a published transfer-receipt fixture after a genuinely fuel-interrupted
+owner and proves service/retirement ordering. Neither claims to witness the exact
+publication fuel window.
 
-The next gate is independent review of the file/project migration, its unfiltered
-workspace baseline and final-head CI. Remaining expression/cache and component
-frontend evaluator retirement and lifecycle requirements remain separate gates.
-No issue is closed, no PR is merged, and M3 is not complete.
+The production canonical mapping supports one async u32 import/export. Executing
+component-to-component tests deliver cancellation event 6, retain awaited cleanup,
+and release imports, transfer allocations and driver resources before acknowledgment.
+The handwritten caller WAT and compiled Wasm fixtures are tracked and required.
+Host resources have explicit teardown; GC finalization is not their correctness
+mechanism. Raw embedders are responsible for equivalent lifetime/quarantine handling.
 
-## Evaluator removal, 2026-10-06
-
-PR #215 (stacked on #210) removes `eval.rs` (`MacroEvaluator`), `expand.rs`, the
-prototype core route and expression codegen (`analyze`, `lower`, `codegen`, `ir`,
-`component`, prototype `wasi`), the byte-only `compile_expr`, and the component
-CLI whose `suss:eval` evaluator component no repository crate implemented. Rows
-above that say `expand.rs` still owns `MacroEvaluator` or that the component
-evaluator route remains describe the state before that PR. Wrong arity to a
-known global function compiles, as pinned ClojureScript does, and raises a
-catchable runtime language exception after argument evaluation (decision on
-#216); see `known_function_wrong_arity_raises_runtime_exceptions`. Call-site
-source annotation of that exception remains open.
-
+Complete upstream analyzer schemas, published project dependencies, generic nested
+WIT future/stream interoperability and non-Unix interactive async I/O certification
+retain later work scopes. These limits do not remove an original #12–#15 criterion.
+The 10,000-task test proves sequential task retirement and actual heap recovery,
+not a generic WIT or OS-resource stress claim. Existing unassessed compatibility
+inventory entries remain unassessed. The broader constructor corpus uses 100M fuel
+and has a separate default-budget regression.

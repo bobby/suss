@@ -157,6 +157,7 @@ fn stage(error: SessionError) -> (String, String) {
         SessionError::Trap(_) => "trap",
         SessionError::Host(_) => "host",
         SessionError::ForeignValue => "ownership",
+        SessionError::ResetPending => "reset-pending",
     };
     (name.into(), error.to_string())
 }

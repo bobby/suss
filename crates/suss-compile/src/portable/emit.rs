@@ -1,7 +1,8 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
+mod r#async;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
-    ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
+    ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
     Diagnostic,
 };
 use crate::runtime_abi;
@@ -37,19 +38,24 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     };
     let mut bodies = Vec::new();
     let mut dispatchers = Vec::new();
-    collect_bodies(ir, &mut bodies, &mut dispatchers);
-    let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function));
+    let mut futures = Vec::new();
+    collect_bodies(ir, &mut bodies, &mut dispatchers, &mut futures);
+    let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function));
     let mut names = BTreeSet::new();
-    let mut throws = false;
+    let mut throws = !futures.is_empty();
+    if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
+    if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
     for function in all_functions {
         for block in &function.blocks {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 match &inst.operation {
+                    Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
                         globals: targets, ..
-                    } => {
+                    } | Operation::AsyncDynamicEnter { globals: targets, .. } => {
                         names.insert("dynamic-invoke");
                         globals.extend(targets.iter().cloned());
                     }
@@ -212,6 +218,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            "future-pending-new" | "dynamic-fork" | "dynamic-save" => (vec![], vec![VALUE]),
+            "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
+            "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
+            "dynamic-pop" => (vec![VALUE], vec![]),
+            "async-registration-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
+            "async-task-complete" => (vec![VALUE, ValType::I32, VALUE], vec![ValType::I32]),
             "protocol-live-dispatcher-new" => (vec![VALUE, VALUE], vec![VALUE]),
             "ifn-live-dispatcher-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
@@ -328,6 +340,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         &globals,
         &bodies,
         &dispatchers,
+        &futures, None,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -338,15 +351,21 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &globals,
             &bodies,
             &dispatchers,
+            &futures, None,
         )?);
     }
     for dispatcher in &dispatchers {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_dispatcher(dispatcher, &names, &globals, &bodies));
     }
+    for body in &futures {
+        functions.function(runtime_abi::INVOKE);
+        code.function(&emit_function(&body.continuation.function, Some(0),
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation))?);
+    }
     let mut elements = ElementSection::new();
-    if !bodies.is_empty() || !dispatchers.is_empty() {
-        let indices = (0..bodies.len() + dispatchers.len())
+    if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
+        let indices = (0..bodies.len() + dispatchers.len() + futures.len())
             .map(|i| u32::try_from(names.len() + 1 + i).map_err(|_| fail("Too many functions")))
             .collect::<Result<Vec<_>, _>>()?;
         elements.declared(Elements::Functions(Cow::Owned(indices)));
@@ -358,7 +377,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&imports)
         .section(&functions)
         .section(&exports);
-    if !bodies.is_empty() || !dispatchers.is_empty() {
+    if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
         module.section(&elements);
     }
     module.section(&code);
@@ -382,19 +401,24 @@ fn collect_bodies<'a>(
     function: &'a IrFunction,
     bodies: &mut Vec<&'a ClosureBody>,
     dispatchers: &mut Vec<&'a GeneralClosureBody>,
+    futures: &mut Vec<&'a FutureBody>,
 ) {
     for block in &function.blocks {
         for inst in &block.instructions {
             match &inst.operation {
+                Operation::MakeFuture { body, .. } => {
+                    futures.push(body);
+                    collect_bodies(&body.continuation.function, bodies, dispatchers, futures);
+                }
                 Operation::MakeClosure { body, .. } => {
                     bodies.push(body);
-                    collect_bodies(&body.function, bodies, dispatchers);
+                    collect_bodies(&body.function, bodies, dispatchers, futures);
                 }
                 Operation::MakeGeneralClosure { body, .. } => {
                     dispatchers.push(body);
                     for method in &body.methods {
                         bodies.push(method);
-                        collect_bodies(&method.function, bodies, dispatchers);
+                        collect_bodies(&method.function, bodies, dispatchers, futures);
                     }
                 }
                 _ => {}
@@ -560,6 +584,8 @@ fn emit_function(
     globals: &[super::resolve::Global],
     bodies: &[&ClosureBody],
     dispatchers: &[&GeneralClosureBody],
+    futures: &[&FutureBody],
+    continuation: Option<&ir::r#async::Continuation>,
 ) -> Result<Function, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
@@ -571,7 +597,7 @@ fn emit_function(
         .checked_add(offset)
         .ok_or_else(|| fail("Too many IR locals"))?;
     let pc = count
-        .checked_add(1)
+        .checked_add(14)
         .and_then(|count| count.checked_add(offset))
         .ok_or_else(|| fail("Too many IR locals"))?;
     let index = |name: &str| {
@@ -581,8 +607,9 @@ fn emit_function(
             .expect("collected import") as u32
     };
     // Every SSA value has one GC local. The last local is the block dispatcher.
-    let mut function = Function::new([(count + 1, VALUE), (1, ValType::I32)]);
+    let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
     use Instruction::*;
+    if continuation.is_none() {
     if let Some(capture_count) = capture_count {
         for (index, value) in ir.blocks[0].parameters.iter().enumerate() {
             if index < capture_count {
@@ -601,19 +628,67 @@ fn emit_function(
         }
     }
 
-    function
-        .instruction(&I32Const(0))
-        .instruction(&LocalSet(pc))
-        .instruction(&Loop(BlockType::Empty));
-    for (block_id, block) in ir.blocks.iter().enumerate() {
-        let block_id = i32::try_from(block_id).map_err(|_| fail("Too many IR blocks"))?;
+    }
+    let slots = r#async::Locals { scratch, snapshot: scratch + 1, cont: scratch + 2,
+        live: scratch + 3, resume: scratch + 4, pc, offset,
+        stack: scratch + 9, frame: scratch + 10, saved: scratch + 11,
+        outcome: scratch + 12, auxiliary: scratch + 13 };
+    if let Some(plan) = continuation {
+        r#async::initialize(&mut function, plan, &slots, &index);
+    } else {
+        function.instruction(&I32Const(0)).instruction(&LocalSet(pc));
+    }
+    if continuation.is_some() {
+        function.instruction(&Loop(BlockType::Empty))
+            .instruction(&Block(BlockType::Result(VALUE)))
+            .instruction(&TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])));
+    }
+    function.instruction(&Loop(BlockType::Empty));
+    let state_count = continuation.map_or(ir.blocks.len(), |plan| plan.states.len());
+    for state_id in 0..state_count {
+        let state = continuation.map(|plan| &plan.states[state_id]);
+        let block_id = state.map_or(state_id, |state| state.block);
+        let block = &ir.blocks[block_id];
+        let instructions = state.map_or(block.instructions.as_slice(), |state| &block.instructions[state.instructions.clone()]);
+        let state_number = i32::try_from(state_id).map_err(|_| fail("Too many IR blocks"))?;
         function
             .instruction(&LocalGet(pc))
-            .instruction(&I32Const(block_id))
+            .instruction(&I32Const(state_number))
             .instruction(&I32Eq)
             .instruction(&If(BlockType::Empty));
-        for inst in &block.instructions {
+        if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
+        for inst in instructions {
             match &inst.operation {
+                Operation::RegionPush { handler, cleanup, end, dynamic } => {
+                    let plan = continuation.ok_or_else(|| fail("Resumable region outside continuation"))?;
+                    r#async::region_push(&mut function, *handler, *cleanup, *end, dynamic, inst.result, plan, &slots);
+                }
+                Operation::RegionExit { value, cleanup } => {
+                    let plan = continuation.ok_or_else(|| fail("Resumable exit outside continuation"))?;
+                    r#async::region_exit(&mut function, *value, *cleanup, &slots, plan.states.len());
+                    function.instruction(&I32Const(0)).instruction(&RefI31).instruction(&LocalSet(inst.result.0 as u32 + offset)).instruction(&Br(1));
+                }
+                Operation::RegionValue => {
+                    if continuation.is_none() { return Err(fail("Resumable outcome outside continuation")); }
+                    r#async::item(&mut function, slots.snapshot, 7);
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::AsyncDynamicEnter { globals: targets, operands } => {
+                    if continuation.is_none() { return Err(fail("Async dynamic entry outside continuation")); }
+                    for (i, target) in targets.iter().enumerate() {
+                        function.instruction(&GlobalGet(globals.binary_search(target).expect("collected dynamic cell") as u32))
+                            .instruction(&LocalGet(operands[i].0 as u32 + offset))
+                            .instruction(&LocalGet(operands[targets.len() + i].0 as u32 + offset));
+                    }
+                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: (targets.len() * 3) as u32 })
+                        .instruction(&Call(index("dynamic-push"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::MakeFuture { body, captures } => {
+                    let body_index = futures.iter().position(|candidate| std::ptr::eq(*candidate, body.as_ref())).expect("collected future");
+                    let function_index = u32::try_from(names.len() + 1 + bodies.len() + dispatchers.len() + body_index).map_err(|_| fail("Too many functions"))?;
+                    r#async::create(&mut function, body, captures, inst.result, function_index, &slots, &index);
+                }
+                Operation::Await { .. } => return Err(fail("Unnormalized await reached emission")),
                 Operation::DynamicScope {
                     globals: targets,
                     operands,
@@ -741,7 +816,7 @@ fn emit_function(
                             array_type_index: runtime_abi::ARGS,
                             array_size: size,
                         });
-                    let tail = block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
+                    let tail = continuation.is_none() && block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
                         && returns_unchanged(ir, &block.terminator, inst.result);
                     if tail {
                         function.instruction(&ReturnCall(index("invoke")));
@@ -1100,16 +1175,29 @@ fn emit_function(
                 }
             }
         }
+        if let Some(plan) = continuation {
+            if let ir::r#async::Exit::Suspend { future, resume, spill, .. } = &plan.states[state_id].exit {
+                r#async::suspend(&mut function, *future, *resume, spill, &slots, ir.values.len(), &index);
+                function.instruction(&End);
+                continue;
+            }
+        }
+        let target_state = |target: usize| continuation.map_or(target, |plan| plan.block_entries[target]);
         match &block.terminator {
             Terminator::Throw(value) => {
-                function
-                    .instruction(&LocalGet(value.0 as u32 + offset))
-                    .instruction(&Throw(0));
+                if let Some(plan) = continuation {
+                    r#async::event(&mut function, 2, value.0 as u32 + offset, &slots, plan.states.len());
+                    function.instruction(&Br(1));
+                } else {
+                    function.instruction(&LocalGet(value.0 as u32 + offset)).instruction(&Throw(0));
+                }
             }
             Terminator::Return(value) => {
-                function
-                    .instruction(&LocalGet(value.0 as u32 + offset))
-                    .instruction(&Return);
+                if continuation.is_some() {
+                    r#async::complete(&mut function, 1, *value, &slots, &index);
+                } else {
+                    function.instruction(&LocalGet(value.0 as u32 + offset)).instruction(&Return);
+                }
             }
             Terminator::Jump { target, arguments } => {
                 // Push every replacement value before any parameter assignment.
@@ -1119,10 +1207,12 @@ fn emit_function(
                 for parameter in ir.blocks[*target].parameters.iter().rev() {
                     function.instruction(&LocalSet(parameter.0 as u32 + offset));
                 }
-                function
-                    .instruction(&I32Const(*target as i32))
-                    .instruction(&LocalSet(pc))
-                    .instruction(&Br(1));
+                if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
+                    r#async::yield_turn(&mut function, plan.block_entries[*target], &slots, ir.values.len(), &index);
+                } else {
+                    function.instruction(&I32Const(target_state(*target) as i32))
+                        .instruction(&LocalSet(pc)).instruction(&Br(1));
+                }
             }
             Terminator::Branch {
                 condition,
@@ -1150,20 +1240,42 @@ fn emit_function(
                     .instruction(&I32Or);
                 function
                     .instruction(&If(BlockType::Result(ValType::I32)))
-                    .instruction(&I32Const(*alternative as i32))
+                    .instruction(&I32Const(target_state(*alternative) as i32))
                     .instruction(&Else)
-                    .instruction(&I32Const(*consequent as i32))
+                    .instruction(&I32Const(target_state(*consequent) as i32))
                     .instruction(&End)
-                    .instruction(&LocalSet(pc))
-                    .instruction(&Br(1));
+                    .instruction(&LocalSet(pc));
+                if let Some(plan) = continuation {
+                    for target in BTreeSet::from([*consequent, *alternative]) {
+                        if plan.backedges.contains(&(block_id, target)) {
+                            function.instruction(&LocalGet(pc)).instruction(&I32Const(plan.block_entries[target] as i32))
+                                .instruction(&I32Eq).instruction(&If(BlockType::Empty));
+                            r#async::yield_turn(&mut function, plan.block_entries[target], &slots, ir.values.len(), &index);
+                            function.instruction(&End);
+                        }
+                    }
+                }
+                function.instruction(&Br(1));
             }
         }
         function.instruction(&End);
     }
-    function
-        .instruction(&Unreachable)
-        .instruction(&End)
-        .instruction(&Unreachable)
-        .instruction(&End);
+    if let Some(plan) = continuation {
+        function.instruction(&LocalGet(pc)).instruction(&I32Const(plan.states.len() as i32))
+            .instruction(&I32Eq).instruction(&If(BlockType::Empty));
+        r#async::unwind(&mut function, &slots, ir.values.len(), &index);
+        function.instruction(&Br(1)).instruction(&End);
+    }
+    function.instruction(&Unreachable).instruction(&End);
+    if let Some(plan) = continuation {
+        // Language exceptions thrown by any compiled operation become an
+        // explicit unwind event. Wasm traps remain runtime/host recovery work.
+        function.instruction(&Unreachable).instruction(&End).instruction(&Unreachable)
+            .instruction(&End).instruction(&LocalSet(slots.outcome));
+        r#async::event(&mut function, 2, slots.outcome, &slots, plan.states.len());
+        function.instruction(&Br(0)).instruction(&End);
+    }
+    function.instruction(&Unreachable).instruction(&End);
+
     Ok(function)
 }

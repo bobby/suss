@@ -1,0 +1,10 @@
+;; Original Suss async extension forms from accepted design section 9.
+;; These macros form compiler suspension markers; they never execute a body.
+;; Marker analysis/lowering and the rooted scheduler are required separately.
+(ns suss.async)
+
+(defmacro future [& body]
+  (cons 'suss.async/future* body))
+
+(defmacro await [value]
+  (list 'suss.async/await* value))
