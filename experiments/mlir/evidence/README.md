@@ -1,5 +1,13 @@
 # Evidence for #188
 
+After #226, recovered experiment rebases onto main `4e0f00d`.
+[Post-merge C++ gates](post226-cpp-gates.json) record a restored verified SDK,
+actual one-worker build, CTest and explicit dialect/global/export/effects gates
+(all terminal0). This does not replace the current-base Rust/Wasmtime/source
+execution or full-baseline gates, which remain pending after cleanup interrupted
+the previous baseline. The `22723b4` records below remain evidence at that base;
+their bootstrap identity projection deliberately differs from new main.
+
 Current-base results use main `22723b432c5fb4792c39302d3739b73a44fa87ff`.
 `current-main-gate-commands.json` records actual command arguments, terminal
 statuses and log names for CMake setup/build, CTest, genuine facts, effects
