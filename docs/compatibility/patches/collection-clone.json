@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "95801c5bb1a05ffbb2604f219e92420345c7fe3dcd0d064639599d1dfa7ac8d5",
+  "replacement": "(def clone\n  \"Clone the supplied value which must implement ICloneable.\"\n  (fn [value]\n    (-clone value)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the complete pinned public declaration, documentation, sole arity and live ICloneable -clone protocol dispatch. No type-only shortcut, clone implementation or method branch is substituted. Executing queue clone and sharing regressions exposed the missing public binding; full cross-type clone compatibility remains in progress."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "152108c421ab1c035e82f84fe0d7af354d0a87a39ee45d44d28315ba8b217ad5",
+  "replacement": "(deftype PersistentQueueIter [^:mutable fseq riter]\n  Object\n  (hasNext [_]\n    (or (and (some? fseq) (seq fseq)) (and (some? riter) (.hasNext riter))))\n  (next [_]\n    (cond\n      (some? fseq)\n      (let [ret (first fseq)]\n        (set! fseq (next fseq))\n        ret)\n      (and (some? riter) ^boolean (.hasNext riter))\n      (.next riter)\n      :else (throw (suss.bootstrap/error \"No such element\"))))\n  (remove [_] (suss.bootstrap/error \"Unsupported operation\")))",
+  "rationale": "Preserve the complete iterator methods and source effect order. Adapt host Error allocation to the existing descriptor-backed portable Error constructor; remove returns an Error value as upstream does, while exhausted next throws."
+}

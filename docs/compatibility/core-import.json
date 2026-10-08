@@ -1603,6 +1603,31 @@
       "id": "runtime:empty:1887",
       "source-sha256": "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76",
       "patch": "docs/compatibility/patches/collection-empty.json"
+    },
+    {
+      "id": "runtime:PersistentQueueIter:6432",
+      "source-sha256": "152108c421ab1c035e82f84fe0d7af354d0a87a39ee45d44d28315ba8b217ad5",
+      "patch": "docs/compatibility/patches/queue-iterator.json"
+    },
+    {
+      "id": "runtime:PersistentQueueSeq:6447",
+      "source-sha256": "75a6613c0f64b78e5639d57a9775c78671e92d7d669a6bb8721ede7308b39636",
+      "patch": null
+    },
+    {
+      "id": "runtime:PersistentQueue:6505",
+      "source-sha256": "682c84520bedbb6ab3cae27d4c3c64ff9a30e5e0a2c36358c38895026da2e074",
+      "patch": null
+    },
+    {
+      "id": "runtime:clone:1270",
+      "source-sha256": "95801c5bb1a05ffbb2604f219e92420345c7fe3dcd0d064639599d1dfa7ac8d5",
+      "patch": "docs/compatibility/patches/collection-clone.json"
+    },
+    {
+      "id": "runtime:last:1858",
+      "source-sha256": "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7",
+      "patch": "docs/compatibility/patches/collection-last.json"
     }
   ],
   "loader": {
@@ -1612,7 +1637,7 @@
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "a43c375851d1f54197fa847742f7e2d9db7bd3b52051038f90c6fd036f2cfd59"
+      "sha256": "689f03b602fb06f6eda89e9e4163c7930770db2980b206b41c4e42afd4f26fc4"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",

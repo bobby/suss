@@ -1,0 +1,31 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "forms": [
+    {
+      "id": "runtime:PersistentQueueIter:6432",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6432,
+      "end-line": 6445,
+      "sha256": "152108c421ab1c035e82f84fe0d7af354d0a87a39ee45d44d28315ba8b217ad5",
+      "retained": "docs/compatibility/queue-foundations/PersistentQueueIter.cljs"
+    },
+    {
+      "id": "runtime:PersistentQueueSeq:6447",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6447,
+      "end-line": 6501,
+      "sha256": "75a6613c0f64b78e5639d57a9775c78671e92d7d669a6bb8721ede7308b39636",
+      "retained": "docs/compatibility/queue-foundations/PersistentQueueSeq.cljs"
+    },
+    {
+      "id": "runtime:PersistentQueue:6505",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6505,
+      "end-line": 6572,
+      "sha256": "682c84520bedbb6ab3cae27d4c3c64ff9a30e5e0a2c36358c38895026da2e074",
+      "retained": "docs/compatibility/queue-foundations/PersistentQueue.cljs"
+    }
+  ],
+  "status": "retained source, not imported or executed"
+}
