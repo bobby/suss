@@ -21829,3 +21829,51 @@ Reviewer explicitly requires regenerated bootstrap and execution of allfourtests
 100M authored finite corpus allowance remains unmeasured. Next after51551Cargo
 owner terminates: reconcile227withmain4e0f00d/evidence, regeneratecurrentlazy
 bootstrap in isolatedtarget, focusednative first, then fullbaseline/finalreviewCI.
+
+Cleanup interruption: MLIR baseline51551 terminal101 after its worktree/target/log
+vanished; user confirmed cleanup job. No diagnostic log survives, so cause of exit
+is not a proven semantic failure and no baseline pass is claimed. Restored committed
+54c5ce6 source detached at/private/tmp/suss-m4-mlir-recovery. SDK/build vanished too;
+pinned acquisition/repro instructions and committed portable evidence remain.
+Checkpointed reviewed lazy draft b2b565d on currentmain4e0f00d before any loss.
+User requests no change to validation procedure: same focused-first/full locked
+commands, jobs2, one Suss Cargo graph, no RUSTFLAGS. Current bootstrap regeneration
+49767 already started before that reply with isolated target
+/Users/bobby/code/github/bobby/suss/target/m4-lazy-current and log
+/Users/bobby/code/github/bobby/suss/target/m4-evidence/lazy-bootstrap-regenerate.log;
+leave this live process intact. Native17CLI14384stillruns/noCargo. No promotion
+of227/fullM4completion. Next: bootstrap terminal, four lazy native tests, preserve
+all failures, then required reproducibility/fullbaseline/review/CI; reconcile188
+against currentmain before final acceptance.
+
+Oracle harness follow-up: scoped path override/main guard avoids import-time
+mutation of shared portable_oracle globals and restores paths on failure. Added
+four strict evidence-verifier regressions; focused4pass0.092s, complete235Python
+pass36.645s. Independent reviewer reproduced4tests/41primary and found no material
+issue. Required native/GC tests remain authored, not accepted from Python alone.
+New docs/runtime/lazy-transformations.md records whole forms/adaptations/current
+limits. acceptance-m4.md preserves original open16–19/188requirements and explicitly
+labels historical publication state. Provenance335artifacts/432reviews/23licensed
+setup forms pass. 17extra CLI owner14384 stilllive; original24passed independently
+bounded printed-value comparison, not canonical/nativebothphase proof.
+
+MLIR recovery branch portable/m4-mlir-current-main d4750b7 rebased onto4e0f00d;
+onlyhandoffconflict resolved by retaining both complete additions57+144lines.
+Experimentfiles/productioncrate-source identities match oldmanifest exactly;
+allfourbootstrapfiles differ and must be revalidated. Download/extraction3417
+terminal0:871033366bytes SHAa3f181b1176406893c097443e21b2a54b85afeac2d10eca3b6d251e6dca32eb3,
+LLVM/Clang23.1.3 source0d261d1 confirmed. NormaldocumentedCMakeconfigure/oneworker
+build/CTest/strictfixture gates7196 nowlive log/private/tmp/suss-m4-mlir-post226-cpp.log.
+CurrentCargo49767 remains the only Suss graph; unrelatedEverwoodCargountouched.
+No measurement attempted while builds/probes are concurrently active.
+
+17 current-main extra CLI probes14384 terminal0; every subprocess0/no stderr,
+closed printed values independently match frozen41-case snapshot. Combined with
+original24CLIprobes, all41have supplemental complete-source Runtime execution.
+These are not canonical storage/GC/bothphase/regenerated-bootstrap passes. Four
+Rust native tests still await49767bootstrap. C++7196terminal0: pinnedoneworkerbuild,
+CTest3/3 and all explicit dialect/global/export/effect positive/negative gates
+pass. Portable post226-cpp-gates.json/log retained in MLIR recovery evidence with
+source/base/SDKarchive/binary/log hashes and exact command argv. New main Rust/
+Wasmtime/genuine-source/measurement/fullbaseline gates remain pending. SDKrestore
+used unchanged documented acquisition/configure/gate procedure; no RUSTFLAGS.

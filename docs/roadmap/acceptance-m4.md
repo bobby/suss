@@ -1,5 +1,37 @@
 # M4 acceptance work record
 
+
+## Current execution snapshot after merged #226 — 2026-10-08
+
+This snapshot supersedes the publication/pending status in the older work record
+below. Original issues #16–#19 remain open; no original acceptance criterion is
+removed. PRs #222, #223, #225 and #226 are incorporated in main `4e0f00d`.
+
+| Requirement | Current evidence | Remaining proof/work |
+| --- | --- | --- |
+| #16 complete notices, hashes, invalidation, namespace loading and explicit adaptations | Current map/filter draft preserves all 325 main recipe selections and adds six complete pinned forms; 335 artifacts reproduce, 432 reviews validate. Whole-form patches, EPL packaging and actual pre-import failures are retained. | Regenerate bootstrap and execute the new forms in both phases; maintain full collection dependency provenance as sorted/record work lands. Extraction alone is not compatibility. |
+| #17 vector/list/lazy/chunk values, effects, metadata and sharing | Published vector, Subvec, chunk and lazy prerequisites remain on main. Complete map/filter source now has 41 fresh pinned typed observations including demand boundaries, all arities, shortest inputs, throw/retry, live helpers, ordered effects and repeated filter chunk reads. Original 24 full-source CLI probes pass and printed values match. | Execute the four authored native tests against regenerated artifacts: complete corpus, fragmented captures/cache across GC, sole host handles and independent raw backing-array identity. All 17 additional CLI probes passed matching printed values; these remain supplemental. |
+| #18 associative collisions/deletion, nil/false keys, comparators, iteration, equality and records | Published HAMT/array-map prerequisites remain on main. Queue #226 passed exact-head full baseline (1,546 passed, zero failed, 41 existing ignores), independent review and all final-head CI before promotion/user merge; three native tests include raw sharing/GC and iterator contracts. | Full portable comparators and sorted collections, nominal record construction/equality/hash/metadata and original associative acceptance remain implementation work. Protocol-only fixtures do not prove sorted collection behavior. |
+| #19 hash/equality, metadata, transient invalidation, Reduced effects and sharing | Existing published focused suites remain evidence for their covered operations. New map/filter primary cases establish transducer Reduced identity and callback/reducer throw ordering; raw sharing tests are authored. | Execute new native gates and finish the full contract across remaining sorted/record/reduction operations. Passing partial corpora do not establish the complete contract. |
+| Separate #188 bounded MLIR evaluation and decision | Committed experiment executes actual WasmGC, shared ABI/rooted closures, source preservation and effect/cleanup examples at the retained `22723b4` base; decision recommends deferral. Recovered source rebases onto `4e0f00d` without changing experiment or reused production source. | Four bootstrap identities changed. Restore pinned tools and rerun affected native/source/effect/evidence gates and required full baseline/final-head review/CI. Cleanup-interrupted baseline51551 exited101 with its log removed; it is not a pass. No adoption decision is made. |
+
+Map/filter native execution remains pending. Required commands retain the existing
+focused-first procedure and finite test allowances; no RUSTFLAGS override:
+
+```sh
+cargo test -p suss-cli --test portable_lazy_transformations --locked -- --test-threads=2
+scripts/verify-core-import.sh
+scripts/verify-bootstrap.sh
+cargo test --workspace --locked -- --test-threads=2
+```
+
+Independent reviews found no material source/test defect in the 41-case draft,
+but explicitly require bootstrap/native execution. The four oracle verifier
+regressions reject concealed or mistyped evidence; these test the harness rather
+than certify guest execution. M5–M7 remain outside this goal.
+
+## Earlier work record
+
 Scope is the original criteria in issues #16–#19 and the separate bounded MLIR
 evaluation #188. This is a work record, not milestone completion evidence.
 
