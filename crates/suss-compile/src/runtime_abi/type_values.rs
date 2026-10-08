@@ -75,7 +75,7 @@ pub(super) fn functions(b: &mut Builder) {
         I32Eqz,
         If(BlockType::Empty),
     ]);
-    // Function constructors and native-object constructor properties
+    // Function and native-object constructor properties
     // remain an explicit unsupported boundary, never kind markers.
     nominal::error(&mut body);
     body.extend([
