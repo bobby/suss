@@ -13,7 +13,9 @@ if sys.argv[1:] == ['generate']:
     target.parent.mkdir(parents=True, exist_ok=True)
     entries = '\n'.join(f'    #js {{:id {json.dumps(case["id"])} :value (encode {case["source"]})}}'
                         for case in corpus['cases'])
-    target.write_text('(ns suss-oracle.macro-vector-cases)\n(defn observations [encode]\n [\n' + entries + '\n ])\n')
+    fixture = (oracle.ROOT / 'tests/oracle/vector-boundary-fixture.sus').read_text()
+    target.write_text('(ns suss-oracle.macro-vector-cases)\n' + fixture +
+                      '\n(defn observations [encode]\n [\n' + entries + '\n ])\n')
 elif sys.argv[1:] == ['compare']:
     oracle.compare()
 else:

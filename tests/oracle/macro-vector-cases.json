@@ -321,6 +321,414 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "boundary-original-count",
+      "source": "(count boundary-original)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090840000000000"
+      }
+    },
+    {
+      "id": "boundary-original-metadata",
+      "source": "(get (meta boundary-original) :boundary)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-0",
+      "source": "(nth boundary-original 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-31",
+      "source": "(nth boundary-original 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-32",
+      "source": "(nth boundary-original 32)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-1023",
+      "source": "(nth boundary-original 1023)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408ff80000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-1024",
+      "source": "(nth boundary-original 1024)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090000000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-1055",
+      "source": "(nth boundary-original 1055)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40907c0000000000"
+      }
+    },
+    {
+      "id": "boundary-original-nth-1056",
+      "source": "(nth boundary-original 1056)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090800000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-count",
+      "source": "(count boundary-collapsed)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090800000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-metadata",
+      "source": "(get (meta boundary-collapsed) :boundary)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-0",
+      "source": "(nth boundary-collapsed 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-31",
+      "source": "(nth boundary-collapsed 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-32",
+      "source": "(nth boundary-collapsed 32)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-1023",
+      "source": "(nth boundary-collapsed 1023)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408ff80000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-1024",
+      "source": "(nth boundary-collapsed 1024)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090000000000000"
+      }
+    },
+    {
+      "id": "boundary-collapsed-nth-1055",
+      "source": "(nth boundary-collapsed 1055)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40907c0000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-count",
+      "source": "(count boundary-associated)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090800000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-metadata",
+      "source": "(get (meta boundary-associated) :boundary)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-0",
+      "source": "(nth boundary-associated 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-31",
+      "source": "(nth boundary-associated 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c03f000000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-32",
+      "source": "(nth boundary-associated 32)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-1023",
+      "source": "(nth boundary-associated 1023)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408ff80000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-1024",
+      "source": "(nth boundary-associated 1024)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c090000000000000"
+      }
+    },
+    {
+      "id": "boundary-associated-nth-1055",
+      "source": "(nth boundary-associated 1055)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40907c0000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-count",
+      "source": "(count boundary-regrown)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090840000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-metadata",
+      "source": "(get (meta boundary-regrown) :boundary)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-0",
+      "source": "(nth boundary-regrown 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-31",
+      "source": "(nth boundary-regrown 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c03f000000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-32",
+      "source": "(nth boundary-regrown 32)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-1023",
+      "source": "(nth boundary-regrown 1023)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408ff80000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-1024",
+      "source": "(nth boundary-regrown 1024)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c090000000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-1055",
+      "source": "(nth boundary-regrown 1055)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40907c0000000000"
+      }
+    },
+    {
+      "id": "boundary-regrown-nth-1056",
+      "source": "(nth boundary-regrown 1056)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090800000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-count",
+      "source": "(count boundary-roundtrip)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090840000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-metadata",
+      "source": "(get (meta boundary-roundtrip) :boundary)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-0",
+      "source": "(nth boundary-roundtrip 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-31",
+      "source": "(nth boundary-roundtrip 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-32",
+      "source": "(nth boundary-roundtrip 32)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-1023",
+      "source": "(nth boundary-roundtrip 1023)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408ff80000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-1024",
+      "source": "(nth boundary-roundtrip 1024)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090000000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-1055",
+      "source": "(nth boundary-roundtrip 1055)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40907c0000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-nth-1056",
+      "source": "(nth boundary-roundtrip 1056)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090800000000000"
+      }
+    },
+    {
+      "id": "boundary-roundtrip-equality-forward",
+      "source": "(= boundary-original boundary-roundtrip)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-roundtrip-equality-reverse",
+      "source": "(= boundary-roundtrip boundary-original)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-roundtrip-equal-hash",
+      "source": "(== (hash boundary-original) (hash boundary-roundtrip))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-regrown-equality",
+      "source": "(= boundary-regrown (assoc boundary-original 31 -31 1024 -1024))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-regrown-equal-hash",
+      "source": "(== (hash boundary-regrown) (hash (assoc boundary-original 31 -31 1024 -1024)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-regrown-differs-from-original",
+      "source": "(= boundary-original boundary-regrown)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boundary-metadata-ignored-by-equality",
+      "source": "(= boundary-regrown (with-meta boundary-regrown nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boundary-metadata-ignored-by-hash",
+      "source": "(== (hash boundary-regrown) (hash (with-meta boundary-regrown nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

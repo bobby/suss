@@ -64,3 +64,21 @@ review and final-head CI remain required before readiness. The first full baseli
 stopped on a stale test assuming the vector class was absent. That test now uses a
 fresh session with no imported core, preserving the original compile-atomic
 missing-constructor guard, while real imported constructors have separate tests.
+
+
+## M4 root-collapse acceptance extension
+
+The shared original fixture `tests/oracle/vector-boundary-fixture.sus` exercises
+public 1057→1056→1057 pop/association/conj transitions with metadata. The pinned
+corpus now has 91 observations: the original 40 remain unchanged and 51 cover
+counts, selected boundary elements, metadata, equality and equal hashes. Fresh
+pinned Node observations match all 91 exactly; this is reference verification,
+not yet a native pass.
+
+The new native test independently decodes every element in both Runtime and Macro
+Stores after GC, including the retained original handle. It checks trie shifts
+10→5→10, unchanged leaf sharing, copied modified leaf/tail and root reuse on
+regrowth. Private field probes stay out of the shared oracle fixture. The original
+vector also remains globally rooted; the test does not claim sole-handle rooting.
+Independent review found no material defect, but native execution, the required
+full baseline and final-head CI remain pending. No M4-02 completion is claimed.

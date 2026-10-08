@@ -1,0 +1,11 @@
+;; Original shared development fixture; execute with either pinned cljs.core or Suss.
+;; All collection operations are public; field reads belong to native sharing probes.
+(def boundary-original
+  (with-meta
+    (loop [v [] i 0]
+      (if (< i 1057) (recur (conj v i) (inc i)) v))
+    {:boundary 17}))
+(def boundary-collapsed (pop boundary-original))
+(def boundary-associated (assoc boundary-collapsed 31 -31 1024 -1024))
+(def boundary-regrown (conj boundary-associated 1056))
+(def boundary-roundtrip (conj boundary-collapsed 1056))
