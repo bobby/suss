@@ -73,7 +73,10 @@ fn native_terminal_publication_fuel_trap_keeps_producer_disarmed_and_wakes_waite
         let calls = Arc::new(AtomicUsize::new(0));
         let mut published_errors = Vec::new();
         let mut refresh_errors = Vec::new();
-        for fuel in 1..=4096 {
+        // Stream-operation ownership guards run before publication. Include
+        // their integrated cost while still requiring real terminal storage
+        // followed by an actual OutOfFuel inside runtime refresh.
+        for fuel in 1..=32768 {
             session.set_operation_fuel(NORMAL_FUEL);
             let producer = calls.clone();
             let dependency = session

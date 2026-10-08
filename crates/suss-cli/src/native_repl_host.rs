@@ -171,6 +171,15 @@ pub struct NativeReplHost<Out: Write, Err: Write> {
     async_reports: Vec<HostReport<CompiledValue, SessionError>>,
     reported_trap_owners: Vec<SessionValue>,
     last_pump_recovered: bool,
+    deferred_observation_interrupt: bool,
+    completed_submission: Option<CompiledValue>,
+    submission_quarantined: bool,
+    #[cfg(test)]
+    injected_submission_tracking_failure: bool,
+    #[cfg(test)]
+    reset_preflight: bool,
+    #[cfg(test)]
+    injected_observation_interrupt: Option<(&'static str, usize)>,
 }
 impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
     /// The caller installs signal/terminal handling and owns main linkage. This
@@ -203,6 +212,15 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
             async_reports: Vec::new(),
             reported_trap_owners: Vec::new(),
             last_pump_recovered: false,
+            deferred_observation_interrupt: false,
+            completed_submission: None,
+            submission_quarantined: false,
+            #[cfg(test)]
+            injected_submission_tracking_failure: false,
+            #[cfg(test)]
+            reset_preflight: false,
+            #[cfg(test)]
+            injected_observation_interrupt: None,
         })
     }
     pub fn interrupt_handles(
@@ -238,11 +256,70 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
     fn nil(&mut self) -> Result<CompiledValue, SessionError> {
         self.scalar(&Literal::Nil).map(CompiledValue::Runtime)
     }
+    // Only feed results of explicit pure Session getters into this classifier.
+    // Test injection happens after executing the real getter, before its result
+    // reaches the host: nil/zero results must never masquerade as known counts.
+    fn getter_result<R>(
+        &mut self,
+        _site: &'static str,
+        result: Result<R, SessionError>,
+    ) -> Result<R, SessionError> {
+        #[cfg(test)]
+        let result = if result.is_ok()
+            && self
+                .injected_observation_interrupt
+                .as_ref()
+                .is_some_and(|(site, _)| *site == _site)
+        {
+            let (_, remaining) = self.injected_observation_interrupt.as_mut().unwrap();
+            if *remaining == 0 {
+                self.injected_observation_interrupt = None;
+                Err(SessionError::Trap(wasmtime::Trap::Interrupt.into()))
+            } else {
+                *remaining -= 1;
+                result
+            }
+        } else {
+            result
+        };
+        self.deferred_observation_interrupt =
+            result.as_ref().is_err_and(|error| error.is_interrupt());
+        result
+    }
+    fn complete_submission(
+        &mut self,
+        value: CompiledValue,
+    ) -> Result<Submission<CompiledValue>, SessionError> {
+        let tracking = self.track_tasks();
+        let tracking = self.getter_result("submission-tracking", tracking);
+        #[cfg(test)]
+        let tracking = if self.injected_submission_tracking_failure && tracking.is_ok() {
+            self.injected_submission_tracking_failure = false;
+            Err(SessionError::Trap(wasmtime::Trap::OutOfFuel.into()))
+        } else {
+            tracking
+        };
+        match tracking {
+            Ok(()) => Ok(Submission::Value(value)),
+            Err(error) => {
+                // Source already completed: keep its rooted result, including
+                // nil. Only observations may be retried; never evaluate again.
+                self.completed_submission = Some(value);
+                // This fresh submission receipt is separate from scheduler
+                // recovery. Non-signal tracking failure must stop the frontend,
+                // retaining the result rather than leaving a poisoned prompt.
+                self.submission_quarantined = !error.is_interrupt();
+                Err(error)
+            }
+        }
+    }
     fn track_tasks(&mut self) -> Result<(), SessionError> {
-        for owner in self.session.pending_task_snapshot()? {
+        let snapshot = self.session.pending_task_snapshot();
+        for owner in self.getter_result("snapshot", snapshot)? {
             let mut present = false;
-            for tracked in &self.tasks {
-                if self.session.values_identical(tracked, &owner)? {
+            for index in 0..self.tasks.len() {
+                let identical = self.session.values_identical(&self.tasks[index], &owner);
+                if self.getter_result("identity", identical)? {
                     present = true;
                     break;
                 }
@@ -256,24 +333,31 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
     fn observe_tasks(&mut self) -> Result<(), SessionError> {
         let mut index = 0;
         while index < self.tasks.len() {
-            match self.session.future_status(&self.tasks[index])? {
+            let status = self.session.future_status(&self.tasks[index]);
+            match self.getter_result("task-status", status)? {
                 Some(FutureStatus::Pending) => index += 1,
                 Some(FutureStatus::Failed) => {
+                    let state = self.session.future_state(&self.tasks[index]);
                     let Some(FutureState::Failed(payload)) =
-                        self.session.future_state(&self.tasks[index])?
+                        self.getter_result("task-state", state)?
                     else {
                         return Err(
                             wasmtime::Error::msg("Failed task changed terminal state").into()
                         );
                     };
                     let mut consumed = None;
-                    for (receipt, owner) in self.reported_trap_owners.iter().enumerate() {
-                        if self.session.values_identical(owner, &self.tasks[index])? {
+                    for receipt in 0..self.reported_trap_owners.len() {
+                        let identical = self.session.values_identical(
+                            &self.reported_trap_owners[receipt],
+                            &self.tasks[index],
+                        );
+                        if self.getter_result("receipt-identity", identical)? {
                             consumed = Some(receipt);
                             break;
                         }
                     }
-                    let marker = self.session.is_async_runtime_trap(&payload)?;
+                    let marker = self.session.is_async_runtime_trap(&payload);
+                    let marker = self.getter_result("trap-marker", marker)?;
                     self.tasks.remove(index);
                     if let Some(receipt) = consumed {
                         self.reported_trap_owners.remove(receipt);
@@ -383,10 +467,10 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
     fn publish_endpoint(&mut self, index: usize) -> Result<bool, SessionError> {
         // Validation is per endpoint, after the full queue is owned. An old
         // Store cannot open a path or publish into its replacement generation.
-        match self
+        let nominal = self
             .session
-            .is_future(&self.endpoints[index].request.future)
-        {
+            .is_future(&self.endpoints[index].request.future);
+        match self.getter_result("endpoint-is-future", nominal) {
             Err(SessionError::ForeignValue) => {
                 self.endpoints[index].close();
                 return Ok(true);
@@ -405,10 +489,10 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
         }
         // Source first-terminal-wins must not be relabelled native completion.
         // The next ordinary pump sweeps its hook; this controller closes its fd.
-        match self
+        let status = self
             .session
-            .future_status(&self.endpoints[index].request.future)?
-        {
+            .future_status(&self.endpoints[index].request.future);
+        match self.getter_result("endpoint-status", status)? {
             Some(FutureStatus::Pending) => {}
             Some(_) => {
                 self.endpoints[index].close();
@@ -474,7 +558,13 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
     type RootResult = CompiledValue;
     type Error = SessionError;
     fn submit(&mut self, source: &str) -> Result<Submission<CompiledValue>, SessionError> {
+        self.deferred_observation_interrupt = false;
+        self.submission_quarantined = false;
         self.check_output()?;
+        if self.completed_submission.is_some() {
+            self.submission_quarantined = true;
+            return Err(wasmtime::Error::msg("Completed submission still awaits tracking").into());
+        }
         let mut words = source.split_whitespace();
         let command = words.next().unwrap_or("");
         if matches!(command, ":load" | ":reload" | ":reload-all" | ":in-ns") {
@@ -503,8 +593,8 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
                 ":in-ns" => self.session.enter_namespace(namespace)?,
                 _ => unreachable!(),
             }
-            self.track_tasks()?;
-            return self.nil().map(Submission::Value);
+            let value = self.nil()?;
+            return self.complete_submission(value);
         }
         // Complete reader validation precedes macro expansion, native factories
         // and all source effects. The evaluator resolves reader conditionals.
@@ -523,16 +613,38 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         }
         let result =
             portable_repl::evaluate_compiled_value(&mut self.session, &mut self.macros, source);
-        let tracking = self.track_tasks();
         match result {
-            Err(original) => Err(original),
-            Ok(value) => tracking.map(|()| Submission::Value(value)),
+            Err(original) => {
+                // Keep discovered owners, but an evaluation failure is not a
+                // pure observation receipt even if subsequent tracking fails.
+                let _ = self.track_tasks();
+                self.deferred_observation_interrupt = false;
+                Err(original)
+            }
+            Ok(value) => self.complete_submission(value),
         }
+    }
+    fn submission_error_requires_quarantine(&self, _: &SessionError) -> bool {
+        self.submission_quarantined
+    }
+    fn resume_completed_submission(&mut self) -> Result<Option<CompiledValue>, SessionError> {
+        self.deferred_observation_interrupt = false;
+        if self.completed_submission.is_none() {
+            return Ok(None);
+        }
+        self.track_tasks()?;
+        Ok(self.completed_submission.take())
     }
     fn pump_one(&mut self) -> Result<bool, SessionError> {
         self.last_pump_recovered = false;
+        self.deferred_observation_interrupt = false;
         self.check_output()?;
-        self.track_tasks()?;
+        // Tracking performs only Session getters. Partial additions stay rooted;
+        // no scheduler callback has started if this observation is interrupted.
+        let tracking = self.track_tasks();
+        self.deferred_observation_interrupt =
+            tracking.as_ref().is_err_and(|error| error.is_interrupt());
+        tracking?;
         let result = self.session.run_async_turn();
         match result {
             Err(original) => {
@@ -541,17 +653,25 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
                 if self.session.last_async_turn_recovered() {
                     if let Some(owner) = self.session.last_async_turn_recovered_owner() {
                         self.reported_trap_owners.push(owner);
-                        self.last_pump_recovered = true;
                     }
+                    self.last_pump_recovered = true;
                 }
                 Err(original)
             }
             Ok(ran) => {
-                self.track_tasks()?;
-                self.observe_tasks()?;
+                // The turn completed. These getters cannot replay source or
+                // mutate scheduler ownership; completed reports remain queued.
+                let observation = self.track_tasks().and_then(|()| self.observe_tasks());
+                self.deferred_observation_interrupt = observation
+                    .as_ref()
+                    .is_err_and(|error| error.is_interrupt());
+                observation?;
                 Ok(ran)
             }
         }
+    }
+    fn observation_interrupted(&self, error: &SessionError) -> bool {
+        self.deferred_observation_interrupt && error.is_interrupt()
     }
     fn async_error_disposition(&self, _: &SessionError) -> AsyncErrorDisposition {
         if self.last_pump_recovered {
@@ -564,7 +684,20 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         std::mem::take(&mut self.async_reports)
     }
     fn task_counts(&mut self) -> Result<TaskCounts, SessionError> {
-        let (pending, queued, active) = self.session.async_task_counts()?;
+        self.deferred_observation_interrupt = false;
+        let observation = self.session.async_task_counts();
+        self.deferred_observation_interrupt = observation
+            .as_ref()
+            .is_err_and(|error| error.is_interrupt());
+        #[cfg(test)]
+        let site = if self.reset_preflight {
+            "reset-counts"
+        } else {
+            "counts"
+        };
+        #[cfg(not(test))]
+        let site = "counts";
+        let (pending, queued, active) = self.getter_result(site, observation)?;
         Ok(TaskCounts {
             pending,
             queued,
@@ -580,6 +713,7 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         Ok(())
     }
     fn poll_completions(&mut self) -> Result<(), SessionError> {
+        self.deferred_observation_interrupt = false;
         self.check_output()?;
         self.drain_requests()?;
         let mut index = 0;
@@ -593,18 +727,34 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         Ok(())
     }
     fn retired(&mut self) -> Result<bool, SessionError> {
-        self.track_tasks()?;
-        self.observe_tasks()?;
-        let counts = self.task_counts()?;
+        self.deferred_observation_interrupt = false;
+        let observation = (|| {
+            self.track_tasks()?;
+            self.observe_tasks()?;
+            self.task_counts()
+        })();
+        self.deferred_observation_interrupt = observation
+            .as_ref()
+            .is_err_and(|error| error.is_interrupt());
+        let counts = observation?;
         if !counts.retired() {
             // Do not cancel cleanup-created children while a previous owner's
             // cancellation latch remains live, even if queued work is empty.
-            if self.cancelling && self.session.async_retiring_count()? == 0 {
-                self.session.request_cancel_pending_tasks()?;
+            if self.cancelling {
+                let observation = self.session.async_retiring_count();
+                self.deferred_observation_interrupt = observation
+                    .as_ref()
+                    .is_err_and(|error| error.is_interrupt());
+                if self.getter_result("retiring-count", observation)? == 0 {
+                    // This is mutation, not an observation-only interruption.
+                    self.deferred_observation_interrupt = false;
+                    self.session.request_cancel_pending_tasks()?;
+                }
             }
             return Ok(false);
         }
         if self.cancelling {
+            self.deferred_observation_interrupt = false;
             self.session.request_cancel_pending_host_requests()?;
             self.poll_completions()?;
         }
@@ -617,9 +767,19 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         Ok(retired)
     }
     fn reset(&mut self) -> Result<(), SessionError> {
-        if !self.retired()? {
+        #[cfg(test)]
+        {
+            self.reset_preflight = true;
+        }
+        let preflight = self.retired();
+        #[cfg(test)]
+        {
+            self.reset_preflight = false;
+        }
+        if !preflight? {
             return Err(SessionError::ResetPending);
         }
+        self.deferred_observation_interrupt = false;
         portable_repl::reset_compiled(&mut self.session, &mut self.macros)?;
         self.display.clear();
         self.tasks.clear();
@@ -697,9 +857,10 @@ mod tests {
         drop(host.submit("(def first-read (suss.io/read-byte \"/dev/null\")) (def second-read (suss.io/read-byte \"/dev/null\"))").unwrap());
         assert_eq!(host.requests.pending(), 2);
         host.session.set_operation_fuel(1);
+        let error = host.poll_completions().unwrap_err();
         assert!(
-            host.poll_completions().is_err(),
-            "force real Wasm inspection failure"
+            !host.observation_interrupted(&error),
+            "fuel failure is not a deferred signal"
         );
         assert_eq!(host.requests.pending(), 0);
         assert_eq!(
@@ -829,5 +990,276 @@ mod tests {
             &reports[0],
             HostReport::Error(SessionError::Language(_))
         ));
+    }
+    #[test]
+    fn interrupted_endpoint_getter_retains_entire_batch_before_cancellation() {
+        let mut host = host();
+        drop(host.submit("(def first-read (suss.io/read-byte \"/dev/null\")) (def second-read (suss.io/read-byte \"/dev/null\"))").unwrap());
+        host.injected_observation_interrupt = Some(("endpoint-status", 0));
+        let error = host.poll_completions().unwrap_err();
+        assert!(error.is_interrupt());
+        assert!(host.observation_interrupted(&error));
+        assert_eq!(host.endpoints.len(), 2);
+        assert_eq!(host.requests.pending(), 0);
+        assert_eq!(host.session.stats().pending_host_requests, 2);
+        assert!(
+            host.endpoints
+                .iter()
+                .all(|endpoint| endpoint.file.is_none() && endpoint.payload.is_none())
+        );
+        for index in 0..host.endpoints.len() {
+            assert_eq!(
+                host.session
+                    .future_status(&host.endpoints[index].request.future)
+                    .unwrap(),
+                Some(FutureStatus::Pending)
+            );
+        }
+        host.report(HostReport::Interrupted);
+        host.request_cancel_pending().unwrap();
+        for _ in 0..64 {
+            host.poll_completions().unwrap();
+            host.pump_one().unwrap();
+            if host.retired().unwrap() {
+                break;
+            }
+        }
+        assert!(host.retired().unwrap());
+        assert!(host.endpoints.is_empty());
+        assert_eq!(host.session.stats().pending_host_requests, 0);
+        assert_eq!(
+            String::from_utf8_lossy(&host.output).matches("^C").count(),
+            1
+        );
+    }
+
+    #[test]
+    fn partial_interrupted_tracking_preserves_existing_and_new_roots() {
+        let mut host = host();
+        drop(host.submit("(def retained (suss.async/future* (suss.async/await* (suss.internal.async/pending))))").unwrap());
+        assert_eq!(host.tasks.len(), 1);
+        let retained = host.session.eval("retained").unwrap();
+        drop(host.session.eval("(def added (suss.async/future* (suss.async/await* (suss.internal.async/pending)))) (def later (suss.async/future* (suss.async/await* (suss.internal.async/pending))))").unwrap());
+        // The first new owner is appended before the next comparison fails.
+        host.injected_observation_interrupt = Some(("identity", 2));
+        let error = host.pump_one().unwrap_err();
+        assert!(host.observation_interrupted(&error));
+        assert_eq!(host.tasks.len(), 2);
+        assert!(
+            host.session
+                .values_identical(&host.tasks[0], &retained)
+                .unwrap()
+        );
+        assert_eq!(host.session.async_task_counts().unwrap(), (3, 3, 0));
+        host.track_tasks().unwrap();
+        assert_eq!(host.tasks.len(), 3);
+        host.session.collect().unwrap();
+        assert_eq!(
+            host.session.future_status(&retained).unwrap(),
+            Some(FutureStatus::Pending)
+        );
+    }
+
+    struct InterruptInput {
+        events: std::collections::VecDeque<super::super::terminal_input::InputEvent>,
+    }
+    impl super::super::session_event_loop::FrontendInput for InterruptInput {
+        fn poll(
+            &mut self,
+            _: std::time::Duration,
+        ) -> io::Result<Option<super::super::terminal_input::InputEvent>> {
+            Ok(self.events.pop_front())
+        }
+        fn prompt(&mut self, _: &str) -> io::Result<()> {
+            Ok(())
+        }
+        fn redraw(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn interrupted_zero_counts_keep_real_nil_root_and_report_input_once() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        let nil = host.session.eval("nil").unwrap();
+        assert_eq!(host.session.async_task_counts().unwrap(), (0, 0, 0));
+        host.injected_observation_interrupt = Some(("counts", 0));
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([InputEvent::Interrupt, InputEvent::Eof]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.injected_observation_interrupt.is_none());
+        assert_eq!(
+            host.display.display(&mut host.session, &nil).unwrap(),
+            "nil"
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&host.output).matches("^C").count(),
+            1
+        );
+        assert!(host.errors.is_empty());
+    }
+
+    #[test]
+    fn interrupted_retirement_getter_holds_cleanup_until_real_input() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        drop(host.submit("(def cleanup-effects 0) (suss.async/future* (try (suss.async/await* (suss.internal.async/pending)) (finally (set! cleanup-effects (+ cleanup-effects 1)))))").unwrap());
+        assert!(host.pump_one().unwrap());
+        host.report(HostReport::Interrupted);
+        host.request_cancel_pending().unwrap();
+        host.injected_observation_interrupt = Some(("counts", 0));
+        let error = host.retired().unwrap_err();
+        assert!(host.observation_interrupted(&error));
+        assert!(
+            !host.tasks.is_empty(),
+            "unknown retirement must retain pending cleanup roots"
+        );
+        assert!(host.session.async_task_counts().unwrap().0 > 0);
+        // Continue through the real loop with one additional input signal; the
+        // explicit first cancellation has not been mislabeled completion/reset.
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([InputEvent::Interrupt, InputEvent::Eof]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        let effects = host.session.eval("cleanup-effects").unwrap();
+        assert_eq!(
+            host.display.display(&mut host.session, &effects).unwrap(),
+            "1"
+        );
+        assert_eq!(host.session.async_task_counts().unwrap(), (0, 0, 0));
+        assert_eq!(
+            String::from_utf8_lossy(&host.output).matches("^C").count(),
+            2
+        );
+        assert!(host.errors.is_empty());
+    }
+    #[test]
+    fn interrupted_submission_tracking_retains_result_without_replaying_effect() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        drop(host.submit("(def once-effects 0)").unwrap());
+        host.injected_observation_interrupt = Some(("submission-tracking", 0));
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line("(do (set! once-effects (+ once-effects 1)) 47191)".into()),
+                InputEvent::Interrupt,
+                InputEvent::Eof,
+            ]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.completed_submission.is_none());
+        assert!(host.injected_observation_interrupt.is_none());
+        let effects = host.session.eval("once-effects").unwrap();
+        assert_eq!(
+            host.display.display(&mut host.session, &effects).unwrap(),
+            "1"
+        );
+        let output = String::from_utf8_lossy(&host.output);
+        assert_eq!(
+            output.matches("47191").count(),
+            1,
+            "completed value reported exactly once"
+        );
+        assert_eq!(output.matches("^C").count(), 1);
+        assert!(output.find("^C").unwrap() < output.find("47191").unwrap());
+        assert!(host.errors.is_empty());
+    }
+
+    #[test]
+    fn interrupted_reset_second_preflight_preserves_reset_intent() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        let old_nil = host.session.eval("nil").unwrap();
+        host.injected_observation_interrupt = Some(("reset-counts", 0));
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line(":reset".into()),
+                InputEvent::Interrupt,
+                InputEvent::Line("(+ 47200 2)".into()),
+                InputEvent::Eof,
+            ]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.injected_observation_interrupt.is_none());
+        assert!(
+            matches!(
+                host.session.future_status(&old_nil),
+                Err(SessionError::ForeignValue)
+            ),
+            "reset actually replaced the old Session"
+        );
+        let output = String::from_utf8_lossy(&host.output);
+        assert_eq!(output.matches("^C").count(), 1);
+        assert_eq!(output.matches("47202").count(), 1);
+        assert!(
+            host.errors.is_empty(),
+            "preflight interrupt is acknowledged through input, not reported as reset failure"
+        );
+    }
+    #[test]
+    fn noninterrupt_postsubmission_tracking_failure_terminates_before_next_source() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        drop(host.submit("(def once-effects 0)").unwrap());
+        host.injected_submission_tracking_failure = true;
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line("(do (set! once-effects (+ once-effects 1)) 47192)".into()),
+                InputEvent::Line("(set! once-effects 999)".into()),
+            ]),
+        };
+        let error = match session_event_loop::run(&mut host, &mut input) {
+            Err(session_event_loop::LoopError::Host(error)) => error,
+            other => panic!("expected conservative termination, got {other:?}"),
+        };
+        assert!(!error.is_interrupt());
+        assert!(host.submission_error_requires_quarantine(&error));
+        // A stale async recovery receipt cannot authorize this submission.
+        host.last_pump_recovered = true;
+        assert!(host.submission_error_requires_quarantine(&error));
+        assert!(
+            host.completed_submission.is_some(),
+            "committed result stays rooted for teardown"
+        );
+        assert_eq!(input.events.len(), 1, "next source is never consumed");
+        let effects = host.session.eval("once-effects").unwrap();
+        assert_eq!(
+            host.display.display(&mut host.session, &effects).unwrap(),
+            "1"
+        );
+        assert!(
+            host.output.is_empty(),
+            "no apparently successful report or continuing prompt"
+        );
+        assert!(
+            host.errors.is_empty(),
+            "return the original error to the frontend owner"
+        );
+    }
+
+    #[test]
+    fn ordinary_submission_compile_and_language_errors_keep_prompt_usable() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line("(unresolved-test-function)".into()),
+                InputEvent::Line("(throw 88)".into()),
+                InputEvent::Line("(+ 47300 3)".into()),
+                InputEvent::Eof,
+            ]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.completed_submission.is_none());
+        assert!(!host.submission_quarantined);
+        assert_eq!(
+            String::from_utf8_lossy(&host.output)
+                .matches("47303")
+                .count(),
+            1
+        );
+        assert!(!host.errors.is_empty());
     }
 }

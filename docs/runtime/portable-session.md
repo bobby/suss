@@ -327,3 +327,12 @@ Reset checks both scheduler tasks and stream operation roots before replacing th
 Store; old endpoint values then fail the ordinary foreign-value check. These
 requirements need the executing stream, fuel-interruption and GC regressions;
 staged code and bootstrap generation alone do not establish acceptance.
+
+Native frontend interruption during a pure task/status observation waits for the
+input signal acknowledgment before retrying. Unknown task counts keep cleanup
+and buffered input gated. A completed input result remains rooted and source
+effects are never replayed while tracking retries; reset retains its pending
+intent across an interrupted second preflight. Non-interrupt failures after a
+completed submission terminate conservatively rather than leave a stuck prompt.
+This observation path does not classify uncertain scheduler mutation or teardown
+as recovered.

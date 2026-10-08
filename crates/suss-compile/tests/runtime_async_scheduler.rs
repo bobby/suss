@@ -1130,7 +1130,13 @@ fn interrupted_trap_recovery_retries_root_retirement_without_replay() {
     let resume = h.closure("(fn [c] (do (t/emit *x*) (t/trap)))");
     let mut interrupted = 0;
     let mut finished = 0;
-    for (iteration, budget) in (0..=2048).step_by(16).enumerate() {
+    // Retain dense interruption checkpoints and include completed recovery
+    // after the integrated bounded stream retirement scan.
+    for (iteration, budget) in (0..=2048)
+        .step_by(16)
+        .chain([4096, 8192, 16384, 32768, 65536, 131072])
+        .enumerate()
+    {
         h.store.set_fuel(1_000_000).unwrap();
         let owner = h.value("future-pending-new", &[]);
         let cont = h.continuation(owner.clone(), task.clone(), 0);
