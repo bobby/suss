@@ -1,0 +1,57 @@
+[
+  {
+    "id": "negative-start",
+    "source": "(subvec sv-base -1 33)",
+    "message": "Index out of bounds"
+  },
+  {
+    "id": "past-end",
+    "source": "(subvec sv-base 31 66)",
+    "message": "Index out of bounds"
+  },
+  {
+    "id": "reversed",
+    "source": "(subvec sv-base 33 31)",
+    "message": "Index out of bounds"
+  },
+  {
+    "id": "nonvector",
+    "source": "(subvec (list 1 2) 0 1)",
+    "message": "v must satisfy IVector"
+  },
+  {
+    "id": "nil-bound",
+    "source": "(subvec sv-base nil 33)",
+    "message": "Assert failed: (and (not (nil? start)) (not (nil? end)))"
+  },
+  {
+    "id": "pop-empty",
+    "source": "(pop (subvec sv-base 32 32))",
+    "message": "Can't pop empty vector"
+  },
+  {
+    "id": "assoc-negative",
+    "source": "(assoc sv-nested -1 9)",
+    "message": "Index -1 out of bounds [0,3]"
+  },
+  {
+    "id": "assoc-past-count",
+    "source": "(assoc sv-nested 4 9)",
+    "message": "Index 4 out of bounds [0,3]"
+  },
+  {
+    "id": "assoc-key",
+    "source": "(assoc sv-nested :x 9)",
+    "message": "Subvec's key for assoc must be a number."
+  },
+  {
+    "id": "nth-negative",
+    "source": "(nth sv-nested -1)",
+    "message": "No item -1 in vector of length 3"
+  },
+  {
+    "id": "nth-count",
+    "source": "(nth sv-nested 3)",
+    "message": "No item 3 in vector of length 3"
+  }
+]

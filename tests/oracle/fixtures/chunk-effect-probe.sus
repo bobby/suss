@@ -1,0 +1,95 @@
+;; Original development fixture, MIT/Apache-2.0; no upstream implementation copied.
+;; Explicit bounded chunk producer, NOT an implementation of public map/filter.
+;; Uses real public vector/chunk APIs and the retained canonical LazySeq type.
+(def chunk-effect-trace [])
+(def chunk-effect-attempts 0)
+(def chunk-effect-fail false)
+(def chunk-reducer-trace [])
+(def chunk-effect-input
+  (fn [n] (loop [v [] i 0] (if (< i n) (recur (conj v i) (inc i)) v))))
+(def chunk-effect-record
+  (fn [x]
+    (set! chunk-effect-trace (conj chunk-effect-trace x))
+    (if (and chunk-effect-fail (== x 32)) (throw 77) nil)
+    x))
+(def chunk-effect-producer
+  (fn [input]
+    (new cljs.core/LazySeq nil
+      (fn []
+        (set! chunk-effect-attempts (inc chunk-effect-attempts))
+        (let [s (seq input)]
+          (if s
+            (if (chunked-seq? s)
+              (let [c (chunk-first s) n (count c) output (array)]
+                (loop [i 0]
+                  (if (< i n)
+                    (do (.push output (chunk-effect-record (nth c i)))
+                        (recur (inc i)))
+                    nil))
+                (chunk-cons (array-chunk output)
+                  (chunk-effect-producer (chunk-rest s))))
+              (cons (chunk-effect-record (first s))
+                (chunk-effect-producer (rest s))))
+            nil))) nil nil)))
+(def chunk-effect-reset
+  (fn []
+    (set! chunk-effect-trace [])
+    (set! chunk-effect-attempts 0)
+    (set! chunk-effect-fail false)
+    (set! chunk-reducer-trace [])))
+(def chunk-effect-snapshot
+  (fn [value] [value chunk-effect-attempts chunk-effect-trace]))
+(def chunk-demand-observations
+  (fn [n]
+    (chunk-effect-reset)
+    (let [pending (chunk-effect-producer (chunk-effect-input n))
+          before (chunk-effect-snapshot -1)
+          first-value (chunk-effect-snapshot (first pending))
+          within (chunk-effect-snapshot (nth pending (if (< n 32) (dec n) 31)))
+          crossing (chunk-effect-snapshot
+                     (if (> n 32) (nth pending 32)
+                       (if (next (loop [s (seq pending) i 0]
+                                   (if (< i (dec n))
+                                     (recur (next s) (inc i)) s))) 99 -1)))
+          next-value (chunk-effect-snapshot (if (> n 33) (nth pending 33) -1))
+          last-value (chunk-effect-snapshot (nth pending (dec n)))
+          repeated (chunk-effect-snapshot (first pending))]
+      [before first-value within crossing next-value last-value repeated])))
+(def chunk-retry-observations
+  (fn []
+    (chunk-effect-reset)
+    (set! chunk-effect-fail true)
+    (let [pending (chunk-effect-producer (chunk-effect-input 65))
+          decorated (with-meta pending {:marker 17})
+          before (chunk-effect-snapshot (get (meta decorated) :marker))
+          first-value (chunk-effect-snapshot (first decorated))
+          caught (chunk-effect-snapshot
+                   (try (nth decorated 32) (catch :default e e)))
+          status [(cljs.core/-realized? pending)
+                  (cljs.core/-realized? (chunk-rest (seq pending)))]]
+      (set! chunk-effect-fail false)
+      (let [retried (chunk-effect-snapshot (nth decorated 32))
+            same-chunk (chunk-effect-snapshot (nth pending 33))
+            last-value (chunk-effect-snapshot (nth pending 64))
+            repeated (chunk-effect-snapshot (first decorated))]
+        [before first-value caught status retried same-chunk last-value repeated]))))
+(def chunk-reduced-observations
+  (fn [stop]
+    (chunk-effect-reset)
+    (let [pending (chunk-effect-producer (chunk-effect-input 65))
+          result (reduce (fn [acc x]
+                           (set! chunk-reducer-trace (conj chunk-reducer-trace x))
+                           (if (== x stop) (reduced x) x)) -1 pending)]
+      [result chunk-effect-attempts chunk-effect-trace chunk-reducer-trace])))
+(def chunk-concat-observations
+  (fn []
+    (chunk-effect-reset)
+    (let [pending (chunk-effect-producer (chunk-effect-input 65))
+          joined (concat (list -1) pending)
+          before (chunk-effect-snapshot -1)
+          prefix (chunk-effect-snapshot (first joined))
+          first-value (chunk-effect-snapshot (nth joined 1))
+          within (chunk-effect-snapshot (nth joined 32))
+          crossing (chunk-effect-snapshot (nth joined 33))
+          repeated (chunk-effect-snapshot (nth joined 1))]
+      [before prefix first-value within crossing repeated])))

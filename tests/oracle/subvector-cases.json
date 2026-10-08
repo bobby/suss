@@ -1,0 +1,684 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "bounds-31-31",
+      "source": "(if (= (into [] (subvec sv-base 31 31)) []) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "bounds-31-32",
+      "source": "(if (= (into [] (subvec sv-base 31 32)) [31]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "bounds-31-33",
+      "source": "(if (= (into [] (subvec sv-base 31 33)) [31 32]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "bounds-32-32",
+      "source": "(if (= (into [] (subvec sv-base 32 32)) []) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "bounds-32-33",
+      "source": "(if (= (into [] (subvec sv-base 32 33)) [32]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "bounds-33-33",
+      "source": "(if (= (into [] (subvec sv-base 33 33)) []) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "length-31",
+      "source": "(if (let [v (subvec sv-base 0 31)] (and (= (count v) 31) (= (peek v) 30) (= (nth v 30) 30))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "length-32",
+      "source": "(if (let [v (subvec sv-base 0 32)] (and (= (count v) 32) (= (peek v) 31) (= (nth v 31) 31))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "length-33",
+      "source": "(if (let [v (subvec sv-base 0 33)] (and (= (count v) 33) (= (peek v) 32) (= (nth v 32) 32))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "two-arity",
+      "source": "(if (= (into [] (subvec sv-base 63)) [63 64]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nested",
+      "source": "(if (= (into [] sv-nested) [31 32 33]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nested-extends-parent",
+      "source": "(if (= (into [] (subvec (subvec sv-base 31 33) 0 3)) [31 32 33]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nested-negative-relative",
+      "source": "(if (= (into [] (subvec (subvec sv-base 31 33) -1 1)) [30 31]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "metadata",
+      "source": "(if (and (nil? (meta (subvec sv-base 31 33))) (= (:marker (meta sv-view)) 17) (= (:marker (meta (pop sv-view))) 17) (= (:marker (meta (conj sv-view 99))) 17) (= (:marker (meta (assoc sv-view 0 99))) 17) (= (:marker (meta (empty sv-view))) 17)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "empty",
+      "source": "(if (and (= (count (subvec sv-base 32 32)) 0) (nil? (peek (subvec sv-base 32 32))) (= (into [] (conj (subvec sv-base 32 32) 99)) [99])) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "equality-hash",
+      "source": "(if (let [v (subvec sv-base 31 34) p [31 32 33] l (list 31 32 33)] (and (= v p) (= p v) (= v l) (= l v) (= (hash v) (hash p)) (= (hash v) (hash l)) (= (hash (with-meta v {:x 1})) (hash v)) (not (= v [31 32 34])))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "pop",
+      "source": "(if (and (= (into [] (pop sv-nested)) [31 32]) (= (into [] sv-nested) [31 32 33])) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "conj-overwrite",
+      "source": "(if (let [v (conj sv-nested 99)] (and (= (into [] v) [31 32 33 99]) (= (nth sv-base 34) 34) (= (into [] sv-nested) [31 32 33]))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "assoc-relative",
+      "source": "(if (and (= (into [] (assoc sv-nested 1 99)) [31 99 33]) (= (into [] sv-nested) [31 32 33])) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "assoc-at-count",
+      "source": "(if (= (into [] (assoc sv-nested 3 99)) [31 32 33 99]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "conj-at-backing-end",
+      "source": "(if (= (into [] (conj (subvec sv-base 63 65) 99)) [63 64 99]) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "lookup-invoke",
+      "source": "(if (and (= (sv-nested 1) 32) (= (sv-nested 3 99) 99) (= (get sv-nested -1 99) 99) (= (nth sv-nested 3 99) 99) (contains? sv-nested 2) (not (contains? sv-nested 3))) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "reduce",
+      "source": "(if (and (= (reduce + 0 sv-nested) 96) (= (reduce-kv (fn [a k v] (+ a (* k v))) 0 sv-nested) 98)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "evaluation-order",
+      "source": "(if (do (set! sv-effects 0) (subvec (sv-mark 1 sv-base) (sv-mark 2 31) (sv-mark 3 33)) (= sv-effects 123)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "assoc-evaluation-order",
+      "source": "(if (do (set! sv-effects 0) (assoc (sv-mark 1 sv-nested) (sv-mark 2 1) (sv-mark 3 99)) (= sv-effects 123)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "contents-31-31",
+      "source": "(into [] (subvec sv-base 31 31))",
+      "expected": {
+        "tag": "vector",
+        "items": []
+      }
+    },
+    {
+      "id": "contents-31-32",
+      "source": "(into [] (subvec sv-base 31 32))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contents-31-33",
+      "source": "(into [] (subvec sv-base 31 33))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contents-32-32",
+      "source": "(into [] (subvec sv-base 32 32))",
+      "expected": {
+        "tag": "vector",
+        "items": []
+      }
+    },
+    {
+      "id": "contents-32-33",
+      "source": "(into [] (subvec sv-base 32 33))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contents-33-33",
+      "source": "(into [] (subvec sv-base 33 33))",
+      "expected": {
+        "tag": "vector",
+        "items": []
+      }
+    },
+    {
+      "id": "contents-0-31",
+      "source": "(into [] (subvec sv-base 0 31))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4035000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4036000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4038000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4039000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403b000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403e000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contents-0-32",
+      "source": "(into [] (subvec sv-base 0 32))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4035000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4036000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4038000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4039000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403b000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contents-0-33",
+      "source": "(into [] (subvec sv-base 0 33))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4035000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4036000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4038000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4039000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403b000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

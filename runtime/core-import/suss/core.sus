@@ -5515,6 +5515,19 @@
     (if ns
       (print-prefix-map (suss.bootstrap/concat-string (str_ "#:" ) (str_ ns)) (aget ns&lift-map 1) print-one writer opts)
       (print-prefix-map nil m print-one writer opts)))))
+
+(def empty
+  "Returns an empty collection of the same category as coll, or nil"
+  (fn [coll]
+    (when-not (suss.bootstrap/nil? coll)
+      (cond
+        (implements? IEmptyableCollection coll)
+        (-empty coll)
+
+        (satisfies? IEmptyableCollection coll)
+        (-empty coll)
+
+        :else nil))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

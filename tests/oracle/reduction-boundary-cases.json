@@ -1,0 +1,870 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "mode-0-stop-31-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 0 31 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 0 31 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 0 31 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 0 31 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 0 31 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 0 31 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 0 31 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 0 31 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 0 31 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 0 31 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 0 31 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-31-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 0 31 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 0 32 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 0 32 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 0 32 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 0 32 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 0 32 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 0 32 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 0 32 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 0 32 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 0 32 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 0 32 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 0 32 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-32-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 0 32 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 0 33 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 0 33 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 0 33 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 0 33 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 0 33 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 0 33 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 0 33 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 0 33 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 0 33 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 0 33 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 0 33 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-0-stop-33-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 0 33 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 1 31 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 1 31 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 1 31 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 1 31 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 1 31 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 1 31 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 1 31 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 1 31 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 1 31 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 1 31 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 1 31 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-31-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 1 31 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 1 32 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 1 32 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 1 32 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 1 32 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 1 32 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 1 32 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 1 32 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 1 32 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 1 32 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 1 32 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 1 32 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-32-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 1 32 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 1 33 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 1 33 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 1 33 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 1 33 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 1 33 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 1 33 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 1 33 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 1 33 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 1 33 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 1 33 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 1 33 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-1-stop-33-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 1 33 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 2 31 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 2 31 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 2 31 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 2 31 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 2 31 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 2 31 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 2 31 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 2 31 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 2 31 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 2 31 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 2 31 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-31-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 2 31 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407f000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 2 32 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 2 32 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 2 32 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 2 32 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 2 32 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 2 32 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 2 32 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 2 32 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 2 32 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 2 32 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 2 32 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-32-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 2 32 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4080800000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-17-field-0",
+      "source": "(nth (reduction-boundary-probe 2 33 17) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-17-field-1",
+      "source": "(nth (reduction-boundary-probe 2 33 17) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-17-field-2",
+      "source": "(nth (reduction-boundary-probe 2 33 17) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-17-field-3",
+      "source": "(nth (reduction-boundary-probe 2 33 17) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-nil-field-0",
+      "source": "(nil? (nth (reduction-boundary-probe 2 33 nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-nil-field-1",
+      "source": "(nth (reduction-boundary-probe 2 33 nil) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-nil-field-2",
+      "source": "(nth (reduction-boundary-probe 2 33 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-nil-field-3",
+      "source": "(nth (reduction-boundary-probe 2 33 nil) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-false-field-0",
+      "source": "(false? (nth (reduction-boundary-probe 2 33 false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-false-field-1",
+      "source": "(nth (reduction-boundary-probe 2 33 false) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-false-field-2",
+      "source": "(nth (reduction-boundary-probe 2 33 false) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "mode-2-stop-33-terminal-false-field-3",
+      "source": "(nth (reduction-boundary-probe 2 33 false) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4081880000000000"
+      }
+    }
+  ]
+}

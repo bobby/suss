@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "92a0f7c8d0d9bc733f40dc55d83a7d7d0e1e8a68a2ae144875a5594a915b88ec",
-  "reviews-sha256": "b26b02f46d5c9c03b9c88203bafce8623746a1cae5a26e80fd743bcb1ef2d1b7",
+  "recipe-sha256": "6bfd5201a421febef286cfa743a94b619464d731365798d2155d9261983ee029",
+  "reviews-sha256": "d72c8a9e06484a2250df69f03cca6fbdca74d5d5a8e077822c8a50858692ad36",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -9834,6 +9834,43 @@
       "semantic-tests": [
         "crates/suss-compile/tests/compiled_printing.rs"
       ]
+    },
+    {
+      "id": "runtime:empty:1887",
+      "name": "empty",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1887,
+      "end-line": 1898,
+      "byte-start": 52015,
+      "byte-end": 52290,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76",
+      "extracted": "extracted/0319.cljs",
+      "extracted-sha256": "e9103da4ada6333185ab3660ae93a6b002aa0bac99f9fb4e608c7a91c9a39d8b",
+      "patch": "docs/compatibility/patches/collection-empty.json",
+      "patch-sha256": "0d578609b093b3a13af0d821f277555423876b7eba8761e8c865e366ab172954",
+      "adapted-form-sha256": "069f4dadec0aba0b0817b792363e02a1f5928393b47771ed8a8ed5cc32f112c5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:when-not:427",
+        "macro:nil?:923",
+        "macro:cond:159",
+        "macro:implements?:2227",
+        "macro:satisfies?:2253",
+        "runtime:IEmptyableCollection:624",
+        "live -empty protocol dispatcher",
+        "private nil? bootstrap lowering"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_empty.rs",
+        "crates/suss-cli/tests/portable_subvector.rs"
+      ]
     }
   ],
   "loader": {
@@ -10172,6 +10209,7 @@
     "extracted/0316.cljs": "9d098bc76cf796482a1bbb619877132414733a81401cb99bfd97eb3d976e812b",
     "extracted/0317.cljs": "7213275892da5a1997b182449cfd2f259c7a1b065afb61d102135be799c6c82c",
     "extracted/0318.cljs": "c9911326d4ac3c5f435d0e661d7a2e26d8fb7f176ab8fc48b96acc7a672d738e",
-    "suss/core.sus": "eb792f7f55bffd3ef196701191d60feb5fbd499cd9c79f4ece9224371033b159"
+    "extracted/0319.cljs": "e9103da4ada6333185ab3660ae93a6b002aa0bac99f9fb4e608c7a91c9a39d8b",
+    "suss/core.sus": "46e421ad17d19dfeb802cda5e0ab2764df02973ef8493c5bcfcbc4d9492bb49b"
   }
 }

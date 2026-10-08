@@ -281,6 +281,614 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       }
+    },
+    {
+      "id": "deletion-collision-count-old",
+      "source": "(count deletion-collision-old)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-count-one",
+      "source": "(count deletion-collision-one)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-count-empty",
+      "source": "(count deletion-collision-empty)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-count-reinserted",
+      "source": "(count deletion-collision-reinserted)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-count-transient-one",
+      "source": "(count deletion-collision-transient-one)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-count-transient-empty",
+      "source": "(count deletion-collision-transient-empty)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-survivor-one",
+      "source": "(get deletion-collision-one (CollisionKey. 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405dc00000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-survivor-transient-one",
+      "source": "(get deletion-collision-transient-one (CollisionKey. 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405dc00000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-removed",
+      "source": "(get deletion-collision-one (CollisionKey. 0) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408f380000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-old-value",
+      "source": "(get deletion-collision-old (CollisionKey. 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-reinserted-value",
+      "source": "(get deletion-collision-reinserted (CollisionKey. 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4072f00000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-empty-lookup",
+      "source": "(get deletion-collision-empty (CollisionKey. 19) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408f380000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-empty-seq",
+      "source": "(if (nil? (seq deletion-collision-empty)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-empty-equality",
+      "source": "(if (= deletion-collision-empty {}) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-empty-hash",
+      "source": "(if (== (hash deletion-collision-empty) (hash {})) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-collision-metadata",
+      "source": "(:deletion (meta deletion-collision-empty))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-old",
+      "source": "(count deletion-dense-old)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-eight",
+      "source": "(count deletion-dense-eight)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-seven",
+      "source": "(count deletion-dense-seven)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-empty",
+      "source": "(count deletion-dense-empty)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-regrown",
+      "source": "(count deletion-dense-regrown)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-transient-seven",
+      "source": "(count deletion-dense-transient-seven)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-count-transient-empty",
+      "source": "(count deletion-dense-transient-empty)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-25",
+      "source": "(get deletion-dense-seven (SlotKey. 25) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f400000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-26",
+      "source": "(get deletion-dense-seven (SlotKey. 26) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f800000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-27",
+      "source": "(get deletion-dense-seven (SlotKey. 27) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405fc00000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-28",
+      "source": "(get deletion-dense-seven (SlotKey. 28) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-29",
+      "source": "(get deletion-dense-seven (SlotKey. 29) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060200000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-30",
+      "source": "(get deletion-dense-seven (SlotKey. 30) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060400000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-seven-31",
+      "source": "(get deletion-dense-seven (SlotKey. 31) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060600000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-seq-count-seven",
+      "source": "(count (seq deletion-dense-seven))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-25",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 25) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f400000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-26",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 26) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f800000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-27",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 27) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405fc00000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-28",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 28) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-29",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 29) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060200000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-30",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 30) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060400000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-survivor-transient-seven-31",
+      "source": "(get deletion-dense-transient-seven (SlotKey. 31) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060600000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-seq-count-transient-seven",
+      "source": "(count (seq deletion-dense-transient-seven))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-removed",
+      "source": "(get deletion-dense-seven (SlotKey. 24) 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408f380000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-old-removed-key",
+      "source": "(get deletion-dense-old (SlotKey. 24))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-empty-metadata",
+      "source": "(:deletion (meta deletion-dense-empty))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-empty-seq",
+      "source": "(if (nil? (seq deletion-dense-empty)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-regrown-equality-forward",
+      "source": "(if (= deletion-dense-old deletion-dense-regrown) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-regrown-equality-reverse",
+      "source": "(if (= deletion-dense-regrown deletion-dense-old) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-dense-regrown-hash",
+      "source": "(if (== (hash deletion-dense-old) (hash deletion-dense-regrown)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-small",
+      "source": "(get deletion-small nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-small",
+      "source": "(get deletion-small false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e80000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-nil-small",
+      "source": "(if (contains? deletion-small nil) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-false-small",
+      "source": "(if (contains? deletion-small false) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-grown",
+      "source": "(get deletion-grown nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-grown",
+      "source": "(get deletion-grown false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e80000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-nil-grown",
+      "source": "(if (contains? deletion-grown nil) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-false-grown",
+      "source": "(if (contains? deletion-grown false) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-shrunk",
+      "source": "(get deletion-shrunk nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-shrunk",
+      "source": "(get deletion-shrunk false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e80000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-nil-shrunk",
+      "source": "(if (contains? deletion-shrunk nil) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-false-shrunk",
+      "source": "(if (contains? deletion-shrunk false) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-converted-transient",
+      "source": "(get deletion-converted-transient nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-converted-transient",
+      "source": "(get deletion-converted-transient false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e80000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-nil-converted-transient",
+      "source": "(if (contains? deletion-converted-transient nil) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-contains-false-converted-transient",
+      "source": "(if (contains? deletion-converted-transient false) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-removed",
+      "source": "(get deletion-nil-removed nil 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408f380000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-preserved",
+      "source": "(get deletion-nil-removed false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e80000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-false-removed",
+      "source": "(get deletion-false-removed false 999)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408f380000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-nil-preserved",
+      "source": "(get deletion-false-removed nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "deletion-cross-type-equality-forward",
+      "source": "(if (= deletion-small deletion-shrunk) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-cross-type-equality-reverse",
+      "source": "(if (= deletion-shrunk deletion-small) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-cross-type-equal-hash",
+      "source": "(if (== (hash deletion-small) (hash deletion-shrunk)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-transient-conversion-equality",
+      "source": "(if (= deletion-grown deletion-converted-transient) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-transient-conversion-hash",
+      "source": "(if (== (hash deletion-grown) (hash deletion-converted-transient)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-count-small",
+      "source": "(count deletion-small)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-count-grown",
+      "source": "(count deletion-grown)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "deletion-conversion-count-shrunk",
+      "source": "(count deletion-shrunk)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "deletion-cross-type-unequal-forward",
+      "source": "(if (= deletion-small (assoc deletion-shrunk nil 701 false 700)) 0 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "deletion-cross-type-unequal-reverse",
+      "source": "(if (= (assoc deletion-shrunk nil 701 false 700) deletion-small) 0 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }

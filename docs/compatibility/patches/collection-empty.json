@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76",
+  "replacement": "(def empty\n  \"Returns an empty collection of the same category as coll, or nil\"\n  (fn [coll]\n    (when-not (suss.bootstrap/nil? coll)\n      (cond\n        (implements? IEmptyableCollection coll)\n        (-empty coll)\n\n        (satisfies? IEmptyableCollection coll)\n        (-empty coll)\n\n        :else nil))))",
+  "rationale": "Retain the complete pinned public form, documentation, fixed arity one, when-not nil guard, both direct implements? and satisfies? fallback branches, both live -empty calls and final nil. Expand defn to def/fn as in existing bootstrap patches and qualify only the emitted nil? macro test through immutable suss.bootstrap/nil? so redefining the public predicate cannot change its semantics. Protocol predicates retain the existing bounded compiler adapters; native fallback and source evaluation order require executing regressions. No method-only substitution or shortened algorithm. Compatibility remains in progress."
+}
