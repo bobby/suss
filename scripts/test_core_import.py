@@ -147,6 +147,24 @@ class CoreImportBuildTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build()
 
+    def test_loader_trailing_comments_do_not_swallow_following_stages(self):
+        import hashlib, json
+        from cljs_inventory import Scanner, declarations
+        inputs = {}
+        for stage in ('before', 'after', 'original'):
+            path = self.root / f'{stage}.sus'
+            raw = f'(def {stage}-marker 1) ; trailing comment'.encode()
+            path.write_bytes(raw)
+            inputs[stage] = {'path': path.name,
+                             'sha256': hashlib.sha256(raw).hexdigest()}
+        self.recipe['loader'] = inputs
+        self.recipe_path.write_text(json.dumps(self.recipe))
+        source = self.build()['suss/core.sus'].decode()
+        names = [name for form in Scanner(source).all()
+                 for _, name, _, _ in declarations(form)]
+        self.assertEqual(names, ['before-marker', 'identity', 'after-marker',
+                                 'original-marker'])
+
     def test_stale_review_and_unreviewed_selection_fail(self):
         original = self.reviews.read_text()
         self.reviews.write_text(original.replace(self.digest, '0' * 64))

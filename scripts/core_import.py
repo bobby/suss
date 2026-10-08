@@ -213,9 +213,12 @@ def build(root=ROOT):
     artifact = f'suss/core.{extension}'
     output = '\n'.join(selected_notices) + '\n;; Generated reviewed core import; see ../manifest.json.\n'
     output += f'(ns {recipe["namespace"]})\n\n'
-    output += loader_sources.get('before', '') + '\n\n'.join(adapted_forms) + '\n'
-    output += loader_sources.get('after', '')
-    output += loader_sources.get('original', '')
+    # Each independently parsed input needs a lexical boundary: a final line
+    # comment must not consume the first declaration of the following stage.
+    stages = [loader_sources.get('before', ''), '\n\n'.join(adapted_forms),
+              loader_sources.get('after', ''), loader_sources.get('original', '')]
+    output += ''.join(stage + ('' if stage.endswith('\n') else '\n')
+                      for stage in stages if stage)
     outputs[artifact] = output.encode()
     for name in ('LICENSE', 'epl-v10.html'):
         outputs[name] = pinned_file(root, name)

@@ -31,7 +31,7 @@ No timestamp or local absolute path enters the output. Reader branches and enclo
 as inventory context. Selected declarations must have empty context: the importer
 rejects reader branches and lexical/dynamic containers until context-preserving
 import is implemented; the extractor never removes forms
-because they contain JS interop. The recipe order is explicit dependency order.
+because they contain JS interop. The recipe records explicit form order; dependency annotations are retained for review, not automatically resolved or checked for ordering. Executing namespace tests separately verify the current artifact loads.
 
 ```sh
 python3 scripts/core_import.py
@@ -41,7 +41,9 @@ scripts/test-core-import-oracle.sh
 ```
 
 The verifier recomputes artifacts from a clean pinned source and the validated
-review overlay. It rejects stale inventory/reviews/source hashes, unreviewed or
+review overlay, and checks the complete licensed standalone sequence setup forms
+with `sequence_provenance.py`. Independent loader stages are separated by a newline
+so trailing comments cannot consume subsequent declarations. It rejects stale inventory/reviews/source hashes, unreviewed or
 excluded selections, duplicate IDs/JSON keys, phase mismatch, unsupported declaration context, missing notices,
 changed upstream license bytes, extra generated files and modified/missing outputs.
 Patches must match the reviewed adaptation path, name the exact original hash,
