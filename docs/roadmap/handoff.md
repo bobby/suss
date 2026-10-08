@@ -22095,3 +22095,22 @@ Rust/actual execution measurements historical, not proof for rebased4e0f00d.
 Post226CPP gates remain passed; current Rust/rootbaseline/CI pending. Normal
 reproduce.md isolated locked18unit/build/execution commands inspected and
 ready after exclusive baseline99452 releases Cargo. No secondgraph started.
+
+Rechecked original GitHub188criteria/state OPEN. Decision recommendation remains
+deferral, scope unchanged. Corrected decision introduction to bind retained
+Rust/source/effects/92pair tables and timing data to22723b4 snapshot; rebased
+4e0f00d current execution remains pending, CPPpost226 alone is notRustproof.
+Baseline99452 confirmedlive in clojure_test_suite; no secondCargo launched.
+
+MLIR historical identity gate explicitly rechecked: capture-evidence.py --check
+identity-current-main.json exits1 as expected after rebase. Retained delta
+post226-historical-identity-delta.json records2 experiment doc/4bootstrap
+changes,0 reused production-file changes. This rejection is not a semantic
+failure or current-base execution pass. Fresh rebuilt binary/identity/gates
+remain required. Lazy baseline99452 passed all5 Clojuresuite tests163.74s
+and continues compiler regressions.
+
+Independent MLIR historical-scope review reproduced identity rejection exit1
+and exact2experimentdocs/4bootstrap/0production delta with matching hashes;
+no material findings. Current-base execution/fullbaseline/publication remain
+pending. Normal Cargo sequence unchanged; session99452 still confirmedlive.

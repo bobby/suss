@@ -15,7 +15,11 @@ roundtrip and fresh source/effects oracles. `identity-current-main.json` binds
 experiment content, reused production sources, bootstrap pairs, lockfiles, tool
 versions, intended Rust profiles/effective CMake configuration and binary
 hashes. Its content projection excludes evidence to avoid self-reference.
-After committing, verify that projection with:
+The following verifies that historical projection only at matching content.
+On the rebased checkout it intentionally rejects; the
+[post-#226 identity delta](post226-historical-identity-delta.json) records the
+changed bootstrap and experiment files. Capture a fresh identity manifest after
+current-base rebuilding and execution before publication:
 
 ```sh
 python3 experiments/mlir/scripts/capture-evidence.py --check experiments/mlir/evidence/identity-current-main.json

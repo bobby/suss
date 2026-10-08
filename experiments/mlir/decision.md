@@ -2,9 +2,13 @@
 
 Draft evidence record, 2026-10-08. Recommend **deferring compiler adoption**.
 This is an isolated investigation, not an architectural decision or authorization
-to migrate the shipped compiler. Current-base rebuilding on main `22723b4` passed all 18 unit tests, actual v2
-source preservation/correspondence, seven effects cases and 92 paired executions.
-Final review, full baseline and final-head CI remain pending.
+to migrate the shipped compiler. Earlier rebuilding on main `22723b4` passed all
+18 unit tests, actual v2 source preservation/correspondence, seven effects cases
+and 92 paired executions. The evidence and measurements below refer to that
+retained snapshot unless explicitly labeled post-#226. Rebuilding and execution
+on the rebased `4e0f00d` checkout remain pending, as do its final review, full
+baseline and final-head CI. Post-#226 C++ gates pass and do not certify Rust
+execution.
 
 The custom dialect provides useful registered types, region structure and
 verifier hooks. This slice still implements the language-specific source-facts
