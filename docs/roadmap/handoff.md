@@ -21668,3 +21668,39 @@ Read-only #17–#19 acceptance audit identifies concrete next gaps: public vecto
 M4 bootstrap repair verification completed: Java/Node-free `scripts/verify-bootstrap.sh` exited 0, reproduced both pairs twice, compared shipped bytes, verified identity and executed compiled_bootstrap 4/4 (13.41s), zero failures/ignores/filters. Source remains frozen for the next required unfiltered full baseline. Final-head CI must run again after pushing the regenerated artifacts; old-head results cannot certify this repair.
 
 M4 vector acceptance branch `portable/m4-vector-boundaries` is isolated at `/private/tmp/suss-m4-vector-boundaries`, based on reviewed import head baf134d. New public root-collapse/regrowth fixture and native Runtime/Macro sharing/metadata regression are prepared and formatted, not executed. The vector oracle retains original40cases and adds51: fresh pinned Node comparisons91/91 pass; oracle/transporttests13/13 pass. Coordinator independently reran `python3 scripts/macro_vector_oracle.py compare`,91 exactmatches. Independent review found no material defect and notes the retained oldhandle also has a globalroot. PR222's fullbaseline96936 remains live on frozen separateworktree, so no second Cargo graph runs. Next execute vector focusedsuite when baseline releases, resolve any genuine failures, update inventory/evidence, obtain finalheadCI and review before promotion.
+
+
+PR #223 vector corpus fuel evidence (2026-10-08): CI reports 7 passes / 1 failure
+/ 0 ignores / 0 filters; the new 1057-element sharing test passes, while
+`boundary-roundtrip-equality-forward` exhausts the existing 100,000,000
+per-operation budget. Local focused reproduction exits 101: 0 passes / 1 failure
+/ 7 filtered, 6.65s. Logs: `/private/tmp/suss-m4-vector-ci-failure.log` and
+`/private/tmp/suss-m4-vector-budget-100m.log`. This is not default-budget failure.
+
+After import baseline PID 50155 ended, the coordinator ran an isolated finite
+1-billion diagnostic: terminal exit 0, one test passed, no failures/ignores/
+filters, 20.28s. All 14 Runtime/Macro size groups completed four Boolean-checked
+operations. Both phases measured equal-vector whole-eval costs of 7,376,354
+(size32), 14,879,852 (size64), and 248,329,586 (size1057); independent vectors and
+shared pop/conj roundtrips matched. Identity equality cost767; the size1057
+hash-pair comparison cost23,196,667. Sizes33/65/1024/1025 also completed. Sampled
+scaling is consistent with linear traversal, not proof of general complexity.
+Measurement includes the small inspection checkpoint overhead and does not
+separately attribute expansion/runtime fuel. Log:
+`/private/tmp/suss-m4-vector-fuel-measurements.log`; archived diagnostic source:
+`/private/tmp/suss-m4-vector-fuel-diagnostic.rs`. Temporary test removed.
+
+Corpus-only allowance is now finite500,000,000, approximately2.01x the measured
+maximum. All91 cases, expectations, GC and independent decoding remain unchanged;
+other stress and production/default budgets are unchanged. Coordinator's complete
+focused `compiled_macro_vectors` run is in progress on frozen Rust. This doc-only
+reconciliation ran no Cargo and did not edit Rust. Next retain focused terminal
+results, run the required full workspace baseline and obtain repaired exact-head
+CI plus independent review before promotion. No revised-corpus pass is claimed
+from the diagnostic alone. PR #222 was separately promoted at verified baf134d;
+its import/bootstrap gates do not certify this vector change.
+
+
+Vector revised-budget focused gate (2026-10-08): `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m3-source-futures/target cargo test -p suss-cli --test compiled_macro_vectors --locked -- --test-threads=2` exited 0: eight passed, zero failed/ignored/filtered, 18.42s. Log `/private/tmp/suss-m4-vector-focused-500m.log`. This supersedes the immediately preceding pending focused result. Temporary fuel diagnostic source is archived outside the workspace; no diagnostic test remains in the PR. Required full baseline and revised-head CI are next. PR #222 was promoted at baf134d after independent final review, all ten CI checks and exact-head unfiltered full baseline (1,531 passed, zero failed/filtered, 41 existing ignores, 201 suites, exit 0). This does not close #16 or M4.
+
+Independent budget-repair review found no material defect. It corrected cost attribution: Session resets fuel after preparation, so measurements cover post-reset Wasm evaluation plus inspection checkpoint overhead, not expansion/compiler cost. The 500M corpus allowance provides 2.013x measured headroom. All original cases/checks remain intact; no general complexity or default-budget performance claim is made.

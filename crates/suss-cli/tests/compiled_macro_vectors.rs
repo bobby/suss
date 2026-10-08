@@ -258,7 +258,12 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 91);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session.set_operation_fuel(100_000_000);
+        // Equality/hash observations traverse complete 1,057-element vectors.
+        // Measured whole-eval cost is 248,329,586 fuel in both phases,
+        // including the inspection checkpoint. Use a finite allowance with
+        // roughly twofold headroom; production/default budgets stay unchanged.
+        const STRESS_CORPUS_FUEL: u64 = 500_000_000;
+        session.set_operation_fuel(STRESS_CORPUS_FUEL);
         session
             .eval(include_str!("../../../tests/oracle/vector-boundary-fixture.sus"))
             .unwrap();

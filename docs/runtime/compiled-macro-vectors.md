@@ -80,5 +80,45 @@ Stores after GC, including the retained original handle. It checks trie shifts
 10→5→10, unchanged leaf sharing, copied modified leaf/tail and root reuse on
 regrowth. Private field probes stay out of the shared oracle fixture. The original
 vector also remains globally rooted; the test does not claim sole-handle rooting.
-Independent review found no material defect, but native execution, the required
-full baseline and final-head CI remain pending. No M4-02 completion is claimed.
+Independent review found no material defect. The sharing test passed in PR #223
+CI; the scalar corpus exhausted its fuel budget. The measured-budget focused run,
+required full baseline and final-head CI remain pending. No M4-02 completion is claimed.
+
+
+### PR #223 measured scalar-corpus fuel budget
+
+PR #223 CI reports seven passes and one failure: the new 1057-element sharing
+test passed, while `boundary-roundtrip-equality-forward` exhausted the corpus's
+existing 100-million per-operation allowance. A local focused reproduction also
+failed: exit 101, zero passes, one failure, seven filtered, 6.65s. These failures
+are retained in `/private/tmp/suss-m4-vector-ci-failure.log` and
+`/private/tmp/suss-m4-vector-budget-100m.log`.
+
+After the import baseline ended, an isolated diagnostic used a finite 1-billion
+ceiling and inspected remaining Wasmtime fuel after each whole eval. It passed
+one diagnostic test in 20.28s with no failures/ignores/filters: 14 phase/size
+groups, four observations each. Runtime and Macro costs matched exactly.
+Identity equality used 767 fuel; independently constructed equal vectors and
+shared pop/conj roundtrips had the same traversal costs:
+
+| Vector length | Whole-eval equality fuel |
+| --- | ---: |
+| 32 | 7,376,354 |
+| 64 | 14,879,852 |
+| 1057 | 248,329,586 |
+
+Additional lengths 33, 65, 1024 and 1025 were measured. The sampled growth is
+consistent with linear traversal rather than quadratic scaling; this does not
+prove general complexity or default-budget performance. At 1057 elements, the
+comparison of both vectors' hashes cost 23,196,667 fuel. Measurements cover post-reset Wasm evaluation and the small inspection checkpoint overhead. Preparation resets fuel before evaluation; expansion/compiler cost was not measured. The diagnostic checked actual Boolean results
+and ran GC between observations; it is cost evidence, not full corpus acceptance.
+
+The corpus alone now uses a finite 500-million per-operation allowance, about
+2.01 times the measured maximum. Existing sharing/smaller stress limits and
+production/default budgets remain unchanged. All 91 cases, expectations,
+independent decoding and GC checks remain intact, with no skip or retry.
+Measurement log: `/private/tmp/suss-m4-vector-fuel-measurements.log`; archived
+source: `/private/tmp/suss-m4-vector-fuel-diagnostic.rs`. The temporary test was
+removed before the coordinator's full focused run.
+
+The complete `cargo test -p suss-cli --test compiled_macro_vectors --locked -- --test-threads=2` run passed all eight tests, with zero failures, ignores or filters (18.42s, exit 0). Log: `/private/tmp/suss-m4-vector-focused-500m.log`. The required full baseline and repaired final-head CI remain pending; the earlier 100M failures are retained.
