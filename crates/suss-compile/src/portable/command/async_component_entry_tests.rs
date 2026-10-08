@@ -81,6 +81,11 @@ impl Harness {
             .instance(&mut store, "suss.fragment.0", source)
             .unwrap();
         linker.func_wrap("suss.bridge", "install", || {}).unwrap();
+        linker
+            .func_wrap("suss.bridge", "quarantine-invocation", |_: i32| -> () {
+                panic!("entry/recovery fixture must not quarantine canonical ownership")
+            })
+            .unwrap();
         for name in [
             "poll-invocation",
             "resume-invocation",
@@ -134,6 +139,13 @@ impl Harness {
                 },
             )
             .unwrap();
+        // These tests exercise ordinary entry/recovery only. The executing
+        // component caller regression owns event-6 cancellation acceptance.
+        linker
+            .func_wrap("suss.canonical", "task-cancel", || -> () {
+                panic!("entry/recovery fixture must not acknowledge cancellation")
+            })
+            .unwrap();
         let driver = linker.instantiate(&mut store, &f.driver).unwrap();
         Self {
             store,
@@ -173,7 +185,12 @@ fn production_entry_fuel_boundaries_restore_scope_without_replaying_entry() {
     let mut quarantined = Vec::new();
     // Fresh stores prevent an interrupted entry from contaminating the next
     // sample. This finite sweep tests pinned checkpoints, not every instruction.
-    for fuel in (0..=256).chain((288..=8192).step_by(32)).chain([32768]) {
+    // The bounded stream recovery scan is part of the integrated scheduler;
+    // include larger checkpoints while retaining dense interrupted-entry cases.
+    for fuel in (0..=256)
+        .chain((288..=8192).step_by(32))
+        .chain([32768, 65536, 131072, 262144, 524288, 1048576])
+    {
         let mut h = Harness::new();
         assert_eq!(h.scope(77), 0);
         h.store.set_fuel(fuel).unwrap();

@@ -221,3 +221,194 @@ fn suspended_task_graph_survives_cancel_cleanup_then_returns_actual_live_bytes_t
     );
     assert_eq!(residency(session.stats()), code, "resident code retained");
 }
+
+/// Reuse compiled functions for 10,000 calls; no source replay or accumulating
+/// fragments can obscure task/waiter retirement. Vary terminal state, payload
+/// shape and late completion while every invocation suspends in finally.
+#[test]
+fn ten_thousand_varied_tasks_retire_waiters_and_return_live_heap_to_baseline() {
+    use suss_compile::portable_session::{FutureState, FutureStatus};
+    install_probe();
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let pending = eval(
+        &mut session,
+        &mut macros,
+        "(fn [] (suss.internal.async/pending))",
+    );
+    let spawn = eval(
+        &mut session,
+        &mut macros,
+        "(fn [dependency cleanup] (suss.async/future* (try (suss.async/await* dependency) (finally (suss.async/await* cleanup)))))",
+    );
+    let bridge = suss_compile::portable_macro_data::FormBridge::new(&mut session).unwrap();
+    const SOURCES: [&str; 8] = [
+        "nil",
+        "false",
+        "true",
+        "0",
+        "-17",
+        "42",
+        "[nil false 42]",
+        "{:value 17}",
+    ];
+    fn without_locations(mut form: suss_reader::forms::Form) -> suss_reader::forms::Form {
+        use suss_reader::forms::Kind;
+        form.span = 0..0;
+        match &mut form.kind {
+            Kind::Vector(items) | Kind::Map(items) => {
+                for item in items {
+                    *item = without_locations(item.clone());
+                }
+            }
+            _ => {}
+        }
+        form
+    }
+    let expected_payloads = SOURCES
+        .map(|source| without_locations(suss_reader::forms::read_forms(source).unwrap().remove(0)));
+    let payloads = SOURCES.map(|source| eval(&mut session, &mut macros, source));
+    let exercise = |session: &mut Session, call: usize| {
+        let dependency = session.invoke(&pending, &[]).unwrap();
+        let cleanup = session.invoke(&pending, &[]).unwrap();
+        let task = session.invoke(&spawn, &[&dependency, &cleanup]).unwrap();
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        let payload = &payloads[call % payloads.len()];
+        let expected = match call % 3 {
+            0 => {
+                assert!(session.resolve_future(&dependency, payload).unwrap());
+                FutureStatus::Ready
+            }
+            1 => {
+                assert!(session.reject_future(&dependency, payload).unwrap());
+                FutureStatus::Failed
+            }
+            _ => {
+                assert!(session.cancel_future(&task).unwrap());
+                FutureStatus::Cancelled
+            }
+        };
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        assert_eq!(
+            session.future_status(&task).unwrap(),
+            Some(FutureStatus::Pending)
+        );
+        assert!(session.resolve_future(&cleanup, &payloads[0]).unwrap());
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        assert_eq!(session.future_status(&task).unwrap(), Some(expected));
+        match session.future_state(&task).unwrap().unwrap() {
+            FutureState::Ready(result) | FutureState::Failed(result) => {
+                let actual = bridge.read(session, &result, 0..0).unwrap();
+                let expected = expected_payloads[call % payloads.len()].clone();
+                assert_eq!(
+                    without_locations(actual),
+                    expected,
+                    "call {call}: independently decoded payload"
+                );
+            }
+            FutureState::Cancelled => {
+                assert!(session.resolve_future(&dependency, payload).unwrap());
+            }
+            FutureState::Pending => panic!("call {call} remained pending"),
+        }
+        assert!(!session.cancel_future(&task).unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        drop(task);
+        drop(cleanup);
+        drop(dependency);
+        assert_eq!(session.async_task_counts().unwrap(), (0, 0, 0));
+        assert_eq!(session.pending_stream_operation_count().unwrap(), 0);
+        assert_eq!(session.stats().pending_host_requests, 0);
+    };
+    // Warm each outcome and shape before measuring exact post-GC bytes.
+    for call in 0..24 {
+        exercise(&mut session, call);
+    }
+    let baseline = live_bytes(&mut session);
+    let code = residency(session.stats());
+    let handles = session.stats().external_value_handles;
+    for call in 0..10_000 {
+        exercise(&mut session, call);
+        if (call + 1) % 1000 == 0 {
+            assert_eq!(
+                live_bytes(&mut session),
+                baseline,
+                "after {} calls",
+                call + 1
+            );
+            assert_eq!(residency(session.stats()), code);
+            assert_eq!(session.stats().external_value_handles, handles);
+        }
+    }
+}
+
+#[test]
+fn dead_capture_graph_is_released_at_await_while_owner_remains_pending() {
+    use suss_compile::portable_session::FutureStatus;
+    install_probe();
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let build = eval(
+        &mut session,
+        &mut macros,
+        "(fn [] (loop [i 0 acc []] (if (< i 300) (recur (+ i 1) (conj acc [i (atom i)])) acc)))",
+    );
+    let pending = eval(
+        &mut session,
+        &mut macros,
+        "(fn [] (suss.internal.async/pending))",
+    );
+    let spawn = eval(
+        &mut session,
+        &mut macros,
+        "(fn [graph dependency] (suss.async/future* (count graph) (suss.async/await* dependency)))",
+    );
+    let nil = eval(&mut session, &mut macros, "nil");
+    let lifecycle = |session: &mut Session, large: bool| {
+        let dependency = session.invoke(&pending, &[]).unwrap();
+        let graph = if large {
+            session.invoke(&build, &[]).unwrap()
+        } else {
+            nil.clone()
+        };
+        let task = session.invoke(&spawn, &[&graph, &dependency]).unwrap();
+        drop(graph);
+        let queued = live_bytes(session);
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        assert_eq!(
+            session.future_status(&task).unwrap(),
+            Some(FutureStatus::Pending)
+        );
+        let awaiting = live_bytes(session);
+        assert!(session.resolve_future(&dependency, &nil).unwrap());
+        assert!(session.run_async_turn().unwrap());
+        assert!(!session.run_async_turn().unwrap());
+        assert_eq!(
+            session.future_status(&task).unwrap(),
+            Some(FutureStatus::Ready)
+        );
+        drop(task);
+        drop(dependency);
+        assert_eq!(session.async_task_counts().unwrap(), (0, 0, 0));
+        (queued, awaiting, live_bytes(session))
+    };
+    lifecycle(&mut session, false);
+    lifecycle(&mut session, true);
+    let code = residency(session.stats());
+    let small = lifecycle(&mut session, false);
+    let large = lifecycle(&mut session, true);
+    assert!(
+        large.0 >= small.0 + 300 * 16,
+        "queued capture really retains graph"
+    );
+    assert_eq!(
+        large.1, small.1,
+        "await snapshot releases dead capture graph before settlement"
+    );
+    assert_eq!(large.2, small.2, "terminal state retires both owners");
+    assert_eq!(residency(session.stats()), code);
+}

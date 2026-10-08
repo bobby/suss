@@ -9,7 +9,7 @@ exact final-head CI. No acceptance criterion is removed or narrowed here.
 ## Current source and evidence, 2026-10-07
 
 This audit inspects `/private/tmp/suss-m3-source-futures` at committed HEAD
-`f764080` plus the current uncommitted continuation/runtime/Session work. The
+`2b57ec5` plus subsequent display repairs and the new stream live-heap test. The
 local `origin/main` history includes #210 (`6ebf952`), evaluator retirement #215
 (`85b6218`) and exact live-heap evidence #217 (`4c3bb6d`). Those merged changes
 supersede the historical evaluator/accounting gaps; they do not certify M3 or
@@ -21,7 +21,7 @@ current descriptions of active entry points. Current compiler/CLI source has no
 `MacroEvaluator` or `expand::expand_all`. The old evaluator component frontend
 and byte-only expression route are retired, rather than newly supported targets.
 GitHub issue status remains authoritative: root reports issue #15 CLOSED and
-PR #218 merged into main `1fdc806`; #220 remains OPEN. Its separate rebase is under validation. Issue closure does not establish the original
+PRs #218 and #220 merged into main `b0024c0`; no PRs remain open. Issue closure does not establish the original
 pending-I/O acceptance evidence or certify the incomplete canonical worktree.
 The full implementation objective remains unchanged.
 
@@ -89,7 +89,25 @@ rounds while resident code remained unchanged (`suss-async-live-heap-retry.log`)
 The production `ScalarHost` wrapper latches quarantine before suspension and
 clears it only after successful invocation completion; raw Wasmtime embedders are
 responsible for equivalent lifetime handling. Stream runtime/service/source
-wrappers and focused compiled-source tests are staged and not yet certified.
+wrappers execute 12/12 compiled-source and 9/9 raw-runtime regressions. Actual
+post-GC stream graphs return to the warmed byte baseline across three rounds
+without changing resident-code counters (`suss-stream-live-heap-first.log`).
+These results do not replace the final acceptance gates.
+
+The first named persistence gate stopped on an unsupported-array display
+error; after restoring display-specific diagnostics, the sequential retry passed
+29 persistence tests, 20 namespace tests and 15 lifecycle tests. The lifecycle
+selector includes all eight native async I/O cases and the PTY case. Java/Node-free
+bootstrap reproduction, checkout-independent identity checks and all four
+bootstrap execution tests also passed. Logs are
+`/private/tmp/suss-m3-main-{persistence,namespaces,lifecycle,bootstrap-verify}-retry.log`.
+These validate the frozen display-repair snapshot; subsequent canonical repair
+changes still require their focused tests and the final full baseline.
+Independent full-diff review also found that canonical export cancellation event
+6 traps before source cleanup. Repair and an executing component-to-component
+regressions now pass for actual event6 delivery, pending awaited cleanup,
+cleanup success/failure and real Unix FD release before acknowledgment. The
+required workspace baseline is running; final-head CI remains pending.
 
 ## Current production entry points
 
@@ -103,8 +121,9 @@ wrappers and focused compiled-source tests are staged and not yet certified.
 
 ## Remaining acceptance work
 
-Execute a genuine pending canonical async import through generated adapters and
-compiled continuations, with GC, once-only callback consumption, reentry,
+Reexecute the existing genuine pending canonical async import regressions through
+generated adapters and compiled continuations on the final head, with GC, once-only
+callback consumption, reentry,
 completion/cancellation races, caller restoration, subtask/waitable/result-buffer
 release and late callback rejection after reset. Async exports must obey the
 declared future-result contract; do not implicitly flatten a future returned as
@@ -114,12 +133,22 @@ bounded reads/writes, backpressure, explicit EOF, endpoint ownership and
 cancellation remain accepted scope, not exclusions introduced by this audit.
 
 Reconfirm exact live GC versus resident-code evidence with suspended/cancelled
-continuations and host resources. Finish the portable macro environment, namespace/dependency/cache and public
-entry-point audit against the original requirements. Match supported source
+continuations and host resources. Independent inspection of the portable macro
+environment, namespace/dependency/cache and public entry points identified no
+additional concrete missing requirement in the original M3 criteria. Reexecute supported source
 `&form`/`&env`, phase dependencies, syntax quote/gensyms and cache changes to
 executing evidence. The accepted design does not mandate the complete upstream
 `cljs.analyzer` schema; unsupported source forms and unassessed compatibility
 items remain explicit rather than fabricated successful records. Preserve source provenance and upstream licensing.
+
+This inspection is a source/coverage audit, not final-head execution. The broad
+constructor corpus uses an explicit 100M fuel budget; main also retains a focused
+default-budget constructor regression. Published project dependencies remain
+explicitly unsupported and belong to later work rather than an invented M3 gate.
+The named commands and independently reviewed cancellation/10,000-call accounting
+regressions have passed focused runs. Final frozen-head workspace acceptance,
+bootstrap reproduction after the last source edit and successful final-head CI
+are still required.
 
 The named acceptance commands remain `cargo test -p suss-cli persistent_session`,
 `cargo test -p suss-cli namespace_session`, `scripts/verify-bootstrap.sh` and

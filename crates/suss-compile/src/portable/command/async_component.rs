@@ -179,7 +179,8 @@ pub fn component(
         .waitable_set_new()
         .waitable_set_drop()
         .context_set(ValType::I32, 0)
-        .task_return(Some(PrimitiveValType::U32.into()), []);
+        .task_return(Some(PrimitiveValType::U32.into()), [])
+        .task_cancel();
     component.section(&canonical);
     let mut instances = InstanceSection::new();
     instances.export_items([
@@ -192,6 +193,7 @@ pub fn component(
         ("set-drop", ExportKind::Func, 8),
         ("context-set", ExportKind::Func, 9),
         ("return", ExportKind::Func, 10),
+        ("task-cancel", ExportKind::Func, 11),
     ]);
     instances.instantiate(3 + count, [("suss.canonical", ModuleArg::Instance(shim))]);
     instances.instantiate(
@@ -241,9 +243,9 @@ pub fn component(
     component.section(&aliases);
     let mut canonical = CanonicalFunctionSection::new();
     canonical.lift(
-        11,
+        12,
         1,
-        [CanonicalOption::Async, CanonicalOption::Callback(12)],
+        [CanonicalOption::Async, CanonicalOption::Callback(13)],
     );
     component.section(&canonical);
     let mut exports = ComponentExportSection::new();
@@ -375,6 +377,13 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
     let register_context = add("suss.context", "register", vec![ValType::I32; 2], vec![]);
     let retire_context = add("suss.context", "retire", vec![ValType::I32], vec![]);
     let ret = add("suss.canonical", "return", vec![ValType::I32], vec![]);
+    let task_cancel = add("suss.canonical", "task-cancel", vec![], vec![]);
+    let cancel_root = add(
+        "suss.runtime",
+        "async-task-cancel",
+        vec![value],
+        vec![ValType::I32],
+    );
     drop(add);
     let language_tag_type = next_type;
     next_type += 1;
@@ -449,7 +458,18 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
         },
         &ConstExpr::i32_const(0),
     );
+    // External canonical cancellation intent outlives the source outcome: a
+    // finally may succeed or fail, but neither may turn event 6 into task.return.
+    globals.global(
+        GlobalType {
+            val_type: ValType::I32,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::i32_const(0),
+    );
     // Imported main=0, rooted task=1, set=2, monotonic invocation=3, active=4.
+    // Previous scope=5, entry latch=6, quarantine=7, cancellation intent=8.
     let mut functions = FunctionSection::new();
     let mut code = CodeSection::new();
     let init = index;
@@ -470,7 +490,7 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
     functions.function(ty);
     emit_with_locals(
         &mut code,
-        [(1, ValType::F64), (4, ValType::I32)],
+        [(1, ValType::F64), (5, ValType::I32)],
         vec![
             GlobalGet(1),
             Call(status),
@@ -594,6 +614,13 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             I32Or,
             Return,
             End,
+            // Preserve intent locally while retiring the driver. A cancelled
+            // root's payload is not a normal result, including failed cleanup.
+            GlobalGet(8),
+            LocalSet(5),
+            LocalGet(5),
+            I32Eqz,
+            If(BlockType::Empty),
             GlobalGet(1),
             Call(status),
             I32Const(1),
@@ -627,7 +654,11 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             End,
             LocalGet(0),
             I32TruncF64U,
-            Call(ret),
+            LocalSet(1),
+            End,
+            // All fallible resource retirement precedes the canonical receipt.
+            // A retirement trap retains invocation roots for quarantine, and
+            // cannot acknowledge twice on a subsequent recovery attempt.
             GlobalGet(2),
             Call(set_drop),
             GlobalGet(3),
@@ -637,6 +668,15 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             GlobalSet(1),
             I32Const(0),
             GlobalSet(4),
+            I32Const(0),
+            GlobalSet(8),
+            LocalGet(5),
+            If(BlockType::Empty),
+            Call(task_cancel),
+            Else,
+            LocalGet(1),
+            Call(ret),
+            End,
             I32Const(0),
             End,
         ],
@@ -741,8 +781,22 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             End,
             Else,
             LocalGet(0),
+            I32Const(6),
+            I32Eq,
+            If(BlockType::Empty),
+            // Publish intent before requesting source cancellation. Cancel only
+            // the root here: an already-running finally may await a child that
+            // must survive until the existing retirement waves can drain it.
+            I32Const(1),
+            GlobalSet(8),
+            GlobalGet(1),
+            Call(cancel_root),
+            Drop,
+            Else,
+            LocalGet(0),
             If(BlockType::Empty),
             Unreachable,
+            End,
             End,
             End,
             Call(step),

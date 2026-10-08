@@ -1047,3 +1047,26 @@ bootstrap reproduction/identity verification and four execution tests passed
 task-owned settlement guard still requires fresh regeneration and execution.
 This evidence does not establish complete async, canonical callback ABI or M3
 lifecycle acceptance.
+
+Original Suss bounded stream API (2026-10-07): `stream-pair`, `read-chunk`,
+`write-chunk`, `close!`, writer-only `fail!` and `stream-eof?` execute through
+compiled continuations. Reads return a nonempty immutable vector or a nominal
+EOF token; `[nil]` remains data. Capacity is 1–4096 elements and an operation
+is bounded to min(capacity, 256). One pending operation per endpoint, whole-chunk
+backpressure, accepted-data drainage on writer close, reader-close discard,
+first-terminal failure reason preservation and cancellation withdrawal are
+covered by 12/12 source tests (32.71s, no filters/ignores) on the current repair
+snapshot. Chunk copying yields inside the future under the default operation
+budget. Three display tests passed (7.00s), keeping streams/futures nominal and
+opaque; log `/private/tmp/suss-m3-cancel-display-focused.log`.
+
+Raw runtime stream tests passed 9/9 on the preceding stream snapshot, including
+cross-operation recovery ordering. The retained-receipt fixture reproduces
+publication state deterministically; it is not evidence of an observed exact
+post-publication engine fuel-trap window. Actual post-GC stream live bytes returned
+to a warmed baseline across three rounds while resident code remained unchanged
+(`/private/tmp/suss-stream-live-heap-first.log`). The source stream implementation
+is original Suss code, not a port of upstream core. Generic canonical WIT stream
+transport remains later interoperability work. Final integrated lifecycle,
+workspace, bootstrap and CI gates remain pending; a newly reviewed canonical
+export event-6 cancellation defect is being repaired.

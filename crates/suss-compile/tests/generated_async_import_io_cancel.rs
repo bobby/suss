@@ -11,11 +11,7 @@ use std::{
     },
     task::{Context, Poll, Wake, Waker},
 };
-use suss_compile::portable::{
-    self,
-    command::async_component,
-    resolve::{Environment, Phase},
-};
+use suss_compile::portable::{self, command::async_component, resolve::Phase};
 use wasmtime::{
     Config, Engine, Store,
     component::{Component, Linker, Val},
@@ -67,11 +63,19 @@ fn generated_fragments(sources: &[&str]) -> Vec<u8> {
             _ => None,
         })
         .unwrap();
-    let mut env = Environment::default();
-    let cell = env
+    // The shipped async library includes source-backed collection wrappers.
+    // Prepare it in the real Runtime core environment, and execute that core
+    // initializer first, just as the public AOT source preparation does.
+    let mut core = portable::bootstrap::shipped(Phase::Runtime)
+        .unwrap()
+        .clone();
+    let cell = core
+        .environment
         .declare_cell(Phase::Runtime, "host", "increment")
         .unwrap();
-    let mut fragments = Vec::new();
+    core.cells.push(cell.clone());
+    let mut env = core.environment.clone();
+    let mut fragments = vec![core];
     for source in sources {
         let fragment = portable::prepare_fragment(source, &env, Phase::Runtime).unwrap();
         env = fragment.environment.clone();

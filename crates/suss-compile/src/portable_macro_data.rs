@@ -1127,6 +1127,13 @@ struct Budget {
     nodes: usize,
     units: usize,
 }
+fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
+    if budget.display.is_some() {
+        error(&format!("Value display does not yet support {name}"))
+    } else {
+        error(&format!("{name} are not macro syntax"))
+    }
+}
 fn spend(budget: &mut Budget) -> wasmtime::Result<()> {
     budget.nodes = budget
         .nodes
@@ -1278,7 +1285,7 @@ fn decode_datum<T: DatumTarget>(
                     )
                 }
                 Class::BitmapIndexedNode | Class::ArrayNode | Class::HashCollisionNode => {
-                    return Err(error("Hash trie nodes are not macro syntax"));
+                    return Err(unsupported_datum(budget, "Hash trie nodes"));
                 }
                 Class::MapEntry => {
                     if data.len() != 3 {
@@ -1312,12 +1319,12 @@ fn decode_datum<T: DatumTarget>(
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
                 }
-                Class::ArrayChunk => return Err(error("Array chunks are not macro syntax")),
+                Class::ArrayChunk => return Err(unsupported_datum(budget, "Array chunks")),
                 Class::LazySeq | Class::ChunkedCons => {
                     DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
-                Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
-                Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
+                Class::VectorNode => return Err(unsupported_datum(budget, "Vector trie nodes")),
+                Class::SourceArray => return Err(unsupported_datum(budget, "Raw source arrays")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
                     DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
