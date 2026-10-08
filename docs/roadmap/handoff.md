@@ -22089,3 +22089,9 @@ Queue56913 remains sole live Cargo graph at reviewed141887c; do not launch a
 second graph. Next: commit/push MLIR draft and check identities at that head;
 finish queue baseline/CI and promote when green; then schedule MLIR full baseline
 and executing sorted foundations, retaining original M4 scope and stable IDs.
+
+MLIR current-state wording correction: README now explicitly labels22723b4
+Rust/actual execution measurements historical, not proof for rebased4e0f00d.
+Post226CPP gates remain passed; current Rust/rootbaseline/CI pending. Normal
+reproduce.md isolated locked18unit/build/execution commands inspected and
+ready after exclusive baseline99452 releases Cargo. No secondgraph started.

@@ -1,8 +1,11 @@
 # Bounded MLIR evaluation (#188)
 
-Current main `22723b4`: 18 Rust tests, source-v2 actual original/mutation,
-seven effects cases and 92 paired GC executions pass. See [current decision](decision.md), [clean reproduction](reproduce.md) and [portable evidence](evidence/).
-Final independent publication review, full baseline and final-head CI remain pending.
+Earlier main `22723b4`: 18 Rust tests, source-v2 actual original/mutation,
+seven effects cases and 92 paired GC executions passed. Those retained results
+do not certify the rebased `4e0f00d` checkout. The restored pinned C++ tools pass
+their post-#226 gates; current-base Rust rebuilding, actual execution, root
+baseline and final-head CI remain pending. See [decision](decision.md),
+[clean reproduction](reproduce.md) and [portable evidence](evidence/).
 Historical stages below retain failures and their superseding results.
 
 This experiment leaves shipped compilation paths unchanged. Toolchain acquisition
