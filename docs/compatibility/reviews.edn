@@ -2,6 +2,22 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:last:1858"
+  {:source-sha256 "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:if-not:359" "macro:nil?:923" "live next/first bindings" "tail recur"]
+   :classification :adapted
+   :rationale "Retain the entire pinned linear traversal, documentation, sole signature, once-only next binding, macro nil guard and tail recur. Explicit def/fn bootstrap and immutable nil? qualification preserve live next/first semantics and public predicate redefinition behavior. Queue rear-trie regrowth exposed the missing public binding; focused execution remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/collection-last.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
+  "runtime:clone:1270"
+  {:source-sha256 "95801c5bb1a05ffbb2604f219e92420345c7fe3dcd0d064639599d1dfa7ac8d5" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:ICloneable:614" "live -clone protocol dispatcher"]
+   :classification :adapted
+   :rationale "Retain the complete pinned public form, documentation, sole signature and live protocol dispatch. Explicit def/fn bootstrap only; native queue regressions exposed the unresolved public binding. No collection-specific clone shortcut. Regeneration and rerun remain pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/collection-clone.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
   "runtime:empty:1887"
   {:source-sha256 "c95e203fb200453ff789397cb060686b0d9930d1cded9b577daa60c1c8a8fb76" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
@@ -4108,4 +4124,25 @@
    :adaptation-path "docs/compatibility/patches/expression-symbol.json"
    :alternative nil
    :tests ["crates/suss-compile/tests/portable_symbol_conversion.rs"]}
+  "runtime:PersistentQueueIter:6432"
+  {:source-sha256 "152108c421ab1c035e82f84fe0d7af354d0a87a39ee45d44d28315ba8b217ad5" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "ISeq/INext/IStack/ICollection/ICounted" "IIterable/IWithMeta/IMeta/IHash/IEquiv" "PersistentVector/List/seq/equiv-sequential/hash-ordered-coll"]
+   :classification :adapted
+   :rationale "Retain the complete pinned queue declaration, every Object/protocol method, mutable field and FIFO front/rear transition. Existing bounded nominal/compiler adapters require executing validation; printing, iterator and sharing contracts remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/queue-iterator.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
+  "runtime:PersistentQueueSeq:6447"
+  {:source-sha256 "75a6613c0f64b78e5639d57a9775c78671e92d7d669a6bb8721ede7308b39636" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "ISeq/INext/IStack/ICollection/ICounted" "IIterable/IWithMeta/IMeta/IHash/IEquiv" "PersistentVector/List/seq/equiv-sequential/hash-ordered-coll"]
+   :classification :portable
+   :rationale "Retain the complete pinned queue declaration, every Object/protocol method, mutable field and FIFO front/rear transition. Existing bounded nominal/compiler adapters require executing validation; printing, iterator and sharing contracts remain unproven."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
+  "runtime:PersistentQueue:6505"
+  {:source-sha256 "682c84520bedbb6ab3cae27d4c3c64ff9a30e5e0a2c36358c38895026da2e074" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "ISeq/INext/IStack/ICollection/ICounted" "IIterable/IWithMeta/IMeta/IHash/IEquiv" "PersistentVector/List/seq/equiv-sequential/hash-ordered-coll"]
+   :classification :portable
+   :rationale "Retain the complete pinned queue declaration, every Object/protocol method, mutable field and FIFO front/rear transition. Existing bounded nominal/compiler adapters require executing validation; printing, iterator and sharing contracts remain unproven."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
 }}

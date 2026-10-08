@@ -1,0 +1,333 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "empty-category",
+      "source": "(instance? PersistentQueue q0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-count",
+      "source": "(= (count q0) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-peek",
+      "source": "(nil? (peek q0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-pop-identity",
+      "source": "(identical? q0 (pop q0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fifo-seq",
+      "source": "(= (seq q3) [1 2 3])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fifo-peek",
+      "source": "(= (peek q3) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fifo-pop",
+      "source": "(= (seq qp) [2 3])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-transfer",
+      "source": "(= (seq (pop (pop q3))) [3])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "regrowth",
+      "source": "(= (seq qr) [2 3 4])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "old-value",
+      "source": "(= (seq q3) [1 2 3])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "pop-meta",
+      "source": "(= (:marker (meta qp)) 17)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "conj-meta",
+      "source": "(= (:marker (meta qr)) 17)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-meta",
+      "source": "(= (:marker (meta (empty qm))) 17)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-count-meta",
+      "source": "(= (count (empty qm)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "vector-equality",
+      "source": "(and (= q3 [1 2 3]) (= [1 2 3] q3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-equality",
+      "source": "(and (= q3 (list 1 2 3)) (= (list 1 2 3) q3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-hash",
+      "source": "(and (= (hash q3) (hash [1 2 3])) (= (hash q3) (hash (list 1 2 3))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metadata-hash",
+      "source": "(= (hash qm) (hash q3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "clone",
+      "source": "(and (instance? PersistentQueue (clone qm)) (= (clone qm) qm) (= (meta (clone qm)) (meta qm)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-meta",
+      "source": "(nil? (meta (seq qm)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "queue-print",
+      "source": "(= (pr-str q3) \"#queue [1 2 3]\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "queue-object-toString",
+      "source": "(= (.toString q3) \"#queue [1 2 3]\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "queue-seq-print",
+      "source": "(= (pr-str (seq q3)) \"(1 2 3)\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-false-fifo",
+      "source": "(= (seq qnf) [nil false 0])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-front-peek",
+      "source": "(nil? (peek qnf))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "false-front-after-pop",
+      "source": "(false? (peek (pop qnf)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "false-is-not-empty",
+      "source": "(= (count (pop qnf)) 2)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-trie-boundary-values",
+      "source": "(= (into [] q65) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-trie-boundary-hash",
+      "source": "(= (hash q65) (hash [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64]))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-trie-transfer-count",
+      "source": "(= (count (pop q65)) 64)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-trie-transfer-endpoints",
+      "source": "(and (= (peek (pop q65)) 1) (= (peek q33) 33) (= (count q33) 32))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rear-trie-regrowth",
+      "source": "(and (= (count (conj q33 65)) 33) (= (peek (conj q33 65)) 33) (= (last (conj q33 65)) 65))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-metadata-rest",
+      "source": "(= (:marker (meta (rest (with-meta (seq q3) {:marker 29})))) 29)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-empty-metadata",
+      "source": "(= (:marker (meta (empty (with-meta (seq q3) {:marker 29})))) 29)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metadata-nil-and-false",
+      "source": "(and (contains? (meta qnf) :nil-marker) (nil? (:nil-marker (meta qnf))) (false? (:false-marker (meta qnf))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "last-empty",
+      "source": "(nil? (last q0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "last-false",
+      "source": "(false? (last (conj q0 false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "last-nil-macro-guard",
+      "source": "(with-redefs [cljs.core/nil? (fn [_] false)] (= (last q3) 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "last-live-next-once",
+      "source": "(let [saved-next next] (set! last-steps 0) (with-redefs [cljs.core/next (fn [s] (do (set! last-steps (inc last-steps)) (saved-next s))) cljs.core/nil? (fn [_] false)] (and (= (last [1 2 3]) 3) (= last-steps 3))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "clone-live-dispatch",
+      "source": "(with-redefs [cljs.core/-clone (fn [_] false)] (false? (clone q3)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "clone-argument-before-dispatch",
+      "source": "(do (set! clone-steps 0) (with-redefs [cljs.core/-clone (fn [value] (do (set! clone-steps (+ (* clone-steps 10) 3)) value))] (let [copy (clone (do (set! clone-steps 1) q3))] (and (identical? copy q3) (= clone-steps 13)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7",
+  "replacement": "(def last\n  \"Return the last item in coll, in linear time\"\n  (fn [s]\n    (let [sn (next s)]\n      (if-not (suss.bootstrap/nil? sn)\n        (recur sn)\n        (first s)))))",
+  "rationale": "Retain the entire pinned public declaration, documentation, sole arity, once-only ordered next binding, nil check, tail recur and live next/first calls. Expand defn to def/fn for bootstrap and qualify only emitted nil? macro through immutable suss.bootstrap/nil?, preserving behavior under public predicate redefinition. No direct index, queue-only shortcut or traversal branch is substituted. Regeneration and execution remain required."
+}

@@ -156,7 +156,13 @@
       "end-line": 10810,
       "sha256": "1180f4c69308bd2578e2bde1583d6e39463ceadc5c1d73cdbf5b96772cd64032",
       "patch": "docs/compatibility/patches/printing-collection-extensions.json",
-      "patch-sha256": "0f6caaea9a3b7719c25e67d6b151594e92f3a255e6bccd18187a364173df8b32"
+      "patch-sha256": "cffed781ee2c7975396de0a9bc6c5a8a391e6402926678fc9b821acece4431f1"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6574,
+      "end-line": 6574,
+      "sha256": "559d0ecee79db5e9427b9380afabb2da488bce58a4963ded1e6fa04079d12089"
     }
   ]
 }

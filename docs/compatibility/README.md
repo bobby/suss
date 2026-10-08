@@ -1076,3 +1076,16 @@ is original Suss code, not a port of upstream core. Generic canonical WIT stream
 transport remains later interoperability work. Final integrated lifecycle,
 workspace, bootstrap and CI gates remain pending; a newly reviewed canonical
 export event-6 cancellation defect is being repaired.
+
+## Persistent queue source lane
+
+The complete pinned queue declarations, canonical EMPTY setup and printer stanzas
+are selected with source/license/patch provenance; see
+[queue evidence](../runtime/portable-queues.md). Fresh pinned comparison passes41
+public cases plus11 ordered iterator observations. All three native tests now
+pass in both phases with independent Boolean/numeric decoding, GC and actual
+sharing probes. Initial unresolved clone/last failures were repaired with the
+complete pinned public forms, preserving live dispatch, once-only traversal and
+macro nil-guard behavior. Bootstrap byte reproducibility and identity checks
+pass with Java/Node absent. Full baseline and final-head CI remain required. Queue imports remain in-progress evidence; this does not
+complete #18 or M4.

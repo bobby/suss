@@ -179,6 +179,12 @@
 (extend-type RSeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
+(extend-type PersistentQueue IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#queue [" " " "]" opts (seq coll))))
+
+(extend-type PersistentQueueSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
 (extend-type NodeSeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
@@ -236,3 +242,5 @@
   (-pr-writer [a writer opts]
     (-write writer "#'")
     (pr-writer (.-sym a) writer opts))))
+
+(set! (.-EMPTY PersistentQueue) (PersistentQueue. nil 0 nil (.-EMPTY PersistentVector) empty-ordered-hash))
