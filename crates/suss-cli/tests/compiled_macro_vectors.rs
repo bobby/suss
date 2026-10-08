@@ -93,22 +93,24 @@ fn compiled_macro_vectors_preserve_trie_updates_and_transport_across_gc() {
         "(== (nth (-pop (-pop (-pop (-pop original)))) 1055) 1055)",
     ] {
         let value = session.eval(source).unwrap();
-        assert!(session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
+        assert!(
+            session
+                .inspect(&value, |store, value| Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32()
+                    == 4))
                 .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
-                == 4))
-            .unwrap());
+        );
     }
 }
 
 #[test]
 fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
     use suss_cli::portable_macro_data::FormBridge;
-    use suss_reader::forms::{read_forms, Kind};
+    use suss_reader::forms::{Kind, read_forms};
     let mut session = Session::new_macro().unwrap();
     let bridge = FormBridge::new(&mut session).unwrap();
     let original = read_forms("[alpha [:key (beta -0.0)] []]")
@@ -142,7 +144,10 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
         "(deftype ForeignVector [meta cnt shift root tail hash]) (ForeignVector. nil 0 5 nil (array) nil)",
     ] {
         let value = session.eval(source).unwrap();
-        assert!(bridge.read(&mut session, &value, 200..210).is_err(), "{source}");
+        assert!(
+            bridge.read(&mut session, &value, 200..210).is_err(),
+            "{source}"
+        );
     }
 }
 
@@ -187,7 +192,7 @@ fn compiled_macro_array_slice_clamps_bounds_and_owns_copied_storage() {
 #[test]
 fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
     use suss_cli::portable_macro_data::FormBridge;
-    use suss_reader::forms::{read_forms, Kind};
+    use suss_reader::forms::{Kind, read_forms};
     let mut session = Session::new_macro().unwrap();
     session.set_operation_fuel(100_000_000);
     let bridge = FormBridge::new(&mut session).unwrap();
@@ -220,15 +225,17 @@ fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
         "(== (count result) 4)",
     ] {
         let value = session.eval(source).unwrap();
-        assert!(session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
+        assert!(
+            session
+                .inspect(&value, |store, value| Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32()
+                    == 4))
                 .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
-                == 4))
-            .unwrap());
+        );
     }
     for source in [
         "(conj! t 1)",
@@ -249,9 +256,17 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 40);
+    assert_eq!(cases.len(), 91);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session.set_operation_fuel(100_000_000);
+        // Equality/hash observations traverse complete 1,057-element vectors.
+        // Measured whole-eval cost is 248,329,586 fuel in both phases,
+        // including the inspection checkpoint. Use a finite allowance with
+        // roughly twofold headroom; production/default budgets stay unchanged.
+        const STRESS_CORPUS_FUEL: u64 = 500_000_000;
+        session.set_operation_fuel(STRESS_CORPUS_FUEL);
+        session
+            .eval(include_str!("../../../tests/oracle/vector-boundary-fixture.sus"))
+            .unwrap();
         for case in cases {
             let value = session
                 .eval(case["source"].as_str().unwrap())
@@ -288,6 +303,125 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
                 })
                 .unwrap();
             assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
+    }
+}
+
+#[test]
+fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and_sharing() {
+    use suss_cli::portable_macro_data::FormBridge;
+    use suss_reader::forms::Kind;
+    use wasmtime::Val;
+
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        let bridge = FormBridge::new(&mut session).unwrap();
+        // Capture the old SessionValue before subsequent updates and GC. Decode
+        // this retained handle directly later, rather than looking its var up again.
+        let fixture = include_str!("../../../tests/oracle/vector-boundary-fixture.sus");
+        let split = fixture.find("(def boundary-collapsed").unwrap();
+        session.eval(&fixture[..split]).unwrap();
+        let old = session.eval("boundary-original").unwrap();
+        session.collect().unwrap();
+        session.eval(&fixture[split..]).unwrap();
+        session.collect().unwrap();
+
+        for (source, length, changed) in [
+            ("boundary-collapsed", 1056, false),
+            ("boundary-associated", 1056, true),
+            ("boundary-regrown", 1057, true),
+            ("boundary-roundtrip", 1057, false),
+        ] {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 300..310).unwrap();
+            let Kind::Vector(items) = decoded.kind else {
+                panic!("{source}: canonical vector contents");
+            };
+            assert_eq!(items.len(), length, "{source}");
+            for (index, item) in items.iter().enumerate() {
+                let Kind::Number(actual) = item.kind else {
+                    panic!("{source}[{index}]: independently decoded Number");
+                };
+                let expected = if changed && (index == 31 || index == 1024) {
+                    -(index as f64)
+                } else {
+                    index as f64
+                };
+                assert_eq!(actual.to_bits(), expected.to_bits(), "{source}[{index}]");
+            }
+        }
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &old, 400..410).unwrap();
+        let Kind::Vector(items) = decoded.kind else {
+            panic!("retained old vector after collapse, regrowth and GC");
+        };
+        assert_eq!(items.len(), 1057);
+        for (index, item) in items.iter().enumerate() {
+            let Kind::Number(actual) = item.kind else {
+                panic!("old[{index}]: Number");
+            };
+            assert_eq!(actual.to_bits(), (index as f64).to_bits(), "old[{index}]");
+        }
+
+        // Independently inspect the metadata marker's ABI Number, without
+        // depending on Suss equality, hash, printing or collection comparison.
+        for name in [
+            "boundary-original",
+            "boundary-collapsed",
+            "boundary-associated",
+            "boundary-regrown",
+            "boundary-roundtrip",
+        ] {
+            let value = session
+                .eval(&format!("(get (meta {name}) :boundary)"))
+                .unwrap();
+            session.collect().unwrap();
+            session
+                .inspect(&value, |mut store, value| {
+                    let fields = value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_struct(&store)?
+                        .unwrap()
+                        .fields(&mut store)?
+                        .collect::<Vec<_>>();
+                    let [Val::F64(bits)] = fields.as_slice() else {
+                        panic!("{name}: metadata Number layout");
+                    };
+                    assert_eq!(*bits, 17f64.to_bits(), "{name}: metadata marker");
+                    Ok(())
+                })
+                .unwrap();
+        }
+
+        // At 1057 the original has shift 10; popping its one-element tail
+        // collapses to shift 5. Unchanged leaf 1 survives both collapse and
+        // association at leaf 0; regrowth shares the associated root as child 0.
+        for source in [
+            "(== (.-shift boundary-original) 10)",
+            "(== (.-shift boundary-collapsed) 5)",
+            "(== (.-shift boundary-regrown) 10)",
+            "(identical? (suss.core/pv-aget (suss.core/pv-aget (.-root boundary-original) 0) 1) (suss.core/pv-aget (.-root boundary-collapsed) 1))",
+            "(identical? (suss.core/pv-aget (.-root boundary-collapsed) 1) (suss.core/pv-aget (.-root boundary-associated) 1))",
+            "(not (identical? (suss.core/pv-aget (.-root boundary-collapsed) 0) (suss.core/pv-aget (.-root boundary-associated) 0)))",
+            "(identical? (.-root boundary-associated) (suss.core/pv-aget (.-root boundary-regrown) 0))",
+            "(not (identical? (.-tail boundary-collapsed) (.-tail boundary-associated)))",
+        ] {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            session
+                .inspect(&value, |store, value| {
+                    let sentinel = value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32();
+                    assert_eq!(sentinel, 4, "{source}: true Boolean sentinel");
+                    Ok(())
+                })
+                .unwrap();
         }
     }
 }
