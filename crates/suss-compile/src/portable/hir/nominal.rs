@@ -442,6 +442,14 @@ impl Analyzer<'_> {
                 self.literal_form(field, Literal::String(symbol.name.encode_utf16().collect())),
             );
         }
+        // parse-type preserves prior declaration fields independently of the
+        // ordinary def/:declared rule. Capture that revision before def can
+        // replace it, selecting only this namespace's actual declaration.
+        let previous_type_info = if let Kind::Symbol(name) = &args[0].kind {
+            self.environment.namespace_scope(self.phase).declarations.into_iter()
+                .find(|(global, _)| global.name() == name.name)
+                .map(|(_, info)| info.clone())
+        } else { None };
         // Declare the source identity before method analysis, for self type references.
         let declaration = self.definition(form, &[args[0].clone()], false)?;
         let Expression::Definition {
@@ -452,6 +460,40 @@ impl Analyzer<'_> {
             unreachable!()
         };
         let class_global = class_global.clone();
+        // Pinned parse-type (analyzer.cljc3614–3649) publishes constructor
+        // source facts before analyzing methods. Do not infer these from the
+        // later native descriptor/closure storage.
+        // A truthy :declared ordinary def can preserve an older revision.
+        // A source type has its own current declaration and must not recover
+        // its tag/metadata/origin from that ordinary-def preservation rule.
+        let mut type_info = previous_type_info.unwrap_or_else(|| {
+            self.environment.definition_info(&class_global)
+                .expect("declared source type").clone()
+        });
+        let previous = reader_metadata_pairs(&type_info.declaration)?;
+        let mut metadata = previous.chunks_exact(2).filter(|pair| {
+            // parse-type replaces these defaults before applying current
+            // metadata; unrelated preserved declaration fields stay intact.
+            !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none()
+                && matches!(key.name.as_str(), "tag" | "type" | "num-fields" | "record"))
+        }).flat_map(|pair| pair.iter().cloned()).collect::<Vec<_>>();
+        for pair in reader_metadata_pairs(&args[0])?.chunks_exact(2) {
+            let mut retained = Vec::new();
+            for old in metadata.chunks_exact(2) {
+                if old[0].kind != pair[0].kind { retained.extend_from_slice(old); }
+            }
+            retained.extend_from_slice(pair);
+            metadata = retained;
+        }
+        type_info.declaration = args[0].clone();
+        type_info.declaration.metadata = if metadata.is_empty() { vec![] } else {
+            vec![Form { kind: Kind::Map(metadata), span: 0..0, metadata: vec![] }]
+        };
+        type_info.definition_form = form.clone();
+        type_info.origin = self.origin.clone();
+        type_info.type_fields = Some(fields.len());
+        type_info.analysis_completed = true;
+        self.environment.record_definition(class_global.clone(), type_info);
         let Kind::Symbol(symbol) = &args[0].kind else {
             unreachable!()
         };

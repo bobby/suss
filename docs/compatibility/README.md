@@ -19,6 +19,13 @@ failures do not establish compatibility; ExceptionInfo implementation and broade
 semantic/arity coverage remain M2/M4/M7 work. The bounded M1-02 evidence-harness
 acceptance is complete; known failures are not compatibility successes.
 
+Constructor source-AST transport has nine pinned analyzer/Node observations
+and matching compiled execution in both caller phases after GC, including
+constructor children, selected type declaration facts and ordered effects.
+The executing regression uses an explicit finite macro-operation test budget;
+it does not certify default-budget execution or the complete analyzer schema.
+See [constructor source-AST evidence](../runtime/compiled-macro-constructor-source-asts.md).
+
 The contract is [the design specification](../design/suss-0.3.1.md), using the
 pinned ClojureScript submodule. `cljs-core.edn` contains **1,065 source declarations**
 from core.cljs and core.cljc, with declaration kind, phase, source range, reader

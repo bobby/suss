@@ -208,6 +208,9 @@ pub struct DefinitionInfo {
     /// Actual initializer syntax, available before its body is analyzed.
     pub initializer_form: Option<suss_reader::forms::Form>,
     pub initializer: Option<std::sync::Arc<super::hir::Hir>>,
+    /// Genuine deftype declaration facts, captured before method analysis.
+    /// None is an ordinary def, not a zero-field source type.
+    pub type_fields: Option<usize>,
     pub once: bool,
 }
 impl DefinitionInfo {
