@@ -22,8 +22,8 @@ use suss_compile::{
     portable_macros::CompiledMacros,
     portable_repl::{self, CompiledValue, NativeDisplay},
     portable_session::{
-        FutureState, FutureStatus, NativeRequest, NativeRequestQueue, Session, SessionError,
-        SessionValue,
+        AsyncDispatch, FutureState, FutureStatus, NativeRequest, NativeRequestQueue, Session,
+        SessionError, SessionValue,
     },
 };
 use suss_reader::{Symbol, forms::Kind};
@@ -177,6 +177,10 @@ pub struct NativeReplHost<Out: Write, Err: Write> {
     #[cfg(test)]
     injected_submission_tracking_failure: bool,
     #[cfg(test)]
+    dispatched_turns: usize,
+    #[cfg(test)]
+    injected_ownerless_mutation_interrupt: bool,
+    #[cfg(test)]
     reset_preflight: bool,
     #[cfg(test)]
     injected_observation_interrupt: Option<(&'static str, usize)>,
@@ -217,6 +221,10 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
             submission_quarantined: false,
             #[cfg(test)]
             injected_submission_tracking_failure: false,
+            #[cfg(test)]
+            dispatched_turns: 0,
+            #[cfg(test)]
+            injected_ownerless_mutation_interrupt: false,
             #[cfg(test)]
             reset_preflight: false,
             #[cfg(test)]
@@ -645,6 +653,27 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
         self.deferred_observation_interrupt =
             tracking.as_ref().is_err_and(|error| error.is_interrupt());
         tracking?;
+        let dispatch = self.session.observe_async_dispatch();
+        if self.getter_result("dispatch-needed", dispatch)? == AsyncDispatch::NoDispatchNeeded {
+            // Terminal reports still progress when the scheduler has no work.
+            self.observe_tasks()?;
+            return Ok(false);
+        }
+        // From here on, a runner/service interruption needs an actual recovery
+        // receipt. No owner presence or observation result fabricates that proof.
+        self.deferred_observation_interrupt = false;
+        #[cfg(test)]
+        {
+            self.dispatched_turns += 1;
+        }
+        #[cfg(test)]
+        if self.injected_ownerless_mutation_interrupt {
+            self.injected_ownerless_mutation_interrupt = false;
+            // Publish a real source-task cancellation request (mutation), then model
+            // interruption before any source owner/recovery receipt is available.
+            self.session.request_cancel_pending_tasks()?;
+            return Err(SessionError::Trap(wasmtime::Trap::Interrupt.into()));
+        }
         let result = self.session.run_async_turn();
         match result {
             Err(original) => {
@@ -1261,5 +1290,115 @@ mod tests {
             1
         );
         assert!(!host.errors.is_empty());
+    }
+    #[test]
+    fn pending_fifo_idle_proof_skips_dispatch_and_defers_signal_until_cleanup() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("pending");
+        let cpath = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(cpath.as_ptr(), 0o600) }, 0);
+        // Keep a writer open with no bytes, so the actual reader stays Pending.
+        let _writer = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .custom_flags(libc::O_NONBLOCK)
+            .open(&path)
+            .unwrap();
+        let mut host = host();
+        let path = serde_json::to_string(path.to_str().unwrap()).unwrap();
+        drop(host.submit(&format!("(def idle-effects 0) (def idle-owner (suss.async/future* (try (suss.async/await* (suss.io/read-byte {path})) (finally (set! idle-effects (+ idle-effects 1))))))")).unwrap());
+        assert!(host.pump_one().unwrap());
+        host.poll_completions().unwrap();
+        assert_eq!(host.endpoints.len(), 1);
+        let slot = host.endpoints[0].file.as_ref().unwrap().clone();
+        assert!(slot.lock().unwrap().is_some());
+        let dispatched = host.dispatched_turns;
+        for _ in 0..16 {
+            assert!(!host.pump_one().unwrap());
+        }
+        assert_eq!(host.dispatched_turns, dispatched, "pending is not runnable");
+        assert_eq!(host.session.async_task_counts().unwrap(), (1, 0, 0));
+        host.injected_observation_interrupt = Some(("dispatch-needed", 0));
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Line("(+ 48000 idle-effects)".into()),
+                InputEvent::Interrupt,
+                InputEvent::Eof,
+            ]),
+        };
+        session_event_loop::run(&mut host, &mut input).unwrap();
+        assert!(host.injected_observation_interrupt.is_none());
+        assert!(
+            slot.lock().unwrap().is_none(),
+            "native read fd closes despite retained controller root"
+        );
+        assert_eq!(host.session.async_task_counts().unwrap(), (0, 0, 0));
+        assert_eq!(host.session.stats().pending_host_requests, 0);
+        let output = String::from_utf8_lossy(&host.output);
+        assert_eq!(output.matches("^C").count(), 1);
+        assert_eq!(
+            output.matches("48001").count(),
+            1,
+            "awaited cancellation cleanup precedes buffered source"
+        );
+        assert!(host.errors.is_empty());
+    }
+
+    #[test]
+    fn no_dispatch_idle_path_still_reports_completed_source_failures() {
+        let mut host = host();
+        drop(host.submit("(suss.async/future* (throw 48101))").unwrap());
+        // Complete source directly, leaving its tracked owner for the host to
+        // observe on an idle turn rather than in pump's post-dispatch branch.
+        assert!(host.session.run_async_turn().unwrap());
+        assert_eq!(
+            host.session.observe_async_dispatch().unwrap(),
+            AsyncDispatch::NoDispatchNeeded
+        );
+        assert!(!host.pump_one().unwrap());
+        assert_eq!(host.dispatched_turns, 0);
+        let reports = host.take_async_reports();
+        assert_eq!(reports.len(), 1);
+        assert!(matches!(
+            &reports[0],
+            HostReport::Error(SessionError::Language(_))
+        ));
+        assert!(!host.pump_one().unwrap());
+        assert!(host.take_async_reports().is_empty());
+    }
+
+    #[test]
+    fn ownerless_mutation_interrupt_never_reuses_idle_or_recovery_proof() {
+        use super::super::{session_event_loop, terminal_input::InputEvent};
+        let mut host = host();
+        assert!(!host.pump_one().unwrap()); // prior successful NoDispatchNeeded
+        drop(
+            host.submit("(suss.async/future* (suss.async/await* (suss.internal.async/pending)))")
+                .unwrap(),
+        );
+        host.last_pump_recovered = true; // stale proof must clear at the new call
+        host.injected_ownerless_mutation_interrupt = true;
+        let mut input = InterruptInput {
+            events: std::collections::VecDeque::from([
+                InputEvent::Interrupt,
+                InputEvent::Line("(must-not-run)".into()),
+            ]),
+        };
+        let error = match session_event_loop::run(&mut host, &mut input) {
+            Err(session_event_loop::LoopError::Host(error)) => error,
+            other => panic!("uncertain mutation must quarantine: {other:?}"),
+        };
+        assert!(error.is_interrupt());
+        assert!(!host.observation_interrupted(&error));
+        assert_eq!(
+            host.async_error_disposition(&error),
+            AsyncErrorDisposition::Quarantine
+        );
+        assert!(host.session.last_async_turn_recovered_owner().is_none());
+        assert_eq!(host.dispatched_turns, 1);
+        assert!(!host.tasks.is_empty(), "uncertain producer remains rooted");
+        assert_eq!(input.events.len(), 2);
+        assert!(host.output.is_empty());
     }
 }

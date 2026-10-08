@@ -2528,6 +2528,87 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
         &[ValType::I32],
         &[LocalGet(0), I32Const(1), Call(run)],
     );
+    // Pure idle proof over private global scheduler state. Queue length alone
+    // misses ready dependencies, cancellation, terminal rows and stream journals.
+    let mut body = vec![GlobalGet(SCHEDULER_GLOBAL), LocalSet(0)];
+    item(&mut body, 0, 3);
+    body.extend([I32Const(0), RefI31, RefEq, I32Eqz]);
+    item(&mut body, 0, 1);
+    body.extend([
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Or,
+        Call(b.names["stream-pending-count"]),
+        I32Or,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    item(&mut body, 0, 0);
+    body.extend([
+        LocalSet(1),
+        I32Const(0),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+    ]);
+    arr(&mut body, 1);
+    body.extend([ArrayLen, I32GeU, BrIf(1)]);
+    arr(&mut body, 1);
+    body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(2)]);
+    item(&mut body, 2, 0);
+    body.push(LocalSet(2));
+    producer(&mut body, 2, read);
+    body.extend([
+        Call(status),
+        I32Eqz,
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    // Start/cancel registrations need dispatch without inspecting their sentinel
+    // dependency. Ordinary await registrations need refresh when it is terminal.
+    registration_item(&mut body, 2, 4);
+    body.extend([
+        RefCastNonNull(HeapType::I31),
+        I31GetU,
+        I32Const(2),
+        I32GeU,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+    ]);
+    registration_item(&mut body, 2, 1);
+    body.extend([
+        Call(status),
+        I32Eqz,
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        I32Const(0),
+    ]);
+    b.function_with_locals(
+        "async-scheduler-dispatch-needed",
+        &[],
+        &[ValType::I32],
+        &[(3, VALUE), (1, ValType::I32)],
+        &body,
+    );
+
     let mut body = vec![GlobalGet(SCHEDULER_GLOBAL), LocalSet(0)];
     item(&mut body, 0, 0);
     body.extend([RefCastNonNull(HeapType::Concrete(ARGS)), ArrayLen]);

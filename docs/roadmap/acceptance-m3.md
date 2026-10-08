@@ -1,28 +1,25 @@
 # M3 acceptance audit in progress
 
 This audit preserves issues #12–#15, stable work packages M3-01–M3-04 and
-accepted design sections 6–7/9. M3 is not certified complete. M2 remains a
-milestone dependency. Passing prerequisites or selected regressions do not replace
+accepted design sections 6–7/9. M3 is not certified complete. M2 issues #8–#11 are closed and their
+merged prerequisite behavior is exercised by the integrated suites. Passing prerequisites or selected regressions do not replace
 full requirement-by-requirement acceptance, independent per-PR review and successful
 exact final-head CI. No acceptance criterion is removed or narrowed here.
 
 ## Current source and evidence, 2026-10-07
 
-This audit inspects `/private/tmp/suss-m3-source-futures` at committed HEAD
-`2b57ec5` plus subsequent display repairs and the new stream live-heap test. The
-local `origin/main` history includes #210 (`6ebf952`), evaluator retirement #215
-(`85b6218`) and exact live-heap evidence #217 (`4c3bb6d`). Those merged changes
-supersede the historical evaluator/accounting gaps; they do not certify M3 or
-the current uncommitted backend. No Cargo command was run for this document audit.
+This audit inspects PR #221 on `portable/m3-source-futures`, including the
+independently reviewed native observation repair at `ac1b4fd`. Main includes
+merged #217, #218 and #220. The source is frozen while the required unfiltered
+workspace baseline and exact-head CI run. Passing focused evidence below does
+not substitute for their terminal results.
 
 The earlier PR #182 and 2026-10-05 production audits recorded older snapshots.
 Their test results remain historical evidence in [handoff](handoff.md), not
 current descriptions of active entry points. Current compiler/CLI source has no
 `MacroEvaluator` or `expand::expand_all`. The old evaluator component frontend
 and byte-only expression route are retired, rather than newly supported targets.
-GitHub issue status remains authoritative: root reports issue #15 CLOSED and
-PRs #218 and #220 merged into main `b0024c0`; no PRs remain open. Issue closure does not establish the original
-pending-I/O acceptance evidence or certify the incomplete canonical worktree.
+GitHub issue status remains authoritative: #12 and #13 are open; #14 and #15 are closed. PRs #218 and #220 are merged into main `b0024c0`; implementation PR #221 is draft. Issue closure does not substitute for current acceptance evidence.
 The full implementation objective remains unchanged.
 
 | Requirement | Current evidence and remaining acceptance |
@@ -34,19 +31,19 @@ The full implementation objective remains unchanged.
 | Compile failure publishes no session bindings | Transactional input/module preparation and `persistent_session_compile_failure_is_atomic_and_language_failure_recovers` cover native cases. Macro graph replacement and failed declaration provenance have separate regressions. Audit all current public compiled entry points; the evaluator component host was removed by #215. |
 | Failed definition initializer preserves its old binding; preceding effects are not rolled back | Persistent session, namespace retry and source definition regressions execute this distinction. Dependency initialization completed before the error is preserved. |
 | `defonce` and initializers execute once, including bound nil/false | Named persistent session tests and dependency diamond/retry tests execute these cases; reload must not replay unrelated completed initializers. |
-| Namespace/phase resolution, reload and errors are deterministic | `namespace_session`, macro import/reload tests and namespace/declaration oracle corpora cover aliases, source selection, ambiguity and selected policies. Published dependency loading is still explicitly rejected; final namespace/cache/policy acceptance is open. |
+| Namespace/phase resolution, reload and errors are deterministic | `namespace_session`, macro import/reload tests and namespace/declaration oracle corpora cover aliases, source selection, ambiguity and selected policies. Published project dependency loading is explicitly rejected and belongs to later work. Final integrated execution remains pending. |
 | Macros execute compiled Suss in a separate phase Store and namespace graph | `CompiledMacros`, `compiled_phase_session`, imports/reload and source command tests execute phase isolation and retained expansions. Runtime-only command exit access is denied in Macro tests. |
 | `&form` retains reader data, explicit metadata and actual source provenance | `compiled_macro_form_source_metadata` and source-position tests compare selected pinned observations, including generated syntax with unknown locations. Keep all declared bounds/errors and verify the complete accepted contract. |
-| `&env` exposes genuine portable source facts | Rooted `AnalysisGraph` and source environment/declaration/tag corpora cover selected records. Source tags, local/global references, compound forms, invocation children and constructor/type declaration facts have subsequently gained pinned and native executing evidence; see the source-AST entries in [handoff](handoff.md) and [compatibility inventory](../compatibility/README.md). These increments do not certify the complete portable environment/schema or remaining inference rules. |
+| `&env` exposes genuine portable source facts | Rooted `AnalysisGraph` and source environment/declaration/tag corpora cover selected records. Source tags, local/global references, compound forms, invocation children and constructor/type declaration facts have subsequently gained pinned and native executing evidence; see the source-AST entries in [handoff](handoff.md) and [compatibility inventory](../compatibility/README.md). Independent inspection found no additional missing original M3 environment requirement. The accepted portable contract does not require the complete upstream analyzer schema; unassessed compatibility remains explicit. |
 | Syntax quote/unquote/splicing and deterministic gensyms | `compiled_macro_syntax_quote` and `compiled_bootstrap` execute selected forms, state across fragments, failed-input stability, lazy output and collection data. Complete contract acceptance still requires an explicit scope audit. |
 | Bounded bootstrap expander and reproducible versioned artifacts without Java | Both phase pairs reproduce and execute through `scripts/verify-bootstrap.sh`; input mutation/corruption checks reject stale identity. Development JVM/Node oracles are not shipped dependencies. |
-| Cache keys include source, compiler/runtime ABI, macro dependency graph, target and flags; macro changes invalidate appropriately | Artifact identity, `compiled_source_artifact_cache` and `compiled_module_cache` execute targeted graph reload, declaration recovery, cross-Store and reset behavior. Complete published dependency/target cache policy remains open. |
+| Cache keys include source, compiler/runtime ABI, macro dependency graph, target and flags; macro changes invalidate appropriately | Artifact identity, `compiled_source_artifact_cache` and `compiled_module_cache` execute targeted graph reload, declaration recovery, cross-Store and reset behavior. The current fixed target/profile and supported dependency policy were independently audited; published dependencies remain later work. Final integrated execution remains pending. |
 | Remove the tree-walking macro evaluator after compiled bootstrap succeeds | Removed by #215: current compiler/CLI source contains no `MacroEvaluator`, and the evaluator component host is retired. Merged main commit `85b6218` is the evaluator retirement evidence; this document does not infer current issue state from source history. Current integrated-head regression execution and bootstrap reproduction remain required after continuation changes. |
 | Runtime exceptions return control to the prompt | Native REPL recovery and typed language exception tests execute this. Traps/host errors remain separately classified. Final acceptance must include errors across pending I/O/resumption. |
 | Reset releases session state and invalidates old/foreign owned handles | Native reset/handle/phase/cache tests execute targeted cases. First-release generated code may stay resident until reset, as allowed by the design. Current reset requests task cancellation, invokes native pending-operation hooks at most once, drains bounded compiled cleanup and returns `ResetPending` with the old Store usable when cleanup remains blocked. The focused reset regression passes; canonical subtask/resource teardown and final integrated reset acceptance remain open. |
-| Cancellation while interactive I/O is pending cleans up and resumes at most once | **Partial implementation, acceptance open:** actual compiled source continuations and queued cancellation now execute. Own cancellation bypasses catches, permits awaited finally to remain Pending, then settles Cancelled; a cancelled dependency is a distinct catchable failure. Native host completion roots and ownership guards execute through Session. Synchronous interruption remains a separate trap path. Actual interactive pending I/O and canonical callback/subtask cancellation/reset/resource-release evidence remain required. |
-| Pending/Ready/Failed/Cancelled transitions preserve locals, handlers, dynamic scope and cleanup; handle races/reentry/fairness | `portable/ir/async.rs`, `portable/emit/async.rs` and `runtime_abi/async.rs` implement compiled stackless resume states, GC-rooted snapshots, resumable try/finally/dynamic regions, generation-checked registrations and FIFO turns. Executing source/scheduler suites cover pending captures, consecutive awaits, GC, failure/cleanup override, invalid await recovery, cancellation during pending finally and caller dynamic restoration. Verified source backedges yield with rooted state; focused tests cover completed-dependency progress, bounded queue/registration roots and yielding catch/finally regions. Ordinary synchronous callees remain atomic; canonical reentry/races and full fairness acceptance remain open. No source interpreter or synchronous future flattening is used. |
-| Code residency and live GC/leak accounting are distinguished | **Merged #217 evidence:** `4c3bb6d` adds exact post-collection Wasm GC live-byte measurements via a test-only logger for pinned Wasmtime 49.0.1's `allocated_bytes` record. `session_live_heap.rs` asserts exact baseline return for released handle-held, cyclic and cell-retained graphs in Runtime and Macro Stores, fixed resident-code counters, and fresh replacement-Store equality after repeated reset. This observes replacement state, not the old Store's drop. Current production `SessionStats` separately reports code/artifact sizes, handles, pending host requests, GC heap capacity and numeric memory capacity; it has no live-byte field. #217 did not add a production live-byte API. Extend exact live-byte evidence to suspended/cancelled tasks and host/canonical resource roots; queue/root counts alone are not byte/leak measurements. |
+| Cancellation while interactive I/O is pending cleans up and resumes at most once | **Partial implementation, acceptance open:** actual compiled source continuations and queued cancellation now execute. Own cancellation bypasses catches, permits awaited finally to remain Pending, then settles Cancelled; a cancelled dependency is a distinct catchable failure. Native host completion roots and ownership guards execute through Session. Synchronous interruption remains a separate trap path. Actual Unix FIFO/PTY process tests and generated canonical component cancellation now execute pending I/O, awaited cleanup and resource release. Final integrated execution remains pending; non-Unix interactive async I/O is unverified. |
+| Pending/Ready/Failed/Cancelled transitions preserve locals, handlers, dynamic scope and cleanup; handle races/reentry/fairness | `portable/ir/async.rs`, `portable/emit/async.rs` and `runtime_abi/async.rs` implement compiled stackless resume states, GC-rooted snapshots, resumable try/finally/dynamic regions, generation-checked registrations and FIFO turns. Executing source/scheduler suites cover pending captures, consecutive awaits, GC, failure/cleanup override, invalid await recovery, cancellation during pending finally and caller dynamic restoration. Verified source backedges yield with rooted state; focused tests cover completed-dependency progress, bounded queue/registration roots and yielding catch/finally regions. Ordinary synchronous callees remain atomic; Canonical callback ownership, generation, recovery and retirement regressions also execute; final integrated acceptance remains pending. No source interpreter or synchronous future flattening is used. |
+| Code residency and live GC/leak accounting are distinguished | **Merged #217 evidence:** `4c3bb6d` adds exact post-collection Wasm GC live-byte measurements via a test-only logger for pinned Wasmtime 49.0.1's `allocated_bytes` record. `session_live_heap.rs` asserts exact baseline return for released handle-held, cyclic and cell-retained graphs in Runtime and Macro Stores, fixed resident-code counters, and fresh replacement-Store equality after repeated reset. This observes replacement state, not the old Store's drop. Current production `SessionStats` separately reports code/artifact sizes, handles, pending host requests, GC heap capacity and numeric memory capacity; it has no live-byte field. #217 did not add a production live-byte API. Focused suspended-task, dead-capture, stream graph and 10,000 varied task-call regressions measure actual post-GC bytes and fixed code/handle counts. Real pending-I/O tests separately verify FD release. These are not generic WIT/OS-resource 10,000-call stress; queue/root counts alone are not byte/leak measurements. |
 
 ## Current executing evidence and limits
 
@@ -161,3 +158,48 @@ Use `Refs` for partial progress and `Closes` only for fulfilled issue criteria.
 No PR may be merged without a later explicit user instruction. M3 acceptance
 remains unproven pending the final requirement-by-requirement audit; this is an
 evidence statement, not a claim that issue #15 is open.
+
+## Final repair evidence awaiting integrated gates
+
+At `ac1b4fd`, CLI binary unit selectors passed 12 native-host and seven event-loop
+tests; process suites passed eight native async I/O, one PTY and eight persistent
+REPL tests. Pure getter interruptions retain roots and wait for acknowledgment;
+completed source submissions are observed once without replay. Interrupted reset
+preflight preserves reset intent. Non-Interrupt post-submit tracking failures
+quarantine the fresh submission and preserve its result before later source;
+ordinary compilation/language errors still recover at the prompt. Ownerless or
+uncertain mutation failures remain conservatively quarantined.
+
+The first CI run exposed fixture assumptions and fuel sweep horizons after the
+stream-aware runtime grew. Repairs retain the assertions: select the unique
+mutable UID global, use the installed private cancellation entry in raw harnesses,
+and extend sweeps to include both actual interruption and successful completion.
+The native publication sweep observes actual terminal OutOfFuel boundaries at
+4694–4697 for both resolve and reject. The canonical retirement fixture uses the
+Session default 10M budget. The earlier failing CI and interrupted baseline runs
+remain recorded in the handoff and are not counted as acceptance passes.
+
+Both handwritten canonical caller fixtures (`.wat` and `.wasm`) are tracked and
+required. Independent full-diff and repair reviews have no unresolved material
+findings. The third full baseline is running on this frozen code; final-head CI
+at `ac1b4fd` completed with foundation and integration partitions 0–5 and 7
+passing, but partition 6 failed Linux PTY interruption. Promotion and M3
+certification wait for the repaired head to pass all required gates.
+
+## Closure boundary agreed with Bobby
+
+Complete the original acceptance criteria of #12–#15 through PR #221: executing
+incremental persistence, live bindings and namespace failure behavior, compiled
+macro phase/form/environment/bootstrap/cache behavior, and interactive
+exception/cancellation/reset/root accounting. Fix defects exposed by those
+acceptance tests, obtain independent review and green exact final-head CI,
+reconcile evidence, then promote for Bobby's review. Later interoperability and
+compatibility work retains its separate scope. No merge is authorized.
+
+The latest idle-dispatch repair adds a pure query covering scheduler readiness,
+stream roots and native retirement obligations. It skips dispatch only when
+these observations prove no service work is needed; it still observes terminal
+reports. Once mutation-capable scheduler service starts, uncertain ownerless
+interruptions remain quarantined. The withdrawal-journal regression explicitly
+constructs an unpublished prepared phase-2 journal; it does not claim observation
+of a published receipt or a particular fuel interruption window.

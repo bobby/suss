@@ -24,7 +24,7 @@ use wasmtime::{
 };
 
 mod frontend;
-pub use frontend::{FutureState, FutureStatus};
+pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 
