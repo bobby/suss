@@ -35,3 +35,7 @@ portable setup commands are in [reproduction](../reproduce.md). The normal
 workspace CI excludes the isolated bridge and LLVM tools. Require these explicit
 experiment gates, independent final-head review, full workspace baseline and
 green final-head root CI before promoting the PR. No completed M4 claim follows.
+
+The two Cargo unit logs omit terminal empty lines for clean repository diff
+checks; their complete original output remains in the recorded temporary logs.
+No diagnostic, result or failure line was removed.

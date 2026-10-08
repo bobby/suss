@@ -24,4 +24,3 @@ test source_section::tests::source_attachment_requires_resealing_and_survives_id
 test analysis::tests::representative_source_roundtrip_and_mutation ... ok
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
-
