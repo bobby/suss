@@ -1036,3 +1036,14 @@ capture environments remain separate from the rooted UTF16 label. Fourteen
 closure-lowering tests and fifty ABI tests pass, including the owned-label and
 foreign raw-environment regressions. Complete printer constructor/storage/body
 behavior and original M3 acceptance remain open; no declaration is reclassified.
+
+The bundled `suss.async` runtime source now defines resolved/rejected futures,
+completion construction, first-terminal settlement and cooperative `cancel!` via
+private ABI2 callable adapters. Root executed all four `compiled_async_runtime_api` regressions successfully
+(9.27s), alongside seven Session lifecycle tests (11.19s). Java/Node-free
+bootstrap reproduction/identity verification and four execution tests passed
+(13.74s). Logs: `/private/tmp/suss-public-async-session-first.log` and
+`/private/tmp/suss-public-async-bootstrap-verify.log`. The subsequent host
+task-owned settlement guard still requires fresh regeneration and execution.
+This evidence does not establish complete async, canonical callback ABI or M3
+lifecycle acceptance.

@@ -219,6 +219,20 @@ impl Analyzer<'_> {
         let source_body =
             self.analyzed_body(&args[..body_end], form.span.clone(), context, false)?;
         let body = self.exception_region(form, vec![], source_body.clone());
+        let kind = if self.suspendable {
+            Expression::AsyncTry {
+                body: Box::new(source_body.clone()),
+                handler: payload.as_ref().map(|_| Box::new(source_handler.clone())),
+                cleanup: source_cleanup.clone().map(Box::new),
+                payload: payload.as_ref().map(|payload| {
+                    let Kind::Symbol(name) = &payload.declaration.kind else { unreachable!() };
+                    Parameter { id: payload.id, name: name.name.clone(), metadata: vec![],
+                        span: payload.declaration.span.clone() }
+                }),
+            }
+        } else {
+            Expression::Try { regions: [Box::new(body), Box::new(handler), Box::new(cleanup)] }
+        };
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Try {
                 body: std::sync::Arc::new(source_body),
@@ -231,9 +245,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Try {
-                regions: [Box::new(body), Box::new(handler), Box::new(cleanup)],
-            },
+            kind,
         })
     }
 }

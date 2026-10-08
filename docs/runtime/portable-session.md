@@ -90,7 +90,53 @@ references become invalid when that scope ends. It is not a language printer or
 an opaque-object success decoder. Tests inspect exact numeric fields, UTF-16 units,
 sentinel values and exception descriptors independently of Suss equality/printing.
 
-`reset` constructs a replacement before dropping the old Store. It preserves
+`reset` constructs a replacement before requesting cancellation in the old Store.
+It requests cooperative cancellation of all tasks and registered native host
+operations, then drives at most 64 fuel-budgeted scheduler turns. Replacement
+requires zero pending task owners, registrations, queued work and host requests.
+If cleanup awaits an unknown producer or exceeds that bound, it returns
+`SessionError::ResetPending`: the old Store, bindings and handles remain usable
+for completing cleanup and retrying reset. Cancellation effects already performed
+are retained; reset retries do not replay source initializers or host hooks.
+The compiled two-phase REPL uses the same retirement gate for both Stores before
+replacing either. A failed replacement preparation starts no cancellation.
+
+`pending_future_with_cancel` registers an internal `OwnedRooted` future and a
+`FnOnce() + Send + 'static` cancellation hook. The hook must be nonblocking,
+must not execute Suss source, and should request host-operation abortion without
+waiting for it. Reset consumes it before invocation, at most once across retries.
+Terminal completion releases the registry entry without invoking its hook.
+`pending_future` uses the same registry with a no-op host hook. These native
+storage APIs do not prove canonical callback transport or disposal of arbitrary
+host resources. `SessionStats::pending_host_requests` counts registry roots
+separately from caller-owned `external_value_handles`.
+
+Fresh-bootstrap native reset validation on 2026-10-07 passes all three focused
+unit regressions: unknown-producer preservation/retry and cancellation-catching
+cleanup pass 2/2 in 6.55s; independent registry ownership/normal completion passes
+1/1 in 0.19s, with zero failures or ignores. The former verifies both direct and
+compiled REPL retirement gates, explicit completion in the retained old Store,
+exactly-once host-hook invocation and captured read-guard release, actual
+cancellation caught in `finally`, and rejection of late handles after replacement.
+The latter distinguishes internal roots from external handles and checks that
+normal completion does not invoke cancellation. Root's separate native
+`session_lifecycle_reset_pending` integration also passes 1/1 in 0.19s.
+The dedicated [`session_lifecycle_reset_interruption.rs`](../../crates/suss-compile/tests/session_lifecycle_reset_interruption.rs)
+integration passes 1/1 in 0.16s, with zero failures, ignores or filtered tests.
+Its consumed host hook invokes the real interrupt handle immediately before
+runtime cancellation: reset returns `Trap::Interrupt`, the future remains Pending
+and the old closure remains callable. After budget refresh, reset retries without
+replaying the hook or releasing its captured guard twice, and rejects late old
+handles after replacement. No sleep or synthetic interruption result is used.
+Commands and logs are recorded in the [handoff](../roadmap/handoff.md).
+
+These results cover native reset storage and cleanup only. Task cancellation
+still lacks an operation-to-waiter ownership association for pending host I/O;
+it must not abort a dependency shared by another task. Canonical per-invocation
+cancellation, callback/resource disposal and final integrated acceptance remain
+unproven.
+
+A successful reset preserves
 options/engine, discards bindings, namespace scopes, loaded identities and resident
 instances, and invalidates old handles. Old external handles may outlive reset,
 but cannot access the new Store. Minimal sessions provision bounded bootstrap intrinsics. `Session::new_repl()`
@@ -213,3 +259,71 @@ required. See [the artifact boundary and remaining AOT
 work](compiled-core-bindings.md). Base runtime/initializer input byte sizes are
 reported separately from installed user fragment artifact bytes. Neither counter
 is a JIT-memory or live-GC measurement.
+
+
+## Native pending-I/O profile
+
+The Unix command REPL installs an explicit Runtime-only native profile before
+source preparation. `suss.io/read-byte(path)` immediately returns a nominal GC
+future and queues owned argument/completion roots. The Store owner opens a fresh
+endpoint with `O_NONBLOCK`, reads one byte, and closes it before publishing the
+outcome. Ready contains a number in `0..255`, or nil for EOF. Each call opens a
+new endpoint; this operation is not a shared stream cursor. Native open/read
+failures produce genuine Failed ExceptionInfo values, distinct from canonical
+WIT `result::err`. Source-owned namespaces and existing source bindings cannot
+be silently replaced by profile installation.
+
+The data endpoint must differ from command stdin, checked by device/inode after
+opening; aliases and symlinks to the command endpoint are rejected before read.
+The adapter never reads command input, runs source from a host callback, or
+settles completions on a background thread. `O_NONBLOCK` does not guarantee
+bounded regular-file or filesystem latency. Other platforms and general streams,
+backpressure, multi-byte transfers and WASI interoperability retain their design
+acceptance requirements.
+
+The frontend polls input and native completions between bounded scheduler turns.
+Ctrl-C requests cooperative task cancellation; awaited finally work may suspend
+and receives I/O service before retirement. Reset and exit drain source owners
+and native endpoints before discarding old roots. Reset reinstalls the profile
+with fresh Store identities; late old handles cannot publish into the replacement.
+Printing a future observes nominal status without implicit await, source execution
+or terminal-payload rooting. Resident code counters remain distinct from the
+test-only actual post-GC live-byte probe.
+
+Current evidence and limitations are recorded in the milestone issues and handoff.
+The staged native implementation does not certify all M3 acceptance criteria.
+
+
+## Portable bounded stream contract (implementation under validation)
+
+The original `suss.async` GC stream profile is separate from canonical WIT stream
+transport. `stream-pair` takes an integer capacity from 1 through 4096 and returns
+`[reader writer]`. These are unique endpoint capabilities; aliases refer to the
+same endpoint, and there is no operation that creates an independent owner.
+Each endpoint permits one pending operation. A second read or write fails without
+replacing the earlier operation.
+
+`read-chunk reader limit` and `write-chunk writer vector` return task-owned
+futures. Limits and nonempty vector counts must be at most the capacity and 256.
+A write copies its immutable input inside the rooted task, yielding at loop
+backedges before claiming its endpoint. Cancellation during copying leaves the
+endpoint unclaimed. It accepts its entire chunk when enough capacity is available; otherwise it
+waits and provides bounded backpressure. Reads return nonempty immutable vectors
+or a private EOF value recognized by `stream-eof?`. A nil element remains data:
+`[nil]` is distinct from EOF. Completion never invokes source inline.
+
+Closing the writer rejects unaccepted writes, drains already accepted data, then
+returns EOF on reads. Closing the reader discards buffered data and fails pending
+operations. `fail!` accepts only the writer, discards data and preserves its exact
+failure payload. Writer close/failure follows the first terminal choice; repeated
+terminal requests return false. Cancelling an operation withdraws its pending
+request without closing its endpoint. Already committed acceptance or consumption
+is an effect and is not rolled back by later cancellation.
+
+Private operation journals remain rooted through prepared transfer, snapshot
+publication, future settlement and retirement. Scheduler recovery must retire an
+orphan operation when a Wasmtime trap prevents source `finally` from executing.
+Reset checks both scheduler tasks and stream operation roots before replacing the
+Store; old endpoint values then fail the ordinary foreign-value check. These
+requirements need the executing stream, fuel-interruption and GC regressions;
+staged code and bootstrap generation alone do not establish acceptance.

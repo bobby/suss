@@ -1,4 +1,6 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
+pub mod liveness;
+pub mod r#async;
 use super::{
     hir::{
         arithmetic_type, Arithmetic, ArrayOperation, BindingId, Bitwise, Comparison, Expression,
@@ -20,6 +22,16 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    /// An evaluated future operand. Its result exists only on successful resume;
+    /// continuation normalization removes this instruction at a state boundary.
+    Await { future: ValueId },
+    MakeFuture { body: Box<FutureBody>, captures: Vec<ValueId> },
+    /// Compiled region entry. Exceptional successors are represented by latent
+    /// CFG branches; emission always enters the body on the normal path.
+    RegionPush { handler: Option<usize>, cleanup: Option<usize>, end: usize, dynamic: Vec<ValueId> },
+    RegionExit { value: ValueId, cleanup: bool },
+    RegionValue,
+    AsyncDynamicEnter { globals: Vec<Global>, operands: Vec<ValueId> },
     Bitwise {
         operation: Bitwise,
         arguments: Vec<ValueId>,
@@ -106,6 +118,11 @@ pub struct Function {
     pub span: Range<usize>,
 }
 #[derive(Debug, Clone)]
+pub struct FutureBody {
+    pub capture_types: Vec<Type>,
+    pub continuation: r#async::Continuation,
+}
+#[derive(Debug, Clone)]
 pub struct ClosureBody {
     pub display_name: Option<Vec<u16>>,
     pub variadic: bool,
@@ -122,6 +139,7 @@ pub struct GeneralClosureBody {
     pub rest_class: Option<Global>,
 }
 struct Lowerer {
+    suspendable: bool,
     function: Function,
     current: usize,
     bindings: HashMap<BindingId, ValueId>,
@@ -130,6 +148,7 @@ struct Lowerer {
 impl Lowerer {
     fn new(span: Range<usize>) -> Self {
         let mut lowerer = Self {
+            suspendable: false,
             function: Function {
                 values: Vec::new(),
                 blocks: Vec::new(),
@@ -201,6 +220,46 @@ impl Lowerer {
         }
 
         Ok(Some(match &hir.kind {
+            Expression::Await { value } if self.suspendable => {
+                let future = operand!(value);
+                self.emit(Operation::Await { future }, Type::Value, hir.span.clone())
+            }
+            Expression::Future { captures, body } => {
+                let mut captured = Vec::new();
+                let mut typed = Vec::new();
+                for id in captures {
+                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                        span: hir.span.clone(), message: "Undefined HIR future capture".into(),
+                    })?;
+                    captured.push(value);
+                    typed.push((*id, self.function.values[value.0].ty));
+                }
+                let continuation = r#async::lower(body, &typed)?;
+                self.emit(Operation::MakeFuture {
+                    body: Box::new(FutureBody {
+                        capture_types: typed.iter().map(|(_, ty)| *ty).collect(), continuation,
+                    }), captures: captured,
+                }, Type::Value, hir.span.clone())
+            }
+            Expression::AsyncTry { body, handler, cleanup, payload } if self.suspendable => {
+                return self.async_region(hir, body, handler.as_deref(), cleanup.as_deref(), payload.as_ref(), Vec::new());
+            }
+            Expression::AsyncDynamicScope { bindings, body } if self.suspendable => {
+                let mut globals = Vec::new();
+                let mut operands = Vec::new();
+                for (global, _) in bindings {
+                    globals.push(global.clone());
+                    operands.push(self.emit(Operation::GlobalRead(global.clone()), Type::Value, hir.span.clone()));
+                }
+                for (_, value) in bindings { operands.push(operand!(value)); }
+                let frame = self.emit(Operation::AsyncDynamicEnter { globals, operands }, Type::Value, hir.span.clone());
+                return self.async_region(hir, body, None, None, None, vec![frame]);
+            }
+            Expression::Await { .. }
+            | Expression::AsyncTry { .. } | Expression::AsyncDynamicScope { .. } => {
+                return Err(Diagnostic { span: hir.span.clone(),
+                    message: "Async continuation lowering is not implemented".into() });
+            }
             Expression::Assign { global, value } => {
                 let value = operand!(value);
                 self.emit(
@@ -793,6 +852,21 @@ fn verify_recurrence(
         message: message.into(),
     };
     match &hir.kind {
+        Expression::Future { body, .. } => {
+            verify_recurrence(body, &mut Vec::new(), false)?;
+        }
+        Expression::Await { value } => {
+            verify_recurrence(value, targets, false)?;
+        }
+        Expression::AsyncTry { body, handler, cleanup, .. } => {
+            verify_recurrence(body, &mut Vec::new(), false)?;
+            if let Some(handler) = handler { verify_recurrence(handler, &mut Vec::new(), false)?; }
+            if let Some(cleanup) = cleanup { verify_recurrence(cleanup, &mut Vec::new(), false)?; }
+        }
+        Expression::AsyncDynamicScope { bindings, body } => {
+            for (_, value) in bindings { verify_recurrence(value, targets, false)?; }
+            verify_recurrence(body, &mut Vec::new(), false)?;
+        }
         Expression::Assign { value, .. } => verify_recurrence(value, targets, false)?,
         Expression::DynamicScope { bindings, body } => {
             if hir.ty != Type::Value
@@ -912,8 +986,9 @@ fn operands(operation: &Operation) -> &[ValueId] {
         Operation::Literal(_)
         | Operation::GlobalRead(_)
         | Operation::GlobalCell(_)
-        | Operation::GlobalBound(_) => &[],
-        Operation::GlobalWrite { value, .. } | Operation::NilTest(value) => {
+        | Operation::GlobalBound(_) | Operation::RegionValue => &[],
+        Operation::GlobalWrite { value, .. } | Operation::NilTest(value)
+        | Operation::Await { future: value } | Operation::RegionExit { value, .. } => {
             std::slice::from_ref(value)
         }
         Operation::Arithmetic { arguments, .. }
@@ -921,9 +996,12 @@ fn operands(operation: &Operation) -> &[ValueId] {
         | Operation::Comparison { arguments, .. }
         | Operation::Array { arguments, .. }
         | Operation::Nominal { arguments, .. } => arguments,
-        Operation::MakeClosure { captures, .. }
+        Operation::MakeFuture { captures, .. }
+        | Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
-        Operation::Call { operands } | Operation::DynamicScope { operands, .. } => operands,
+        Operation::RegionPush { dynamic, .. } => dynamic,
+        Operation::Call { operands } | Operation::DynamicScope { operands, .. }
+        | Operation::AsyncDynamicEnter { operands, .. } => operands,
         Operation::Try { regions } => regions,
     }
 }
@@ -1049,6 +1127,20 @@ fn verify_function(
             }
             let result_ty = ty(inst.result)?;
             match &inst.operation {
+                Operation::RegionPush { handler, cleanup, end, dynamic } => {
+                    if result_ty != Type::Bool || dynamic.len() > 1
+                        || handler.iter().chain(cleanup.iter()).chain(std::iter::once(end)).any(|id| *id >= n || !function.blocks[*id].parameters.is_empty()) {
+                        return Err(fail("IR resumable region shape mismatch"));
+                    }
+                }
+                Operation::RegionExit { .. } | Operation::RegionValue => {
+                    if result_ty != Type::Value { return Err(fail("IR region outcome must be dynamic Value")); }
+                }
+                Operation::AsyncDynamicEnter { globals, operands } => {
+                    if result_ty != Type::Value || operands.len() != globals.len() * 2 {
+                        return Err(fail("IR async dynamic entry shape mismatch"));
+                    }
+                }
                 Operation::DynamicScope { globals, operands } => {
                     if globals.len() > i32::MAX as usize / 3
                         || operands.len() != globals.len() * 2 + 1
@@ -1118,6 +1210,17 @@ fn verify_function(
                     entry.extend(std::iter::repeat_n(Type::Value, body.arity));
                     verify_function(&body.function, &entry, depth + 1)?;
                 }
+                Operation::MakeFuture { body, captures } => {
+                    if result_ty != Type::Value || body.capture_types.len() != captures.len()
+                        || body.continuation.function.blocks[0].parameters.len() != captures.len() {
+                        return Err(fail("IR future capture shape mismatch"));
+                    }
+                    for (value, expected) in captures.iter().zip(&body.capture_types) {
+                        if ty(*value)? != *expected { return Err(fail("IR future capture type mismatch")); }
+                    }
+                    verify_function(&body.continuation.function, &body.capture_types, depth + 1)?;
+                    r#async::verify(&body.continuation)?;
+                }
                 Operation::MakeGeneralClosure { body, captures } => {
                     if body.display_name.as_ref().is_some_and(|name| name.len() > i32::MAX as usize) || body.methods.is_empty()
                         || body.capture_types.len() != captures.len()
@@ -1171,6 +1274,11 @@ fn verify_function(
                         if arity != operands.len() - 1 {
                             return Err(fail("IR known closure call arity mismatch"));
                         }
+                    }
+                }
+                Operation::Await { .. } => {
+                    if result_ty != Type::Value {
+                        return Err(fail("IR await result must be dynamic Value"));
                     }
                 }
                 Operation::NilTest(_) => {

@@ -16,7 +16,9 @@ fn error(body: &mut Vec<Instruction<'static>>) {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
     ]);
 }
@@ -212,6 +214,217 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         &[LocalGet(0), LocalGet(1), GlobalGet(CURRENT), Call(set_in)],
     );
     set_in
+}
+/// Validate a whole chain, including entries hidden by a nearer binding. No
+/// frame, entry, cell or root is mutated. Only the language nil sentinel ends a
+/// chain; null, false and arbitrary objects are not empty contexts.
+pub(super) fn switching(b: &mut Builder) {
+    use Instruction::*;
+    // Parameter/current cursor 0; slow cursor 1; entries 2; index 3; parity 4.
+    // Floyd's check bounds malformed cyclic chains without a host registry.
+    let mut body = vec![
+        LocalGet(0),
+        LocalSet(1),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(0),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+    ];
+    guard(&mut body, 0, FRAME);
+    frame(&mut body, 0, 1);
+    body.push(LocalSet(2));
+    shape(&mut body, 2);
+    array(&mut body, 2);
+    body.extend([
+        ArrayLen,
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        I32Eqz,
+        BrIf(1),
+        LocalGet(3),
+        I32Const(3),
+        I32Sub,
+        LocalSet(3),
+    ]);
+    array(&mut body, 2);
+    body.extend([LocalGet(3), ArrayGet(ARGS)]);
+    check_cell(&mut body);
+    body.extend([Br(0), End, End]);
+    frame(&mut body, 0, 0);
+    body.extend([
+        LocalSet(0),
+        LocalGet(4),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(1),
+        LocalSet(4),
+        Else,
+    ]);
+    frame(&mut body, 1, 0);
+    body.extend([
+        LocalSet(1),
+        I32Const(0),
+        LocalSet(4),
+        End,
+        LocalGet(0),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        I32Eqz,
+        LocalGet(0),
+        LocalGet(1),
+        RefEq,
+        I32And,
+        If(BlockType::Empty),
+    ]);
+    error(&mut body);
+    body.extend([End, Br(0), End, End]);
+    let validate = b.function_with_locals(
+        "dynamic-frame-check",
+        &[VALUE],
+        &[],
+        &[(2, VALUE), (2, ValType::I32)],
+        &body,
+    );
+    // Retain the same chain; this does not clone/isolate mutable binding entries.
+    // Task creation uses dynamic-fork; a retained chain is for saving/resuming
+    // one context and must remain GC-rooted by its caller while inactive.
+    b.function(
+        "dynamic-save",
+        &[],
+        &[VALUE],
+        &[GlobalGet(CURRENT), Call(validate), GlobalGet(CURRENT)],
+    );
+    // Effective values live in triplets, not in the cells' root slots. Installing
+    // a chain makes binding-get/set search that entire chain (nearest/reverse
+    // entry first), with root-cell fallback. Copying values into cells, or using
+    // dynamic-pop here, would overwrite caller state and destroy saved contexts.
+    // Validate both chains before the single publication; even a validation fuel
+    // trap leaves the old root and all effective values untouched.
+    b.function_with_locals(
+        "dynamic-switch",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &[
+            GlobalGet(CURRENT),
+            LocalSet(1),
+            LocalGet(0),
+            Call(validate),
+            LocalGet(1),
+            Call(validate),
+            LocalGet(0),
+            GlobalSet(CURRENT),
+            LocalGet(1),
+        ],
+    );
+    fork(b, validate);
+}
+
+/// Snapshot binding storage, not reachable language objects. Every parent frame
+/// and triplet array is fresh; cells, snapshot values and current values retain
+/// identity. No root/cell/source-array writes or unwind happen, even on failure.
+fn fork(b: &mut Builder, validate: u32) {
+    use Instruction::*;
+    // GC locals: source 0, cursor 1, source-frame array 2, cloned parent 3,
+    // source entries 4, copied entries 5. Integers: depth 6, index 7, length 8.
+    let mut body = vec![
+        GlobalGet(CURRENT),
+        LocalTee(0),
+        Call(validate),
+        LocalGet(0),
+        LocalSet(1),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(1),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+        LocalGet(6),
+        I32Const(i32::MAX),
+        I32Eq,
+        If(BlockType::Empty),
+    ];
+    error(&mut body);
+    body.extend([End, LocalGet(6), I32Const(1), I32Add, LocalSet(6)]);
+    frame(&mut body, 1, 0);
+    body.extend([
+        LocalSet(1),
+        Br(0),
+        End,
+        End,
+        LocalGet(6),
+        ArrayNewDefault(ARGS),
+        LocalSet(2),
+        LocalGet(0),
+        LocalSet(1),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(7),
+        LocalGet(6),
+        I32Eq,
+        BrIf(1),
+    ]);
+    array(&mut body, 2);
+    body.extend([LocalGet(7), LocalGet(1), ArraySet(ARGS)]);
+    frame(&mut body, 1, 0);
+    body.extend([
+        LocalSet(1),
+        LocalGet(7),
+        I32Const(1),
+        I32Add,
+        LocalSet(7),
+        Br(0),
+        End,
+        End,
+        I32Const(0),
+        RefI31,
+        LocalSet(3),
+        // Reverse the source-frame array: immutable parents must be constructed
+        // outermost first. Every in-progress clone remains in a GC Wasm local.
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(7),
+        I32Eqz,
+        BrIf(1),
+        LocalGet(7),
+        I32Const(1),
+        I32Sub,
+        LocalSet(7),
+    ]);
+    array(&mut body, 2);
+    body.extend([LocalGet(7), ArrayGet(ARGS), LocalSet(1)]);
+    frame(&mut body, 1, 1);
+    body.push(LocalSet(4));
+    array(&mut body, 4);
+    body.extend([ArrayLen, LocalTee(8), ArrayNewDefault(ARGS), LocalSet(5)]);
+    array(&mut body, 5);
+    body.push(I32Const(0));
+    array(&mut body, 4);
+    body.extend([
+        I32Const(0),
+        LocalGet(8),
+        ArrayCopy {
+            array_type_index_dst: ARGS,
+            array_type_index_src: ARGS,
+        },
+        LocalGet(3),
+    ]);
+    array(&mut body, 5);
+    body.extend([StructNew(FRAME), LocalSet(3), Br(0), End, End, LocalGet(3)]);
+    b.function_with_locals(
+        "dynamic-fork",
+        &[],
+        &[VALUE],
+        &[(6, VALUE), (3, ValType::I32)],
+        &body,
+    );
 }
 pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> Vec<u32> {
     use Instruction::*;

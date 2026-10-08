@@ -332,7 +332,9 @@ fn inferred(hir: &Hir, depth: usize) -> Result<Option<Form>, Diagnostic> {
             .map_or(Ok(Some(named("clj-nil"))), |item| inferred(item, depth + 1)),
         Expression::Let { body, .. }
         | Expression::Loop { body, .. }
-        | Expression::DynamicScope { body, .. } => inferred(body, depth + 1),
+        | Expression::DynamicScope { body, .. }
+        | Expression::AsyncDynamicScope { body, .. }
+        | Expression::AsyncTry { body, .. } => inferred(body, depth + 1),
         Expression::Function { body, .. } => inferred(body, depth + 1),
         _ => Ok(None),
     }
@@ -380,7 +382,9 @@ pub(super) fn source_tags(
                 Expression::Do(_)
                 | Expression::Let { .. }
                 | Expression::Loop { .. }
-                | Expression::DynamicScope { .. } => inferred(hir, 0)?,
+                | Expression::DynamicScope { .. }
+                | Expression::AsyncDynamicScope { .. }
+                | Expression::AsyncTry { .. } => inferred(hir, 0)?,
                 Expression::Try { regions } => inferred(&regions[0], 0)?,
                 Expression::If {
                     condition,

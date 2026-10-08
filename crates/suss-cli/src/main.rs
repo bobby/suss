@@ -3,7 +3,14 @@
 //! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
+#[cfg(unix)]
+mod terminal_input;
+#[cfg(unix)]
+mod session_event_loop;
+#[cfg(unix)]
+mod native_repl_host;
 
+#[cfg(not(unix))]
 use rustyline::{error::ReadlineError, DefaultEditor};
 
 fn main() {
@@ -600,6 +607,7 @@ mod repl_interrupt {
     use suss_cli::portable_session::InterruptHandle;
 
     static HANDLES: OnceLock<[InterruptHandle; 2]> = OnceLock::new();
+    static WAKE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
     extern "C" fn on_sigint(_: nix::libc::c_int) {
         // Async-signal-safe: an atomic store and an atomic epoch increment.
@@ -608,6 +616,39 @@ mod repl_interrupt {
                 handle.interrupt();
             }
         }
+        let fd = WAKE.load(std::sync::atomic::Ordering::Relaxed);
+        if fd >= 0 {
+            // A full nonblocking pipe already records a pending interrupt.
+            let byte = [1u8];
+            unsafe { nix::libc::write(fd, byte.as_ptr().cast(), 1); }
+        }
+    }
+
+    pub struct WakePipe {
+        pub read: std::os::fd::OwnedFd,
+        _write: std::os::fd::OwnedFd,
+    }
+    impl Drop for WakePipe {
+        fn drop(&mut self) {
+            WAKE.store(-1, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+    pub fn wake_pipe() -> std::io::Result<WakePipe> {
+        use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+        let mut fds = [-1; 2];
+        if unsafe { nix::libc::pipe(fds.as_mut_ptr()) } < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let read = unsafe { OwnedFd::from_raw_fd(fds[0]) };
+        let write = unsafe { OwnedFd::from_raw_fd(fds[1]) };
+        for fd in [&read, &write] {
+            if unsafe { nix::libc::fcntl(fd.as_raw_fd(), nix::libc::F_SETFL, nix::libc::O_NONBLOCK) } < 0
+                || unsafe { nix::libc::fcntl(fd.as_raw_fd(), nix::libc::F_SETFD, nix::libc::FD_CLOEXEC) } < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+        }
+        WAKE.store(write.as_raw_fd(), std::sync::atomic::Ordering::Relaxed);
+        Ok(WakePipe { read, _write: write })
     }
 
     pub fn install(runtime: InterruptHandle, macros: InterruptHandle) {
@@ -627,6 +668,44 @@ mod repl_interrupt {
 }
 
 /// Run each input in the same Store using independently compiled fragments.
+#[cfg(unix)]
+fn run_repl(fuel: Option<u64>) {
+    use std::{io::{self, IsTerminal}, os::fd::AsFd};
+    use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
+    let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+        let mut session = Session::new_repl()?;
+        let mut macros = CompiledMacros::new()?;
+        if let Some(fuel) = fuel {
+            session.set_operation_fuel(fuel);
+            macros.set_operation_fuel(fuel);
+        }
+        let stdin = io::stdin();
+        if stdin.is_terminal() {
+            println!("Suss v{} - compiled REPL", env!("CARGO_PKG_VERSION"));
+            println!("Type :quit to exit, :reset to reset the session.");
+        }
+        let mut host = native_repl_host::NativeReplHost::new(
+            session, macros, stdin.as_fd(), io::stdout(), io::stderr(),
+        )?;
+        let wake = repl_interrupt::wake_pipe()?;
+        let (runtime, macros) = host.interrupt_handles();
+        repl_interrupt::install(runtime, macros);
+        let mut input = terminal_input::TerminalInput::new(
+            stdin.as_fd(), Some(wake.read.as_fd()), io::stdout(),
+        )?;
+        session_event_loop::run(&mut host, &mut input).map_err(|error| {
+            match error {
+                session_event_loop::LoopError::Input(error) => Box::new(error) as Box<dyn std::error::Error>,
+                session_event_loop::LoopError::Host(error) => Box::new(error) as Box<dyn std::error::Error>,
+            }
+        })
+    })();
+    if let Err(error) = result {
+        eprintln!("Error: {error}");
+    }
+}
+
+#[cfg(not(unix))]
 fn run_repl(fuel: Option<u64>) {
     use std::io::{self, BufRead, IsTerminal};
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};

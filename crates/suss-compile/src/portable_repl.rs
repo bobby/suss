@@ -22,6 +22,11 @@ impl NativeDisplay {
         session: &mut Session,
         value: &SessionValue,
     ) -> Result<String, SessionError> {
+        // Nominal observation preserves the future itself: printing never
+        // awaits, runs source, or roots a terminal payload.
+        if let Some(leaf) = crate::portable_macro_data::display_leaf(session, value)? {
+            return Ok(leaf.text().into());
+        }
         match inspect_display(session, value)? {
             Output::Text(text) => Ok(text),
             Output::Number => session.number_text(value),
@@ -44,7 +49,7 @@ impl NativeDisplay {
                         error => error,
                     })?;
                 let mut text = String::new();
-                render_data(session, &form, &mut text)?;
+                render_display_datum(session, &form, &mut text)?;
                 Ok(text)
             }
         }
@@ -126,6 +131,39 @@ fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output
     Ok(output)
 }
 
+fn render_display_datum(
+    session: &mut Session,
+    datum: &crate::portable_macro_data::DisplayDatum,
+    text: &mut String,
+) -> Result<(), SessionError> {
+    use crate::portable_macro_data::{DisplayCollection, DisplayDatum};
+    match datum {
+        DisplayDatum::Plain(form) => render_data(session, form, text)?,
+        DisplayDatum::Opaque(leaf) => text.push_str(leaf.text()),
+        DisplayDatum::Collection(kind, items) => {
+            let (open, close) = match kind {
+                DisplayCollection::List => ("(", ")"),
+                DisplayCollection::Vector => ("[", "]"),
+                DisplayCollection::Map => ("{", "}"),
+                DisplayCollection::Set => ("#{", "}"),
+            };
+            text.push_str(open);
+            for (index, item) in items.iter().enumerate() {
+                if index != 0 {
+                    text.push(' ');
+                }
+                render_display_datum(session, item, text)?;
+            }
+            text.push_str(close);
+        }
+    }
+    if text.len() > 8_388_608 {
+        return Err(SessionError::Host(wasmtime::Error::msg(
+            "Value display exceeds output bound",
+        )));
+    }
+    Ok(())
+}
 fn render_data(
     session: &mut Session,
     form: &suss_reader::forms::Form,
@@ -143,8 +181,7 @@ fn render_data(
             } else if *value == f64::NEG_INFINITY {
                 text.push_str("##-Inf");
             } else {
-                let value =
-                    session.data_scalar(&crate::portable::hir::Literal::Number(*value))?;
+                let value = session.data_scalar(&crate::portable::hir::Literal::Number(*value))?;
                 text.push_str(&session.number_text(&value)?);
             }
         }
@@ -235,16 +272,34 @@ pub fn evaluate_compiled_with_display(
     source: &str,
     display: &mut NativeDisplay,
 ) -> Result<String, SessionError> {
-    let forms = suss_reader::forms::read_forms(source)
-        .and_then(suss_reader::forms::resolve_conditionals)
-        .map_err(|error| {
-            SessionError::Compile(crate::portable::Diagnostic {
-                span: error.span,
-                message: error.message,
-            })
-        })?;
+    let value = evaluate_compiled_value(runtime, macros, source)?;
+    display_compiled_value(runtime, macros, &value, display)
+}
+
+/// Retain the result in the Store that owns it until explicit display.
+pub enum CompiledValue {
+    Runtime(SessionValue),
+    Macro(SessionValue),
+}
+pub fn display_compiled_value(
+    runtime: &mut Session,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    value: &CompiledValue,
+    display: &mut NativeDisplay,
+) -> Result<String, SessionError> {
+    match value {
+        CompiledValue::Runtime(value) => display.display(runtime, value),
+        CompiledValue::Macro(value) => macros.display_value(value),
+    }
+}
+pub fn evaluate_compiled_value(
+    runtime: &mut Session,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    source: &str,
+) -> Result<CompiledValue, SessionError> {
+    let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, None);
-    evaluate_forms_compiled(runtime, macros, forms, source.len(), &origin, display, true)
+    evaluate_forms_compiled(runtime, macros, forms, source.len(), &origin)
 }
 
 /// Execute script forms in textual order in one Runtime and one Macro Store.
@@ -258,7 +313,11 @@ pub fn evaluate_script_compiled(
     let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, path);
     let prepared = prepare_script_compiled(
-        runtime.compilation_snapshot(), macros, forms, source.len(), &origin,
+        runtime.compilation_snapshot(),
+        macros,
+        forms,
+        source.len(),
+        &origin,
     )?;
     // All runtime compilation succeeds before any input/dependency initializer.
     let mut result = "nil".to_owned();
@@ -317,7 +376,13 @@ pub(crate) fn prepare_script_compiled_batch(
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
     origin: &crate::portable::SourceOrigin,
-) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
+) -> Result<
+    (
+        Vec<PreparedScript>,
+        crate::portable_session::CompilationSnapshot,
+    ),
+    SessionError,
+> {
     let checkpoint = macros.binding_checkpoint()?;
     let mut staged_macros = Vec::new();
     let preparation = (|| -> Result<Vec<PreparedScript>, SessionError> {
@@ -392,9 +457,7 @@ fn evaluate_forms_compiled(
     mut forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
     origin: &crate::portable::SourceOrigin,
-    display: &mut NativeDisplay,
-    display_result: bool,
-) -> Result<String, SessionError> {
+) -> Result<CompiledValue, SessionError> {
     if forms.len() == 1 {
         if let suss_reader::forms::Kind::List(items) = &forms[0].kind {
             if let Some(suss_reader::forms::Form {
@@ -413,11 +476,13 @@ fn evaluate_forms_compiled(
                         name: "defmacro".into(),
                     });
                     macros.enter_namespace(runtime.current_namespace())?;
-                    return macros.define_form_display(
-                        forms.into_iter().next().unwrap(),
-                        0..source_len,
-                        Some(origin),
-                    );
+                    return macros
+                        .define_form_with_origin(
+                            forms.into_iter().next().unwrap(),
+                            0..source_len,
+                            Some(origin),
+                        )
+                        .map(CompiledValue::Macro);
                 }
             }
         }
@@ -429,11 +494,7 @@ fn evaluate_forms_compiled(
         Some(origin),
     )?;
     let value = runtime.eval_prepared(prepared)?;
-    if display_result {
-        display.display(runtime, &value)
-    } else {
-        Ok(String::new())
-    }
+    Ok(CompiledValue::Runtime(value))
 }
 /// Provision both replacement Stores before discarding either previous phase.
 pub fn reset_compiled(
@@ -442,6 +503,8 @@ pub fn reset_compiled(
 ) -> Result<(), SessionError> {
     let replacement_runtime = runtime.replacement()?;
     let replacement_macros = macros.replacement()?;
+    runtime.retire_for_reset()?;
+    macros.retire_for_reset()?;
     *runtime = replacement_runtime;
     *macros = replacement_macros;
     Ok(())

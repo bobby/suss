@@ -1,0 +1,97 @@
+;; Original Suss async runtime API, accepted design section 9.
+;; These functions execute through compiled ABI2 closures. Settlement never
+;; invokes queued continuations inline. Task-owned futures settle via cleanup.
+(ns suss.async)
+
+(def completion
+  (fn [] (suss.internal.async/pending)))
+
+(def resolved
+  (fn [value]
+    (let [result (completion)]
+      (suss.internal.async/resolve! result value)
+      result)))
+
+(def rejected
+  (fn [reason]
+    (let [result (completion)]
+      (suss.internal.async/reject! result reason)
+      result)))
+
+(def resolve!
+  (fn [result value] (suss.internal.async/resolve! result value)))
+
+(def reject!
+  (fn [result reason] (suss.internal.async/reject! result reason)))
+
+;; Task cancellation queues an unwind request; completion cancellation publishes
+;; Cancelled immediately because it has no source body or cleanup to unwind.
+(def cancel!
+  (fn [result] (suss.internal.async/cancel! result)))
+
+;; Original native/portable GC stream profile. This is not canonical WIT stream
+;; transport (M6). Endpoints, operation tokens, chunks and EOF have private
+;; nominal descriptors; only ordinary immutable vectors cross the source API.
+(def stream-pair
+  (fn [capacity]
+    (let [pair (suss.internal.async/stream-pair capacity)]
+      [(suss.internal.async/stream-pair-reader pair)
+       (suss.internal.async/stream-pair-writer pair)])))
+
+(def stream-eof?
+  (fn [value] (suss.internal.async/stream-eof? value)))
+
+(def read-chunk
+  (fn [reader limit]
+    ;; Validate before creating task/endpoint work. Caller arguments have already
+    ;; evaluated once in ordinary source order; no implicit future flattening.
+    (let [limit (suss.internal.async/stream-read-limit reader limit)]
+      (suss.async/future*
+        (let [operation (suss.internal.async/stream-begin-read reader limit)]
+          (try
+            (let [chunk (suss.async/await*
+                          (suss.internal.async/stream-operation-future operation))]
+              (if (stream-eof? chunk)
+                chunk
+                (let [size (suss.internal.async/stream-chunk-count chunk)]
+                  (loop [index 0 result []]
+                    (if (< index size)
+                      (recur (+ index 1)
+                             (conj result
+                               (suss.internal.async/stream-chunk-nth chunk index)))
+                      result)))))
+            (finally
+              (suss.internal.async/stream-operation-retire operation))))))))
+
+(def write-chunk
+  (fn [writer chunk]
+    ;; Validate before creating endpoint work. The immutable source vector is
+    ;; rooted by the task while its bounded copy yields at loop backedges.
+    ;; Cancellation during copying leaves the endpoint unclaimed; begin-write
+    ;; runs only after the complete private snapshot has been built.
+    (if (vector? chunk)
+      (let [input-size (count chunk)
+            size (suss.internal.async/stream-write-limit writer input-size)]
+        (suss.async/future*
+          (let [private-chunk (suss.internal.async/stream-chunk-new size)]
+            (loop [index 0]
+              (if (< index size)
+                (do
+                  (suss.internal.async/stream-chunk-set
+                    private-chunk index (nth chunk index))
+                  (recur (+ index 1)))
+                nil))
+            (let [operation
+                  (suss.internal.async/stream-begin-write writer private-chunk)]
+              (try
+                (suss.async/await*
+                  (suss.internal.async/stream-operation-future operation))
+                (finally
+                  (suss.internal.async/stream-operation-retire operation)))))))
+      (throw (ex-info "write-chunk expects an immutable vector" {})))))
+
+(def close!
+  (fn [endpoint] (suss.internal.async/stream-close! endpoint)))
+
+(def fail!
+  (fn [endpoint reason] (suss.internal.async/stream-fail! endpoint reason)))

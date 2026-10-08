@@ -223,6 +223,7 @@ fn numbers(hash: &mut Sha256, function: &ir::Function) {
                 ir::Operation::Literal(super::hir::Literal::Number(value)) => {
                     hash.update(value.to_bits().to_le_bytes());
                 }
+                ir::Operation::MakeFuture { body, .. } => numbers(hash, &body.continuation.function),
                 ir::Operation::MakeClosure { body, .. } => numbers(hash, &body.function),
                 ir::Operation::MakeGeneralClosure { body, .. } => {
                     for method in &body.methods {

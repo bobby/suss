@@ -57,16 +57,19 @@ impl Analyzer<'_> {
         let target = self.target.take();
         let body = self.body(&args[1..], form.span.clone(), context.returning(), false);
         self.target = target;
-        let body = self.exception_region(form, vec![], body?);
+        let body = body?;
+        let kind = if self.suspendable {
+            Expression::AsyncDynamicScope { bindings, body: Box::new(body) }
+        } else {
+            let body = self.exception_region(form, vec![], body);
+            Expression::DynamicScope { bindings, body: Box::new(body) }
+        };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::DynamicScope {
-                bindings,
-                body: Box::new(body),
-            },
+            kind,
         })
     }
 }

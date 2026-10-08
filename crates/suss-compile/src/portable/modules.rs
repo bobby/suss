@@ -174,18 +174,21 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
         if self.active.len() >= 64 {
             return Err(fail("Namespace dependency nesting exceeds 64".into()));
         }
-        let path = resolve::locate_source(&identity.namespace, self.roots, span.clone())
+        let file = resolve::locate_source_if_present(&identity.namespace, self.roots, span.clone())
             .map_err(|error| located(&identity, origin, error))?;
-        let text = std::fs::read_to_string(&path).map_err(|error| {
-            located(
-                &identity,
-                Some(&path),
-                Diagnostic {
+        let (path, text) = if let Some(path) = file {
+            let text = std::fs::read_to_string(&path).map_err(|error| {
+                located(&identity, Some(&path), Diagnostic {
                     span: 0..0,
                     message: format!("Cannot read namespace source: {error}"),
-                },
-            )
-        })?;
+                })
+            })?;
+            (path, text)
+        } else if let Some((path, text)) = super::stdlib::source(&identity.namespace, identity.phase) {
+            (PathBuf::from(path), text.to_owned())
+        } else {
+            return Err(fail(format!("No source for namespace {}", identity.namespace)));
+        };
         let forms = read_forms(&text)
             .and_then(resolve_conditionals)
             .map_err(|error| {

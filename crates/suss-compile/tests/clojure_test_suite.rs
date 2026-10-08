@@ -190,6 +190,7 @@ fn session_stage(error: &SessionError) -> &'static str {
         SessionError::Trap(_) => "trap",
         SessionError::Host(_) => "host",
         SessionError::ForeignValue => "ownership",
+        SessionError::ResetPending => "reset-pending",
     }
 }
 

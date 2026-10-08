@@ -502,6 +502,8 @@ impl SourceCallable {
 /// Quoted data constructors do not create expression child records.
 #[derive(Debug, Clone)]
 pub enum SourceNode {
+    Future(std::sync::Arc<Hir>),
+    Await(std::sync::Arc<Hir>),
     Vector(std::sync::Arc<[Hir]>),
     Map(std::sync::Arc<[Hir]>),
     Set(std::sync::Arc<[Hir]>),
@@ -565,6 +567,17 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    /// Deferred executable body and its lexical captures; never a body value.
+    Future { captures: Vec<BindingId>, body: Box<Hir> },
+    Await { value: Box<Hir> },
+    /// Suspension-aware executable regions, before closure packaging.
+    AsyncTry {
+        body: Box<Hir>,
+        handler: Option<Box<Hir>>,
+        cleanup: Option<Box<Hir>>,
+        payload: Option<Parameter>,
+    },
+    AsyncDynamicScope { bindings: Vec<(Global, Hir)>, body: Box<Hir> },
     Bitwise {
         operation: Bitwise,
         arguments: Vec<Hir>,
@@ -660,6 +673,7 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
     }
 }
 struct Analyzer<'a> {
+    suspendable: bool,
     expander: &'a mut dyn super::ExpansionHost,
     origin: Option<super::SourceOrigin>,
     environment: Environment,
@@ -1279,7 +1293,9 @@ impl Analyzer<'_> {
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let outer_scope_count = self.function_scopes.len();
+        let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        self.suspendable = suspendable;
         if result.is_ok() {
             let name = self.function_scopes.get(outer_scope_count).cloned();
             if let Some(callable) = self.source_callables.last_mut().and_then(Option::as_mut) {
@@ -1527,6 +1543,28 @@ impl Analyzer<'_> {
         rest_parameter: Option<usize>,
         receiver_type: Option<&Form>,
     ) -> Result<(Hir, SourceMethod), Diagnostic> {
+        // Object and protocol methods also enter through this boundary rather
+        // than the ordinary function wrapper. Their bodies are synchronous;
+        // only a nested future may introduce a new suspendable context.
+        let suspendable = std::mem::replace(&mut self.suspendable, false);
+        let result = self.fixed_function_fields_inner(
+            form, args, bootstrap_macro, fields, method_receiver, object_method,
+            rest_parameter, receiver_type,
+        );
+        self.suspendable = suspendable;
+        result
+    }
+    fn fixed_function_fields_inner(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+        fields: &[Form],
+        method_receiver: bool,
+        object_method: bool,
+        rest_parameter: Option<usize>,
+        receiver_type: Option<&Form>,
+    ) -> Result<(Hir, SourceMethod), Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
         };
@@ -1746,6 +1784,37 @@ impl Analyzer<'_> {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.async") {
+            if symbol.name == "future*" {
+                let suspendable = std::mem::replace(&mut self.suspendable, true);
+                let target = self.target.take();
+                let locals = self.locals.clone();
+                let body = self.analyzed_body(args, form.span.clone(), super::AnalysisContext::Return, false);
+                self.suspendable = suspendable;
+                self.target = target;
+                self.locals = locals;
+                let body = body?;
+                let mut captures = BTreeSet::new();
+                free_bindings(&body, &BTreeSet::new(), &mut captures);
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Future(std::sync::Arc::new(body.clone()))));
+                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                    ty: Type::Value, kind: Expression::Future { captures: captures.into_iter().collect(), body: Box::new(body) } });
+            }
+            if symbol.name == "await*" {
+                if !self.suspendable {
+                    return Err(fail(form.span.clone(), "await is legal only inside a future body"));
+                }
+                if args.len() != 1 {
+                    return Err(fail(form.span.clone(), "await requires exactly one operand"));
+                }
+                let value = self.form(&args[0])?;
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Await(std::sync::Arc::new(value.clone()))));
+                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                    ty: Type::Value, kind: Expression::Await { value: Box::new(value) } });
+            }
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
@@ -2292,13 +2361,22 @@ impl Analyzer<'_> {
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
         Expression::Assign { value, .. } => free_bindings(value, bound, free),
-        Expression::DynamicScope { bindings, body } => {
+        Expression::DynamicScope { bindings, body } | Expression::AsyncDynamicScope { bindings, body } => {
             for (_, value) in bindings {
                 free_bindings(value, bound, free);
             }
             free_bindings(body, bound, free);
         }
-        Expression::Throw(value) | Expression::NilTest(value) => free_bindings(value, bound, free),
+        Expression::Throw(value) | Expression::NilTest(value) | Expression::Await { value } => free_bindings(value, bound, free),
+        Expression::AsyncTry { body, handler, cleanup, payload } => {
+            free_bindings(body, bound, free);
+            if let Some(handler) = handler {
+                let mut bound = bound.clone();
+                if let Some(payload) = payload { bound.insert(payload.id); }
+                free_bindings(handler, &bound, free);
+            }
+            if let Some(cleanup) = cleanup { free_bindings(cleanup, bound, free); }
+        }
         Expression::Try { regions } => {
             for region in regions {
                 free_bindings(region, bound, free);
@@ -2313,7 +2391,8 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 free.insert(*id);
             }
         }
-        Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } => {
+        Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. }
+        | Expression::Future { captures, .. } => {
             for id in captures {
                 if !bound.contains(id) {
                     free.insert(*id);
@@ -2408,6 +2487,7 @@ pub(crate) fn prepare_with_origin(
     origin: Option<&super::SourceOrigin>,
 ) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
+        suspendable: false,
         expander,
         origin: origin.cloned(),
         environment: environment.clone(),

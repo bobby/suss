@@ -9,7 +9,7 @@ fn sources(directory: &Path, files: &mut Vec<PathBuf>) {
         let path = entry.expect("compiler source entry").path();
         if path.is_dir() {
             sources(&path, files);
-        } else if path.extension().is_some_and(|extension| extension == "rs") {
+        } else if path.extension().is_some_and(|extension| extension == "rs" || extension == "sus") {
             files.push(path);
         }
     }
