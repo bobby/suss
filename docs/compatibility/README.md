@@ -1,5 +1,11 @@
 # ClojureScript compatibility evidence
 
+For current original M3 acceptance and lifecycle evidence, see the
+[M3 acceptance record](../roadmap/acceptance-m3.md). The dated prerequisite
+notes below describe their inspected snapshots; older absence/pending statements
+are superseded by that current record. M3 session acceptance does not reclassify
+unassessed core declarations or establish full upstream compatibility.
+
 The native command REPL now uses one persistent portable Session and displays
 already-rooted scalar results without source reexecution. Eight process-level
 regressions establish bounded frontend persistence/recovery/reset/reader evidence.

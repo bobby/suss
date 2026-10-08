@@ -234,27 +234,39 @@ fn session_lifecycle_sigint_cancels_suspended_source_and_awaited_finally_runs_on
     let cleanup = dir.path().join("cleanup");
     fifo(&body);
     fifo(&cleanup);
-    let _body_writer = held_writer(&body);
-    let mut cleanup_writer = held_writer(&cleanup);
+    let body_guard = held_writer(&body);
+    let cleanup_guard = held_writer(&cleanup);
     let mut repl = Repl::new();
     setup(&mut repl);
     repl.send("(def cleaned 0)");
     repl.send(&format!("(def task (future (try (await (suss.io/read-byte {})) (finally (set! cleaned (+ cleaned 1)) (await (suss.io/read-byte {})) (set! cleaned (+ cleaned 1))))))", literal(&body), literal(&cleanup)));
     repl.send("(+ 7400 cleaned)");
     repl.line("7400");
+    let mut body_writer = writer_only_after_guard(&mut repl, &body, body_guard);
     assert_eq!(
         unsafe { libc::kill(repl.child.id() as i32, libc::SIGINT) },
         0
     );
-    // Cleanup has a real writer but no bytes. Queue later input, then supply
-    // its awaited byte; source effects must complete before that input executes.
+    // Signal delivery is asynchronous: wait for input acknowledgment before
+    // queuing source that must execute after cancellation retirement.
+    repl.wait("source cancellation acknowledged", |child| {
+        child.out.lines().any(|line| line == "^C")
+    });
+    let mut cleanup_writer = writer_only_after_guard(&mut repl, &cleanup, cleanup_guard);
+    // The child owns a real cleanup reader with no bytes. Queue later input,
+    // then release its awaited read; cleanup must finish before source executes.
     repl.send("(+ 7500 cleaned)");
     cleanup_writer.write_all(&[9]).unwrap();
     repl.line("7502");
+    assert_reader_retired(&mut repl, &body, &mut body_writer);
+    assert_reader_retired(&mut repl, &cleanup, &mut cleanup_writer);
     repl.send("(+ 7600 cleaned)");
     repl.line("7602");
     repl.send("(+ 7700 3)");
     repl.line("7703");
+    assert_eq!(repl.out.lines().filter(|line| *line == "7502").count(), 1);
+    assert_eq!(repl.out.lines().filter(|line| *line == "7602").count(), 1);
+    assert_eq!(repl.out.lines().filter(|line| *line == "^C").count(), 1);
     repl.finish();
     assert!(
         !repl.err.contains("Uncaught language exception"),
