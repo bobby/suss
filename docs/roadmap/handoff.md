@@ -21742,3 +21742,37 @@ Clone bootstrap terminal0. Second complete queue native gate terminal101:2passed
 Third complete queue native gate terminal0:3passed/0failed/0ignored/0filtered,6.16s. All41pinnedvaluecases execute in Runtime+Macro; source-array/descriptor/front/rear sharing and sole retained queue handle survive forcedGC; ordered iterator and exact Error7/message returned-vs-thrown behavior pass. Log `/private/tmp/suss-m4-queue-native-third.log`. Independent fullqueue/clone/last/delta reviews find no material findings; importer329/review426/setup23 checks pass. No source branch/case/assertion skipped. Java/Node-absent bootstrap reproducibility verification now owns Cargo, log `/private/tmp/suss-m4-queue-bootstrap-verification.log`. Full baseline/final-head CI remain pending before promotion.
 
 Queue bootstrap Java/Node-absent reproducibility gate terminal0: bothpairs generatedtwice byteidentical to shipped, compiled buildidentity checkout-independent/invalidation passes, compiled_bootstrap4passed/0failed/ignored/filtered13.24s. Log `/private/tmp/suss-m4-queue-bootstrap-verification.log`. FinalPython231tests pass7.113s, importer329/review426/setup23 andRustfmt/diffchecks pass. Queue source/runtime frozen for commit/draftPR and required exact-head fullbaseline/finalCI; MLIR short focused gate now uses the released Cargo slot before that long baseline. No additional fullissue/M4 completion claim.
+
+Queue final-head baseline follow-up (2026-10-08): head
+1a07d4f05fd824c38bc1bf470f886e0c9edfa29a full locked workspace baseline
+session39763 exited101 in generated_async_import_bridge::
+source_completion_cancel_drains_canonical_host_operation_before_return.
+Wasmtime fuel exhaustion at line229; 7 neighboring tests passed. Retained full
+log /private/tmp/suss-m4-queue-full-baseline.log. Direct execution of the exact
+baseline test binary reproduced the same failure in3.03s (terminal101), log
+/private/tmp/suss-m4-queue-cancellation-exact-binary.log. No skip or assertion
+change. This test allocates2M fuel once before real bootstrap initialization and
+three invocation rounds. Independent static review found no new cancellation
+loop but requires measured initializer/per-round costs and starts/polls/drops
+before deciding on separate initialization/invocation budgets. Focused Cargo
+session1650 still live compiling the narrower test graph; source remains frozen.
+PR226 remains draft and its body records the failure. Eight CI jobs passed,
+integration5 pending at latest observation. Next: finish focused reproduction,
+add bounded diagnostics and determine actual cause, then rerun final-head gates.
+
+Queue fuel diagnosis resolved with actual measurements: focused original test
+session1650 exited101, reproducing baseline failure. Temporary bounded10M
+measurement (session60124 exit0) retained every outcome/resource assertion:
+initializer1,693,955; calls103,278/103,240/103,240; GC0; starts/polls/drops1/2/3.
+Total2,003,713 exceeds old shared2M. Restored original source and added separate
+2M invocation budget after initialization, shared across three rounds. Full
+8-test generated_async_import_bridge suite is running, independent fix review
+pending. No blanket fuel increase, skips or semantic runtime changes. Required
+new exact-head full baseline and final CI remain pending. Next: focused suite,
+review fix, commit/push and schedule full baseline, then current-base MLIR rebuild.
+
+Fuel fix verification: generated_async_import_bridge complete8-test suite
+session49148 exited0, 8passed/0failed/ignored/filtered,11.20s. Rustfmt and diff
+checks passed. Independent review found no material findings; finite initializer
+and cumulative invocation limits retained, every cleanup/outcome assertion intact.
+New exact-head full baseline and CI remain pending; do not promote yet.

@@ -219,6 +219,11 @@ fn source_completion_cancel_drains_canonical_host_operation_before_return() {
     let mut store = Store::new(&engine, ());
     store.set_fuel(2_000_000).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
+    // Initialization executes the entire shipped core plus async/app fragments.
+    // Keep its finite allowance separate from the shared three-call exercise: a
+    // larger core catalog must not consume the cancellation regression's budget.
+    // Each phase remains bounded; invocation fuel is not replenished per round.
+    store.set_fuel(2_000_000).unwrap();
     let run = instance
         .get_typed_func::<(u32,), (u32,)>(&mut store, "run")
         .unwrap();

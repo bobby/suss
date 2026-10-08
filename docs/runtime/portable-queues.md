@@ -45,3 +45,15 @@ Bootstrap artifacts reproduce byte-identically twice with Java/Node absent;
 identity invalidation and all four compiled bootstrap tests pass. All231 Python
 tests pass. Full workspace baseline and green final-head CI remain required. Full #18 still includes sorted collections and records;
 this lane closes none of those criteria and makes no M4 completion claim.
+
+
+Final-head baseline diagnosis: the first full run exited101 in the existing
+canonical host cancellation regression. Exact binary and focused Cargo reruns
+reproduced fuel exhaustion. Bounded diagnostic execution measured1,693,955 fuel
+for genuine bootstrap/async/app initialization, then103,278/103,240/103,240 for
+three calls, with zero fuel consumed by GC. Total2,003,713 exceeded the prior
+shared2M budget; starts/polls/drops each advanced exactly once per call. The fix
+retains2M for initialization and a separate2M shared across all three calls;
+no per-round replenishment, outcome/resource assertion change or skip. Complete
+suite and new exact-head baseline/CI remain required. Diagnostic logs are retained
+under `/private/tmp/suss-m4-queue-cancellation-{reproduce,fuel-diagnostics}.log`.
