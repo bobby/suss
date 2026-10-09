@@ -129,7 +129,7 @@ fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() 
     let project = tempfile::tempdir().unwrap();
     let source = project.path().join("tools.sus");
     std::fs::write(&source, "(ns tools) (defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
-    let mut session = Session::with_options(SessionOptions {
+    let mut session = Session::new_repl_with_options(SessionOptions {
         source_paths: vec![project.path().to_owned()],
         ..Default::default()
     })
