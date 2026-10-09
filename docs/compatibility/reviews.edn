@@ -2,6 +2,50 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:vary-meta:4171"
+  {:source-sha256 "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9"
+   :visibility :public
+   :arities {:fixed [2 3 4 5 6] :variadic-min 6}
+   :dependencies ["macro:defn:3364" "runtime:with-meta" "runtime:meta" "runtime:apply"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-vary-meta.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)" "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"]}
+  "runtime:fnil:4526"
+  {:source-sha256 "e6404742f0365e0e74ebf2956cc0a058d5c6da08fc0f30c6d3b3e943868f7453"
+   :visibility :public
+   :arities {:fixed [2 3 4] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:nil?:923" "immutable suss.bootstrap/nil? adapter" "runtime:apply"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied. Qualify every emitted nil? macro application through immutable suss.bootstrap/nil?, preserving behavior under public nil? rebinding; all other helper calls remain live."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-fnil.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)" "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"]}
+  "runtime:update-in:5530"
+  {:source-sha256 "ab3dd984b2e2cbc71fd41fdc97140cee4505c5e6d491447eaed6e1cc5f2dea47"
+   :visibility :public
+   :arities {:fixed [3 4 5 6] :variadic-min 6}
+   :dependencies ["macro:defn:3364" "runtime:assoc" "runtime:get" "runtime:apply" "compiler vector/rest destructuring"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-update-in.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)" "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"]}
+  "runtime:group-by:11244"
+  {:source-sha256 "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:transient:3987" "runtime:persistent!:3992" "runtime:assoc!:4012" "runtime:reduce" "runtime:conj" "runtime:get" "runtime:TransientArrayMap:7210" "runtime:TransientHashMap:8202"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-group-by.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)" "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"]}
   "runtime:ChunkBuffer:3673"
   {:source-sha256 "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680"
    :visibility :public

@@ -1,0 +1,17 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "command": "sh scripts/test-record-helper-oracle.sh",
+  "exit_code": 0,
+  "observations": 33,
+  "native": "uncompiled/unexecuted",
+  "bootstrap": "unchanged/stale",
+  "preserved_base": "1cf5c43",
+  "preserved_selections": 336,
+  "appended_selections": 4,
+  "preserved_existing_reviews": 437,
+  "files": {
+    "tests/oracle/record-helper-cases.json": "31aebb463402fbf16592e96ef274a6f8d379b3790c559fb04b92736ef5d8bc16",
+    "docs/compatibility/record-helper-foundations/evidence/primary-observations.json": "376182cdd0fe4a0bd653cb60c330828b3493c93c25d563b45d6e40412556b82a",
+    "docs/compatibility/record-helper-foundations/evidence/primary-fixture.cljs": "3ce2fb4cc193eec0b22c2406be274c54aee64314a05b6cd6e6b619b384eba3c4"
+  }
+}

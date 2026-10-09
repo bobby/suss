@@ -23019,3 +23019,39 @@ Python verifier3 passes7.651s; no native execution/bootstrap/Cargo/push. This
 catalog is not yet materialized as compiler state in the Macro Store. Analyzer
 extern/module/warning/fallback adapters and full source-helper execution remain
 required before real reify/nil-iter or record factory acceptance.
+
+### 2026-10-09 — whole record macro runtime-helper dependency group
+
+Appended complete vary-meta4171/fnil4526/update-in5530/group-by11244 after all336
+existing import selections. All437 prior review entries retain their original
+values and order; four additive reviews remain in-progress. Whole original forms,
+EPL notices, source hashes and exact patches are packaged. Defn becomes def/fn;
+fnil's emitted nil? macro guards alone use immutable suss.bootstrap/nil?. Every
+fixed/variadic arity and algorithm branch remains, including group-by's transient
+map reduction/promotion and update-in's live recursive/apply paths. No existing
+generated core bytes are changed; new declarations precede the unchanged loader
+after-stanzas. Original12 macro forms,7 reify/14 iterator corpus and four bootstrap
+artifacts remain unchanged.
+
+`sh scripts/test-record-helper-oracle.sh` freshly compiled the exact33-case
+fixture against the pin, executed Node and strict-compared all33 ordered raw
+Boolean observations: terminal0. Raw fixture/observations and a hash receipt are
+retained under docs/compatibility/record-helper-foundations/evidence. Focused
+harness3 passed0.023s; full Python250 passed14.363s. Whole helper adaptation
+verification passes4; core-import check verifies344 files; overlay441 reviewed/
+624 unassessed passes; rustfmt and diff checks pass. The initial author script
+failed before changing selections because extract_forms has no sha256 field;
+corrected by hashing the exact whole form. An initial preservation assertion
+incorrectly expected generated core to have the entire old file as its prefix;
+the importer inserts declarations before after-stanzas. Corrected audit proves
+one additive insertion and all previous bytes retained, not a source change.
+
+Two native tests are authored UNCOMPILED/UNEXECUTED: shared33 both-phase postGC
+observations and fnil sole-host callable retaining captured vector/default across
+GC and repeated independent variadic invocations. No bootstrap regeneration,
+Cargo or push occurred; existing artifacts are stale for the new sources. These
+complete runtime helpers do not implement source analyzer adapters, exists?,
+anonymous reify class publication, full deftype helper execution, nil-iter or
+record factories. Continue the complete source macro/compiler graph next, then
+regenerate and execute unchanged7/14 plus new33/typed facts when exclusive Cargo
+is available. Full original record/reify acceptance remains open.

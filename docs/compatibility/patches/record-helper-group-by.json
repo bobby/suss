@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378",
+  "replacement": "(def group-by\n  \"Returns a map of the elements of coll keyed by the result of\n  f on each element. The value at each key will be a vector of the\n  corresponding elements, in the order they appeared in coll.\"\n  (fn [f coll]\n  (persistent!\n    (reduce\n      (fn [ret x]\n        (let [k (f x)]\n          (assoc! ret k (conj (get ret k []) x))))\n      (transient {}) coll))))",
+  "rationale": "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied."
+}

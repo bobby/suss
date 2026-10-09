@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9",
+  "replacement": "(def vary-meta\n  \"Returns an object of the same type and value as obj, with\n  (apply f (meta obj) args) as its metadata.\"\n  (fn ([obj f]\n   (with-meta obj (f (meta obj))))\n  ([obj f a]\n   (with-meta obj (f (meta obj) a)))\n  ([obj f a b]\n   (with-meta obj (f (meta obj) a b)))\n  ([obj f a b c]\n   (with-meta obj (f (meta obj) a b c)))\n  ([obj f a b c d]\n   (with-meta obj (f (meta obj) a b c d)))\n  ([obj f a b c d & args]\n   (with-meta obj (apply f (meta obj) a b c d args)))))",
+  "rationale": "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. Native/bootstrap execution is pending; no record/reify completion is implied."
+}

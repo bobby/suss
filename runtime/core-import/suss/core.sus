@@ -5805,6 +5805,84 @@
         (MapEntry. k (-lookup record k) nil))
       (.next ext-map-iter)))
   (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(def vary-meta
+  "Returns an object of the same type and value as obj, with
+  (apply f (meta obj) args) as its metadata."
+  (fn ([obj f]
+   (with-meta obj (f (meta obj))))
+  ([obj f a]
+   (with-meta obj (f (meta obj) a)))
+  ([obj f a b]
+   (with-meta obj (f (meta obj) a b)))
+  ([obj f a b c]
+   (with-meta obj (f (meta obj) a b c)))
+  ([obj f a b c d]
+   (with-meta obj (f (meta obj) a b c d)))
+  ([obj f a b c d & args]
+   (with-meta obj (apply f (meta obj) a b c d args)))))
+
+(def fnil
+  "Takes a function f, and returns a function that calls f, replacing
+  a nil first argument to f with the supplied value x. Higher arity
+  versions can replace arguments in the second and third
+  positions (y, z). Note that the function f can take any number of
+  arguments, not just the one(s) being nil-patched."
+  (fn ([f x]
+   (fn
+     ([a] (f (if (suss.bootstrap/nil? a) x a)))
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) b))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) b c))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) b c ds))))
+  ([f x y]
+   (fn
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b)))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) c))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) c ds))))
+  ([f x y z]
+   (fn
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b)))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) (if (suss.bootstrap/nil? c) z c)))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) (if (suss.bootstrap/nil? c) z c) ds))))))
+
+(def update-in
+  "'Updates' a value in a nested associative structure, where ks is a
+  sequence of keys and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  nested structure.  If any levels do not exist, hash-maps will be
+  created."
+  (fn ([m [k & ks] f]
+   (if ks
+     (assoc m k (update-in (get m k) ks f))
+     (assoc m k (f (get m k)))))
+  ([m [k & ks] f a]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a))
+     (assoc m k (f (get m k) a))))
+  ([m [k & ks] f a b]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b))
+     (assoc m k (f (get m k) a b))))
+  ([m [k & ks] f a b c]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b c))
+     (assoc m k (f (get m k) a b c))))
+  ([m [k & ks] f a b c & args]
+   (if ks
+     (assoc m k (apply update-in (get m k) ks f a b c args))
+     (assoc m k (apply f (get m k) a b c args))))))
+
+(def group-by
+  "Returns a map of the elements of coll keyed by the result of
+  f on each element. The value at each key will be a vector of the
+  corresponding elements, in the order they appeared in coll."
+  (fn [f coll]
+  (persistent!
+    (reduce
+      (fn [ret x]
+        (let [k (f x)]
+          (assoc! ret k (conj (get ret k []) x))))
+      (transient {}) coll))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

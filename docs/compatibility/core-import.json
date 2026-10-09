@@ -1683,6 +1683,26 @@
       "id": "runtime:RecordIter:6607",
       "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
       "patch": "docs/compatibility/patches/record-iteration-RecordIter.json"
+    },
+    {
+      "id": "runtime:vary-meta:4171",
+      "source-sha256": "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9",
+      "patch": "docs/compatibility/patches/record-helper-vary-meta.json"
+    },
+    {
+      "id": "runtime:fnil:4526",
+      "source-sha256": "e6404742f0365e0e74ebf2956cc0a058d5c6da08fc0f30c6d3b3e943868f7453",
+      "patch": "docs/compatibility/patches/record-helper-fnil.json"
+    },
+    {
+      "id": "runtime:update-in:5530",
+      "source-sha256": "ab3dd984b2e2cbc71fd41fdc97140cee4505c5e6d491447eaed6e1cc5f2dea47",
+      "patch": "docs/compatibility/patches/record-helper-update-in.json"
+    },
+    {
+      "id": "runtime:group-by:11244",
+      "source-sha256": "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378",
+      "patch": "docs/compatibility/patches/record-helper-group-by.json"
     }
   ],
   "loader": {
