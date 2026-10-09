@@ -22226,3 +22226,30 @@ Sorted/Array fullPython81447 terminal0, retained arrayconstructor evidence
 python-suite.log/hash. Allnewnative tests remain uncompiled while228new
 fullbaseline94838 runs on frozen ebdbc16. Next nativeprereqbootstrap execution
 still required before claiming constructor identity or full comparison support.
+
+Array storage inspection for next constructor implementation: existing
+runtime_abi/arrays.rs MAX_LENGTH=1000000 is a bootstrap resource bound,
+source-array-new clones dense ARGS and source-array-make builds dimensions.
+Generic Invalid or unsupported array operation is neither proof of RangeError
+identity nor valid uint32length support. Constructor implementation must first
+distinguish JS invalidnumericlength from resource/storage capacity; do not
+reuse dimension coercion for single nonnumeric elements or silentlytruncate
+large validlengths. Canonical constructor rooting/current bounded identity
+helpers remain uncompiled. Fullsorted/Arrayacceptance still pending.
+
+Independent read-only Array prerequisite review while MLIR baseline78918 runs:
+current dense source-array buffer conflates holes with present undefined and
+cannot represent valid sparse uint32 lengths. Implementation route requires
+semantic storage accessors (logical length/get/set/own-presence/delete/shrink),
+GC-owned sparse entries or pages with dense optimization, then migration of
+array_methods/push/pop/named_properties and array-to-ARGS call consumers.
+Canonical runtime-rooted callable Array belongs in primitive_constructors and
+source-array type lookup in type_values; mutable constructor/prototype lookup
+needs explicit portable-contract resolution. Invalid numeric length requires
+actual RangeError identity; valid large sparse length cannot use the existing
+one-million resource-bound error. Ordered fresh ToPrimitive and join then use
+semantic reads, captured length, later mutations, nesting/cycles and cleanup.
+This is implementation planning, not new source execution or acceptance.
+Next scheduled Cargo step remains existing scalar/type prerequisite validation
+after sole MLIR baseline gates release the lane. Preserve sharing assertions
+and all original #18/#19 criteria during storage migration.
