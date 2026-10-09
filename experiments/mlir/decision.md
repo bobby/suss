@@ -5,10 +5,13 @@ This is an isolated investigation, not an architectural decision or authorizatio
 to migrate the shipped compiler. Earlier rebuilding on main `22723b4` passed all
 18 unit tests, actual v2 source preservation/correspondence, seven effects cases
 and 92 paired executions. The evidence and measurements below refer to that
-retained snapshot unless explicitly labeled post-#226. Rebuilding and execution
-on the rebased `4e0f00d` checkout remain pending, as do its final review, full
-baseline and final-head CI. Post-#226 C++ gates pass and do not certify Rust
-execution.
+retained snapshot unless explicitly labeled post-#226. Fresh rebuilding and
+execution on the rebased `4e0f00d` checkout now pass: 18 Rust tests, genuine
+source-v2 preservation, seven native/pinned effects cases, 92 paired executions,
+and pinned/CLI source observations. Post-#226 C++ gates also pass. See
+[evidence receipts](evidence/post226-execution-gates.json) and the fresh content
+identity manifest. Independent review at `db79427` found no material issues;
+full baseline and final-head CI remain pending.
 
 The custom dialect provides useful registered types, region structure and
 verifier hooks. This slice still implements the language-specific source-facts

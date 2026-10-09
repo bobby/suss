@@ -1,6 +1,6 @@
 {
   "schema": "suss.mlir.evidence-identity.v1",
-  "base_commit": "9dddc895f679c1d77795f8461188474f00d3b5a2",
+  "base_commit": "db794279284c1da498fa363295617b0fda9f5369",
   "binding": "experiment content hashes are authoritative across the subsequent commit; no self-referential commit hash",
   "experiment_files": {
     "experiments/mlir/CMakeLists.txt": {
@@ -292,8 +292,8 @@
       "sha256": "4f22517efc2dec79b93c883d24adde006212b53c4dad2c6f8d8ef73c1be0e4af"
     },
     "experiments/mlir/decision.md": {
-      "bytes": 10589,
-      "sha256": "d63eaab046b9b92a28b66c2b441a0c2cb3e51ad8326685e348a9fc063fb21705"
+      "bytes": 10853,
+      "sha256": "f6a6f7fe89bea6ac0cd851e773d50a9a8a4282fa2ccaaf88aaeddff6b9d28a53"
     },
     "experiments/mlir/feature-probes/exception-throw.mlir": {
       "bytes": 40,
