@@ -1,44 +1,20 @@
 {
-  "schema": 1,
+  "scope": "coherent uncommitted authoring snapshot; diagnostic only, no frozen acceptance",
   "base": "ca0d72cd4396d820b01fac79be4e47491f8e9cb3",
-  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
-  "scope": "authoring; complete parameter source bind graph; final native not certified",
-  "reference": {
-    "command": "sh scripts/test-function-parameter-oracle.sh",
-    "exit_code": 0,
-    "cases": 39
-  },
-  "python": {
-    "command": "python3 -B -m unittest discover -s scripts -p 'test_*.py'",
-    "exit_code": 0,
-    "passed": 269,
-    "seconds": 21.278
-  },
-  "preservation": {
-    "ordered_recipe_entries": 350,
-    "unchanged_extracted": 350,
-    "previous_reviews": "all complete blocks byte-identical",
-    "unchanged_bootstrap": {
-      "runtime/bootstrap/macro.json": "f1d4d6f8b12559b974ef231b2055aecc8519ea3745c050a97afd524ad39c04da",
-      "runtime/bootstrap/macro.wasm": "94c351a4d079c0f96c179e92b325ba13418a4f862ef067417916566cd492639f",
-      "runtime/bootstrap/runtime.json": "36a8ae5914fc9ccd7b9528b03db10fb00374d02f6375ee3e9b5c50cb2eebbc03",
-      "runtime/bootstrap/runtime.wasm": "78e55b4a8aeb4c1a07a03904fd3f5121df4a5ad79cf62e80fc66052bff7ec5b0"
-    }
-  },
-  "native": "isolated diagnostic snapshot results retained; final candidate pending",
   "files": {
     "crates/suss-cli/tests/portable_function_parameters.rs": "fb12530179ea916a652cb77b9f498c744084fb18c1f52471a1c87667d9cb627c",
     "crates/suss-compile/src/portable/hir.rs": "40a3ab038d49cff578e2d3579326d91a589ae7956c16291cda7d5e62eed825db",
-    "crates/suss-compile/src/portable/hir/destructuring.rs": "7c3aaff3d2308eeaf1628953caca70bf3965813a135da84a1b255b89d9eb4e0c",
+    "crates/suss-compile/src/portable/hir/destructuring.rs": "db3ee3f35c210d1b91ec24c41872ddedb72de4608f5366171ff8250fe538657a",
     "docs/compatibility/bootstrap/sequence-forward-declarations.sus": "640e5a0e1ccd4d6a8b8d743322b0e18984752d26d44afabc79cf6defefbd973a",
     "docs/compatibility/core-import.json": "d2bff55997d31b22b584b5a2a732e2a2612f662f9bde1c24e1bf5c0557de46c7",
     "docs/compatibility/function-parameters/NOTICE": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
-    "docs/compatibility/function-parameters/README.md": "9b4f5c3599952911409e1ceb9f840a973eaf645ad11d6459ac3d46a8ee4fc83d",
+    "docs/compatibility/function-parameters/README.md": "134d2fda4fe3abd4e2fa8436e3e26f3fdd596e5b9c71aab0babef788e9d3fede",
     "docs/compatibility/function-parameters/core-destructure-629.cljc": "f4a3a3bd3dadbef251deafdf19909d2c443f915c3049247c2910f32fb21743b9",
     "docs/compatibility/function-parameters/core-fn-269.cljc": "ab6620705f872b811e4e4485e174114bf5b488a38c5f44235c3479897e28fe51",
     "docs/compatibility/function-parameters/core-let-772.cljc": "0562771b25c984608cb9c6d0a10145895772d99b4cf70458982530cc140b4ef8",
     "docs/compatibility/function-parameters/core-maybe-destructured-250.cljc": "72e0f47c7bda5c7fa2baf6ec9971fb4b73c5dc5623d2d74f28903298e97ca823",
     "docs/compatibility/function-parameters/core-when-let-412.cljc": "9dcef30bf4029ea680958b87f65715abdcf2e3983024bc6e7b09256a8fc3fb1d",
+    "docs/compatibility/function-parameters/evidence/authoring-receipt.json": "b9360ecbf42b3a76900c3d0151bc8874cfbf4abad23b4aea33c3b6ad4aba7778",
     "docs/compatibility/function-parameters/evidence/live-initial-expectations.json": "52afbdda2965f41b87520ebfc3fbfa2a003503e063018d0b0d37daef39d94d0b",
     "docs/compatibility/function-parameters/evidence/live-initial-failed.log": "c1c0d692a1f1548007f1b37f2a1a3db5376e0634e52bf4deeb90cae739420033",
     "docs/compatibility/function-parameters/evidence/primary-26.log": "76e6094de5ba2e6d2b6d679221beb73bf4f7352fd3f61426026781ffcd479420",
@@ -74,7 +50,7 @@
     "docs/compatibility/patches/destructuring-to-array.json": "98c106828a1f6385f6f7cc109253757bd62dec50bbed94f604815b9faa945b61",
     "docs/compatibility/patches/destructuring-vector.json": "8d6d4ac9c0e32d7e36ccd208f1bfb4a6d648ced75ddfc1b5a696ddfda6b2b9b1",
     "docs/compatibility/reviews.edn": "0673d6f4f97620fb9bd044d5b39120d3742139b6bcc3b098f2f893ffc45fad1e",
-    "docs/roadmap/handoff.md": "d0a7a7bd77c285586a811ffdfcae4e9c4ff4867b1f5ee2f778ddb63aa6e8ca99",
+    "docs/roadmap/handoff.md": "4ca51b33e8010594dea7add3fe9701a56101a83783ecccf69aeda1316587768f",
     "runtime/core-import/extracted/0350.cljs": "e581918ae937892f70a1c5190f8157f72c578ff35cecd73f939b1f9cb1b63e20",
     "runtime/core-import/extracted/0351.cljs": "e6b4d6ebc3d92e8b95648c0efa8ac1e0aefb94ce3009b1ebcb08e870b1bf5f58",
     "runtime/core-import/extracted/0352.cljs": "319b5a2a1438b1137fa7bb3f98ef210576681d9ce3dc9417c2aaee5aa532a99a",
@@ -92,14 +68,24 @@
     "scripts/test_function_parameter_runtime_provenance.py": "7866fa3c5c525777b81873992a32c933988f2f52269338bd3ac6d7ac2993e0a8",
     "scripts/test_record_graph_runtime_provenance.py": "6cc4e8a174b768a1d417091af11235bf1c071cdd19eb087651745c3c2047e1b0",
     "tests/oracle/function-parameter-cases.json": "9088aeba4ffc1ebbb1280ce5bcded0ea2075b86004c910e4d84c6033cc0d9158",
-    "tests/oracle/src/suss_oracle/function_parameter.cljs": "0f0bee52b1aecbd09a6e8e5fb7b6c9189a0d05dc51907e9c2b75b87f97c43b09",
-    "docs/compatibility/function-parameters/evidence/suss-m4-parameter-coherent-compiler-lib.log": "38ee4812afef65a8faa066ad51147f466380c295fab9e7d7bea9014836a47ac0",
-    "docs/compatibility/function-parameters/evidence/suss-m4-parameter-coherent-native.log": "fa58c42e5a040f3a92020a98632a2b784e47f348691249408d25c72995ee1d1e",
-    "docs/compatibility/function-parameters/evidence/suss-m4-parameter-coherent-diagnostic-snapshot.json": "1432cabfafb47075c94fbceffbc8d46f772204af2b627886f93e16ff38f2cfc2"
+    "tests/oracle/src/suss_oracle/function_parameter.cljs": "0f0bee52b1aecbd09a6e8e5fb7b6c9189a0d05dc51907e9c2b75b87f97c43b09"
   },
-  "followup": {
-    "base": "d3de9e53bfece49562beb8b2ea21ba231c70f4a2",
-    "scope": "structural assertion inspects actual named owner publication; production lowering unchanged",
-    "execution": "coherent39native2pass; structural correction pending"
+  "bootstrap": {
+    "exit_code": 0,
+    "summary": "regenerated successfully",
+    "log": "/private/tmp/suss-m4-parameter-coherent-bootstrap.log",
+    "sha256": "b206fb4b66951adc68cb04ed34626f8c1a1eb1295c3ae86dc4711dddb3c93041"
+  },
+  "compiler_lib": {
+    "exit_code": 101,
+    "summary": "92 passed, 1 failed, 0 ignored; structural named method assertion",
+    "log": "/private/tmp/suss-m4-parameter-coherent-compiler-lib.log",
+    "sha256": "38ee4812afef65a8faa066ad51147f466380c295fab9e7d7bea9014836a47ac0"
+  },
+  "native_parameters": {
+    "exit_code": 0,
+    "summary": "2 passed, 0 failed, 0 ignored; 39 raw cases both phases and GC capture",
+    "log": "/private/tmp/suss-m4-parameter-coherent-native.log",
+    "sha256": "fa58c42e5a040f3a92020a98632a2b784e47f348691249408d25c72995ee1d1e"
   }
 }

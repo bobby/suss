@@ -23237,3 +23237,10 @@ push; finalhead review/compiler/native/bootstrap reproduction/full unchanged
 baseline/CI pending. Full original record/reify graph remains open. Next genuine
 source/compiler group: actual reify and nil-iter for empty HAMT traversal, retaining
 whole source/protocol/meta/capture/factory contracts, not a stand-in iterator.
+
+Parameter d3de follow-up: coherent diagnostic bootstrap0/native2pass39cases8.13s;
+compilerlib92pass1fail at structural named-method assertion. Actual named function
+uses attach_callable_signatures Let publication; inspect its owner GeneralFunction,
+assert genuine self name again/sole method, retain rawarity2 and Do->Let inside
+recurrence Loop. Test-only shape repair, no production/allowance/assertion removal.
+Coherent raw logs/receipt retained; corrected assertion pending parent execution.

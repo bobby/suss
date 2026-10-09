@@ -79,3 +79,11 @@ execution, bootstrap reproduction, unchanged full baseline and CI remain require
 This is a prerequisite for Refs #18/#19, not record/reify or M4 completion.
 The next source group is genuine retained reify plus nil-iter, including the
 empty-HAMT iterator path; no replacement class or protocol subset.
+
+A coherent later snapshot passed bootstrap and the 39-case native gate (two tests,
+8.13s), but compilerlib remained 92 passed/1 failed: the structural assertion
+expected a bare GeneralFunction rather than the actual callable-signature
+publication Let. The follow-up now inspects the genuine owner's GeneralFunction,
+asserts its self name and sole method, retains exact raw arity two, and retains
+Do->Let inside the recurrence Loop. Production lowering is unchanged; the corrected
+structural assertion still needs its own execution. Coherent logs/receipt retained.

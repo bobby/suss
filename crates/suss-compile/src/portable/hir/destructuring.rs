@@ -638,9 +638,26 @@ mod tests {
             let Expression::Do(items) = hir.kind else {
                 panic!("top-level")
             };
-            let Expression::GeneralFunction { methods, .. } = &items.last().unwrap().kind else {
-                panic!("named method")
+            // Named functions publish their genuine owner/delegates through
+            // attach_callable_signatures; inspect that owner's actual method,
+            // not a fabricated unwrapped top-level function shape.
+            let Expression::Let {
+                bindings: callable_bindings,
+                ..
+            } = &items.last().unwrap().kind
+            else {
+                panic!("callable signature publication")
             };
+            let Expression::GeneralFunction {
+                methods,
+                self_binding,
+                ..
+            } = &callable_bindings[0].value.kind
+            else {
+                panic!("named callable owner")
+            };
+            assert_eq!(self_binding.as_ref().unwrap().name, "again");
+            assert_eq!(methods.len(), 1);
             assert_eq!(
                 methods[0].parameters.len(),
                 2,
