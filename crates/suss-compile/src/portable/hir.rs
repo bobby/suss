@@ -3,6 +3,7 @@ mod arrays;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
 mod function_parameters;
+mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
 mod bitwise;
 mod callable_signatures;
@@ -1306,6 +1307,13 @@ impl Analyzer<'_> {
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
+        let expanded;
+        let args = if bootstrap_macro {
+            expanded = self.destructured_function_arguments(form, args)?;
+            expanded.as_slice()
+        } else {
+            args
+        };
         let outer_scope_count = self.function_scopes.len();
         let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
@@ -1560,6 +1568,13 @@ impl Analyzer<'_> {
         // Object and protocol methods also enter through this boundary rather
         // than the ordinary function wrapper. Their bodies are synchronous;
         // only a nested future may introduce a new suspendable context.
+        let expanded;
+        let args = if bootstrap_macro {
+            expanded = self.destructured_function_arguments(form, args)?;
+            expanded.as_slice()
+        } else {
+            args
+        };
         let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.fixed_function_fields_inner(
             form, args, bootstrap_macro, fields, method_receiver, object_method,

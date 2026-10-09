@@ -1753,12 +1753,42 @@
       "id": "runtime:gensym:10907",
       "source-sha256": "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a",
       "patch": "docs/compatibility/patches/record-graph-gensym.json"
+    },
+    {
+      "id": "runtime:LITE_MODE:56",
+      "source-sha256": "3aa9752d7ee11c9d97bf8ecb35bb2504f9ef879aa1dbd4ee09b20200d2755fcb",
+      "patch": "docs/compatibility/patches/destructuring-LITE_MODE.json"
+    },
+    {
+      "id": "runtime:to-array:3819",
+      "source-sha256": "53e0f3d75b831ef2028703b8168977bb4c834d5dcb3d0d25a4c34e22473e22bb",
+      "patch": "docs/compatibility/patches/destructuring-to-array.json"
+    },
+    {
+      "id": "runtime:--destructure-map:4154",
+      "source-sha256": "d12f57bee88d8103d6b605125ffdf2f66336545ea5247cb686d054967b5e1973",
+      "patch": "docs/compatibility/patches/destructuring---destructure-map.json"
+    },
+    {
+      "id": "runtime:reverse:3367",
+      "source-sha256": "87142e78c06d83a690a9f0bd8ac6801bec92b0e999b5de6174ba2c1a17da7941",
+      "patch": "docs/compatibility/patches/destructuring-reverse.json"
+    },
+    {
+      "id": "runtime:vector:5959",
+      "source-sha256": "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c",
+      "patch": "docs/compatibility/patches/destructuring-vector.json"
+    },
+    {
+      "id": "runtime:some:4430",
+      "source-sha256": "034b8c7d5e1dd0f04c8e7d3dba7c38f106a5194bacac6b52e0b37d3c54ebffd0",
+      "patch": "docs/compatibility/patches/destructuring-some.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "4d938f880bed003f44c8aa8fe05464d4972279bede26d81c5960af9218a07aa3"
+      "sha256": "640e5a0e1ccd4d6a8b8d743322b0e18984752d26d44afabc79cf6defefbd973a"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

@@ -1,0 +1,12 @@
+..........................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 266 tests in 18.935s
+
+OK
+PASS 22 pinned Array constructor observations
+41 pinned portable source observations match exactly
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 33 pinned record helper observations
+PASS 14 pinned record iterator/not-empty observations
+PASS 7 pinned reify prerequisite observations
+45 pinned portable source observations match exactly

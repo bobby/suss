@@ -14,7 +14,7 @@ class RuntimeGraphProvenance(unittest.TestCase):
     def test_missing_reordered_duplicate_and_wrong_hash_rejected(self):
         for change in ('missing','reordered','duplicate','hash'):
             recipe = copy.deepcopy(self.recipe)
-            if change == 'missing': recipe['forms'].pop()
+            if change == 'missing': recipe['forms'].pop(349)
             elif change == 'reordered': recipe['forms'][340:350] = recipe['forms'][340:350][::-1]
             elif change == 'duplicate': recipe['forms'].append(copy.deepcopy(recipe['forms'][340]))
             else: recipe['forms'][340]['source-sha256'] = '0'*64

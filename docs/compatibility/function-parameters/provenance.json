@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "forms": [
+    {
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "kind": "defn",
+      "name": "maybe-destructured",
+      "line": 250,
+      "end-line": 266,
+      "reader-context": [
+        ":cljs"
+      ],
+      "sha256": "994f8fa3d34cb74ed00edbf0f686ac1c5d0b3d8429c97a182e66b533a6636920",
+      "retained": "docs/compatibility/function-parameters/core-maybe-destructured-250.cljc",
+      "retained-file-sha256": "72e0f47c7bda5c7fa2baf6ec9971fb4b73c5dc5623d2d74f28903298e97ca823",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "kind": "defmacro",
+      "name": "fn",
+      "line": 269,
+      "end-line": 330,
+      "reader-context": [
+        ":cljs"
+      ],
+      "sha256": "c92d8d3b88f0e844abd70400d70b6d0104fa064d716589d23bc537f966abc024",
+      "retained": "docs/compatibility/function-parameters/core-fn-269.cljc",
+      "retained-file-sha256": "ab6620705f872b811e4e4485e174114bf5b488a38c5f44235c3479897e28fe51",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "kind": "defmacro",
+      "name": "when-let",
+      "line": 412,
+      "end-line": 424,
+      "reader-context": [
+        ":cljs"
+      ],
+      "sha256": "ed3244f72d2b38c08223867744d186a83e8332de188ff445429b84cc452f0c28",
+      "retained": "docs/compatibility/function-parameters/core-when-let-412.cljc",
+      "retained-file-sha256": "9dcef30bf4029ea680958b87f65715abdcf2e3983024bc6e7b09256a8fc3fb1d",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "kind": "defn",
+      "name": "destructure",
+      "line": 629,
+      "end-line": 730,
+      "reader-context": [],
+      "sha256": "532417510d2fbf3181403605826236fb4b4a96aed6e7f1e318ed161db7310ec4",
+      "retained": "docs/compatibility/function-parameters/core-destructure-629.cljc",
+      "retained-file-sha256": "f4a3a3bd3dadbef251deafdf19909d2c443f915c3049247c2910f32fb21743b9",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "kind": "defmacro",
+      "name": "let",
+      "line": 772,
+      "end-line": 787,
+      "reader-context": [],
+      "sha256": "6fef5cb8bdbc45547ba5df6d2b251be0eee42e8a78347f8fba7f44b1a8c190e7",
+      "retained": "docs/compatibility/function-parameters/core-let-772.cljc",
+      "retained-file-sha256": "0562771b25c984608cb9c6d0a10145895772d99b4cf70458982530cc140b4ef8",
+      "status": "whole source retained; compilation/execution not established"
+    }
+  ]
+}

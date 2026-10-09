@@ -23198,3 +23198,42 @@ No JVM alias normalization, production/allowance changes or removed promotion/
 internal checks. Raw focused+diagnostic failures and receipt retained. Test name:
 publication_probe_cannot_promote_real_reader_or_internal_reservations. No Cargo
 by author; corrected candidate pending parent rerun, separate from destructuring.
+
+### Full portable function-parameter binding graph authoring
+
+After ca0, implement genuine bootstrap fn vector/map parameter lowering to raw
+arguments plus an inner primitive let* inside the method recurrence loop. Preserve
+named/multiple/rest signatures, nested bindings, :as, qualified shorthands, eager
+defaults, public extraction calls/effect order, genuine captures and source metadata.
+Primitive fn* remains strict. Syntax maps preserve small-map/HAMT promotion,
+collisions and removal order. No imported helper is truncated.
+
+Retain five complete macro parents with EPL notice/hash/context and append six
+whole source prerequisites after all350 existing forms: LITE_MODE, to-array,
+--destructure-map, reverse, vector, some. Exact canonical dot spelling and complete
+when-let expansion only; vector is not an intrinsic alias and some is not Booleanized.
+The full LITE_MODE=true ObjMap dependency remains pending. 356 selections generate
+360 files; four bootstrap artifacts unchanged/stale.
+
+Author gates: fresh pinned39 raw value/effect cases match; five macro and six
+runtime provenance checks pass; core_import --check360; Python269pass21.278s;
+new Rust parsed/formatted and diffcheck clean. Existing runtimegraph missing-entry
+mutation now removes index349 instead of the newly appended recipe tail; retain
+all missing/reorder/duplicate/hash/removed-branch rejection assertions.
+
+Parent isolated snapshots: compile-only0; bootstrap sequential genuine failures
+reverse/vector/some/dot/when-let retained, complete adapted bootstrap0; native30
+and39 gates each2pass (39in8.05s), bothphases/postGC/solehostcapture. These are
+snapshot diagnostics with exact source receipts, not final authoring certification.
+Compilerlib39snapshot91pass2fail, then published sparse-fixture corrections plus
+Keyword declaration92pass1fail missingPersistentVector. Final authored structural
+fixture declares canonical Keyword/PersistentVector/PersistentArrayMap cells and
+checks genuine Do->Let inside recurrence; no fake class body or skipped keyword
+coverage. Failed mixed copy consistency guard means no final-module test result.
+Oldbase sparsefixture unchanged here; integration must inherit reviewed06 fixes.
+
+Evidence/receipts: docs/compatibility/function-parameters/. No author Cargo/build/
+push; finalhead review/compiler/native/bootstrap reproduction/full unchanged
+baseline/CI pending. Full original record/reify graph remains open. Next genuine
+source/compiler group: actual reify and nil-iter for empty HAMT traversal, retaining
+whole source/protocol/meta/capture/factory contracts, not a stand-in iterator.

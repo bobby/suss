@@ -80,6 +80,15 @@
          ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
 
 (declare ^:private keyword-name-parts)
+
+;; Full parameter map-normalization mutual references. ObjMap is pending, not a stub.
+(declare --destructure-map LITE_MODE to-array ObjMap)
+
+;; Complete comp variadic factory mutual reference, initialized by whole reverse.
+(declare reverse)
+
+;; Full juxt and merge/merge-with source graph references, not aliases.
+(declare vector some)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -6057,6 +6066,64 @@
      (when (suss.bootstrap/nil? gensym_counter)
        (set! gensym_counter (atom 0)))
      (symbol (str_ prefix-string (swap! gensym_counter inc))))))
+
+(def
+  ^{:doc "Boolean flag for LITE_MODE"
+    :jsdoc ["@type {boolean}"]}
+  LITE_MODE false)
+
+(def to-array
+  "Returns an array containing the contents of coll."
+  (fn [coll]
+  (let [ary (array)]
+    (loop [s (seq coll)]
+      (if-not (suss.bootstrap/nil? s)
+        (do (.push ary (first s))
+            (recur (next s)))
+        ary)))))
+
+(def --destructure-map
+  (fn [gmap]
+  (if ^boolean LITE_MODE
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc ObjMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY ObjMap)))
+      gmap)
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY PersistentArrayMap)))
+      gmap))))
+
+(def reverse
+  "Returns a seq of the items in coll in reverse order. Not lazy."
+  (fn [coll]
+  (if (reversible? coll)
+    (or (rseq coll) ())
+    (reduce conj () coll))))
+
+(def vector
+  "Creates a new vector containing the args."
+  (fn [& args]
+  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+    (vec args))))
+
+(def some
+  "Returns the first logical true value of (pred x) for any x in coll,
+  else nil.  One common idiom is to use a set as pred, for example
+  this will return :fred if :fred is in the sequence, otherwise nil:
+  (some #{:fred} coll)"
+  (fn [pred coll]
+  (let [some_seq_once__ (seq coll)]
+    (when some_seq_once__
+      (let [s some_seq_once__]
+        (or (pred (first s)) (recur pred (next s))))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

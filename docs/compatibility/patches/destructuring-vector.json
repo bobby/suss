@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c",
+  "replacement": "(def vector\n  \"Creates a new vector containing the args.\"\n  (fn [& args]\n  (if (and (instance? IndexedSeq args) (zero? (.-i args)))\n    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))\n    (vec args))))",
+  "rationale": "Complete pinned runtime graph dependency; only defn -> def/fn declaration expansion. Source docstring, every branch, public dispatch, physical source arguments and once-only/effect order retained. Authoring snapshot bootstrap exposed this genuine dependency; native execution not established. Retain full variadic IndexedSeq/zero offset/fromArray fast path, original source array alias flag and complete vec fallback; no vector intrinsic alias."
+}
