@@ -1,0 +1,103 @@
+[
+  {
+    "name": "cmake-configure-current",
+    "command": [
+      "cmake",
+      "-S",
+      "/private/tmp/suss-m4-mlir-evaluation/experiments/mlir",
+      "-B",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned",
+      "-G",
+      "Unix Makefiles",
+      "-DMLIR_DIR=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/lib/cmake/mlir",
+      "-DLLVM_DIR=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/lib/cmake/llvm",
+      "-DCMAKE_C_COMPILER=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang",
+      "-DCMAKE_CXX_COMPILER=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang++",
+      "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/ld64.lld",
+      "-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-DCMAKE_BUILD_TYPE="
+    ],
+    "exit_code": 0,
+    "log": "cmake-configure-current.log"
+  },
+  {
+    "name": "cmake-build-current",
+    "command": [
+      "cmake",
+      "--build",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned",
+      "--target",
+      "suss-mlir-opt",
+      "suss-mlir-export",
+      "--parallel",
+      "1"
+    ],
+    "exit_code": 0,
+    "log": "cmake-build-current.log"
+  },
+  {
+    "name": "ctest-current",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned",
+      "--output-on-failure",
+      "--parallel",
+      "1"
+    ],
+    "exit_code": 0,
+    "log": "ctest-current.log"
+  },
+  {
+    "name": "genuine-facts-current",
+    "command": [
+      "python3",
+      "experiments/mlir/fixtures/check-native-analysis.py",
+      "/private/tmp/suss-m3-source-futures/target/debug/suss-mlir-bridge-draft",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned/suss-mlir-opt"
+    ],
+    "exit_code": 0,
+    "log": "genuine-facts-current.log"
+  },
+  {
+    "name": "effects-roundtrip-current",
+    "command": [
+      "python3",
+      "experiments/mlir/bridge/effects-fixtures/check-effects.py",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned/suss-mlir-export",
+      "/private/tmp/suss-m4-mlir-toolchain/build-export-pinned/suss-mlir-opt"
+    ],
+    "exit_code": 0,
+    "log": "effects-roundtrip-current.log"
+  },
+  {
+    "name": "source-oracle-current",
+    "command": [
+      "python3",
+      "experiments/mlir/bridge/source-fixtures/check-source-oracles.py",
+      "--upstream",
+      "/private/tmp/suss-m4-queues/clojurescript",
+      "--workdir",
+      "/private/tmp/suss-m4-mlir-source-primary-current",
+      "--suss",
+      "/private/tmp/suss-m4-queue-target/debug/suss"
+    ],
+    "exit_code": 0,
+    "log": "source-oracle-current.log"
+  },
+  {
+    "name": "effects-oracle-current",
+    "command": [
+      "python3",
+      "experiments/mlir/bridge/effects-fixtures/run-cljs.py",
+      "--upstream",
+      "/private/tmp/suss-m4-queues/clojurescript",
+      "--workdir",
+      "/private/tmp/suss-m4-mlir-effects-primary-current",
+      "--native",
+      "/private/tmp/suss-m3-source-futures/target/debug/suss-mlir-bridge-draft"
+    ],
+    "exit_code": 0,
+    "log": "effects-oracle-current.log"
+  }
+]

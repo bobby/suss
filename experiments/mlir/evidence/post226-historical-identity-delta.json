@@ -1,0 +1,87 @@
+{
+  "schema": "suss.mlir.historical-identity-delta.v1",
+  "historical_base": "22723b432c5fb4792c39302d3739b73a44fa87ff",
+  "current_source_head": "b34dd5eea6753a5e5beb014061de160583dd759d",
+  "current_main_base": "4e0f00dbac50aac732902acecbbafb5351d0132b",
+  "command": [
+    "python3",
+    "experiments/mlir/scripts/capture-evidence.py",
+    "--check",
+    "experiments/mlir/evidence/identity-current-main.json"
+  ],
+  "exit_status": 1,
+  "result": "historical identity manifest rejects current source; fresh current-base execution remains required",
+  "changes": {
+    "experiment_files": [
+      {
+        "path": "experiments/mlir/README.md",
+        "previous": {
+          "bytes": 13453,
+          "sha256": "2a4d68670165cc4db8966d421f48b1e9f3632bd1b65dc756dc7e95866cf5c9f1"
+        },
+        "current": {
+          "bytes": 13585,
+          "sha256": "929bc6492f9bd4b194d06bcc4bc0c06a620a3b6f0dcbd940e231bf0460810006"
+        }
+      },
+      {
+        "path": "experiments/mlir/decision.md",
+        "previous": {
+          "bytes": 10359,
+          "sha256": "803a7dcff08939c6b27d06c1aff021a6beb10b756e4869493cc42629620b0b5a"
+        },
+        "current": {
+          "bytes": 10589,
+          "sha256": "d63eaab046b9b92a28b66c2b441a0c2cb3e51ad8326685e348a9fc063fb21705"
+        }
+      }
+    ],
+    "bootstrap_files": [
+      {
+        "path": "runtime/bootstrap/macro.json",
+        "previous": {
+          "bytes": 36854,
+          "sha256": "59f27be7793950ef378dc2f7415acf392577e3be571a14894e33f0e42fcc2352"
+        },
+        "current": {
+          "bytes": 37277,
+          "sha256": "9fcffa2fbbca97c5a267189af42704f51b88735059f39ab63f443ad471310b6c"
+        }
+      },
+      {
+        "path": "runtime/bootstrap/macro.wasm",
+        "previous": {
+          "bytes": 1389399,
+          "sha256": "51a5be8633b7491082bbb4b22b096923a0e5eca2a831847498bb441dcf279bdb"
+        },
+        "current": {
+          "bytes": 1420056,
+          "sha256": "63dcff3a4afbe114e114fa2180e80d5f8e3c151202a589e058da1d9391b59181"
+        }
+      },
+      {
+        "path": "runtime/bootstrap/runtime.json",
+        "previous": {
+          "bytes": 38040,
+          "sha256": "6c2cb596b97ccf2fe71736525cdd75e674ca0d062fd889252aa0362dc8553139"
+        },
+        "current": {
+          "bytes": 38479,
+          "sha256": "8f7ddf7bad223857fc20ddd407130efea60dc5eb6ecadb61aafe1ce324acc83f"
+        }
+      },
+      {
+        "path": "runtime/bootstrap/runtime.wasm",
+        "previous": {
+          "bytes": 1390575,
+          "sha256": "a892efea0b18c7f42a2f8795e78246a41332cb3b59201409b47efa07deb004c1"
+        },
+        "current": {
+          "bytes": 1421248,
+          "sha256": "a8e1e1f3849e5b451aabf46909172c6430b473b67570f64991a2ef58aa5b8ade"
+        }
+      }
+    ],
+    "production_files": []
+  }
+}

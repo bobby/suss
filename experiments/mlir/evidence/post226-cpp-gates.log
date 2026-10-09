@@ -1,0 +1,126 @@
+-- The C compiler identification is Clang 23.1.3
+-- The CXX compiler identification is Clang 23.1.3
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for histedit.h
+-- Looking for histedit.h - found
+-- Found LibEdit: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include (found version "2.11")
+-- Found ZLIB: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd (found version "1.2.12")
+-- Found zstd: /opt/homebrew/lib/libzstd.dylib
+-- Found LibXml2: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libxml2.tbd (found version "2.9.13")
+-- Linker detection: lld
+-- Performing Test LLVM_LINKER_SUPPORTS_NO_EXPORTED_SYMBOLS
+-- Performing Test LLVM_LINKER_SUPPORTS_NO_EXPORTED_SYMBOLS - Success
+-- Performing Test LLVM_LINKER_SUPPORTS_NO_WARN_DUPLICATE_LIBRARIES
+-- Performing Test LLVM_LINKER_SUPPORTS_NO_WARN_DUPLICATE_LIBRARIES - Success
+-- Found Python3: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 (found version "3.14.7") found components: Interpreter
+-- Configuring done (8.8s)
+-- Generating done (0.0s)
+-- Build files have been written to: /private/tmp/suss-m4-mlir-toolchain/build-post226
+[ 11%] Building SussDialect.h.inc...
+[ 22%] Building SussDialect.cpp.inc...
+[ 33%] Building SussTypes.h.inc...
+[ 44%] Building SussTypes.cpp.inc...
+[ 55%] Building SussOps.h.inc...
+[ 66%] Building SussOps.cpp.inc...
+[ 66%] Built target SussGenerated
+[ 77%] Building CXX object CMakeFiles/suss-mlir-opt.dir/src/Suss.cpp.o
+[ 88%] Building CXX object CMakeFiles/suss-mlir-opt.dir/src/main.cpp.o
+[100%] Linking CXX executable suss-mlir-opt
+[100%] Built target suss-mlir-opt
+[ 60%] Built target SussGenerated
+[ 70%] Building CXX object CMakeFiles/suss-mlir-export.dir/src/Suss.cpp.o
+[ 80%] Building CXX object CMakeFiles/suss-mlir-export.dir/src/Export.cpp.o
+[ 90%] Building CXX object CMakeFiles/suss-mlir-export.dir/src/export-main.cpp.o
+[100%] Linking CXX executable suss-mlir-export
+[100%] Built target suss-mlir-export
+Test project /private/tmp/suss-m4-mlir-toolchain/build-post226
+    Start 1: suss-dialect-fixtures
+1/3 Test #1: suss-dialect-fixtures ............   Passed    2.75 sec
+    Start 2: suss-verified-graph-export
+2/3 Test #2: suss-verified-graph-export .......   Passed    0.68 sec
+    Start 3: suss-effects-export
+3/3 Test #3: suss-effects-export ..............   Passed    0.61 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =   4.05 sec
+PASS positive and stable complete fixture locations
+PASS positive-analysis-source.mlir: verify and stable roundtrip
+PASS positive-nested-higher-order.mlir: verify and stable roundtrip
+PASS positive-zero-capture.mlir: verify and stable roundtrip
+PASS negative-analysis-bits.mlir: f64 requires exact lowercase bits
+PASS negative-analysis-capture-reference.mlir: dangling/duplicate capture reference
+PASS negative-analysis-child-order.mlir: dangling/reordered initializer reference
+PASS negative-analysis-child-reference.mlir: dangling/reordered initializer reference
+PASS negative-analysis-closure-arity.mlir: closure arity disagrees with callable
+PASS negative-analysis-conflicting-binding.mlir: conflicting declaration identity
+PASS negative-analysis-conflicting-hir-id.mlir: conflicting hirBindingId
+PASS negative-analysis-duplicate-declaration.mlir: duplicate source declaration
+PASS negative-analysis-duplicate-key.mlir: duplicate keys
+PASS negative-analysis-escaped-duplicate-key.mlir: duplicate keys
+PASS negative-analysis-hidden-unbound-argument.mlir: child scope disagrees with declarations
+PASS negative-analysis-json.mlir: invalid JSON
+PASS negative-analysis-legacy.mlir: legacy dictionaries unsupported
+PASS negative-analysis-local-name.mlir: local name/declaration mismatch
+PASS negative-analysis-method-entry-scope.mlir: callable body scope disagrees with declarations
+PASS negative-analysis-missing-field.mlir: missing/unknown object fields
+PASS negative-analysis-non-f64-const.mlir: unsupported operation/source attachment mapping
+PASS negative-analysis-optional.mlir: missing/unknown object fields
+PASS negative-analysis-parameter-identity.mlir: parameter facts disagree
+PASS negative-analysis-resolved-literal.mlir: resolution on nonlocal node
+PASS negative-analysis-resolved-symbol-name.mlir: local symbol/resolution mismatch
+PASS negative-analysis-shadow-scope.mlir: shadow disagrees with lexical scope
+PASS negative-analysis-source-op.mlir: unsupported tag/context/phase
+PASS negative-analysis-span.mlir: reversed span
+PASS negative-analysis-unbound-method-argument.mlir: callable body scope disagrees with declarations
+PASS negative-analysis-unknown-field.mlir: missing/unknown object fields
+PASS negative-analysis-unrelated-attachment.mlir: unsupported operation/source attachment mapping
+PASS negative-analysis-utf16.mlir: UTF16 unit out of range
+PASS negative-analysis-version.mlir: unsupported schema version
+PASS negative-arithmetic-type.mlir: operand #1 must be 64-bit float
+PASS negative-call-arity.mlir: call arity mismatch
+PASS negative-call-result.mlir: call result type mismatch
+PASS negative-call-type.mlir: call argument type mismatch
+PASS negative-capture-count.mlir: capture count/type mismatch
+PASS negative-capture-type.mlir: capture count/type mismatch
+PASS negative-empty-body.mlir: body must contain exactly one block
+PASS negative-entry-shape.mlir: entry parameters must be captures
+PASS negative-implicit-capture.mlir: external value
+PASS negative-missing-return.mlir: body must end in suss.return
+PASS negative-multiple-blocks.mlir: expects region #0 to have 0 or 1 blocks
+PASS negative-nested-implicit-capture.mlir: external value
+PASS negative-non-callable.mlir: callee must have a suss closure type
+PASS negative-nonclosure-result.mlir: requires a suss closure result type
+PASS negative-return-type.mlir: return type mismatch
+PASS negative-type-multi-argument.mlir: closure signature requires exactly one result
+PASS negative-type-multi-attribute.mlir: closure signature requires exactly one result
+PASS negative-type-multi-nested-capture.mlir: closure signature requires exactly one result
+PASS negative-type-multi-nested-input.mlir: closure signature requires exactly one result
+PASS negative-type-multi-nested-result.mlir: closure signature requires exactly one result
+PASS negative-type-unsupported-capture.mlir: closure elements must be f64 or a suss closure type
+PASS negative-type-unsupported-input.mlir: closure elements must be f64 or a suss closure type
+PASS negative-type-unsupported-nested.mlir: closure elements must be f64 or a suss closure type
+PASS negative-type-unsupported-result.mlir: closure elements must be f64 or a suss closure type
+PASS negative-type-zero-argument.mlir: closure signature requires exactly one result
+PASS negative-type-zero-attribute.mlir: closure signature requires exactly one result
+PASS negative-type-zero-nested-capture.mlir: closure signature requires exactly one result
+PASS negative-type-zero-nested-input.mlir: closure signature requires exactly one result
+PASS negative-type-zero-nested-result.mlir: closure signature requires exactly one result
+PASS negative-unknown-op.mlir: unregistered operation
+PASS negative-wrong-return-parent.mlir: must terminate a suss.closure body
+PASS recursive isolation through an admitted foreign region
+PASS complete selected-facts fields/attachments/locations and metadata/presence mutation storage (synthetic, not native HIR)
+PASS source-analysis byte/nesting bounds
+PASS: 3 global/head positives full roundtrip, 17 strict negatives (synthetic; native pending)
+PASS: exact original/mutated export, explicit location omission, 3 raw float bit probes, 9 rejection probes; Wasmtime pending
+PASS: registered effects print/parse/export roundtrip
+PASS: 7 effects exports, logical dominance/IDs, 17 rejection probes; Wasmtime pending

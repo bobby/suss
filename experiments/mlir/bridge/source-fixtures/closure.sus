@@ -1,0 +1,1 @@
+(let [^{:tag number :marker false :nil-marker nil} x 7 f (fn [y] (+ x y))] (f 2))

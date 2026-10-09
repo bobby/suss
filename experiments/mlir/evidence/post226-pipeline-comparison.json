@@ -1,0 +1,196 @@
+{
+  "schema": "suss.mlir.pipeline-comparison.v1",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "bridge": {
+    "sha256": "d797c9c7d27133f5492e6b48a1a4a31320e2c31bee2fe871c4d55a06fe5eee2f",
+    "bytes": 77445392
+  },
+  "exporter": {
+    "sha256": "adc5515abca4a24bb68687815bc457cb3134cefb474696b35c6173aed9fd3d0c",
+    "bytes": 5002288
+  },
+  "fixtures": {
+    "native-producer.sus": "7a58b2c64ee859c67d230e9369ef78abc8f91a90337139b02de9da6f7253a622",
+    "native-caller.sus": "48efbbe3f9500c03e0b4ac16efaee0ba39a4fc5c2f4471b016ea44ea2a874a4e",
+    "producer-caller.mlir": "9b3124ed3a20b0b85096397be1a00a64b5899d22f8ec5837fd7d659c03ba5a6c",
+    "producer-caller-mutated.mlir": "8487c9bc190a6abed3817ac5db07ff8175b79c0b945c09de98f8912e75bfff9c"
+  },
+  "stage": "process launch + compilation/verification + emission + output file writes",
+  "native_route": "two genuine source fragments -> public compile_in -> WasmGC",
+  "mlir_route": "hand-authored MLIR -> C++ verified JSON -> Rust IR reconstruction -> compile_ir -> WasmGC",
+  "excluded": [
+    "toolchain/build time",
+    "source-to-MLIR conversion (not implemented)",
+    "Wasmtime compilation/execution/GC",
+    "source-analysis v2 sidecar"
+  ],
+  "limitations": [
+    "different parser inputs; same capture, arithmetic and live-cell call",
+    "native source identity annotations differ from IR identity annotations",
+    "MLIR uses two processes; native uses one",
+    "shared host not isolated; no production performance claim"
+  ],
+  "warmups_per_case_lane": 3,
+  "cases": {
+    "original": {
+      "native": {
+        "samples_ns": [
+          6094375,
+          6362750,
+          5937375,
+          6116583,
+          6011584,
+          6447375,
+          6309000,
+          6181333,
+          6012417,
+          6014916,
+          6178291,
+          6092625,
+          6026750,
+          6309500,
+          6104375,
+          6067542,
+          6311959,
+          7422708,
+          5966292,
+          6095750
+        ],
+        "median_ns": 6100062.5,
+        "minimum_ns": 5937375,
+        "maximum_ns": 7422708
+      },
+      "mlir": {
+        "samples_ns": [
+          20427292,
+          21386167,
+          19987500,
+          19878125,
+          19721875,
+          19470375,
+          19717958,
+          21357667,
+          20194250,
+          19761375,
+          19677792,
+          19615208,
+          20118916,
+          20577250,
+          19979125,
+          21594833,
+          19990375,
+          20423042,
+          20088792,
+          20347708
+        ],
+        "median_ns": 20039583.5,
+        "minimum_ns": 19470375,
+        "maximum_ns": 21594833
+      }
+    },
+    "mutated": {
+      "native": {
+        "samples_ns": [
+          6011167,
+          6078958,
+          6025708,
+          6094625,
+          5965750,
+          6022000,
+          7099833,
+          6227917,
+          7299375,
+          6065125,
+          6237791,
+          5948459,
+          6133958,
+          6111375,
+          6020000,
+          6012084,
+          5895042,
+          6006250,
+          5832000,
+          5848625
+        ],
+        "median_ns": 6023854.0,
+        "minimum_ns": 5832000,
+        "maximum_ns": 7299375
+      },
+      "mlir": {
+        "samples_ns": [
+          19951209,
+          20893125,
+          19800167,
+          19216125,
+          19727083,
+          19303208,
+          19776125,
+          20591167,
+          19350125,
+          19624958,
+          19669167,
+          19385875,
+          19630584,
+          19524459,
+          19267625,
+          18937834,
+          19040500,
+          19310125,
+          19046916,
+          19165458
+        ],
+        "median_ns": 19455167.0,
+        "minimum_ns": 18937834,
+        "maximum_ns": 20893125
+      }
+    }
+  },
+  "artifacts": {
+    "original": {
+      "native": {
+        "producer.wasm": {
+          "bytes": 1036,
+          "sha256": "563962315ac0b3931497c4b7a84bb2bc09ba1e4eebab7a2a5d9f3a53a0eed2f8"
+        },
+        "caller.wasm": {
+          "bytes": 910,
+          "sha256": "b24b53f554b2c6c32e1351f21b0a133c6d578ce5448e87de84e280104d524bdf"
+        }
+      },
+      "mlir": {
+        "producer.wasm": {
+          "bytes": 940,
+          "sha256": "30e4618303e30d14482b2a168e7bafd03c8813c1387897c708cd0c3dc2ddf3e9"
+        },
+        "caller.wasm": {
+          "bytes": 845,
+          "sha256": "6ae5e1e2b929e4985af0f4731e551851555fd51e7fb6e56fd22cdd1387e3adac"
+        }
+      }
+    },
+    "mutated": {
+      "native": {
+        "producer.wasm": {
+          "bytes": 1036,
+          "sha256": "692b491d83b54ce96329c127ae3fa84ec67a7a89443a7667ce01e5728228ae21"
+        },
+        "caller.wasm": {
+          "bytes": 910,
+          "sha256": "b24b53f554b2c6c32e1351f21b0a133c6d578ce5448e87de84e280104d524bdf"
+        }
+      },
+      "mlir": {
+        "producer.wasm": {
+          "bytes": 940,
+          "sha256": "deeecd5efe850b6ee81020b420efa8de326b7250d4d873ca959702c47252cd2b"
+        },
+        "caller.wasm": {
+          "bytes": 845,
+          "sha256": "6ae5e1e2b929e4985af0f4731e551851555fd51e7fb6e56fd22cdd1387e3adac"
+        }
+      }
+    }
+  },
+  "observations": "all 92 fragment-pair executions matched exact 9/13 result bits after GC; ABI initializer gate passed"
+}

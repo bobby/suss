@@ -1,0 +1,2 @@
+PASS: registered effects print/parse/export roundtrip
+PASS: 7 effects exports, logical dominance/IDs, 17 rejection probes; Wasmtime pending

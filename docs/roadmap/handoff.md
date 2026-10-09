@@ -21944,3 +21944,215 @@ Fuel fix focused50519 terminal0: complete8tests pass23.27s/no failures or
 ignores/filters. Independent review no materialfindings; diagnosticsremoved,
 finite2Minit andshared2Mfourcalls preserveeveryassertion. Retainedfixedsuite
 log/hash. Next commit/push newhead then full lockedworkspacebaseline/finalCI.
+
+
+## M4 bounded MLIR transport integration — 2026-10-08
+
+Isolated `experiments/mlir/bridge/src/main.rs` now includes the native source-analysis module and a bounded `--analyze-source SOURCE.sus` command. It accepts one UTF-8 file up to 1 MiB, calls the default native analyzer, prints selected facts and propagates unsupported errors. It does not substitute source compilation for the verified-export runtime graph. `rustfmt --edition 2024 --config skip_children=true experiments/mlir/bridge/src/main.rs` and `git diff --check` pass. Rust compilation/execution and the module tests remain pending; no Cargo was run while vector baseline PID 65986 owns the build lane.
+
+The bridge README now distinguishes actual C++ verified exports from the older hand-authored samples. The registered exporter gate previously passed exact original/mutated graphs, raw float bit witnesses and nine rejection probes; actual WasmGC results, ABI rejection before initialization, effects/cleanup, genuine source-fact transport and same-example measurements remain unproven. Independent source-schema review exposed duplicated declarations, missing callable argument scopes and contradictory local resolution. The repaired built fixture checker now prints passes for the focused negatives, complete synthetic-fact storage and byte/nesting bounds (`/private/tmp/suss-m4-mlir-schema-repaired-check.log`). Independent repair review remains required. These are synthetic schema/storage checks, not native HIR correspondence evidence.
+
+Next after the vector baseline releases: establish the isolated bridge lock, compile its source-analysis tests and execute actual verified-export original/mutated graphs; repair real API/semantic failures. Keep #188 open until its executing acceptance and reviewed decision record are complete. Compiler adoption remains a separate decision.
+
+
+MLIR ABI initializer probe authored (2026-10-08): isolated bridge adds `abi_probe.rs` and pinned workspace-matching wasm-encoder 0.258.0. The graph lane calls this gate before executing verified-export graphs: incompatible ABI/compiler manifests must fail before a host counter start effect; compatible positive control must execute once. It uses the public production prelude and an original synthetic initializer, based on the repository’s existing runtime_abi test; it is distinct from the C++ exported producer/caller graph. Rustfmt and whitespace checks pass, but no Cargo compilation/execution or passing ABI evidence is claimed while vector baseline PID 65986 owns the build lane. Independent review is pending. Next compile/run and preserve failures; keep the full #188 source-facts/effects/cleanup/measurement and decision-record scope open.
+
+
+Bounded MLIR export measurement (2026-10-08): `measure-export.py` ran the actual pinned exporter with the reviewed producer/caller fixture and expected graph, exit 0. All 23 outputs matched exactly; three warmups excluded, twenty samples median16.612ms/min12.113ms/max18.330ms; exporter3,787,696bytes. Raw samples/platform/SHA256 identities `/private/tmp/suss-m4-mlir-export-measurement.json`. Only subprocess launch+MLIR parse/verify+export is timed; native baseline comparison, builds, Wasm emission/runtime and effects remain pending. No Cargo graph was started. Independent synthetic ABI-probe static review found no material issue; it explicitly does not prove actual exported-graph rejection or malformed prelude coverage. Compile/execute before claiming ABI success.
+
+MLIR exporter distribution evidence (2026-10-08): `otool -L` exited 0 and reports only macOS system libSystem/libz/libc++ dependencies for the pinned 3,787,696-byte exporter. No LLVM/MLIR SDK dylib is listed; do not count the whole 7.6 GiB development SDK as a demonstrated runtime requirement. This inspection covers one macOS ARM64 experimental build, not Linux or a release package. No binary is shipped; retain upstream LLVM Apache-2.0/LLVM-exception provenance for any later distribution. Native compile/runtime and same-example comparison remain pending.
+
+
+MLIR actual native gates and retained failure (2026-10-08): coordinator standalone
+locked bridge build completed. Actual registered/verified C++ numeric exports
+consumed by the bridge returned original9 (`4022000000000000`) and mutation13
+(`402a000000000000`); initializer ABI/compiler rejection-before-marker and
+compatible positive control passed. Log `/private/tmp/suss-m4-mlir-numeric-native.log`.
+All seven `--effects` graphs matched exact actual Wasmtime results and ordered
+cell snapshot bits: success, alternative, handled-throw, cleanup-overrides-success,
+cleanup-overrides-handler, captured-f64, nested-join. Log
+`/private/tmp/suss-m4-mlir-effects-native.log`. This is bounded public IR/compile_ir,
+manifest validation and Wasmtime GC/EH evidence from actual exported synthetic
+MLIR graphs, not original HIR/source transport or complete effects support.
+
+Preserve actual failures: second unit gate9pass2fail exposed unknown scalar-type
+field acceptance despite serde deny_unknown_fields. Empty struct scalar variants
+repair the unit-variant gap while retaining the failing test and expanding all
+scalar direct/nested negatives. Third gate compiled and finished12pass1fail,
+zero ignored/filtered,0.25s; every effects/numeric test passed, but
+analysis::tests::representative_source_roundtrip_and_mutation failed with
+`global/field resolution unsupported`. Logs
+`/private/tmp/suss-m4-mlir-bridge-{second,third}-tests.log`. Source-analysis global
+encoding awaits coordinator repair; no all-tests pass or complete #188 claim.
+Next coordinator repairs/reruns that gate, proves real source/MLIR correspondence,
+and completes comparable end-to-end measurements and decision review. No Cargo
+was invoked by this documentation/research lane. Runtime/source files remain
+frozen here; resumed #18 record work is read-only dependency research against the
+pinned forms in `/private/tmp/suss-m4-record-plan.md`, not architecture adoption.
+
+MLIR source global repair native unit gate: 15 passed, zero failures/ignores/filters; standalone build exit 0. Actual representative source facts generated from unchanged let/closure/vector/shadow fixture at `/private/tmp/suss-m4-source-facts-native/native.json`. Feeding these genuine facts to strict C++ module storage FAILED: source-analysis conflicting declaration identity. Synthetic schema fixtures previously passed but do not establish genuine transport compatibility. Input/error artifacts retained in that directory; inspect error only as first diagnostic line to avoid emitting the large source attribute. Next fix must reconcile actual declaration identity/type snapshots without relaxing stale/conflicting identity rejection or substituting synthetic facts. Four resumed agents again failed network permission; closed confirmed terminal handles, continuing locally. Independent pending reviews remain required.
+
+Genuine MLIR transport diagnosis: the shared lexical LocalBinding identity survives function parameter lowering remap; same binding:2 appears with physical HIR IDs 1 and 2, exactly as documented in hir/local_bindings.rs. C++ validator now compares all retained declaration facts except current hirBindingId for stable lexical identity while keeping concrete HIR-ID-to-lexical-identity conflict rejection and all structural facts strict. One-worker suss-mlir-opt build passes; original fixture gate passes including conflicting-content/physical-ID negatives, complete synthetic storage and bounds. Actual unchanged native representative now advances past declaration identity and fails callable body scope disagrees with declarations: scope comparison still assumes source parameter ID equals remapped body ID. Preserve source parameter/current body IDs independently; next repair must validate lexical scope correspondence without removing scope or parameter checks. Logs `/private/tmp/suss-m4-mlir-identity-{build,fixtures}.log`; genuine output/error `/private/tmp/suss-m4-source-facts-native/identity-repaired-*`. No genuine roundtrip success or lowering claim yet.
+
+Genuine native source-analysis storage now passes: new reproducible `experiments/mlir/fixtures/check-native-analysis.py BRIDGE OPT` analyzes the unchanged let/closure/vector/shadow fixture, parses/prints twice through registered strict MLIR and compares the entire native facts JSON. Source parameter declaration physical IDs and remapped body IDs are retained independently. Callable scope accepts remapping only for the declared source parameters; exact outer declaration snapshots, lexical identity/content, parameter facts, scope names/count, resolution visibility and concrete HIR-ID uniqueness checks remain enforced. One-worker build, full original positive/negative fixture gate and genuine source runner pass. Logs `/private/tmp/suss-m4-mlir-{scope-build,scope-fixtures,native-analysis-scope}.log`. This supersedes earlier genuine identity/scope storage failures, but does not establish source preservation through representative executable lowering; independent review and that end-to-end gate remain pending.
+
+Independent MLIR scope identity review found no material findings. Reviewer independently accepts genuine parameter remaps and rejects outer remaps, conflicting physical IDs, stale parameter content and stale capture IDs; saved actual native facts survive complete two-roundtrip JSON equality. Added recommended consistently remapped outer-binding negative to check-native-analysis.py; execution passes and requires exact callable-body-scope rejection, while genuine unmutated facts continue to roundtrip. Log `/private/tmp/suss-m4-mlir-native-analysis-outer-negative.log`. This remains schema/storage evidence, not executable lowering or compiler adoption.
+
+MLIR #188 acceptance inspected directly. Added explicit source-preserving numeric v2, opt-in C++ exporter flag, complete genuine native module-facts carrier and separate closed profile; v1/effects stay unchanged. Same original/mutated closure source program includes false/nil metadata; actual C++ exporter preserves complete native facts and frozen executable numeric graphs (9/13). Missing/malformed source carriers and default-v1 source attributes reject before output write; original v1 exporter probes still pass. Logs source-export-build/check and source-v1-regression under/private/tmp. New Rust source_section.rs and --source-graph command author complete-source reanalysis, bounded byte-preserving custom sections on both independently lowered fragments, ABI checks, GC/shared closure execution and result gates; unit/actual native gate remains UNCOMPILED/UNEXECUTED while baseline33504 runs. `check-source-export.py --execute` must run after build before claims; source-schema.md states hand-authored graph and operation-location/debug mapping limits. Shipped paths and ABI unchanged.
+
+MLIR independent source-v2 review found integrity P2: appending custom facts after compile_ir sealing invalidates the artifact hash. Fixed ordering now appends, reseals with existing annotate_ir, checks exact source-section bytes and verifies artifact identity before Module creation. Focused regression retains stale-hash rejection and resealing/preservation/idempotency. Independent static rereview found no material defect. New comparison.rs emits genuine native producer/caller source vs actual verified MLIR graph via public IR, and independently executes both with GC/ABI/integrity checks and exact f64 decoding. measure-pipelines.py documents different inputs/annotations, two exporter/bridge launches vs one native launch, and excludes execution/source-to-MLIR conversion from timing. These Rust/measurement gates are UNCOMPILED/UNEXECUTED while baseline33504 owns Cargo. Python syntax/whitespace pass.
+
+Fresh reproducible source-primary gate terminal0: `python3 experiments/mlir/bridge/source-fixtures/check-source-oracles.py --upstream /private/tmp/suss-m4-queues/clojurescript --workdir /private/tmp/suss-m4-mlir-source-primary --suss /private/tmp/suss-m4-collection-target/debug/suss` compares identical original/mutated closure source. Actual pinned CLJS binary64 bits4022000000000000/402a000000000000 and existing Suss CLI printed9/13 match. Log `/private/tmp/suss-m4-mlir-source-primary.log`; primary/native observations and compile.log retained in workdir. Native CLI printing is distinct from required independent bridge ABI decoding. No executable-v2 preservation or automated source-to-MLIR compiler claim.
+
+MLIR comparison evidence planning: measure-implementation.py executed, retains per-file hashes/bytes/physical/nonblank lines in `/private/tmp/suss-m4-mlir-implementation-footprint.json`; counts are not equivalent replacement cost or maintenance savings. Current draft decision.md recommends deferral, explicitly pending nativev2/emission measurements/final review/fullbaseline/CI. Inspected current official WasmSSA docs and pinned SDK types/ops: opaque funcref/externref plus symbol calls do not supply accepted GC/recursive-reference/typedclosure/EH profile; retained concrete probes already reject tested eqref/struct.new/throw spellings. Decision distinguishes missing pinned route from general MLIR impossibility, local dialect/bridge from upstream infrastructure, and synchronous effect examples from rooted stackless cancellation work. Shipped paths/accepted design unchanged. Next after queue native slot: standalone locked bridge units/build, source-v2 --execute with mismatch rejection, retained numeric/effects gates, actual same-example measurement, reconcile draft decision evidence.
+
+MLIR fifthunitgate retainedterminal101: source-v2 fragment parameter addition leftthree effects calls missing fourthargument(E0061); no tests executed. Fixedthose callsonlywithNone preserving closed effects profile. Sixthunits17passed; source-carrier presence audit found Option deserialization could admit explicitnull as v1None. Added String-only present-field deserializer and focused regression; seventhunits terminal0:18passed/0failed/ignored/filtered0.50s, log `/private/tmp/suss-m4-mlir-bridge-seventh-tests.log`; normalbuildterminal0 log `/private/tmp/suss-m4-mlir-bridge-current-build.log`. Source-v2 actual --execute gate terminal0: original/mutatedgenuinefacts preservedinbothWasmGC fragments through resealing/identity/ABIvalidation/forcedGC; exact9/13bits; source mismatch exactcomplete-facts diagnostic and malformed/missing/default-v1sentinelsreject. Log `/private/tmp/suss-m4-mlir-source-v2-native.log`. No automatic source-to-MLIR compiler or arbitrary graph correspondence claim.
+
+Actual identical-example pipeline comparison terminal0:92fragment-pair executions (23warmup/timediterations x2lanes x2cases) match9/13afterGCandABIgate. Native source2fragments emit medians5.566/5.659ms; hand-authoredMLIR C++export+Rust2fragment emission21.840/23.575ms. Nativeartifact1036+910bytes vsMLIR940+845bytes (samebothcases); source identity annotation differs, v2carrier/runtimeexecution/toolchainbuild/source-to-MLIRconversion excluded; sharedhostnoise andtwo-vs-oneprocess launches disclosed. Rawplatform/sample/hashreport `/private/tmp/suss-m4-mlir-pipeline-comparison.json`; currentexporter5,002,288bytes withSHAadc5515a..., bridge30,631,664bytes withSHAb9a826f6... . Saved portable evidence underexperiments/mlir/evidence withbefore-main labels.
+
+MLIR worktree rebased from observedbaf134d base to mergedmain22723b4 with no productioncrate-source diff; complete append-only handoff snapshot/addendum saved/restored under/private/tmp. Untrackedexperiment files preserved. Library/bootstrap data changed, so current-base rebuild/18unit+v2/effects/numeric/measurement gates must run again after queuefullbaseline39763releasesCargo. Current native evidence remains explicitly before-main; no final188completion orreadyPRclaim. QueuePR226onmainhead1a07d4f isdraft/fullbaselineandCIrunning; freshindependentfinalheadreview findsnomaterialissues, allnative/bootstrap/provenance/231Python/pinned41+11evidencevalidated. Previousreviewerhandleexpirednotfound; newreviewerHilbert01a11cf8-39a7-7780-9afb-4fe30f4b5923completedread-onlyreview. No merge performed; GitHubexternallyconfirms225merged22723b4.
+
+
+MLIR follow-up (2026-10-08): independent review retained #188 open for
+current-base execution, representative executable correspondence, concrete cost
+comparison and final publication gates. Added a fail-closed representative
+source/graph mapping in `source_correspondence.py` and integrated it before
+execution in `check-source-export.py`. Existing before-main bridge/exporter:
+`python3 experiments/mlir/bridge/source-fixtures/check-source-export.py
+/private/tmp/suss-m3-source-futures/target/debug/suss-mlir-bridge-draft
+/private/tmp/suss-m4-mlir-toolchain/build-export-pinned/suss-mlir-export --execute`
+returned 0, original/mutated source facts and actual two-fragment WasmGC passed;
+four corrupted graphs reject. Log: `/private/tmp/suss-m4-mlir-correspondence-before-main.log`.
+This specializes pinned numeric `suss.core/+`, not arbitrary globals/source.
+Independent review of the addition and rebuilt current-base execution remain
+required. Refreshed portable per-file footprint and concrete complexity,
+diagnostic, verifier, build and distribution comparison in the draft decision.
+Fresh exporter `otool -L` shows only system libSystem/libz/libc++.
+Queue exact-head full baseline session39763 remains live; no second Cargo graph
+started. Next unblocked work: review mapping and current-base rebuild once that
+baseline terminates, then remaining sorted/record acceptance work.
+
+MLIR mapping review P2 repaired: Python value equality admitted Boolean indexes
+and floating return indexes. Added recursive exact-type body/declaration
+comparison and three regressions. Actual before-main original/mutated --execute
+rerun returned 0 with all seven corruption negatives; log
+`/private/tmp/suss-m4-mlir-correspondence-strict-before-main.log`. Current-base and
+fix review remain pending; no general compiler claim.
+
+Independent reviewer confirmed the correspondence P2 repair: exact types reject
+Boolean/integer and integer/float substitutions in bodies and parameter kinds.
+Representative mapping is sufficient in principle for the bounded #188 example;
+current-base execution and all final gates remain required. Historical README
+pending/failure statements now point to superseding before-main evidence.
+
+Current-main MLIR revalidation on22723b4: locked offline18-test run session28986
+exited0 (18passed/0failed/ignored/filtered,0.48s); normal build session82521 exited0
+(1m08s). Rebuilt bridge SHA256
+7c2838cec2d75a5f1238032ff02dc8e8d594ea98fd57eefd5194069f2885952a.
+Actual source-v2 original/mutation execution and seven-negative strict mapping
+passed. All7actualeffects cases passed, including cleanup overriding success and
+handler, captured f64 and nested join. Portable current-main logs copied under
+experiments/mlir/evidence; refreshed92pair comparison session80109 remainslive.
+No second Cargograph. After measurement terminates, start queue141887c full
+baseline and finalize/review the separate188decision. Pinned LLVM archive hash
+rechecked then compressed download removed to recover871MB; extractedSDK and
+allsource/binaries/evidence preserved, archive still reproducible fromtoolchainlock.
+
+Current-main paired MLIR measurement session80109 exited0: all92fragmentpair
+executions exact9/13 afterGC/ABIgate, samples/hashes retained portable in
+experiments/mlir/evidence/pipeline-comparison-current-main.json. Native medians
+6.087/6.137ms; MLIR19.432/19.420ms; identical artifact sizes to before-main.
+Limitations unchanged: launches/writes included, runtime/build/conversion/v2
+sidecars excluded, one versus two processes, shared host, no speed claim.
+Queue second full baseline now session56913 on clean reviewed head141887c9e...;
+commands exact locked workspace with two testthreads/jobs2, log
+/private/tmp/suss-m4-queue-full-baseline-second.log. No second Cargo graph.
+Next: final current-main188review/evidence packaging while queuebaseline/CI run;
+then execute sorted foundation prerequisites and continue original16–19 scope.
+
+MLIR publication preparation: independent audit considers original bounded #188
+criteria substantively covered; repaired remaining packaging P2s. Clean setup
+instructions now use streamed SHA256 compatible with recorded Python3.9.6;
+actual CMake configure/build exited0, CTest3/3, global/head3positive/17negative,
+genuine facts two print/parse rounds, fresh identical-source CLJS+Suss scalar
+oracle and fresh7-case CLJS+native effects comparisons all pass. Commands/status
+records and logs are portable under experiments/mlir/evidence. Identity manifest
+binds experiment, bootstrap, reused4crate production sources/manifests/rootlock,
+selected actual CMake settings and binary hashes; Rust profiles labeled intended
+with external compiler-flag limit. `--check` passes and a missing rootlock entry
+rejects. Metadata Python compilation initially hit Apple cache sandbox outside
+workspace; corrected PYCACHEPREFIX to/private/tmp and passed. Reviewer confirmed
+all packaging repairs with no material findings. Refreshed footprint matches.
+Root CI does not execute isolated MLIR Rust/C++ gates; explicit committed-head
+experiment check plus full locked baseline and final-head CI still required.
+Queue56913 remains sole live Cargo graph at reviewed141887c; do not launch a
+second graph. Next: commit/push MLIR draft and check identities at that head;
+finish queue baseline/CI and promote when green; then schedule MLIR full baseline
+and executing sorted foundations, retaining original M4 scope and stable IDs.
+
+MLIR current-state wording correction: README now explicitly labels22723b4
+Rust/actual execution measurements historical, not proof for rebased4e0f00d.
+Post226CPP gates remain passed; current Rust/rootbaseline/CI pending. Normal
+reproduce.md isolated locked18unit/build/execution commands inspected and
+ready after exclusive baseline99452 releases Cargo. No secondgraph started.
+
+Rechecked original GitHub188criteria/state OPEN. Decision recommendation remains
+deferral, scope unchanged. Corrected decision introduction to bind retained
+Rust/source/effects/92pair tables and timing data to22723b4 snapshot; rebased
+4e0f00d current execution remains pending, CPPpost226 alone is notRustproof.
+Baseline99452 confirmedlive in clojure_test_suite; no secondCargo launched.
+
+MLIR historical identity gate explicitly rechecked: capture-evidence.py --check
+identity-current-main.json exits1 as expected after rebase. Retained delta
+post226-historical-identity-delta.json records2 experiment doc/4bootstrap
+changes,0 reused production-file changes. This rejection is not a semantic
+failure or current-base execution pass. Fresh rebuilt binary/identity/gates
+remain required. Lazy baseline99452 passed all5 Clojuresuite tests163.74s
+and continues compiler regressions.
+
+Independent MLIR historical-scope review reproduced identity rejection exit1
+and exact2experimentdocs/4bootstrap/0production delta with matching hashes;
+no material findings. Current-base execution/fullbaseline/publication remain
+pending. Normal Cargo sequence unchanged; session99452 still confirmedlive.
+
+
+## Post-#226 MLIR recovery: current execution gates
+
+At source head 9dddc895f679c1d77795f8461188474f00d3b5a2, isolated Rust
+18-test run31695 and normal bridge build52499 exited0. Native analysis88274,
+source export actual execution47601, native effects20378 and 92-pair
+comparison35078 also exited0. Evidence is retained under experiments/mlir/evidence
+in post226-execution-gates.json and the referenced logs/report. Exact 9/13
+bits matched after GC for all92 pairs. Fresh pinned CLJS effects5193 exited0:
+all7 result/journal/count triples matched frozen expectations and actual native
+artifacts. The reference checkout is clean at c4295f303100bbf5afac449242d30bca1126f1a1.
+These explicit experiment gates do not replace root baseline or CI.
+
+CLI build90448 is confirmed live, using jobs2 and isolated native-target-post226.
+Next unblocked task after terminal successful build: check-source-oracles.py with
+that CLI and the pinned checkout, then retain source observations, fresh complete
+identity, independent final-head review, required unchanged full workspace baseline
+and final-head CI before promoting #227. No adoption or M4 completion claim.
+#228 was independently reviewed at ebdbc16, passed required full baseline94838
+and all10 final-head CI checks, and was promoted for Bobby; no merge performed.
+
+CLI90448 terminal0; source primary8091 terminal0 at the same 9dddc89 source.
+Fresh pinned binary64 9/13 and current CLI printed9/13 match; retained post226
+source-primary log and CLJS/native observations. Packaging fresh content identity
+(identity-post226.json), then final committed-head review/full baseline/CI.
+
+## PR #227 rebase after merged #228 — 2026-10-08
+
+Rebased onto origin/main c46cee5 at Bobby’s request. The only conflict was
+this handoff: preserved both complete additive sections (167 main lines and
+144 MLIR lines). All experiment files remain byte-identical to reviewed
+f7b40fb; latest main brings #228’s lazy transformations and bootstrap changes.
+The f7b40fb required full baseline completed with exit0:1546passed/0failed/
+41ignored; receipt /private/tmp/suss-m4-mlir-baseline-f7b40fb-receipt.json,
+log SHA256 4dbfe721f07288e945fdadeab05e41eac3616a09fc8c77a6f4cea4c09f421f1d.
+That review/baseline/CI justified promotion before this rebase, but does not
+certify the new head. The retained identity-post226 check correctly rejects
+changed bootstrap content; keep this evidence historical rather than implying
+a current-base pass. Independent rebase review, focused gates and the required
+full baseline/final-head CI are pending. Next: validate the rebased experiment
+against new bootstrap content; no MLIR adoption or full M4 completion claimed.

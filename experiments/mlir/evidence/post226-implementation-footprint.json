@@ -1,0 +1,742 @@
+{
+  "schema": "suss.mlir.implementation-footprint.v1",
+  "method": "UTF-8 bytes and splitlines, including comments; nonblank separately",
+  "excluded": [
+    "generated TableGen/CMake files",
+    "LLVM/MLIR implementation",
+    "Rust dependency implementation",
+    "docs and fixture data",
+    "shipped reader/CLI/macro hosts and tests outside experiment"
+  ],
+  "limitations": [
+    "native groups cover substantially more behavior than the experiment",
+    "MLIR layer adds to, and does not replace, the reused native groups",
+    "line counts do not measure ongoing maintenance savings"
+  ],
+  "groups": {
+    "additional_handwritten_mlir_cpp_tablegen": {
+      "file_count": 9,
+      "bytes": 61322,
+      "physical_lines": 887,
+      "nonblank_lines": 877,
+      "files": {
+        "experiments/mlir/src/Analysis.h": {
+          "bytes": 27931,
+          "physical_lines": 406,
+          "nonblank_lines": 405,
+          "sha256": "53fe3975c36cf381fd5e4f27e42f970a2a3ba4f95a1e3820e3a60c1940edbbc0"
+        },
+        "experiments/mlir/src/EffectsExport.h": {
+          "bytes": 6969,
+          "physical_lines": 59,
+          "nonblank_lines": 59,
+          "sha256": "58ff49d3fb730ee5b88f36af7789ee54a9b3c1c8953722209029943c94ed5100"
+        },
+        "experiments/mlir/src/Export.cpp": {
+          "bytes": 8104,
+          "physical_lines": 129,
+          "nonblank_lines": 128,
+          "sha256": "e6e32e62bc410eb3b4a218637437504a4eb97bb060dd8615cfd3f7cc6d1e6218"
+        },
+        "experiments/mlir/src/Export.h": {
+          "bytes": 512,
+          "physical_lines": 11,
+          "nonblank_lines": 11,
+          "sha256": "eb52e734fe98f111ad2c6ef0892e04ff60b818d556d574d084a7da59506ff6fb"
+        },
+        "experiments/mlir/src/Suss.cpp": {
+          "bytes": 10648,
+          "physical_lines": 157,
+          "nonblank_lines": 150,
+          "sha256": "93379acc44b9142c5bc1d25c95cb92ace8901d7beca377e66c3f59641deae32e"
+        },
+        "experiments/mlir/src/Suss.h": {
+          "bytes": 442,
+          "physical_lines": 13,
+          "nonblank_lines": 13,
+          "sha256": "dc9384e795acc6e11a9d8d4cd30d4bafa89312f0a1b451c5e9b74b547074594d"
+        },
+        "experiments/mlir/src/Suss.td": {
+          "bytes": 3713,
+          "physical_lines": 64,
+          "nonblank_lines": 63,
+          "sha256": "553f72359242b80a4005e003d720cc88fca0f78a32ab043d3493361be139b1df"
+        },
+        "experiments/mlir/src/export-main.cpp": {
+          "bytes": 2640,
+          "physical_lines": 40,
+          "nonblank_lines": 40,
+          "sha256": "fbed0d1e70034b74b720f58b8e2065cf56b6a9815a4e26d1ce6c32e6fa2d861d"
+        },
+        "experiments/mlir/src/main.cpp": {
+          "bytes": 363,
+          "physical_lines": 8,
+          "nonblank_lines": 8,
+          "sha256": "7f28c901dbe6655d4a279b0168ac8515ad9519d59d1f94e6eb6e0928d4b81fa3"
+        }
+      }
+    },
+    "additional_handwritten_bridge_rust": {
+      "file_count": 6,
+      "bytes": 103011,
+      "physical_lines": 2576,
+      "nonblank_lines": 2560,
+      "files": {
+        "experiments/mlir/bridge/src/abi_probe.rs": {
+          "bytes": 2704,
+          "physical_lines": 72,
+          "nonblank_lines": 70,
+          "sha256": "28eec7ae714c21c697c3323311e2f36b87df91a05ceb8c13b508f3e0ba75fcda"
+        },
+        "experiments/mlir/bridge/src/analysis.rs": {
+          "bytes": 35667,
+          "physical_lines": 822,
+          "nonblank_lines": 817,
+          "sha256": "d2d86f5da146f33dcfa0043956df4b0b8b65de942870e3621cd64eea43d6f616"
+        },
+        "experiments/mlir/bridge/src/comparison.rs": {
+          "bytes": 6065,
+          "physical_lines": 147,
+          "nonblank_lines": 146,
+          "sha256": "f1f255fcc20b79b8f3d82b3b927c1ac3eafebe47de33e3ab799dea44c22af26f"
+        },
+        "experiments/mlir/bridge/src/effects.rs": {
+          "bytes": 33674,
+          "physical_lines": 858,
+          "nonblank_lines": 851,
+          "sha256": "98a73767abe975b718987b25f6d701545616e23f34ca4a68ba82caa711523a68"
+        },
+        "experiments/mlir/bridge/src/main.rs": {
+          "bytes": 20822,
+          "physical_lines": 571,
+          "nonblank_lines": 570,
+          "sha256": "1b24ae586f1106d3d6e8553cc4e9e144b17444b01a5b58198e2cbc9d5f5b3553"
+        },
+        "experiments/mlir/bridge/src/source_section.rs": {
+          "bytes": 4079,
+          "physical_lines": 106,
+          "nonblank_lines": 106,
+          "sha256": "4f22517efc2dec79b93c883d24adde006212b53c4dad2c6f8d8ef73c1be0e4af"
+        }
+      }
+    },
+    "additional_experiment_python": {
+      "file_count": 19,
+      "bytes": 70497,
+      "physical_lines": 1140,
+      "nonblank_lines": 1084,
+      "files": {
+        "experiments/mlir/bridge/effects-fixtures/check-cljs.py": {
+          "bytes": 2081,
+          "physical_lines": 26,
+          "nonblank_lines": 26,
+          "sha256": "7f0ce59130f9441a1e8f428856942cf48e7f47ee0889da7c33bc30da7c35feab"
+        },
+        "experiments/mlir/bridge/effects-fixtures/check-effects.py": {
+          "bytes": 4156,
+          "physical_lines": 65,
+          "nonblank_lines": 65,
+          "sha256": "6658d7a80035eb806c68a3811e96547b37e4635d3e097d86222fd1fbc580697d"
+        },
+        "experiments/mlir/bridge/effects-fixtures/check-native.py": {
+          "bytes": 1006,
+          "physical_lines": 25,
+          "nonblank_lines": 24,
+          "sha256": "f39b9214e365cd9098ff6ba5308287a40978cfc13faafd78f112714f30f9c55e"
+        },
+        "experiments/mlir/bridge/effects-fixtures/generate.py": {
+          "bytes": 2949,
+          "physical_lines": 21,
+          "nonblank_lines": 21,
+          "sha256": "3d05cdeb07e72df9ab6f2051a747adf5e43e0a1d9a96d7c3d85a2eb1dbc655f5"
+        },
+        "experiments/mlir/bridge/effects-fixtures/run-cljs.py": {
+          "bytes": 2056,
+          "physical_lines": 24,
+          "nonblank_lines": 24,
+          "sha256": "814a5de76654a57485b791bce833cf36f97a8ad32d7fdf7a1950dbd054460602"
+        },
+        "experiments/mlir/bridge/export-fixtures/check-export.py": {
+          "bytes": 2898,
+          "physical_lines": 53,
+          "nonblank_lines": 52,
+          "sha256": "eb1826c8bd1a63e339e4a58a6a164b9599de8c469a516146f624b44f003147e6"
+        },
+        "experiments/mlir/bridge/source-fixtures/check-source-export.py": {
+          "bytes": 5473,
+          "physical_lines": 70,
+          "nonblank_lines": 70,
+          "sha256": "015ffbdaf4a5e9e4c1eff18b3304c692cc8bcd6beef4998aad365dee13777a77"
+        },
+        "experiments/mlir/bridge/source-fixtures/check-source-oracles.py": {
+          "bytes": 3313,
+          "physical_lines": 58,
+          "nonblank_lines": 57,
+          "sha256": "6d4f3b83a536a196d3db712d10d10582db946afd097bb510b77d8a1817b9a5d0"
+        },
+        "experiments/mlir/bridge/source-fixtures/source_correspondence.py": {
+          "bytes": 5527,
+          "physical_lines": 115,
+          "nonblank_lines": 100,
+          "sha256": "5e36c6147064b47ae1388a2b8ceb0698dc8adcc8f6ad34633cf8ae09a5fa5e97"
+        },
+        "experiments/mlir/fixtures/analysis-shapes.py": {
+          "bytes": 11243,
+          "physical_lines": 145,
+          "nonblank_lines": 140,
+          "sha256": "e4e3d2a7322ca85acfc8281743adeec2c872252848793bb2394c61e7ba242425"
+        },
+        "experiments/mlir/fixtures/check-analysis-globals.py": {
+          "bytes": 4695,
+          "physical_lines": 50,
+          "nonblank_lines": 50,
+          "sha256": "f494dc833e8413b8902a7aa2d8bb2669266711fbc719eb764480728090db02b7"
+        },
+        "experiments/mlir/fixtures/check-analysis.py": {
+          "bytes": 3165,
+          "physical_lines": 56,
+          "nonblank_lines": 53,
+          "sha256": "e71384d2179fa1d3180d778810a89f237115d38eb62b834b0be53589df474442"
+        },
+        "experiments/mlir/fixtures/check-native-analysis.py": {
+          "bytes": 2550,
+          "physical_lines": 46,
+          "nonblank_lines": 45,
+          "sha256": "c5bc822f7c8c6df290304db46b9a4bd808986112627c38faf1eac9701c36a306"
+        },
+        "experiments/mlir/fixtures/check.py": {
+          "bytes": 2438,
+          "physical_lines": 52,
+          "nonblank_lines": 45,
+          "sha256": "0ae97356532c137358f35dde6c86abcf3334dfa84136b1dedf3a92b374375739"
+        },
+        "experiments/mlir/scripts/capture-evidence.py": {
+          "bytes": 4758,
+          "physical_lines": 83,
+          "nonblank_lines": 74,
+          "sha256": "20f779ff88c127eccd6dcb5311b0f681cb818611354002eae39b0762fdc58629"
+        },
+        "experiments/mlir/scripts/measure-export.py": {
+          "bytes": 2219,
+          "physical_lines": 62,
+          "nonblank_lines": 57,
+          "sha256": "296ad36de07973ed048c42cb62bd0e707b17e2e3779d7cabda1fce15834557ff"
+        },
+        "experiments/mlir/scripts/measure-implementation.py": {
+          "bytes": 2100,
+          "physical_lines": 45,
+          "nonblank_lines": 44,
+          "sha256": "0386edd74efc34fcc449bb9029682be006c0eb31af179ac8fc0bc12f9b1c4cf0"
+        },
+        "experiments/mlir/scripts/measure-pipelines.py": {
+          "bytes": 5740,
+          "physical_lines": 106,
+          "nonblank_lines": 100,
+          "sha256": "4ce72c531e6e0180e8dc58451984f10abbe7742e63b88d0dbc784eafb24ce4e5"
+        },
+        "experiments/mlir/scripts/verify-toolchain.py": {
+          "bytes": 2130,
+          "physical_lines": 38,
+          "nonblank_lines": 37,
+          "sha256": "8cce9f1b4309072bbcb5df690cc3f75ba520e965a1bdcb806e1fabe41457f412"
+        }
+      }
+    },
+    "reused_native_portable_frontend_ir_emitter": {
+      "file_count": 50,
+      "bytes": 917762,
+      "physical_lines": 24641,
+      "nonblank_lines": 24405,
+      "files": {
+        "crates/suss-compile/src/portable/aot/exact.rs": {
+          "bytes": 2354,
+          "physical_lines": 82,
+          "nonblank_lines": 82,
+          "sha256": "491b8e5450e41725ea432825aac0a737fa8dd3984558be4d353b28a87c2ad335"
+        },
+        "crates/suss-compile/src/portable/aot/exact_schema.rs": {
+          "bytes": 1240,
+          "physical_lines": 26,
+          "nonblank_lines": 26,
+          "sha256": "b80b4474e4998c337cd3a8708e9c96e3a414ac62d77e702761108928e75b7287"
+        },
+        "crates/suss-compile/src/portable/aot/list_schema.rs": {
+          "bytes": 7911,
+          "physical_lines": 148,
+          "nonblank_lines": 148,
+          "sha256": "a24a5a75625b28b4d082249191a116b5547d8a5ac231afeeb2e0aa5897f5adc4"
+        },
+        "crates/suss-compile/src/portable/aot/lists.rs": {
+          "bytes": 10893,
+          "physical_lines": 391,
+          "nonblank_lines": 386,
+          "sha256": "dbd1c4566826bd1170bc4625c68753dd35a8cc97efcce102c507779f99b80eb4"
+        },
+        "crates/suss-compile/src/portable/aot/strings.rs": {
+          "bytes": 6313,
+          "physical_lines": 238,
+          "nonblank_lines": 232,
+          "sha256": "5c3a01e1d17cce39fcf44fc7c3c32baa3a0e12d78bdf57dd9a6472a7a3101532"
+        },
+        "crates/suss-compile/src/portable/aot.rs": {
+          "bytes": 76764,
+          "physical_lines": 1914,
+          "nonblank_lines": 1899,
+          "sha256": "788d2d2b561b2dda594c81779c541afb1657d3965d57fa8798aac1540e9085ae"
+        },
+        "crates/suss-compile/src/portable/artifact_cache.rs": {
+          "bytes": 12500,
+          "physical_lines": 331,
+          "nonblank_lines": 328,
+          "sha256": "4d28142bfc48d6586088836b99f66082e256a0c84a1647c3aff692ed2ddeaa4f"
+        },
+        "crates/suss-compile/src/portable/artifact_identity.rs": {
+          "bytes": 16507,
+          "physical_lines": 453,
+          "nonblank_lines": 450,
+          "sha256": "1a45fdbc861caca42ef7d755185969773032a663fd131d5dab26003fc1792084"
+        },
+        "crates/suss-compile/src/portable/bootstrap.rs": {
+          "bytes": 6274,
+          "physical_lines": 153,
+          "nonblank_lines": 151,
+          "sha256": "60f953b84912b100eadc15097aca5863fc5c378d97c5f306c1289c2d7f9f8515"
+        },
+        "crates/suss-compile/src/portable/command/adapter.rs": {
+          "bytes": 12109,
+          "physical_lines": 407,
+          "nonblank_lines": 404,
+          "sha256": "755f6cdb6b6b6e45823a7e77be6ddaa5aa555f5c5518de2630b6a275bed0c043"
+        },
+        "crates/suss-compile/src/portable/command/assembly.rs": {
+          "bytes": 10953,
+          "physical_lines": 304,
+          "nonblank_lines": 301,
+          "sha256": "fb1dc8ff35c3f650b1bb23652e69755c9626c88c30e13d1b00f6b4016d01f73a"
+        },
+        "crates/suss-compile/src/portable/command/async_bridge.rs": {
+          "bytes": 34663,
+          "physical_lines": 1237,
+          "nonblank_lines": 1229,
+          "sha256": "4c349606b99985a8faab9f9b635d668c3a9986f33660c629edb077e35633298f"
+        },
+        "crates/suss-compile/src/portable/command/async_component.rs": {
+          "bytes": 30850,
+          "physical_lines": 970,
+          "nonblank_lines": 966,
+          "sha256": "0d1a64f27ad1df6113675a5d4a0336cdf4430a6224e5d7da1f28b533b9a90112"
+        },
+        "crates/suss-compile/src/portable/command/async_component_entry_tests.rs": {
+          "bytes": 11013,
+          "physical_lines": 309,
+          "nonblank_lines": 306,
+          "sha256": "35bfcac7fd51b6b8e6dc379f388dffeafa7e6b251462001c0f41f6b305d72c75"
+        },
+        "crates/suss-compile/src/portable/command/exit.rs": {
+          "bytes": 5305,
+          "physical_lines": 183,
+          "nonblank_lines": 182,
+          "sha256": "155b381cada8e7995af33a954fb49f96c138e289af6eaca45e896b4f112eb9ad"
+        },
+        "crates/suss-compile/src/portable/command/memory.rs": {
+          "bytes": 15410,
+          "physical_lines": 507,
+          "nonblank_lines": 495,
+          "sha256": "0342c555bc595f247099801bb46fc04cd5d1edf5ab3b021a94e62ba678f73cc6"
+        },
+        "crates/suss-compile/src/portable/command/shape.rs": {
+          "bytes": 4890,
+          "physical_lines": 129,
+          "nonblank_lines": 125,
+          "sha256": "c95f88d5815c826ec479b688695efeb88985b71ba1a08dfdcd7ca07431100fae"
+        },
+        "crates/suss-compile/src/portable/command.rs": {
+          "bytes": 3270,
+          "physical_lines": 92,
+          "nonblank_lines": 88,
+          "sha256": "3926404e0a14296ace10454040f4816125b65352d0e94dd68718c57d28a0ca42"
+        },
+        "crates/suss-compile/src/portable/core_bindings.rs": {
+          "bytes": 6855,
+          "physical_lines": 189,
+          "nonblank_lines": 184,
+          "sha256": "182d92ffa7cb54b1380e3ecd03a76e48d6cbbc9b64948e01edf20d216c5d4d8b"
+        },
+        "crates/suss-compile/src/portable/emit/async.rs": {
+          "bytes": 16256,
+          "physical_lines": 469,
+          "nonblank_lines": 464,
+          "sha256": "e15213ac421df482ee2a71d87fbe0fc570fcdabe269953d89578453c5c88a4aa"
+        },
+        "crates/suss-compile/src/portable/emit.rs": {
+          "bytes": 65162,
+          "physical_lines": 1281,
+          "nonblank_lines": 1277,
+          "sha256": "77c0b412aec8547489e643c6692445dced0ec9562af1a89383d0c5b80be8328c"
+        },
+        "crates/suss-compile/src/portable/function_names.rs": {
+          "bytes": 4894,
+          "physical_lines": 174,
+          "nonblank_lines": 172,
+          "sha256": "eba0987d51f89c4736b8bedf256906a130c59bee132a2b771e807a5278851978"
+        },
+        "crates/suss-compile/src/portable/hir/arrays.rs": {
+          "bytes": 5045,
+          "physical_lines": 134,
+          "nonblank_lines": 134,
+          "sha256": "994f1b2296368ca237126812cf5a7a3e95b974c357fe20df1c11f85c0dc1d1b5"
+        },
+        "crates/suss-compile/src/portable/hir/bitwise.rs": {
+          "bytes": 1511,
+          "physical_lines": 48,
+          "nonblank_lines": 48,
+          "sha256": "c7244c69dbf1bc7ec16af8a2ee96b92168f143196486d1f3bdc0a7c7588d8ab0"
+        },
+        "crates/suss-compile/src/portable/hir/callable_signatures.rs": {
+          "bytes": 7237,
+          "physical_lines": 205,
+          "nonblank_lines": 203,
+          "sha256": "6167333b09f94c8901ce1e23bf38bb0730ae297e5d9bdfde53e9441cf5c1433d"
+        },
+        "crates/suss-compile/src/portable/hir/cases.rs": {
+          "bytes": 6238,
+          "physical_lines": 160,
+          "nonblank_lines": 158,
+          "sha256": "5aaa2f2b9173da50cf811a56f3f9fe7d3849f9666b4db88c27ed05e78c1266d1"
+        },
+        "crates/suss-compile/src/portable/hir/collections.rs": {
+          "bytes": 10114,
+          "physical_lines": 267,
+          "nonblank_lines": 255,
+          "sha256": "3cad0d40b52481902a99a0eced28bedf8999e8141dd81ba91603acbfa5c0de09"
+        },
+        "crates/suss-compile/src/portable/hir/comparisons.rs": {
+          "bytes": 1858,
+          "physical_lines": 54,
+          "nonblank_lines": 54,
+          "sha256": "458627588c1511ea958d5e49c1a1de53e597f3e44b44e8e075305d339421544a"
+        },
+        "crates/suss-compile/src/portable/hir/controls.rs": {
+          "bytes": 22239,
+          "physical_lines": 495,
+          "nonblank_lines": 494,
+          "sha256": "4e9e976148a26584e6c4f1431aa101d418a75f86663bd54f9cade6285ec8f147"
+        },
+        "crates/suss-compile/src/portable/hir/dynamic.rs": {
+          "bytes": 2663,
+          "physical_lines": 75,
+          "nonblank_lines": 75,
+          "sha256": "2c5116276c7d7544df054c14436d130ff18347277fdbacff9b265c3a6e9c1f0c"
+        },
+        "crates/suss-compile/src/portable/hir/exceptions.rs": {
+          "bytes": 10098,
+          "physical_lines": 251,
+          "nonblank_lines": 250,
+          "sha256": "9ffb6ced3080e4b9457f3b1a64b1619b800b880386ed5728d0dfeecd91d7c700"
+        },
+        "crates/suss-compile/src/portable/hir/function_parameters.rs": {
+          "bytes": 6069,
+          "physical_lines": 164,
+          "nonblank_lines": 159,
+          "sha256": "fae01e601aba300fb9dcb0f94cc444d00552e0cfd375df84e3553df0ce9834ce"
+        },
+        "crates/suss-compile/src/portable/hir/local_bindings.rs": {
+          "bytes": 11202,
+          "physical_lines": 301,
+          "nonblank_lines": 294,
+          "sha256": "8fb7657a87c1149637047f05bbae4afdf428705961e903ee350c31dffd31a30a"
+        },
+        "crates/suss-compile/src/portable/hir/nominal.rs": {
+          "bytes": 53662,
+          "physical_lines": 1238,
+          "nonblank_lines": 1237,
+          "sha256": "a1f43bde4c5060b499fee9f2e5163256d31c353408ebdf3436c418f62b7d654d"
+        },
+        "crates/suss-compile/src/portable/hir/quotes.rs": {
+          "bytes": 21488,
+          "physical_lines": 558,
+          "nonblank_lines": 551,
+          "sha256": "7972bc87ac915cefbd42db6a14444831f66938233936bad9b3b66ff59824cecc"
+        },
+        "crates/suss-compile/src/portable/hir/source_tags.rs": {
+          "bytes": 23672,
+          "physical_lines": 544,
+          "nonblank_lines": 538,
+          "sha256": "09b0223198862988d30f3e610a5696b7a879cdda3a638a57bc1dfbd0c78b49ae"
+        },
+        "crates/suss-compile/src/portable/hir.rs": {
+          "bytes": 102355,
+          "physical_lines": 2527,
+          "nonblank_lines": 2526,
+          "sha256": "2ba6bb2e909fc9b6316cead080996488c483de515ebcce6cb0e32b7a9929be66"
+        },
+        "crates/suss-compile/src/portable/ir/async.rs": {
+          "bytes": 23436,
+          "physical_lines": 656,
+          "nonblank_lines": 642,
+          "sha256": "a4f3b45a6935ac82e8b6ee3ed68a553c4215bd7d6452b3b11ee196d0ce06bc5b"
+        },
+        "crates/suss-compile/src/portable/ir/liveness.rs": {
+          "bytes": 5097,
+          "physical_lines": 125,
+          "nonblank_lines": 120,
+          "sha256": "72b2f4f589e38b43ee654c0fa346c7d1bf9184caf5ad52ac3d6cc7ccab466ec7"
+        },
+        "crates/suss-compile/src/portable/ir.rs": {
+          "bytes": 58183,
+          "physical_lines": 1377,
+          "nonblank_lines": 1374,
+          "sha256": "2051271fa9435131737ccf80a65d6aa973df336aef7f5f7f596e8fe7fc556591"
+        },
+        "crates/suss-compile/src/portable/mod.rs": {
+          "bytes": 10804,
+          "physical_lines": 280,
+          "nonblank_lines": 268,
+          "sha256": "cedc349e63c131feacc0fdce502c639271cd6c128f7ef018bc0892cfbc994b6a"
+        },
+        "crates/suss-compile/src/portable/modules.rs": {
+          "bytes": 17648,
+          "physical_lines": 497,
+          "nonblank_lines": 492,
+          "sha256": "a364e447cf1878248e2715f52a1558fa4d8bc6c9da430825d0a2435b71bfd85f"
+        },
+        "crates/suss-compile/src/portable/origin/form_metadata.rs": {
+          "bytes": 19948,
+          "physical_lines": 558,
+          "nonblank_lines": 532,
+          "sha256": "8078c2ffd2e16f2644bdaf5234b04f32ac2e8b2b4b14ac13d383940d7aff7626"
+        },
+        "crates/suss-compile/src/portable/origin.rs": {
+          "bytes": 3290,
+          "physical_lines": 94,
+          "nonblank_lines": 93,
+          "sha256": "5f806a6b4e479fb392c61c11decd68f0a8c3f3a879382cd303e522db1f3a2ff7"
+        },
+        "crates/suss-compile/src/portable/resolve.rs": {
+          "bytes": 56148,
+          "physical_lines": 1463,
+          "nonblank_lines": 1458,
+          "sha256": "9d25b613b8c26a07ff65573d4177e50ae2ec00bf3e52e0ea780bef80b5270088"
+        },
+        "crates/suss-compile/src/portable/source.rs": {
+          "bytes": 17615,
+          "physical_lines": 479,
+          "nonblank_lines": 476,
+          "sha256": "f25503420cebb7eaaa37f466ecfb9452534682cc6a3c63ade96a39a7c2ba794e"
+        },
+        "crates/suss-compile/src/portable/stdlib.rs": {
+          "bytes": 577,
+          "physical_lines": 16,
+          "nonblank_lines": 15,
+          "sha256": "93ec7d296904b688c23cceffe15c22c97df16d7ba0d03420294f212ebd27cb40"
+        },
+        "crates/suss-compile/src/portable/syntax_quote/core_names.rs": {
+          "bytes": 19881,
+          "physical_lines": 1088,
+          "nonblank_lines": 1088,
+          "sha256": "b8689c908c5ffb765a12e1f518ae79159ab1b32f284ae3b393b018550f16b4a7"
+        },
+        "crates/suss-compile/src/portable/syntax_quote/tests.rs": {
+          "bytes": 15404,
+          "physical_lines": 427,
+          "nonblank_lines": 414,
+          "sha256": "d5c742cbf72ac1b832a57cd7bef53993199d220bcec8e0e7dd9726d4d8fa8436"
+        },
+        "crates/suss-compile/src/portable/syntax_quote.rs": {
+          "bytes": 21894,
+          "physical_lines": 573,
+          "nonblank_lines": 562,
+          "sha256": "05ed052fd278309686f19ecc8d0c36a71d871ba5e5c95347c4edc1ade95ecfc7"
+        }
+      }
+    },
+    "reused_native_runtime_abi": {
+      "file_count": 30,
+      "bytes": 413015,
+      "physical_lines": 14824,
+      "nonblank_lines": 14723,
+      "files": {
+        "crates/suss-compile/src/runtime_abi.rs": {
+          "bytes": 31359,
+          "physical_lines": 957,
+          "nonblank_lines": 949,
+          "sha256": "acd25af1641f7cc806d614a58b07625372c48abceca125ff05258d57dca57a59"
+        },
+        "crates/suss-compile/src/runtime_abi/arithmetic.rs": {
+          "bytes": 3784,
+          "physical_lines": 124,
+          "nonblank_lines": 123,
+          "sha256": "f80b36704d55a3529c5aa6a05cd3dfaa770849ee87de7c37422b6d3523213935"
+        },
+        "crates/suss-compile/src/runtime_abi/array_methods.rs": {
+          "bytes": 4553,
+          "physical_lines": 178,
+          "nonblank_lines": 178,
+          "sha256": "d51937082e2fc932b9c55935030615a8beed531f5e989cebbd2b2e6895a7f615"
+        },
+        "crates/suss-compile/src/runtime_abi/array_pop.rs": {
+          "bytes": 2800,
+          "physical_lines": 104,
+          "nonblank_lines": 104,
+          "sha256": "64d78a56aed744b8dee1423ae05c100b188b2ea45c85959b030e3c89c1fc1a50"
+        },
+        "crates/suss-compile/src/runtime_abi/array_push.rs": {
+          "bytes": 3381,
+          "physical_lines": 132,
+          "nonblank_lines": 132,
+          "sha256": "099312f727dffe611cf43a23e141573df39e362125dcc47c8ed51e5406cedd9d"
+        },
+        "crates/suss-compile/src/runtime_abi/arrays.rs": {
+          "bytes": 19014,
+          "physical_lines": 743,
+          "nonblank_lines": 742,
+          "sha256": "b5be88f13c2057c198f7d0ca2b98641320ea33ac00d135a24764ec42defa2860"
+        },
+        "crates/suss-compile/src/runtime_abi/async.rs": {
+          "bytes": 87267,
+          "physical_lines": 3336,
+          "nonblank_lines": 3302,
+          "sha256": "0dd9cef4aafea49a04fc2d6492eafc873011ab9b682468319df49228700fd808"
+        },
+        "crates/suss-compile/src/runtime_abi/async_library.rs": {
+          "bytes": 4371,
+          "physical_lines": 105,
+          "nonblank_lines": 104,
+          "sha256": "d82174666aeaa32fe5d0b41af405c7cbc0c63d3130dca71ea7592d90b375bab0"
+        },
+        "crates/suss-compile/src/runtime_abi/bitwise.rs": {
+          "bytes": 7196,
+          "physical_lines": 207,
+          "nonblank_lines": 205,
+          "sha256": "c3ff8eaec85c031d77d2013118bc98118d4d8827f184314066be1dc6bd325126"
+        },
+        "crates/suss-compile/src/runtime_abi/callable_properties.rs": {
+          "bytes": 8324,
+          "physical_lines": 280,
+          "nonblank_lines": 279,
+          "sha256": "35abd2333e977b5b8a3e2e55c1d287e5553865e8ed14f329b9b4dc42950534d5"
+        },
+        "crates/suss-compile/src/runtime_abi/closure_calls.rs": {
+          "bytes": 4467,
+          "physical_lines": 149,
+          "nonblank_lines": 148,
+          "sha256": "fdac0c5992180e3dd75d1eac059142c4e342bcf524bd7927d95c2e0cbc8ecfd4"
+        },
+        "crates/suss-compile/src/runtime_abi/closure_properties.rs": {
+          "bytes": 8172,
+          "physical_lines": 258,
+          "nonblank_lines": 255,
+          "sha256": "6306d8ee4434d1f36356f78feb4700659f26d4ec4df9f649b998f88c813e02d2"
+        },
+        "crates/suss-compile/src/runtime_abi/comparisons.rs": {
+          "bytes": 5637,
+          "physical_lines": 201,
+          "nonblank_lines": 200,
+          "sha256": "cf00eccdfd5d4dc9e0c68e88cffffb671055e97648e38e69c47fda51695a3767"
+        },
+        "crates/suss-compile/src/runtime_abi/dynamic.rs": {
+          "bytes": 15553,
+          "physical_lines": 592,
+          "nonblank_lines": 591,
+          "sha256": "918b2de61fd5577674f7becb23b741e4cd362b81d3141aabb56f1961838eb6d0"
+        },
+        "crates/suss-compile/src/runtime_abi/exception_info.rs": {
+          "bytes": 9520,
+          "physical_lines": 346,
+          "nonblank_lines": 346,
+          "sha256": "c2c7b82972b174e0e9ce9ae88bfb8169d0e02c85076b9718fd8e2d5d7093dee8"
+        },
+        "crates/suss-compile/src/runtime_abi/exceptions.rs": {
+          "bytes": 1955,
+          "physical_lines": 81,
+          "nonblank_lines": 81,
+          "sha256": "1c3c2750f9fd5d788243c3c340e757472e95bd0202548d458d37dd3d439b6ee6"
+        },
+        "crates/suss-compile/src/runtime_abi/identity_hash.rs": {
+          "bytes": 2668,
+          "physical_lines": 92,
+          "nonblank_lines": 91,
+          "sha256": "d73dcfb8e64693e2b12440229738cb80e2f6846225cc5e8e46d31f744f224a22"
+        },
+        "crates/suss-compile/src/runtime_abi/named_properties.rs": {
+          "bytes": 20305,
+          "physical_lines": 726,
+          "nonblank_lines": 717,
+          "sha256": "55507a2ebb2f347d8153c8e166d8c5d8f34a79f1dcfe08c8ffa84203e26dfa43"
+        },
+        "crates/suss-compile/src/runtime_abi/native_object_factory.rs": {
+          "bytes": 4161,
+          "physical_lines": 163,
+          "nonblank_lines": 163,
+          "sha256": "68a9b29d505489202f3039470ee10c7db956e4d48fc73c875caac1f4d8c97a8e"
+        },
+        "crates/suss-compile/src/runtime_abi/native_object_methods.rs": {
+          "bytes": 15864,
+          "physical_lines": 498,
+          "nonblank_lines": 498,
+          "sha256": "b60b5ca7d9a946e84510d2bf97e378d7c37bbc0580558720f026cbe0a99b95bb"
+        },
+        "crates/suss-compile/src/runtime_abi/native_object_properties.rs": {
+          "bytes": 14119,
+          "physical_lines": 541,
+          "nonblank_lines": 540,
+          "sha256": "ba56676366675951d72c32196c4e7cce4905219f19d4a2b6b810f225507bf434"
+        },
+        "crates/suss-compile/src/runtime_abi/native_objects.rs": {
+          "bytes": 15242,
+          "physical_lines": 610,
+          "nonblank_lines": 608,
+          "sha256": "01b93378b324b78ff7caaa0f4f804a1847485842f5a705ed07210eb97818d4ca"
+        },
+        "crates/suss-compile/src/runtime_abi/native_protocols.rs": {
+          "bytes": 16042,
+          "physical_lines": 601,
+          "nonblank_lines": 598,
+          "sha256": "5d5b03640c2ee76b5c2187472e44d51cccd1923a0a989737e43783fa3e5d614b"
+        },
+        "crates/suss-compile/src/runtime_abi/nominal.rs": {
+          "bytes": 18427,
+          "physical_lines": 610,
+          "nonblank_lines": 601,
+          "sha256": "b4b64207b1338239983c2fcae07dc262d1d354744afd3d2cfd73c27a6d61cd7a"
+        },
+        "crates/suss-compile/src/runtime_abi/numeric.rs": {
+          "bytes": 18604,
+          "physical_lines": 609,
+          "nonblank_lines": 597,
+          "sha256": "c21cc4aeec14d0fb323c600f4a5db1bff9c69a93d061ec2a4832538bb5c45d76"
+        },
+        "crates/suss-compile/src/runtime_abi/numeric_hash.rs": {
+          "bytes": 8709,
+          "physical_lines": 323,
+          "nonblank_lines": 323,
+          "sha256": "f1470829c45da543ed44cbc9d5dea26226da181d748f3a63a783fdcecc36a433"
+        },
+        "crates/suss-compile/src/runtime_abi/object_methods.rs": {
+          "bytes": 7579,
+          "physical_lines": 264,
+          "nonblank_lines": 262,
+          "sha256": "7a3a8c2a56d4ca741787d42315910a4d22c58c4723e6a601713c8facfd437d9a"
+        },
+        "crates/suss-compile/src/runtime_abi/predicates.rs": {
+          "bytes": 5121,
+          "physical_lines": 190,
+          "nonblank_lines": 187,
+          "sha256": "d63cbca8bc5aeb7024ed6b3f56aa5e19d4853c781b3900c6364b10e8f5aaec52"
+        },
+        "crates/suss-compile/src/runtime_abi/streams.rs": {
+          "bytes": 40800,
+          "physical_lines": 1498,
+          "nonblank_lines": 1496,
+          "sha256": "56d1c003823f8efc07635ebbf8854513abd12326b193dda6a5482a27fc06dab4"
+        },
+        "crates/suss-compile/src/runtime_abi/string_methods.rs": {
+          "bytes": 8021,
+          "physical_lines": 306,
+          "nonblank_lines": 303,
+          "sha256": "215539d4eac28c78442f3527e66f78fb716c653bc83667059483c500bfe1131a"
+        }
+      }
+    }
+  }
+}

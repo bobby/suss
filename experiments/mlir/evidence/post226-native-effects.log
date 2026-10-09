@@ -1,0 +1,7 @@
+PASS actual Wasmtime result and ordered cells: success
+PASS actual Wasmtime result and ordered cells: alternative
+PASS actual Wasmtime result and ordered cells: handled-throw
+PASS actual Wasmtime result and ordered cells: cleanup-overrides-success
+PASS actual Wasmtime result and ordered cells: cleanup-overrides-handler
+PASS actual Wasmtime result and ordered cells: captured-f64
+PASS actual Wasmtime result and ordered cells: nested-join
