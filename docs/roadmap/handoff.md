@@ -23692,3 +23692,13 @@ external-source symlink and stale-manifest checks failed truthfully, corrected
 local exactpinclone and metadataregeneration. Native not yet executed.
 
 Compiled-support c2cf native: entire compile_expr286pass0fail30existingunsupportedignores83.50s; seven original tests reactivated with unchanged assertions, new11raw values/effects/capture cases passed, remaining30 exact diagnostics retained. Bootstrap regeneration and two-generation Java/Nodefree reproducibility passed with4compiledbootstraptests14.43s. Evidence compiled-support-reactivation/evidence/native-validation.json. Publicationundefinedfixture, str sourceclosure, RecordIter/reify, upstreamsuitebaseline, finalfullbaseline/CI remain required; PR231 draft.
+### PR231 publication literal-nil/undefined fixture repair (base677340c)
+
+Focused publicationcells0pass2fail reached kernel; exact literalmake-array1
+input is present nil by whole pinmacro2644–2660, hence definedtrue. Retain that
+source as a positivenilcase and add genuine js/Arrayhole with originalfalse;
+dynamic undefined fixtures usejsArrayholes preservingfalse/restoration/GC and
+every other originalassertion. Freshpin4rawvectors matchundefined/own/nil/exists
+plusglobal/dynamicpublication. Fullmakearraywitness+failedlogs retained under
+docs/compatibility/publication-fixture/. No runtime/fuel/bootstrap change; native
+correctedtests pending parentlane, fullreify/niliter scope stillrequired.
