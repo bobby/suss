@@ -23709,3 +23709,5 @@ runtimeconstructorbranch as pin), notliteralnil macro. Originalfalseundefined
 assertions/restoration unchanged; freshpin5rawmatch+3harnesspass. Parentconsistent
 authoringsnapshot publication2pass7.24s isdiagnostic only; frozen/integrated
 acceptancepending. No production/bootstrap/manifest/fuel edits.
+
+Publication fixture af3561f exact integrated native passed2/0/0 in7.02s. Genuine first-class make-array alias supplies undefined; literal make-array nil source retained and tested positive. Both phases, laterclasspublication/dynamicselectedvalue/unbound/restoration/GC assertions remain. Log+receipt publication-fixture/evidence/integrated-native-validation.json. Kernel/bootstrap/fuel unchanged. Independent finalfixture review and fullgoal sourceclosure/baseline/CI pending.
