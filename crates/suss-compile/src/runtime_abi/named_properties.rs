@@ -290,7 +290,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "__proto__",
     ];
     // Schema reads validate every field. Compare only reserved spellings of the
-    // same length; long protocol names cannot match a shorter reserved word.
+    // same length/first unit. Compare literal units without allocating temporary
+    // strings; every spelling and the preceding full character guard remain.
     let mut by_length = std::collections::BTreeMap::<usize, Vec<&str>>::new();
     for reserved in reserved_names {
         by_length.entry(reserved.len()).or_default().push(reserved);
@@ -300,6 +301,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         RefCastNonNull(HeapType::Concrete(STRING)),
         ArrayLen,
         LocalSet(3),
+        LocalGet(3),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        I32Const(0),
+        ArrayGetU(STRING),
+        LocalSet(2),
     ]);
     for (length, names) in by_length {
         body.extend([
@@ -308,10 +320,36 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32Eq,
             If(BlockType::Empty),
         ]);
+        let mut by_first = std::collections::BTreeMap::<u8, Vec<&str>>::new();
         for reserved in names {
-            body.push(LocalGet(0));
-            name(&mut body, reserved);
-            body.extend([Call(equal), If(BlockType::Empty), I32Const(0), Return, End]);
+            by_first
+                .entry(reserved.as_bytes()[0])
+                .or_default()
+                .push(reserved);
+        }
+        for (first, spellings) in by_first {
+            body.extend([
+                LocalGet(2),
+                I32Const(i32::from(first)),
+                I32Eq,
+                If(BlockType::Empty),
+            ]);
+            for reserved in spellings {
+                body.push(I32Const(1));
+                for (index, unit) in reserved.encode_utf16().enumerate().skip(1) {
+                    body.extend([
+                        LocalGet(0),
+                        RefCastNonNull(HeapType::Concrete(STRING)),
+                        I32Const(index as i32),
+                        ArrayGetU(STRING),
+                        I32Const(i32::from(unit)),
+                        I32Eq,
+                        I32And,
+                    ]);
+                }
+                body.extend([If(BlockType::Empty), I32Const(0), Return, End]);
+            }
+            body.push(End);
         }
         body.push(End);
     }

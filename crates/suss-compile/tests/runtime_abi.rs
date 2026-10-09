@@ -8161,3 +8161,91 @@ fn runtime_abi_small_hole_arrays_use_private_masked_storage_without_changing_pre
         assert_eq!(nominal_value(&mut store, runtime, "source-array-sparse-has", &[copy, Val::I32(0)]).unwrap_i32(), 1);
     }
 }
+
+#[test]
+fn runtime_abi_reserved_schema_names_keep_all_spellings_and_near_misses() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let reserved = [
+        "arguments",
+        "abstract",
+        "await",
+        "boolean",
+        "break",
+        "byte",
+        "case",
+        "catch",
+        "char",
+        "class",
+        "const",
+        "continue",
+        "debugger",
+        "default",
+        "delete",
+        "do",
+        "double",
+        "else",
+        "enum",
+        "export",
+        "extends",
+        "final",
+        "finally",
+        "float",
+        "for",
+        "function",
+        "goto",
+        "if",
+        "implements",
+        "import",
+        "in",
+        "instanceof",
+        "int",
+        "interface",
+        "let",
+        "long",
+        "native",
+        "new",
+        "package",
+        "private",
+        "protected",
+        "public",
+        "return",
+        "short",
+        "static",
+        "super",
+        "switch",
+        "synchronized",
+        "this",
+        "throw",
+        "throws",
+        "transient",
+        "try",
+        "typeof",
+        "var",
+        "void",
+        "volatile",
+        "while",
+        "with",
+        "yield",
+        "methods",
+        "null",
+        "constructor",
+        "__proto__",
+    ];
+    let empty = nominal_value(&mut store, runtime, "string-new", &[Val::I32(0)]);
+    store.gc(None).unwrap();
+    assert_eq!(nominal_value(&mut store, runtime, "property-field-name-supported", &[empty]).unwrap_i32(), 1);
+    for spelling in reserved {
+        for (candidate, expected) in [(spelling.to_owned(), 0), (format!("{spelling}_"), 1)] {
+            let units = candidate.encode_utf16().collect::<Vec<_>>();
+            let name = nominal_value(&mut store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+            for (index, unit) in units.into_iter().enumerate() {
+                runtime.get_func(&mut store, "string-set-unit").unwrap()
+                    .call(&mut store, &[name.clone(), Val::I32(index as i32), Val::I32(i32::from(unit))], &mut [Val::I32(0)]).unwrap();
+            }
+            store.gc(None).unwrap();
+            assert_eq!(nominal_value(&mut store, runtime, "property-field-name-supported", &[name]).unwrap_i32(), expected, "{candidate}");
+        }
+    }
+}
