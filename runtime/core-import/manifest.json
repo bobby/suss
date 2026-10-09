@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "d2bff55997d31b22b584b5a2a732e2a2612f662f9bde1c24e1bf5c0557de46c7",
-  "reviews-sha256": "e7adaa89dd07f4fdde3b3860c603f45332e744ccc598156394bc0804c674cf56",
+  "reviews-sha256": "812c4d875c407e32e43056e29dfec651bfdd727b0ff39f6a95c22e2783abc49c",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10563,7 +10563,9 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)",
+        "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
       ]
     },
     {
@@ -10594,7 +10596,9 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)",
+        "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
       ]
     },
     {

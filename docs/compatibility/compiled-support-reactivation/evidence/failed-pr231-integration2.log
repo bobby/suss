@@ -1,0 +1,1147 @@
+﻿2026-10-09T12:00:07.6758377Z Current runner version: '2.337.0'
+2026-10-09T12:00:07.6775375Z ##[group]Runner Image Provisioner
+2026-10-09T12:00:07.6776033Z Hosted Compute Agent
+2026-10-09T12:00:07.6776383Z Version: 20261002.596
+2026-10-09T12:00:07.6776779Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-09T12:00:07.6777215Z Build Date: 2026-10-02T22:28:27Z
+2026-10-09T12:00:07.6777619Z Worker ID: {b4c9afcc-2bf7-4823-bb05-961506421b79}
+2026-10-09T12:00:07.6778103Z Region: centralus
+2026-10-09T12:00:07.6778437Z Cloud: Azure
+2026-10-09T12:00:07.6778753Z ##[endgroup]
+2026-10-09T12:00:07.6779597Z ##[group]Operating System
+2026-10-09T12:00:07.6779959Z Ubuntu
+2026-10-09T12:00:07.6780395Z 24.04.5
+2026-10-09T12:00:07.6780707Z LTS
+2026-10-09T12:00:07.6781004Z ##[endgroup]
+2026-10-09T12:00:07.6781376Z ##[group]Runner Image
+2026-10-09T12:00:07.6781767Z Image: ubuntu-24.04
+2026-10-09T12:00:07.6782129Z Version: 20261004.327.1
+2026-10-09T12:00:07.6783021Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-09T12:00:07.6783921Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-09T12:00:07.6784504Z ##[endgroup]
+2026-10-09T12:00:07.6785245Z ##[group]GITHUB_TOKEN Permissions
+2026-10-09T12:00:07.6786585Z Contents: read
+2026-10-09T12:00:07.6786965Z Metadata: read
+2026-10-09T12:00:07.6787314Z Packages: read
+2026-10-09T12:00:07.6787684Z ##[endgroup]
+2026-10-09T12:00:07.6789000Z Secret source: Actions
+2026-10-09T12:00:07.6789515Z Cache mode: write
+2026-10-09T12:00:07.6789992Z Prepare workflow directory
+2026-10-09T12:00:07.7107722Z Prepare all required actions
+2026-10-09T12:00:07.7145695Z Getting action download info
+2026-10-09T12:00:07.9567327Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-09T12:00:08.2263155Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:686976e191b89faba57d3206551f0f330d8cb249)
+2026-10-09T12:00:08.5895437Z Download action repository 'Swatinem/rust-cache@v2' (SHA:6323deb102c322ba6fcbdcafc7e3dddab59af2b6)
+2026-10-09T12:00:09.5596718Z Complete job name: integration (2)
+2026-10-09T12:00:09.6364320Z ##[group]Run actions/checkout@v4
+2026-10-09T12:00:09.6365112Z with:
+2026-10-09T12:00:09.6365617Z   submodules: true
+2026-10-09T12:00:09.6366195Z   repository: bobby/suss
+2026-10-09T12:00:09.6370733Z   token: ***
+2026-10-09T12:00:09.6371249Z   ssh-strict: true
+2026-10-09T12:00:09.6371778Z   ssh-user: git
+2026-10-09T12:00:09.6372323Z   persist-credentials: true
+2026-10-09T12:00:09.6373057Z   clean: true
+2026-10-09T12:00:09.6373649Z   sparse-checkout-cone-mode: true
+2026-10-09T12:00:09.6374275Z   fetch-depth: 1
+2026-10-09T12:00:09.6374805Z   fetch-tags: false
+2026-10-09T12:00:09.6375341Z   show-progress: true
+2026-10-09T12:00:09.6375892Z   lfs: false
+2026-10-09T12:00:09.6376423Z   set-safe-directory: true
+2026-10-09T12:00:09.6377048Z   allow-unsafe-pr-checkout: false
+2026-10-09T12:00:09.6378000Z env:
+2026-10-09T12:00:09.6378482Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:09.6379043Z ##[endgroup]
+2026-10-09T12:00:09.7097249Z Syncing repository: bobby/suss
+2026-10-09T12:00:09.7099762Z ##[group]Getting Git version info
+2026-10-09T12:00:09.7100960Z Working directory is '/home/runner/work/suss/suss'
+2026-10-09T12:00:09.7102751Z [command]/usr/bin/git version
+2026-10-09T12:00:09.7167496Z git version 2.55.0
+2026-10-09T12:00:09.7196864Z ##[endgroup]
+2026-10-09T12:00:09.7205516Z Temporarily overriding HOME='/home/runner/work/_temp/a5a7a46a-f494-4ede-943b-d064eadad063' before making global git config changes
+2026-10-09T12:00:09.7207951Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T12:00:09.7209589Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/suss/suss
+2026-10-09T12:00:09.7489827Z Deleting the contents of '/home/runner/work/suss/suss'
+2026-10-09T12:00:09.7495654Z ##[group]Initializing the repository
+2026-10-09T12:00:09.7499198Z [command]/usr/bin/git init /home/runner/work/suss/suss
+2026-10-09T12:00:09.8482280Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-09T12:00:09.8484237Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-09T12:00:09.8485860Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-09T12:00:09.8487150Z hint: call:
+2026-10-09T12:00:09.8487843Z hint:
+2026-10-09T12:00:09.8488683Z hint: 	git config --global init.defaultBranch <name>
+2026-10-09T12:00:09.8489649Z hint:
+2026-10-09T12:00:09.8490545Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-09T12:00:09.8492073Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-09T12:00:09.8493469Z hint:
+2026-10-09T12:00:09.8494173Z hint: 	git branch -m <name>
+2026-10-09T12:00:09.8494949Z hint:
+2026-10-09T12:00:09.8496076Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-09T12:00:09.8497125Z Initialized empty Git repository in /home/runner/work/suss/suss/.git/
+2026-10-09T12:00:09.8499051Z [command]/usr/bin/git remote add origin https://github.com/bobby/suss
+2026-10-09T12:00:09.8766974Z ##[endgroup]
+2026-10-09T12:00:09.8768376Z ##[group]Disabling automatic garbage collection
+2026-10-09T12:00:09.8769557Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-09T12:00:09.8983895Z ##[endgroup]
+2026-10-09T12:00:09.8985535Z ##[group]Setting up auth
+2026-10-09T12:00:09.8987054Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T12:00:09.9014995Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T12:00:09.9311693Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T12:00:09.9339248Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T12:00:09.9520185Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T12:00:09.9547222Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T12:00:09.9712152Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-09T12:00:09.9960921Z ##[endgroup]
+2026-10-09T12:00:09.9962136Z ##[group]Fetching the repository
+2026-10-09T12:00:09.9969110Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +646583fc69c4b297266ca09802b567cd391e40f5:refs/remotes/pull/231/merge
+2026-10-09T12:00:11.1017958Z From https://github.com/bobby/suss
+2026-10-09T12:00:11.1018871Z  * [new ref]         646583fc69c4b297266ca09802b567cd391e40f5 -> pull/231/merge
+2026-10-09T12:00:11.1023202Z ##[endgroup]
+2026-10-09T12:00:11.1023717Z ##[group]Determining the checkout info
+2026-10-09T12:00:11.1024022Z ##[endgroup]
+2026-10-09T12:00:11.1027815Z [command]/usr/bin/git sparse-checkout disable
+2026-10-09T12:00:11.1071867Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-09T12:00:11.1098873Z ##[group]Checking out the ref
+2026-10-09T12:00:11.1101132Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/231/merge
+2026-10-09T12:00:11.2294480Z Note: switching to 'refs/remotes/pull/231/merge'.
+2026-10-09T12:00:11.2294788Z 
+2026-10-09T12:00:11.2294949Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-09T12:00:11.2295250Z changes and commit them, and you can discard any commits you make in this
+2026-10-09T12:00:11.2295568Z state without impacting any branches by switching back to a branch.
+2026-10-09T12:00:11.2295759Z 
+2026-10-09T12:00:11.2295917Z If you want to create a new branch to retain commits you create, you may
+2026-10-09T12:00:11.2296393Z do so (now or later) by using -c with the switch command. Example:
+2026-10-09T12:00:11.2296546Z 
+2026-10-09T12:00:11.2296641Z   git switch -c <new-branch-name>
+2026-10-09T12:00:11.2296749Z 
+2026-10-09T12:00:11.2296839Z Or undo this operation with:
+2026-10-09T12:00:11.2296937Z 
+2026-10-09T12:00:11.2297035Z   git switch -
+2026-10-09T12:00:11.2297136Z 
+2026-10-09T12:00:11.2297294Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-09T12:00:11.2297500Z 
+2026-10-09T12:00:11.2297716Z HEAD is now at 646583f Merge abd58cb7eed2b2a5e494b9fe6405288701464e76 into 06ac94b27c43d9683e2966c7e180bc7ee0f14a8f
+2026-10-09T12:00:11.2307273Z ##[endgroup]
+2026-10-09T12:00:11.2307588Z ##[group]Setting up auth for fetching submodules
+2026-10-09T12:00:11.2312787Z [command]/usr/bin/git config --global http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-09T12:00:11.2348339Z [command]/usr/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2026-10-09T12:00:11.2373701Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2026-10-09T12:00:11.2399805Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf org-8336@github.com:
+2026-10-09T12:00:11.2424269Z ##[endgroup]
+2026-10-09T12:00:11.2424660Z ##[group]Fetching submodules
+2026-10-09T12:00:11.2426513Z [command]/usr/bin/git submodule sync
+2026-10-09T12:00:11.2647544Z [command]/usr/bin/git -c protocol.version=2 submodule update --init --force --depth=1
+2026-10-09T12:00:11.2810450Z Submodule 'clojurescript' (https://github.com/clojure/clojurescript.git) registered for path 'clojurescript'
+2026-10-09T12:00:11.2828659Z Cloning into '/home/runner/work/suss/suss/clojurescript'...
+2026-10-09T12:00:12.7954421Z From https://github.com/clojure/clojurescript
+2026-10-09T12:00:12.7955021Z  * branch            c4295f303100bbf5afac449242d30bca1126f1a1 -> FETCH_HEAD
+2026-10-09T12:00:12.8241739Z Submodule path 'clojurescript': checked out 'c4295f303100bbf5afac449242d30bca1126f1a1'
+2026-10-09T12:00:12.8255617Z [command]/usr/bin/git submodule foreach git config --local gc.auto 0
+2026-10-09T12:00:12.8423256Z Entering 'clojurescript'
+2026-10-09T12:00:12.8788892Z ##[endgroup]
+2026-10-09T12:00:12.8789222Z ##[group]Persisting credentials for submodules
+2026-10-09T12:00:12.8794030Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'url\.https\:\/\/github\.com\/\.insteadOf' && git config --local --unset-all 'url.https://github.com/.insteadOf' || :"
+2026-10-09T12:00:12.8953941Z Entering 'clojurescript'
+2026-10-09T12:00:12.8994289Z [command]/usr/bin/git submodule foreach sh -c "git config --local 'http.https://github.com/.extraheader' 'AUTHORIZATION: basic ***' && git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-09T12:00:12.9150448Z Entering 'clojurescript'
+2026-10-09T12:00:12.9183197Z file:/home/runner/work/suss/suss/.git/modules/clojurescript/config	remote.origin.url
+2026-10-09T12:00:12.9200566Z [command]/usr/bin/git submodule foreach git config --local --add 'url.https://github.com/.insteadOf' 'git@github.com:'
+2026-10-09T12:00:12.9355641Z Entering 'clojurescript'
+2026-10-09T12:00:12.9382199Z [command]/usr/bin/git submodule foreach git config --local --add 'url.https://github.com/.insteadOf' 'org-8336@github.com:'
+2026-10-09T12:00:12.9538908Z Entering 'clojurescript'
+2026-10-09T12:00:12.9564992Z ##[endgroup]
+2026-10-09T12:00:12.9599756Z [command]/usr/bin/git log -1 --format=%H
+2026-10-09T12:00:12.9621485Z 646583fc69c4b297266ca09802b567cd391e40f5
+2026-10-09T12:00:12.9854683Z ##[group]Run dtolnay/rust-toolchain@stable
+2026-10-09T12:00:12.9854858Z with:
+2026-10-09T12:00:12.9854975Z   toolchain: stable
+2026-10-09T12:00:12.9855090Z env:
+2026-10-09T12:00:12.9855197Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:12.9855319Z ##[endgroup]
+2026-10-09T12:00:12.9897017Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-10-09T12:00:12.9935667Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-10-09T12:00:12.9936090Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-10-09T12:00:12.9936394Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-10-09T12:00:12.9936697Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-10-09T12:00:12.9936870Z [36;1m  exit 1[0m
+2026-10-09T12:00:12.9937062Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-10-09T12:00:12.9937293Z [36;1m  if [[ Linux == macOS ]]; then[0m
+2026-10-09T12:00:12.9937614Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:12.9937894Z [36;1m  else[0m
+2026-10-09T12:00:12.9938117Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:12.9938364Z [36;1m  fi[0m
+2026-10-09T12:00:12.9938536Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-10-09T12:00:12.9938843Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:12.9939097Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-10-09T12:00:12.9939386Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:12.9939651Z [36;1melse[0m
+2026-10-09T12:00:12.9939796Z [36;1m  delimiter=EOF[0m
+2026-10-09T12:00:12.9939975Z [36;1m  while [[ $toolchain == *$delimiter* ]]; do delimiter+=_; done[0m
+2026-10-09T12:00:12.9940255Z [36;1m  printf 'toolchain<<%s\n%s\n%s\n' "$delimiter" "$toolchain" "$delimiter" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:12.9940479Z [36;1mfi[0m
+2026-10-09T12:00:13.0158654Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:13.0158863Z env:
+2026-10-09T12:00:13.0158990Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:13.0159117Z   toolchain: stable
+2026-10-09T12:00:13.0159246Z ##[endgroup]
+2026-10-09T12:00:13.0264100Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=36]
+2026-10-09T12:00:13.0266734Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-10-09T12:00:13.0290534Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+2026-10-09T12:00:13.0290808Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2026-10-09T12:00:13.0336741Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:13.0336927Z env:
+2026-10-09T12:00:13.0337045Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:13.0337169Z ##[endgroup]
+2026-10-09T12:00:13.0402628Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=13]
+2026-10-09T12:00:13.0404242Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-10-09T12:00:13.0422802Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-10-09T12:00:13.0423170Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-10-09T12:00:13.0423586Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2026-10-09T12:00:13.0423978Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2026-10-09T12:00:13.0424138Z [36;1mfi[0m
+2026-10-09T12:00:13.0469079Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:13.0469261Z env:
+2026-10-09T12:00:13.0469523Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:13.0469656Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:13.0469799Z ##[endgroup]
+2026-10-09T12:00:13.0533880Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=12]
+2026-10-09T12:00:13.0535190Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-10-09T12:00:13.0538959Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T12:00:13.0548054Z ##[start-action display=rustup toolchain install stable;id=__dtolnay_rust-toolchain.__run_4]
+2026-10-09T12:00:13.0562428Z ##[group]Run set -f  # split targets and components on commas and whitespace, without glob expansion
+2026-10-09T12:00:13.0562806Z [36;1mset -f  # split targets and components on commas and whitespace, without glob expansion[0m
+2026-10-09T12:00:13.0563277Z [36;1mflags=()[0m
+2026-10-09T12:00:13.0563442Z [36;1mfor t in ${targets//,/ }; do flags+=(--target "$t"); done[0m
+2026-10-09T12:00:13.0563671Z [36;1mfor c in ${components//,/ }; do flags+=(--component "$c"); done[0m
+2026-10-09T12:00:13.0563945Z [36;1mif [[ $toolchain == nightly && -n $components ]]; then flags+=(--allow-downgrade); fi[0m
+2026-10-09T12:00:13.0564172Z [36;1mlog=$(mktemp)[0m
+2026-10-09T12:00:13.0564303Z [36;1mtrap 'rm -f "$log"' EXIT[0m
+2026-10-09T12:00:13.0564448Z [36;1mfor attempt in 1 2 3 4 5; do[0m
+2026-10-09T12:00:13.0564764Z [36;1m  if rustup toolchain install "$toolchain" "${flags[@]}" --profile minimal --no-self-update --force-non-host 2>&1 | tee "$log"; then[0m
+2026-10-09T12:00:13.0565066Z [36;1m    break[0m
+2026-10-09T12:00:13.0565179Z [36;1m  else[0m
+2026-10-09T12:00:13.0565293Z [36;1m    status=$?[0m
+2026-10-09T12:00:13.0565412Z [36;1m  fi[0m
+2026-10-09T12:00:13.0565576Z [36;1m  if [[ $attempt == 5 ]] || ! grep -Fq 'checksum failed for ' "$log" \[0m
+2026-10-09T12:00:13.0565882Z [36;1m      || ! grep -Fq 'this is likely due to an ongoing update of the official release server' "$log"; then[0m
+2026-10-09T12:00:13.0566143Z [36;1m    exit "$status"[0m
+2026-10-09T12:00:13.0566271Z [36;1m  fi[0m
+2026-10-09T12:00:13.0566471Z [36;1m  echo "Retrying rustup toolchain install in 30 seconds (retry $attempt of 4)" >&2[0m
+2026-10-09T12:00:13.0566698Z [36;1m  sleep 30[0m
+2026-10-09T12:00:13.0566814Z [36;1mdone[0m
+2026-10-09T12:00:13.0610707Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:13.0610897Z env:
+2026-10-09T12:00:13.0611011Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:13.0611143Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:13.0611282Z   toolchain: stable
+2026-10-09T12:00:13.0611396Z   targets: 
+2026-10-09T12:00:13.0611503Z   components: 
+2026-10-09T12:00:13.0611625Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-10-09T12:00:13.0611762Z ##[endgroup]
+2026-10-09T12:00:15.5901346Z info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+2026-10-09T12:00:15.9286747Z 
+2026-10-09T12:00:15.9351626Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.99.0 (b940084d7 2026-09-28)
+2026-10-09T12:00:15.9351862Z 
+2026-10-09T12:00:15.9393601Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=2884]
+2026-10-09T12:00:15.9398824Z ##[start-action display=rustup default stable;id=__dtolnay_rust-toolchain.__run_5]
+2026-10-09T12:00:15.9429988Z ##[group]Run rustup default "$toolchain" --force-non-host
+2026-10-09T12:00:15.9430229Z [36;1mrustup default "$toolchain" --force-non-host[0m
+2026-10-09T12:00:15.9482119Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:15.9482300Z env:
+2026-10-09T12:00:15.9482412Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:15.9482542Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:15.9482681Z   toolchain: stable
+2026-10-09T12:00:15.9482800Z ##[endgroup]
+2026-10-09T12:00:15.9574762Z info: using existing install for stable-x86_64-unknown-linux-gnu
+2026-10-09T12:00:15.9584233Z info: default toolchain set to stable-x86_64-unknown-linux-gnu
+2026-10-09T12:00:15.9584568Z 
+2026-10-09T12:00:15.9645546Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.99.0 (b940084d7 2026-09-28)
+2026-10-09T12:00:15.9645809Z 
+2026-10-09T12:00:15.9659208Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=25]
+2026-10-09T12:00:15.9661978Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-10-09T12:00:15.9675485Z ##[group]Run DATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-10-09T12:00:15.9676105Z [36;1mDATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-10-09T12:00:15.9676470Z [36;1mHASH=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-10-09T12:00:15.9676752Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-10-09T12:00:15.9722671Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:15.9722849Z env:
+2026-10-09T12:00:15.9723145Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:15.9723275Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:15.9723413Z   toolchain: stable
+2026-10-09T12:00:15.9723534Z ##[endgroup]
+2026-10-09T12:00:16.0633521Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=97]
+2026-10-09T12:00:16.0635424Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-10-09T12:00:16.0649323Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-10-09T12:00:16.0649542Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-10-09T12:00:16.0649723Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-10-09T12:00:16.0649878Z [36;1mfi[0m
+2026-10-09T12:00:16.0701209Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:16.0701385Z env:
+2026-10-09T12:00:16.0701494Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.0701631Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.0701775Z ##[endgroup]
+2026-10-09T12:00:16.0764299Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=12]
+2026-10-09T12:00:16.0765517Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-10-09T12:00:16.0777214Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-10-09T12:00:16.0777417Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-10-09T12:00:16.0777606Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-10-09T12:00:16.0777770Z [36;1mfi[0m
+2026-10-09T12:00:16.0820421Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:16.0820598Z env:
+2026-10-09T12:00:16.0820708Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.0820834Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.0820976Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:16.0821099Z ##[endgroup]
+2026-10-09T12:00:16.0880100Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=11]
+2026-10-09T12:00:16.0882124Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-10-09T12:00:16.0894876Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-10-09T12:00:16.0895155Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-10-09T12:00:16.0895529Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-10-09T12:00:16.0895930Z [36;1m  if rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-10-09T12:00:16.0896241Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-10-09T12:00:16.0896524Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-10-09T12:00:16.0896920Z [36;1m  elif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-10-09T12:00:16.0897224Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-10-09T12:00:16.0897496Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-10-09T12:00:16.0897677Z [36;1m  fi[0m
+2026-10-09T12:00:16.0897783Z [36;1mfi[0m
+2026-10-09T12:00:16.0940696Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:16.0940982Z env:
+2026-10-09T12:00:16.0941091Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.0941222Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.0941362Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:16.0941486Z   CARGO_TERM_COLOR: always
+2026-10-09T12:00:16.0941610Z   toolchain: stable
+2026-10-09T12:00:16.0941725Z ##[endgroup]
+2026-10-09T12:00:16.1190572Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=30]
+2026-10-09T12:00:16.1193422Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-10-09T12:00:16.1206141Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-10-09T12:00:16.1206545Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-10-09T12:00:16.1206869Z [36;1mif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-10-09T12:00:16.1207120Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-10-09T12:00:16.1207295Z [36;1mfi[0m
+2026-10-09T12:00:16.1254237Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:16.1254413Z env:
+2026-10-09T12:00:16.1254518Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.1254646Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.1254783Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:16.1254905Z   CARGO_TERM_COLOR: always
+2026-10-09T12:00:16.1255028Z   toolchain: stable
+2026-10-09T12:00:16.1255142Z ##[endgroup]
+2026-10-09T12:00:16.1408835Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=21]
+2026-10-09T12:00:16.1411781Z ##[start-action display=rustc +stable --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-10-09T12:00:16.1424029Z ##[group]Run rustc +"$toolchain" --version --verbose
+2026-10-09T12:00:16.1424231Z [36;1mrustc +"$toolchain" --version --verbose[0m
+2026-10-09T12:00:16.1468616Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T12:00:16.1468796Z env:
+2026-10-09T12:00:16.1468906Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.1469033Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.1469170Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:16.1469291Z   CARGO_TERM_COLOR: always
+2026-10-09T12:00:16.1469412Z   toolchain: stable
+2026-10-09T12:00:16.1469521Z ##[endgroup]
+2026-10-09T12:00:16.1608506Z rustc 1.99.0 (b940084d7 2026-09-28)
+2026-10-09T12:00:16.1608989Z binary: rustc
+2026-10-09T12:00:16.1609571Z commit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4
+2026-10-09T12:00:16.1610097Z commit-date: 2026-09-28
+2026-10-09T12:00:16.1610326Z host: x86_64-unknown-linux-gnu
+2026-10-09T12:00:16.1610531Z release: 1.99.0
+2026-10-09T12:00:16.1610697Z LLVM version: 23.1.1
+2026-10-09T12:00:16.1627688Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=21]
+2026-10-09T12:00:16.1740975Z ##[group]Run Swatinem/rust-cache@v2
+2026-10-09T12:00:16.1741123Z with:
+2026-10-09T12:00:16.1741240Z   shared-key: workspace-tests
+2026-10-09T12:00:16.1741386Z   prefix-key: v0-rust
+2026-10-09T12:00:16.1741502Z   add-job-id-key: true
+2026-10-09T12:00:16.1741633Z   add-rust-environment-hash-key: true
+2026-10-09T12:00:16.1741776Z   cache-targets: true
+2026-10-09T12:00:16.1741894Z   cache-all-crates: false
+2026-10-09T12:00:16.1742024Z   cache-workspace-crates: false
+2026-10-09T12:00:16.1742155Z   save-if: true
+2026-10-09T12:00:16.1742267Z   cache-provider: github
+2026-10-09T12:00:16.1742388Z   cache-bin: true
+2026-10-09T12:00:16.1742497Z   lookup-only: false
+2026-10-09T12:00:16.1742608Z   cmd-format: {0}
+2026-10-09T12:00:16.1742797Z env:
+2026-10-09T12:00:16.1743144Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:16.1743440Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:16.1743652Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:16.1743868Z   CARGO_TERM_COLOR: always
+2026-10-09T12:00:16.1744163Z ##[endgroup]
+2026-10-09T12:00:17.4703638Z ##[group]Cache Configuration
+2026-10-09T12:00:17.4703816Z Cache Provider:
+2026-10-09T12:00:17.4704211Z     github
+2026-10-09T12:00:17.4704438Z Workspaces:
+2026-10-09T12:00:17.4704618Z     /home/runner/work/suss/suss
+2026-10-09T12:00:17.4704866Z Cache Paths:
+2026-10-09T12:00:17.4705044Z     /home/runner/.cargo/bin
+2026-10-09T12:00:17.4705308Z     /home/runner/.cargo/.crates.toml
+2026-10-09T12:00:17.4705587Z     /home/runner/.cargo/.crates2.json
+2026-10-09T12:00:17.4705853Z     /home/runner/.cargo/registry
+2026-10-09T12:00:17.4706254Z     /home/runner/.cargo/git
+2026-10-09T12:00:17.4706480Z     /home/runner/work/suss/suss/target
+2026-10-09T12:00:17.4706733Z Restore Key:
+2026-10-09T12:00:17.4707019Z     v0-rust-workspace-tests-Linux-x64-52251cb1
+2026-10-09T12:00:17.4707173Z Cache Key:
+2026-10-09T12:00:17.4707312Z     v0-rust-workspace-tests-Linux-x64-52251cb1-f3c7db73
+2026-10-09T12:00:17.4707480Z .. Prefix:
+2026-10-09T12:00:17.4707613Z   - v0-rust-workspace-tests-Linux-x64
+2026-10-09T12:00:17.4707763Z .. Environment considered:
+2026-10-09T12:00:17.4707931Z   - Rust Versions:
+2026-10-09T12:00:17.4708183Z     - 1.99.0 x86_64-unknown-linux-gnu b940084d7eb6a299eb4bfeb8e34901bc051e7ac4
+2026-10-09T12:00:17.4708382Z   - CARGO_BUILD_JOBS
+2026-10-09T12:00:17.4708494Z   - CARGO_HOME
+2026-10-09T12:00:17.4708600Z   - CARGO_INCREMENTAL
+2026-10-09T12:00:17.4708711Z   - CARGO_TERM_COLOR
+2026-10-09T12:00:17.4708824Z .. Lockfiles considered:
+2026-10-09T12:00:17.4708953Z   - /home/runner/work/suss/suss/Cargo.lock
+2026-10-09T12:00:17.4709127Z   - /home/runner/work/suss/suss/crates/suss-cli/Cargo.toml
+2026-10-09T12:00:17.4709328Z   - /home/runner/work/suss/suss/crates/suss-compile/Cargo.toml
+2026-10-09T12:00:17.4709527Z   - /home/runner/work/suss/suss/crates/suss-core/Cargo.toml
+2026-10-09T12:00:17.4709726Z   - /home/runner/work/suss/suss/crates/suss-reader/Cargo.toml
+2026-10-09T12:00:17.4709937Z   - /home/runner/work/suss/suss/runtime/numeric/rust-toolchain.toml
+2026-10-09T12:00:17.4710203Z ##[endgroup]
+2026-10-09T12:00:17.4710269Z 
+2026-10-09T12:00:17.4710316Z ... Restoring cache ...
+2026-10-09T12:00:17.6031974Z Cache hit for: v0-rust-workspace-tests-Linux-x64-52251cb1-f3c7db73
+2026-10-09T12:00:18.7464546Z Received 121634816 of 412711509 (29.5%), 116.0 MBs/sec
+2026-10-09T12:00:19.7438234Z Received 364904448 of 412711509 (88.4%), 174.0 MBs/sec
+2026-10-09T12:00:19.9924960Z Received 412711509 of 412711509 (100.0%), 175.0 MBs/sec
+2026-10-09T12:00:19.9925618Z Cache Size: ~394 MB (412711509 B)
+2026-10-09T12:00:19.9999747Z [command]/usr/bin/tar -xf /home/runner/work/_temp/1ae4b1d9-8102-446f-bd4b-77bcdd25ae23/cache.tzst -P -C /home/runner/work/suss/suss --use-compress-program unzstd
+2026-10-09T12:00:22.9286048Z Cache restored successfully
+2026-10-09T12:00:22.9445401Z Restored from cache key "v0-rust-workspace-tests-Linux-x64-52251cb1-f3c7db73" full match: true.
+2026-10-09T12:00:22.9617192Z ##[group]Run python3 scripts/ci_test_shards.py --count 8 --index 2
+2026-10-09T12:00:22.9617479Z [36;1mpython3 scripts/ci_test_shards.py --count 8 --index 2[0m
+2026-10-09T12:00:22.9667798Z shell: /usr/bin/bash -e {0}
+2026-10-09T12:00:22.9667939Z env:
+2026-10-09T12:00:22.9668063Z   CARGO_BUILD_JOBS: 2
+2026-10-09T12:00:22.9668208Z   CARGO_HOME: /home/runner/.cargo
+2026-10-09T12:00:22.9668346Z   CARGO_INCREMENTAL: 0
+2026-10-09T12:00:22.9668468Z   CARGO_TERM_COLOR: always
+2026-10-09T12:00:22.9668598Z   CACHE_ON_FAILURE: false
+2026-10-09T12:00:22.9668723Z ##[endgroup]
+2026-10-09T12:00:23.0155259Z {"index": 2, "count": 8, "total_targets": 211, "targets": [["suss-cli", "compiled_macro_binding_records"], ["suss-cli", "compiled_macro_data_builders"], ["suss-cli", "compiled_macro_function_scopes"], ["suss-cli", "compiled_macro_maps"], ["suss-cli", "compiled_macro_set_oracle"], ["suss-cli", "compiled_module_cache"], ["suss-cli", "compiled_source_macros"], ["suss-cli", "native_repl_async_pty"], ["suss-cli", "portable_error_predicate"], ["suss-cli", "portable_map_mutation_helpers"], ["suss-cli", "portable_quoted_identifiers"], ["suss-cli", "portable_scalar_predicates"], ["suss-cli", "portable_transient_errors"], ["suss-compile", "compile_expr"], ["suss-compile", "compiled_async_library"], ["suss-compile", "generated_async_bridge_journal"], ["suss-compile", "portable_aot_options"], ["suss-compile", "portable_async_fairness"], ["suss-compile", "portable_closures"], ["suss-compile", "portable_continuation_liveness"], ["suss-compile", "portable_if_let"], ["suss-compile", "portable_nominal"], ["suss-compile", "reader_runtime"], ["suss-compile", "runtime_async_streams"], ["suss-compile", "session_lifecycle_reset_pending"], ["suss-compile", "toolchain_async"]]}
+2026-10-09T12:00:23.0158829Z cargo test --workspace --locked --test compile_expr --test compiled_async_library --test compiled_macro_binding_records --test compiled_macro_data_builders --test compiled_macro_function_scopes --test compiled_macro_maps --test compiled_macro_set_oracle --test compiled_module_cache --test compiled_source_macros --test generated_async_bridge_journal --test native_repl_async_pty --test portable_aot_options --test portable_async_fairness --test portable_closures --test portable_continuation_liveness --test portable_error_predicate --test portable_if_let --test portable_map_mutation_helpers --test portable_nominal --test portable_quoted_identifiers --test portable_scalar_predicates --test portable_transient_errors --test reader_runtime --test runtime_async_streams --test session_lifecycle_reset_pending --test toolchain_async -- --test-threads=2
+2026-10-09T12:00:23.9102163Z [1m[92m    Updating[0m crates.io index
+2026-10-09T12:00:26.4508366Z [1m[92m   Compiling[0m suss-core v0.1.0 (/home/runner/work/suss/suss/crates/suss-core)
+2026-10-09T12:00:26.4509082Z [1m[92m   Compiling[0m suss-compile v0.1.0 (/home/runner/work/suss/suss/crates/suss-compile)
+2026-10-09T12:00:32.0837846Z [1m[92m   Compiling[0m suss-reader v0.1.0 (/home/runner/work/suss/suss/crates/suss-reader)
+2026-10-09T12:00:35.0172358Z [1m[33mwarning[0m[1m: unused imports: `prepare_fragment` and `prepare_selected_fragment`[0m
+2026-10-09T12:00:35.0172722Z  [1m[94m--> [0mcrates/suss-compile/src/portable/modules.rs:3:35
+2026-10-09T12:00:35.0173184Z   [1m[94m|[0m
+2026-10-09T12:00:35.0173456Z [1m[94m3[0m [1m[94m|[0m     Diagnostic, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+2026-10-09T12:00:35.0173838Z   [1m[94m|[0m                                   [1m[33m^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-10-09T12:00:35.0174051Z   [1m[94m|[0m
+2026-10-09T12:00:35.0174275Z   [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-10-09T12:00:35.0174447Z 
+2026-10-09T12:00:35.0306428Z [1m[33mwarning[0m[1m: unused import: `suss_reader::ParserState`[0m
+2026-10-09T12:00:35.0306828Z    [1m[94m--> [0mcrates/suss-compile/src/lib.rs:104:5
+2026-10-09T12:00:35.0307449Z     [1m[94m|[0m
+2026-10-09T12:00:35.0307759Z [1m[94m104[0m [1m[94m|[0m use suss_reader::ParserState;
+2026-10-09T12:00:35.0308082Z     [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-10-09T12:00:35.0308256Z 
+2026-10-09T12:00:36.3741052Z [1m[33mwarning[0m[1m: use of deprecated method `std::sync::atomic::Atomic::<u64>::fetch_update`: renamed to `try_update` for consistency[0m
+2026-10-09T12:00:36.3741540Z    [1m[94m--> [0mcrates/suss-compile/src/portable_session.rs:533:14
+2026-10-09T12:00:36.3741742Z     [1m[94m|[0m
+2026-10-09T12:00:36.3742015Z [1m[94m533[0m [1m[94m|[0m             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-10-09T12:00:36.3742283Z     [1m[94m|[0m              [1m[33m^^^^^^^^^^^^[0m
+2026-10-09T12:00:36.3742457Z     [1m[94m|[0m
+2026-10-09T12:00:36.3742638Z     [1m[94m= [0m[1mnote[0m: `#[warn(deprecated)]` on by default
+2026-10-09T12:00:36.3742874Z [1m[96mhelp[0m: replace the use of the deprecated method
+2026-10-09T12:00:36.3743180Z     [1m[94m|[0m
+2026-10-09T12:00:36.3743455Z [1m[94m533[0m [91m- [0m            .[91mfetch_update[0m(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-10-09T12:00:36.3743820Z [1m[94m533[0m [92m+ [0m            .[92mtry_update[0m(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-10-09T12:00:36.3744521Z     [1m[94m|[0m
+2026-10-09T12:00:36.3744592Z 
+2026-10-09T12:00:36.5023013Z [1m[33mwarning[0m[1m: unused variable: `base`[0m
+2026-10-09T12:00:36.5023343Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/streams.rs:513:30
+2026-10-09T12:00:36.5023547Z     [1m[94m|[0m
+2026-10-09T12:00:36.5023760Z [1m[94m513[0m [1m[94m|[0m fn withdraw(b: &mut Builder, base: u32) -> u32 {
+2026-10-09T12:00:36.5024121Z     [1m[94m|[0m                              [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_base`[0m
+2026-10-09T12:00:36.5024381Z     [1m[94m|[0m
+2026-10-09T12:00:36.5024638Z     [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+2026-10-09T12:00:36.5024816Z 
+2026-10-09T12:00:36.8039374Z [1m[33mwarning[0m[1m: unused variable: `form`[0m
+2026-10-09T12:00:36.8039702Z    [1m[94m--> [0mcrates/suss-compile/src/portable/hir/nominal.rs:970:9
+2026-10-09T12:00:36.8039950Z     [1m[94m|[0m
+2026-10-09T12:00:36.8040117Z [1m[94m970[0m [1m[94m|[0m         form: &Form,
+2026-10-09T12:00:36.8040429Z     [1m[94m|[0m         [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_form`[0m
+2026-10-09T12:00:36.8040630Z 
+2026-10-09T12:00:37.4019023Z [1m[33mwarning[0m[1m: unused variable: `depth`[0m
+2026-10-09T12:00:37.4019353Z     [1m[94m--> [0mcrates/suss-compile/src/portable_macro_graph.rs:2183:39
+2026-10-09T12:00:37.4019568Z      [1m[94m|[0m
+2026-10-09T12:00:37.4019820Z [1m[94m2183[0m [1m[94m|[0m     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+2026-10-09T12:00:37.4020261Z      [1m[94m|[0m                                       [1m[33m^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_depth`[0m
+2026-10-09T12:00:37.4020478Z 
+2026-10-09T12:00:37.5530489Z [1m[33mwarning[0m[1m: function `input_header` is never used[0m
+2026-10-09T12:00:37.5531173Z    [1m[94m--> [0mcrates/suss-compile/src/portable/source.rs:301:15
+2026-10-09T12:00:37.5531845Z     [1m[94m|[0m
+2026-10-09T12:00:37.5532129Z [1m[94m301[0m [1m[94m|[0m pub(crate) fn input_header(
+2026-10-09T12:00:37.5532442Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-10-09T12:00:37.5532672Z     [1m[94m|[0m
+2026-10-09T12:00:37.5533052Z     [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+2026-10-09T12:00:37.5533339Z 
+2026-10-09T12:00:37.5533560Z [1m[33mwarning[0m[1m: function `dependencies` is never used[0m
+2026-10-09T12:00:37.5533937Z    [1m[94m--> [0mcrates/suss-compile/src/portable/source.rs:346:15
+2026-10-09T12:00:37.5534484Z     [1m[94m|[0m
+2026-10-09T12:00:37.5534742Z [1m[94m346[0m [1m[94m|[0m pub(crate) fn dependencies(
+2026-10-09T12:00:37.5535055Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-10-09T12:00:37.5535222Z 
+2026-10-09T12:00:37.5535389Z [1m[33mwarning[0m[1m: function `children` is never used[0m
+2026-10-09T12:00:37.5535805Z   [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:17:4
+2026-10-09T12:00:37.5536128Z    [1m[94m|[0m
+2026-10-09T12:00:37.5536446Z [1m[94m17[0m [1m[94m|[0m fn children(form: &Form) -> impl Iterator<Item = &Form> {
+2026-10-09T12:00:37.5536793Z    [1m[94m|[0m    [1m[33m^^^^^^^^[0m
+2026-10-09T12:00:37.5536937Z 
+2026-10-09T12:00:38.6798399Z [1m[92m   Compiling[0m suss-cli v0.1.0 (/home/runner/work/suss/suss/crates/suss-cli)
+2026-10-09T12:00:40.4190535Z [1m[33mwarning[0m: `suss-compile` (lib) generated 9 warnings (run `cargo fix --lib -p suss-compile` to apply 6 suggestions)
+2026-10-09T12:00:42.3014763Z [1m[33mwarning[0m[1m: method `decode` is never used[0m
+2026-10-09T12:00:42.3015273Z    [1m[94m--> [0mcrates/suss-compile/tests/support/portable_decode.rs:175:12
+2026-10-09T12:00:42.3015616Z     [1m[94m|[0m
+2026-10-09T12:00:42.3015862Z [1m[94m 59[0m [1m[94m|[0m impl Decoder {
+2026-10-09T12:00:42.3016514Z     [1m[94m|[0m [1m[94m------------[0m [1m[94mmethod in this implementation[0m
+2026-10-09T12:00:42.3016845Z [1m[94m...[0m
+2026-10-09T12:00:42.3017085Z [1m[94m175[0m [1m[94m|[0m     pub fn decode(
+2026-10-09T12:00:42.3017379Z     [1m[94m|[0m            [1m[33m^^^^^^[0m
+2026-10-09T12:00:42.3017627Z     [1m[94m|[0m
+2026-10-09T12:00:42.3017966Z     [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+2026-10-09T12:00:42.3018227Z 
+2026-10-09T12:00:43.1220933Z [1m[33mwarning[0m: `suss-compile` (test "compile_expr") generated 1 warning
+2026-10-09T12:00:44.4937266Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.4938065Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:163:12
+2026-10-09T12:00:44.4938389Z     [1m[94m|[0m
+2026-10-09T12:00:44.4938691Z [1m[94m163[0m [1m[94m|[0m     before.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.4939051Z     [1m[94m|[0m            [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.4939309Z     [1m[94m|[0m
+2026-10-09T12:00:44.4939604Z     [1m[94m= [0m[1mnote[0m: `#[warn(deprecated)]` on by default
+2026-10-09T12:00:44.4939809Z 
+2026-10-09T12:00:44.4940591Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.4941356Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:165:14
+2026-10-09T12:00:44.4970157Z     [1m[94m|[0m
+2026-10-09T12:00:44.4993756Z [1m[94m165[0m [1m[94m|[0m     optional.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.4994024Z     [1m[94m|[0m              [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.4994144Z 
+2026-10-09T12:00:44.4994649Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.4995101Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:168:11
+2026-10-09T12:00:44.4995356Z     [1m[94m|[0m
+2026-10-09T12:00:44.4995578Z [1m[94m168[0m [1m[94m|[0m     after.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.4995806Z     [1m[94m|[0m           [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.4995911Z 
+2026-10-09T12:00:44.4996249Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.4996983Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:187:16
+2026-10-09T12:00:44.4997197Z     [1m[94m|[0m
+2026-10-09T12:00:44.4997388Z [1m[94m187[0m [1m[94m|[0m         choose.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.4997620Z     [1m[94m|[0m                [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.4997736Z 
+2026-10-09T12:00:44.4998085Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.4998504Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:204:22
+2026-10-09T12:00:44.4998706Z     [1m[94m|[0m
+2026-10-09T12:00:44.4998905Z [1m[94m204[0m [1m[94m|[0m             function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.4999144Z     [1m[94m|[0m                      [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.4999258Z 
+2026-10-09T12:00:44.4999586Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5000006Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:230:22
+2026-10-09T12:00:44.5000201Z     [1m[94m|[0m
+2026-10-09T12:00:44.5000392Z [1m[94m230[0m [1m[94m|[0m             function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5000741Z     [1m[94m|[0m                      [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5000853Z 
+2026-10-09T12:00:44.5089303Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5090107Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:255:26
+2026-10-09T12:00:44.5090433Z     [1m[94m|[0m
+2026-10-09T12:00:44.5090748Z [1m[94m255[0m [1m[94m|[0m                 function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5091182Z     [1m[94m|[0m                          [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5091463Z [1m[94m...[0m
+2026-10-09T12:00:44.5091941Z [1m[94m260[0m [1m[94m|[0m     roundtrip!("s8", i8, [None, Some(i8::MIN), Some(-1), Some(i8::MAX)]);
+2026-10-09T12:00:44.5092592Z     [1m[94m|[0m     [1m[94m--------------------------------------------------------------------[0m [1m[94min this macro invocation[0m
+2026-10-09T12:00:44.5093175Z     [1m[94m|[0m
+2026-10-09T12:00:44.5093719Z     [1m[94m= [0m[1mnote[0m: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+2026-10-09T12:00:44.5094131Z 
+2026-10-09T12:00:44.5097790Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5098552Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:255:26
+2026-10-09T12:00:44.5098870Z     [1m[94m|[0m
+2026-10-09T12:00:44.5099194Z [1m[94m255[0m [1m[94m|[0m                 function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5099598Z     [1m[94m|[0m                          [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5099868Z [1m[94m...[0m
+2026-10-09T12:00:44.5100297Z [1m[94m261[0m [1m[94m|[0m     roundtrip!("s16", i16, [None, Some(i16::MIN), Some(-1), Some(i16::MAX)]);
+2026-10-09T12:00:44.5100948Z     [1m[94m|[0m     [1m[94m------------------------------------------------------------------------[0m [1m[94min this macro invocation[0m
+2026-10-09T12:00:44.5101383Z     [1m[94m|[0m
+2026-10-09T12:00:44.5101907Z     [1m[94m= [0m[1mnote[0m: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+2026-10-09T12:00:44.5102322Z 
+2026-10-09T12:00:44.5104674Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5106000Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:255:26
+2026-10-09T12:00:44.5106509Z     [1m[94m|[0m
+2026-10-09T12:00:44.5107010Z [1m[94m255[0m [1m[94m|[0m                 function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5107568Z     [1m[94m|[0m                          [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5107989Z [1m[94m...[0m
+2026-10-09T12:00:44.5108634Z [1m[94m262[0m [1m[94m|[0m     roundtrip!("u16", u16, [None, Some(0), Some(u16::MAX)]);
+2026-10-09T12:00:44.5109384Z     [1m[94m|[0m     [1m[94m-------------------------------------------------------[0m [1m[94min this macro invocation[0m
+2026-10-09T12:00:44.5109960Z     [1m[94m|[0m
+2026-10-09T12:00:44.5110639Z     [1m[94m= [0m[1mnote[0m: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+2026-10-09T12:00:44.5111181Z 
+2026-10-09T12:00:44.5112326Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5113304Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:255:26
+2026-10-09T12:00:44.5113757Z     [1m[94m|[0m
+2026-10-09T12:00:44.5114469Z [1m[94m255[0m [1m[94m|[0m                 function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5114972Z     [1m[94m|[0m                          [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5115347Z [1m[94m...[0m
+2026-10-09T12:00:44.5115850Z [1m[94m263[0m [1m[94m|[0m     roundtrip!("u32", u32, [None, Some(0), Some(u32::MAX)]);
+2026-10-09T12:00:44.5116515Z     [1m[94m|[0m     [1m[94m-------------------------------------------------------[0m [1m[94min this macro invocation[0m
+2026-10-09T12:00:44.5117022Z     [1m[94m|[0m
+2026-10-09T12:00:44.5117611Z     [1m[94m= [0m[1mnote[0m: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+2026-10-09T12:00:44.5118114Z 
+2026-10-09T12:00:44.5127367Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5128227Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:278:18
+2026-10-09T12:00:44.5128715Z     [1m[94m|[0m
+2026-10-09T12:00:44.5129223Z [1m[94m278[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5129738Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5130050Z 
+2026-10-09T12:00:44.5136201Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5137058Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:321:18
+2026-10-09T12:00:44.5137544Z     [1m[94m|[0m
+2026-10-09T12:00:44.5138020Z [1m[94m321[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5138532Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5138851Z 
+2026-10-09T12:00:44.5155940Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5156896Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:364:18
+2026-10-09T12:00:44.5157416Z     [1m[94m|[0m
+2026-10-09T12:00:44.5157927Z [1m[94m364[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5165024Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5165887Z 
+2026-10-09T12:00:44.5166690Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5170843Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:366:18
+2026-10-09T12:00:44.5171385Z     [1m[94m|[0m
+2026-10-09T12:00:44.5171844Z [1m[94m366[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5172374Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5172705Z 
+2026-10-09T12:00:44.5173587Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5174475Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:369:18
+2026-10-09T12:00:44.5174962Z     [1m[94m|[0m
+2026-10-09T12:00:44.5175423Z [1m[94m369[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5175956Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5176273Z 
+2026-10-09T12:00:44.5214516Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5244136Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:418:18
+2026-10-09T12:00:44.5274487Z     [1m[94m|[0m
+2026-10-09T12:00:44.5275184Z [1m[94m418[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5303741Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5315800Z 
+2026-10-09T12:00:44.5316818Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5317409Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:481:18
+2026-10-09T12:00:44.5317754Z     [1m[94m|[0m
+2026-10-09T12:00:44.5318097Z [1m[94m481[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5318495Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5318729Z 
+2026-10-09T12:00:44.5319201Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-10-09T12:00:44.5319766Z    [1m[94m--> [0mcrates/suss-compile/tests/portable_aot_options.rs:498:18
+2026-10-09T12:00:44.5320086Z     [1m[94m|[0m
+2026-10-09T12:00:44.5320398Z [1m[94m498[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-10-09T12:00:44.5320751Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-10-09T12:00:44.5320977Z 
+2026-10-09T12:00:45.2122371Z [1m[33mwarning[0m: `suss-compile` (test "portable_aot_options") generated 18 warnings
+2026-10-09T12:00:45.6167393Z [1m[33mwarning[0m[1m: unexpected `cfg` condition value: `component`[0m
+2026-10-09T12:00:45.6167904Z    [1m[94m--> [0mcrates/suss-cli/src/main.rs:603:25
+2026-10-09T12:00:45.6168227Z     [1m[94m|[0m
+2026-10-09T12:00:45.6168696Z [1m[94m603[0m [1m[94m|[0m #[cfg(all(unix, not(all(feature = "component", target_family = "wasm"))))]
+2026-10-09T12:00:45.6169144Z     [1m[94m|[0m                         [1m[33m^^^^^^^^^^^^^^^^^^^^^[0m
+2026-10-09T12:00:45.6169448Z     [1m[94m|[0m
+2026-10-09T12:00:45.6169756Z     [1m[94m= [0m[1mnote[0m: expected values for `feature` are: `default`
+2026-10-09T12:00:45.6170225Z     [1m[94m= [0m[1mhelp[0m: consider adding `component` as a feature in `Cargo.toml`
+2026-10-09T12:00:45.6171145Z     [1m[94m= [0m[1mnote[0m: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+2026-10-09T12:00:45.6171839Z     [1m[94m= [0m[1mnote[0m: `#[warn(unexpected_cfgs)]` on by default
+2026-10-09T12:00:45.6172100Z 
+2026-10-09T12:00:49.4158816Z [1m[33mwarning[0m: `suss-cli` (bin "suss") generated 1 warning
+2026-10-09T12:00:49.4205048Z [1m[92m    Finished[0m `test` profile [unoptimized] target(s) in 26.39s
+2026-10-09T12:00:49.4407117Z [1m[92m     Running[0m tests/compiled_macro_binding_records.rs (target/debug/deps/compiled_macro_binding_records-0add923a586a8c7e)
+2026-10-09T12:00:49.4421971Z 
+2026-10-09T12:00:49.4422104Z running 8 tests
+2026-10-09T12:01:01.1689699Z test compiler_catch_private_payload_name_avoids_the_user_catch_alias ... ok
+2026-10-09T12:01:01.1918849Z test compiler_catch_records_keep_private_payload_and_immutable_source_declarations ... ok
+2026-10-09T12:01:01.2350572Z test compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects ... ok
+2026-10-09T12:01:01.2715244Z test compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_loop_identity ... ok
+2026-10-09T12:01:01.3230220Z test compiler_macro_nested_definitions_keep_each_declaration_and_initializer_together ... ok
+2026-10-09T12:01:01.3407071Z test compiler_macro_source_origins_keep_module_paths_separate_from_inline_inputs ... ok
+2026-10-09T12:01:01.3658509Z test compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runtime_values ... ok
+2026-10-09T12:01:01.3879735Z test compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_macro_call ... ok
+2026-10-09T12:01:01.3881548Z 
+2026-10-09T12:01:01.3882197Z test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.95s
+2026-10-09T12:01:01.3882372Z 
+2026-10-09T12:01:01.4731414Z [1m[92m     Running[0m tests/compiled_macro_data_builders.rs (target/debug/deps/compiled_macro_data_builders-1777c26bfc9373cf)
+2026-10-09T12:01:01.4746584Z 
+2026-10-09T12:01:01.4746678Z running 7 tests
+2026-10-09T12:01:12.8625002Z test native_macro_data_builders_enforce_store_identity_and_reset_without_allocating_fragments ... ok
+2026-10-09T12:01:17.4071397Z test native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_roots ... ok
+2026-10-09T12:01:17.7180952Z test native_macro_data_construction_keeps_captured_classes_after_core_redefinition ... ok
+2026-10-09T12:01:28.1118729Z test native_macro_data_maps_use_last_equal_key_and_vectors_cross_tree_boundaries ... ok
+2026-10-09T12:01:28.4558353Z test native_macro_maps_keep_custom_hash_coercion_and_array_map_hash_effects ... ok
+2026-10-09T12:01:28.6844278Z test native_macro_form_transport_is_bounded_data_and_adds_no_resident_code ... ok
+2026-10-09T12:01:39.2676644Z test native_macro_maps_preserve_collisions_deep_hash_paths_and_utf16_keys ... ok
+2026-10-09T12:01:39.2676978Z 
+2026-10-09T12:01:39.2677124Z test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 37.79s
+2026-10-09T12:01:39.2677311Z 
+2026-10-09T12:01:39.3562068Z [1m[92m     Running[0m tests/compiled_macro_function_scopes.rs (target/debug/deps/compiled_macro_function_scopes-03eb1cbd61f38fee)
+2026-10-09T12:01:39.3577704Z 
+2026-10-09T12:01:39.3577779Z running 2 tests
+2026-10-09T12:01:52.5138113Z test function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_origins ... ok
+2026-10-09T12:01:52.5849326Z test genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings ... ok
+2026-10-09T12:01:52.5853295Z 
+2026-10-09T12:01:52.5853613Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.23s
+2026-10-09T12:01:52.5853919Z 
+2026-10-09T12:01:52.6680214Z [1m[92m     Running[0m tests/compiled_macro_maps.rs (target/debug/deps/compiled_macro_maps-31a1a30e8cb6fcb4)
+2026-10-09T12:01:52.6696177Z 
+2026-10-09T12:01:52.6696440Z running 6 tests
+2026-10-09T12:02:04.2891862Z test compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw ... ok
+2026-10-09T12:02:04.8872388Z test compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+2026-10-09T12:02:05.4074265Z test compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound ... ok
+2026-10-09T12:02:15.5313832Z test compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover ... ok
+2026-10-09T12:02:20.8502427Z test compiled_macro_maps_transport_actual_entries_and_sequences_after_gc ... ok
+2026-10-09T12:02:20.9194409Z test compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values ... ok
+2026-10-09T12:02:20.9194746Z 
+2026-10-09T12:02:20.9194950Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.25s
+2026-10-09T12:02:20.9195260Z 
+2026-10-09T12:02:21.0058476Z [1m[92m     Running[0m tests/compiled_macro_set_oracle.rs (target/debug/deps/compiled_macro_set_oracle-23e1eed0c638c83a)
+2026-10-09T12:02:21.0072875Z 
+2026-10-09T12:02:21.0073267Z running 1 test
+2026-10-09T12:02:34.2051596Z test compiled_macro_sets_match_pinned_source_observations_in_both_phases_after_gc ... ok
+2026-10-09T12:02:34.2052155Z 
+2026-10-09T12:02:34.2054383Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.20s
+2026-10-09T12:02:34.2054702Z 
+2026-10-09T12:02:34.2784788Z [1m[92m     Running[0m tests/compiled_module_cache.rs (target/debug/deps/compiled_module_cache-01b0e919b3abb6cd)
+2026-10-09T12:02:34.2800134Z 
+2026-10-09T12:02:34.2800223Z running 2 tests
+2026-10-09T12:02:34.8053863Z test compiled_code_reuse_preserves_initializers_store_isolation_and_reset ... ok
+2026-10-09T12:02:41.6375635Z test identical_macro_output_still_executes_macro_effects_each_time ... ok
+2026-10-09T12:02:41.6383262Z 
+2026-10-09T12:02:41.6383570Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.36s
+2026-10-09T12:02:41.6383864Z 
+2026-10-09T12:02:41.6946814Z [1m[92m     Running[0m tests/compiled_source_macros.rs (target/debug/deps/compiled_source_macros-653114857e7a562f)
+2026-10-09T12:02:41.6963358Z 
+2026-10-09T12:02:41.6963766Z running 6 tests
+2026-10-09T12:02:48.7320541Z test compiled_source_macros_expand_dependency_artifacts_before_publication ... ok
+2026-10-09T12:02:56.2204140Z test compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis ... ok
+2026-10-09T12:03:04.6273378Z test compiled_source_macros_materialize_env_only_for_macros_that_can_read_it ... ok
+2026-10-09T12:03:05.2540619Z test compiled_source_macros_pass_real_form_and_preserve_quote_and_failures ... ok
+2026-10-09T12:03:05.6333268Z test compiled_source_macros_preserve_true_loop_special_form_priority ... ok
+2026-10-09T12:03:26.3470688Z test compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions ... ok
+2026-10-09T12:03:26.3471239Z 
+2026-10-09T12:03:26.3473967Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 44.65s
+2026-10-09T12:03:26.3474276Z 
+2026-10-09T12:03:26.4616955Z [1m[92m     Running[0m tests/native_repl_async_pty.rs (target/debug/deps/native_repl_async_pty-9b4c7c56816877a1)
+2026-10-09T12:03:26.4617736Z 
+2026-10-09T12:03:26.4617862Z running 1 test
+2026-10-09T12:03:41.1608697Z test session_lifecycle_interactive_utf8_redraw_history_and_pending_sigint_cleanup_are_preserved ... ok
+2026-10-09T12:03:41.1608983Z 
+2026-10-09T12:03:41.1609136Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.70s
+2026-10-09T12:03:41.1609360Z 
+2026-10-09T12:03:41.1611000Z [1m[92m     Running[0m tests/portable_error_predicate.rs (target/debug/deps/portable_error_predicate-d81f5d7e5d730448)
+2026-10-09T12:03:41.1625759Z 
+2026-10-09T12:03:41.1625840Z running 1 test
+2026-10-09T12:03:53.5844635Z test native_error_catch_adapter_distinguishes_errors_and_rethrows_other_payloads ... ok
+2026-10-09T12:03:53.5844994Z 
+2026-10-09T12:03:53.5863577Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.42s
+2026-10-09T12:03:53.5863776Z 
+2026-10-09T12:03:53.6634300Z [1m[92m     Running[0m tests/portable_map_mutation_helpers.rs (target/debug/deps/portable_map_mutation_helpers-00a76b9400f3bd9e)
+2026-10-09T12:03:53.6649104Z 
+2026-10-09T12:03:53.6649191Z running 6 tests
+2026-10-09T12:04:05.5285651Z test retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_returns_receiver ... ok
+2026-10-09T12:04:05.7266793Z test retained_map_mutation_helpers_execute_all_dissoc_arities_and_sequence_dependencies ... ok
+2026-10-09T12:04:05.7385653Z test retained_hash_map_quotient_dependencies_preserve_numeric_boundaries_and_recovery ... ok
+2026-10-09T12:04:05.8545012Z test retained_map_mutation_helpers_preserve_transient_vector_protocol_dispatch_and_lifecycle ... ok
+2026-10-09T12:04:05.8590245Z test retained_transient_array_map_removal_uses_owned_pop_storage ... ok
+2026-10-09T12:04:06.2666640Z test source_array_pop_preserves_aliases_empty_undefined_and_physical_call_receiver ... ok
+2026-10-09T12:04:06.2667018Z 
+2026-10-09T12:04:06.2667251Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.60s
+2026-10-09T12:04:06.2667441Z 
+2026-10-09T12:04:06.3542858Z [1m[92m     Running[0m tests/portable_quoted_identifiers.rs (target/debug/deps/portable_quoted_identifiers-492cc020b6d8793d)
+2026-10-09T12:04:06.3558001Z 
+2026-10-09T12:04:06.3558163Z running 3 tests
+2026-10-09T12:04:12.4726091Z test compiled_macro_prerequisite_quotes_keep_real_identifiers_and_lists_through_gc ... ok
+2026-10-09T12:04:12.5452807Z test compiled_macro_prerequisite_quote_errors_are_located_and_preserve_session_state ... ok
+2026-10-09T12:04:12.7679084Z test compiled_macro_prerequisite_quotes_match_lossless_primary_observations ... ok
+2026-10-09T12:04:12.7679316Z 
+2026-10-09T12:04:12.7684301Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.41s
+2026-10-09T12:04:12.7684592Z 
+2026-10-09T12:04:12.8267975Z [1m[92m     Running[0m tests/portable_scalar_predicates.rs (target/debug/deps/portable_scalar_predicates-56ad04dc1a61d2c6)
+2026-10-09T12:04:12.8282634Z 
+2026-10-09T12:04:12.8282711Z running 6 tests
+2026-10-09T12:04:13.3402816Z test first_class_predicates_use_live_aliases_and_retained_original_closures ... ok
+2026-10-09T12:04:13.3480281Z test every_predicate_factory_is_first_class_and_retained_across_collection ... ok
+2026-10-09T12:04:13.3839358Z test predicate_calls_evaluate_callee_and_arguments_once_and_recover_after_arity_errors ... ok
+2026-10-09T12:04:13.4067208Z test identical_compares_primitive_values_and_nominal_references ... ok
+2026-10-09T12:04:13.7579242Z test primitive_predicates_preserve_nil_boolean_numeric_and_utf16_distinctions ... ok
+2026-10-09T12:04:13.7579678Z test utf16_identity_loop_obeys_fuel_and_recovers_with_rooted_inputs ... ok
+2026-10-09T12:04:13.7579881Z 
+2026-10-09T12:04:13.7580022Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+2026-10-09T12:04:13.7580207Z 
+2026-10-09T12:04:13.7664218Z [1m[92m     Running[0m tests/portable_transient_errors.rs (target/debug/deps/portable_transient_errors-48d639c8633b037f)
+2026-10-09T12:04:13.7678898Z 
+2026-10-09T12:04:13.7678987Z running 1 test
+2026-10-09T12:04:26.5890589Z test transient_mutation_errors_preserve_exact_pinned_messages_after_gc ... ok
+2026-10-09T12:04:26.5891063Z 
+2026-10-09T12:04:26.5891512Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.82s
+2026-10-09T12:04:26.5891826Z 
+2026-10-09T12:04:26.6635737Z [1m[92m     Running[0m tests/compile_expr.rs (target/debug/deps/compile_expr-1d5e0c94d3816e06)
+2026-10-09T12:04:26.6652609Z 
+2026-10-09T12:04:26.6652849Z running 315 tests
+2026-10-09T12:04:40.0964450Z test comparison_arguments_follow_pinned_variadic_macro_expansion ... ok
+2026-10-09T12:04:40.4599205Z test condition_evaluates_effect_once ... ok
+2026-10-09T12:04:41.2976914Z test arithmetic_and_equality_preserve_argument_effect_order ... ok
+2026-10-09T12:04:42.5295738Z test known_function_wrong_arity_raises_runtime_exceptions ... ok
+2026-10-09T12:04:42.6338301Z test condition_preserves_falsey_and_truthy_effects ... ok
+2026-10-09T12:04:43.7592408Z test legacy_dispatch_receiver_precedes_arguments_once ... ok
+2026-10-09T12:04:46.6686635Z test legacy_hash_inspects_each_evaluated_operand_once ... ok
+2026-10-09T12:04:47.3163064Z test legacy_bitwise_operands_preserve_source_order_once ... ok
+2026-10-09T12:04:47.3979071Z test lexical_callees_shadow_global_and_intrinsic_names ... ok
+2026-10-09T12:04:47.4609865Z test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+2026-10-09T12:04:47.5244285Z test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+2026-10-09T12:04:47.5924059Z test portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers ... ok
+2026-10-09T12:04:47.7175834Z test nested_conditions_preserve_effect_order ... ok
+2026-10-09T12:04:49.2902586Z test reduce_without_initial_value ... ok
+2026-10-09T12:04:49.3960675Z test prototype_cases_awaiting_compiled_support ... FAILED
+2026-10-09T12:04:49.7451882Z test test_add_single_arg ... ok
+2026-10-09T12:04:50.1005611Z test test_add_zero_args ... ok
+2026-10-09T12:04:50.4763578Z test test_addition ... ok
+2026-10-09T12:04:50.4945395Z test test_abs ... ok
+2026-10-09T12:04:50.8308426Z test test_and_all_true ... ok
+2026-10-09T12:04:50.8819349Z test test_and_empty ... ok
+2026-10-09T12:04:51.2696568Z test test_and_returns_first_falsy ... ok
+2026-10-09T12:04:51.5280956Z test test_and_one_false ... ok
+2026-10-09T12:04:51.6524025Z test test_and_returns_last_value ... ok
+2026-10-09T12:04:51.8797075Z test test_and_single ... ok
+2026-10-09T12:04:52.0349525Z test test_apply_basic_add ... ok
+2026-10-09T12:04:52.2446879Z test test_apply_basic_mul ... ok
+2026-10-09T12:04:52.4321247Z test test_apply_captured_closure ... ok
+2026-10-09T12:04:52.6031553Z test test_apply_closure ... ok
+2026-10-09T12:04:52.6031990Z test test_apply_large_vector_builtin ... ignored, compiled pipeline: Unresolved Runtime name take; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:04:52.6032524Z test test_apply_large_vector_variadic_capture ... ignored, compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:04:52.8302199Z test test_apply_closure_as_value ... ok
+2026-10-09T12:04:52.9646118Z test test_apply_one_arity ... ok
+2026-10-09T12:04:53.2364022Z test test_apply_three_args ... ok
+2026-10-09T12:04:53.6327982Z test test_apply_variadic_add_one_arg ... ok
+2026-10-09T12:04:54.0197831Z test test_apply_variadic_add_zero_args ... ok
+2026-10-09T12:04:54.0388669Z test test_apply_variadic_add_many_args ... ok
+2026-10-09T12:04:54.7402247Z test test_apply_variadic_div_one_arg ... ok
+2026-10-09T12:04:54.7871954Z test test_apply_variadic_div_many_args ... ok
+2026-10-09T12:04:55.0957887Z test test_apply_variadic_div_two_args ... ok
+2026-10-09T12:04:55.5722389Z test test_apply_variadic_let_bound ... ok
+2026-10-09T12:04:55.8207767Z test test_apply_variadic_mul_many_args ... ok
+2026-10-09T12:04:55.9769259Z test test_apply_variadic_mul_one_arg ... ok
+2026-10-09T12:04:56.1826567Z test test_apply_variadic_mul_zero_args ... ok
+2026-10-09T12:04:56.7831290Z test test_apply_variadic_sub_many_args ... ok
+2026-10-09T12:04:56.9116807Z test test_apply_variadic_sub_one_arg ... ok
+2026-10-09T12:04:57.1920074Z test test_apply_variadic_sub_two_args ... ok
+2026-10-09T12:04:57.2722737Z test test_apply_vector_from_expr ... ok
+2026-10-09T12:04:57.6001859Z test test_apply_zero_arity ... ok
+2026-10-09T12:04:57.6239738Z test test_as_thread ... ok
+2026-10-09T12:04:57.9828397Z test test_atom_deref_syntax ... ok
+2026-10-09T12:04:58.0029350Z test test_atom_basic ... ok
+2026-10-09T12:04:58.3402113Z test test_atom_reset ... ok
+2026-10-09T12:04:58.3403434Z test test_atom_validator_accepts ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:04:58.3404289Z test test_atom_validator_rejects ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:04:58.3405142Z test test_atom_validator_swap_rejects ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:04:58.3985737Z test test_atom_swap ... ok
+2026-10-09T12:04:58.6959484Z test test_boolean_false ... ok
+2026-10-09T12:04:58.7957369Z test test_boolean_true ... ok
+2026-10-09T12:04:59.0483419Z test test_builtin_as_value_add ... ok
+2026-10-09T12:04:59.1837075Z test test_builtin_as_value_dec ... ok
+2026-10-09T12:04:59.4045652Z test test_builtin_as_value_div ... ok
+2026-10-09T12:04:59.5696245Z test test_builtin_as_value_inc ... ok
+2026-10-09T12:04:59.7646453Z test test_builtin_as_value_mul ... ok
+2026-10-09T12:04:59.9621032Z test test_builtin_as_value_sub ... ok
+2026-10-09T12:05:00.4743474Z test test_builtin_comparison_as_value ... ok
+2026-10-09T12:05:00.7541202Z test test_builtin_conditional_selection ... ok
+2026-10-09T12:05:00.8384837Z test test_builtin_same_function_twice ... ok
+2026-10-09T12:05:01.1547447Z test test_case_default ... ok
+2026-10-09T12:05:01.1991717Z test test_case_match_first ... ok
+2026-10-09T12:05:01.5662581Z test test_case_match_second ... ok
+2026-10-09T12:05:01.5687691Z test test_case_match_third ... ok
+2026-10-09T12:05:01.9345546Z test test_closure_as_value ... ok
+2026-10-09T12:05:01.9666351Z test test_case_with_expression ... ok
+2026-10-09T12:05:02.2932733Z test test_closure_call_twice ... ok
+2026-10-09T12:05:02.3548780Z test test_closure_capture_multiple_vars ... ok
+2026-10-09T12:05:02.6559554Z test test_closure_multiple_params ... ok
+2026-10-09T12:05:02.7546612Z test test_closure_nested_capture ... ok
+2026-10-09T12:05:03.0130000Z test test_closure_simple ... ok
+2026-10-09T12:05:03.1440817Z test test_closure_with_capture ... ok
+2026-10-09T12:05:03.3674055Z test test_closure_zero_arity ... ok
+2026-10-09T12:05:03.3674812Z test test_comp ... ignored, compiled pipeline: Unresolved Runtime name comp; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:03.5368423Z test test_closure_zero_arity_with_capture ... ok
+2026-10-09T12:05:04.0818416Z test test_comparison_equals ... ok
+2026-10-09T12:05:04.3232140Z test test_comparison_greater_than ... ok
+2026-10-09T12:05:04.7167188Z test test_cond_else ... ok
+2026-10-09T12:05:04.8011277Z test test_comparison_less_than ... ok
+2026-10-09T12:05:05.1142498Z test test_cond_first_true ... ok
+2026-10-09T12:05:05.1622507Z test test_cond_no_else ... ok
+2026-10-09T12:05:05.1623121Z test test_cond_thread_first ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:05.1623648Z test test_cond_thread_first_false ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:05.5145161Z test test_cond_second_true ... ok
+2026-10-09T12:05:05.5314670Z test test_conj_on_vector ... ok
+2026-10-09T12:05:05.9152145Z test test_conj_past_32_boundary ... ok
+2026-10-09T12:05:06.2615988Z test test_cons_creates_list ... ok
+2026-10-09T12:05:06.2617034Z test test_debug_comp_simple ... ignored, compiled pipeline: Unresolved Runtime name comp; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:06.2618193Z test test_debug_lazy_seq_simple ... ignored, compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:06.6180726Z test test_debug_seq_vec ... ok
+2026-10-09T12:05:06.9714468Z test test_debug_set_mutable ... ok
+2026-10-09T12:05:07.0855759Z test test_count_vector ... ok
+2026-10-09T12:05:07.3304486Z test test_debug_vec_nth ... ok
+2026-10-09T12:05:07.3304953Z test test_defn_map_destructuring ... ignored, compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:07.7025931Z test test_division ... ok
+2026-10-09T12:05:08.0624653Z test test_do_block ... ok
+2026-10-09T12:05:08.0625168Z test test_doseq_basic ... ignored, compiled pipeline: Unresolved Runtime name doseq; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:08.2679414Z test test_dec ... ok
+2026-10-09T12:05:08.4110476Z test test_empty_map ... ok
+2026-10-09T12:05:08.6513092Z test test_empty_set ... ok
+2026-10-09T12:05:08.7616993Z test test_empty_vector ... ok
+2026-10-09T12:05:09.4678502Z test test_first_on_cons ... ok
+2026-10-09T12:05:09.8220064Z test test_float_addition ... ok
+2026-10-09T12:05:10.1840448Z test test_float_literal ... ok
+2026-10-09T12:05:10.1841589Z test test_fn_map_destructuring_as ... ignored, compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:10.1855017Z test test_fn_map_destructuring_keys ... ignored, compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:10.5427959Z test test_get_on_vector ... ok
+2026-10-09T12:05:10.6079888Z test test_finally_preserves_result_and_runs_on_throw ... ok
+2026-10-09T12:05:11.0130958Z test test_hash_false ... ok
+2026-10-09T12:05:11.6108153Z test test_greater_than_or_equal ... ok
+2026-10-09T12:05:11.7903588Z test test_hash_float_deterministic ... ok
+2026-10-09T12:05:12.3275820Z test test_hash_float_different_values ... ok
+2026-10-09T12:05:12.6814087Z test test_hash_nil ... ok
+2026-10-09T12:05:12.9556361Z test test_hash_negative ... ok
+2026-10-09T12:05:13.7455197Z test test_hash_small_int ... ok
+2026-10-09T12:05:14.1174422Z test test_hash_string_basic ... ok
+2026-10-09T12:05:14.4524098Z test test_hash_string_deterministic ... ok
+2026-10-09T12:05:14.5008959Z test test_hash_string_empty ... ok
+2026-10-09T12:05:14.8066592Z test test_hash_true ... ok
+2026-10-09T12:05:14.8899830Z test test_hash_zero ... ok
+2026-10-09T12:05:15.1651101Z test test_if_false_branch ... ok
+2026-10-09T12:05:15.2814075Z test test_if_true_branch ... ok
+2026-10-09T12:05:15.8774185Z test test_if_with_condition ... ok
+2026-10-09T12:05:16.6195706Z test test_immediate_variadic_fn_call_count ... ok
+2026-10-09T12:05:17.0809693Z test test_immediate_variadic_fn_call_nth ... ok
+2026-10-09T12:05:18.1804154Z test test_immediate_variadic_fn_with_fixed_params ... ok
+2026-10-09T12:05:18.2655695Z test test_inc ... ok
+2026-10-09T12:05:18.6650040Z test test_keyword_3arg_with_default ... ok
+2026-10-09T12:05:18.7121275Z test test_integer_literal ... ok
+2026-10-09T12:05:19.0754320Z test test_keyword_3arg_with_default_missing ... ok
+2026-10-09T12:05:19.2318350Z test test_keyword_as_map_key ... ok
+2026-10-09T12:05:19.4828944Z test test_keyword_from_string ... ok
+2026-10-09T12:05:19.7334872Z test test_keyword_ns_from_string ... ok
+2026-10-09T12:05:19.9014132Z test test_large_map_assoc_preserves ... ok
+2026-10-09T12:05:20.3554806Z test test_large_map_count_100 ... ok
+2026-10-09T12:05:20.3679922Z test test_large_map_assoc_update ... ok
+2026-10-09T12:05:20.7967934Z test test_large_map_count_50 ... ok
+2026-10-09T12:05:20.8578657Z test test_large_map_get_first ... ok
+2026-10-09T12:05:21.1968778Z test test_large_map_get_last ... ok
+2026-10-09T12:05:21.2844892Z test test_large_map_get_middle ... ok
+2026-10-09T12:05:21.6499511Z test test_large_map_get_missing ... ok
+2026-10-09T12:05:21.8147257Z test test_large_set_conj_new ... ok
+2026-10-09T12:05:22.0802303Z test test_large_set_conj_preserves ... ok
+2026-10-09T12:05:22.2684571Z test test_large_set_contains_first ... ok
+2026-10-09T12:05:22.4653833Z test test_large_set_contains_last ... ok
+2026-10-09T12:05:22.6807749Z test test_large_set_contains_middle ... ok
+2026-10-09T12:05:22.8540221Z test test_large_set_contains_missing ... ok
+2026-10-09T12:05:23.1135380Z test test_large_set_count_100 ... ok
+2026-10-09T12:05:23.2541150Z test test_large_set_count_50 ... ok
+2026-10-09T12:05:23.6440908Z test test_large_vector_count_33 ... ok
+2026-10-09T12:05:23.7032371Z test test_large_vector_count_100 ... ok
+2026-10-09T12:05:24.0196170Z test test_large_vector_nth_32nd_element ... ok
+2026-10-09T12:05:24.1531933Z test test_large_vector_nth_first_element ... ok
+2026-10-09T12:05:24.3836146Z test test_large_vector_nth_last ... ok
+2026-10-09T12:05:24.6029649Z test test_large_vector_nth_middle ... ok
+2026-10-09T12:05:25.1018310Z test test_let_simple ... ok
+2026-10-09T12:05:25.5594531Z test test_less_than_or_equal ... ok
+2026-10-09T12:05:25.5730342Z test test_let_with_expression ... ok
+2026-10-09T12:05:25.9417094Z test test_map_assoc_new_key ... ok
+2026-10-09T12:05:25.9862147Z test test_map_assoc_preserves_existing ... ok
+2026-10-09T12:05:26.3260457Z test test_map_assoc_update_existing ... ok
+2026-10-09T12:05:26.5170146Z test test_map_chained_assoc ... ok
+2026-10-09T12:05:26.7502741Z test test_map_count ... ok
+2026-10-09T12:05:26.7503941Z test test_map_destructuring_direct ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:26.7505152Z test test_map_destructuring_keys ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:26.9341629Z test test_map_count_empty ... ok
+2026-10-09T12:05:27.1229349Z test test_map_dissoc_compiles ... ok
+2026-10-09T12:05:27.3855349Z test test_map_dissoc_nonexistent_key ... ok
+2026-10-09T12:05:27.5101621Z test test_map_dissoc_on_empty ... ok
+2026-10-09T12:05:27.8560386Z test test_map_get ... ok
+2026-10-09T12:05:27.8968293Z test test_map_get_empty ... ok
+2026-10-09T12:05:28.2900722Z test test_map_get_last_entry ... ok
+2026-10-09T12:05:28.3668235Z test test_map_get_first_entry ... ok
+2026-10-09T12:05:28.6657370Z test test_map_get_missing_key ... ok
+2026-10-09T12:05:28.9164704Z test test_map_get_multiple_entries ... ok
+2026-10-09T12:05:29.0702361Z test test_map_let_bound_assoc ... ok
+2026-10-09T12:05:29.4676092Z test test_map_let_bound_get ... ok
+2026-10-09T12:05:29.5030829Z test test_map_literal ... ok
+2026-10-09T12:05:30.0095098Z test test_map_structural_sharing ... ok
+2026-10-09T12:05:30.3034281Z test test_max_multiple_args ... ok
+2026-10-09T12:05:30.5290806Z test test_max_single_arg ... ok
+2026-10-09T12:05:31.4977422Z test test_max_two_args ... ok
+2026-10-09T12:05:31.5994186Z test test_min_multiple_args ... ok
+2026-10-09T12:05:31.9010234Z test test_min_single_arg ... ok
+2026-10-09T12:05:33.0905653Z test test_mod ... ok
+2026-10-09T12:05:33.1596540Z test test_min_two_args ... ok
+2026-10-09T12:05:33.4836572Z test test_mul_single_arg ... ok
+2026-10-09T12:05:33.6847446Z test test_mul_zero_args ... ok
+2026-10-09T12:05:33.6848162Z test test_multi_arity_map_destructuring ... ignored, compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:33.9034707Z test test_multi_arity_basic ... ok
+2026-10-09T12:05:34.1686799Z test test_multi_arity_two_args ... ok
+2026-10-09T12:05:34.3132452Z test test_multi_arity_variadic_basic ... ok
+2026-10-09T12:05:34.7034723Z test test_multi_arity_variadic_fixed_dispatch ... ok
+2026-10-09T12:05:34.7317304Z test test_multi_arity_variadic_guard ... ok
+2026-10-09T12:05:35.1227904Z test test_multi_arity_variadic_zero_fixed ... ok
+2026-10-09T12:05:35.2342790Z test test_multi_arity_variadic_rest_first ... ok
+2026-10-09T12:05:35.4993246Z test test_multiplication ... ok
+2026-10-09T12:05:35.7877296Z test test_nested_arithmetic ... ok
+2026-10-09T12:05:36.2791468Z test test_not_false ... ok
+2026-10-09T12:05:36.3344605Z test test_not_equal ... ok
+2026-10-09T12:05:36.8270170Z test test_not_true ... ok
+2026-10-09T12:05:37.2449138Z test test_or_all_false ... ok
+2026-10-09T12:05:37.4966518Z test test_nth_vector ... ok
+2026-10-09T12:05:37.7657584Z test test_or_empty ... ok
+2026-10-09T12:05:38.3730633Z test test_or_one_true ... ok
+2026-10-09T12:05:38.7888356Z test test_or_returns_last_if_all_falsy ... ok
+2026-10-09T12:05:38.9283362Z test test_or_returns_first_truthy ... ok
+2026-10-09T12:05:39.1859127Z test test_or_single ... ok
+2026-10-09T12:05:39.1859600Z test test_partial ... ignored, compiled pipeline: Unresolved Runtime name partial; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:39.5730604Z test test_partial_apply_concat ... ok
+2026-10-09T12:05:39.9573217Z test test_partial_apply_cons ... ok
+2026-10-09T12:05:40.3587001Z test test_partial_apply_vec ... ok
+2026-10-09T12:05:40.4492360Z test test_or_with_zero_is_truthy ... ok
+2026-10-09T12:05:40.7775787Z test test_partial_debug_apply_rest ... ok
+2026-10-09T12:05:41.0554548Z test test_partial_debug_concat ... ok
+2026-10-09T12:05:41.1974557Z test test_partial_debug_concat_count ... ok
+2026-10-09T12:05:41.1975519Z test test_partial_debug_lazy_seq ... ignored, compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:41.1976094Z test test_partial_debug_range_alength ... ignored, compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:41.6400838Z test test_partial_debug_rest_count ... ok
+2026-10-09T12:05:41.7318252Z test test_partial_debug_fixed_and_rest ... ok
+2026-10-09T12:05:42.0671948Z test test_partial_debug_rest_first ... ok
+2026-10-09T12:05:42.7964135Z test test_polymorphic_count_dispatches_correctly ... ok
+2026-10-09T12:05:43.2978887Z test test_polymorphic_first_on_empty_vector ... ok
+2026-10-09T12:05:43.3628199Z test test_polymorphic_count_on_list ... ok
+2026-10-09T12:05:43.7864248Z test test_polymorphic_mixed_operations ... ok
+2026-10-09T12:05:44.4244282Z test test_polymorphic_first_on_vector ... ok
+2026-10-09T12:05:44.4244790Z test test_print_no_newline ... ignored, compiled pipeline: Unresolved Runtime name print; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.4245422Z test test_println_basic ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.4245993Z test test_println_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.4247279Z test test_println_no_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.4248010Z test test_println_number ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.4248680Z test test_prn_basic ... ignored, compiled pipeline: Unresolved Runtime name prn; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:44.9907119Z test test_recur_in_do_last_expr_allowed ... ok
+2026-10-09T12:05:45.0458072Z test test_polymorphic_nth_on_list ... ok
+2026-10-09T12:05:45.4274613Z test test_recur_in_do_non_last_rejected ... ok
+2026-10-09T12:05:45.4906764Z test test_recur_in_if_branches_allowed ... ok
+2026-10-09T12:05:45.7850028Z test test_recur_in_let_binding_rejected ... ok
+2026-10-09T12:05:45.9317529Z test test_recur_in_let_body_allowed ... ok
+2026-10-09T12:05:46.2496756Z test test_recur_not_in_tail_position_rejected ... ok
+2026-10-09T12:05:46.3027087Z test test_recur_outside_loop_rejected ... ok
+2026-10-09T12:05:46.6804823Z test test_set_chained_conj ... ok
+2026-10-09T12:05:47.0730749Z test test_set_conj_new_element ... ok
+2026-10-09T12:05:47.1313244Z test test_rest_on_cons ... ok
+2026-10-09T12:05:47.4384228Z test test_set_conj_preserves_existing ... ok
+2026-10-09T12:05:47.5433925Z test test_set_contains_empty ... ok
+2026-10-09T12:05:47.8049479Z test test_set_contains_false ... ok
+2026-10-09T12:05:47.9542448Z test test_set_contains_true ... ok
+2026-10-09T12:05:48.1835717Z test test_set_count ... ok
+2026-10-09T12:05:48.4008456Z test test_set_count_empty ... ok
+2026-10-09T12:05:48.5861747Z test test_set_disj_compiles ... ok
+2026-10-09T12:05:48.8564613Z test test_set_disj_nonexistent_element ... ok
+2026-10-09T12:05:48.9763199Z test test_set_disj_on_empty ... ok
+2026-10-09T12:05:49.3197657Z test test_set_let_bound_conj ... ok
+2026-10-09T12:05:49.3553328Z test test_set_let_bound_contains ... ok
+2026-10-09T12:05:49.7857792Z test test_set_structural_sharing ... ok
+2026-10-09T12:05:49.7893715Z test test_set_literal ... ok
+2026-10-09T12:05:50.1837362Z test test_simple_loop_countdown ... ok
+2026-10-09T12:05:50.2622231Z test test_simple_loop_sum ... ok
+2026-10-09T12:05:50.2623042Z test test_some_thread_first ... ignored, compiled pipeline: Unresolved Runtime name some->; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.2623796Z test test_str_empty ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.2624600Z test test_str_mixed_types ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.2626101Z test test_str_multi_arg_literals ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.2626863Z test test_str_single_int ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.2627587Z test test_str_with_nil ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:05:50.5726496Z test test_simple_loop_with_vector ... ok
+2026-10-09T12:05:50.6876489Z test test_string_hash_map_count ... ok
+2026-10-09T12:05:50.9709316Z test test_string_hash_map_lookup ... ok
+2026-10-09T12:05:51.1354618Z test test_structural_sharing ... ok
+2026-10-09T12:05:51.3530856Z test test_subtraction ... ok
+2026-10-09T12:05:51.5935760Z test test_symbol_from_string ... ok
+2026-10-09T12:06:02.9528175Z test test_tco_deep_recursion ... ok
+2026-10-09T12:06:23.7231962Z test test_tco_mutual_recursion_style ... ok
+2026-10-09T12:06:47.8446377Z test test_tco_tail_recursive_factorial ... ok
+2026-10-09T12:06:48.2393289Z test test_truthiness_and_with_zero ... ok
+2026-10-09T12:06:52.5255268Z test test_truthiness_comparison_false ... ok
+2026-10-09T12:06:53.0504257Z test test_truthiness_comparison_true ... ok
+2026-10-09T12:06:53.5575892Z test test_truthiness_cond_with_zero ... ok
+2026-10-09T12:06:53.9329396Z test test_truthiness_false_is_falsy ... ok
+2026-10-09T12:06:54.2810315Z test test_tco_tail_recursive_sum ... ok
+2026-10-09T12:06:54.3058780Z test test_truthiness_float_zero_is_truthy ... ok
+2026-10-09T12:06:54.6780373Z test test_truthiness_positive_is_truthy ... ok
+2026-10-09T12:06:54.7105919Z test test_truthiness_negative_is_truthy ... ok
+2026-10-09T12:06:55.0643952Z test test_truthiness_true_is_truthy ... ok
+2026-10-09T12:06:55.1914756Z test test_truthiness_when_with_zero ... ok
+2026-10-09T12:06:55.4401166Z test test_truthiness_zero_is_truthy ... ok
+2026-10-09T12:06:55.6473274Z test test_try_catch_throw ... ok
+2026-10-09T12:06:55.8557893Z test test_try_catch_with_expressions ... ok
+2026-10-09T12:06:56.1508688Z test test_try_no_exception ... ok
+2026-10-09T12:06:57.0520748Z test test_unary_negate ... ok
+2026-10-09T12:06:57.6940190Z test test_unary_reciprocal ... ok
+2026-10-09T12:06:57.8383253Z test test_variadic_add_chain ... ok
+2026-10-09T12:06:57.8384079Z test test_variadic_closure_with_capture_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:06:57.8384760Z test test_variadic_closure_with_capture_zero_args ... ignored, compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:06:58.2509726Z test test_variadic_closure_inline_zero_args ... ok
+2026-10-09T12:06:58.5923485Z test test_variadic_div_chain ... ok
+2026-10-09T12:06:59.2874381Z test test_variadic_mul_chain ... ok
+2026-10-09T12:06:59.4072166Z test test_variadic_sub_chain ... ok
+2026-10-09T12:06:59.4073403Z test test_vector_destructuring_let ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:06:59.4074380Z test test_vector_destructuring_rest ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:06:59.7936132Z test test_vector_literal ... ok
+2026-10-09T12:06:59.8078954Z test test_vector_32_elements ... ok
+2026-10-09T12:06:59.8079657Z test test_when_first ... ignored, compiled pipeline: Unresolved Runtime name when-first; see prototype_cases_awaiting_compiled_support
+2026-10-09T12:07:00.1842718Z test test_when_false ... ok
+2026-10-09T12:07:00.2995418Z test test_when_multiple_body ... ok
+2026-10-09T12:07:00.5814386Z test test_when_not_false ... ok
+2026-10-09T12:07:00.7545853Z test test_when_not_true ... ok
+2026-10-09T12:07:00.9535941Z test test_when_true ... ok
+2026-10-09T12:07:00.9536188Z 
+2026-10-09T12:07:00.9536264Z failures:
+2026-10-09T12:07:00.9536368Z 
+2026-10-09T12:07:00.9537040Z ---- prototype_cases_awaiting_compiled_support stdout ----
+2026-10-09T12:07:00.9537270Z 
+2026-10-09T12:07:00.9537596Z thread 'prototype_cases_awaiting_compiled_support' (3207) panicked at crates/suss-compile/tests/compile_expr.rs:2634:22:
+2026-10-09T12:07:00.9552132Z test_comp: (let [f (comp inc inc)] (f 10)) no longer fails as recorded: Ok(CompiledExpr { wasm: [0, 97, 115, 109, 1, 0, 0, 0, 0, 46, 16, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 45, 97, 98, 105, 2, 0, 0, 0, 48, 46, 49, 46, 48, 43, 112, 111, 114, 116, 97, 98, 108, 101, 46, 50, 0, 48, 46, 50, 53, 56, 46, 48, 0, 1, 130, 1, 10, 78, 10, 95, 1, 124, 0, 94, 119, 1, 94, 109, 1, 96, 2, 109, 100, 2, 1, 109, 95, 5, 109, 0, 100, 3, 0, 127, 0, 127, 0, 109, 1, 95, 2, 109, 1, 127, 1, 95, 5, 126, 0, 109, 0, 109, 1, 109, 1, 109, 1, 95, 4, 100, 6, 0, 100, 2, 0, 109, 0, 109, 1, 95, 5, 100, 6, 0, 100, 1, 0, 109, 0, 109, 0, 109, 1, 95, 2, 109, 0, 100, 2, 0, 96, 1, 109, 1, 109, 96, 1, 109, 1, 109, 96, 2, 109, 109, 0, 96, 2, 109, 109, 1, 109, 96, 1, 109, 1, 109, 96, 2, 109, 109, 1, 109, 96, 1, 124, 1, 109, 96, 1, 127, 1, 109, 96, 0, 1, 109, 2, 252, 3, 12, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 13, 98, 105, 110, 100, 105, 110, 103, 45, 98, 111, 117, 110, 100, 0, 10, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 11, 98, 105, 110, 100, 105, 110, 103, 45, 103, 101, 116, 0, 11, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 11, 98, 105, 110, 100, 105, 110, 103, 45, 115, 101, 116, 0, 12, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 13, 99, 97, 108, 108, 97, 98, 108, 101, 45, 98, 105, 110, 100, 0, 13, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 14, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 45, 110, 101, 119, 0, 14, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 6, 105, 110, 118, 111, 107, 101, 0, 15, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 10, 110, 117, 109, 98, 101, 114, 45, 98, 111, 120, 0, 16, 12, 115, 117, 115, 115, 46, 114, 117, 110, 116, 105, 109, 101, 10, 115, 116, 114, 105, 110, 103, 45, 110, 101, 119, 0, 17, 21, 115, 117, 115, 115, 46, 98, 105, 110, 100, 105, 110, 103, 115, 46, 114, 117, 110, 116, 105, 109, 101, 14, 115, 117, 115, 115, 46, 99, 111, 114, 101, 47, 99, 111, 109, 112, 3, 100, 5, 0, 21, 115, 117, 115, 115, 46, 98, 105, 110, 100, 105, 110, 103, 115, 46, 114, 117, 110, 116, 105, 109, 101, 13, 115, 117, 115, 115, 46, 99, 111, 114, 101, 47, 105, 110, 99, 3, 100, 5, 0, 21, 115, 117, 115, 115, 46, 98, 105, 110, 100, 105, 110, 103, 115, 46, 114, 117, 110, 116, 105, 109, 101, 78, 115, 117, 115, 115, 46, 105, 110, 116, 101, 114, 110, 97, 108, 46, 112, 114, 111, 116, 111, 99, 111, 108, 45, 107, 101, 121, 115, 47, 107, 101, 121, 45, 55, 51, 55, 53, 55, 51, 55, 51, 50, 101, 54, 51, 54, 102, 55, 50, 54, 53, 50, 102, 52, 57, 52, 54, 54, 101, 50, 102, 50, 100, 54, 57, 54, 101, 55, 54, 54, 102, 54, 98, 54, 53, 50, 102, 51, 50, 3, 100, 5, 0, 21, 115, 117, 115, 115, 46, 98, 105, 110, 100, 105, 110, 103, 115, 46, 114, 117, 110, 116, 105, 109, 101, 78, 115, 117, 115, 115, 46, 105, 110, 116, 101, 114, 110, 97, 108, 46, 112, 114, 111, 116, 111, 99, 111, 108, 45, 107, 101, 121, 115, 47, 107, 101, 121, 45, 55, 51, 55, 53, 55, 51, 55, 51, 50, 101, 54, 51, 54, 102, 55, 50, 54, 53, 50, 102, 52, 57, 52, 54, 54, 101, 50, 102, 50, 100, 54, 57, 54, 101, 55, 54, 54, 102, 54, 98, 54, 53, 50, 102, 51, 51, 3, 100, 5, 0, 3, 2, 1, 18, 7, 8, 1, 4, 101, 118, 97, 108, 0, 8, 10, 150, 5, 1, 147, 5, 2, 43, 109, 1, 127, 65, 0, 33, 43, 3, 64, 32, 43, 65, 0, 70, 4, 64, 35, 0, 16, 0, 251, 22, 108, 251, 30, 65, 4, 70, 4, 109, 35, 0, 16, 1, 5, 65, 6, 251, 28, 11, 33, 0, 32, 0, 251, 20, 4, 4, 127, 65, 4, 5, 65, 2, 11, 251, 28, 33, 1, 32, 1, 65, 0, 251, 28, 211, 32, 1, 65, 2, 251, 28, 211, 114, 32, 1, 65, 6, 251, 28, 211, 114, 4, 127, 65, 2, 5, 65, 1, 11, 33, 43, 12, 1, 11, 32, 43, 65, 1, 70, 4, 64, 32, 0, 33, 12, 65, 6, 33, 43, 12, 1, 11, 32, 43, 65, 2, 70, 4, 64, 35, 3, 16, 0, 33, 2, 32, 2, 65, 0, 251, 28, 211, 32, 2, 65, 2, 251, 28, 211, 114, 32, 2, 65, 6, 251, 28, 211, 114, 4, 127, 65, 4, 5, 65, 3, 11, 33, 43, 12, 1, 11, 32, 43, 65, 3, 70, 4, 64, 65, 0, 251, 28, 33, 4, 32, 4, 33, 3, 65, 5, 33, 43, 12, 1, 11, 32, 43, 65, 4, 70, 4, 64, 65, 0, 16, 7, 33, 5, 65, 0, 16, 7, 33, 6, 65, 0, 16, 7, 33, 7, 32, 5, 32, 6, 32, 7, 251, 8, 2, 3, 16, 4, 33, 8, 35, 3, 32, 8, 16, 2, 32, 8, 33, 9, 32, 9, 33, 3, 65, 5, 33, 43, 12, 1, 11, 32, 43, 65, 5, 70, 4, 64, 35, 3, 16, 0, 251, 22, 108, 251, 30, 65, 4, 70, 4, 109, 35, 3, 16, 1, 5, 65, 6, 251, 28, 11, 33, 10, 32, 0, 32, 10, 16, 3, 33, 11, 32, 11, 33, 12, 65, 6, 33, 43, 12, 1, 11, 32, 43, 65, 6, 70, 4, 64, 35, 1, 16, 0, 251, 22, 108, 251, 30, 65, 4, 70, 4, 109, 35, 1, 16, 1, 5, 65, 6, 251, 28, 11, 33, 13, 35, 1, 16, 0, 251, 22, 108, 251, 30, 65, 4, 70, 4, 109, 35, 1, 16, 1, 5, 65, 6, 251, 28, 11, 33, 14, 32, 12, 32, 13, 32, 14, 251, 8, 2, 2, 16, 5, 33, 15, 32, 15, 251, 20, 4, 4, 127, 65, 4, 5, 65, 2, 11, 251, 28, 33, 16, 32, 16, 65, 0, 251, 28, 211, 32, 16, 65, 2, 251, 28, 211, 114, 32, 16, 65, 6, 251, 28, 211, 114, 4, 127, 65, 8, 5, 65, 7, 11, 33, 43, 12, 1, 11, 32, 43, 65, 7, 70, 4, 64, 32, 15, 33, 26, 65, 12, 33, 43, 12, 1, 11, 32, 43, 65, 8, 70, 4, 64, 35, 2, 16, 0, 33, 17, 32, 17, 65, 0, 251, 28, 211, 32, 17, 65, 2, 251, 28, 211, 114, 32, 17, 65, 6, 251, 28, 211, 114, 4, 127, 65, 10, 5, 65, 9, 11, 33, 43, 12, 1, 11, 32, 43, 65, 9, 70, 4, 64, 65, 0, 251, 28, 33, 19, 32, 19, 33, 18, 65, 11, 33, 43, 12, 1, 11, 32, 43, 65, 10, 70, 4, 64, 65, 0, 16, 7, 33, 20, 65, 0, 16, 7, 33, 21, 32, 20, 32, 21, 251, 8, 2, 2, 16, 4, 33, 22, 35, 2, 32, 22, 16, 2, 32, 22, 33, 23, 32, 23, 33, 18, 65, 11, 33, 43, 12, 1, 11, 32, 43, 65, 11, 70, 4, 64, 35, 2, 16, 0, 251, 22, 108, 251, 30, 65, 4, 70, 4, 109, 35, 2, 16, 1, 5, 65, 6, 251, 28, 11, 33, 24, 32, 15, 32, 24, 16, 3, 33, 25, 32, 25, 33, 26, 65, 12, 33, 43, 12, 1, 11, 32, 43, 65, 12, 70, 4, 64, 68, 0, 0, 0, 0, 0, 0, 36, 64, 16, 6, 33, 27, 32, 26, 32, 27, 251, 8, 2, 1, 18, 5, 32, 28, 15, 11, 0, 11, 0, 11, 0, 157, 5, 20, 115, 117, 115, 115, 46, 115, 111, 117, 114, 99, 101, 45, 97, 114, 116, 105, 102, 97, 99, 116, 123, 34, 102, 111, 114, 109, 97, 116, 95, 118, 101, 114, 115, 105, 111, 110, 34, 58, 49, 44, 34, 99, 111, 109, 112, 105, 108, 101, 114, 95, 115, 111, 117, 114, 99, 101, 95, 115, 104, 97, 50, 53, 54, 34, 58, 34, 100, 97, 48, 100, 57, 52, 98, 101, 49, 56, 98, 53, 99, 56, 102, 52, 56, 98, 51, 51, 53, 50, 53, 50, 98, 55, 48, 53, 54, 56, 56, 98, 99, 52, 52, 49, 55, 52, 53, 48, 51, 97, 52, 51, 102, 99, 97, 50, 55, 54, 53, 99, 48, 56, 56, 54, 54, 102, 52, 56, 55, 52, 56, 57, 34, 44, 34, 114, 117, 110, 116, 105, 109, 101, 95, 97, 98, 105, 34, 58, 50, 44, 34, 99, 111, 109, 112, 105, 108, 101, 114, 34, 58, 34, 48, 46, 49, 46, 48, 43, 112, 111, 114, 116, 97, 98, 108, 101, 46, 50, 34, 44, 34, 119, 97, 115, 109, 95, 116, 111, 111, 108, 115, 34, 58, 34, 48, 46, 50, 53, 56, 46, 48, 34, 44, 34, 116, 97, 114, 103, 101, 116, 34, 58, 34, 112, 111, 114, 116, 97, 98, 108, 101, 45, 119, 97, 115, 109, 45, 103, 99, 45, 115, 104, 97, 114, 101, 100, 45, 97, 98, 105, 34, 44, 34, 112, 114, 111, 102, 105, 108, 101, 34, 58, 34, 100, 101, 102, 97, 117, 108, 116, 34, 44, 34, 102, 108, 97, 103, 115, 34, 58, 91, 93, 44, 34, 112, 104, 97, 115, 101, 34, 58, 34, 114, 117, 110, 116, 105, 109, 101, 34, 44, 34, 115, 111, 117, 114, 99, 101, 95, 115, 104, 97, 50, 53, 54, 34, 58, 34, 51, 50, 101, 49, 98, 101, 97, 56, 53, 51, 102, 50, 48, 56, 55, 101, 51, 54, 98, 56, 102, 102, 56, 54, 57, 101, 100, 50, 50, 57, 102, 51, 54, 55, 100, 48, 98, 49, 50, 97, 98, 98, 57, 53, 98, 102, 55, 51, 48, 51, 51, 56, 98, 99, 53, 56, 56, 51, 101, 100, 53, 52, 57, 51, 34, 44, 34, 115, 111, 117, 114, 99, 101, 95, 112, 97, 116, 104, 34, 58, 110, 117, 108, 108, 44, 34, 109, 97, 99, 114, 111, 95, 100, 101, 112, 101, 110, 100, 101, 110, 99, 105, 101, 115, 34, 58, 91, 91, 34, 98, 111, 111, 116, 115, 116, 114, 97, 112, 34, 44, 34, 48, 48, 57, 99, 50, 102, 55, 57, 55, 101, 98, 101, 54, 51, 98, 52, 101, 53, 101, 53, 102, 51, 57, 54, 53, 53, 98, 99, 51, 48, 101, 49, 102, 101, 97, 57, 50, 57, 49, 49, 50, 48, 50, 101, 102, 52, 55, 53, 102, 50, 100, 52, 54, 102, 98, 51, 52, 49, 97, 101, 55, 51, 53, 98, 34, 93, 44, 91, 34, 109, 97, 99, 114, 111, 58, 115, 117, 115, 115, 46, 99, 111, 114, 101, 47, 100, 101, 102, 110, 34, 44, 34, 53, 52, 56, 97, 98, 100, 98, 102, 52, 97, 56, 56, 48, 57, 52, 48, 100, 56, 54, 55, 102, 101, 102, 57, 101, 56, 49, 102, 54, 57, 100, 98, 100, 56, 56, 98, 99, 52, 50, 57, 50, 98, 48, 52, 48, 97, 50, 97, 97, 57, 50, 51, 50, 50, 51, 99, 100, 53, 102, 49, 53, 97, 57, 97, 34, 93, 93, 44, 34, 119, 97, 115, 109, 95, 115, 104, 97, 50, 53, 54, 34, 58, 34, 56, 53, 100, 57, 97, 49, 98, 53, 100, 97, 100, 48, 57, 100, 101, 98, 99, 49, 50, 52, 48, 99, 98, 56, 57, 55, 53, 49, 98, 101, 56, 54, 102, 98, 102, 53, 48, 55, 97, 51, 99, 53, 51, 52, 102, 101, 55, 57, 50, 48, 55, 56, 101, 52, 98, 97, 50, 98, 48, 50, 48, 50, 99, 56, 34, 125], is_component: false, prepared: Some(ExpressionArtifact { modules: 2 }) })
+2026-10-09T12:07:00.9566799Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-10-09T12:07:00.9567057Z 
+2026-10-09T12:07:00.9567061Z 
+2026-10-09T12:07:00.9567142Z failures:
+2026-10-09T12:07:00.9567342Z     prototype_cases_awaiting_compiled_support
+2026-10-09T12:07:00.9567521Z 
+2026-10-09T12:07:00.9567760Z test result: FAILED. 277 passed; 1 failed; 37 ignored; 0 measured; 0 filtered out; finished in 154.29s
+2026-10-09T12:07:00.9568071Z 
+2026-10-09T12:07:01.0788484Z [1m[91merror[0m: test failed, to rerun pass `-p suss-compile --test compile_expr`
+2026-10-09T12:07:01.2519861Z Traceback (most recent call last):
+2026-10-09T12:07:01.2520289Z   File "/home/runner/work/suss/suss/scripts/ci_test_shards.py", line 66, in <module>
+2026-10-09T12:07:01.2520644Z     main()
+2026-10-09T12:07:01.2520933Z   File "/home/runner/work/suss/suss/scripts/ci_test_shards.py", line 62, in main
+2026-10-09T12:07:01.2521297Z     subprocess.run(command, check=True)
+2026-10-09T12:07:01.2521601Z   File "/usr/lib/python3.12/subprocess.py", line 571, in run
+2026-10-09T12:07:01.2527548Z     raise CalledProcessError(retcode, process.args,
+2026-10-09T12:07:01.2530583Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--test', 'compile_expr', '--test', 'compiled_async_library', '--test', 'compiled_macro_binding_records', '--test', 'compiled_macro_data_builders', '--test', 'compiled_macro_function_scopes', '--test', 'compiled_macro_maps', '--test', 'compiled_macro_set_oracle', '--test', 'compiled_module_cache', '--test', 'compiled_source_macros', '--test', 'generated_async_bridge_journal', '--test', 'native_repl_async_pty', '--test', 'portable_aot_options', '--test', 'portable_async_fairness', '--test', 'portable_closures', '--test', 'portable_continuation_liveness', '--test', 'portable_error_predicate', '--test', 'portable_if_let', '--test', 'portable_map_mutation_helpers', '--test', 'portable_nominal', '--test', 'portable_quoted_identifiers', '--test', 'portable_scalar_predicates', '--test', 'portable_transient_errors', '--test', 'reader_runtime', '--test', 'runtime_async_streams', '--test', 'session_lifecycle_reset_pending', '--test', 'toolchain_async', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-10-09T12:07:01.2719270Z ##[error]Process completed with exit code 1.
+2026-10-09T12:07:01.2809048Z Post job cleanup.
+2026-10-09T12:07:01.3427026Z [command]/usr/bin/git version
+2026-10-09T12:07:01.3464432Z git version 2.55.0
+2026-10-09T12:07:01.3519985Z Temporarily overriding HOME='/home/runner/work/_temp/ed7d9f86-52da-4c6d-8ffb-5dcf3a0c9d25' before making global git config changes
+2026-10-09T12:07:01.3523666Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T12:07:01.3537452Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/suss/suss
+2026-10-09T12:07:01.3611738Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T12:07:01.3658279Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T12:07:01.3920136Z Entering 'clojurescript'
+2026-10-09T12:07:01.3980470Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T12:07:01.4013443Z http.https://github.com/.extraheader
+2026-10-09T12:07:01.4026580Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-09T12:07:01.4079569Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T12:07:01.4295657Z Entering 'clojurescript'
+2026-10-09T12:07:01.4319631Z http.https://github.com/.extraheader
+2026-10-09T12:07:01.4390102Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T12:07:01.4432669Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T12:07:01.4686972Z Entering 'clojurescript'
+2026-10-09T12:07:01.4708303Z file:/home/runner/work/suss/suss/.git/modules/clojurescript/config	remote.origin.url
+2026-10-09T12:07:01.4744075Z [command]/usr/bin/git config --file /home/runner/work/suss/suss/.git/modules/clojurescript/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T12:07:01.4960736Z Cleaning up orphan processes
+2026-10-09T12:07:01.5190045Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

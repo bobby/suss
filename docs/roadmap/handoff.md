@@ -23669,3 +23669,24 @@ Coherent raw logs/receipt retained; corrected assertion pending parent execution
 Parameter integration at22a16a9 includes reviewed06ac runtime/fixture repairs plus f593 whole binding prerequisite. Bootstrap regeneration/reproducibility passed (two generations; four compiled tests14.44s); compilerlib93pass0fail0ignore13.16s; parameter native2pass0fail0ignore9.07s covering39 rawcases bothphases/GC; pinned provenance9pass6.418s. Initial provenance attempt failed missing upstream checkout, retained before actual c4295f initialization. Evidence docs/compatibility/function-parameters/evidence/integration-validation.json. Merge review, full baseline and final-headCI pending. Full reify/nil-iter and original M4 collection gates remain required.
 
 PR231 abd58cb unchanged fullbaseline terminated101:17groups86pass1fail0ignore. Initial t/policy at catalog test143 unresolvedRuntime suss.core/Symbol before reload; minimal Session::with_options did not provision core. Test setup now uses existing new_repl_with_options, preserving all publication/reload/recovery assertions and fuel. Focused reload retry passed1/0/0 in48.88s. Logs/terminalreceipt retained in function-parameters/evidence. Independent correctionreview and renewed fullbaseline/finalCI pending; originalM4 remains open.
+
+### PR231 obsolete support diagnostics repair (base677340c)
+
+CI integration2 compiler test277pass1fail37ignore: obsolete comp unsupported
+row now compiles. In an isolated branch, reactivated seven original tests with
+all original sources/results unchanged; removed exactly their seven negative
+rows, preserving remaining30 unsupported rows. Added eleven-case closed raw
+pinned fixture and postGC host values/effects/capture regression. Fresh pinned
+compile/Node0 all11match; failure/raw observations retained under
+docs/compatibility/compiled-support-reactivation/. Comp/partial inventory refs
+updated, no runtime/bootstrap/sourceform changes or fuel changes. Nativepending
+parent lane. Catalog core-setup repair677 inherited, not duplicated.
+Staging work remains at authorb97; whole reify/nil-iter not implemented by this
+test repair. Original Refs18/19 scope/required unchanged baseline/CI remain open.
+
+Reactivation author freeze checks: Python272pass22.486s, core-import360check
+passes after semantic-test/review-hash manifest refresh; all source/extracted
+forms unchanged. Four bootstrap files unchanged/stale due manifest identity;
+parent must regenerate before exactnative. Rustfmt parse/diffcheckpass. Initial
+external-source symlink and stale-manifest checks failed truthfully, corrected
+local exactpinclone and metadataregeneration. Native not yet executed.

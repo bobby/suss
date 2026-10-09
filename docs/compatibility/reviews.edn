@@ -25,7 +25,7 @@
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/record-graph-comp.json"
    :alternative nil
-   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"]}
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)" "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)" "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"]}
   "runtime:partial:4497"
   {:source-sha256 "ab48b02fc09bc7c185d7daabfda6733efa50f202292ef3294bcd9c0a974cc0b7"
    :visibility :public
@@ -36,7 +36,7 @@
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/record-graph-partial.json"
    :alternative nil
-   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"]}
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)" "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)" "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"]}
   "runtime:juxt:10251"
   {:source-sha256 "512be1a1ca88483dc7b6626b8d41ff24001696c38478fea0e84d07e97206ee92"
    :visibility :public
