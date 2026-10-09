@@ -23702,3 +23702,10 @@ every other originalassertion. Freshpin4rawvectors matchundefined/own/nil/exists
 plusglobal/dynamicpublication. Fullmakearraywitness+failedlogs retained under
 docs/compatibility/publication-fixture/. No runtime/fuel/bootstrap change; native
 correctedtests pending parentlane, fullreify/niliter scope stillrequired.
+
+Publication followup:143e native2fail duejsArrayalias unavailable indefaultcore,
+notcellkernel. Retainedfailure. Usegenuinefirstclassmakearray lexicalalias (same
+runtimeconstructorbranch as pin), notliteralnil macro. Originalfalseundefined
+assertions/restoration unchanged; freshpin5rawmatch+3harnesspass. Parentconsistent
+authoringsnapshot publication2pass7.24s isdiagnostic only; frozen/integrated
+acceptancepending. No production/bootstrap/manifest/fuel edits.

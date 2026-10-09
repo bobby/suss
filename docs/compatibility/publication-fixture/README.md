@@ -24,3 +24,21 @@ diagnostic evidence, not passing checks.
 Three fail-closed harness tests pass; core-import --check360 passes without any
 recipe/review/manifest edit. Rustfmt/diff checks pass. Stale top test comments
 refer to authoring history; corrected tests still need exact native execution.
+
+## Follow-up: published first-class make-array capability
+
+Native validation of 143e107 failed because default core sessions do not expose
+js/Array. Retained that failure; it never entered the corrected cell operations.
+The follow-up obtains the existing genuine first-class make-array callable via
+a lexical alias and reads its hole. This matches the pinned runtime make-array
+branch rather than the literal macro; no mock constructor or manual sentinel.
+All three undefined fixtures use `(let [make make-array] (aget (make 1) 0))`;
+false assertions/restoration and the literal nil true case remain unchanged.
+Fresh pinned five-case raw fixture also probes that exact alias and observes
+undefined true/nil identity false/own presence false/exists false; global and
+dynamic cases use the same alias. All five match. Three harness tests pass.
+
+Parent consistent authoring snapshot: publication tests2pass7.24s, retained as
+diagnostic only. Corrected frozen/integrated native acceptance remains pending.
+No production/bootstrap/manifest/fuel changes. Initial four-case corpus/logs
+remain historical rather than being relabeled as final five-case evidence.

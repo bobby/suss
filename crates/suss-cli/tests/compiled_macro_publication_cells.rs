@@ -28,7 +28,10 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
             ("(def publication-value 0)", true),
             // Pinned literal make-array expands to a present nil slot, not a hole.
             ("(def publication-value (aget (make-array 1) 0))", true),
-            ("(def publication-value (aget (js/Array. 1) 0))", false),
+            (
+                "(def publication-value (let [make make-array] (aget (make 1) 0)))",
+                false,
+            ),
             (
                 "(def publication-effects 0) (def publication-value (js-obj \"valueOf\" (fn [] (set! publication-effects 99))))",
                 true,
@@ -45,7 +48,7 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
         let actual = bridge.read(&mut session, &effects, 0..0).unwrap();
         assert!(matches!(actual.kind, Kind::Number(value) if value.to_bits() == 0.0_f64.to_bits()));
         let result = session
-            .eval("(binding [publication-value (aget (js/Array. 1) 0)] (suss.compiler/cell-defined? user/publication-value))");
+            .eval("(binding [publication-value (let [make make-array] (aget (make 1) 0))] (suss.compiler/cell-defined? user/publication-value))");
         // Preserve the existing binding kernel's selected dynamic value.
         boolean(&mut session, &result.unwrap(), false);
         let result = session.invoke(&probe, &[]).unwrap();
@@ -68,7 +71,7 @@ fn publication_probe_sees_later_class_and_dynamic_overrides_without_replaying() 
         session
             .eval("(def ^:dynamic publication-dynamic nil)")
             .unwrap();
-        let result = session.eval("(binding [publication-dynamic (aget (js/Array. 1) 0)] (suss.compiler/cell-defined? user/publication-dynamic))").unwrap();
+        let result = session.eval("(binding [publication-dynamic (let [make make-array] (aget (make 1) 0))] (suss.compiler/cell-defined? user/publication-dynamic))").unwrap();
         boolean(&mut session, &result, false);
         let result = session
             .eval("(suss.compiler/cell-defined? user/publication-dynamic)")

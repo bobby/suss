@@ -25,6 +25,6 @@ class ClosedPublicationFixtureTests(unittest.TestCase):
         self.assertEqual((gate.oracle.CORPUS, gate.oracle.OBSERVATIONS), original)
 
     def test_complete_closed_forms(self):
-        self.assertEqual(len(gate.corpus()['cases']), 4)
+        self.assertEqual(len(gate.corpus()['cases']), 5)
 
 if __name__ == '__main__': unittest.main()

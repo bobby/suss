@@ -5,7 +5,7 @@ import json
 import sys
 import portable_oracle as oracle
 from cljs_inventory import Scanner
-CASE_IDS = ['literal-make-array-present-nil', 'constructor-array-hole-undefined', 'global-hole-then-nil-publication', 'dynamic-hole-restores-nil-publication']
+CASE_IDS = ['literal-make-array-present-nil', 'constructor-array-hole-undefined', 'global-hole-then-nil-publication', 'dynamic-hole-restores-nil-publication', 'first-class-make-array-hole-undefined']
 
 CORPUS = oracle.ROOT / 'tests/oracle/publication-fixture-cases.json'
 OBSERVATIONS = oracle.ROOT / 'tests/oracle/out/publication-fixture-observations.json'

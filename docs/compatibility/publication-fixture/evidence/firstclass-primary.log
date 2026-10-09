@@ -1,0 +1,5 @@
+WARNING: js/value is shadowed by a local at line 3 /private/tmp/suss-m4-pr231-publication-fixture-repair/tests/oracle/out/generated/suss_oracle/publication_fixture_cases.cljs
+WARNING: js/value is shadowed by a local at line 4 /private/tmp/suss-m4-pr231-publication-fixture-repair/tests/oracle/out/generated/suss_oracle/publication_fixture_cases.cljs
+WARNING: publication-value at line 5 is being replaced at line 5 /private/tmp/suss-m4-pr231-publication-fixture-repair/tests/oracle/out/generated/suss_oracle/publication_fixture_cases.cljs
+WARNING: js/value is shadowed by a local at line 7 /private/tmp/suss-m4-pr231-publication-fixture-repair/tests/oracle/out/generated/suss_oracle/publication_fixture_cases.cljs
+5 pinned portable source observations match exactly
