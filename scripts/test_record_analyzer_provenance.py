@@ -9,7 +9,7 @@ class RecordAnalyzerProvenance(unittest.TestCase):
         cls.provenance = json.loads((DIRECTORY / 'provenance.json').read_text())
 
     def test_complete_closed_retention(self):
-        self.assertEqual(verify(self.provenance), 44)
+        self.assertEqual(verify(self.provenance), 46)
 
     def test_missing_reordered_and_duplicate_dependencies_rejected(self):
         for mutation in ('missing', 'reordered', 'duplicate'):

@@ -402,6 +402,30 @@
     },
     {
       "source": "clojurescript/src/main/clojure/cljs/compiler.cljc",
+      "name": "get-first-ns-segment",
+      "kind": "defn",
+      "line": 63,
+      "end-line": 72,
+      "reader-context": [],
+      "sha256": "d9e73198e0c431566d8e3b8ebd57e9998bd64894895f24b9de72f03de21f2766",
+      "retained": "docs/compatibility/record-analyzer-context/compiler-get-first-ns-segment-63.cljc",
+      "retained-file-sha256": "576414367a05981a21b93962494466097b14c0a5be77731030088d26e76c753e",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/compiler.cljc",
+      "name": "find-ns-starts-with",
+      "kind": "defn",
+      "line": 74,
+      "end-line": 80,
+      "reader-context": [],
+      "sha256": "483e635537a2c7b362b6bdc5d4af1a24de96b701e89860f406a13e43606224bf",
+      "retained": "docs/compatibility/record-analyzer-context/compiler-find-ns-starts-with-74.cljc",
+      "retained-file-sha256": "8588664c13209d99b075150eb08a5434f52b19b0aa4167610f9c0110e3e672d2",
+      "status": "whole source retained; compilation/execution not established"
+    },
+    {
+      "source": "clojurescript/src/main/clojure/cljs/compiler.cljc",
       "name": "shadow-depth",
       "kind": "defn",
       "line": 83,

@@ -17,7 +17,7 @@ def expected_forms():
     predicates = {
         'src/main/clojure/cljs/core.cljc': lambda name, line: 1444 <= line <= 1708 or name in {'fast-path-protocols', 'fast-path-protocol-partitions-count'},
         'src/main/clojure/cljs/analyzer.cljc': lambda name, line: name in {'resolve-var', 'resolve-existing-var', 'elide-reader-meta', 'parse-type', 'js-reserved'},
-        'src/main/clojure/cljs/compiler.cljc': lambda name, line: name in {'munge', 'munge-reserved', 'shadow-depth', 'hash-scope', 'fn-self-name'},
+        'src/main/clojure/cljs/compiler.cljc': lambda name, line: name in {'munge', 'munge-reserved', 'shadow-depth', 'hash-scope', 'fn-self-name', 'get-first-ns-segment', 'find-ns-starts-with'},
         'src/main/cljs/cljs/core.cljs': lambda name, line: name in {'CHAR_MAP', 'munge-str', 'nil-iter', 'gensym', 'gensym_counter'},
     }
     dirty = subprocess.check_output(['git', '-C', str(ROOT / 'clojurescript'), 'status', '--porcelain', '--', *predicates], text=True)
@@ -43,7 +43,7 @@ def verify(provenance=None):
         raise ValueError('schema/pin/license mismatch')
     expected = expected_forms()
     entries = provenance['forms']
-    if len(entries) != 44 or len(expected) != 44:
+    if len(entries) != 46 or len(expected) != 46:
         raise ValueError('closed dependency inventory mismatch')
     retained_paths = set()
     for entry, (path, kind, name, form, context, source) in zip(entries, expected):

@@ -2,7 +2,7 @@
 //! is released. These assert typed compiler facts, not full reify support.
 use std::{collections::HashMap, sync::Arc};
 use suss_compile::portable::{
-    compiler_facts::elide_reader_metadata,
+    compiler_facts::{elide_reader_metadata, CompilerNamespaceCatalog},
     compiler_names::{munge_name, munge_name_with_reserved},
     hir::{BindingId, LocalBinding, LocalKind, SourceBinding, SourceNamespace, SourceRole, Type},
     resolve::{Environment, Phase},
@@ -136,6 +136,47 @@ fn unused_lexical_bindings_keep_declaration_identity_and_shadow_globals() {
         panic!("global fact")
     };
     assert_eq!(resolved, global);
+}
+
+#[test]
+fn compiler_namespace_catalog_preserves_missing_scopes_phases_and_revisions() {
+    let mut env = Environment::new("record.user").unwrap();
+    env.declare_namespace(Phase::Runtime, "declared.only")
+        .unwrap();
+    env.enter_namespace(Phase::Runtime, "other.live").unwrap();
+    let value = env
+        .declare_cell(Phase::Runtime, "other.live", "value")
+        .unwrap();
+    env.enter_namespace(Phase::Runtime, "record.user").unwrap();
+    env.alias(Phase::Runtime, "other", "other.live").unwrap();
+    env.declare_namespace(Phase::Macro, "macro.only").unwrap();
+    let catalog = CompilerNamespaceCatalog::capture(&env, Phase::Runtime);
+    assert_eq!(env.current_namespace(Phase::Runtime), "record.user");
+    assert_eq!(catalog.current, "record.user");
+    assert!(catalog.namespaces["declared.only"].is_none());
+    assert!(!catalog.namespaces.contains_key("macro.only"));
+    let live = catalog.namespaces["other.live"].as_ref().unwrap();
+    assert_eq!(live.identities, vec![value]);
+    assert!(
+        live.declarations.is_empty(),
+        "cell is not invented source syntax"
+    );
+    assert_eq!(
+        catalog.namespaces["record.user"].as_ref().unwrap().aliases["other"],
+        "other.live"
+    );
+    assert!(catalog.starts_with_namespace_segment("other"));
+    assert!(!catalog.starts_with_namespace_segment("oth"));
+    assert!(!catalog.starts_with_namespace_segment("other.live"));
+    env.enter_namespace(Phase::Runtime, "new.live").unwrap();
+    assert!(
+        !catalog.namespaces.contains_key("new.live"),
+        "immutable snapshot"
+    );
+    assert!(CompilerNamespaceCatalog::capture(&env, Phase::Runtime)
+        .namespaces
+        .contains_key("new.live"));
+    assert!(SourceNamespace::capture_namespace(&env, Phase::Runtime, "missing").is_none());
 }
 
 #[test]

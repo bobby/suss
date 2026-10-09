@@ -558,8 +558,14 @@ impl Environment {
         &self.current[&phase]
     }
     pub fn namespace_scope(&self, phase: Phase) -> NamespaceScope<'_> {
-        let scope = self.scope(phase);
-        NamespaceScope {
+        self.namespace_scope_for(phase, self.current_namespace(phase))
+            .expect("declared current scope")
+    }
+    /// Read an actual declared scope without changing the current namespace or
+    /// source generation. A missing scope stays missing, never a fallback def.
+    pub fn namespace_scope_for(&self, phase: Phase, namespace: &str) -> Option<NamespaceScope<'_>> {
+        let scope = self.scopes.get(&(phase, canonical(namespace).into()))?;
+        Some(NamespaceScope {
             namespace: &scope.namespace, aliases: &scope.aliases,
             refers: &scope.refers, excluded_core: &scope.excluded_core,
             used_refers: &scope.used_refers, renamed_refers: &scope.renamed_refers,
@@ -568,7 +574,12 @@ impl Environment {
             declarations: self.definitions.iter().filter(|(global, _)|
                 global.phase() == phase && global.namespace() == scope.namespace)
                 .map(|(global, info)| (global, info.as_ref())).collect(),
-        }
+        })
+    }
+    /// Phase-specific declared namespaces; declaration does not certify loading.
+    pub fn declared_namespaces(&self, phase: Phase) -> impl Iterator<Item = &str> {
+        self.namespaces.iter().filter_map(move |(entry_phase, namespace)|
+            (*entry_phase == phase).then_some(namespace.as_str()))
     }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
         self.definitions.get(global).map(std::sync::Arc::as_ref)

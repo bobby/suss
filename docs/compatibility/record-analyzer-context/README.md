@@ -1,6 +1,6 @@
 # Record and reify compiler dependency retention
 
-The ledger retains 44 complete declarations and source stanzas from the pinned
+The ledger retains 46 complete declarations and source stanzas from the pinned
 ClojureScript checkout, including the complete extension helper graph, analyzer
 resolution/type parsing, compiler name munging, protocol-mask tables, gensym and
 `nil-iter`. The 12 original record macro declarations remain separately retained
@@ -16,6 +16,13 @@ retention only. These forms have not been imported or executed by this change.
 `portable/compiler_names.rs` adapts the complete scalar UTF-16 name-munging path
 and source tables. The macro analysis graph uses the same live resolution catalog.
 The authored Rust regressions have not been compiled or executed.
+
+Cross-namespace catalogs preserve actual phase-specific scopes and declaration
+revisions without switching namespaces. A declared namespace without a source
+scope remains an explicit missing scope. Namespace-segment matching follows the
+whole pinned `get-first-ns-segment`/`find-ns-starts-with` helpers, not substring
+matching. These typed interfaces do not yet materialize compiler state into the
+compiled macro Store or implement analyzer extern/module/warning mutations.
 
 These interfaces do not implement all analyzer `resolve-var` branches: extern
 state, module resolution, warning callbacks and fallback definitions still need

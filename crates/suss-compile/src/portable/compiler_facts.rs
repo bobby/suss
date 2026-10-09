@@ -8,6 +8,42 @@ use suss_reader::{
     Symbol,
 };
 
+/// Immutable compiler namespace revisions, separate from runtime bound values.
+/// Declared namespaces lacking a source scope remain explicit entries with None.
+#[derive(Debug, Clone)]
+pub struct CompilerNamespaceCatalog {
+    pub phase: resolve::Phase,
+    pub current: String,
+    pub namespaces: BTreeMap<String, Option<Arc<hir::SourceNamespace>>>,
+}
+
+impl CompilerNamespaceCatalog {
+    pub fn capture(environment: &resolve::Environment, phase: resolve::Phase) -> Self {
+        Self {
+            phase,
+            current: environment.current_namespace(phase).to_owned(),
+            namespaces: environment
+                .declared_namespaces(phase)
+                .map(|namespace| {
+                    (
+                        namespace.to_owned(),
+                        hir::SourceNamespace::capture_namespace(environment, phase, namespace)
+                            .map(Arc::new),
+                    )
+                })
+                .collect(),
+        }
+    }
+
+    /// Pinned find-ns-starts-with compares the complete needle with the first
+    /// namespace segment. It does not perform a prefix or substring match.
+    pub fn starts_with_namespace_segment(&self, needle: &str) -> bool {
+        self.namespaces
+            .keys()
+            .any(|namespace| namespace.split('.').next() == Some(needle))
+    }
+}
+
 impl ExpansionContext<'_> {
     /// Current resolution catalog differs from the enclosing source snapshot:
     /// provisional definitions published during analysis must be visible here.

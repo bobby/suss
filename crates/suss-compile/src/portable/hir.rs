@@ -428,8 +428,13 @@ pub struct SourceNamespace {
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
-        let scope = environment.namespace_scope(phase);
-        Self {
+        Self::capture_namespace(environment, phase, environment.current_namespace(phase))
+            .expect("declared current namespace")
+    }
+    /// Capture an actual namespace revision without installing it as current.
+    pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
+        let scope = environment.namespace_scope_for(phase, namespace)?;
+        Some(Self {
             namespace: scope.namespace.into(),
             aliases: scope.aliases.clone(),
             refers: scope.refers.clone(),
@@ -452,7 +457,7 @@ impl SourceNamespace {
                 .filter(|global| global.phase() == phase && global.namespace() == scope.namespace
                     && !environment.is_hidden_cell(phase, global.namespace(), global.name()))
                 .collect(),
-        }
+        })
     }
 }
 #[derive(Debug, Clone)]

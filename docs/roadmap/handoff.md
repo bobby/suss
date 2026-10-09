@@ -23000,3 +23000,22 @@ deftype's no-outer-local restriction. Then import complete nil-iter through real
 reify and implement the full record factory graph. These are not implemented by
 the retention ledger or typed caller APIs. Native/bootstrap acceptance must wait
 for the exclusive Cargo lane; no original issue criterion is marked complete.
+
+### 2026-10-09 — record/reify immutable cross-namespace compiler catalog
+
+Follow-up authoring adds read-only phase-specific namespace-scope lookup and a
+compiler catalog capturing all actual declared namespaces without entering them.
+SourceNamespace capture now shares that lookup; current-scope behavior remains
+the same. Declaration-only namespaces retain None rather than fabricated scope
+or definitions. Existing cell identities and shared declaration revisions remain
+actual compiler facts, not runtime loaded/bound evidence. The full pinned
+get-first-ns-segment/find-ns-starts-with helpers are retained, bringing the closed
+dependency ledger to46; all previous44 entries remain unchanged.
+
+The fifth authored Rust regression checks alias/cell snapshots, missing scopes,
+phase separation, exact namespace-segment matching and subsequent namespace
+publication not mutating old snapshots. It is UNCOMPILED/UNEXECUTED. Focused
+Python verifier3 passes7.651s; no native execution/bootstrap/Cargo/push. This
+catalog is not yet materialized as compiler state in the Macro Store. Analyzer
+extern/module/warning/fallback adapters and full source-helper execution remain
+required before real reify/nil-iter or record factory acceptance.
