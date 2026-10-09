@@ -22274,3 +22274,63 @@ Independent read-only Array22 review found no material findings and reproduced
 all22 pinned observations, three strict harness tests and clean diff. Native
 execution remains pending; shrink/delete and inherited-property behavior remain
 separate storage requirements alongside RangeError identity.
+
+Post-rebase MLIR validation completed at frozen b82ad94: full required baseline
+34020 terminal0, 1550passed/0failed/41existingignored,207resultblocks; logSHA256
+dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377.
+All10 final-head CI checks pass. Rebuilt bridge97936, native-analysis66760,
+actual two-fragment source-export45617, seven native effects57893,92paired
+comparison18167, fresh seven-case pinned effects81757,CLIbuild40824 and fresh
+pinned source oracle61020 all terminal0. Comparison medians original/mutated:
+native5.841/5.907ms,MLIR19.014/19.128ms; retained exclusions and no speed claim.
+External receipts: /private/tmp/suss-m4-mlir-post228-validation-plan.json and
+/private/tmp/suss-m4-mlir-baseline-b82ad94-receipt.json; executed content identity
+/private/tmp/suss-m4-mlir-identity-executed-post228-b82ad94.json verifies. These
+receipts describe frozen MLIR execution, not later sorted changes or M4 completion.
+
+Sorted bootstrap regeneration15850 terminal0 with jobs2/locked/profiletest and
+CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226. Both
+phases generated in runtime/bootstrap. Identity verifier initially lacked that
+target environment and failed to locate compiled build script; rerunning with
+the exact target environment passed. Focused compiler comparator foundations
+session15756 currently compiling; sole Cargo graph. Next terminal-success step:
+execute both-phase core comparator/interface prerequisites and runtime ABI guards,
+then Java/Node-free reproducibility gate. Full Array/comparator/tree/record and
+original #18/#19 criteria remain incomplete; no native prerequisite pass yet.
+
+Compiler comparator guards15756 terminal0:2passed/0failed/ignored0. Native
+foundations99505 terminal101: all3 scalar/type comparator tests passed in both
+phases; sorted shared nominal27-case corpus passed, but reload/alias test failed
+in Runtime at core_sorted_interfaces.rs:143. Reloading CORE makes conjunction
+identical? cljs.core/ISorted saved-sorted-protocol and implements? false. Log
+/private/tmp/suss-m4-sorted-native-foundations.log retains failure; do not claim
+full prerequisite gate pass or skip it. Next: isolate identity versus implements
+and trace stable protocol key/definition behavior on repeated core loading, fix
+semantics with focused regression, then rerun compiler/native/ABI/bootstrap gates.
+
+Reload investigation77597 terminal101 isolated identityfalse with current
+implements?true. Fresh pinned CLJS69719 terminal0/Node0 gives [false,true,false,17,17]:
+public defprotocol value is fresh, current protocol symbol implements retained
+instance, saved ordinary-var symbol is not a protocol symbol for the macro, and
+new/retained methods dispatch17. Fixture/evidence now tracked in tests/oracle/src/
+suss_oracle/protocol_reload.cljs and docs/compatibility/protocol-reload/evidence.
+Initial49648 oracle compile failed due generated fixture path outside classpath;
+corrected location before terminal successful rerun. Native expectation was wrong,
+not lost implementation: split assertions, expect freshpublic identityfalse.
+Corrected94495 terminal0:2tests pass18.40s in both phases afterGC. Independent
+review finds no material issue; retained aliases/method/arity/recovery coverage.
+No dynamic saved-protocol semantics claim. RuntimeABI98718 now soleCargo graph.
+Next after success: Java/Node-free bootstrap reproduction, then actual sparse
+Array/ToPrimitive/comparator implementation, retaining original sorted/record scope.
+
+RuntimeABI98718 terminal0:50passed/0failed/ignored0,6.86s. Java/Node-free
+verify-bootstrap58067 terminal0: twicegenerated artifacts matchstored4files,
+compiledidentity passes and4compiledbootstraptests pass14.34s. Source Array
+constructor regression3465 terminal101:0passed/2failed/ignored0,4.93s. Both
+initial type(array) lookup and retained-constructor acquisition throw language
+values, confirming Array constructor support is absent; no success or skipclaim.
+Log /private/tmp/suss-m4-sorted-array-before-implementation.log. Added case/source
+context to corpus failure diagnostics. Next implementation: canonical rooted
+Array callable plus true sparse uint32logical-length/presence storage and access
+consumers; exact RangeErroridentity and ordered ToPrimitive remain required.
+Scalar/type prerequisites are validated; fullsorted/tree/record scope remainsopen.

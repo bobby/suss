@@ -135,14 +135,23 @@ fn sorted_protocol_aliases_retained_values_reload_and_method_arities() {
             ("IComparable", "saved-comparable-protocol"),
         ] {
             for namespace in ["cljs.core", "suss.core"] {
-                let source = format!(
-                    "(and (identical? {namespace}/{protocol} {saved}) (implements? {namespace}/{protocol} sorted-interface-probe))"
-                );
-                let value = session.eval(&source).unwrap();
+                let implementation =
+                    format!("(implements? {namespace}/{protocol} sorted-interface-probe)");
+                let value = session.eval(&implementation).unwrap();
                 session.collect().unwrap();
                 assert_eq!(
                     observation(&mut session, &value),
                     serde_json::json!({"tag":"bool","value":true}),
+                    "{phase:?}, {implementation}"
+                );
+                // Pinned CLJS defprotocol reload creates a fresh public value;
+                // method keys and dispatch for old instances remain usable.
+                let source = format!("(identical? {namespace}/{protocol} {saved})");
+                let value = session.eval(&source).unwrap();
+                session.collect().unwrap();
+                assert_eq!(
+                    observation(&mut session, &value),
+                    serde_json::json!({"tag":"bool","value":false}),
                     "{phase:?}, {source}"
                 );
             }

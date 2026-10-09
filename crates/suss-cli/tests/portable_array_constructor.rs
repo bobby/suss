@@ -49,7 +49,9 @@ fn array_constructor_preserves_identity_arity_length_and_holes_in_both_phases() 
         session.set_operation_fuel(100_000_000);
         for case in corpus["cases"].as_array().unwrap() {
             let source = case["source"].as_str().unwrap();
-            let value = session.eval(source).unwrap();
+            let value = session
+                .eval(source)
+                .unwrap_or_else(|error| panic!("Array case {} ({source}): {error}", case["id"]));
             session.collect().unwrap();
             let actual = session
                 .inspect(&value, |store, value| {
