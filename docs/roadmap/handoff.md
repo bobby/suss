@@ -22114,3 +22114,29 @@ Independent MLIR historical-scope review reproduced identity rejection exit1
 and exact2experimentdocs/4bootstrap/0production delta with matching hashes;
 no material findings. Current-base execution/fullbaseline/publication remain
 pending. Normal Cargo sequence unchanged; session99452 still confirmedlive.
+
+
+## Post-#226 MLIR recovery: current execution gates
+
+At source head 9dddc895f679c1d77795f8461188474f00d3b5a2, isolated Rust
+18-test run31695 and normal bridge build52499 exited0. Native analysis88274,
+source export actual execution47601, native effects20378 and 92-pair
+comparison35078 also exited0. Evidence is retained under experiments/mlir/evidence
+in post226-execution-gates.json and the referenced logs/report. Exact 9/13
+bits matched after GC for all92 pairs. Fresh pinned CLJS effects5193 exited0:
+all7 result/journal/count triples matched frozen expectations and actual native
+artifacts. The reference checkout is clean at c4295f303100bbf5afac449242d30bca1126f1a1.
+These explicit experiment gates do not replace root baseline or CI.
+
+CLI build90448 is confirmed live, using jobs2 and isolated native-target-post226.
+Next unblocked task after terminal successful build: check-source-oracles.py with
+that CLI and the pinned checkout, then retain source observations, fresh complete
+identity, independent final-head review, required unchanged full workspace baseline
+and final-head CI before promoting #227. No adoption or M4 completion claim.
+#228 was independently reviewed at ebdbc16, passed required full baseline94838
+and all10 final-head CI checks, and was promoted for Bobby; no merge performed.
+
+CLI90448 terminal0; source primary8091 terminal0 at the same 9dddc89 source.
+Fresh pinned binary64 9/13 and current CLI printed9/13 match; retained post226
+source-primary log and CLJS/native observations. Packaging fresh content identity
+(identity-post226.json), then final committed-head review/full baseline/CI.

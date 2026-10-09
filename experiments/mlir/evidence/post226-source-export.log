@@ -1,0 +1,2 @@
+PASS genuine original/mutated source facts and unchanged numeric graphs; v1/source-malformation/missing-carrier fail closed
+actual two-fragment WasmGC source preservation: PASS

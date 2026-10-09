@@ -3,9 +3,18 @@
 After #226, recovered experiment rebases onto main `4e0f00d`.
 [Post-merge C++ gates](post226-cpp-gates.json) record a restored verified SDK,
 actual one-worker build, CTest and explicit dialect/global/export/effects gates
-(all terminal0). This does not replace the current-base Rust/Wasmtime/source
-execution or full-baseline gates, which remain pending after cleanup interrupted
-the previous baseline. The `22723b4` records below remain evidence at that base;
+(all terminal0). [Fresh execution gates](post226-execution-gates.json) now retain
+18 isolated Rust tests, the normal bridge build, genuine analysis print/parse,
+actual source preservation, all seven native effects cases, and all 92 paired
+executions with exact 9/13 result bits after GC. Fresh pinned ClojureScript effects
+observations also match all seven native result/journal/count triples.
+[Current measurements](post226-pipeline-comparison.json) retain binary hashes,
+samples and exclusions; they support no production performance claim.
+The fresh CLI source comparison also passed: pinned binary64 9/13 and current
+CLI printed 9/13. These printed values remain separate from bridge ABI decoding.
+The fresh identity manifest is `identity-post226.json`; its content check uses the
+same capture script with `--check`. Independent review, full workspace baseline
+and final-head CI remain pending. The `22723b4` records below remain evidence at that base;
 their bootstrap identity projection deliberately differs from new main.
 
 The earlier retained results below use main `22723b432c5fb4792c39302d3739b73a44fa87ff`.
