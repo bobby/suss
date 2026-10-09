@@ -22253,3 +22253,7 @@ This is implementation planning, not new source execution or acceptance.
 Next scheduled Cargo step remains existing scalar/type prerequisite validation
 after sole MLIR baseline gates release the lane. Preserve sharing assertions
 and all original #18/#19 criteria during storage migration.
+
+## Remaining M4 refresh after #227/#228 merges — 2026-10-08
+
+Sorted constructor prerequisites refreshed at 82e400d onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus ISorted/IComparable/type. python3 scripts/core_import.py --check:338files verified; git diff --check passes. Seven prerequisite Rust sources are byte-identical to pre-rebase 8fccc93. Bootstrap artifacts remain merged main artifacts; authored native prerequisites are still uncompiled. Next after sole baseline34020 terminal: regenerate both bootstrap phases, execute comparator compiler/ABI and Runtime/Macro protocol/scalar-constructor gates before full Array/comparator/tree work. Original #18/#19 remain incomplete.
