@@ -1,0 +1,61 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "captured-local",
+      "source": "(let [x 17 r (reify Object (value [_] x))] (= (.value r) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "with-meta-preserves-capture",
+      "source": "(let [x 23 r (reify Object (value [_] x)) m (with-meta r {:marker false})] (and (= (.value m) 23) (= (meta m) {:marker false}) (nil? (meta r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reader-meta-transfer",
+      "source": "(let [r ^{:marker 29} (reify Object (value [_] 1))] (= (meta r) {:marker 29}))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "same-site-nominal-class",
+      "source": "(let [make (fn [x] (reify Object (value [_] x))) a (make 1) b (make 2)] (and (= (type a) (type b)) (= (.value a) 1) (= (.value b) 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "different-sites-distinct-types",
+      "source": "(let [a (reify Object (value [_] 1)) b (reify Object (value [_] 2))] (not= (type a) (type b)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "protocol-dispatch",
+      "source": "(let [r (reify ICounted (-count [_] 3))] (= (count r) 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "method-head-recur",
+      "source": "(let [r (reify Object (sum [_ n acc] (if (zero? n) acc (recur (dec n) (+ acc n)))))] (= (.sum r 4 0) 10))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

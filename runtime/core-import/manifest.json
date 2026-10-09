@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "896b93486ce064e477d15d0b93881dd8c8cb68083f36e24c1153b9a78ed9c05b",
-  "reviews-sha256": "ef7fb98764374781408f9f65b618ae2bdbb4fad391a19a376d043bf31ca115cd",
+  "recipe-sha256": "85e1a23bb502e60b155be5ae4559587147c7bc18dcf913900832723a2a4fe792",
+  "reviews-sha256": "e95e7e3ac9fe064d7f24d7848902cd5e7946f448afd42fdd1268da111d01debf",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10331,6 +10331,71 @@
       "semantic-tests": [
         "crates/suss-cli/tests/core_comparator_foundations.rs"
       ]
+    },
+    {
+      "id": "runtime:not-empty:4194",
+      "name": "not-empty",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4194,
+      "end-line": 4196,
+      "byte-start": 110861,
+      "byte-end": 110954,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+      "extracted": "extracted/0334.cljs",
+      "extracted-sha256": "ed9964b16cd3164620b7f19ea1abb3affee32dc0788aabd1144f33853c7512d7",
+      "patch": "docs/compatibility/patches/record-iteration-not-empty.json",
+      "patch-sha256": "19ca8ddeea212ffb0a5657b59ead295f0e453f6c50a912975b2a38d51a8545ec",
+      "adapted-form-sha256": "343336b7eab90f119f15fd60e82acd7ef63168c70f8925119043e2034990920b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:seq:1282",
+        "macro:defn",
+        "macro:when"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_record_iteration.rs",
+        "tests/oracle/record-iteration-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:RecordIter:6607",
+      "name": "RecordIter",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6607,
+      "end-line": 6617,
+      "byte-start": 181581,
+      "byte-end": 181946,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+      "extracted": "extracted/0335.cljs",
+      "extracted-sha256": "1a6695915f06855611c8e87c9eaaa5e575b288f24c50a5c4b0d5e9ce12a8c240",
+      "patch": "docs/compatibility/patches/record-iteration-RecordIter.json",
+      "patch-sha256": "e46fbf74215eca1d57c433a1728a2a6af1394dd45672f70f5e9b23cbd6c9bd2a",
+      "adapted-form-sha256": "f68cb88fc4d793e9276adb846421a94d54e0aca2d4da99bddc74af80226e1522",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:deftype",
+        "runtime:nth",
+        "runtime:inc:1505",
+        "macro:inc:1192",
+        "MapEntry/-lookup",
+        "Object iterator methods"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_record_iteration.rs",
+        "tests/oracle/record-iteration-cases.json"
+      ]
     }
   ],
   "loader": {
@@ -10684,6 +10749,8 @@
     "extracted/0331.cljs": "7b7f23e1a16947181877905e65eb3df15df3469d85e649d04d24c2f7d0f20ecc",
     "extracted/0332.cljs": "f104973e3e889bf6b2e09d9cfd09fe6b3079b20ace69021d95807c8363090402",
     "extracted/0333.cljs": "29649717e40ecd5a5f30c654d67bbc980299c9879f99858701e17a583f3110c0",
-    "suss/core.sus": "96a24862cf39db8940835e349453a26250e8e7f6e7c10f7cdc2b94b967948a48"
+    "extracted/0334.cljs": "ed9964b16cd3164620b7f19ea1abb3affee32dc0788aabd1144f33853c7512d7",
+    "extracted/0335.cljs": "1a6695915f06855611c8e87c9eaaa5e575b288f24c50a5c4b0d5e9ce12a8c240",
+    "suss/core.sus": "87718bf37d411f54b2c6c99720e7976bbf2522f047016c75f24038ded7d281b1"
   }
 }

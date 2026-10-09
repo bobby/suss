@@ -5789,6 +5789,22 @@
     (if (suss.bootstrap/nil? x)
       nil
       (suss.bootstrap/value-constructor x))))
+
+(def not-empty
+  "If coll is empty, returns nil, else coll"
+  (fn [coll] (if (seq coll) coll nil)))
+
+(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]
+  Object
+  (hasNext [_]
+    (or (< i base-count) (.hasNext ext-map-iter)))
+  (next [_]
+    (if (< i base-count)
+      (let [k (nth fields i)]
+        (set! i (inc i))
+        (MapEntry. k (-lookup record k) nil))
+      (.next ext-map-iter)))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

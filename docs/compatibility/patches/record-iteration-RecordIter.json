@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+  "replacement": "(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]\n  Object\n  (hasNext [_]\n    (or (< i base-count) (.hasNext ext-map-iter)))\n  (next [_]\n    (if (< i base-count)\n      (let [k (nth fields i)]\n        (set! i (inc i))\n        (MapEntry. k (-lookup record k) nil))\n      (.next ext-map-iter)))\n  (remove [_] (suss.bootstrap/error \"Unsupported operation\")))",
+  "rationale": "Retain the entire pinned nominal declaration, five fields, mutable index and all Object methods. Adapt only host Error allocation to the existing descriptor-backed portable Error constructor. Preserve increment before lookup, short-circuit availability and extension delegation; remove returns an Error rather than throwing it. Execution remains required."
+}

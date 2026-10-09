@@ -1,0 +1,2 @@
+WARNING: Ignoring target object "(js* "(~{} - ~{})" n 1)" passed in recur to protocol method head at line 9 /private/tmp/suss-m4-record-iteration/tests/oracle/out/generated/suss_oracle/reify_prerequisites.cljs
+PASS 7 pinned reify prerequisite observations

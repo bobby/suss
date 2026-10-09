@@ -1673,6 +1673,16 @@
       "id": "runtime:type:347",
       "source-sha256": "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7",
       "patch": "docs/compatibility/patches/sorted-type.json"
+    },
+    {
+      "id": "runtime:not-empty:4194",
+      "source-sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+      "patch": "docs/compatibility/patches/record-iteration-not-empty.json"
+    },
+    {
+      "id": "runtime:RecordIter:6607",
+      "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+      "patch": "docs/compatibility/patches/record-iteration-RecordIter.json"
     }
   ],
   "loader": {

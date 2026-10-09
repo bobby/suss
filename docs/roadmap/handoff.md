@@ -22823,3 +22823,138 @@ Bootstrap reproducibility session15450 completed exit0: Java/Node absent, two ge
 Frozen3a50 full baseline session94535 terminated101:502passed/1failed/0ignored; `/private/tmp/suss-m4-full-baseline-late-ci.log`. Failure was `private_object_errors_are_atomic_or_runtime_and_recover` line52: obsolete negative `(suss.bootstrap/object-set (factory) (factory) 7)`. Isolated3a50 worktree `/private/tmp/suss-m4-native-object-key-repair` source-labelled diagnostic session77163 exited101,1passed/1failed (`/private/tmp/suss-m4-native-object-key-parent-diagnostic.log`). Fresh pinned c4295f CLJS compilation/Node execution both exited0: ordinary object key converts to `[object Object]`, assignment and property both7. Raw hook trace1234, thrown payload73, preserved property23 and recovery19 retained in `docs/compatibility/native-object-key/evidence`; reproduction command and hashes accompany them.
 
 Replace only obsolete negative with post-GC independently decoded Number bits; new regression covers both caller phases, source operand order before string-hint hooks, toString precedence, original thrown payload, preserved property and recovery. Retain original nil-get/self-cycle/mutual-cycle failures, compile atomicity, captured factory behavior and original source-order test. No production semantics or bootstrap changes. Authorized focused command `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-cli --test portable_native_objects --locked -- --test-threads=2` session83059 exited0:3passed/0failed/0ignored; log `/private/tmp/suss-m4-native-object-key-repair-focused.log`. No full baseline/bootstrap/push executed. Next: independent other-agent committed-head review, then coordinate full baseline and final-head CI; no milestone completion claimed.
+
+## Historical record prerequisite lane, retained during Array integration
+
+The following notes retain their original snapshots; native execution is still pending.
+
+Record iteration staging (2026-10-08): isolated branch
+portable/m4-record-iteration at origin/main4e0f00d retains complete pinned
+not-empty4194–4196 and RecordIter6607–6617 using core_import.extract_forms,
+with declaration/file hashes and EPL notice in docs/compatibility/record-iteration.
+No source import, bootstrap regeneration or native execution has occurred.
+Full reify/nil-iter and defrecord helper graph remain required; iterator-only
+fixtures cannot establish record acceptance. Next: full-form adaptations,
+reviews and primary observations before native gates. Lazy final-head workspace
+baseline session99452 was confirmed live; no second Cargo graph started.
+
+Record iteration source import follow-up: initialized pinned submodule via local
+reference, selected both whole forms, adapted only defn/when expansion for
+not-empty and host Error construction for RecordIter. Import generation/check
+verify331 artifacts; review overlay validates428 reviewed/637 unassessed.
+Bootstrap remains unchanged, so no execution claim. Independent read-only
+source review dispatched. Next: primary corpus and both-phase native regressions.
+
+Record iterator validation: independent complete-form source review found no
+material semantic defect; corrected imported-source status and per-form
+dependencies (including macro inc1192). Pre-import retained queue binary
+exits1: Unresolved Runtime name RecordIter at bytes1..12; log
+/private/tmp/suss-record-iteration-before-import.log. Fresh pinned CLJS compilation
+68008 exits0, Node execution exits0, all10 exact ordered Boolean observations
+match record-iteration-cases.json, including lookup throw then next field,
+extension short-circuit/delegation, nil/false and returned remove Error.
+Reference result does not prove native execution; bootstrap unchanged.
+
+Record iterator reproducibility: added strict closed10-case reference driver
+and pinned CLJS/Node runner; comparison against fresh observations passes.
+Authored both-phase native regression independently decodes Boolean ABI after
+GC for all10 cases, with explicit host Error predicate to canonical portable
+Error predicate adaptation. Rustfmt and review-overlay validation pass.
+Native test is uncompiled/unexecuted while baseline99452 owns Cargo.
+Next: regenerate bootstrap and execute focused native test when slot is free;
+add sole-handle iterator retention and full record/reify dependencies.
+
+Record iterator retention regression authored: sole host handle retains fresh
+iterator and its map/fields/extension object across GC, separately compiled
+projection advances twice to17/23, then exhaustion is independently decoded.
+No native execution yet. Import check331 passes; existing full Python suite
+passes, and two newly added fail-closed oracle tests pass (missing/reordered/
+duplicate/unknown/mistyped/extra observations and duplicate JSON keys).
+Read-only review of tests/harness dispatched; baseline99452 confirmed live.
+
+Record iterator follow-up review reproduced10 primary/2 harness observations,
+found corpus identity closure gap: fixed oracle and native test to require exact
+ordered IDs; third focused harness test rejects substituted/reordered corpus.
+All3 focused tests pass. Retained primary/native-before-import/Python evidence
+with file SHA receipts under record-iteration/evidence. Native tests remain
+unexecuted; live dependencies and independent Error payload probes pending.
+
+Record iteration runner sh scripts/test-record-iteration-oracle.sh terminal0,
+fresh compile/Node/strict comparison10pass; retained primary-runner.log/hash.
+Third native regression now independently inspects returned Error descriptor7
+and UTF16 Unsupported operation after GC, successful evaluation proves intended
+return rather than throw once executed. Authored native tests remain uncompiled.
+Full Python rerun64715 and independent follow-up review pending at dispatch.
+Lazy baseline99452 still live, progressed to native_repl_async_io.
+
+Record iteration follow-up: full Python rerun64715 terminal0 (234tests pass),
+retained final-suite log/hash. Independent latest-delta review finds no material
+defect; reproduced3 harness/10primary and validated Error decoder authoredtest.
+Corrected stale README wording. Native execution remains pending.
+
+Record iterator live dependency progress: expanded closed corpus to13 with
+not-empty argument effect exactly once, rebound seq called once and actual
+rebound nth replacement observed by RecordIter. Fresh pinned runner78115
+terminal0/13matches; focused3 harness tests pass. Native test consumes same13
+ordered IDs, remains uncompiled. Retained new runner/result files with hashes;
+earlier10 evidence retained historical. Next: native bootstrap/focused execution
+and live lookup/solehandle/fullrecords continuation. Baseline99452 live.
+
+Independent13-case review reproduced all13+3harness/no material defect.
+Added14th live -lookup case with both arity entrypoints and finally restoration;
+fresh pinned runner22927 exits0/all14matches, focused3harness passes.
+Native exact IDs14 aligned, still uncompiled. Retained primary14files/hashes.
+
+Record iterator source checkpoint: final14th-case independent review finds no
+material finding and reproduces14 pinned observations. Complete forms,
+provenance, strict14-case harness, three authored native regressions and
+retained evidence are checkpointed for subsequent native validation.
+Bootstrap intentionally unchanged; no native test compile/execution yet.
+No PR/promotion or full record acceptance from this checkpoint.
+
+Record macro dependency evidence: retained12 complete pinned reify/exists?/
+deftype/defrecord and helper forms with source/file hashes and EPL notice in
+record-macro-foundations. No macro import or execution. Inspected reify capture,
+metadata/type guard and compiler munging/analyzer dependencies; full emit
+record fields/methods/factories remain required. Next after iterator validation:
+complete helper adaptation and generic nominal record storage, no stubs.
+
+Reify prerequisite execution: reproducible pinned runner5248 terminal0, five
+closed ordered Boolean observations match captures/metadata/same-site and
+different-site nominal type identity. Retained missing native reify failure
+(exit1 bytes14..19) and primary results/log with hashes. Initial wrong cwd
+failed namespace generation, corrected before actual compile/execution.
+Authored portable_reify both-phase/GC/independent Boolean ABI regression,
+uncompiled and expected to fail until full macro implementation. No skips or
+full record claim. Source macro prerequisites remain retention-only.
+
+Reify review finds12 source forms/hash/license and5 primary cases sound,
+records unproven GC/protocol/recur/unused-local/metadata-elision/munging and
+cross-fragment same-site contracts. Added sole-host-handle reified object
+retention test: captures vector, GC, separately compiled Object invocation
+projects23 with independent numeric decode afterGC. Uncompiled/no pass claim.
+Added macro-provenance verifier (12wholeforms pass) and3 new fail-closed reify
+oracle tests (allpass). FullPython24711 running; baseline99452 live.
+
+Reify follow-up: full Python237tests pass10.897s (24711exit0), retained log.
+Fresh pinned7case runner33744 terminal0 adds ICounted protocoldispatch and
+method-head recur behavior; strict3harness and12form provenance checks pass.
+Retained primary7result/log/hash. Native exactordered7IDs aligned and
+sole-hostcapture test authored; both uncompiled/fullmacro unimplemented.
+
+Reify latest independent review reproduces12wholeform verification,3harness
+and7primary observations; no material defect in GCretention authoredtest or
+protocol/recur additions. Namespace munging, unused-local capture and repeated
+fragment identity still pending. No native compilation or macro implementation.
+
+## Remaining M4 refresh after #227/#228 merges — 2026-10-08
+
+Record/reify prerequisites refreshed at 5d23601 onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus full not-empty/RecordIter. python3 scripts/core_import.py --check:337files verified; git diff --check passes. Both record/reify native test files and all 12 retained upstream macro forms are byte-identical to f26639d. Macro forms remain retained provenance, not implemented acceptance. Native tests remain uncompiled and bootstrap is still merged main. Next after constructor lane: regenerate affected bootstrap and execute record iteration prerequisites, then implement full reify/record macro contracts and nominal collection behavior. Sole Suss Cargo owner34020 continues unchanged.
+
+Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` terminal0, 241tests pass in 8.788s; log /private/tmp/suss-m4-record-post227-python.log, SHA256 7885ccf6e1fa20aca553d2e5fe282503c698d4e96ffa2475044c82860e3154de. Independent read-only exact-head review b0f615d31642f8b3ee3960f075e47f6f2dc750eb found no material refresh defects. This validates harness/provenance and retained observations, not fresh native execution. Bootstrap regeneration and native gates still pending; baseline34020 remains sole Cargo graph.
+
+### 2026-10-09 — record prerequisites integrated after Array conversion
+
+Copied the reviewed record/reify lane from00c1d7f onto current Array runtime c4c53f9 in an isolated integration worktree. Every current import selection remains ordered and unchanged; complete not-empty and RecordIter forms are appended with their original patches/reviews. Twelve macro forms and native regressions remain unchanged from that lane. Generated importer verification/Python checks are next. Bootstrap regeneration and native execution remain pending; reify/record macro implementation is still required, not implied by retained provenance. No Cargo graph was started while baseline99077 remains live.
+
+Integration validation: all current 334 selections remain identical/in order, plus exactly not-empty and RecordIter. Both native files and all twelve retained macro forms are byte-identical to00c1d7f. `python3 scripts/core_import.py --check` verified340 files; `python3 scripts/check_record_macro_provenance.py` verified12 complete pinned macro forms; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed244 tests in8.053s, log `/private/tmp/suss-m4-record-after-arrays-python.log`, SHA256 135e40d5429b2a876fd76ba7a39d165711993599d81ebc15fe99929608f588a9. No native execution/bootstrap regeneration, no full record acceptance or PR readiness implied. Next unblocked task is focused native record iterator execution after scheduled compiler validation, then complete reify/record macro contracts.

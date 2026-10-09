@@ -1,0 +1,25 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "forms": [
+    {
+      "id": "runtime:not-empty:4194",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4194,
+      "end-line": 4196,
+      "sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+      "retained": "docs/compatibility/record-iteration/not-empty.cljs",
+      "retained-file-sha256": "6f5ebf742d283b3f498469a848be9de4291d8a5adec106c59a5540f0c05516d9"
+    },
+    {
+      "id": "runtime:RecordIter:6607",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6607,
+      "end-line": 6617,
+      "sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+      "retained": "docs/compatibility/record-iteration/RecordIter.cljs",
+      "retained-file-sha256": "2d9925f283a272bec1b464fade0d34ccdf9ae8cf3867e812b1073e28185682db"
+    }
+  ],
+  "status": "complete source imported; bootstrap and native execution unverified"
+}

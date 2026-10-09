@@ -4245,4 +4245,18 @@
    :rationale "Retain the complete pinned queue declaration, every Object/protocol method, mutable field and FIFO front/rear transition. Existing bounded nominal/compiler adapters require executing validation; printing, iterator and sharing contracts remain unproven."
    :status :in-progress :adaptation-path nil :alternative nil
    :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
+  "runtime:not-empty:4194"
+  {:source-sha256 "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:seq:1282" "macro:defn" "macro:when"]
+   :classification :adapted
+   :rationale "Complete pinned form retained; bootstrap declaration or Error allocation adaptation only. Native execution and complete record contract remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-iteration-not-empty.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_iteration.rs" "tests/oracle/record-iteration-cases.json"]}
+  "runtime:RecordIter:6607"
+  {:source-sha256 "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "runtime:nth" "runtime:inc:1505" "macro:inc:1192" "MapEntry/-lookup" "Object iterator methods"]
+   :classification :adapted
+   :rationale "Complete pinned form retained; bootstrap declaration or Error allocation adaptation only. Native execution and complete record contract remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-iteration-RecordIter.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_iteration.rs" "tests/oracle/record-iteration-cases.json"]}
 }}

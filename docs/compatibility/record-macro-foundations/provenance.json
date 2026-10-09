@@ -1,0 +1,115 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "status": "complete source retention only; no macro implementation or execution",
+  "forms": [
+    {
+      "id": "macro:exists?:1000",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1000,
+      "end-line": 1015,
+      "sha256": "16d65a68e74c4448875b6364dfeff5cf058263f94ef643939ddceab5e7d2fe7c",
+      "retained": "docs/compatibility/record-macro-foundations/exists-predicate.cljc",
+      "retained-file-sha256": "9fa3b7b5fd9bec7e41366513f2f59f04c3b01b8c1d39dcb1cbc9a201ae38af47"
+    },
+    {
+      "id": "macro:reify:1355",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1355,
+      "end-line": 1418,
+      "sha256": "43c8a215b5db77edf4293eba941303978e42fb8b23479d5fe475195800377068",
+      "retained": "docs/compatibility/record-macro-foundations/reify.cljc",
+      "retained-file-sha256": "e5a22afd6a9952f21e1a8b85f2cd0dc2c3dc40967f4e1142f06379059325fb78"
+    },
+    {
+      "id": "macro:prepare-protocol-masks:1710",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1710,
+      "end-line": 1730,
+      "sha256": "d172ca8907ff60eff042fd5b2772ac2299fda0d776670cb3f975587db9b1fd3b",
+      "retained": "docs/compatibility/record-macro-foundations/prepare-protocol-masks.cljc",
+      "retained-file-sha256": "a5956a8285686fa95a101b0b33499ffcbf16c36282395c6ea046165162229460"
+    },
+    {
+      "id": "macro:annotate-specs:1732",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1732,
+      "end-line": 1735,
+      "sha256": "586c800446617850ca3f8f73e3c2a4a997ab340b1d5c3221f470ac96188d6737",
+      "retained": "docs/compatibility/record-macro-foundations/annotate-specs.cljc",
+      "retained-file-sha256": "74c1dc5c4ad1cfc47703e1768551fa429ccea6be45e29a60b201d8ef4c034485"
+    },
+    {
+      "id": "macro:dt->et:1737",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1737,
+      "end-line": 1752,
+      "sha256": "ec28e27e949dee8a39b90df8118de82625f9fee597935c3ef89f8acd2d06dfa4",
+      "retained": "docs/compatibility/record-macro-foundations/dt-to-et.cljc",
+      "retained-file-sha256": "bc7939d660d363cc22ba35e150913874b71bf28dbe7b15a30a704ceb5595d1fa"
+    },
+    {
+      "id": "macro:collect-protocols:1754",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1754,
+      "end-line": 1758,
+      "sha256": "f1813953ce29694f22cd26fff5a3823003396ea476bbdf34c5a82e92a8a872f3",
+      "retained": "docs/compatibility/record-macro-foundations/collect-protocols.cljc",
+      "retained-file-sha256": "c634a4f94462c22dd6d2a6a73e0deb532a6c6e2d74dbac05675d80aaf61f07a4"
+    },
+    {
+      "id": "macro:build-positional-factory:1760",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1760,
+      "end-line": 1769,
+      "sha256": "fad1f2e6fed6882ad744d70464383de431b5e5a297fd0152513440a815c83527",
+      "retained": "docs/compatibility/record-macro-foundations/build-positional-factory.cljc",
+      "retained-file-sha256": "d5db735ce59c4c312c04c6b7de2131a4c5b71c54d698811f0329e1c0be04e62f"
+    },
+    {
+      "id": "macro:validate-fields:1771",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1771,
+      "end-line": 1776,
+      "sha256": "fd9dd18485ae4c6c69ab4f98d23b116f82173a88747677a151e5171748e4b266",
+      "retained": "docs/compatibility/record-macro-foundations/validate-fields.cljc",
+      "retained-file-sha256": "52c46921e4a86193630fe772a4d6ce53e76c7d1ea2cec70688a5dbf5dc0a1be8"
+    },
+    {
+      "id": "macro:deftype:1778",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1778,
+      "end-line": 1851,
+      "sha256": "e9308661076599c2f8bc0e4ae09bcc72b1ecb462d1b0b2855797346d46add88c",
+      "retained": "docs/compatibility/record-macro-foundations/deftype.cljc",
+      "retained-file-sha256": "b43fe43df07575b4b19b0c12ad48c4a777f10f0b8994e4729af0ab9ba99587df"
+    },
+    {
+      "id": "macro:emit-defrecord:1853",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1853,
+      "end-line": 1958,
+      "sha256": "4b6bb63cee300f674968585a62cbb4938d26e3ce22d0ec875f0fd27624fe9616",
+      "retained": "docs/compatibility/record-macro-foundations/emit-defrecord.cljc",
+      "retained-file-sha256": "5c28f4bfd281341f9e4b13ec0c6fb0feca2e35494aca6f6394f2b545bcf66447"
+    },
+    {
+      "id": "macro:build-map-factory:1960",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1960,
+      "end-line": 1970,
+      "sha256": "6406d90207c872c9eee82e38054bffa08d7d6a3092dec6ef56a22e6296b541cb",
+      "retained": "docs/compatibility/record-macro-foundations/build-map-factory.cljc",
+      "retained-file-sha256": "0e3f0c3741568d6c01d22eb23e2f101a674f28d1f1bf3d8732ce91e9237048ed"
+    },
+    {
+      "id": "macro:defrecord:1972",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1972,
+      "end-line": 2039,
+      "sha256": "3d9985e703105f6f66a3d56e9a3158684fd6b65c06aa1263034175b69d39b948",
+      "retained": "docs/compatibility/record-macro-foundations/defrecord.cljc",
+      "retained-file-sha256": "d7d9b7f589c39fe8388389c702b4dd48b33cc2192fae2e48aeb9e789aa1f34f2"
+    }
+  ]
+}
