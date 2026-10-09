@@ -971,7 +971,7 @@ mod identity_tests {
             let owner = session.eval("(def overlap-array (array 1 nil 2))").unwrap();
             let seq = session.eval("(IndexedSeq. overlap-array 0 nil)").unwrap();
             let sparse = session
-                .eval("(let [ctor (type (array)) a (ctor 3)] (aset a 0 9) a)")
+                .eval("(let [ctor (type (array)) a (ctor 33)] (set! (.-length a) 3) (aset a 0 9) a)")
                 .unwrap();
             let head = session
                 .inspect(&sparse, |mut store, value| {
@@ -1008,7 +1008,7 @@ mod identity_tests {
                 session.collect().unwrap();
                 assert!(bridge.read(&mut session, &value, 0..1).is_err(), "{source}");
             }
-            let owner = session.eval("(def decoder-array (let [ctor (type (array)) a (ctor 2)] (aset a 0 1) (aset a 1 2) a))").unwrap();
+            let owner = session.eval("(def decoder-array (let [ctor (type (array)) a (ctor 33)] (set! (.-length a) 2) (aset a 0 1) (aset a 1 2) a))").unwrap();
             let seq = session.eval("(IndexedSeq. decoder-array 0 nil)").unwrap();
             let (node, saved_tail) = session
                 .inspect(&owner, |mut store, value| {
