@@ -1,0 +1,3100 @@
+[
+  {
+    "id": "Error-new-zero",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [],
+      "messageOwn": false,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-new-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [],
+      "messageOwn": false,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-new-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        110,
+        117,
+        108,
+        108
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-new-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        102,
+        97,
+        108,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-new-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        49,
+        55
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-new-utf16",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        65,
+        55357,
+        56832
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-ordinary",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        111,
+        114,
+        100,
+        105,
+        110,
+        97,
+        114,
+        121
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-cause-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-cause-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "nil"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-cause-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-cause-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-primitive-options-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-primitive-options-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-primitive-options-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "Error-primitive-options-string",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-zero",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [],
+      "messageOwn": false,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [],
+      "messageOwn": false,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        110,
+        117,
+        108,
+        108
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        102,
+        97,
+        108,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        49,
+        55
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-new-utf16",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        65,
+        55357,
+        56832
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-ordinary",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        111,
+        114,
+        100,
+        105,
+        110,
+        97,
+        114,
+        121
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-cause-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-cause-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "nil"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-cause-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-cause-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        99,
+        97,
+        117,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-primitive-options-nil",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-primitive-options-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-primitive-options-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "RangeError-primitive-options-string",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "RangeError",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "inherited-cause",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        105,
+        110,
+        104,
+        101,
+        114,
+        105,
+        116,
+        101,
+        100
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "array-cause",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        97,
+        114,
+        114,
+        97,
+        121
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "typed-error",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        116,
+        121,
+        112,
+        101,
+        100
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "typed-range-first",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4031000000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "typed-parent-first",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4031000000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "typed-exception-info",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        105,
+        110,
+        102,
+        111
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "nominal-not-derived",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "range-parent",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "error-not-range",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "info-parent",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "reject-nil",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "reject-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "reject-number",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "reject-shape",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "original-throw",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "original-false-throw",
+    "mode": "throw",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "finally-rethrow",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "constructor-operand-order",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        111,
+        114,
+        100,
+        101,
+        114,
+        101,
+        100
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4093480000000000"
+    }
+  },
+  {
+    "id": "instance-operand-order",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4028000000000000"
+    }
+  },
+  {
+    "id": "message-conversion-order",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        99,
+        111,
+        110,
+        118,
+        101,
+        114,
+        116,
+        101,
+        100
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4093480000000000"
+    }
+  },
+  {
+    "id": "conversion-original-throw",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "405ec00000000000"
+    }
+  },
+  {
+    "id": "retained-class-identity",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "class-of-error",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "class-of-range",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "cause-read-absent",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "cause-read-nil",
+    "mode": "return",
+    "value": {
+      "tag": "nil"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "cause-read-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "local-js-shadow",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        108,
+        111,
+        99,
+        97,
+        108
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-Error-name",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-Error-message",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": []
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-RangeError-name",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        82,
+        97,
+        110,
+        103,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-Error-constructor",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-Error-not-instance",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-RangeError-is-Error",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-RangeError-not-self",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-stable-owner",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-ordinary-derived",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-derived",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-typed-catch",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "401c000000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-detach-live",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-distinct-class-owners",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "options-callable-absent",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "options-callable-own-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "options-source-inherited-false",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "options-source-inherited-number",
+    "mode": "return",
+    "value": {
+      "tag": "error",
+      "class": "Error",
+      "message": [
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": true,
+      "cause": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-intermediate-source-instance",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-intermediate-source-catch",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-RangeError-live-detach",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-inherited-name",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-inherited-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-getter-receiver",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-inherited-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-inherited-nil",
+    "mode": "return",
+    "value": {
+      "tag": "nil"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-source-getter-original-throw",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "type-source-live-constructor-nil",
+    "mode": "return",
+    "value": {
+      "tag": "nil"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "type-source-live-constructor-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "type-Error-live-constructor-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-Error-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-Error-message",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-RangeError-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        82,
+        97,
+        110,
+        103,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-RangeError-message",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        82,
+        97,
+        110,
+        103,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-TypeError-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        84,
+        121,
+        112,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-TypeError-message",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        84,
+        121,
+        112,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-message-nil",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        110,
+        117,
+        108,
+        108
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-cause-nil",
+    "mode": "return",
+    "value": {
+      "tag": "nil"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-name-nil",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        110,
+        117,
+        108,
+        108,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-message-false",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        102,
+        97,
+        108,
+        115,
+        101
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-cause-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-name-false",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        102,
+        97,
+        108,
+        115,
+        101,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-message-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-cause-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-name-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-message-number",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        55,
+        51
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-cause-number",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-name-number",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        55,
+        51,
+        58,
+        32,
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-message-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-cause-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": []
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-name-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        120
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-both-empty",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": []
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-borrow-ordinary",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        110,
+        117,
+        108,
+        108,
+        58,
+        32,
+        102,
+        97,
+        108,
+        115,
+        101
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-source-derived",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        55,
+        51
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-reject-nil",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        110,
+        117,
+        108,
+        108
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-reject-false",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        102,
+        97,
+        108,
+        115,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-reject-number",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        55
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-reject-string",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        120
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-reject-undefined",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        117,
+        110,
+        100,
+        101,
+        102,
+        105,
+        110,
+        101,
+        100
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-detached",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        77,
+        101,
+        116,
+        104,
+        111,
+        100,
+        32,
+        69,
+        114,
+        114,
+        111,
+        114,
+        46,
+        112,
+        114,
+        111,
+        116,
+        111,
+        116,
+        121,
+        112,
+        101,
+        46,
+        116,
+        111,
+        83,
+        116,
+        114,
+        105,
+        110,
+        103,
+        32,
+        99,
+        97,
+        108,
+        108,
+        101,
+        100,
+        32,
+        111,
+        110,
+        32,
+        105,
+        110,
+        99,
+        111,
+        109,
+        112,
+        97,
+        116,
+        105,
+        98,
+        108,
+        101,
+        32,
+        114,
+        101,
+        99,
+        101,
+        105,
+        118,
+        101,
+        114,
+        32,
+        110,
+        117,
+        108,
+        108
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "toString-order-0",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        78,
+        58,
+        32,
+        77
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4093480000000000"
+    }
+  },
+  {
+    "id": "toString-order-1",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "toString-order-2",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4028000000000000"
+    }
+  },
+  {
+    "id": "toString-order-3",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "405ec00000000000"
+    }
+  },
+  {
+    "id": "toString-order-4",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4093480000000000"
+    }
+  },
+  {
+    "id": "setter-physical-error-receiver",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        110,
+        101,
+        119
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "setter-original-throw",
+    "mode": "throw",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "mutation-live-constructor-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-prototype-detach",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "mutation-new-prototype-parent",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        105,
+        110,
+        104,
+        101,
+        114,
+        105,
+        116,
+        101,
+        100
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-inherited-cause-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-new-message",
+    "mode": "return",
+    "value": {
+      "tag": "data-descriptor",
+      "value": {
+        "tag": "string",
+        "units": [
+          120
+        ]
+      },
+      "writable": true,
+      "enumerable": false,
+      "configurable": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-new-cause",
+    "mode": "return",
+    "value": {
+      "tag": "data-descriptor",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "writable": true,
+      "enumerable": false,
+      "configurable": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-absent-message",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-assignment-message",
+    "mode": "return",
+    "value": {
+      "tag": "data-descriptor",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "writable": true,
+      "enumerable": true,
+      "configurable": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-redefine-message",
+    "mode": "return",
+    "value": {
+      "tag": "data-descriptor",
+      "value": {
+        "tag": "string",
+        "units": [
+          110,
+          101,
+          119
+        ]
+      },
+      "writable": false,
+      "enumerable": true,
+      "configurable": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-readonly-assignment",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-readonly-redefine",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        67,
+        97,
+        110,
+        110,
+        111,
+        116,
+        32,
+        114,
+        101,
+        100,
+        101,
+        102,
+        105,
+        110,
+        101,
+        32,
+        112,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        121,
+        58,
+        32,
+        97,
+        110,
+        115,
+        119,
+        101,
+        114
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-readonly-samevalue",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-nan-samevalue",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "7ff8000000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-negative-zero-different",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        67,
+        97,
+        110,
+        110,
+        111,
+        116,
+        32,
+        114,
+        101,
+        100,
+        101,
+        102,
+        105,
+        110,
+        101,
+        32,
+        112,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        121,
+        58,
+        32,
+        97,
+        110,
+        115,
+        119,
+        101,
+        114
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-getter-to-data",
+    "mode": "return",
+    "value": {
+      "tag": "data-descriptor",
+      "value": {
+        "tag": "number",
+        "bits": "4052400000000000"
+      },
+      "writable": false,
+      "enumerable": false,
+      "configurable": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "descriptor-data-to-getter",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        110,
+        101,
+        119
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "3ff0000000000000"
+    }
+  },
+  {
+    "id": "descriptor-attribute-order",
+    "mode": "return",
+    "value": {
+      "tag": "number",
+      "bits": "4052400000000000"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "4093480000000000"
+    }
+  },
+  {
+    "id": "constructor-prototype-readonly-Error",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "constructor-prototype-readonly-RangeError",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        82,
+        97,
+        110,
+        103,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "constructor-prototype-readonly-TypeError",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        84,
+        121,
+        112,
+        101,
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "delete-message-inherits",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "delete-cause-undefined",
+    "mode": "return",
+    "value": {
+      "tag": "undefined"
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "delete-absent-true",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": true
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "delete-readonly-false",
+    "mode": "return",
+    "value": {
+      "tag": "bool",
+      "value": false
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-self-cycle-rejected",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        67,
+        121,
+        99,
+        108,
+        105,
+        99,
+        32,
+        95,
+        95,
+        112,
+        114,
+        111,
+        116,
+        111,
+        95,
+        95,
+        32,
+        118,
+        97,
+        108,
+        117,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-static-cycle-rejected",
+    "mode": "throw",
+    "value": {
+      "tag": "error",
+      "class": "TypeError",
+      "message": [
+        67,
+        121,
+        99,
+        108,
+        105,
+        99,
+        32,
+        95,
+        95,
+        112,
+        114,
+        111,
+        116,
+        111,
+        95,
+        95,
+        32,
+        118,
+        97,
+        108,
+        117,
+        101
+      ],
+      "messageOwn": true,
+      "causeOwn": false,
+      "cause": {
+        "tag": "undefined"
+      }
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  },
+  {
+    "id": "prototype-owned-error-parent",
+    "mode": "return",
+    "value": {
+      "tag": "string",
+      "units": [
+        69,
+        114,
+        114,
+        111,
+        114,
+        58,
+        32,
+        112,
+        97,
+        114,
+        101,
+        110,
+        116
+      ]
+    },
+    "trace": {
+      "tag": "number",
+      "bits": "0000000000000000"
+    }
+  }
+]

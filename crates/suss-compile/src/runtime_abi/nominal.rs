@@ -21,7 +21,9 @@ pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
     ]);
 }
@@ -91,7 +93,9 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         ArrayNewDefault(ARGS),
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(0),
+        RefI31,
+        StructNew(DESCRIPTOR),
         GlobalGet(ID_GLOBAL),
         I64Const(1),
         I64Add,
@@ -151,9 +155,15 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
         LocalGet(3),
         RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(0),
+        Call(b.names["owned-descriptor-prototype"]),
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 1,
+        },
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(OBJECT),
+        StructNew(OBJECT),
     ]);
     let object_new = b.function_with_locals(
         "object-new",
@@ -166,19 +176,52 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
     body.extend([
+        LocalGet(0),
+        GlobalGet(ERROR_GLOBAL),
+        RefEq,
+        If(BlockType::Empty),
+    ]);
+    super::error_constructors::family_test(b, &mut body, 1);
+    body.extend([Return, End]);
+    body.extend([
+        LocalGet(0),
+        Call(b.names["owned-descriptor-prototype"]),
+        LocalSet(2),
+        LocalGet(2),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(1),
+        LocalGet(2),
+        Call(b.names["owned-prototype-instance"]),
+        Return,
+        End,
+    ]);
+    body.extend([
         LocalGet(1),
         RefTestNonNull(HeapType::Concrete(OBJECT)),
         If(BlockType::Result(ValType::I32)),
     ]);
     get(&mut body, 1, OBJECT, 0);
     body.extend([
-        LocalGet(0), RefEq, Else,
-        LocalGet(1), RefTestNonNull(HeapType::Concrete(8)),
+        LocalGet(0),
+        RefEq,
+        Else,
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(8)),
         If(BlockType::Result(ValType::I32)),
     ]);
     get(&mut body, 1, 8, 0);
     body.extend([LocalGet(0), RefEq, Else, I32Const(0), End, End]);
-    b.function("object-instance", &[VALUE, VALUE], &[ValType::I32], &body);
+    b.function_with_locals(
+        "object-instance",
+        &[VALUE, VALUE],
+        &[ValType::I32],
+        &[(1, VALUE)],
+        &body,
+    );
 
     let mut body = vec![];
     guard(&mut body, 0, OBJECT);
@@ -444,12 +487,26 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
     body.extend([
-        LocalGet(0), GlobalGet(type_values::KEY_GLOBAL), Call(method_get), LocalSet(1),
-        LocalGet(1), RefTestNonNull(HeapType::Concrete(4)), If(BlockType::Empty),
-        LocalGet(1), Return, End,
-        LocalGet(0), RefFunc(ordinary_type), I32Const(0), I32Const(-1),
-        Call(b.names["closure-new"]), LocalSet(1),
-        LocalGet(0), GlobalGet(type_values::KEY_GLOBAL), LocalGet(1), Call(method_set),
+        LocalGet(0),
+        GlobalGet(type_values::KEY_GLOBAL),
+        Call(method_get),
+        LocalSet(1),
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(4)),
+        If(BlockType::Empty),
+        LocalGet(1),
+        Return,
+        End,
+        LocalGet(0),
+        RefFunc(ordinary_type),
+        I32Const(0),
+        I32Const(-1),
+        Call(b.names["closure-new"]),
+        LocalSet(1),
+        LocalGet(0),
+        GlobalGet(type_values::KEY_GLOBAL),
+        LocalGet(1),
+        Call(method_set),
         LocalGet(1),
     ]);
     b.function_with_locals("class-value-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
@@ -618,7 +675,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         Call(b.names["closure-new"]),
     ]);
     b.function_with_locals(
-        "source-constructor-new",
+        "nominal-source-constructor-new",
         &[VALUE],
         &[VALUE],
         &[(1, VALUE)],

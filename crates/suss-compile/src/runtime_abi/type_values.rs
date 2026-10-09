@@ -90,10 +90,18 @@ pub(super) fn functions(b: &mut Builder) {
         Return,
         End,
         LocalGet(0),
-        Call(b.names["range-error?"]),
+        RefTestNonNull(HeapType::Concrete(8)),
         If(BlockType::Empty),
-        Call(b.names["range-error-constructor"]),
+        LocalGet(0),
+        Call(b.names["language-error-canonical?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+    ]);
+    constructor_name(&mut body);
+    body.extend([
+        Call(b.names["named-property-get"]),
         Return,
+        End,
         End,
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(7)),
@@ -120,7 +128,9 @@ pub(super) fn functions(b: &mut Builder) {
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
-    body.extend([End, LocalGet(1)]);
+    body.extend([End, LocalGet(0)]);
+    constructor_name(&mut body);
+    body.push(Call(b.names["named-property-get"]));
     b.function_with_locals(
         "value-constructor",
         &[VALUE],

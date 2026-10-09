@@ -22,11 +22,109 @@ fn array(body: &mut Vec<Instruction<'static>>, local: u32) {
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
     let descriptor = descriptor_functions(b);
+    // Owned constructor-created Errors keep their mutable property owner in
+    // field2 [initial presence mask, native backing]. Legacy kernel errors have
+    // the original scalar data slot and do not acquire fabricated properties.
+    let mut code = vec![
+        LocalGet(0),
+        Call(b.names["language-error-canonical?"]),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(8)),
+        StructGet {
+            struct_type_index: 8,
+            field_index: 2,
+        },
+        LocalSet(1),
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(2),
+        I32Ne,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut code);
+    code.extend([
+        End,
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalSet(2),
+        LocalGet(2),
+        RefTestNonNull(HeapType::I31),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.extend([
+        End,
+        LocalGet(2),
+        RefCastNonNull(HeapType::I31),
+        I31GetU,
+        I32Const(3),
+        I32GtU,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.extend([
+        End,
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(1),
+    ]);
+    guard(&mut code, 1, 7);
+    code.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet {
+            struct_type_index: 7,
+            field_index: 0,
+        },
+        GlobalGet(TAG_GLOBAL),
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.extend([End, LocalGet(1)]);
+    let owned_error = b.function_with_locals(
+        "owned-error-backing",
+        &[VALUE],
+        &[VALUE],
+        &[(2, VALUE)],
+        &code,
+    );
     b.function(
         "native-object?",
         &[VALUE],
         &[ValType::I32],
         &[
+            LocalGet(0),
+            Call(owned_error),
+            I32Const(0),
+            RefI31,
+            RefEq,
+            I32Eqz,
+            If(BlockType::Empty),
+            I32Const(1),
+            Return,
+            End,
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(7)),
             If(BlockType::Result(ValType::I32)),
@@ -59,10 +157,25 @@ pub(super) fn functions(b: &mut Builder) {
             },
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(7),
+            I32Const(0),
+            RefI31,
+            StructNew(7),
         ],
     );
-    let mut body = vec![];
+    let mut body = vec![
+        LocalGet(0),
+        Call(owned_error),
+        LocalSet(1),
+        LocalGet(1),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(1),
+        LocalSet(0),
+        End,
+    ];
     guard(&mut body, 0, 7);
     body.extend([
         LocalGet(0),
@@ -466,6 +579,17 @@ fn prototype_functions(b: &mut Builder, fields: u32, slot: u32) {
         RefEq,
         If(BlockType::Empty),
     ];
+    body.extend([
+        LocalGet(0),
+        Call(b.names["owned-error-backing"]),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    error_properties::text(&mut body, "Cyclic __proto__ value");
+    body.extend([Call(b.names["owned-type-error"]), Drop, End]);
     nominal::error(&mut body);
     body.extend([
         End,

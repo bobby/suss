@@ -1,5 +1,12 @@
 //! Original bounded transport of actual compiler analysis graphs.
 //! This preserves native facts and sharing; source-level &env schema is separate.
+use crate::portable::{
+    self,
+    hir::{
+        self, Expression, FieldBinding, FunctionScope, Hir, Literal, LocalBinding, SourceNamespace,
+        SourceRole,
+    },
+};
 use crate::{
     portable_macro_data::{FormBridge, MetadataShape},
     portable_session::{Session, SessionError, SessionValue},
@@ -7,13 +14,6 @@ use crate::{
 use std::{
     collections::{BTreeMap, HashMap, VecDeque},
     sync::{Arc, Weak},
-};
-use crate::portable::{
-    self,
-    hir::{
-        self, Expression, FieldBinding, FunctionScope, Hir, Literal, LocalBinding, SourceNamespace,
-        SourceRole,
-    },
 };
 use suss_reader::forms::{Form, Kind};
 
@@ -35,7 +35,8 @@ pub(crate) struct DeclarationValues {
 }
 impl DeclarationValues {
     fn prune(&mut self) {
-        self.metadata.retain(|_, (source, _)| source.strong_count() != 0);
+        self.metadata
+            .retain(|_, (source, _)| source.strong_count() != 0);
     }
 }
 
@@ -271,7 +272,11 @@ pub struct AnalysisGraph<'a> {
     units: usize,
     reader_key_bytes: usize,
     retained: Option<&'a mut DeclarationValues>,
-    metadata_roots: Vec<(Value, DeclarationKey, Arc<portable::resolve::DefinitionInfo>)>,
+    metadata_roots: Vec<(
+        Value,
+        DeclarationKey,
+        Arc<portable::resolve::DefinitionInfo>,
+    )>,
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     forms: BTreeMap<Vec<u8>, Value>,
@@ -479,7 +484,9 @@ impl<'a> AnalysisGraph<'a> {
         if let Some(retained) = &self.retained {
             for (id, key, source) in &self.metadata_roots {
                 if let Some((owner, value)) = retained.metadata.get(key)
-                    && owner.upgrade().is_some_and(|owner| Arc::ptr_eq(&owner, source))
+                    && owner
+                        .upgrade()
+                        .is_some_and(|owner| Arc::ptr_eq(&owner, source))
                 {
                     cached[*id] = Some(value.clone());
                 }
@@ -564,7 +571,9 @@ impl<'a> AnalysisGraph<'a> {
                 if let Some(retained) = &mut self.retained {
                     for (id, key, source) in &self.metadata_roots {
                         if let Some(value) = &cached[*id] {
-                            retained.metadata.insert(key.clone(), (Arc::downgrade(source), value.clone()));
+                            retained
+                                .metadata
+                                .insert(key.clone(), (Arc::downgrade(source), value.clone()));
                         }
                     }
                 }
@@ -1171,7 +1180,9 @@ impl<'a> AnalysisGraph<'a> {
                 "arglists",
                 "arglists-meta",
                 "export",
-                "type", "num-fields", "record",
+                "type",
+                "num-fields",
+                "record",
             ] {
                 if let Some(value) = property(field) {
                     fields.retain(|(name, _)| *name != field);
@@ -1518,7 +1529,9 @@ impl<'a> AnalysisGraph<'a> {
             SourceRole::Plain => "plain".into(),
             SourceRole::FunctionName { variadic, methods } => format!(
                 "function:{variadic}:{}",
-                methods.as_ref().map_or(0, |methods| Arc::as_ptr(methods) as usize)
+                methods
+                    .as_ref()
+                    .map_or(0, |methods| Arc::as_ptr(methods) as usize)
             ),
             SourceRole::PrivateCatch { .. } => "private-catch".into(),
             SourceRole::CatchBinding { .. } => "catch-alias".into(),
@@ -1553,7 +1566,9 @@ impl<'a> AnalysisGraph<'a> {
             .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
         {
             entries.push(("tag", self.form(&tag, depth + 1)?));
-        } else if binding.initializer.is_some() || matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
+        } else if binding.initializer.is_some()
+            || matches!(binding.source_kind(), hir::LocalKind::Argument { .. })
+        {
             entries.push(("tag", self.scalar(Literal::Nil)?));
         }
         if !matches!(binding.source_role, SourceRole::PrivateCatch { .. }) {
@@ -1580,7 +1595,9 @@ impl<'a> AnalysisGraph<'a> {
                 entries.push(("max-fixed-arity", self.number(methods.max_fixed_arity())?));
                 let mut parameters = Vec::new();
                 for method in &methods.methods {
-                    let bindings = method.parameters.iter()
+                    let bindings = method
+                        .parameters
+                        .iter()
                         .map(|parameter| self.local(parameter, depth + 1))
                         .collect::<Result<Vec<_>>>()?;
                     parameters.push(self.vector(&bindings)?);
@@ -1599,7 +1616,8 @@ impl<'a> AnalysisGraph<'a> {
             entries.push(("shadow", self.field(field, depth + 1)?));
         }
         if matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
-            let shadow = if let Some((_, shadow)) = entries.iter().find(|(key, _)| *key == "shadow") {
+            let shadow = if let Some((_, shadow)) = entries.iter().find(|(key, _)| *key == "shadow")
+            {
                 *shadow
             } else {
                 let nil = self.scalar(Literal::Nil)?;
@@ -1671,9 +1689,14 @@ impl<'a> AnalysisGraph<'a> {
         // Pinned parse-type retains raw nullable flags, independently of the
         // lowered mutability boolean. Unique source fields have no shadow;
         // duplicate declarations are rejected by the compiler before this path.
-        let metadata = hir::reader_metadata_pairs(&field.declaration)
-            .map_err(SessionError::Compile)?;
-        for key in ["mutable", "unsynchronized-mutable", "volatile-mutable", "tag"] {
+        let metadata =
+            hir::reader_metadata_pairs(&field.declaration).map_err(SessionError::Compile)?;
+        for key in [
+            "mutable",
+            "unsynchronized-mutable",
+            "volatile-mutable",
+            "tag",
+        ] {
             let value = metadata.chunks_exact(2).find_map(|pair| {
                 matches!(&pair[0].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == key)
                     .then_some(&pair[1])
@@ -1756,7 +1779,8 @@ impl<'a> AnalysisGraph<'a> {
             ("env", env),
             ("info", info),
         ];
-        let metadata = hir::reader_metadata_pairs(&scope.declaration).map_err(SessionError::Compile)?;
+        let metadata =
+            hir::reader_metadata_pairs(&scope.declaration).map_err(SessionError::Compile)?;
         if let Some(tag) = metadata.chunks_exact(2).find_map(|pair| {
             matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")
                 .then_some(&pair[1])
@@ -1863,7 +1887,9 @@ impl<'a> AnalysisGraph<'a> {
         )?;
         let lowering = self.lowering(hir, depth + 1)?;
         let mut fields = vec![("form", form), ("env", env), ("suss/lowering", lowering)];
-        if source.is_body { fields.push(("body?", self.flag(true)?)); }
+        if source.is_body {
+            fields.push(("body?", self.flag(true)?));
+        }
         // Genuine scalar source constants follow pinned analyzer.cljc's
         // analyze-keyword/analyze-form contract, not the physical HIR value.
         // Metadata wrappers, quotes and compound source ASTs need their own
@@ -1882,19 +1908,31 @@ impl<'a> AnalysisGraph<'a> {
         // Metadata wrappers are handled separately; do not infer their schema
         // from the enclosing form or its lowered with-meta call.
         if let Some(collection) = &source.node
-            && matches!(collection.as_ref(), hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_))
+            && matches!(
+                collection.as_ref(),
+                hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_)
+            )
         {
             let (operation, children) = match collection.as_ref() {
-                hir::SourceNode::Vector(items) => ("vector", vec![("items", items.iter().collect::<Vec<_>>())]),
-                hir::SourceNode::Set(items) => ("set", vec![("items", items.iter().collect::<Vec<_>>())]),
+                hir::SourceNode::Vector(items) => {
+                    ("vector", vec![("items", items.iter().collect::<Vec<_>>())])
+                }
+                hir::SourceNode::Set(items) => {
+                    ("set", vec![("items", items.iter().collect::<Vec<_>>())])
+                }
                 hir::SourceNode::Map(items) => {
                     if items.len() % 2 != 0 {
-                        return Err(SessionError::Host(wasmtime::Error::msg("Unpaired source map children")));
+                        return Err(SessionError::Host(wasmtime::Error::msg(
+                            "Unpaired source map children",
+                        )));
                     }
-                    ("map", vec![
-                        ("keys", items.iter().step_by(2).collect::<Vec<_>>()),
-                        ("vals", items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
-                    ])
+                    (
+                        "map",
+                        vec![
+                            ("keys", items.iter().step_by(2).collect::<Vec<_>>()),
+                            ("vals", items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
+                        ],
+                    )
                 }
                 _ => unreachable!("non-collection handled separately"),
             };
@@ -1911,29 +1949,46 @@ impl<'a> AnalysisGraph<'a> {
             fields.push(("children", self.vector(&names)?));
         }
         if let Some(node) = &source.node
-            && let hir::SourceNode::Bindings { is_loop, bindings, body } = node.as_ref()
+            && let hir::SourceNode::Bindings {
+                is_loop,
+                bindings,
+                body,
+            } = node.as_ref()
         {
             fields.push(("op", self.keyword(if *is_loop { "loop" } else { "let" })?));
             let mut records = Vec::new();
-            for binding in bindings.iter() { records.push(self.local(binding, depth + 1)?); }
+            for binding in bindings.iter() {
+                records.push(self.local(binding, depth + 1)?);
+            }
             fields.push(("bindings", self.vector(&records)?));
             fields.push(("body", self.ast(body, depth + 1)?));
             let bindings = self.keyword("bindings")?;
             let body = self.keyword("body")?;
             fields.push(("children", self.vector(&[bindings, body])?));
         }
-        if let Some(hir::SourceNode::Try { body, handler, cleanup, payload }) = source.node.as_deref() {
+        if let Some(hir::SourceNode::Try {
+            body,
+            handler,
+            cleanup,
+            payload,
+        }) = source.node.as_deref()
+        {
             fields.push(("op", self.keyword("try")?));
             fields.push(("body", self.ast(body, depth + 1)?));
             fields.push(("catch", self.ast(handler, depth + 1)?));
-            let name = if let Some(payload) = payload { self.form(&payload.declaration, depth + 1)? }
-                else { self.scalar(Literal::Nil)? };
+            let name = if let Some(payload) = payload {
+                self.form(&payload.declaration, depth + 1)?
+            } else {
+                self.scalar(Literal::Nil)?
+            };
             fields.push(("name", name));
             let mut children = vec![self.keyword("body")?, self.keyword("catch")?];
             let finally = if let Some(cleanup) = cleanup {
                 children.push(self.keyword("finally")?);
                 self.ast(cleanup, depth + 1)?
-            } else { self.scalar(Literal::Nil)? };
+            } else {
+                self.scalar(Literal::Nil)?
+            };
             fields.push(("finally", finally));
             fields.push(("children", self.vector(&children)?));
         }
@@ -1941,15 +1996,51 @@ impl<'a> AnalysisGraph<'a> {
             // These are original analyzed operands retained before dispatch or
             // storage lowering, not children reconstructed from physical HIR.
             let (operation, many, one) = match node.as_ref() {
-                hir::SourceNode::Do { statements, result } => ("do", vec![("statements", statements.as_ref())], vec![("ret", result.as_ref())]),
-                hir::SourceNode::If { condition, consequent, alternative } => ("if", vec![], vec![("test", condition.as_ref()), ("then", consequent.as_ref()), ("else", alternative.as_ref())]),
-                hir::SourceNode::Recur(arguments) => ("recur", vec![("exprs", arguments.as_ref())], vec![]),
-                hir::SourceNode::Throw(exception) => ("throw", vec![], vec![("exception", exception.as_ref())]),
-                hir::SourceNode::Assign { target, value } => ("set!", vec![], vec![("target", target.as_ref()), ("val", value.as_ref())]),
-                hir::SourceNode::Invoke { callee, arguments } => ("invoke", vec![("args", arguments.as_ref())], vec![("fn", callee.as_ref())]),
-                hir::SourceNode::Construct { class, arguments } => ("new", vec![("args", arguments.as_ref())], vec![("class", class.as_ref())]),
-                hir::SourceNode::Future(body) => ("suss/future", vec![], vec![("body", body.as_ref())]),
-                hir::SourceNode::Await(value) => ("suss/await", vec![], vec![("value", value.as_ref())]),
+                hir::SourceNode::Do { statements, result } => (
+                    "do",
+                    vec![("statements", statements.as_ref())],
+                    vec![("ret", result.as_ref())],
+                ),
+                hir::SourceNode::If {
+                    condition,
+                    consequent,
+                    alternative,
+                } => (
+                    "if",
+                    vec![],
+                    vec![
+                        ("test", condition.as_ref()),
+                        ("then", consequent.as_ref()),
+                        ("else", alternative.as_ref()),
+                    ],
+                ),
+                hir::SourceNode::Recur(arguments) => {
+                    ("recur", vec![("exprs", arguments.as_ref())], vec![])
+                }
+                hir::SourceNode::Throw(exception) => {
+                    ("throw", vec![], vec![("exception", exception.as_ref())])
+                }
+                hir::SourceNode::Assign { target, value } => (
+                    "set!",
+                    vec![],
+                    vec![("target", target.as_ref()), ("val", value.as_ref())],
+                ),
+                hir::SourceNode::Invoke { callee, arguments } => (
+                    "invoke",
+                    vec![("args", arguments.as_ref())],
+                    vec![("fn", callee.as_ref())],
+                ),
+                hir::SourceNode::Construct { class, arguments } => (
+                    "new",
+                    vec![("args", arguments.as_ref())],
+                    vec![("class", class.as_ref())],
+                ),
+                hir::SourceNode::Future(body) => {
+                    ("suss/future", vec![], vec![("body", body.as_ref())])
+                }
+                hir::SourceNode::Await(value) => {
+                    ("suss/await", vec![], vec![("value", value.as_ref())])
+                }
                 _ => ("", vec![], vec![]),
             };
             if !operation.is_empty() {
@@ -1969,20 +2060,32 @@ impl<'a> AnalysisGraph<'a> {
                 };
                 for (name, children) in many {
                     let mut records = Vec::new();
-                    for child in children { records.push(self.ast(child, depth + 1)?); }
+                    for child in children {
+                        records.push(self.ast(child, depth + 1)?);
+                    }
                     fields.push((name, self.vector(&records)?));
                 }
-                for (name, child) in one { fields.push((name, self.ast(child, depth + 1)?)); }
+                for (name, child) in one {
+                    fields.push((name, self.ast(child, depth + 1)?));
+                }
                 let mut keywords = Vec::new();
-                for name in names { keywords.push(self.keyword(name)?); }
+                for name in names {
+                    keywords.push(self.keyword(name)?);
+                }
                 fields.push(("children", self.vector(&keywords)?));
             }
         }
         if let Some(node) = &source.node
-            && let hir::SourceNode::WithMeta { expression, metadata, .. } = node.as_ref()
+            && let hir::SourceNode::WithMeta {
+                expression,
+                metadata,
+                ..
+            } = node.as_ref()
         {
             if expression.source.is_none() || metadata.source.is_none() {
-                return Err(SessionError::Host(wasmtime::Error::msg("Incomplete metadata source children")));
+                return Err(SessionError::Host(wasmtime::Error::msg(
+                    "Incomplete metadata source children",
+                )));
             }
             fields.push(("op", self.keyword("with-meta")?));
             fields.push(("meta", self.ast(metadata, depth + 1)?));
@@ -2072,6 +2175,24 @@ impl<'a> AnalysisGraph<'a> {
             fields.push(("info", self.field(binding, depth + 1)?));
             fields.push(("name", self.form(&binding.declaration, depth + 1)?));
         }
+        // Owned JS references retain their genuine source operation. They do
+        // not manufacture a source namespace/declaration revision or extern map.
+        if matches!(&source.form.kind, Kind::Symbol(_))
+            && let Some(hir::SourceBinding::JavaScript { global }) = &source.resolved
+        {
+            let op = self.keyword("js-var")?;
+            let name = self.symbol(&format!("js/{}", global.name()))?;
+            let ns = self.symbol("js")?;
+            let tag = self.symbol("js")?;
+            let info = self.map(vec![("op", op), ("name", name), ("ns", ns), ("tag", tag)])?;
+            fields.extend([
+                ("op", op),
+                ("name", name),
+                ("ns", ns),
+                ("tag", tag),
+                ("info", info),
+            ]);
+        }
         let resolved_var = if matches!(&source.form.kind, Kind::Symbol(_))
             && let Some(hir::SourceBinding::Global {
                 global,
@@ -2135,32 +2256,60 @@ impl<'a> AnalysisGraph<'a> {
         }
         if let Some(callable) = &source.callable {
             fields.push(("suss/source-function", self.callable(callable)?));
-            if !matches!(source.node.as_deref(), Some(hir::SourceNode::WithMeta { .. })) {
+            if !matches!(
+                source.node.as_deref(),
+                Some(hir::SourceNode::WithMeta { .. })
+            ) {
                 fields.push(("op", self.keyword("fn")?));
                 let mut methods = Vec::new();
                 for method in &callable.methods {
                     let mut parameters = Vec::new();
-                    for declaration in &method.declarations { parameters.push(self.local(declaration, depth + 1)?); }
+                    for declaration in &method.declarations {
+                        parameters.push(self.local(declaration, depth + 1)?);
+                    }
                     let parameters = self.vector(&parameters)?;
                     let body = self.ast(&method.body, depth + 1)?;
                     let form = self.form(&method.form, depth + 1)?;
                     let entry = &method.environment;
-                    let env = self.environment(&entry.namespace_snapshot, &entry.scope,
-                        &entry.locals, &entry.fields, &entry.function_scopes, entry.context, depth + 1)?;
+                    let env = self.environment(
+                        &entry.namespace_snapshot,
+                        &entry.scope,
+                        &entry.locals,
+                        &entry.fields,
+                        &entry.function_scopes,
+                        entry.context,
+                        depth + 1,
+                    )?;
                     let op = self.keyword("fn-method")?;
                     let params = self.keyword("params")?;
                     let body_key = self.keyword("body")?;
                     let children = self.vector(&[params, body_key])?;
                     let variadic = self.flag(method.variadic)?;
-                    let arity = method.parameters.len().checked_sub(usize::from(method.variadic))
-                        .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Invalid source method parameter list")))?;
+                    let arity = method
+                        .parameters
+                        .len()
+                        .checked_sub(usize::from(method.variadic))
+                        .ok_or_else(|| {
+                            SessionError::Host(wasmtime::Error::msg(
+                                "Invalid source method parameter list",
+                            ))
+                        })?;
                     let fixed = self.number(arity)?;
                     let recurs = match method.recurs {
                         Some(value) => self.flag(value)?,
                         None => self.scalar(Literal::Nil)?,
                     };
-                    methods.push(self.map(vec![("op", op), ("form", form), ("env", env), ("params", parameters),
-                        ("body", body), ("children", children), ("variadic?", variadic), ("fixed-arity", fixed), ("recurs", recurs)])?);
+                    methods.push(self.map(vec![
+                        ("op", op),
+                        ("form", form),
+                        ("env", env),
+                        ("params", parameters),
+                        ("body", body),
+                        ("children", children),
+                        ("variadic?", variadic),
+                        ("fixed-arity", fixed),
+                        ("recurs", recurs),
+                    ])?);
                 }
                 fields.push(("methods", self.vector(&methods)?));
                 let methods = self.keyword("methods")?;
@@ -2188,10 +2337,17 @@ impl<'a> AnalysisGraph<'a> {
         let (operation, children): (&str, Vec<&Hir>) = match &hir.kind {
             Expression::Future { body, .. } => ("future", vec![body]),
             Expression::Await { value } => ("await", vec![value]),
-            Expression::AsyncTry { body, handler, cleanup, .. } => (
-                "async-try", std::iter::once(body.as_ref())
+            Expression::AsyncTry {
+                body,
+                handler,
+                cleanup,
+                ..
+            } => (
+                "async-try",
+                std::iter::once(body.as_ref())
                     .chain(handler.iter().map(|h| h.as_ref()))
-                    .chain(cleanup.iter().map(|h| h.as_ref())).collect(),
+                    .chain(cleanup.iter().map(|h| h.as_ref()))
+                    .collect(),
             ),
             Expression::Literal(_) => ("literal", vec![]),
             Expression::Local(_) => ("local", vec![]),
@@ -2248,8 +2404,11 @@ impl<'a> AnalysisGraph<'a> {
             ),
             Expression::AsyncDynamicScope { bindings, body } => (
                 "async-dynamic-scope",
-                bindings.iter().map(|(_, value)| value)
-                    .chain(std::iter::once(body.as_ref())).collect(),
+                bindings
+                    .iter()
+                    .map(|(_, value)| value)
+                    .chain(std::iter::once(body.as_ref()))
+                    .collect(),
             ),
             Expression::DynamicScope { bindings, body } => (
                 "dynamic-scope",

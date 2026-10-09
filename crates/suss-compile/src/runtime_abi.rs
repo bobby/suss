@@ -4,43 +4,47 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod array_join;
+mod array_methods;
+mod array_own_properties;
+mod array_pop;
+mod array_properties;
+mod array_push;
+mod arrays;
 mod r#async;
 mod async_library;
-mod streams;
-mod arrays;
-mod sparse_arrays;
-mod array_methods;
-mod array_join;
-mod array_push;
-mod array_pop;
-mod array_own_properties;
-mod array_properties;
 mod bitwise;
-mod closure_properties;
-mod closure_calls;
 mod callable_properties;
-mod comparisons;
+mod closure_calls;
+mod closure_properties;
 mod coercions;
+mod comparisons;
 mod dynamic;
+mod error_constructors;
+mod error_properties;
 mod exception_info;
 mod exceptions;
+mod identity_hash;
 mod named_properties;
-mod native_protocols;
-mod native_objects;
-mod native_object_methods;
 mod native_object_factory;
+mod native_object_methods;
 mod native_object_properties;
+mod native_objects;
+mod native_protocols;
 mod nominal;
-mod type_values;
-mod primitive_constructors;
-mod range_errors;
 mod numeric;
 mod numeric_hash;
-mod identity_hash;
+mod object_descriptors;
 mod object_methods;
+mod owned_prototypes;
 mod predicates;
+mod primitive_constructors;
+mod range_errors;
+mod sparse_arrays;
+mod streams;
 mod string_methods;
 mod string_char_at;
+mod type_values;
 
 pub const VERSION: u32 = 2;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
@@ -461,7 +465,9 @@ fn build_module() -> Vec<u8> {
             LocalGet(1),
             LocalGet(2),
             LocalGet(3),
-            I32Const(0), RefI31, StructNew(4),
+            I32Const(0),
+            RefI31,
+            StructNew(4),
         ],
     );
     let closure = HeapType::Concrete(4);
@@ -489,7 +495,9 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(8),
+            I32Const(0),
+            RefI31,
+            StructNew(8),
             Throw(0),
             End,
         ]);
@@ -539,7 +547,9 @@ fn build_module() -> Vec<u8> {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
         End,
         LocalGet(0),
@@ -565,7 +575,9 @@ fn build_module() -> Vec<u8> {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
     ]);
     b.function("arity-error", &[], &[VALUE], &arity_error);
@@ -625,7 +637,9 @@ fn build_module() -> Vec<u8> {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
         End,
         LocalGet(0),
@@ -689,6 +703,8 @@ fn build_module() -> Vec<u8> {
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
     let coercion_types = coercions::declare(&mut b);
+    let prototype_types = owned_prototypes::declare(&mut b);
+    error_constructors::canonical_test_function(&mut b);
     let primitives = numeric::intrinsics(&mut b, numeric_info, coercion_types);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
@@ -699,39 +715,34 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
-    arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
     // Original source error adapter: retain the ABI Error descriptor/message
     // rather than substituting nil, an opaque object or a Wasm trap.
-    b.function("language-error-new", &[VALUE], &[VALUE], &[
-        GlobalGet(nominal::ERROR_GLOBAL), LocalGet(0), Call(b.names["coerce-string"]),
-        RefCastNonNull(HeapType::Concrete(STRING)), I32Const(0), RefI31,
-        I32Const(0), RefI31, I32Const(0), RefI31, StructNew(8),
-    ]);
+    b.function(
+        "language-error-new",
+        &[VALUE],
+        &[VALUE],
+        &[
+            GlobalGet(nominal::ERROR_GLOBAL),
+            LocalGet(0),
+            Call(b.names["coerce-string"]),
+            RefCastNonNull(HeapType::Concrete(STRING)),
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            StructNew(8),
+        ],
+    );
     // Native Error adapters use rooted descriptor identity. A structurally
     // identical payload with another descriptor is not a language Error.
-    let mut error_test = vec![
-        LocalGet(0), RefTestNonNull(HeapType::Concrete(8)),
-        If(BlockType::Result(ValType::I32)), I32Const(0),
-    ];
-    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL, range_errors::DESCRIPTOR_GLOBAL]) {
-        error_test.extend([
-            LocalGet(0), RefCastNonNull(HeapType::Concrete(8)),
-            StructGet { struct_type_index: 8, field_index: 0 },
-            GlobalGet(descriptor), RefEq, I32Or,
-        ]);
-    }
-    error_test.extend([
-        Else, LocalGet(0), RefTestNonNull(HeapType::Concrete(7)),
-        If(BlockType::Result(ValType::I32)),
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
-        StructGet { struct_type_index: 7, field_index: 0 },
-        GlobalGet(exception_info::DESCRIPTOR_GLOBAL), RefEq,
-        Else, I32Const(0), End, End,
-    ]);
+    let mut error_test = vec![];
+    error_constructors::family_test(&b, &mut error_test, 0);
     b.function("language-error-is", &[VALUE], &[ValType::I32], &error_test);
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
@@ -741,8 +752,17 @@ fn build_module() -> Vec<u8> {
     r#async::intrinsics(&mut b);
     arithmetic_functions.extend(async_library::functions(&mut b));
     arithmetic_functions.extend(primitive_constructors::functions(&mut b));
-    arithmetic_functions.extend(range_errors::functions(&mut b));
+    let error_callback = error_constructors::callback(&mut b);
+    arithmetic_functions.push(error_callback);
+    arithmetic_functions.extend(range_errors::functions(&mut b, error_callback));
+    error_constructors::functions(&mut b, error_callback);
+    arithmetic_functions.extend(error_properties::functions(&mut b));
+    let (object_descriptor_functions, object_initialize) = object_descriptors::functions(&mut b);
+    arithmetic_functions.extend(object_descriptor_functions);
+    arithmetic_functions.extend(exception_info::functions(&mut b));
     type_values::functions(&mut b);
+    let prototype_functions = owned_prototypes::functions(&mut b);
+    arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
     arithmetic_functions.extend(coercion_functions);
     let mut elements = ElementSection::new();
@@ -770,7 +790,9 @@ fn build_module() -> Vec<u8> {
                 RefI31,
                 I32Const(0),
                 RefI31,
-                I32Const(0), RefI31, StructNew(DESCRIPTOR),
+                I32Const(0),
+                RefI31,
+                StructNew(DESCRIPTOR),
             ]),
         );
     }
@@ -805,7 +827,9 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
         ]),
     );
     // A rooted opaque protocol marker, distinct from booleans and callables.
@@ -823,7 +847,9 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -852,7 +878,9 @@ fn build_module() -> Vec<u8> {
         ArrayNewDefault(ARGS),
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(0),
+        RefI31,
+        StructNew(DESCRIPTOR),
     ]);
     globals.global(
         GlobalType {
@@ -880,14 +908,18 @@ fn build_module() -> Vec<u8> {
         ArrayNewDefault(ARGS),
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(0),
+        RefI31,
+        StructNew(DESCRIPTOR),
         I32Const(UNDEFINED),
         RefI31,
         I32Const(3),
         ArrayNew(ARGS),
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(7),
+        I32Const(0),
+        RefI31,
+        StructNew(7),
     ]);
     globals.global(
         GlobalType {
@@ -912,7 +944,9 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
         ]),
     );
     // Private source-array identity; appended without changing old global indices.
@@ -930,7 +964,9 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
         ]),
     );
     // Appended private Object method tag and portable implicit-this realm.
@@ -948,7 +984,9 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -965,12 +1003,16 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(7),
+            I32Const(0),
+            RefI31,
+            StructNew(7),
         ]),
     );
     // Private singleton builtin method root; no owners or per-string registry.
@@ -983,18 +1025,52 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended([I32Const(0), RefI31]),
     );
     // Original owned dynamic data-property storage tag, appended privately.
-    globals.global(GlobalType { val_type: reference(DESCRIPTOR), mutable: false, shared: false },
-        &ConstExpr::extended([I64Const(0), I32Const(0), ArrayNewDefault(ARGS),
-            I32Const(0), ArrayNewDefault(ARGS), I32Const(0), RefI31, I32Const(0), RefI31, StructNew(DESCRIPTOR)]));
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
+    );
     // Lazy shared default Object prototype, owned by the runtime GC root.
-    globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
-        &ConstExpr::extended([I32Const(0), RefI31]));
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([I32Const(0), RefI31]),
+    );
     // Shared Array.slice function root; no receiver retained.
-    globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
-        &ConstExpr::extended([I32Const(0), RefI31]));
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([I32Const(0), RefI31]),
+    );
     // Scalar-only UID allocator; no global reference table retains owners.
-    globals.global(GlobalType { val_type: ValType::I64, mutable: true, shared: false },
-        &ConstExpr::i64_const(1));
+    globals.global(
+        GlobalType {
+            val_type: ValType::I64,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::i64_const(1),
+    );
     r#async::append_descriptor(&mut globals);
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
     type_values::append_globals(&mut globals);
@@ -1004,6 +1080,13 @@ fn build_module() -> Vec<u8> {
     coercions::append_globals(&mut globals, coercion_types, coercion_functions);
     array_join::append_globals(&mut globals);
     string_char_at::append_globals(&mut globals);
+    owned_prototypes::append_globals(
+        &mut globals,
+        prototype_types,
+        prototype_functions,
+        object_initialize,
+        b.names["owned-type-error-implementation"],
+    );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

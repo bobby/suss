@@ -22,8 +22,8 @@
     "scripts/sorted_tree_oracle.py": "b57b0e40c5f61fee0c8394d49182dcae9e6832745a9d5ee546bbea03e6b4d70e",
     "scripts/test-sorted-tree-oracle.sh": "d36d5956f08c58d5768ff27b588859476dc672ba5e37157223564a60df31c938",
     "scripts/test_sorted_tree_oracle.py": "13415258acb24bcf094ec8ec0e3e3ca9e481b5e4494612becd2d828598737f8b",
-    "scripts/sorted_tree_adaptations.py": "2648431306aa474c26061d3fd07af8801bec11c9f85f9d9edfa5701f24960a98",
-    "docs/compatibility/sorted-tree-collections/provenance.json": "a5d0535a2a806cd000c2c6243cb15af3d3191ca76be5fd128e06837a8406f7b5",
+    "scripts/sorted_tree_adaptations.py": "03f598da7fe4cb6701a41d725bc3400d136901ab103042b75da87d3d808a9be5",
+    "docs/compatibility/sorted-tree-collections/provenance.json": "e0e7ff3a4a03ae1b2c4d8d83a6405c1c01e29547b41ea85603928c73d44a370e",
     "docs/compatibility/sorted-tree-collections/dependency-ledger.json": "76216f481b2c2f881a1a4619f6445841d3a370d696d381579858890d70e788ef",
     "crates/suss-cli/tests/portable_sorted_tree_collections.rs": "82544fbe4506db43f650900b7bb73191bbb0d39fad7a2408b7ab08f58bc6b2b3",
     "crates/suss-compile/src/portable/hir/nominal.rs": "0a6ed4f519f94d745106f584ed6118e109c5d458656ce3f4b339569c230a6797",
@@ -40,5 +40,12 @@
     "tests/oracle/out/sorted-tree.js": "60f749c527b11610ef3d3d4b4da8e59965049b79b18fcf2582ced433549fe60f",
     "tests/oracle/out/sorted-tree-cljs/cljs/core.js": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205"
   },
-  "sharing-repair": "Correct nested reference path and exact raw shapes; original receipt retained in sharing-repair/original-main-receipt.json; native remains uncompiled."
+  "sharing-repair": "Correct nested reference path and exact raw shapes; original receipt retained in sharing-repair/original-main-receipt.json; native remains uncompiled.",
+  "definition-lowering": {
+    "base": "36d27750c041e707c0fd08c38b2b8725161d997c",
+    "definitions": 23,
+    "original-receipt": "docs/compatibility/sorted-tree-collections/evidence/receipt-before-definition-lowering.json",
+    "original-receipt-sha256": "59df237b1fb6c3397da9a121d6bdbad33c58f437db0b5de6971ddbccad1acdfe",
+    "scope": "whole retained definitions, metadata and signatures; no native/bootstrap execution"
+  }
 }

@@ -115,10 +115,25 @@ fn callable_before_dispatch(hir: &Hir) -> Option<&SourceCallable> {
     if hir.source.is_none() {
         if let Expression::Let { bindings, body } = &hir.kind {
             if bindings.len() == 1 {
-                if let Expression::If { condition, alternative, .. } = &body.kind {
-                    if matches!(condition.kind, Expression::Nominal { operation: Nominal::IsClosure, .. })
-                        && matches!(alternative.kind, Expression::Nominal { operation: Nominal::BindCallable, .. })
-                    {
+                if let Expression::If {
+                    condition,
+                    alternative,
+                    ..
+                } = &body.kind
+                {
+                    if matches!(
+                        condition.kind,
+                        Expression::Nominal {
+                            operation: Nominal::IsClosure,
+                            ..
+                        }
+                    ) && matches!(
+                        alternative.kind,
+                        Expression::Nominal {
+                            operation: Nominal::BindCallable,
+                            ..
+                        }
+                    ) {
                         return callable(&bindings[0].value);
                     }
                 }
@@ -153,26 +168,43 @@ fn truthy(form: &Form) -> bool {
     !matches!(form.kind, Kind::Nil | Kind::Bool(false))
 }
 fn provisional(info: &super::super::resolve::DefinitionInfo) -> Result<bool, Diagnostic> {
-    Ok(!info.analysis_completed || (info.initializer_form.is_some()
-        && metadata(&info.declaration, "declared")?.as_ref().is_some_and(truthy)))
+    Ok(!info.analysis_completed
+        || (info.initializer_form.is_some()
+            && metadata(&info.declaration, "declared")?
+                .as_ref()
+                .is_some_and(truthy)))
 }
-fn completed_callable(info: &super::super::resolve::DefinitionInfo) -> Result<Option<&SourceCallable>, Diagnostic> {
-    Ok(if provisional(info)? { None } else {
+fn completed_callable(
+    info: &super::super::resolve::DefinitionInfo,
+) -> Result<Option<&SourceCallable>, Diagnostic> {
+    Ok(if provisional(info)? {
+        None
+    } else {
         info.initializer.as_ref().and_then(|init| callable(init))
     })
 }
 // Pinned analyzer.cljc2092–2175 merges raw metadata before callable top-fn
 // overlays and computed return fields. Original Rust policy; never treat a
 // provisional initializer as a published callable declaration.
-fn top_function_property(info: &super::super::resolve::DefinitionInfo, name: &str) -> Result<Option<Form>, Diagnostic> {
-    let Some(top) = metadata(&info.declaration, "top-fn")? else { return Ok(None) };
+fn top_function_property(
+    info: &super::super::resolve::DefinitionInfo,
+    name: &str,
+) -> Result<Option<Form>, Diagnostic> {
+    let Some(top) = metadata(&info.declaration, "top-fn")? else {
+        return Ok(None);
+    };
     let pairs = match &top.kind {
         Kind::Nil => return Ok(None),
         Kind::Map(items) => items,
         Kind::Vector(items) if items.len() == 2 => items,
         Kind::List(items) | Kind::Set(items) if items.is_empty() => return Ok(None),
         Kind::String(units) if units.is_empty() => return Ok(None),
-        _ => return Err(fail(top.span.clone(), "Function declaration top-fn requires mergeable reader data")),
+        _ => {
+            return Err(fail(
+                top.span.clone(),
+                "Function declaration top-fn requires mergeable reader data",
+            ));
+        }
     };
     Ok(pairs.chunks_exact(2).rev().find_map(|pair| {
         matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name)
@@ -185,42 +217,75 @@ pub fn declaration_tag(
     let raw = metadata(&info.declaration, "tag")?;
     // parse-type merges source metadata over its default function tag,
     // including explicit nil/false. Type declarations precede method analysis.
-    if info.type_fields.is_some() { return Ok(raw.or_else(|| Some(named("function")))) }
-    if provisional(info)? { return Ok(raw) }
+    if info.type_fields.is_some() {
+        return Ok(raw.or_else(|| Some(named("function"))));
+    }
+    if provisional(info)? {
+        return Ok(raw);
+    }
     // Function vars retain their raw/overlaid tag, including present nil and
     // false. Dynamic affects scalar inference, not function var-reference tags.
     if completed_callable(info)?.is_some() {
         return Ok(top_function_property(info, "tag")?.or(raw));
     }
-    if raw.as_ref().is_some_and(truthy) { return Ok(raw) }
-    if metadata(&info.declaration, "dynamic")?.as_ref().is_some_and(truthy) {
+    if raw.as_ref().is_some_and(truthy) {
+        return Ok(raw);
+    }
+    if metadata(&info.declaration, "dynamic")?
+        .as_ref()
+        .is_some_and(truthy)
+    {
         return Ok(Some(named("any")));
     }
-    let computed = info.initializer.as_ref().map(|init| inferred(init, 0)).transpose()?.flatten();
+    let computed = info
+        .initializer
+        .as_ref()
+        .map(|init| inferred(init, 0))
+        .transpose()?
+        .flatten();
     Ok(computed.or(raw))
 }
-fn declaration_return_tag(info: &super::super::resolve::DefinitionInfo) -> Result<Option<Form>, Diagnostic> {
+fn declaration_return_tag(
+    info: &super::super::resolve::DefinitionInfo,
+) -> Result<Option<Form>, Diagnostic> {
     let methods = completed_callable(info)?;
     let fn_var = if methods.is_some() {
         top_function_property(info, "fn-var")?.as_ref().map_or(
-            !metadata(&info.declaration, "macro")?.as_ref().is_some_and(truthy), truthy)
+            !metadata(&info.declaration, "macro")?
+                .as_ref()
+                .is_some_and(truthy),
+            truthy,
+        )
     } else {
-        metadata(&info.declaration, "fn-var")?.as_ref().is_some_and(truthy)
+        metadata(&info.declaration, "fn-var")?
+            .as_ref()
+            .is_some_and(truthy)
             || (!provisional(info)?
-                && metadata(&info.declaration, "declared")?.as_ref().is_some_and(truthy)
-                && metadata(&info.declaration, "arglists")?.as_ref().is_some_and(truthy))
+                && metadata(&info.declaration, "declared")?
+                    .as_ref()
+                    .is_some_and(truthy)
+                && metadata(&info.declaration, "arglists")?
+                    .as_ref()
+                    .is_some_and(truthy))
     };
-    if !fn_var { return Ok(None) }
+    if !fn_var {
+        return Ok(None);
+    }
     let raw = metadata(&info.declaration, "ret-tag")?;
     let tag = if let Some(methods) = methods {
-        let computed = metadata(&info.declaration, "tag")?.filter(truthy).or(return_tag(methods)?);
+        let computed = metadata(&info.declaration, "tag")?
+            .filter(truthy)
+            .or(return_tag(methods)?);
         computed.or(top_function_property(info, "ret-tag")?).or(raw)
-    } else { raw };
+    } else {
+        raw
+    };
     // infer-invoke uses if-some, preserving false but falling through nil.
     Ok(tag.filter(|tag| !matches!(tag.kind, Kind::Nil)))
 }
 fn resolved_tag(binding: Option<&SourceBinding>) -> Result<Option<Form>, Diagnostic> {
     match binding {
+        Some(SourceBinding::JavaScript { .. }) => Ok(Some(named("js"))),
         Some(SourceBinding::Local(binding)) => local_tag(binding),
         Some(SourceBinding::Field(binding)) => hint(&binding.declaration),
         Some(SourceBinding::Global {
@@ -373,7 +438,9 @@ pub(super) fn source_tags(
                 if matches!(items.first().map(|head| &head.kind), Some(Kind::Symbol(head)) if head.namespace.is_none() && head.name == "quote")
                     && items.len() == 2 =>
             {
-                quoted_const_tag.as_ref().map(|tag| tag.clone().unwrap_or_else(|| named("any")))
+                quoted_const_tag
+                    .as_ref()
+                    .map(|tag| tag.clone().unwrap_or_else(|| named("any")))
             }
             _ => match &hir.kind {
                 Expression::Arithmetic { .. } | Expression::Bitwise { .. } => Some(named("number")),
@@ -407,7 +474,8 @@ pub(super) fn source_tags(
                     .map_or(Ok(None), |init| inferred(init, 0))?,
                 Expression::Assign { .. } => None,
                 Expression::Call { callee, arguments } => {
-                    let methods = callable_before_dispatch(callee).or_else(|| resolved_callable(resolved));
+                    let methods =
+                        callable_before_dispatch(callee).or_else(|| resolved_callable(resolved));
                     let method = methods.and_then(|methods| {
                         methods.methods.iter().find(|method| {
                             method.variadic || method.parameters.len() == arguments.len()
@@ -421,25 +489,37 @@ pub(super) fn source_tags(
                     // initializer's individual methods (analyzer def parse).
                     // Local/direct functions retain per-method information.
                     let global_tag = match resolved {
-                        Some(SourceBinding::Global { declaration: Some(info), .. }) => {
-                            declaration_return_tag(info)?
-                        }
+                        Some(SourceBinding::JavaScript { .. }) => Some(named("js")),
+                        Some(SourceBinding::Global {
+                            declaration: Some(info),
+                            ..
+                        }) => declaration_return_tag(info)?,
                         _ => None,
                     };
                     method_tag.or(global_tag).or(Some(named("any")))
                 }
-                Expression::Nominal { operation: Nominal::Construct, arguments } => {
+                Expression::Nominal {
+                    operation: Nominal::Construct,
+                    arguments,
+                } => {
                     // parse-new derives the result from source resolution,
                     // not the physical runtime constructor/descriptor value.
                     // Resolution on an invocation belongs to its callee, not
                     // the value of the constructor expression. Only reference
                     // ASTs carry the :info read by pinned parse-new.
-                    let class = arguments.first().and_then(|class| class.source.as_ref())
+                    let class = arguments
+                        .first()
+                        .and_then(|class| class.source.as_ref())
                         .filter(|class| matches!(class.form.kind, Kind::Symbol(_)));
-                    let class_tag = class.map(|class| resolved_tag(class.resolved.as_ref()))
-                        .transpose()?.flatten();
+                    let class_tag = class
+                        .map(|class| resolved_tag(class.resolved.as_ref()))
+                        .transpose()?
+                        .flatten();
                     let name = match class.and_then(|class| class.resolved.as_ref()) {
-                        Some(SourceBinding::Global { global, .. }) => Some(named(&format!("{}/{}", global.namespace(), global.name()))),
+                        Some(SourceBinding::JavaScript { global })
+                        | Some(SourceBinding::Global { global, .. }) => {
+                            Some(named(&format!("{}/{}", global.namespace(), global.name())))
+                        }
                         Some(SourceBinding::Local(binding)) => Some(binding.declaration.clone()),
                         Some(SourceBinding::Field(binding)) => Some(binding.declaration.clone()),
                         _ => None,
@@ -449,21 +529,34 @@ pub(super) fn source_tags(
                             && symbol.namespace.as_deref() == Some("js")
                         {
                             match symbol.name.as_str() {
-                                "Object" => Some("object"), "String" => Some("string"),
-                                "Array" => Some("array"), "Number" => Some("number"),
-                                "Function" => Some("function"), "Boolean" => Some("boolean"),
+                                "Object" => Some("object"),
+                                "String" => Some("string"),
+                                "Array" => Some("array"),
+                                "Number" => Some("number"),
+                                "Function" => Some("function"),
+                                "Boolean" => Some("boolean"),
                                 _ => None,
                             }
-                        } else { None }
+                        } else {
+                            None
+                        }
                     };
-                    let js_tag = class_tag.as_ref().is_some_and(|tag| matches!(&tag.kind,
+                    let js_tag = class_tag.as_ref().is_some_and(|tag| {
+                        matches!(&tag.kind,
                         Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("js")
-                            || (symbol.namespace.is_none() && symbol.name == "js")));
+                            || (symbol.namespace.is_none() && symbol.name == "js"))
+                    });
                     if js_tag && class_tag.as_ref().and_then(primitive).is_none() {
                         Some(named("js"))
                     } else {
-                        Some(name.and_then(|name| primitive(&name).map(named).or(Some(name)))
-                            .unwrap_or(Form { kind: Kind::Nil, span: 0..0, metadata: vec![] }))
+                        Some(
+                            name.and_then(|name| primitive(&name).map(named).or(Some(name)))
+                                .unwrap_or(Form {
+                                    kind: Kind::Nil,
+                                    span: 0..0,
+                                    metadata: vec![],
+                                }),
+                        )
                     }
                 }
                 _ => None,
@@ -488,14 +581,28 @@ mod quoted_tag_tests {
     #[test]
     fn scalar_quote_preserves_outer_source_instead_of_private_literal_source() {
         for phase in [Phase::Runtime, Phase::Macro] {
-            for source in ["(quote nil)", "(quote false)", "(quote 42)", "(quote \"hello\")"] {
-                let hir = crate::portable::analyze_in(source, &Environment::default(), phase).unwrap();
-                let Expression::Do(forms) = &hir.kind else { panic!("fragment source forms") };
+            for source in [
+                "(quote nil)",
+                "(quote false)",
+                "(quote 42)",
+                "(quote \"hello\")",
+            ] {
+                let hir =
+                    crate::portable::analyze_in(source, &Environment::default(), phase).unwrap();
+                let Expression::Do(forms) = &hir.kind else {
+                    panic!("fragment source forms")
+                };
                 assert_eq!(forms.len(), 1);
                 assert!(matches!(&forms[0].kind, Expression::Literal(_)));
-                let retained = forms[0].source.as_ref().expect("actual quoted source record");
+                let retained = forms[0]
+                    .source
+                    .as_ref()
+                    .expect("actual quoted source record");
                 let expected = suss_reader::forms::read_forms(source).unwrap().remove(0);
-                assert_eq!(retained.form, expected, "enclosing source quote in {phase:?}");
+                assert_eq!(
+                    retained.form, expected,
+                    "enclosing source quote in {phase:?}"
+                );
                 assert!(retained.tags.quoted_const_tag.is_some());
             }
         }
@@ -540,5 +647,8 @@ mod quoted_tag_tests {
 
 // analyze-wrap-meta has no own :tag; get-tag may still read a source hint.
 pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
-    Ok(SourceTags { inferred: hint(form)?, ..Default::default() })
+    Ok(SourceTags {
+        inferred: hint(form)?,
+        ..Default::default()
+    })
 }

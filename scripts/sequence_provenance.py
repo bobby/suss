@@ -55,6 +55,12 @@ def verify_payload(record, source, loader):
                 original_target[1] = '(.-EMPTY_NODE PersistentVector)'
             if original_target == ['set!', '(.-HASHMAP-THRESHOLD PersistentArrayMap)']:
                 original_target[1] = '(.-HASHMAP_THRESHOLD PersistentArrayMap)'
+            if original_target == ['set!', '(.. ExceptionInfo -prototype -__proto__)']:
+                # Whole pinned parent: expand property-chain syntax and the JS
+                # qualified-property spelling to ordered native property reads.
+                if replacement != '(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))':
+                    raise ValueError('ExceptionInfo requires the complete ordered prototype parent')
+                original_target[1] = '(.-__proto__ (.-prototype ExceptionInfo))'
             if original_target == ['extend-protocol', 'IComparable']:
                 from tree_node_registration import expand
                 if replacement != expand(text):

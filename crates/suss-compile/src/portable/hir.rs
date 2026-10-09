@@ -16,12 +16,12 @@ mod exceptions;
 mod nominal;
 mod quotes;
 mod source_tags;
-pub use source_tags::{SourceTags, local_tag, declaration_tag};
 use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs};
+pub use source_tags::{SourceTags, declaration_tag, local_tag};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     ops::Range,
@@ -457,20 +457,34 @@ impl SourceNamespace {
             declarations: scope
                 .declarations
                 .into_iter()
-                .map(|(global, _)| (global.clone(), environment.shared_definition_info(global)
-                    .expect("captured declaration revision").clone()))
+                .map(|(global, _)| {
+                    (
+                        global.clone(),
+                        environment
+                            .shared_definition_info(global)
+                            .expect("captured declaration revision")
+                            .clone(),
+                    )
+                })
                 .collect(),
             identities: environment
                 .cells()
                 .into_iter()
-                .filter(|global| global.phase() == phase && global.namespace() == scope.namespace
-                    && !environment.is_hidden_cell(phase, global.namespace(), global.name()))
+                .filter(|global| {
+                    global.phase() == phase
+                        && global.namespace() == scope.namespace
+                        && !environment.is_hidden_cell(phase, global.namespace(), global.name())
+                })
                 .collect(),
         })
     }
 }
 #[derive(Debug, Clone)]
 pub enum SourceBinding {
+    /// Actual bounded owned JS host reference, not a source namespace var.
+    JavaScript {
+        global: Global,
+    },
     Local(std::sync::Arc<LocalBinding>),
     Field(std::sync::Arc<FieldBinding>),
     Global {
@@ -512,9 +526,15 @@ impl SourceCallable {
         self.methods.iter().any(|method| method.variadic)
     }
     pub fn max_fixed_arity(&self) -> Option<usize> {
-        if self.methods.is_empty() { return None; }
+        if self.methods.is_empty() {
+            return None;
+        }
         self.methods.iter().try_fold(0, |maximum, method| {
-            method.parameters.len().checked_sub(usize::from(method.variadic)).map(|arity| maximum.max(arity))
+            method
+                .parameters
+                .len()
+                .checked_sub(usize::from(method.variadic))
+                .map(|arity| maximum.max(arity))
         })
     }
 }
@@ -527,7 +547,10 @@ pub enum SourceNode {
     Vector(std::sync::Arc<[Hir]>),
     Map(std::sync::Arc<[Hir]>),
     Set(std::sync::Arc<[Hir]>),
-    Do { statements: std::sync::Arc<[Hir]>, result: std::sync::Arc<Hir> },
+    Do {
+        statements: std::sync::Arc<[Hir]>,
+        result: std::sync::Arc<Hir>,
+    },
     If {
         condition: std::sync::Arc<Hir>,
         consequent: std::sync::Arc<Hir>,
@@ -546,9 +569,18 @@ pub enum SourceNode {
         cleanup: Option<std::sync::Arc<Hir>>,
         payload: Option<std::sync::Arc<LocalBinding>>,
     },
-    Assign { target: std::sync::Arc<Hir>, value: std::sync::Arc<Hir> },
-    Invoke { callee: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
-    Construct { class: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
+    Assign {
+        target: std::sync::Arc<Hir>,
+        value: std::sync::Arc<Hir>,
+    },
+    Invoke {
+        callee: std::sync::Arc<Hir>,
+        arguments: std::sync::Arc<[Hir]>,
+    },
+    Construct {
+        class: std::sync::Arc<Hir>,
+        arguments: std::sync::Arc<[Hir]>,
+    },
     WithMeta {
         expression: std::sync::Arc<Hir>,
         metadata: std::sync::Arc<Hir>,
@@ -588,8 +620,13 @@ pub struct Hir {
 #[derive(Debug, Clone)]
 pub enum Expression {
     /// Deferred executable body and its lexical captures; never a body value.
-    Future { captures: Vec<BindingId>, body: Box<Hir> },
-    Await { value: Box<Hir> },
+    Future {
+        captures: Vec<BindingId>,
+        body: Box<Hir>,
+    },
+    Await {
+        value: Box<Hir>,
+    },
     /// Suspension-aware executable regions, before closure packaging.
     AsyncTry {
         body: Box<Hir>,
@@ -597,7 +634,10 @@ pub enum Expression {
         cleanup: Option<Box<Hir>>,
         payload: Option<Parameter>,
     },
-    AsyncDynamicScope { bindings: Vec<(Global, Hir)>, body: Box<Hir> },
+    AsyncDynamicScope {
+        bindings: Vec<(Global, Hir)>,
+        body: Box<Hir>,
+    },
     Bitwise {
         operation: Bitwise,
         arguments: Vec<Hir>,
@@ -635,7 +675,10 @@ pub enum Expression {
     /// Read a live cell by resolved language identity, never by a Wasm index.
     Global(Global),
     /// Reader calls use a live public value only after successful initialization.
-    GlobalOrFallback { global: Global, fallback: Global },
+    GlobalOrFallback {
+        global: Global,
+        fallback: Global,
+    },
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
@@ -781,11 +824,19 @@ impl Analyzer<'_> {
         // while its children retain their ordinary bounded analysis frames.
         // Do not charge an additional source nesting level for this wrapper.
         let mut body_forms = vec![Form {
-            kind: Kind::Symbol(suss_reader::Symbol { namespace: None, name: "do".into() }),
-            span: span.clone(), metadata: vec![],
+            kind: Kind::Symbol(suss_reader::Symbol {
+                namespace: None,
+                name: "do".into(),
+            }),
+            span: span.clone(),
+            metadata: vec![],
         }];
         body_forms.extend_from_slice(forms);
-        let body_form = Form { kind: Kind::List(body_forms), span, metadata: vec![] };
+        let body_form = Form {
+            kind: Kind::List(body_forms),
+            span,
+            metadata: vec![],
+        };
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
             self.expand_or_analyze(&body_form, context, tail, None)
@@ -824,21 +875,38 @@ impl Analyzer<'_> {
         let previous_origin = self.origin.clone();
         let reader_form = if self.analysis_depth == 0 && super::syntax_quote::has_template(form)? {
             let mut reader = self.environment.reader_state.clone();
-            let raw = reader.expand_with_origin(form, &self.environment, self.phase, self.origin.as_ref())?;
+            let raw = reader.expand_with_origin(
+                form,
+                &self.environment,
+                self.phase,
+                self.origin.as_ref(),
+            )?;
             // Replay the same initial counter against verified indexing data;
             // this does not allocate another set of observable generated IDs.
             let mut replay = self.environment.reader_state.clone();
-            let located = if let Some(origin) = &self.origin { origin.reader_tree(form)? } else { form.clone() };
+            let located = if let Some(origin) = &self.origin {
+                origin.reader_tree(form)?
+            } else {
+                form.clone()
+            };
             let located = replay.expand(&located, &self.environment, self.phase)?;
             if reader != replay {
-                return Err(fail(form.span.clone(), "Reader provenance generated IDs diverged"));
+                return Err(fail(
+                    form.span.clone(),
+                    "Reader provenance generated IDs diverged",
+                ));
             }
             let lowered = super::syntax_quote::lower_generated(&raw)?;
-            let origin = self.origin.clone().unwrap_or_else(|| super::SourceOrigin::new("", None));
+            let origin = self
+                .origin
+                .clone()
+                .unwrap_or_else(|| super::SourceOrigin::new("", None));
             self.origin = Some(origin.with_reader_expansion(lowered.clone(), located));
             self.environment.reader_state = reader;
             Some(lowered)
-        } else { None };
+        } else {
+            None
+        };
         let form = reader_form.as_ref().unwrap_or(form);
         if self.analysis_depth == 0 {
             // The pinned analyzer refreshes &env's namespace between top-level
@@ -875,7 +943,10 @@ impl Analyzer<'_> {
                 if !shadowed {
                     let expansion_context = super::ExpansionContext {
                         environment: &self.environment,
-                        namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot"),
+                        namespace_snapshot: self
+                            .namespace_snapshot
+                            .as_ref()
+                            .expect("top-level source snapshot"),
                         origin: self.origin.as_ref(),
                         phase: self.phase,
                         context,
@@ -890,16 +961,20 @@ impl Analyzer<'_> {
                     // Pinned EPL-1.0 core.cljc772–813 expands let/loop to their
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
-                    let primitive = match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
-                        Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
-                        Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
-                        _ => None,
-                    };
+                    let primitive =
+                        match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
+                            Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
+                            _ => None,
+                        };
                     if let Some(primitive) = primitive {
                         let mut expanded = form.clone();
-                        let Kind::List(items) = &mut expanded.kind else { unreachable!() };
+                        let Kind::List(items) = &mut expanded.kind else {
+                            unreachable!()
+                        };
                         items[0].kind = Kind::Symbol(suss_reader::Symbol {
-                            namespace: None, name: primitive.into(),
+                            namespace: None,
+                            name: primitive.into(),
                         });
                         // The fixed primitive rewrite is analyzed in this
                         // frame; it cannot form a recursive bootstrap chain.
@@ -910,25 +985,50 @@ impl Analyzer<'_> {
                 }
             }
         }
-        if let Some(coerced) = super::syntax_quote::reader_sequence_initializer(form, &self.environment, self.phase, self.origin.as_ref())? {
+        if let Some(coerced) = super::syntax_quote::reader_sequence_initializer(
+            form,
+            &self.environment,
+            self.phase,
+            self.origin.as_ref(),
+        )? {
             let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
             if fresh {
                 let initializer = self.form(&coerced)?;
-                self.callable_keys.insert(fallback.clone(), Hir {
-                    source: None, span: form.span.clone(), metadata: Vec::new(), ty: Type::Value,
-                    kind: Expression::Definition {
-                        global: fallback.clone(), name_metadata: Vec::new(), name_span: form.span.clone(),
-                        docstring: None, initializer: Some(Box::new(initializer)), once: true,
+                self.callable_keys.insert(
+                    fallback.clone(),
+                    Hir {
+                        source: None,
+                        span: form.span.clone(),
+                        metadata: Vec::new(),
+                        ty: Type::Value,
+                        kind: Expression::Definition {
+                            global: fallback.clone(),
+                            name_metadata: Vec::new(),
+                            name_span: form.span.clone(),
+                            docstring: None,
+                            initializer: Some(Box::new(initializer)),
+                            once: true,
+                        },
                     },
-                });
+                );
             }
-            let Kind::List(items) = &form.kind else { unreachable!() };
+            let Kind::List(items) = &form.kind else {
+                unreachable!()
+            };
             let argument = self.form(&items[1])?;
             return Ok(Hir {
-                source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
+                source: None,
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
                 kind: Expression::Call {
-                    callee: Box::new(Hir { source: None, span: items[0].span.clone(),
-                        metadata: Vec::new(), ty: Type::Value, kind: Expression::GlobalOrFallback { global, fallback } }),
+                    callee: Box::new(Hir {
+                        source: None,
+                        span: items[0].span.clone(),
+                        metadata: Vec::new(),
+                        ty: Type::Value,
+                        kind: Expression::GlobalOrFallback { global, fallback },
+                    }),
                     arguments: vec![argument],
                 },
             });
@@ -950,7 +1050,7 @@ impl Analyzer<'_> {
             _ => None,
         };
         let resolved = symbol.and_then(|symbol| {
-            if symbol.namespace.is_none() {
+            if symbol.namespace.is_none() || symbol.namespace.as_deref() == Some("js") {
                 if let Some(binding) = self.locals.get(&symbol.name) {
                     return Some(SourceBinding::Local(std::sync::Arc::new(binding.clone())));
                 }
@@ -963,10 +1063,11 @@ impl Analyzer<'_> {
                 .ok()
                 .map(|binding| {
                     let global = binding.global().clone();
-                    let declaration = self
-                        .environment
-                        .shared_definition_info(&global)
-                        .cloned();
+                    if global.namespace() == "js" && matches!(binding, ResolvedBinding::Core { .. })
+                    {
+                        return SourceBinding::JavaScript { global };
+                    }
+                    let declaration = self.environment.shared_definition_info(&global).cloned();
                     SourceBinding::Global {
                         global,
                         declaration,
@@ -978,53 +1079,69 @@ impl Analyzer<'_> {
         self.source_callables.push(None);
         self.source_nodes.push(None);
         let result = self.form_inner(form, context, tail, name_hint);
-        let callable = self.source_callables.pop().expect("source callable fact slot");
+        let callable = self
+            .source_callables
+            .pop()
+            .expect("source callable fact slot");
         let node = self.source_nodes.pop().expect("source node fact slot");
         result.and_then(|mut expression| {
-                // A bootstrap/source expansion may already have returned its actual
-                // analyzed node. Preserve that record instead of attributing the
-                // original macro call to the expanded expression.
-                if expression.source.is_none() {
-                    let tags = source_tags::source_tags(form, resolved.as_ref(), callable.as_deref(), &expression)?;
-                    let mut source = SourceAnalysis {
-                        is_body: false,
-                        tags,
-                        form: form.clone(),
-                        resolved,
-                        name_hint: name_hint.cloned(),
-                        scope,
-                        namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
-                        callable,
-                        node,
-                        locals,
-                        fields,
-                        function_scopes,
-                        context,
-                        phase: self.phase,
-                        namespace,
-                        origin: self.origin.clone(),
-                    };
-                    if let Some(node) = &source.node
-                        && let SourceNode::WithMeta { expression: value, metadata, inner } = node.as_ref()
-                    {
-                        // The child uses the original entry snapshot and form,
-                        // but the expression context of analyze-wrap-meta.
-                        let mut value = value.as_ref().clone();
-                        let mut child = source.clone();
-                        child.context = super::AnalysisContext::Expression;
-                        child.node = inner.clone();
-                        value.source = Some(std::sync::Arc::new(child));
-                        source.tags = source_tags::metadata_wrapper_tags(form)?;
-                        source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
-                            expression: std::sync::Arc::new(value),
-                            metadata: metadata.clone(),
-                            inner: inner.clone(),
-                        }));
-                    }
-                    expression.source = Some(std::sync::Arc::new(source));
+            // A bootstrap/source expansion may already have returned its actual
+            // analyzed node. Preserve that record instead of attributing the
+            // original macro call to the expanded expression.
+            if expression.source.is_none() {
+                let tags = source_tags::source_tags(
+                    form,
+                    resolved.as_ref(),
+                    callable.as_deref(),
+                    &expression,
+                )?;
+                let mut source = SourceAnalysis {
+                    is_body: false,
+                    tags,
+                    form: form.clone(),
+                    resolved,
+                    name_hint: name_hint.cloned(),
+                    scope,
+                    namespace_snapshot: self
+                        .namespace_snapshot
+                        .as_ref()
+                        .expect("top-level source snapshot")
+                        .clone(),
+                    callable,
+                    node,
+                    locals,
+                    fields,
+                    function_scopes,
+                    context,
+                    phase: self.phase,
+                    namespace,
+                    origin: self.origin.clone(),
+                };
+                if let Some(node) = &source.node
+                    && let SourceNode::WithMeta {
+                        expression: value,
+                        metadata,
+                        inner,
+                    } = node.as_ref()
+                {
+                    // The child uses the original entry snapshot and form,
+                    // but the expression context of analyze-wrap-meta.
+                    let mut value = value.as_ref().clone();
+                    let mut child = source.clone();
+                    child.context = super::AnalysisContext::Expression;
+                    child.node = inner.clone();
+                    value.source = Some(std::sync::Arc::new(child));
+                    source.tags = source_tags::metadata_wrapper_tags(form)?;
+                    source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
+                        expression: std::sync::Arc::new(value),
+                        metadata: metadata.clone(),
+                        inner: inner.clone(),
+                    }));
                 }
-                Ok(expression)
-            })
+                expression.source = Some(std::sync::Arc::new(source));
+            }
+            Ok(expression)
+        })
     }
     fn form_inner(
         &mut self,
@@ -1079,17 +1196,18 @@ impl Analyzer<'_> {
                 return self.attach_constant_metadata(form, value);
             }
             Kind::Symbol(symbol) => {
-                let (kind, ty) = if symbol.namespace.is_none() {
-                    if let Some(binding) = self.locals.get(&symbol.name) {
-                        (Expression::Local(binding.id), binding.ty)
-                    } else if let Some(field) = self.fields.get(&symbol.name) {
-                        (field.access.kind.clone(), field.access.ty)
+                let (kind, ty) =
+                    if symbol.namespace.is_none() || symbol.namespace.as_deref() == Some("js") {
+                        if let Some(binding) = self.locals.get(&symbol.name) {
+                            (Expression::Local(binding.id), binding.ty)
+                        } else if let Some(field) = self.fields.get(&symbol.name) {
+                            (field.access.kind.clone(), field.access.ty)
+                        } else {
+                            self.global_value(symbol, form.span.clone())?
+                        }
                     } else {
                         self.global_value(symbol, form.span.clone())?
-                    }
-                } else {
-                    self.global_value(symbol, form.span.clone())?
-                };
+                    };
                 return Ok(Hir {
                     source: None,
                     span: form.span.clone(),
@@ -1154,10 +1272,11 @@ impl Analyzer<'_> {
                 ));
             }
         }
-        *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
-            callee: std::sync::Arc::new(callee.as_ref().clone()),
-            arguments: arguments.clone().into(),
-        }));
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee.as_ref().clone()),
+                arguments: arguments.clone().into(),
+            }));
         Ok(Hir {
             source: None,
             span: form.span.clone(),
@@ -1237,11 +1356,13 @@ impl Analyzer<'_> {
         // retains the existing immutable revision, including source functions.
         let preserve_declaration = init.is_none()
             && self.environment.definition_info(&global).is_some()
-            && reader_metadata_pairs(&args[0])?.chunks_exact(2).any(|pair| {
-                matches!(&pair[0].kind, Kind::Keyword(key)
+            && reader_metadata_pairs(&args[0])?
+                .chunks_exact(2)
+                .any(|pair| {
+                    matches!(&pair[0].kind, Kind::Keyword(key)
                     if key.namespace.is_none() && key.name == "declared")
-                    && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
-            });
+                        && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+                });
         let mut definition = super::resolve::DefinitionInfo {
             definition_form: form.clone(),
             analysis_completed: false,
@@ -1390,8 +1511,10 @@ impl Analyzer<'_> {
             } else {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
-            self.locals.get_mut(&parameter.name).unwrap().source_role =
-                SourceRole::FunctionName { variadic, methods: None };
+            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
+                variadic,
+                methods: None,
+            };
         }
         let declaration = if self_binding.is_some() {
             args.first()
@@ -1405,8 +1528,13 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
-            self.locals.get_mut(&parameter.name).expect("self binding").source_role =
-                SourceRole::FunctionName { variadic, methods: Some(staged) };
+            self.locals
+                .get_mut(&parameter.name)
+                .expect("self binding")
+                .source_role = SourceRole::FunctionName {
+                variadic,
+                methods: Some(staged),
+            };
         }
         let mut methods = Vec::new();
         let mut source_methods = Vec::new();
@@ -1415,7 +1543,8 @@ impl Analyzer<'_> {
             .first()
             .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
         {
-            let (method, free, source_method) = self.general_method(form, signatures, bootstrap_macro)?;
+            let (method, free, source_method) =
+                self.general_method(form, signatures, bootstrap_macro)?;
             source_methods.push(source_method);
             captures.extend(free);
             methods.push(method);
@@ -1428,9 +1557,14 @@ impl Analyzer<'_> {
                     ));
                 };
                 let multi = signatures.len() > 1;
-                if multi { self.analysis_contexts.push(super::AnalysisContext::Expression); }
+                if multi {
+                    self.analysis_contexts
+                        .push(super::AnalysisContext::Expression);
+                }
                 let result = self.general_method(signature, items, bootstrap_macro);
-                if multi { self.analysis_contexts.pop(); }
+                if multi {
+                    self.analysis_contexts.pop();
+                }
                 let (method, free, source_method) = result?;
                 source_methods.push(source_method);
                 captures.extend(free);
@@ -1507,7 +1641,13 @@ impl Analyzer<'_> {
             },
         };
         let function = self.attach_callable_signatures(form, function)?;
-        *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable { name: None, methods: source_methods }));
+        *self
+            .source_callables
+            .last_mut()
+            .expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
+            name: None,
+            methods: source_methods,
+        }));
         Ok(function)
     }
     fn general_method(
@@ -1517,9 +1657,16 @@ impl Analyzer<'_> {
         bootstrap_macro: bool,
     ) -> Result<(Method, Vec<BindingId>, SourceMethod), Diagnostic> {
         let method_form = if matches!(&form.kind, Kind::List(parts)
-            if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(_)))) {
+            if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(_))))
+        {
             form.clone()
-        } else { Form { kind: Kind::List(args.to_vec()), span: form.span.clone(), metadata: vec![] } };
+        } else {
+            Form {
+                kind: Kind::List(args.to_vec()),
+                span: form.span.clone(),
+                metadata: vec![],
+            }
+        };
         let (args, variadic, rest_parameter) = Self::normalize_function_method(form, args)?;
         let (method, mut source_method) = self.fixed_function_fields(
             form,
@@ -1582,8 +1729,14 @@ impl Analyzer<'_> {
         };
         let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.fixed_function_fields_inner(
-            form, args, bootstrap_macro, fields, method_receiver, object_method,
-            rest_parameter, receiver_type,
+            form,
+            args,
+            bootstrap_macro,
+            fields,
+            method_receiver,
+            object_method,
+            rest_parameter,
+            receiver_type,
         );
         self.suspendable = suspendable;
         result
@@ -1635,15 +1788,23 @@ impl Analyzer<'_> {
         }
         let method_environment = SourceMethodEnvironment {
             scope: self.capture_source_namespace(),
-            namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
+            namespace_snapshot: self
+                .namespace_snapshot
+                .as_ref()
+                .expect("top-level source snapshot")
+                .clone(),
             locals: std::sync::Arc::new(self.locals.clone()),
             fields: std::sync::Arc::new(self.fields.clone()),
             function_scopes: self.function_scopes.clone().into(),
-            context: *self.analysis_contexts.last().expect("method analysis context"),
+            context: *self
+                .analysis_contexts
+                .last()
+                .expect("method analysis context"),
         };
         let outer = self.locals.clone();
         let outer_fields = self.fields.clone();
-        let (parameters, declarations) = self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
+        let (parameters, declarations) =
+            self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
         let target = LoopId(self.next_loop);
         self.next_loop += 1;
         let outer_target = self
@@ -1762,12 +1923,21 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
-        let (method_target, recurred) = self.method_recurrence.pop().expect("method recurrence frame");
+        let (method_target, recurred) = self
+            .method_recurrence
+            .pop()
+            .expect("method recurrence frame");
         debug_assert_eq!(method_target, target);
         let source_method = SourceMethod {
             environment: method_environment,
-            form: Form { kind: Kind::List(args.to_vec()), span: form.span.clone(), metadata: vec![] },
-            declarations, parameters: parameters.clone(), variadic: rest_parameter.is_some(),
+            form: Form {
+                kind: Kind::List(args.to_vec()),
+                span: form.span.clone(),
+                metadata: vec![],
+            },
+            declarations,
+            parameters: parameters.clone(),
+            variadic: rest_parameter.is_some(),
             recurs: recurred.then_some(true),
             body: std::sync::Arc::new(inner_body.clone()),
         };
@@ -1788,17 +1958,20 @@ impl Analyzer<'_> {
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
         free_bindings(&body, &bound, &mut captures);
-        Ok((Hir {
-            source: None,
-            span: form.span.clone(),
-            metadata: form.metadata.clone(),
-            ty: Type::Closure(parameters.len()),
-            kind: Expression::Function {
-                parameters,
-                captures: captures.into_iter().collect(),
-                body,
+        Ok((
+            Hir {
+                source: None,
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Closure(parameters.len()),
+                kind: Expression::Function {
+                    parameters,
+                    captures: captures.into_iter().collect(),
+                    body,
+                },
             },
-        }, source_method))
+            source_method,
+        ))
     }
     // Object method names use the pinned hyphen-to-underscore munging.
     // Raw named property reads/writes deliberately retain their current boundary.
@@ -1851,30 +2024,58 @@ impl Analyzer<'_> {
                 let suspendable = std::mem::replace(&mut self.suspendable, true);
                 let target = self.target.take();
                 let locals = self.locals.clone();
-                let body = self.analyzed_body(args, form.span.clone(), super::AnalysisContext::Return, false);
+                let body = self.analyzed_body(
+                    args,
+                    form.span.clone(),
+                    super::AnalysisContext::Return,
+                    false,
+                );
                 self.suspendable = suspendable;
                 self.target = target;
                 self.locals = locals;
                 let body = body?;
                 let mut captures = BTreeSet::new();
                 free_bindings(&body, &BTreeSet::new(), &mut captures);
-                *self.source_nodes.last_mut().expect("source node fact slot") =
-                    Some(std::sync::Arc::new(SourceNode::Future(std::sync::Arc::new(body.clone()))));
-                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
-                    ty: Type::Value, kind: Expression::Future { captures: captures.into_iter().collect(), body: Box::new(body) } });
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                    std::sync::Arc::new(SourceNode::Future(std::sync::Arc::new(body.clone()))),
+                );
+                return Ok(Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Value,
+                    kind: Expression::Future {
+                        captures: captures.into_iter().collect(),
+                        body: Box::new(body),
+                    },
+                });
             }
             if symbol.name == "await*" {
                 if !self.suspendable {
-                    return Err(fail(form.span.clone(), "await is legal only inside a future body"));
+                    return Err(fail(
+                        form.span.clone(),
+                        "await is legal only inside a future body",
+                    ));
                 }
                 if args.len() != 1 {
-                    return Err(fail(form.span.clone(), "await requires exactly one operand"));
+                    return Err(fail(
+                        form.span.clone(),
+                        "await requires exactly one operand",
+                    ));
                 }
                 let value = self.form(&args[0])?;
-                *self.source_nodes.last_mut().expect("source node fact slot") =
-                    Some(std::sync::Arc::new(SourceNode::Await(std::sync::Arc::new(value.clone()))));
-                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
-                    ty: Type::Value, kind: Expression::Await { value: Box::new(value) } });
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                    std::sync::Arc::new(SourceNode::Await(std::sync::Arc::new(value.clone()))),
+                );
+                return Ok(Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Value,
+                    kind: Expression::Await {
+                        value: Box::new(value),
+                    },
+                });
             }
         }
         if symbol.namespace.as_deref() == Some("suss.compiler") && symbol.name == "cell-defined?" {
@@ -2067,12 +2268,19 @@ impl Analyzer<'_> {
             // syntax before analysis. Keep that source record, not the lowered
             // descriptor call or the original shorthand invocation.
             constructor.metadata.clear();
-            let mut parts = vec![Form {
-                kind: Kind::Symbol(suss_reader::Symbol::new("new")),
-                span: items[0].span.clone(), metadata: vec![],
-            }, constructor];
+            let mut parts = vec![
+                Form {
+                    kind: Kind::Symbol(suss_reader::Symbol::new("new")),
+                    span: items[0].span.clone(),
+                    metadata: vec![],
+                },
+                constructor,
+            ];
             parts.extend_from_slice(args);
-            let expanded = Form { kind: Kind::List(parts), ..form.clone() };
+            let expanded = Form {
+                kind: Kind::List(parts),
+                ..form.clone()
+            };
             // This fixed rewrite cannot recurse through another trailing dot;
             // preserve the existing source-depth bound like let/loop rewrites.
             return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
@@ -2087,10 +2295,11 @@ impl Analyzer<'_> {
                 .iter()
                 .map(|argument| self.form(argument))
                 .collect::<Result<Vec<_>, _>>()?;
-            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Construct {
-                class: std::sync::Arc::new(arguments[0].clone()),
-                arguments: arguments[1..].to_vec().into(),
-            }));
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Construct {
+                    class: std::sync::Arc::new(arguments[0].clone()),
+                    arguments: arguments[1..].to_vec().into(),
+                }));
             return Ok(self.nominal(form, Nominal::Construct, arguments));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "quote-form" {
@@ -2208,10 +2417,11 @@ impl Analyzer<'_> {
             let global = self.assignment_target(&args[0])?;
             let target = self.form(&args[0])?;
             let value = self.form(&args[1])?;
-            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Assign {
-                target: std::sync::Arc::new(target),
-                value: std::sync::Arc::new(value.clone()),
-            }));
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Assign {
+                    target: std::sync::Arc::new(target),
+                    value: std::sync::Arc::new(value.clone()),
+                }));
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -2234,7 +2444,9 @@ impl Analyzer<'_> {
                 ));
             }
             let exception = self.form(&args[0])?;
-            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Throw(std::sync::Arc::new(exception.clone()))));
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                std::sync::Arc::new(SourceNode::Throw(std::sync::Arc::new(exception.clone()))),
+            );
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -2269,10 +2481,17 @@ impl Analyzer<'_> {
                 .iter()
                 .map(|arg| self.form(arg))
                 .collect::<Result<Vec<_>, _>>()?;
-            if let Some((_, recurred)) = self.method_recurrence.iter_mut().rev().find(|(id, _)| *id == target) {
+            if let Some((_, recurred)) = self
+                .method_recurrence
+                .iter_mut()
+                .rev()
+                .find(|(id, _)| *id == target)
+            {
                 *recurred = true;
             }
-            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Recur(arguments.clone().into())));
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                std::sync::Arc::new(SourceNode::Recur(arguments.clone().into())),
+            );
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -2307,16 +2526,25 @@ impl Analyzer<'_> {
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let body = self.body(args, form.span.clone(), context, tail)?;
-                let Expression::Do(children) = &body.kind else { unreachable!() };
-                let (statements, result) = if let Some((result, statements)) = children.split_last() {
+                let Expression::Do(children) = &body.kind else {
+                    unreachable!()
+                };
+                let (statements, result) = if let Some((result, statements)) = children.split_last()
+                {
                     (statements.to_vec(), result.clone())
                 } else {
-                    let nil = Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] };
+                    let nil = Form {
+                        kind: Kind::Nil,
+                        span: form.span.clone(),
+                        metadata: vec![],
+                    };
                     (vec![], self.form_in(&nil, context, tail)?)
                 };
-                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Do {
-                    statements: statements.into(), result: std::sync::Arc::new(result),
-                }));
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Do {
+                        statements: statements.into(),
+                        result: std::sync::Arc::new(result),
+                    }));
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -2328,7 +2556,11 @@ impl Analyzer<'_> {
                 let alternative = Box::new(if args.len() == 3 {
                     self.form_in(&args[2], context, tail)?
                 } else {
-                    let nil = Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] };
+                    let nil = Form {
+                        kind: Kind::Nil,
+                        span: form.span.clone(),
+                        metadata: vec![],
+                    };
                     self.form_in(&nil, context, tail)?
                 });
                 let ty = if consequent.ty == alternative.ty {
@@ -2336,11 +2568,12 @@ impl Analyzer<'_> {
                 } else {
                     Type::Value
                 };
-                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::If {
-                    condition: std::sync::Arc::new(condition.as_ref().clone()),
-                    consequent: std::sync::Arc::new(consequent.as_ref().clone()),
-                    alternative: std::sync::Arc::new(alternative.as_ref().clone()),
-                }));
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::If {
+                        condition: std::sync::Arc::new(condition.as_ref().clone()),
+                        consequent: std::sync::Arc::new(consequent.as_ref().clone()),
+                        alternative: std::sync::Arc::new(alternative.as_ref().clone()),
+                    }));
                 (
                     Expression::If {
                         condition,
@@ -2350,8 +2583,7 @@ impl Analyzer<'_> {
                     ty,
                 )
             }
-            _ if bare && matches!(symbol.name.as_str(), "let*" | "loop*") =>
-            {
+            _ if bare && matches!(symbol.name.as_str(), "let*" | "loop*") => {
                 let is_loop = symbol.name == "loop*";
                 if args.is_empty() {
                     return Err(fail(form.span.clone(), "let requires a binding vector"));
@@ -2382,13 +2614,22 @@ impl Analyzer<'_> {
                     // its physical payload ID. Consume the original declaration
                     // before entering the body; ordinary nested lets stay distinct.
                     let alias = if !is_loop {
-                        self.catch_aliases.iter().position(|(declaration, hidden)| {
-                            declaration == &pair[0] && pair[1].kind == hidden.declaration.kind
-                        }).map(|index| self.catch_aliases.remove(index).1)
-                    } else { None };
+                        self.catch_aliases
+                            .iter()
+                            .position(|(declaration, hidden)| {
+                                declaration == &pair[0] && pair[1].kind == hidden.declaration.kind
+                            })
+                            .map(|index| self.catch_aliases.remove(index).1)
+                    } else {
+                        None
+                    };
                     let value = self.form(&pair[1])?;
-                    let id = if let Some(hidden) = &alias { hidden.id } else {
-                        let id = BindingId(self.next); self.next += 1; id
+                    let id = if let Some(hidden) = &alias {
+                        hidden.id
+                    } else {
+                        let id = BindingId(self.next);
+                        self.next += 1;
+                        id
                     };
                     self.insert_local(
                         &pair[0],
@@ -2404,18 +2645,24 @@ impl Analyzer<'_> {
                         Some(value.clone()),
                     );
                     if let Some(hidden) = &alias {
-                        self.locals.get_mut(&name.name).expect("catch alias").source_role = SourceRole::CatchBinding {
-                            hidden: hidden.clone(), access: self.local(&pair[1], hidden.id),
+                        self.locals
+                            .get_mut(&name.name)
+                            .expect("catch alias")
+                            .source_role = SourceRole::CatchBinding {
+                            hidden: hidden.clone(),
+                            access: self.local(&pair[1], hidden.id),
                         };
                     }
                     source_bindings.push(self.locals[&name.name].clone());
-                    if alias.is_none() { bindings.push(Binding {
-                        id,
-                        name: name.name.clone(),
-                        metadata: pair[0].metadata.clone(),
-                        span: pair[0].span.clone(),
-                        value,
-                    }); }
+                    if alias.is_none() {
+                        bindings.push(Binding {
+                            id,
+                            name: name.name.clone(),
+                            metadata: pair[0].metadata.clone(),
+                            span: pair[0].span.clone(),
+                            value,
+                        });
+                    }
                 }
                 let target = LoopId(self.next_loop);
                 let outer_target = self.target;
@@ -2426,10 +2673,18 @@ impl Analyzer<'_> {
                 // Pinned analyze-let-body explicitly analyzes a synthetic do
                 // in this lexical scope. This is its genuine source analysis,
                 // not a body reconstructed from the physical Do expression.
-                let body = Box::new(self.analyzed_body(&args[1..], form.span.clone(), context.returning(), is_loop || tail)?);
-                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Bindings {
-                    is_loop, bindings: source_bindings.into(), body: std::sync::Arc::new(body.as_ref().clone()),
-                }));
+                let body = Box::new(self.analyzed_body(
+                    &args[1..],
+                    form.span.clone(),
+                    context.returning(),
+                    is_loop || tail,
+                )?);
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Bindings {
+                        is_loop,
+                        bindings: source_bindings.into(),
+                        body: std::sync::Arc::new(body.as_ref().clone()),
+                    }));
                 self.target = outer_target;
                 self.locals = outer;
                 let ty = body.ty;
@@ -2462,9 +2717,11 @@ impl Analyzer<'_> {
                     .iter()
                     .map(|arg| self.form(arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
-                    callee: std::sync::Arc::new(callee), arguments: arguments.clone().into(),
-                }));
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Invoke {
+                        callee: std::sync::Arc::new(callee),
+                        arguments: arguments.clone().into(),
+                    }));
                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
                 let ty = arithmetic_type(operator, &types).ok_or_else(|| {
                     let operand = arguments
@@ -2497,21 +2754,33 @@ impl Analyzer<'_> {
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
         Expression::Assign { value, .. } => free_bindings(value, bound, free),
-        Expression::DynamicScope { bindings, body } | Expression::AsyncDynamicScope { bindings, body } => {
+        Expression::DynamicScope { bindings, body }
+        | Expression::AsyncDynamicScope { bindings, body } => {
             for (_, value) in bindings {
                 free_bindings(value, bound, free);
             }
             free_bindings(body, bound, free);
         }
-        Expression::Throw(value) | Expression::NilTest(value) | Expression::Await { value } => free_bindings(value, bound, free),
-        Expression::AsyncTry { body, handler, cleanup, payload } => {
+        Expression::Throw(value) | Expression::NilTest(value) | Expression::Await { value } => {
+            free_bindings(value, bound, free)
+        }
+        Expression::AsyncTry {
+            body,
+            handler,
+            cleanup,
+            payload,
+        } => {
             free_bindings(body, bound, free);
             if let Some(handler) = handler {
                 let mut bound = bound.clone();
-                if let Some(payload) = payload { bound.insert(payload.id); }
+                if let Some(payload) = payload {
+                    bound.insert(payload.id);
+                }
                 free_bindings(handler, &bound, free);
             }
-            if let Some(cleanup) = cleanup { free_bindings(cleanup, bound, free); }
+            if let Some(cleanup) = cleanup {
+                free_bindings(cleanup, bound, free);
+            }
         }
         Expression::Try { regions } => {
             for region in regions {
@@ -2527,7 +2796,8 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 free.insert(*id);
             }
         }
-        Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. }
+        Expression::Function { captures, .. }
+        | Expression::GeneralFunction { captures, .. }
         | Expression::Future { captures, .. } => {
             for id in captures {
                 if !bound.contains(id) {

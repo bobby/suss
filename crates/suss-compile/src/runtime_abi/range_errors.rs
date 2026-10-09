@@ -52,7 +52,7 @@ pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
         Throw(0),
     ]);
 }
-pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+pub(super) fn functions(b: &mut Builder, callback: u32) -> Vec<u32> {
     b.function(
         "range-error?",
         &[VALUE],
@@ -74,53 +74,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             End,
         ],
     );
-    let mut body = vec![
-        GlobalGet(DESCRIPTOR_GLOBAL),
-        LocalGet(1),
-        ArrayLen,
-        I32Eqz,
-        If(BlockType::Result(VALUE)),
-        ArrayNewFixed {
-            array_type_index: STRING,
-            array_size: 0,
-        },
-        Else,
-        LocalGet(1),
-        I32Const(0),
-        ArrayGet(ARGS),
-        I32Const(UNDEFINED),
-        RefI31,
-        RefEq,
-        If(BlockType::Result(VALUE)),
-        ArrayNewFixed {
-            array_type_index: STRING,
-            array_size: 0,
-        },
-        Else,
-        LocalGet(1),
-        I32Const(0),
-        ArrayGet(ARGS),
-        Call(b.names["coerce-string"]),
-        End,
-        End,
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        StructNew(8),
-    ];
-    let callback = b.count;
-    b.functions.function(INVOKE);
-    let mut function = Function::new([]);
-    for instruction in body.drain(..) {
-        function.instruction(&instruction);
-    }
-    function.instruction(&End);
-    b.code.function(&function);
-    b.count += 1;
+    let mut body = vec![];
     body.extend([
         GlobalGet(CONSTRUCTOR_ROOT),
         RefTestNonNull(HeapType::Concrete(CLOSURE)),
@@ -147,5 +101,5 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         GlobalGet(CONSTRUCTOR_ROOT),
     ]);
     b.function("range-error-constructor", &[], &[VALUE], &body);
-    vec![callback]
+    vec![]
 }

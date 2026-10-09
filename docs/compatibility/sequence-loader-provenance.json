@@ -183,6 +183,14 @@
       "line": 9582,
       "end-line": 9583,
       "sha256": "749ba6a71c28b36c1688896751bfc4afce0673ece5d80a607091099eeac2c0bc"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11785,
+      "end-line": 11785,
+      "sha256": "e2c5d91f66be4adca898e0b078c9a29a4b9cfb612a94cf6a59a611ec412f6939",
+      "patch": "docs/compatibility/patches/error-ExceptionInfo-prototype.json",
+      "patch-sha256": "635ccf38766e102d481c8fe1997d6def8150e922d4a4c105c17577d6c8d2df4d"
     }
   ]
 }

@@ -308,3 +308,6 @@
 
 (set! (.-EMPTY PersistentTreeSet)
   (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))
+
+;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
+(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))

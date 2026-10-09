@@ -527,6 +527,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalSet(payload),
         ]);
         if !writing {
+            body.push(LocalGet(1));
+            name(&mut body, "prototype");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                LocalGet(0),
+                Call(b.names["owned-constructor-prototype"]),
+                Return,
+                End,
+            ]);
             for (spelling, adapter) in [
                 ("call", "closure-call-method"),
                 ("apply", "closure-apply-method"),
@@ -542,6 +552,29 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     End,
                 ]);
             }
+        }
+        if writing {
+            body.push(LocalGet(1));
+            name(&mut body, "prototype");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                LocalGet(0),
+                Call(b.names["closure-environment"]),
+                LocalSet(fresh),
+                I32Const(0),
+            ]);
+            for descriptor in [
+                nominal::ERROR_GLOBAL,
+                range_errors::DESCRIPTOR_GLOBAL,
+                owned_prototypes::TYPE_ERROR_GLOBAL,
+                owned_prototypes::OBJECT_DESCRIPTOR,
+            ] {
+                body.extend([LocalGet(fresh), GlobalGet(descriptor), RefEq, I32Or]);
+            }
+            // Pinned unoptimized portable code is non-strict: assignments to
+            // these nonwritable builtin prototype properties return the RHS.
+            body.extend([If(BlockType::Empty), LocalGet(2), Return, End, End]);
         }
         reject_host_names(&mut body, equal, INHERITED_NAMES);
         reject_host_names(
@@ -841,6 +874,30 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             body.extend([
                 LocalGet(fresh),
                 Call(b.names["protocol-method-get"]),
+                LocalSet(fresh),
+                LocalGet(fresh),
+                I32Const(0),
+                RefI31,
+                RefEq,
+                I32Eqz,
+                If(BlockType::Empty),
+                LocalGet(fresh),
+                Return,
+                End,
+                End,
+            ]);
+            body.extend([
+                LocalGet(0),
+                LocalGet(1),
+                Call(b.names["owned-instance-property-get"]),
+                LocalSet(fresh),
+                LocalGet(fresh),
+                RefTestNonNull(HeapType::Concrete(ARGS)),
+                If(BlockType::Empty),
+                LocalGet(fresh),
+                RefCastNonNull(HeapType::Concrete(ARGS)),
+                I32Const(0),
+                ArrayGet(ARGS),
                 Return,
                 End,
             ]);

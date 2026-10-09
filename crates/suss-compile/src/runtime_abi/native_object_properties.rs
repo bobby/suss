@@ -13,6 +13,9 @@ pub(super) fn primitives(b: &mut Builder) {
         LocalGet(1),
         RefTestNonNull(HeapType::Concrete(7)),
         I32Or,
+        LocalGet(1),
+        Call(b.names["native-object?"]),
+        I32Or,
         If(BlockType::Empty),
         LocalGet(0),
         GlobalGet(native_object_methods::ROOT),
@@ -184,6 +187,66 @@ pub(super) fn functions(b: &mut Builder) {
         &[(3, VALUE)],
         &code,
     );
+    // Source instances retain a nominal field schema and a separate prototype
+    // reference. Resolve storage on that prototype while invoking an inherited
+    // accessor with the actual instance as receiver.
+    code = vec![
+        LocalGet(0),
+        LocalGet(2),
+        Call(resolve),
+        LocalSet(3),
+        LocalGet(3),
+        I32Const(UNDEFINED),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
+        LocalGet(3),
+        Return,
+        End,
+        LocalGet(3),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        RefCastNonNull(HeapType::I31),
+        I31GetU,
+        I32Const(8),
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(3),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalSet(4),
+        LocalGet(4),
+        I32Const(UNDEFINED),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
+        LocalGet(4),
+        Return,
+        End,
+        LocalGet(4),
+        LocalGet(1),
+        I32Const(0),
+        ArrayNewDefault(ARGS),
+        Call(b.names["object-method-invoke"]),
+        Return,
+        End,
+        LocalGet(3),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+    ];
+    b.function_with_locals(
+        "native-object-property-get-with-receiver",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(2, VALUE)],
+        &code,
+    );
     for strict in [false, true] {
         code = vec![LocalGet(2), RefIsNull, If(BlockType::Empty)];
         nominal::error(&mut code);
@@ -300,6 +363,31 @@ pub(super) fn functions(b: &mut Builder) {
         ];
         nominal::error(&mut code);
         code.push(End);
+        code.extend([
+            LocalGet(0),
+            Call(b.names["owned-error-backing"]),
+            I32Const(0),
+            RefI31,
+            RefEq,
+            I32Eqz,
+            If(BlockType::Empty),
+            LocalGet(0),
+            LocalGet(1),
+        ]);
+        if writing {
+            code.push(LocalGet(2));
+        }
+        code.extend([
+            Call(
+                b.names[if writing {
+                    "native-object-property-set"
+                } else {
+                    "native-object-property-get"
+                }],
+            ),
+            Return,
+            End,
+        ]);
         if !writing {
             // Typed language errors have their own ABI layout. Validate nominal
             // identity before reading it; an equal structural layout is not an
@@ -310,7 +398,7 @@ pub(super) fn functions(b: &mut Builder) {
                 RefTestNonNull(HeapType::Concrete(8)),
                 If(BlockType::Empty),
                 LocalGet(0),
-                Call(b.names["language-error-is"]),
+                Call(b.names["language-error-canonical?"]),
                 I32Eqz,
                 If(BlockType::Empty),
             ]);
@@ -327,11 +415,68 @@ pub(super) fn functions(b: &mut Builder) {
                 If(BlockType::Empty),
                 LocalGet(0),
                 RefCastNonNull(HeapType::Concrete(8)),
-                StructGet { struct_type_index: 8, field_index: 1 },
+                StructGet {
+                    struct_type_index: 8,
+                    field_index: 1,
+                },
                 Return,
                 End,
             ]);
-            // Other host Error properties still require an explicit adapter.
+            for (name, field) in [("cause", 3)] {
+                code.push(LocalGet(1));
+                let units: Vec<_> = name.encode_utf16().collect();
+                code.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+                code.extend([
+                    ArrayNewFixed {
+                        array_type_index: STRING,
+                        array_size: units.len() as u32,
+                    },
+                    Call(b.names["property-key-equal"]),
+                    If(BlockType::Empty),
+                    LocalGet(0),
+                    RefCastNonNull(HeapType::Concrete(8)),
+                    StructGet {
+                        struct_type_index: 8,
+                        field_index: 2,
+                    },
+                    RefCastNonNull(HeapType::I31),
+                    I31GetU,
+                    I32Const(1),
+                    I32And,
+                    If(BlockType::Result(VALUE)),
+                    LocalGet(0),
+                    RefCastNonNull(HeapType::Concrete(8)),
+                    StructGet {
+                        struct_type_index: 8,
+                        field_index: field,
+                    },
+                    Else,
+                    I32Const(UNDEFINED),
+                    RefI31,
+                    End,
+                    Return,
+                    End,
+                ]);
+            }
+            // Read constructor-owned inherited properties with the physical
+            // Error as accessor receiver. The one-slot carrier keeps present
+            // undefined distinct from missing properties.
+            code.extend([
+                LocalGet(0),
+                LocalGet(1),
+                Call(b.names["owned-instance-property-get"]),
+                LocalSet(2),
+                LocalGet(2),
+                RefTestNonNull(HeapType::Concrete(ARGS)),
+                If(BlockType::Empty),
+                LocalGet(2),
+                RefCastNonNull(HeapType::Concrete(ARGS)),
+                I32Const(0),
+                ArrayGet(ARGS),
+                Return,
+                End,
+            ]);
+            // Unimplemented host properties retain their explicit boundary.
             nominal::error(&mut code);
             code.push(End);
         }
@@ -370,7 +515,7 @@ pub(super) fn functions(b: &mut Builder) {
             ),
             End,
         ]);
-        b.function(
+        b.function_with_locals(
             if writing {
                 "named-property-set"
             } else {
@@ -382,6 +527,7 @@ pub(super) fn functions(b: &mut Builder) {
                 &[VALUE, VALUE]
             },
             &[VALUE],
+            &[(1, VALUE)],
             &code,
         );
     }

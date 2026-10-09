@@ -6678,8 +6678,9 @@ reduces them without incurring seq initialization"
       ret))
   (remove [_] (suss.bootstrap/error "Unsupported operation")))
 
-(defn string-iter [x]
-  (StringIter. x 0))
+(def ^{:arglists '([x])} string-iter
+  (fn [x]
+  (StringIter. x 0)))
 
 (deftype ArrayIter [arr ^:mutable i]
   Object
@@ -6690,8 +6691,9 @@ reduces them without incurring seq initialization"
       ret))
   (remove [_] (suss.bootstrap/error "Unsupported operation")))
 
-(defn array-iter [x]
-  (ArrayIter. x 0))
+(def ^{:arglists '([x])} array-iter
+  (fn [x]
+  (ArrayIter. x 0)))
 
 (def INIT (cljs.core/js-obj))
 
@@ -6715,24 +6717,27 @@ reduces them without incurring seq initialization"
         (first _next))))
   (remove [_] (suss.bootstrap/error "Unsupported operation")))
 
-(defn seq-iter [coll]
-  (SeqIter. INIT coll))
+(def ^{:arglists '([coll])} seq-iter
+  (fn [coll]
+  (SeqIter. INIT coll)))
 
-(defn nil-iter []
+(def ^{:arglists '([])} nil-iter
+  (fn []
   (reify
     Object
     (hasNext [_] false)
     (next [_] (suss.bootstrap/error "No such element"))
-    (remove [_] (suss.bootstrap/error "Unsupported operation"))))
+    (remove [_] (suss.bootstrap/error "Unsupported operation")))))
 
-(defn iter [coll]
+(def ^{:arglists '([coll])} iter
+  (fn [coll]
   (cond
     (iterable? coll) (-iterator coll)
     (suss.bootstrap/nil? coll) (nil-iter)
     (suss.bootstrap/string? coll) (string-iter coll)
     (array? coll) (array-iter coll)
     (seqable? coll) (seq-iter coll)
-    :else (throw (suss.bootstrap/error (let [sorted-text__ (str_ coll)] (.join (cljs.core/array "Cannot create iterator from " sorted-text__) ""))))))
+    :else (throw (suss.bootstrap/error (let [sorted-text__ (str_ coll)] (.join (cljs.core/array "Cannot create iterator from " sorted-text__) "")))))))
 
 (deftype ES6Iterator [^:mutable s]
   Object
@@ -6743,10 +6748,9 @@ reduces them without incurring seq initialization"
         (cljs.core/js-obj "value" x "done" false))
       (cljs.core/js-obj "value" nil "done" true))))
 
-(defn es6-iterator
-  "Return a ES2015+ compatible iterator for coll."
-  [coll]
-  (ES6Iterator. (seq coll)))
+(def ^{:doc "Return a ES2015+ compatible iterator for coll." :arglists '([coll])} es6-iterator
+  (fn [coll]
+  (ES6Iterator. (seq coll))))
 
 (deftype ES6EntriesIterator [^:mutable s]
   Object
@@ -6757,8 +6761,9 @@ reduces them without incurring seq initialization"
         (cljs.core/js-obj "value" (cljs.core/array k v) "done" false))
       (cljs.core/js-obj "value" nil "done" true))))
 
-(defn es6-entries-iterator [coll]
-  (ES6EntriesIterator. (seq coll)))
+(def ^{:arglists '([coll])} es6-entries-iterator
+  (fn [coll]
+  (ES6EntriesIterator. (seq coll))))
 
 (deftype ES6SetEntriesIterator [^:mutable s]
   Object
@@ -6769,10 +6774,11 @@ reduces them without incurring seq initialization"
         (cljs.core/js-obj "value" (cljs.core/array x x) "done" false))
       (cljs.core/js-obj "value" nil "done" true))))
 
-(defn es6-set-entries-iterator [coll]
-  (ES6SetEntriesIterator. (seq coll)))
+(def ^{:arglists '([coll])} es6-set-entries-iterator
+  (fn [coll]
+  (ES6SetEntriesIterator. (seq coll))))
 
-(def ^:private tree-map-seq-push
+(def ^{:arglists '([node stack ^boolean ascending?]) :private true} tree-map-seq-push
   (fn [node stack ^boolean ascending?]
   (loop [t node stack stack]
     (if-not (suss.bootstrap/nil? t)
@@ -6854,11 +6860,11 @@ reduces them without incurring seq initialization"
   (-reduce [coll f] (seq-reduce f coll))
   (-reduce [coll f start] (seq-reduce f start coll)))
 
-(def ^:private create-tree-map-seq
+(def ^{:arglists '([tree ascending? cnt]) :private true} create-tree-map-seq
   (fn [tree ascending? cnt]
   (PersistentTreeMapSeq. nil (tree-map-seq-push tree nil ascending?) ascending? cnt nil)))
 
-(def ^:private tree-map-add
+(def ^{:arglists '([comp tree k v found]) :private true} tree-map-add
   (fn [comp tree k v found]
   (if (suss.bootstrap/nil? tree)
     (RedNode. k v nil nil nil)
@@ -6878,7 +6884,7 @@ reduces them without incurring seq initialization"
           (if-not (suss.bootstrap/nil? ins)
             (.add-right tree ins))))))))
 
-(def ^:private tree-map-append
+(def ^{:arglists '([left right]) :private true} tree-map-append
   (fn [left right]
   (cond
     (suss.bootstrap/nil? left)
@@ -6936,7 +6942,7 @@ reduces them without incurring seq initialization"
                                       (.-right right)
                                       nil)))))))
 
-(def ^:private tree-map-remove
+(def ^{:arglists '([comp tree k found]) :private true} tree-map-remove
   (fn [comp tree k found]
   (if-not (suss.bootstrap/nil? tree)
     (let [c (comp k (.-key tree))]
@@ -6959,7 +6965,7 @@ reduces them without incurring seq initialization"
               (balance-right-del (.-key tree) (.-val tree) (.-left tree) del)
               (RedNode. (.-key tree) (.-val tree) (.-left tree) del nil)))))))))
 
-(def ^:private tree-map-replace
+(def ^{:arglists '([comp tree k v]) :private true} tree-map-replace
   (fn [comp tree k v]
   (let [tk (.-key tree)
         c  (comp k tk)]
@@ -7033,11 +7039,10 @@ reduces them without incurring seq initialization"
   (-reduce [coll f] (seq-reduce f coll))
   (-reduce [coll f start] (seq-reduce f start coll)))
 
-(defn vals
-  "Returns a sequence of the map's values, in the same order as (seq map)."
-  [map]
+(def ^{:doc "Returns a sequence of the map's values, in the same order as (seq map)." :arglists '([map])} vals
+  (fn [map]
   (when-let [mseq (seq map)]
-    (ValSeq. mseq nil)))
+    (ValSeq. mseq nil))))
 
 (deftype PersistentTreeMap [comp tree cnt meta ^:mutable __hash]
   Object
@@ -7324,42 +7329,37 @@ reduces them without incurring seq initialization"
   (-invoke [coll k not-found]
     (suss.bootstrap/direct-protocol-call ILookup -lookup coll k not-found)))
 
-(defn sorted-map
-  "keyval => key val
-  Returns a new sorted map with supplied mappings."
-  ([& keyvals]
+(def ^{:doc "keyval => key val
+  Returns a new sorted map with supplied mappings." :arglists '([& keyvals])} sorted-map
+  (fn ([& keyvals]
      (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
        (if in
          (recur (nnext in) (assoc out (first in) (second in)))
-         out))))
+         out)))))
 
-(defn sorted-map-by
-  "keyval => key val
-  Returns a new sorted map with supplied mappings, using the supplied comparator."
-  ([comparator & keyvals]
+(def ^{:doc "keyval => key val
+  Returns a new sorted map with supplied mappings, using the supplied comparator." :arglists '([comparator & keyvals])} sorted-map-by
+  (fn ([comparator & keyvals]
      (loop [in (seq keyvals)
             out (PersistentTreeMap. (fn->comparator comparator) nil 0 nil 0)]
        (if in
          (recur (nnext in) (assoc out (first in) (second in)))
-         out))))
+         out)))))
 
-(defn sorted-set
-  "Returns a new sorted set with supplied keys."
-  ([& keys]
-   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))
+(def ^{:doc "Returns a new sorted set with supplied keys." :arglists '([& keys])} sorted-set
+  (fn ([& keys]
+   (reduce -conj (.-EMPTY PersistentTreeSet) keys))))
 
-(defn sorted-set-by
-  "Returns a new sorted set with supplied keys, using the supplied comparator."
-  ([comparator & keys]
+(def ^{:doc "Returns a new sorted set with supplied keys, using the supplied comparator." :arglists '([comparator & keys])} sorted-set-by
+  (fn ([comparator & keys]
    (reduce -conj
            (PersistentTreeSet. nil (sorted-map-by comparator) 0)
-           keys)))
+           keys))))
 
-(defn take-while
-  "Returns a lazy sequence of successive items from coll while
+(def ^{:doc "Returns a lazy sequence of successive items from coll while
   (pred item) returns logical true. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred]
+  Returns a transducer when no collection is provided." :arglists '([pred] [pred coll])} take-while
+  (fn ([pred]
      (fn [rf]
        (fn
          ([] (rf))
@@ -7372,19 +7372,18 @@ reduces them without incurring seq initialization"
      (lazy-seq
        (when-let [s (seq coll)]
          (when (pred (first s))
-           (cons (first s) (take-while pred (rest s))))))))
+           (cons (first s) (take-while pred (rest s)))))))))
 
-(defn mk-bound-fn
-  [sc test key]
+(def ^{:arglists '([sc test key])} mk-bound-fn
+  (fn [sc test key]
   (fn [e]
     (let [comp (-comparator sc)]
-      (test (comp (-entry-key sc e) key) 0))))
+      (test (comp (-entry-key sc e) key) 0)))))
 
-(defn subseq
-  "sc must be a sorted collection, test(s) one of <, <=, > or
+(def ^{:doc "sc must be a sorted collection, test(s) one of <, <=, > or
   >=. Returns a seq of those entries with keys ek for
-  which (test (.. sc comparator (compare ek key)) 0) is true"
-  ([sc test key]
+  which (test (.. sc comparator (compare ek key)) 0) is true" :arglists '([sc test key] [sc start-test start-key end-test end-key])} subseq
+  (fn ([sc test key]
      (let [include (mk-bound-fn sc test key)]
        (if (#{> >=} test)
          (when-let [[e :as s] (-sorted-seq-from sc key true)]
@@ -7393,13 +7392,12 @@ reduces them without incurring seq initialization"
   ([sc start-test start-key end-test end-key]
      (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
        (take-while (mk-bound-fn sc end-test end-key)
-                   (if ((mk-bound-fn sc start-test start-key) e) s (next s))))))
+                   (if ((mk-bound-fn sc start-test start-key) e) s (next s)))))))
 
-(defn rsubseq
-  "sc must be a sorted collection, test(s) one of <, <=, > or
+(def ^{:doc "sc must be a sorted collection, test(s) one of <, <=, > or
   >=. Returns a reverse seq of those entries with keys ek for
-  which (test (.. sc comparator (compare ek key)) 0) is true"
-  ([sc test key]
+  which (test (.. sc comparator (compare ek key)) 0) is true" :arglists '([sc test key] [sc start-test start-key end-test end-key])} rsubseq
+  (fn ([sc test key]
      (let [include (mk-bound-fn sc test key)]
        (if (#{< <=} test)
          (when-let [[e :as s] (-sorted-seq-from sc key false)]
@@ -7408,7 +7406,7 @@ reduces them without incurring seq initialization"
   ([sc start-test start-key end-test end-key]
      (when-let [[e :as s] (-sorted-seq-from sc end-key false)]
        (take-while (mk-bound-fn sc start-test start-key)
-                   (if ((mk-bound-fn sc end-test end-key) e) s (next s))))))
+                   (if ((mk-bound-fn sc end-test end-key) e) s (next s)))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -7719,6 +7717,9 @@ reduces them without incurring seq initialization"
 
 (set! (.-EMPTY PersistentTreeSet)
   (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))
+
+;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
+(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
 ;; Original Suss WIT integer foundations, not extracted upstream source.
 ;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
 ;; Decimal parsing never converts the complete integer through binary64.

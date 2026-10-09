@@ -2037,7 +2037,7 @@
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "199343e5f633ebb144d68fc27ca1e79a2b5073e0193704aeae7d20dc5898079d"
+      "sha256": "03f25acf05e6471fbfa6f896acf9571fc9cd6e43c571d27999696bd2978bf1d1"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",

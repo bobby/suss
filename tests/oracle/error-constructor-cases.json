@@ -1,0 +1,3557 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "Error-new-zero",
+      "source": "(new js/Error)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [],
+          "messageOwn": false,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-new-undefined",
+      "source": "(new js/Error js/undefined)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [],
+          "messageOwn": false,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-new-nil",
+      "source": "(new js/Error nil)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            110,
+            117,
+            108,
+            108
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-new-false",
+      "source": "(new js/Error false)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            102,
+            97,
+            108,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-new-number",
+      "source": "(new js/Error 17)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            49,
+            55
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-new-utf16",
+      "source": "(new js/Error \"A\ud83d\ude00\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            65,
+            55357,
+            56832
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-ordinary",
+      "source": "(js/Error \"ordinary\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            111,
+            114,
+            100,
+            105,
+            110,
+            97,
+            114,
+            121
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-cause-number",
+      "source": "(js/Error. \"cause\" (js-obj \"cause\" 73))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-cause-nil",
+      "source": "(js/Error. \"cause\" (js-obj \"cause\" nil))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "nil"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-cause-undefined",
+      "source": "(js/Error. \"cause\" (js-obj \"cause\" js/undefined))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-cause-false",
+      "source": "(js/Error. \"cause\" (js-obj \"cause\" false))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "bool",
+            "value": false
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-primitive-options-nil",
+      "source": "(js/Error. \"x\" nil)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-primitive-options-false",
+      "source": "(js/Error. \"x\" false)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-primitive-options-number",
+      "source": "(js/Error. \"x\" 17)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "Error-primitive-options-string",
+      "source": "(js/Error. \"x\" \"x\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-zero",
+      "source": "(new js/RangeError)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [],
+          "messageOwn": false,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-undefined",
+      "source": "(new js/RangeError js/undefined)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [],
+          "messageOwn": false,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-nil",
+      "source": "(new js/RangeError nil)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            110,
+            117,
+            108,
+            108
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-false",
+      "source": "(new js/RangeError false)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            102,
+            97,
+            108,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-number",
+      "source": "(new js/RangeError 17)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            49,
+            55
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-new-utf16",
+      "source": "(new js/RangeError \"A\ud83d\ude00\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            65,
+            55357,
+            56832
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-ordinary",
+      "source": "(js/RangeError \"ordinary\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            111,
+            114,
+            100,
+            105,
+            110,
+            97,
+            114,
+            121
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-cause-number",
+      "source": "(js/RangeError. \"cause\" (js-obj \"cause\" 73))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-cause-nil",
+      "source": "(js/RangeError. \"cause\" (js-obj \"cause\" nil))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "nil"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-cause-undefined",
+      "source": "(js/RangeError. \"cause\" (js-obj \"cause\" js/undefined))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-cause-false",
+      "source": "(js/RangeError. \"cause\" (js-obj \"cause\" false))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            99,
+            97,
+            117,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "bool",
+            "value": false
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-primitive-options-nil",
+      "source": "(js/RangeError. \"x\" nil)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-primitive-options-false",
+      "source": "(js/RangeError. \"x\" false)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-primitive-options-number",
+      "source": "(js/RangeError. \"x\" 17)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "RangeError-primitive-options-string",
+      "source": "(js/RangeError. \"x\" \"x\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "RangeError",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "inherited-cause",
+      "source": "(let [p (js-obj \"cause\" 73) o (js-obj)] (aset o \"__proto__\" p) (js/Error. \"inherited\" o))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            105,
+            110,
+            104,
+            101,
+            114,
+            105,
+            116,
+            101,
+            100
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "array-cause",
+      "source": "(let [o (array)] (aset o \"cause\" false) (js/Error. \"array\" o))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            97,
+            114,
+            114,
+            97,
+            121
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "bool",
+            "value": false
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "typed-error",
+      "source": "(try (throw (js/Error. \"typed\")) (catch js/Error e (.-message e)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            116,
+            121,
+            112,
+            101,
+            100
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "typed-range-first",
+      "source": "(try (throw (js/RangeError. \"range\")) (catch js/RangeError e 17) (catch js/Error e 23))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4031000000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "typed-parent-first",
+      "source": "(try (throw (js/RangeError. \"range\")) (catch js/Error e 17) (catch js/RangeError e 23))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4031000000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "typed-exception-info",
+      "source": "(try (throw (ex-info \"info\" {})) (catch js/Error e (ex-message e)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            105,
+            110,
+            102,
+            111
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "nominal-not-derived",
+      "source": "(instance? js/Error (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (array) nil))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "range-parent",
+      "source": "(instance? js/Error (js/RangeError. \"x\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "error-not-range",
+      "source": "(instance? js/RangeError (js/Error. \"x\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "info-parent",
+      "source": "(instance? js/Error (ex-info \"x\" {}))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "reject-nil",
+      "source": "(instance? js/Error nil)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "reject-false",
+      "source": "(instance? js/Error false)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "reject-number",
+      "source": "(instance? js/Error 73)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "reject-shape",
+      "source": "(instance? js/Error (js-obj \"message\" \"fake\" \"name\" \"Error\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "original-throw",
+      "source": "(try (throw 73) (catch js/Error e 17))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "original-false-throw",
+      "source": "(try (throw false) (catch js/Error e 17))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "finally-rethrow",
+      "source": "(try (throw 73) (catch js/Error e 17) (finally (error-step 1)))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "constructor-operand-order",
+      "source": "(new (do (error-step 1) js/Error) (do (error-step 2) \"ordered\") (do (error-step 3) nil) (do (error-step 4) 99))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            111,
+            114,
+            100,
+            101,
+            114,
+            101,
+            100
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4093480000000000"
+        }
+      }
+    },
+    {
+      "id": "instance-operand-order",
+      "source": "(instance? (do (error-step 1) js/Error) (do (error-step 2) (js/RangeError. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4028000000000000"
+        }
+      }
+    },
+    {
+      "id": "message-conversion-order",
+      "source": "(let [o (js-obj \"toString\" (fn [] (error-step 4) \"converted\"))] (js/Error. (do (error-step 1) o) (do (error-step 2) (js-obj \"cause\" 73)) (do (error-step 3) nil)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            99,
+            111,
+            110,
+            118,
+            101,
+            114,
+            116,
+            101,
+            100
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4093480000000000"
+        }
+      }
+    },
+    {
+      "id": "conversion-original-throw",
+      "source": "(let [o (js-obj \"toString\" (fn [] (error-step 3) (throw 73)))] (js/Error. (do (error-step 1) o) (do (error-step 2) nil)))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "405ec00000000000"
+        }
+      }
+    },
+    {
+      "id": "retained-class-identity",
+      "source": "(let [a js/Error b js/Error] (identical? a b))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "class-of-error",
+      "source": "(identical? js/Error (type (js/Error. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "class-of-range",
+      "source": "(identical? js/RangeError (type (js/RangeError. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "cause-read-absent",
+      "source": "(undefined? (.-cause (js/Error. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "cause-read-nil",
+      "source": "(.-cause (js/Error. \"x\" (js-obj \"cause\" nil)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "nil"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "cause-read-false",
+      "source": "(.-cause (js/Error. \"x\" (js-obj \"cause\" false)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "local-js-shadow",
+      "source": "(let [Error (fn [message] message)] (js/Error \"local\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            108,
+            111,
+            99,
+            97,
+            108
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-Error-name",
+      "source": "(.-name (.-prototype js/Error))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-Error-message",
+      "source": "(.-message (.-prototype js/Error))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": []
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-RangeError-name",
+      "source": "(.-name (.-prototype js/RangeError))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            82,
+            97,
+            110,
+            103,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-Error-constructor",
+      "source": "(identical? (.-constructor (.-prototype js/Error)) js/Error)",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-Error-not-instance",
+      "source": "(instance? js/Error (.-prototype js/Error))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-RangeError-is-Error",
+      "source": "(instance? js/Error (.-prototype js/RangeError))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-RangeError-not-self",
+      "source": "(instance? js/RangeError (.-prototype js/RangeError))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-stable-owner",
+      "source": "(identical? (.-prototype js/Error) (.-prototype js/Error))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-ordinary-derived",
+      "source": "(let [o (js-obj)] (set! (.-__proto__ o) (.-prototype js/Error)) (instance? js/Error o))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-derived",
+      "source": "(do (deftype ErrorChild [message]) (set! (.-__proto__ (.-prototype ErrorChild)) (.-prototype js/Error)) (instance? js/Error (ErrorChild. 7)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-typed-catch",
+      "source": "(do (deftype CatchErrorChild [message]) (set! (.-__proto__ (.-prototype CatchErrorChild)) (.-prototype js/Error)) (try (throw (CatchErrorChild. 7)) (catch js/Error e (.-message e))))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "401c000000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-detach-live",
+      "source": "(do (deftype DetachErrorChild [message]) (set! (.-__proto__ (.-prototype DetachErrorChild)) (.-prototype js/Error)) (let [e (DetachErrorChild. 7)] (set! (.-__proto__ (.-prototype DetachErrorChild)) nil) (instance? js/Error e)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-distinct-class-owners",
+      "source": "(do (deftype FirstErrorChild [message]) (deftype SecondErrorChild [message]) (set! (.-__proto__ (.-prototype FirstErrorChild)) (.-prototype js/Error)) (instance? js/Error (SecondErrorChild. 7)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "options-callable-absent",
+      "source": "(js/Error. \"x\" (fn [] 7))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "options-callable-own-false",
+      "source": "(let [f (fn [] 7)] (set! (.-cause f) false) (js/Error. \"x\" f))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "bool",
+            "value": false
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "options-source-inherited-false",
+      "source": "(do (deftype CauseOptionFalse [marker]) (set! (.-cause (.-prototype CauseOptionFalse)) false) (js/Error. \"x\" (CauseOptionFalse. nil)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "bool",
+            "value": false
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "options-source-inherited-number",
+      "source": "(do (deftype CauseOptionNumber [marker]) (set! (.-cause (.-prototype CauseOptionNumber)) 73) (js/Error. \"x\" (CauseOptionNumber. nil)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "Error",
+          "message": [
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": true,
+          "cause": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-intermediate-source-instance",
+      "source": "(do (deftype ErrorAncestor [message]) (deftype ErrorDescendant [message]) (set! (.-__proto__ (.-prototype ErrorAncestor)) (.-prototype js/Error)) (set! (.-__proto__ (.-prototype ErrorDescendant)) (.-prototype ErrorAncestor)) (instance? ErrorAncestor (ErrorDescendant. 73)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-intermediate-source-catch",
+      "source": "(do (deftype ErrorAncestor [message]) (deftype ErrorDescendant [message]) (set! (.-__proto__ (.-prototype ErrorAncestor)) (.-prototype js/Error)) (set! (.-__proto__ (.-prototype ErrorDescendant)) (.-prototype ErrorAncestor)) (try (throw (ErrorDescendant. 73)) (catch ErrorAncestor e (.-message e))))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-RangeError-live-detach",
+      "source": "(let [p (.-prototype js/RangeError) old (.-__proto__ p) e (js/RangeError. \"x\")] (set! (.-__proto__ p) nil) (let [result (instance? js/Error e)] (set! (.-__proto__ p) old) result))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-inherited-name",
+      "source": "(do (deftype ErrorNameChild [message]) (set! (.-__proto__ (.-prototype ErrorNameChild)) (.-prototype js/Error)) (.-name (ErrorNameChild. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-inherited-false",
+      "source": "(do (deftype ErrorFalseChild [message]) (set! (.-answer (.-prototype ErrorFalseChild)) false) (.-answer (ErrorFalseChild. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-getter-receiver",
+      "source": "(do (deftype ErrorGetterChild [message]) (.defineProperty js/Object (.-prototype ErrorGetterChild) \"answer\" #js {:get (fn [] (this-as self (error-step 1) (.-message self))) :configurable true}) (.-answer (ErrorGetterChild. 73)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-inherited-undefined",
+      "source": "(do (deftype ErrorUndefinedChild [message]) (set! (.-constructor (.-prototype ErrorUndefinedChild)) js/undefined) (.-constructor (ErrorUndefinedChild. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-inherited-nil",
+      "source": "(do (deftype ErrorNilChild [message]) (set! (.-constructor (.-prototype ErrorNilChild)) nil) (.-constructor (ErrorNilChild. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "nil"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-source-getter-original-throw",
+      "source": "(do (deftype ErrorThrowChild [message]) (.defineProperty js/Object (.-prototype ErrorThrowChild) \"answer\" #js {:get (fn [] (error-step 1) (throw 73)) :configurable true}) (.-answer (ErrorThrowChild. \"x\")))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "type-source-live-constructor-nil",
+      "source": "(do (deftype ErrorTypeNil [message]) (set! (.-constructor (.-prototype ErrorTypeNil)) nil) (type (ErrorTypeNil. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "nil"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "type-source-live-constructor-false",
+      "source": "(do (deftype ErrorTypeFalse [message]) (set! (.-constructor (.-prototype ErrorTypeFalse)) false) (type (ErrorTypeFalse. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "type-Error-live-constructor-undefined",
+      "source": "(let [p (.-prototype js/Error) old (.-constructor p) e (js/Error. \"x\")] (set! (.-constructor p) js/undefined) (let [result (type e)] (set! (.-constructor p) old) result))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-Error-empty",
+      "source": "(.toString (js/Error. ))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-Error-message",
+      "source": "(.toString (js/Error. \"x\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-RangeError-empty",
+      "source": "(do (.setPrototypeOf js/Object (.-prototype js/RangeError) (.-prototype js/Error)) (.toString (js/RangeError. )))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            82,
+            97,
+            110,
+            103,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-RangeError-message",
+      "source": "(do (.setPrototypeOf js/Object (.-prototype js/RangeError) (.-prototype js/Error)) (.toString (js/RangeError. \"x\")))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            82,
+            97,
+            110,
+            103,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-TypeError-empty",
+      "source": "(.toString (js/TypeError. ))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            84,
+            121,
+            112,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-TypeError-message",
+      "source": "(.toString (js/TypeError. \"x\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            84,
+            121,
+            112,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-message-nil",
+      "source": "(let [e (js/Error. \"old\")] (set! (.-message e) nil) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            110,
+            117,
+            108,
+            108
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-cause-nil",
+      "source": "(let [e (js/Error.)] (set! (.-cause e) nil) (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "nil"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-name-nil",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) nil) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            110,
+            117,
+            108,
+            108,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-message-false",
+      "source": "(let [e (js/Error. \"old\")] (set! (.-message e) false) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            102,
+            97,
+            108,
+            115,
+            101
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-cause-false",
+      "source": "(let [e (js/Error.)] (set! (.-cause e) false) (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-name-false",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) false) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            102,
+            97,
+            108,
+            115,
+            101,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-message-undefined",
+      "source": "(let [e (js/Error. \"old\")] (set! (.-message e) js/undefined) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-cause-undefined",
+      "source": "(let [e (js/Error.)] (set! (.-cause e) js/undefined) (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-name-undefined",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) js/undefined) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-message-number",
+      "source": "(let [e (js/Error. \"old\")] (set! (.-message e) 73) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            55,
+            51
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-cause-number",
+      "source": "(let [e (js/Error.)] (set! (.-cause e) 73) (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-name-number",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) 73) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            55,
+            51,
+            58,
+            32,
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-message-empty",
+      "source": "(let [e (js/Error. \"old\")] (set! (.-message e) \"\") (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-cause-empty",
+      "source": "(let [e (js/Error.)] (set! (.-cause e) \"\") (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": []
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-name-empty",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) \"\") (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            120
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-both-empty",
+      "source": "(let [e (js/Error. \"x\")] (set! (.-name e) \"\") (set! (.-message e) \"\") (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": []
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-borrow-ordinary",
+      "source": "(.call (.-toString (.-prototype js/Error)) (js-obj \"name\" nil \"message\" false))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            110,
+            117,
+            108,
+            108,
+            58,
+            32,
+            102,
+            97,
+            108,
+            115,
+            101
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-source-derived",
+      "source": "(do (deftype ToStringChild [message]) (set! (.-__proto__ (.-prototype ToStringChild)) (.-prototype js/Error)) (.toString (ToStringChild. 73)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            55,
+            51
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-reject-nil",
+      "source": "(.call (.-toString (.-prototype js/Error)) nil)",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            110,
+            117,
+            108,
+            108
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-reject-false",
+      "source": "(.call (.-toString (.-prototype js/Error)) false)",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            102,
+            97,
+            108,
+            115,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-reject-number",
+      "source": "(.call (.-toString (.-prototype js/Error)) 7)",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            55
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-reject-string",
+      "source": "(.call (.-toString (.-prototype js/Error)) \"x\")",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            120
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-reject-undefined",
+      "source": "(.call (.-toString (.-prototype js/Error)) js/undefined)",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            117,
+            110,
+            100,
+            101,
+            102,
+            105,
+            110,
+            101,
+            100
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-detached",
+      "source": "(let [f (.-toString (.-prototype js/Error))] (f))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            77,
+            101,
+            116,
+            104,
+            111,
+            100,
+            32,
+            69,
+            114,
+            114,
+            111,
+            114,
+            46,
+            112,
+            114,
+            111,
+            116,
+            111,
+            116,
+            121,
+            112,
+            101,
+            46,
+            116,
+            111,
+            83,
+            116,
+            114,
+            105,
+            110,
+            103,
+            32,
+            99,
+            97,
+            108,
+            108,
+            101,
+            100,
+            32,
+            111,
+            110,
+            32,
+            105,
+            110,
+            99,
+            111,
+            109,
+            112,
+            97,
+            116,
+            105,
+            98,
+            108,
+            101,
+            32,
+            114,
+            101,
+            99,
+            101,
+            105,
+            118,
+            101,
+            114,
+            32,
+            110,
+            117,
+            108,
+            108
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-order-0",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"name\" #js {:get (fn [] (error-step 1) (js-obj \"toString\" (fn [] (error-step 2) \"N\"))) :configurable true}) (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 3) (js-obj \"toString\" (fn [] (error-step 4) \"M\"))) :configurable true}) (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            78,
+            58,
+            32,
+            77
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4093480000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-order-1",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"name\" #js {:get (fn [] (error-step 1) (throw 73)) :configurable true}) (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 3) (js-obj \"toString\" (fn [] (error-step 4) \"M\"))) :configurable true}) (.toString e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-order-2",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"name\" #js {:get (fn [] (error-step 1) (js-obj \"toString\" (fn [] (error-step 2) (throw 73)))) :configurable true}) (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 3) (js-obj \"toString\" (fn [] (error-step 4) \"M\"))) :configurable true}) (.toString e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4028000000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-order-3",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"name\" #js {:get (fn [] (error-step 1) (js-obj \"toString\" (fn [] (error-step 2) \"N\"))) :configurable true}) (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 3) (throw 73)) :configurable true}) (.toString e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "405ec00000000000"
+        }
+      }
+    },
+    {
+      "id": "toString-order-4",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"name\" #js {:get (fn [] (error-step 1) (js-obj \"toString\" (fn [] (error-step 2) \"N\"))) :configurable true}) (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 3) (js-obj \"toString\" (fn [] (error-step 4) (throw 73)))) :configurable true}) (.toString e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4093480000000000"
+        }
+      }
+    },
+    {
+      "id": "setter-physical-error-receiver",
+      "source": "(let [e (js/Error. \"old\")] (.__defineSetter__ e \"answer\" (fn [x] (this-as self (error-step 1) (set! (.-message self) x)))) (set! (.-answer e) \"new\") (.-message e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            110,
+            101,
+            119
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "setter-original-throw",
+      "source": "(let [e (js/Error.)] (.__defineSetter__ e \"answer\" (fn [x] (error-step 1) (throw 73))) (set! (.-answer e) 7))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-live-constructor-false",
+      "source": "(let [e (js/Error.)] (set! (.-constructor e) false) (type e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-prototype-detach",
+      "source": "(let [e (js/Error.)] (set! (.-__proto__ e) nil) (instance? js/Error e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "mutation-new-prototype-parent",
+      "source": "(let [e (js/Error.) p (js-obj \"message\" \"inherited\")] (set! (.-__proto__ e) p) (.-message e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            105,
+            110,
+            104,
+            101,
+            114,
+            105,
+            116,
+            101,
+            100
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-inherited-cause-undefined",
+      "source": "(let [p (.-prototype js/Error)] (set! (.-cause p) js/undefined) (let [e (js/Error. \"x\" (js/Error.))] (js-delete p \"cause\") (.-cause e)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-new-message",
+      "source": "(.getOwnPropertyDescriptor js/Object (js/Error. \"x\" (js-obj \"cause\" false)) \"message\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "data-descriptor",
+          "value": {
+            "tag": "string",
+            "units": [
+              120
+            ]
+          },
+          "writable": true,
+          "enumerable": false,
+          "configurable": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-new-cause",
+      "source": "(.getOwnPropertyDescriptor js/Object (js/Error. \"x\" (js-obj \"cause\" false)) \"cause\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "data-descriptor",
+          "value": {
+            "tag": "bool",
+            "value": false
+          },
+          "writable": true,
+          "enumerable": false,
+          "configurable": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-absent-message",
+      "source": "(.getOwnPropertyDescriptor js/Object (js/Error.) \"message\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-assignment-message",
+      "source": "(let [e (js/Error.)] (set! (.-message e) false) (.getOwnPropertyDescriptor js/Object e \"message\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "data-descriptor",
+          "value": {
+            "tag": "bool",
+            "value": false
+          },
+          "writable": true,
+          "enumerable": true,
+          "configurable": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-redefine-message",
+      "source": "(let [e (js/Error. \"old\")] (.defineProperty js/Object e \"message\" #js {:value \"new\" :writable false :enumerable true :configurable false}) (.getOwnPropertyDescriptor js/Object e \"message\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "data-descriptor",
+          "value": {
+            "tag": "string",
+            "units": [
+              110,
+              101,
+              119
+            ]
+          },
+          "writable": false,
+          "enumerable": true,
+          "configurable": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-readonly-assignment",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value 73}) (set! (.-answer e) 7) (.-answer e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-readonly-redefine",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value 73}) (.defineProperty js/Object e \"answer\" #js {:value 7}))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            67,
+            97,
+            110,
+            110,
+            111,
+            116,
+            32,
+            114,
+            101,
+            100,
+            101,
+            102,
+            105,
+            110,
+            101,
+            32,
+            112,
+            114,
+            111,
+            112,
+            101,
+            114,
+            116,
+            121,
+            58,
+            32,
+            97,
+            110,
+            115,
+            119,
+            101,
+            114
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-readonly-samevalue",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value 73}) (.defineProperty js/Object e \"answer\" #js {:value 73}) (.-answer e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-nan-samevalue",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value js/NaN}) (.defineProperty js/Object e \"answer\" #js {:value js/NaN}) (.-answer e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "7ff8000000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-negative-zero-different",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value 0}) (.defineProperty js/Object e \"answer\" #js {:value -0.0}))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            67,
+            97,
+            110,
+            110,
+            111,
+            116,
+            32,
+            114,
+            101,
+            100,
+            101,
+            102,
+            105,
+            110,
+            101,
+            32,
+            112,
+            114,
+            111,
+            112,
+            101,
+            114,
+            116,
+            121,
+            58,
+            32,
+            97,
+            110,
+            115,
+            119,
+            101,
+            114
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-getter-to-data",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:get (fn [] 7) :configurable true}) (.defineProperty js/Object e \"answer\" #js {:value 73}) (.getOwnPropertyDescriptor js/Object e \"answer\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "data-descriptor",
+          "value": {
+            "tag": "number",
+            "bits": "4052400000000000"
+          },
+          "writable": false,
+          "enumerable": false,
+          "configurable": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-data-to-getter",
+      "source": "(let [e (js/Error. \"old\")] (.defineProperty js/Object e \"message\" #js {:get (fn [] (error-step 1) \"new\")}) (.-message e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            110,
+            101,
+            119
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "3ff0000000000000"
+        }
+      }
+    },
+    {
+      "id": "descriptor-attribute-order",
+      "source": "(let [e (js/Error.) d (js-obj)] (.__defineGetter__ d \"enumerable\" (fn [] (error-step 1) false)) (.__defineGetter__ d \"configurable\" (fn [] (error-step 2) true)) (.__defineGetter__ d \"value\" (fn [] (error-step 3) 73)) (.__defineGetter__ d \"writable\" (fn [] (error-step 4) true)) (.defineProperty js/Object e \"answer\" d) (.-answer e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "number",
+          "bits": "4052400000000000"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "4093480000000000"
+        }
+      }
+    },
+    {
+      "id": "constructor-prototype-readonly-Error",
+      "source": "(do (set! (.-prototype js/Error) nil) (.-name (.-prototype js/Error)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "constructor-prototype-readonly-RangeError",
+      "source": "(do (set! (.-prototype js/RangeError) nil) (.-name (.-prototype js/RangeError)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            82,
+            97,
+            110,
+            103,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "constructor-prototype-readonly-TypeError",
+      "source": "(do (set! (.-prototype js/TypeError) nil) (.-name (.-prototype js/TypeError)))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            84,
+            121,
+            112,
+            101,
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "delete-message-inherits",
+      "source": "(let [e (js/Error. \"old\")] (js-delete e \"message\") (.toString e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "delete-cause-undefined",
+      "source": "(let [e (js/Error. \"x\" (js-obj \"cause\" false))] (js-delete e \"cause\") (.-cause e))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "undefined"
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "delete-absent-true",
+      "source": "(js-delete (js/Error.) \"absent\")",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": true
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "delete-readonly-false",
+      "source": "(let [e (js/Error.)] (.defineProperty js/Object e \"answer\" #js {:value 73}) (js-delete e \"answer\"))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "bool",
+          "value": false
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-self-cycle-rejected",
+      "source": "(let [e (js/Error.)] (set! (.-__proto__ e) e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            67,
+            121,
+            99,
+            108,
+            105,
+            99,
+            32,
+            95,
+            95,
+            112,
+            114,
+            111,
+            116,
+            111,
+            95,
+            95,
+            32,
+            118,
+            97,
+            108,
+            117,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-static-cycle-rejected",
+      "source": "(let [e (js/Error.)] (.setPrototypeOf js/Object e e))",
+      "mode": "throw",
+      "expected": {
+        "value": {
+          "tag": "error",
+          "class": "TypeError",
+          "message": [
+            67,
+            121,
+            99,
+            108,
+            105,
+            99,
+            32,
+            95,
+            95,
+            112,
+            114,
+            111,
+            116,
+            111,
+            95,
+            95,
+            32,
+            118,
+            97,
+            108,
+            117,
+            101
+          ],
+          "messageOwn": true,
+          "causeOwn": false,
+          "cause": {
+            "tag": "undefined"
+          }
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    },
+    {
+      "id": "prototype-owned-error-parent",
+      "source": "(let [a (js/Error. \"parent\") b (js/Error.)] (set! (.-__proto__ b) a) (.toString b))",
+      "mode": "return",
+      "expected": {
+        "value": {
+          "tag": "string",
+          "units": [
+            69,
+            114,
+            114,
+            111,
+            114,
+            58,
+            32,
+            112,
+            97,
+            114,
+            101,
+            110,
+            116
+          ]
+        },
+        "trace": {
+          "tag": "number",
+          "bits": "0000000000000000"
+        }
+      }
+    }
+  ]
+}

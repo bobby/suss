@@ -1,5 +1,45 @@
 """Enumerated whole-form adaptations for complete sorted collections authoring."""
 import re
+from cljs_inventory import Scanner
+
+def lower_definition(source, name):
+    """Mechanical pinned defn expansion for this closed whole-source group.
+
+    Preserve the original body bytes and all signatures. Reject declaration
+    shapes outside the audited group rather than dropping metadata or branches.
+    This runs only in the development importer, never in shipped evaluation.
+    """
+    forms = Scanner(source).all()
+    if len(forms) != 1 or forms[0].kind != 'list':
+        raise ValueError('expected complete declaration')
+    top = forms[0]
+    children = top.children
+    if children[0].text not in ('defn', 'defn-'):
+        return source
+    if len(children) < 3:
+        raise ValueError('missing function declaration')
+    if children[1].kind != 'atom' or children[1].text != name:
+        raise ValueError('definition identity or metadata outside audited group')
+    i = 2
+    attributes = []
+    if children[i].kind == 'string':
+        attributes.append(':doc ' + source[children[i].start:children[i].end])
+        i += 1
+    signatures = children[i:]
+    if not signatures:
+        raise ValueError('missing function signatures')
+    if signatures[0].kind == 'vector':
+        arglists = [source[signatures[0].start:signatures[0].end]]
+    else:
+        if any(s.kind != 'list' or not s.children or s.children[0].kind != 'vector'
+               for s in signatures):
+            raise ValueError('function attributes or signatures outside audited group')
+        arglists = [source[s.children[0].start:s.children[0].end] for s in signatures]
+    attributes.append(":arglists '(" + ' '.join(arglists) + ')')
+    if children[0].text == 'defn-':
+        attributes.append(':private true')
+    body = source[signatures[0].start:top.end - 1]
+    return '(def ^{' + ' '.join(attributes) + '} ' + name + '\n  (fn ' + body + '))'
 NAMES = ['StringIter', 'string-iter', 'ArrayIter', 'array-iter', 'INIT', 'START',
          'SeqIter', 'seq-iter', 'nil-iter', 'iter',
          'ES6Iterator', 'es6-iterator', 'ES6EntriesIterator', 'es6-entries-iterator',
@@ -29,8 +69,7 @@ DOSEQ = '''(loop [sorted-seq__ (seq coll) sorted-chunk__ nil sorted-count__ 0 so
 
 def adapt(original, name):
     result = original
-    if result.startswith('(defn- ' + name + ' '):
-        result = result.replace('(defn- ' + name + ' ', '(def ^:private ' + name + '\n  (fn ', 1) + ')'
+    result = lower_definition(result, name)
     result = result.replace('(js/Error.', '(suss.bootstrap/error')
     result = result.replace('#js {:value #js [k v] :done false}', '(cljs.core/js-obj "value" (cljs.core/array k v) "done" false)')
     result = result.replace('#js {:value #js [x x] :done false}', '(cljs.core/js-obj "value" (cljs.core/array x x) "done" false)')

@@ -1,0 +1,5 @@
+PASS 151 closed Error cases/driver; native pending
+WARNING: js/Error is shadowed by a local at line 63 /private/tmp/suss-m4-sorted-runtime-prerequisites/tests/oracle/src/suss_oracle/error_constructors.cljs
+WARNING: ->ErrorAncestor at line 81 is being replaced at line 82 /private/tmp/suss-m4-sorted-runtime-prerequisites/tests/oracle/src/suss_oracle/error_constructors.cljs
+WARNING: ->ErrorDescendant at line 81 is being replaced at line 82 /private/tmp/suss-m4-sorted-runtime-prerequisites/tests/oracle/src/suss_oracle/error_constructors.cljs
+PASS 151 exact pinned Error constructor/ancestry/effect observations
