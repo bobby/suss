@@ -1,0 +1,57 @@
+{
+  "head": "eaec26de04336ea70f51c3cb24fd9bea13162673",
+  "run": 37930190032,
+  "status": "completed/failure; do not promote",
+  "logs": {
+    "0": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration0-job.log",
+      "sha256": "e9bf9f93feecdc2ba17cdf78bb9080b2ca572c079f4c0e8d25724d6ee7a67cb3"
+    },
+    "1": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration1-job.log",
+      "sha256": "eac630b76f053b9879350e20300654dca9dd3c7cbba6a5786672901b0154e7d0"
+    },
+    "2": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration2-job.log",
+      "sha256": "9d46bde07ec43f421d13e233eb4042d04a6497d739ac98ee321b242b5673af50"
+    },
+    "4": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration4-job.log",
+      "sha256": "4084cb0e86dcdb17888686dd53558140b835e9f7c6405732bbf82d7ae19b75c4"
+    },
+    "5": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration5-job.log",
+      "sha256": "df433bb140ac737f9c81635bc08d885df9832e985378f52fd2393815b45e2666"
+    },
+    "6": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration6-job.log",
+      "sha256": "cb4f13cabe908ee43d37f0725710a87c6d7ca34b9ffd4264b1ad4e9f321f703e"
+    },
+    "7": {
+      "path": "docs/compatibility/function-parameters/evidence/pr231-eaec-ci/suss-m4-pr231-eaec-integration7-job.log",
+      "sha256": "8a1741cf22c69650d6e1bb93138f8dda4dc0a5712b929c05f0f95bdb8c233e02"
+    }
+  },
+  "evidence": {
+    "0": "Reify 0 pass/2 fail: unresolved Runtime reify",
+    "1": "Upstream suite baseline mismatch: get assertions13/28 kind:error; fnil/get namespaces load",
+    "2": "compile_expr 286 pass/30 existing ignores; portable_closures13 pass/1 fail obsolete vector rejection",
+    "4": "Catalog4 pass; record graph1 pass/1 fail unresolved str",
+    "5": "Entire partition success, including publication fixture repairs",
+    "6": "RecordIter0 pass/3 fail; requires genuine canonical field storage repair",
+    "7": "Entire partition success"
+  },
+  "next": "Complete source/runtime gaps; c895 closure correction independently reviewed and native focused1PASS; full baseline a426 failed unresolved str.",
+  "partition_conclusions": {
+    "foundation": "success",
+    "0": "failure",
+    "1": "failure",
+    "2": "failure",
+    "3": "success",
+    "4": "failure",
+    "5": "success",
+    "6": "failure",
+    "7": "success"
+  },
+  "run_url": "https://github.com/bobby/suss/actions/runs/37930190032"
+}

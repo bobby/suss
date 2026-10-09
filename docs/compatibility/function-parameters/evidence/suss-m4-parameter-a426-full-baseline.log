@@ -1,0 +1,1263 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 51.86s
+     Running unittests src/lib.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss_cli-7e60510245ad64f1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss-aab6fb7033f983f2)
+
+running 27 tests
+test native_repl_host::tests::cancellation_mutation_interrupt_clears_stale_observation_and_stops_input ... ok
+test native_repl_host::tests::failed_first_native_inspection_retains_the_entire_drained_batch_for_retry ... ok
+test native_repl_host::tests::failed_task_report_is_queued_once_without_writing_over_input ... ok
+test native_repl_host::tests::interrupted_endpoint_getter_retains_entire_batch_before_cancellation ... ok
+test native_repl_host::tests::interrupted_reset_second_preflight_preserves_reset_intent ... ok
+test native_repl_host::tests::interrupted_retirement_getter_holds_cleanup_until_real_input ... ok
+test native_repl_host::tests::interrupted_submission_tracking_retains_result_without_replaying_effect ... ok
+test native_repl_host::tests::interrupted_zero_counts_keep_real_nil_root_and_report_input_once ... ok
+test native_repl_host::tests::cancellation_preflight_interrupt_preserves_intent_and_buffered_source ... ok
+test native_repl_host::tests::no_dispatch_idle_path_still_reports_completed_source_failures ... ok
+test native_repl_host::tests::invalid_callable_path_is_rejected_without_executing_source_effects ... ok
+test native_repl_host::tests::ordinary_submission_compile_and_language_errors_keep_prompt_usable ... ok
+test native_repl_host::tests::noninterrupt_postsubmission_tracking_failure_terminates_before_next_source ... ok
+test native_repl_host::tests::ownerless_mutation_interrupt_never_reuses_idle_or_recovery_proof ... ok
+test native_repl_host::tests::partial_interrupted_tracking_preserves_existing_and_new_roots ... ok
+test native_repl_host::tests::pending_fifo_idle_proof_skips_dispatch_and_defers_signal_until_cleanup ... ok
+test native_repl_host::tests::pending_stream_and_fifo_idle_proof_preserves_cancellation_cleanup ... ok
+test session_event_loop::tests::count_observation_noninterrupt_failure_remains_fatal ... ok
+test session_event_loop::tests::deferred_observation_does_not_swallow_cancellation_mutation_failure ... ok
+test session_event_loop::tests::multiline_interrupt_cleanup_reset_and_eof_share_one_owner ... ok
+test session_event_loop::tests::observation_interrupt_waits_for_input_and_cleanup_before_buffered_source ... ok
+test session_event_loop::tests::recovered_async_error_reports_original_and_keeps_prompt_usable ... ok
+test session_event_loop::tests::retirement_observation_interrupt_preserves_reset_intent ... ok
+test session_event_loop::tests::unrecovered_async_error_quarantines_before_next_input ... ok
+test terminal_input::tests::partial_utf8_pipe_lines_eof_and_fd_flags_are_preserved ... ok
+test terminal_input::tests::unicode_cursor_history_and_interrupt_preserve_edit_boundaries ... ok
+test native_repl_host::tests::recovered_fuel_trap_reports_original_once_and_keeps_source_prompt_usable ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 67.75s
+
+     Running unittests src/bin/suss-bootstrap.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss_bootstrap-97c5792f19ca4175)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/aot_source_preparation.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/aot_source_preparation-aea5716aa53cccad)
+
+running 4 tests
+test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.47s
+
+     Running tests/compiled_aot.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_aot-942751f1969e9788)
+
+running 1 test
+test compiled_macro_source_expands_into_an_executable_component_without_replay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.97s
+
+     Running tests/compiled_aot_async_command.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_aot_async_command-18200f65403dc06e)
+
+running 2 tests
+test async_input_validation_precedes_guest_initializers ... ok
+test native_async_invocation_executes_compiled_macros_and_validates_inputs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.97s
+
+     Running tests/compiled_aot_command.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_aot_command-cb1191cbfa901031)
+
+running 4 tests
+test compile_file_defers_runtime_throw_and_preserves_output_on_invalid_selection_or_mapping ... ok
+test typed_invocation_rejects_malformed_integer_instead_of_substituting_zero ... ok
+test compile_file_uses_compiled_macros_dependencies_and_exact_interface_mappings ... ok
+test typed_invocation_validates_selection_and_arguments_before_guest_initializers ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 51.95s
+
+     Running tests/compiled_aot_namespace_command.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_aot_namespace_command-dea4e4fdcb5df9ab)
+
+running 4 tests
+test namespace_command_rejects_missing_wit_and_project_options_before_routing ... ok
+test namespace_command_rejects_wrong_missing_or_ambiguous_source_without_replacing_output ... ok
+test namespace_command_defers_runtime_throw_until_component_instantiation ... ok
+test namespace_command_uses_default_root_compiled_macros_and_runtime_dependencies ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.18s
+
+     Running tests/compiled_aot_project_command.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_aot_project_command-f887c735db6204a4)
+
+running 7 tests
+test configured_entry_world_and_mappings_execute_compiled_phases_without_partial_output ... ok
+test project_command_rejects_ignored_main_and_conflicting_configuration_selection ... ok
+test explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization ... ok
+test project_selection_and_headers_reject_before_macro_effects_and_preserve_output ... ok
+test project_compilation_defers_original_runtime_exception_to_each_fresh_store ... ok
+test retained_world_groups_prepare_shared_roots_once_and_preserve_all_source_effects ... ok
+test selected_project_worlds_reject_output_aliases_before_replacing_artifacts ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 43.95s
+
+     Running tests/compiled_artifact_identities.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_artifact_identities-e1fd0f5d97be4262)
+
+running 2 tests
+test source_artifact_identity_keeps_external_macro_provenance_unknown ... ok
+test source_artifact_identity_records_actual_macro_versions_and_rejects_prior_graph ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.39s
+
+     Running tests/compiled_bootstrap.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_bootstrap-170d672419fa8b06)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.43s
+
+     Running tests/compiled_export_metadata.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_export_metadata-f9e94882f284f45c)
+
+running 5 tests
+test duplicate_freestanding_markers_require_an_explicit_authoritative_mapping ... ok
+test export_metadata_maps_freestanding_functions_and_preserves_live_effects ... ok
+test interface_metadata_requires_explicit_mapping_and_preserves_prior_output ... ok
+test source_export_metadata_matches_macro_snapshots_in_both_phases ... ok
+test partial_explicit_mapping_overrides_unsupported_metadata ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.62s
+
+     Running tests/compiled_macro_analysis_context.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_analysis_context-8795f5e8d592541d)
+
+running 1 test
+test compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.70s
+
+     Running tests/compiled_macro_analysis_graph.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_analysis_graph-e602a731b1c7fa9d)
+
+running 11 tests
+test native_analysis_graph_namespace_exclusions_are_canonical_sets ... ok
+test native_analysis_graph_keeps_function_declaration_environment_outside_new_self_binding ... ok
+test native_analysis_graph_preserves_actual_definition_forms_through_staging_and_redefinition ... ok
+test native_analysis_graph_namespace_maps_preserve_actual_imports_and_renames_in_both_phases ... ok
+test native_analysis_graph_preserves_unqualified_slash_keys_in_hash_maps ... ok
+test native_analysis_graph_reader_depth_is_independent_of_record_depth ... ok
+test native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source_execution ... ok
+test native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_arity_elimination ... ok
+test native_analysis_graph_retains_staged_definition_and_function_syntax ... ok
+test oversized_analysis_metadata_fails_before_runtime_effects_or_macro_store_allocation ... ok
+test native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalog ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.25s
+
+     Running tests/compiled_macro_binding_records.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_binding_records-cca5d69520213eb1)
+
+running 8 tests
+test compiler_catch_private_payload_name_avoids_the_user_catch_alias ... ok
+test compiler_catch_records_keep_private_payload_and_immutable_source_declarations ... ok
+test compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects ... ok
+test compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_loop_identity ... ok
+test compiler_macro_nested_definitions_keep_each_declaration_and_initializer_together ... ok
+test compiler_macro_source_origins_keep_module_paths_separate_from_inline_inputs ... ok
+test compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runtime_values ... ok
+test compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_macro_call ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.62s
+
+     Running tests/compiled_macro_collection_source_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_collection_source_asts-f8470c4d0381f75f)
+
+running 3 tests
+test empty_do_source_return_retains_context_and_nil_after_gc ... ok
+test collection_source_nodes_retain_original_children_before_factory_lowering ... ok
+test unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 63.90s
+
+     Running tests/compiled_macro_compiler_catalog.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_compiler_catalog-07cd97102ea5b55b)
+
+running 4 tests
+test compiler_catalog_policy_is_opt_in_and_invalid_metadata_keeps_old_macro ... ok
+test failed_macro_reload_keeps_published_policy_then_successful_reload_recovers ... ok
+test failed_script_staging_restores_callable_and_catalog_policy_after_gc ... ok
+test source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc has been running for over 60 seconds
+test source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 145.69s
+
+     Running tests/compiled_macro_constant_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_constant_asts-beaa985b338db201)
+
+running 3 tests
+test scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference ... ok
+test reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants ... ok
+test scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.87s
+
+     Running tests/compiled_macro_constructor_source_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_constructor_source_asts-ad3f0eb72c71ca09)
+
+running 2 tests
+test constructor_operation_and_children_fit_default_fuel_in_both_caller_phases ... ok
+test constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc has been running for over 60 seconds
+test constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 215.29s
+
+     Running tests/compiled_macro_control_source_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_control_source_asts-b7aad08c72dbf9ab)
+
+running 5 tests
+test catch_alpha_view_rejects_inconsistent_or_non_private_payload_names ... ok
+test function_metadata_keeps_wrapper_and_inner_method_edges ... ok
+test control_source_nodes_match_genuine_primary_children_and_forms_after_gc ... ok
+test function_name_asts_match_primary_identity_presence_and_shadow_after_gc ... ok
+test method_recurrence_flags_survive_gc_in_both_caller_phases ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.63s
+
+     Running tests/compiled_macro_core_environment.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_core_environment-7bc5f1d8e289d116)
+
+running 1 test
+test compiled_macro_core_namespace_keeps_complete_declaration_records has been running for over 60 seconds
+test compiled_macro_core_namespace_keeps_complete_declaration_records ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 91.67s
+
+     Running tests/compiled_macro_cross_invocation_identity_probe.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_cross_invocation_identity_probe-f4a34c1be1fcd834)
+
+running 1 test
+test same_captured_declaration_metadata_across_distinct_macro_invocations ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.99s
+
+     Running tests/compiled_macro_data_builders.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_data_builders-6c33184e6ef1fb1b)
+
+running 7 tests
+test native_macro_data_builders_enforce_store_identity_and_reset_without_allocating_fragments ... ok
+test native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_roots ... ok
+test native_macro_data_construction_keeps_captured_classes_after_core_redefinition ... ok
+test native_macro_data_maps_use_last_equal_key_and_vectors_cross_tree_boundaries ... ok
+test native_macro_maps_keep_custom_hash_coercion_and_array_map_hash_effects ... ok
+test native_macro_form_transport_is_bounded_data_and_adds_no_resident_code ... ok
+test native_macro_maps_preserve_collisions_deep_hash_paths_and_utf16_keys ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.65s
+
+     Running tests/compiled_macro_declaration_functions.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_declaration_functions-996b5f8b0de0ba11)
+
+running 2 tests
+test compiled_argument_lists_preserve_quoted_data_and_actual_file_positions ... ok
+test compiled_function_declarations_match_primary_presence_and_parameter_shapes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.80s
+
+     Running tests/compiled_macro_declaration_metadata.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_declaration_metadata-809fba00d80d557a)
+
+running 3 tests
+test compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields ... ok
+test raw_function_metadata_is_preserved_before_completed_callable_overlays ... ok
+test declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer has been running for over 60 seconds
+test declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 60.42s
+
+     Running tests/compiled_macro_definitions.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_definitions-6a82f78f3c74113a)
+
+running 3 tests
+test compiled_macro_definitions_dispatch_all_signatures_and_keep_prior_definition_on_failure ... ok
+test compiled_macro_definitions_expand_macro_bodies_in_the_same_phase_store ... ok
+test compiled_macro_definitions_namespace_registration_keeps_owned_roots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.30s
+
+     Running tests/compiled_macro_field_records.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_field_records-2a3136ecd6b29de1)
+
+running 1 test
+test compiler_macro_field_records_preserve_declarations_access_and_parameter_shadows ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.48s
+
+     Running tests/compiled_macro_field_reference_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_field_reference_asts-da35c3c39ccc9661)
+
+running 1 test
+test field_reference_asts_match_pinned_flags_tags_positions_and_identity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.00s
+
+     Running tests/compiled_macro_form_source_metadata.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_form_source_metadata-139cd585320774c4)
+
+running 10 tests
+test compiled_source_macro_file_metadata_uses_the_loaded_source_path ... ok
+test compiled_source_macro_conditional_and_chained_metadata_match_actual_reader_data ... ok
+test compiled_source_macro_form_preserves_explicit_location_overrides ... ok
+test compiled_source_macro_form_retains_reader_positions_on_nested_syntax ... ok
+test compiled_source_macro_generated_syntax_does_not_invent_reader_locations ... ok
+test compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax ... ok
+test compiled_source_macro_metadata_bound_failure_preserves_bindings_and_recovers ... ok
+test source_metadata_snapshot_rejects_invalid_source_instead_of_erasing_failure ... ok
+test source_metadata_snapshot_rejects_non_unicode_paths_instead_of_replacement_characters ... ok
+test compiled_source_macro_tag_values_retain_their_own_reader_metadata ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.49s
+
+     Running tests/compiled_macro_forms.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_forms-dbe5bc98f8209f2f)
+
+running 6 tests
+test compiled_macro_forms_bound_cycles_and_total_utf16_allocation ... ok
+test compiled_macro_forms_keep_locations_metadata_and_compile_atomicity ... ok
+test compiled_macro_forms_preserve_utf16_and_binary64_without_source_roundtrip ... ok
+test compiled_macro_forms_reject_unknown_malformed_metadata_and_bounded_data ... ok
+test compiled_macro_forms_use_phase_dependencies_and_conditional_selection_once ... ok
+test compiled_macro_forms_execute_actual_transformer_output_through_runtime_pipeline ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.53s
+
+     Running tests/compiled_macro_function_scopes.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_function_scopes-88ef0ad37046bf5f)
+
+running 2 tests
+test function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_origins ... ok
+test genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.83s
+
+     Running tests/compiled_macro_global_reference_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_global_reference_asts-b3643e1152a20637)
+
+running 2 tests
+test resolved_info_copies_identity_fields_and_shares_captured_nested_metadata ... ok
+test captured_global_declarations_supply_var_ast_fields_without_catalog_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.78s
+
+     Running tests/compiled_macro_hamt_lookup.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_hamt_lookup-8de5a5dc14f4cd1b)
+
+running 3 tests
+test compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined ... ok
+test compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations ... ok
+test compiled_macro_transient_hash_map_rejects_lookup_after_persistence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.83s
+
+     Running tests/compiled_macro_hamt_sequences.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_hamt_sequences-3c8da7abba9af327)
+
+running 4 tests
+test compiled_macro_hamt_sequences_grow_persistent_array_maps_with_symbol_collisions ... ok
+test compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_locations ... ok
+test compiled_macro_hamt_sequences_match_exact_pinned_order_in_both_phases_after_gc ... ok
+test compiled_macro_hamt_sequences_retain_metadata_old_descriptors_and_reject_foreign_layouts ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.19s
+
+     Running tests/compiled_macro_hash_maps.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_hash_maps-d8e90bf3b482eba9)
+
+running 8 tests
+test compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition ... ok
+test compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases ... ok
+test compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth ... ok
+test compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values ... ok
+test compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_persistence ... ok
+test compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc ... ok
+test compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles ... ok
+test compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.48s
+
+     Running tests/compiled_macro_imports.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_imports-5d11cdea6694d475)
+
+running 5 tests
+test namespace_session_compiled_macro_aliases_are_separate_and_lexical_locals_win ... ok
+test namespace_session_compiled_macro_imports_execute_phase_dependencies_and_aliases ... ok
+test namespace_session_compiled_macro_source_definitions_resolve_core_and_execute_once ... ok
+test namespace_session_compiled_macro_imports_preserve_caller_and_runtime_on_failure ... ok
+test namespace_session_macro_bodies_expand_ordinary_phase_aliases_and_refers ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.84s
+
+     Running tests/compiled_macro_indexed_data.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_indexed_data-51c870decdc2d455)
+
+running 3 tests
+test compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_limits ... ok
+test compiled_macro_indexed_data_returns_actual_variadic_arguments_as_code ... ok
+test compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.67s
+
+     Running tests/compiled_macro_local_reference_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_local_reference_asts-3fcf684bc0ff3196)
+
+running 2 tests
+test reference_asts_keep_initializer_scope_metadata_and_variadic_self_identity ... ok
+test retained_local_declarations_supply_reference_ast_fields_without_reexecution ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.72s
+
+     Running tests/compiled_macro_maps.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_maps-cbfa04212ed95bdb)
+
+running 6 tests
+test compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw ... ok
+test compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+test compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound ... ok
+test compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover ... ok
+test compiled_macro_maps_transport_actual_entries_and_sequences_after_gc ... ok
+test compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.08s
+
+     Running tests/compiled_macro_metadata.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_metadata-f482bb0f73e0f7ca)
+
+running 10 tests
+test compiled_macro_metadata_captures_with_meta_before_literal_entry_effects ... ok
+test compiled_macro_metadata_desugars_and_merges_prefixes_with_outer_precedence ... ok
+test compiled_macro_metadata_keeps_distinct_duplicate_map_syntax_keys ... ok
+test compiled_macro_metadata_evaluates_ordinary_literal_expressions_after_reader_merging ... ok
+test compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_invalid_data ... ok
+test compiled_macro_metadata_merges_data_before_constructing_discarded_values ... ok
+test compiled_macro_metadata_transports_actual_maps_on_nested_syntax_after_gc ... ok
+test compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_boundaries ... ok
+test compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_after_gc ... ok
+test compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.12s
+
+     Running tests/compiled_macro_method_roles.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_method_roles-dd6e5ebb86a8f5b0)
+
+running 2 tests
+test repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow ... ok
+test source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_fake_ids ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.55s
+
+     Running tests/compiled_macro_publication_cells.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_publication_cells-b4015ff66d876bfe)
+
+running 2 tests
+test publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc ... ok
+test publication_probe_sees_later_class_and_dynamic_overrides_without_replaying ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.20s
+
+     Running tests/compiled_macro_quote_asts.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_quote_asts-417cb95b868affd2)
+
+running 1 test
+test quote_and_literal_child_records_match_pinned_without_datum_analysis ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.62s
+
+     Running tests/compiled_macro_reload.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_reload-30f6063b242cf5d4)
+
+running 7 tests
+test namespace_session_compiled_macro_failed_reload_keeps_old_binding_and_retries_source ... ok
+test namespace_session_compiled_macro_reload_all_leaves_unreachable_modules_loaded ... ok
+test namespace_session_compiled_macro_reload_all_updates_reachable_macro_dependencies ... ok
+test namespace_session_compiled_macro_reload_metadata_is_checked_before_publication ... ok
+test namespace_session_compiled_macro_reload_metadata_outer_prefix_wins ... ok
+test namespace_session_compiled_macro_reload_observes_changed_source_and_keeps_old_expansions ... ok
+test namespace_session_command_reloads_macro_source_from_libspec_metadata ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.56s
+
+     Running tests/compiled_macro_repeated_declarations.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_repeated_declarations-bc6f3a914077a25d)
+
+running 1 test
+test repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.71s
+
+     Running tests/compiled_macro_self_local_methods.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_self_local_methods-7e83314a4b2cca5c)
+
+running 2 tests
+test reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order ... ok
+test named_self_and_method_argument_fields_match_the_pinned_local_observations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.27s
+
+     Running tests/compiled_macro_set_oracle.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_set_oracle-a7c7e9c08effce52)
+
+running 1 test
+test compiled_macro_sets_match_pinned_source_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.13s
+
+     Running tests/compiled_macro_sets.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_sets-53b823aabeccd92a)
+
+running 8 tests
+test compiled_large_set_literals_use_the_canonical_hamt_backing_map ... ok
+test compiled_macro_key_sequences_ignore_values_and_keep_their_own_metadata ... ok
+test compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc ... ok
+test compiled_macro_sets_transport_canonical_small_and_hamt_values_after_gc ... ok
+test compiled_set_literals_preserve_textual_effect_order_and_stop_at_throw ... ok
+test compiled_set_transients_reject_all_operations_after_persistence ... ok
+test compiled_quoted_sets_keep_symbols_nested_syntax_metadata_and_factory_boundaries ... ok
+test compiled_sets_keep_canonical_lookup_metadata_and_persistent_versions_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.61s
+
+     Running tests/compiled_macro_source_environment.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_source_environment-1d8ab1e24f02c9c1)
+
+running 3 tests
+test compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution ... ok
+test compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog ... ok
+test compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.97s
+
+     Running tests/compiled_macro_source_hint_boundaries.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_source_hint_boundaries-602c5a192589d9f0)
+
+running 1 test
+test completed_declaration_hint_boundaries_match_actual_primary_expression_tags ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.67s
+
+     Running tests/compiled_macro_source_positions.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_source_positions-7b394d5f583565f5)
+
+running 3 tests
+test compiler_local_positions_exclude_metadata_prefixes_using_actual_source_tokens ... ok
+test compiler_macro_unknown_origin_is_not_reused_or_fabricated_and_invalid_offsets_are_rejected ... ok
+test compiler_macro_source_positions_execute_with_exact_pinned_utf16_and_newline_locations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.65s
+
+     Running tests/compiled_macro_source_tags.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_source_tags-d56cb950286900c7)
+
+running 2 tests
+test compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods ... ok
+test compiled_source_inference_matches_pinned_tags_without_changing_executed_storage_or_effects ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.13s
+
+     Running tests/compiled_macro_syntax_quote.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_syntax_quote-592a65b4b594d3ed)
+
+running 12 tests
+test compiled_macro_lazy_chunked_concat_output_is_executed_as_source_forms ... ok
+test compiled_macro_lazy_concat_output_is_executed_as_source_forms ... ok
+test compiled_macro_lazy_metadata_is_validated_before_thunk_effects ... ok
+test compiled_macro_lazy_output_rejects_cycles_and_recovers_without_publication ... ok
+test compiled_macro_lazy_undefined_sequence_tail_is_empty ... ok
+test compiled_macro_syntax_quote_executes_unquote_and_sequence_splicing ... ok
+test compiled_macro_reader_provenance_retains_automatic_parent_positions ... ok
+test compiled_macro_syntax_quote_preserves_collection_data_without_reexecution ... ok
+test compiled_macro_syntax_quote_reuses_auto_gensyms_and_evaluates_input_once ... ok
+test compiled_macro_syntax_quote_matches_actual_pinned_execution_and_reader_form ... ok
+test syntax_quote_state_survives_fragments_and_failed_input_does_not_advance_it ... ok
+test compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.79s
+
+     Running tests/compiled_macro_vectors.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_vectors-fd5e2d4ac89496e9)
+
+running 8 tests
+test compiled_macro_array_slice_clamps_bounds_and_owns_copied_storage ... ok
+test compiled_macro_vectors_large_literals_use_retained_transient_factory ... ok
+test compiled_macro_vectors_preserve_trie_updates_and_transport_across_gc ... ok
+test compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage ... ok
+test compiled_macro_vectors_transport_actual_binding_vectors_and_quoted_symbols ... ok
+test compiled_macro_vectors_use_retained_nominal_type_and_persistent_tail ... ok
+test compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and_sharing ... ok
+test compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.16s
+
+     Running tests/compiled_module_cache.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_module_cache-b5cc192ef1615864)
+
+running 2 tests
+test compiled_code_reuse_preserves_initializers_store_isolation_and_reset ... ok
+test identical_macro_output_still_executes_macro_effects_each_time ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.38s
+
+     Running tests/compiled_namespace_acceptance.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_namespace_acceptance-05987dcd06bd981f)
+
+running 1 test
+test namespace_session_aliases_refers_renames_exclusions_and_phases_agree_in_repl_and_aot ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.18s
+
+     Running tests/compiled_native_entrypoints.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_native_entrypoints-f20772ee2a8c93f1)
+
+running 10 tests
+test canonical_display_ignores_metadata_that_is_not_macro_data ... ok
+test canonical_display_preserves_gc_data_numeric_spelling_and_utf16_without_growth ... ok
+test display_traversal_bound_reports_failure_and_recovers ... ok
+test eval_command_gives_compiled_macros_actual_lexical_environment ... ok
+test eval_and_file_commands_keep_compiled_macro_phases_and_initializer_effects ... ok
+test file_command_preserves_original_macro_call_positions_and_filename ... ok
+test review_script_compile_failure_preserves_macro_bindings ... ok
+test review_failed_script_preserves_completed_macro_dependencies_and_effects ... ok
+test script_compile_failure_preserves_existing_runtime_bindings ... ok
+test scripts_do_not_display_discarded_lazy_values ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.89s
+
+     Running tests/compiled_official_command.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_official_command-591872e2fe572f49)
+
+running 6 tests
+test invalid_official_command_shape_is_rejected_before_guest_initialization ... ok
+test main_emits_official_async_result_and_normal_number_completion_succeeds ... ok
+test explicit_exit_uses_u8_status_and_invalid_values_are_catchable_language_errors has been running for over 60 seconds
+test main_receives_only_user_strings_in_order_and_uncaught_exception_fails ... ok
+test main_uses_compiled_macros_source_paths_and_preflights_selection_before_output ... ok
+test explicit_exit_uses_u8_status_and_invalid_values_are_catchable_language_errors ... ok
+test runtime_exit_capability_is_unavailable_to_compiled_macro_phase ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 86.42s
+
+     Running tests/compiled_phase_session.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_phase_session-35057f51d1c78d43)
+
+running 3 tests
+test compiled_phase_session_load_reload_failure_and_reset_preserve_phase ... ok
+test compiled_phase_session_invokes_compiled_transformer_and_failed_reset_keeps_state ... ok
+test compiled_phase_session_uses_separate_store_cells_core_and_roots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.76s
+
+     Running tests/compiled_repl_macros.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_repl_macros-2e0e52a180e154c5)
+
+running 6 tests
+test namespace_session_command_compiled_macros_expand_load_and_reload ... ok
+test namespace_session_command_compiled_macro_definitions_respect_exclusions_and_aliases ... ok
+test persistent_session_command_compiled_macro_core_aliases_conditionals_and_shadowing ... ok
+test persistent_session_command_compiled_macros_keep_effects_and_old_expansions ... ok
+test session_lifecycle_compiled_macro_reset_failure_preserves_both_phase_stores ... ok
+test persistent_session_command_compiled_macros_namespace_errors_and_reset ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.72s
+
+     Running tests/compiled_source_artifact_cache.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_source_artifact_cache-36ee66f45b64bdf3)
+
+running 6 tests
+test source_artifact_cache_executes_distinct_nan_payloads_and_unknown_host_bypass ... ok
+test source_artifact_cache_hits_keep_macro_effects_and_runtime_initializers ... ok
+test source_artifact_cache_bypasses_partial_load_until_successful_reload ... ok
+test source_artifact_cache_restores_declaration_provenance_after_script_compile_error ... ok
+test source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset ... ok
+test source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.85s
+
+     Running tests/compiled_source_macros.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_source_macros-0990f76a242d17b8)
+
+running 6 tests
+test compiled_source_macros_expand_dependency_artifacts_before_publication ... ok
+test compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis ... ok
+test compiled_source_macros_materialize_env_only_for_macros_that_can_read_it ... ok
+test compiled_source_macros_pass_real_form_and_preserve_quote_and_failures ... ok
+test compiled_source_macros_preserve_true_loop_special_form_priority ... ok
+test compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.41s
+
+     Running tests/core_comparator_foundations.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/core_comparator_foundations-0181ce9db1ecac9d)
+
+running 3 tests
+test private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases ... ok
+test primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases ... ok
+test staged_type_returns_retained_nominal_constructors_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.90s
+
+     Running tests/core_import.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/core_import-a854accabe37fa63)
+
+running 17 tests
+test bootstrap_nil_test_evaluates_once_and_propagates_exceptions ... ok
+test bootstrap_nil_test_captures_values_across_fragments_and_loop_edges ... ok
+test imported_boolean_port_arguments_run_once_before_arity_errors ... ok
+test imported_boolean_ports_keep_original_behavior_and_canonical_live_bindings ... ok
+test imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload ... ok
+test imported_boolean_ports_use_cljs_truthiness_for_primitives_and_objects ... ok
+test imported_core_aliases_and_captured_function_observe_live_redefinition ... ok
+test imported_core_matches_independently_decoded_pinned_scalar_corpus ... ok
+test imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity ... ok
+test imported_identity_preserves_exact_values_and_object_identity_across_gc ... ok
+test imported_inc_dec_alias_calls_capture_callee_before_mutating_operand ... ok
+test imported_inc_dec_array_conversion_and_unsupported_objects_recover ... ok
+test imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover ... ok
+test imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings ... ok
+test imported_some_distinguishes_nil_from_false_and_survives_gc ... ok
+test imported_some_evaluates_arguments_once_before_arity_error ... ok
+test imported_some_ignores_redefined_predicate_and_not_vars ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.10s
+
+     Running tests/core_sequence_interfaces.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/core_sequence_interfaces-856fdc79bffb8616)
+
+running 6 tests
+test empty_list_literal_reads_canonical_core_class_property_after_gc ... ok
+test imported_interfaces_match_independently_encoded_primary_adapter_observations ... ok
+test canonical_core_aliases_and_retained_methods_survive_source_reload ... ok
+test imported_sequence_interfaces_execute_direct_methods_after_gc ... ok
+test imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery ... ok
+test malformed_operation_declarations_and_extensions_preserve_loaded_core ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.95s
+
+     Running tests/core_sorted_interfaces.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/core_sorted_interfaces-d81cacb581a7bf41)
+
+running 2 tests
+test sorted_protocol_shared_nominal_observations_match_both_phases_after_gc ... ok
+test sorted_protocol_aliases_retained_values_reload_and_method_arities ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.54s
+
+     Running tests/namespace_session.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/namespace_session-9df5b412c61bae95)
+
+running 5 tests
+test namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependencies_provided ... ok
+test namespace_session_reload_all_visits_only_reachable_dependencies_in_require_order ... ok
+test namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failure ... ok
+test namespace_session_shipped_core_loads_from_supplied_source_roots ... ok
+test namespace_session_command_loads_once_and_keeps_live_globals_and_old_captures ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.22s
+
+     Running tests/native_repl_async_io.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/native_repl_async_io-e5d4353e01110a57)
+
+running 8 tests
+test session_lifecycle_cli_public_stream_writer_awaits_real_io_and_reader_distinguishes_nil_data_from_eof ... ok
+test session_lifecycle_cli_reset_waits_for_pending_stream_cleanup_and_late_bytes_cannot_cross_stores ... ok
+test session_lifecycle_cli_sigint_cancels_pending_streams_awaits_finally_and_retires_native_fds ... ok
+test session_lifecycle_idle_source_io_progresses_with_stdin_open_and_input_stays_responsive ... ok
+test session_lifecycle_recovered_async_fuel_trap_reports_once_and_keeps_cli_prompt_usable ... ok
+test session_lifecycle_sigint_cancels_suspended_source_and_awaited_finally_runs_once ... ok
+test session_lifecycle_reset_retires_old_io_endpoint_before_new_session_accepts_input ... ok
+test session_lifecycle_source_io_eof_is_nil_and_host_failure_is_catchable_without_losing_prompt ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.85s
+
+     Running tests/native_repl_async_pty.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/native_repl_async_pty-fe3fe2944fe76c4e)
+
+running 1 test
+test session_lifecycle_interactive_utf8_redraw_history_and_pending_sigint_cleanup_are_preserved ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.74s
+
+     Running tests/persistent_repl.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/persistent_repl-0f304c3d47ecd28e)
+
+running 8 tests
+test persistent_session_command_repl_displays_utf16_and_binary64_without_reexecution ... ok
+test persistent_session_command_repl_keeps_atoms_and_their_captured_values ... ok
+test persistent_session_command_repl_reads_multiline_inputs_before_executing ... ok
+test persistent_session_command_repl_keeps_effects_and_captured_functions ... ok
+test persistent_session_command_repl_reports_malformed_and_incomplete_input ... ok
+test persistent_session_command_repl_recovers_without_publishing_failed_definitions ... ok
+test persistent_session_command_repl_reports_unsupported_objects_without_fabricating_strings ... ok
+test session_lifecycle_command_repl_reset_discards_bindings_and_allows_new_inputs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 37.92s
+
+     Running tests/persistent_session.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/persistent_session-20b9cb026d9319b3)
+
+running 33 tests
+test multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments ... ok
+test named_function_identity_and_multiple_dispatch_survive_gc_and_rebinding ... ok
+test nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker ... ok
+test nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_the_pin ... ok
+test nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order ... ok
+test nominal_protocol_extensions_update_existing_objects_across_fragments ... ok
+test nominal_protocol_membership_and_method_keys_survive_redeclaration ... ok
+test nominal_review_grouped_extension_and_protocol_expression_coercions ... ok
+test nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captures ... ok
+test nominal_undefined_constructor_results_preserve_truthiness_numeric_and_string_coercion ... ok
+test nominal_same_layout_types_keep_distinct_identity_through_aliases_and_gc ... ok
+test nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bindings ... ok
+test persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once ... ok
+test persistent_session_arithmetic_function_values_use_universal_invocation ... ok
+test persistent_session_arithmetic_values_evaluate_callee_and_arguments_once ... ok
+test persistent_session_catalog_scopes_cannot_skip_loading_and_core_alias_is_canonical ... ok
+test persistent_session_compile_failure_is_atomic_and_language_failure_recovers ... ok
+test persistent_session_arithmetic_values_share_cells_and_keep_old_functions ... ok
+test persistent_session_diamond_effects_follow_reverse_require_order ... ok
+test persistent_session_failed_module_retries_without_replaying_successful_dependencies ... ok
+test persistent_session_foreign_values_are_rejected_before_runtime_use ... ok
+test persistent_session_input_dependencies_compile_atomically_and_initialize_once ... ok
+test persistent_session_initializers_execute_once_and_defonce_skips_effects ... ok
+test persistent_session_loop_and_function_recur_replace_bindings_in_parallel ... ok
+test persistent_session_nil_and_false_are_initialized_defonce_bindings ... ok
+test persistent_session_named_and_multiple_fixed_signatures_preserve_captures_and_recur ... ok
+test persistent_session_unary_arithmetic_retains_dynamic_values_and_old_closures ... ok
+test recurrence_fuel_traps_and_compile_errors_leave_the_session_usable ... ok
+test persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc ... ok
+test session_lifecycle_fuel_trap_is_distinct_and_the_next_input_recovers ... ok
+test recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types ... ok
+test session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots ... ok
+test session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/portable_apply_sequences.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_apply_sequences-20839cb6dd1e196c)
+
+running 4 tests
+test private_definitions_retain_callable_qualified_access ... ok
+test retained_apply_sequence_corpus_executes_all_primary_numeric_observations ... ok
+test retained_apply_sequences_preserve_spread_and_all_list_star_arities ... ok
+test retained_bounded_count_keeps_counted_fast_path_and_limits_seq_effects ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.48s
+
+     Running tests/portable_array_constructor.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_array_constructor-f640c58cc9260519)
+
+running 7 tests
+test array_named_length_primitive_rhs_and_builtin_shadowing ... ok
+test array_own_method_identity_survives_public_property_reads_and_gc ... ok
+test array_push_overflow_and_ordinary_properties_match_pinned_cases_in_both_phases ... ok
+test array_constructor_preserves_identity_arity_length_and_holes_in_both_phases ... ok
+test make_array_preserves_holes_and_literal_nil_presence ... ok
+test make_array_dimension_validation_and_unreachable_leaves ... ok
+test retained_array_constructor_is_callable_after_gc_in_separate_fragment ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.16s
+
+     Running tests/portable_array_join.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_array_join-e4162cee6c1d08e7)
+
+running 2 tests
+test array_join_cancellation_does_not_leave_a_cycle_marker ... ok
+test array_join_conversion_preserves_holes_nesting_and_live_reads ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.64s
+
+     Running tests/portable_arrays.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_arrays-a6f076bb3ad1db1e)
+
+running 10 tests
+test array_argument_order_and_retained_function_values ... ok
+test array_bounds_arity_and_errors_preserve_session_recovery ... ok
+test array_first_class_functions_and_native_protocols ... ok
+test array_make_literal_dynamic_and_nested_dimensions ... ok
+test array_macro_allocation_and_error_effects ... ok
+test array_mutation_growth_and_shallow_clone ... ok
+test array_scalar_storage_identity_and_missing_slots ... ok
+test qualified_array_macros_and_clone_aliases_survive_gc_and_growth ... ok
+test retained_arrays_functions_and_old_core_values_cross_fragments_after_gc ... ok
+test arrays_match_independently_encoded_primary_corpus ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running tests/portable_atoms.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_atoms-6d53923628172613)
+
+running 4 tests
+test persistent_session_atom_operations_preserve_order_and_errors_before_mutation ... ok
+test persistent_session_atoms_and_old_contents_remain_rooted_across_fragments_and_gc ... ok
+test session_lifecycle_atom_core_is_reprovisioned_on_reset_and_failed_reset_preserves_state ... ok
+test persistent_session_atoms_match_independent_pinned_observations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.02s
+
+     Running tests/portable_bitwise_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_bitwise_hash-a0cfe7431a98fc8e)
+
+running 6 tests
+test bitwise_alias_exclusion_and_both_compilation_phases_are_explicit ... ok
+test bitwise_bad_arities_fail_with_spans_and_no_partial_publication ... ok
+test bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args ... ok
+test captured_variadic_bitwise_body_reads_the_current_tail_reducer_once ... ok
+test variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery ... ok
+test bitwise_hash_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.21s
+
+     Running tests/portable_caching_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_caching_hash-c5f154047d9b2630)
+
+running 4 tests
+test canonical_nan_comparison_is_narrow_and_cache_storage_preserves_both_signs ... ok
+test hash_macro_aliases_exclusions_and_phase_are_resolved_explicitly ... ok
+test malformed_cache_expansions_fail_atomically_and_session_recovers ... ok
+test caching_hash_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.28s
+
+     Running tests/portable_callable_metadata.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_callable_metadata-98f1e25dd8336469)
+
+running 4 tests
+test function_literal_metadata_evaluates_lexical_values_and_keeps_callable_body ... ok
+test ordinary_callable_wrong_arity_runs_operands_once_and_recovers ... ok
+test ordinary_collection_calls_use_canonical_ifn_methods ... ok
+test ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.47s
+
+     Running tests/portable_case.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_case-292f184ee2ff13a2)
+
+running 5 tests
+test empty_case_group_has_exact_located_boundary_without_publication ... ok
+test generic_case_throw_restores_equality_and_bounds_are_located ... ok
+test scalar_case_evaluates_selector_once_and_only_selected_result ... ok
+test case_errors_and_namespace_guards_keep_effects_and_recover_after_gc ... ok
+test scalar_case_matches_independently_decoded_pinned_observations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.51s
+
+     Running tests/portable_chunk_effects.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_chunk_effects-7ec03cfa59466d6b)
+
+running 2 tests
+test chunk_demand_cache_and_retry_survive_gc_between_source_fragments ... ok
+test chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.95s
+
+     Running tests/portable_collection_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_collection_hash-798fb559a43e1771)
+
+running 5 tests
+test cached_hash_suppresses_effects_and_recovers_after_a_throw ... ok
+test collection_hash_matches_independently_decoded_primary_values ... ok
+test sequential_hash_agrees_across_retained_types_after_gc ... ok
+test element_throw_stops_next_and_cons_cache_survives_gc ... ok
+test unordered_helper_hash_is_independent_of_input_order ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.89s
+
+     Running tests/portable_collection_literals.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_collection_literals-cf78541031ec6a0a)
+
+running 6 tests
+test large_vector_method_is_captured_before_entry_property_mutation ... ok
+test missing_literal_classes_fail_before_initializer_effects_or_publication ... ok
+test collection_literals_match_independently_decoded_primary_values ... ok
+test small_vector_captures_constructor_and_empty_node_before_entry_redefinition ... ok
+test thrown_map_and_set_entries_stop_later_effects_and_construction ... ok
+test vector_literal_normalizes_entries_once_before_constructor_invocation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.07s
+
+     Running tests/portable_comparisons.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_comparisons-57d53848d437260f)
+
+running 7 tests
+test comparison_macro_and_runtime_names_preserve_aliases_user_shadowing_and_gc ... ok
+test comparison_macro_arity_erasure_and_lexical_shadowing_remain_distinct_from_values ... ok
+test comparison_utf16_prefix_loop_has_fuel_recovery_and_typed_coercion_errors ... ok
+test explicit_user_refers_preserve_pinned_core_macros_but_aliases_call_user_vars ... ok
+test retained_comparison_captures_follow_accepted_design_with_explicit_primary_divergence ... ok
+test runtime_comparison_large_arity_uses_bounded_callback_code_without_macro_expansion ... ok
+test comparisons_match_independently_encoded_primary_corpus ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+     Running tests/portable_control_flow.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_control_flow-8591594a23bc26b6)
+
+running 3 tests
+test control_macro_aliases_exclusions_and_macro_phase_are_resolved_explicitly ... ok
+test malformed_control_macros_have_located_errors_and_do_not_publish_definitions ... ok
+test control_macros_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests/portable_default_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_default_hash-f321118a7621ce33)
+
+running 3 tests
+test captured_default_dispatch_observes_root_redefinition_across_gc_fragments ... ok
+test default_hash_errors_preserve_effects_and_private_adapter_is_checked ... ok
+test default_hash_matches_pinned_identity_and_root_relations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.52s
+
+     Running tests/portable_dynamic_bindings.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_dynamic_bindings-7be0631183626607)
+
+running 10 tests
+test binding_cleanup_restores_after_throw_and_runs_inside_finally_before_outer_handlers ... ok
+test binding_initializers_are_parallel_and_nested_scopes_restore_current_values ... ok
+test binding_is_visible_to_old_functions_but_escaped_readers_do_not_capture_scope ... ok
+test closure_values_and_thrown_closures_survive_frame_restoration_and_gc ... ok
+test fuel_traps_do_not_leak_dynamic_values_into_the_next_prompt_or_saved_function ... ok
+test malformed_binding_and_assignment_fail_locally_without_publishing_declarations ... ok
+test fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot ... ok
+test original_values_are_snapshotted_before_initializers_and_failed_initializers_keep_effects ... ok
+test with_redefs_keeps_macro_calls_and_rebinds_actual_function_values ... ok
+test nested_multi_target_pop_is_restartable_at_every_fuel_boundary ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.48s
+
+     Running tests/portable_empty.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_empty-cb6e70bd7b349cf0)
+
+running 3 tests
+test empty_retains_direct_and_native_fallback_and_live_dispatch ... ok
+test empty_preserves_throw_payloads_arity_and_recovery_after_gc ... ok
+test retained_empty_matches_pinned_reference_cases_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.98s
+
+     Running tests/portable_error_predicate.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_error_predicate-9488b3af068d4e5d)
+
+running 1 test
+test native_error_catch_adapter_distinguishes_errors_and_rethrows_other_payloads ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.65s
+
+     Running tests/portable_exception_info.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_exception_info-a0232bf16f61b8c4)
+
+running 12 tests
+test error_message_family_remains_original_when_info_class_is_replaced ... ok
+test exception_info_arity_errors_happen_after_ordered_arguments_and_recover ... ok
+test exception_info_constructor_and_predicates_follow_the_current_class_cell ... ok
+test exception_info_distinguishes_false_nil_and_missing_constructor_fields ... ok
+test exception_info_functions_are_live_first_class_canonical_core_bindings ... ok
+test exception_info_getters_use_field_names_when_the_class_is_redefined ... ok
+test exception_info_payload_and_closure_fields_survive_throw_frame_exit_and_gc ... ok
+test exception_info_keeps_message_data_cause_and_its_nominal_identity ... ok
+test exception_info_source_arguments_run_once_before_construction ... ok
+test ordinary_exception_info_calls_return_a_truthy_non_exception_realm_value ... ok
+test selected_two_argument_ex_info_calls_the_live_three_argument_binding ... ok
+test ordinary_values_and_user_objects_do_not_impersonate_exception_info ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/portable_exceptions.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_exceptions-97b8985551b29dcf)
+
+running 10 tests
+test source_catch_bindings_shadow_restore_and_survive_closure_capture ... ok
+test nested_exception_regions_capture_nominal_fields_and_loop_bindings ... ok
+test source_handlers_catch_runtime_errors_without_publishing_failed_initializers ... ok
+test source_throw_keeps_exact_scalar_payloads_and_recovers_after_gc ... ok
+test source_try_preserves_results_cleanup_order_and_superseding_exceptions ... ok
+test source_try_rejects_invalid_handlers_and_cross_region_recur_atomically ... ok
+test source_throw_divergence_stops_later_operands_and_failed_publication ... ok
+test source_typed_catches_use_descriptor_identity_and_preserve_payload_roots ... ok
+test typed_catch_operands_are_lazy_ordered_and_short_circuit_after_matching ... ok
+test unhandled_nil_and_closure_run_cleanup_without_replacing_payload ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running tests/portable_forward_declarations.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_forward_declarations-375543fb2a86d843)
+
+running 2 tests
+test declaration_errors_are_atomic_and_unknown_names_still_fail_resolution ... ok
+test forward_declarations_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.29s
+
+     Running tests/portable_function_parameters.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_function_parameters-68ae74c52eaef917)
+
+running 2 tests
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.24s
+
+     Running tests/portable_hash_numeric_boundaries.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_hash_numeric_boundaries-f334078358ac7b67)
+
+running 4 tests
+test numeric_hash_adapters_validate_in_both_compilation_phases ... ok
+test numeric_hash_boundaries_keep_effects_typed_errors_and_compile_atomicity ... ok
+test numeric_hash_remainder_checks_both_operands_after_source_evaluation ... ok
+test hash_numeric_boundaries_match_independently_encoded_primary_observations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.88s
+
+     Running tests/portable_identity_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_identity_hash-c40f148db51fe220)
+
+running 4 tests
+test explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols ... ok
+test identity_uid_errors_preserve_effects_and_compile_atomicity ... ok
+test identity_uids_remain_owned_stable_and_distinct_across_gc_fragments ... ok
+test identity_hash_contract_matches_pinned_owned_value_relations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.99s
+
+     Running tests/portable_implements.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_implements-c0f2ac502a4eda60)
+
+running 3 tests
+test implements_aliases_user_refers_exclusions_and_gc_preserve_direct_only_test ... ok
+test implements_rejects_malformed_macro_calls_and_recovers_after_throw ... ok
+test implements_matches_independently_encoded_primary_observations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/portable_indexed_strings.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_indexed_strings-7e59da5a6ccaef4e)
+
+running 2 tests
+test unsupported_string_operations_are_language_errors_and_session_recovers ... ok
+test indexed_strings_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+     Running tests/portable_indexing.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_indexing-d14af97973ec6a75)
+
+running 3 tests
+test indexing_errors_preserve_messages_effects_and_gc_recovery ... ok
+test indexing_contract_match_independently_encoded_primary_observations ... ok
+test indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.25s
+
+     Running tests/portable_iteration.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_iteration-2d7df942a53479e1)
+
+running 2 tests
+test retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors ... ok
+test iteration_contract_match_independently_encoded_primary_observations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.08s
+
+     Running tests/portable_lazy_sequences.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_lazy_sequences-1f52a6b1cdb6651c)
+
+running 4 tests
+test retained_lazy_sequence_metadata_delays_realization_and_failed_thunks_retry ... ok
+test retained_concat_preserves_laziness_all_arities_and_chunk_boundaries ... ok
+test retained_lazy_sequence_realizes_once_and_keeps_state_after_gc ... ok
+test retained_lazy_sequences_match_actual_pinned_shared_execution ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.54s
+
+     Running tests/portable_lazy_transformations.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_lazy_transformations-650438ddb7b2fb0d)
+
+running 4 tests
+test handed_chunk_preserves_actual_backing_array_identity_after_gc ... ok
+test unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments ... ok
+test unforced_transformations_survive_with_only_host_handles ... ok
+test lazy_transformations_match_complete_pinned_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.37s
+
+     Running tests/portable_let_star.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_let_star-63a8c1fbb1bdbf77)
+
+running 1 test
+test primitive_let_star_executes_directly_and_from_compiled_macros_in_both_phases ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.05s
+
+     Running tests/portable_map_mutation_helpers.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_map_mutation_helpers-874f645a7ef82df3)
+
+running 6 tests
+test retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_returns_receiver ... ok
+test retained_map_mutation_helpers_execute_all_dissoc_arities_and_sequence_dependencies ... ok
+test retained_hash_map_quotient_dependencies_preserve_numeric_boundaries_and_recovery ... ok
+test retained_map_mutation_helpers_preserve_transient_vector_protocol_dispatch_and_lifecycle ... ok
+test retained_transient_array_map_removal_uses_owned_pop_storage ... ok
+test source_array_pop_preserves_aliases_empty_undefined_and_physical_call_receiver ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.01s
+
+     Running tests/portable_murmur_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_murmur_hash-c6c9d7687a7ca670)
+
+running 5 tests
+test retained_murmur_functions_observe_live_globals_and_old_values_survive_gc ... ok
+test threading_aliases_exclusions_and_phase_are_explicit ... ok
+test threading_expansion_limits_are_located_atomic_and_recover ... ok
+test threading_invalid_bindings_and_arities_recover_without_publication ... ok
+test murmur_hash_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.00s
+
+     Running tests/portable_mutable_fields.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_mutable_fields-e732eb9cb1cee045)
+
+running 2 tests
+test retained_mutable_field_setter_keeps_owner_alive_without_global_roots ... ok
+test mutable_fields_match_independently_encoded_primary_corpus ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/portable_named_properties.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_named_properties-c2b2d5e8ecfca89d)
+
+running 4 tests
+test named_access_rejects_munged_schemas_without_breaking_lexical_fields ... ok
+test malformed_or_unsupported_named_forms_preserve_session_and_recover ... ok
+test unfinished_prototype_and_callable_attributes_are_explicit_errors ... ok
+test named_properties_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.93s
+
+     Running tests/portable_native_objects.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_native_objects-0b2dfa4a7596b01b)
+
+running 3 tests
+test private_object_errors_are_atomic_or_runtime_and_recover ... ok
+test private_object_factory_and_properties_execute_ordered_source_after_gc ... ok
+test ordinary_object_property_keys_preserve_values_hook_order_and_throw_recovery ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.54s
+
+     Running tests/portable_native_protocols.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_native_protocols-e42a0a4aa2f923b1)
+
+running 11 tests
+test captured_native_dispatcher_reads_current_method_table_after_replacement ... ok
+test missing_native_method_preserves_argument_effects_and_language_recovery ... ok
+test native_extension_replaces_all_arities_and_recur_changes_receiver ... ok
+test native_protocol_extensions_remain_live_for_old_dispatchers_after_gc ... ok
+test native_protocol_redeclaration_resets_tables_but_direct_object_methods_survive ... ok
+test native_protocol_membership_uses_marker_and_replaced_protocol_value ... ok
+test native_protocols_choose_direct_then_specific_then_default_methods ... ok
+test native_protocols_dispatch_nil_undefined_and_scalar_kinds ... ok
+test native_satisfies_function_is_first_class_and_macro_fallback_observes_redefinition ... ok
+test qualified_native_extension_updates_captured_dispatcher_across_namespaces_and_gc ... ok
+test native_protocols_match_independently_encoded_primary_corpus ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/portable_numeric_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_numeric_hash-28fc7cfb3fa7c751)
+
+running 3 tests
+test numeric_hash_aliases_and_private_adapters_validate_in_both_phases ... ok
+test numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc ... ok
+test numeric_hash_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.59s
+
+     Running tests/portable_object_coercion.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_object_coercion-8e69cb1872a2ddc3)
+
+running 2 tests
+test array_length_assignment_converts_object_rhs_twice_in_order ... ok
+test ordinary_object_coercion_preserves_hints_order_and_primitive_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.65s
+
+     Running tests/portable_object_methods.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_object_methods-a7f7ef0ecd6c4fc9)
+
+running 2 tests
+test malformed_object_methods_fail_atomically_and_session_recovers ... ok
+test object_methods_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.89s
+
+     Running tests/portable_public_hash.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_public_hash-f12eb21c4271e4a9)
+
+running 5 tests
+test numeric_date_storage_executes_without_full_core ... ok
+test date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority ... ok
+test public_hash_matches_independently_decoded_primary_observations ... ok
+test time_clip_rejects_wrong_storage_and_preserves_effects_and_compile_atomicity ... ok
+test public_hash_retains_scalar_branches_and_captured_callable_after_gc ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.49s
+
+     Running tests/portable_queues.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_queues-40d2bc3a5f6efda7)
+
+running 3 tests
+test queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract ... ok
+test queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc ... ok
+test persistent_queues_match_pinned_fifo_and_value_contract_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.19s
+
+     Running tests/portable_quoted_identifiers.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_quoted_identifiers-b22627566fe16cde)
+
+running 3 tests
+test compiled_macro_prerequisite_quotes_keep_real_identifiers_and_lists_through_gc ... ok
+test compiled_macro_prerequisite_quote_errors_are_located_and_preserve_session_state ... ok
+test compiled_macro_prerequisite_quotes_match_lossless_primary_observations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.02s
+
+     Running tests/portable_reader_constructors.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_reader_constructors-8ca669befd506736)
+
+running 2 tests
+test retained_vec_executes_all_source_branches_in_both_phases ... ok
+test retained_map_constructors_execute_variadic_and_apply_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.71s
+
+     Running tests/portable_record_graph_runtime.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_record_graph_runtime-da26903045a20e05)
+
+running 2 tests
+test composition_partial_and_juxt_retain_sole_host_callback_captures_across_invocations ... ok
+test whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after_gc ... FAILED
+
+failures:
+
+---- whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after_gc stdout ----
+
+thread 'whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after_gc' (10149704) panicked at crates/suss-cli/tests/portable_record_graph_runtime.rs:129:46:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 59..62, message: "Unresolved Runtime name str" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after_gc
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.50s
+
+error: test failed, to rerun pass `-p suss-cli --test portable_record_graph_runtime`
