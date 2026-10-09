@@ -117,6 +117,14 @@ fn retained_hash_map_quotient_dependencies_preserve_numeric_boundaries_and_recov
             );
             assert_eq!(number(&mut session, "(quot 7 3)"), 2.0);
         }
+        session.eval("(def ceil-hook-count 0)").unwrap();
+        assert!(matches!(
+            session.eval("(suss.bootstrap/f64-ceil (js-obj \"valueOf\" (fn [] (set! ceil-hook-count (+ ceil-hook-count 1)) 1.75) \"toString\" (fn [] (set! ceil-hook-count (+ ceil-hook-count 10)) \"1.75\")))"),
+            Err(SessionError::Language(_))
+        ));
+        session.collect().unwrap();
+        assert_eq!(number(&mut session, "ceil-hook-count"), 0.0);
+        assert_eq!(number(&mut session, "(quot 7 3)"), 2.0);
         for source in [
             "(suss.bootstrap/f64-ceil)",
             "(suss.bootstrap/f64-ceil 1 2)",
