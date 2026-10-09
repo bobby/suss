@@ -839,8 +839,23 @@ impl<'a> AnalysisGraph<'a> {
         })
     }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
+        self.expansion_catalog(context, false)
+    }
+    /// Explicit compiler-helper transport; ordinary macros keep the existing
+    /// graph schema/work. Full catalogs use the same guarded recipe builder.
+    pub fn expansion_with_compiler_catalog(
+        &mut self,
+        context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
+        self.expansion_catalog(context, true)
+    }
+    fn expansion_catalog(
+        &mut self,
+        context: portable::ExpansionContext<'_>,
+        include_compiler: bool,
+    ) -> Result<SessionValue> {
         let catalog = context.resolution_catalog();
-        let root = self.environment(
+        let mut root = self.environment(
             context.namespace_snapshot,
             &catalog,
             context.locals,
@@ -849,6 +864,60 @@ impl<'a> AnalysisGraph<'a> {
             context.context,
             0,
         )?;
+        if include_compiler {
+            let compiler = portable::compiler_facts::CompilerNamespaceCatalog::capture(
+                context.environment,
+                context.phase,
+            );
+            let mut namespaces = Vec::new();
+            for (name, revision) in &compiler.namespaces {
+                let value = match revision {
+                    Some(revision) => self.namespace(revision, 1)?,
+                    None => self.scalar(Literal::Nil)?,
+                };
+                namespaces.push((self.symbol(name)?, value));
+            }
+            let namespaces = self.map_values(namespaces)?;
+            let mut protocols = Vec::new();
+            for (global, methods) in &context.environment.protocols {
+                if global.phase() != context.phase {
+                    continue;
+                }
+                let mut signatures = Vec::new();
+                for method in methods {
+                    let arities = method
+                        .signatures
+                        .iter()
+                        .map(|(arity, _)| self.number(*arity))
+                        .collect::<Result<Vec<_>>>()?;
+                    signatures.push((self.symbol(&method.name)?, self.vector(&arities)?));
+                }
+                let signatures = self.map_values(signatures)?;
+                protocols.push((
+                    self.symbol(&format!("{}/{}", global.namespace(), global.name()))?,
+                    signatures,
+                ));
+            }
+            let protocols = self.map_values(protocols)?;
+            let phase = self.keyword(match compiler.phase {
+                portable::resolve::Phase::Runtime => "runtime",
+                portable::resolve::Phase::Macro => "macro",
+            })?;
+            let current = self.symbol(&compiler.current)?;
+            let compiler = self.map(vec![
+                ("phase", phase),
+                ("current", current),
+                ("namespaces", namespaces),
+                ("protocol-signatures", protocols),
+            ])?;
+            let key = self.keyword("suss/compiler-catalog")?;
+            let mut entries = match self.recipes[root].as_ref().expect("environment map recipe") {
+                Recipe::Map(entries) => entries.clone(),
+                _ => unreachable!("environment recipe is a map"),
+            };
+            entries.push((key, compiler));
+            root = self.map_values(entries)?;
+        }
         self.materialize(root)
     }
     fn environment(

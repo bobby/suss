@@ -23081,3 +23081,27 @@ Next: finish the separate opt-in genuine compiler-catalog transport, consuming
 source macro tests and complete analyzer/nominal helper graph. exists?/reify,
 anonymous captured classes, nil-iter through actual reify and full record factories
 remain pending; original record/reify acceptance is not narrowed or complete.
+
+
+### Genuine record compiler catalog transport — authored, native pending
+
+An explicit qualified Boolean/nil macro metadata policy now controls materializing
+phase/current namespace, actual cross-namespace source revisions and actual
+protocol-signature arities into &env. Absent/false/nil keeps the ordinary graph.
+Malformed metadata fails before macro publication; macro transaction checkpoints
+include the policy and restore it with the original callable on failed reload.
+No runtime-value guessing, host source evaluator, new shared ABI types or graph
+budget changes were introduced. Canonical namespaces are unchanged, and missing
+source scopes remain nil. The graph still enforces its existing recipe/form/unit
+limits; full-catalog cost has not been measured or certified.
+
+Three new compiled_macro_compiler_catalog Rust regressions are authored only:
+actual two-phase cross-namespace docs/overloads and retained old results after GC,
+opt-in/invalid metadata preservation, and failed reload policy restoration.
+They are UNCOMPILED/UNEXECUTED. No Cargo/bootstrap/push. Whole 46 analyzer dependency
+stanzas and original 12 macro forms, 340 selections, all 33 Boolean/raw helper
+cases, seven reify and fourteen iterator cases remain unchanged. Next dependency
+group is the complete executing nominal macro helper graph and its required
+whole runtime functions; extern/module/warning/resolve fallback, scalar and map
+munge adapter consumption, anonymous publication/reify/nil-iter and full records
+remain pending rather than replaced with a subset.

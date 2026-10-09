@@ -21,8 +21,22 @@ Cross-namespace catalogs preserve actual phase-specific scopes and declaration
 revisions without switching namespaces. A declared namespace without a source
 scope remains an explicit missing scope. Namespace-segment matching follows the
 whole pinned `get-first-ns-segment`/`find-ns-starts-with` helpers, not substring
-matching. These typed interfaces do not yet materialize compiler state into the
-compiled macro Store or implement analyzer extern/module/warning mutations.
+matching. An explicit `:suss/compiler-catalog true` macro declaration now requests an
+additional `&env` compiler catalog in the compiled Macro Store. It contains the
+actual caller phase/current namespace, all actual phase-specific namespace
+revisions (nil for a declared namespace without a source scope), and actual
+protocol method arities. Existing source graph construction/limits and declaration
+identity sharing remain in use. Ordinary macros retain their existing graph.
+False/nil or absent policy does not request the catalog; malformed policy fails.
+Policy rolls back with macro bindings during failed publication/reload.
+
+Three authored consuming source-macro regressions check independently decoded
+namespace names/docs/overloads and retained results after GC, opt-in/malformed
+policy, and failed-reload restoration. They are UNCOMPILED/UNEXECUTED. These
+transport keys are a Suss compiler interface, not an assertion of upstream
+analyzer-state schema equality. Canonical namespaces remain `suss.core`; no
+fabricated `cljs.core` revision or extern/module/warning state is inserted.
+Analyzer extern/module/warning mutations are still missing.
 
 These interfaces do not implement all analyzer `resolve-var` branches: extern
 state, module resolution, warning callbacks and fallback definitions still need
