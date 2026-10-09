@@ -30,12 +30,25 @@ pub(super) fn string(code: &mut Vec<Instruction<'static>>, types: Types) {
     code.extend([LocalGet(0), GlobalGet(STRING_ROOT), CallRef(types.string)]);
 }
 pub(super) fn primitive(code: &mut Vec<Instruction<'static>>, types: Types, local: u32, hint: i32) {
+    // Canonical boxed numbers and strings cannot run conversion methods.
+    // Keep their hot arithmetic paths inline; every other representation still
+    // enters the checked ordered adapter, including invalid I31 sentinels.
     code.extend([
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        If(BlockType::Empty),
+        Else,
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(STRING)),
+        If(BlockType::Empty),
+        Else,
         LocalGet(local),
         I32Const(hint),
         GlobalGet(PRIMITIVE_ROOT),
         CallRef(types.primitive),
         LocalSet(local),
+        End,
+        End,
     ]);
 }
 fn text(code: &mut Vec<Instruction<'static>>, s: &str) {
@@ -46,13 +59,20 @@ fn text(code: &mut Vec<Instruction<'static>>, s: &str) {
     });
 }
 pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
-    let mut code = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(STRING)),
-        I32Or,
-    ];
+    // Numeric arithmetic/comparison is a hot path. Return before testing every
+    // other primitive representation; object conversion still follows both hooks.
+    let mut code = Vec::new();
+    for ty in [NUMBER, STRING] {
+        code.extend([
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(ty)),
+            If(BlockType::Empty),
+            I32Const(1),
+            Return,
+            End,
+        ]);
+    }
+    code.push(I32Const(0));
     for sentinel in [0, 2, 4, UNDEFINED] {
         code.extend([LocalGet(0), I32Const(sentinel), RefI31, RefEq, I32Or]);
     }

@@ -224,6 +224,16 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalTee(2),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
+        // Shape, uint32 length and dense/mask lengths were checked above.
+        // An empty sparse chain has no nodes, keys or cycles left to validate.
+        LocalGet(0),
+        Return,
+        End,
+        LocalGet(2),
         LocalSet(3),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
@@ -379,10 +389,10 @@ pub(super) fn functions(b: &mut Builder) {
             I32TruncSatF64U,
         ],
     );
+    // Private, unexported traversal is reached only after fields validation.
+    // No callbacks or writes intervene, so do not revalidate the same chain.
     let mut body = vec![
         LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(2),
@@ -396,27 +406,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(2),
         Return,
         End,
-        LocalGet(2),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
     ];
-    nominal::error(&mut body);
-    body.push(End);
-    args(&mut body, 2);
-    body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
-    nominal::error(&mut body);
-    body.push(End);
-    args(&mut body, 2);
-    body.extend([
-        I32Const(0),
-        ArrayGet(ARGS),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    nominal::error(&mut body);
-    body.push(End);
     args(&mut body, 2);
     body.extend([
         I32Const(0),
@@ -445,12 +435,30 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(0),
         RefI31,
     ]);
-    let find = b.function_with_locals(
+    let find_validated = b.count;
+    b.types
+        .ty()
+        .function([reference(ARGS), ValType::I32], [VALUE]);
+    b.functions.function(b.next_type);
+    b.next_type += 1;
+    let mut function = Function::new([(1, VALUE)]);
+    for instruction in &body {
+        function.instruction(instruction);
+    }
+    function.instruction(&End);
+    b.code.function(&function);
+    b.count += 1;
+    b.function(
         "source-array-sparse-find",
         &[VALUE, ValType::I32],
         &[VALUE],
-        &[(1, VALUE)],
-        &body,
+        &[
+            LocalGet(0),
+            Call(fields),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            LocalGet(1),
+            Call(find_validated),
+        ],
     );
     for (export, presence) in [
         ("source-array-sparse-has", true),
@@ -487,9 +495,10 @@ pub(super) fn functions(b: &mut Builder) {
         }
         body.extend([
             End,
-            LocalGet(0),
+            LocalGet(2),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
             LocalGet(1),
-            Call(find),
+            Call(find_validated),
             LocalTee(2),
             I32Const(0),
             RefI31,
@@ -549,9 +558,10 @@ pub(super) fn functions(b: &mut Builder) {
         End,
     ]);
     body.extend([
-        LocalGet(0),
+        LocalGet(3),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(1),
-        Call(find),
+        Call(find_validated),
         LocalTee(4),
         I32Const(0),
         RefI31,
@@ -676,9 +686,10 @@ pub(super) fn functions(b: &mut Builder) {
         End,
     ]);
     body.extend([
-        LocalGet(0),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(1),
-        Call(find),
+        Call(find_validated),
         LocalTee(3),
         I32Const(0),
         RefI31,
@@ -1010,9 +1021,67 @@ pub(super) fn functions(b: &mut Builder) {
         End,
         LocalSet(5),
     ]);
+    // Consecutive present sparse elements extend the copied dense prefix.
+    // This keeps repeatedly cloned vector tails dense without allocating holes
+    // or materializing distant sparse indices. The source remains untouched.
+    body.extend([LocalGet(5), LocalSet(13)]);
+    args(&mut body, 3);
+    body.extend([
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(8),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(8),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+    ]);
+    args(&mut body, 8);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        I32TruncSatF64U,
+        LocalSet(12),
+        LocalGet(12),
+        LocalGet(1),
+        I32GeU,
+        If(BlockType::Empty),
+        LocalGet(12),
+        LocalGet(2),
+        I32GeU,
+        BrIf(2),
+        LocalGet(12),
+        LocalGet(1),
+        I32Sub,
+        LocalGet(13),
+        I32Ne,
+        LocalGet(13),
+        I32Const(arrays::MAX_LENGTH),
+        I32GeU,
+        I32Or,
+        BrIf(2),
+        LocalGet(13),
+        I32Const(1),
+        I32Add,
+        LocalSet(13),
+        End,
+        LocalGet(8),
+        Call(next),
+        LocalSet(8),
+        Br(0),
+        End,
+        End,
+    ]);
     for (slot, ty, dest) in [(2, ARGS, 6), (3, STRING, 7)] {
         body.extend([
-            LocalGet(5),
+            LocalGet(13),
             ArrayNewDefault(ty),
             LocalSet(dest),
             LocalGet(5),
@@ -1070,6 +1139,31 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(12),
         LocalGet(1),
         I32Sub,
+        LocalGet(13),
+        I32LtU,
+        If(BlockType::Empty),
+        LocalGet(6),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(12),
+        LocalGet(1),
+        I32Sub,
+    ]);
+    args(&mut body, 8);
+    body.extend([
+        I32Const(1),
+        ArrayGet(ARGS),
+        ArraySet(ARGS),
+        LocalGet(7),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        LocalGet(12),
+        LocalGet(1),
+        I32Sub,
+        I32Const(1),
+        ArraySet(STRING),
+        Else,
+        LocalGet(12),
+        LocalGet(1),
+        I32Sub,
         F64ConvertI32U,
         Call(b.names["number-box"]),
     ]);
@@ -1102,6 +1196,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(11),
         LocalSet(10),
         End,
+        End,
         LocalGet(8),
         Call(next),
         LocalSet(8),
@@ -1125,7 +1220,7 @@ pub(super) fn functions(b: &mut Builder) {
         "source-array-sparse-slice",
         &[VALUE, ValType::I32, ValType::I32],
         &[VALUE],
-        &[(1, VALUE), (2, ValType::I32), (6, VALUE), (1, ValType::I32)],
+        &[(1, VALUE), (2, ValType::I32), (6, VALUE), (2, ValType::I32)],
         &body,
     );
     b.function(

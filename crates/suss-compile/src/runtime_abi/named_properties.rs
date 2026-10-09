@@ -223,7 +223,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         End,
     ]);
-    for reserved in [
+    let reserved_names = [
         "arguments",
         "abstract",
         "await",
@@ -288,17 +288,39 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "null",
         "constructor",
         "__proto__",
-    ] {
-        body.push(LocalGet(0));
-        name(&mut body, reserved);
-        body.extend([Call(equal), If(BlockType::Empty), I32Const(0), Return, End]);
+    ];
+    // Schema reads validate every field. Compare only reserved spellings of the
+    // same length; long protocol names cannot match a shorter reserved word.
+    let mut by_length = std::collections::BTreeMap::<usize, Vec<&str>>::new();
+    for reserved in reserved_names {
+        by_length.entry(reserved.len()).or_default().push(reserved);
+    }
+    body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        LocalSet(3),
+    ]);
+    for (length, names) in by_length {
+        body.extend([
+            LocalGet(3),
+            I32Const(length as i32),
+            I32Eq,
+            If(BlockType::Empty),
+        ]);
+        for reserved in names {
+            body.push(LocalGet(0));
+            name(&mut body, reserved);
+            body.extend([Call(equal), If(BlockType::Empty), I32Const(0), Return, End]);
+        }
+        body.push(End);
     }
     body.push(I32Const(1));
     let field_supported = b.function_with_locals(
         "property-field-name-supported",
         &[VALUE],
         &[ValType::I32],
-        &[(2, ValType::I32)],
+        &[(3, ValType::I32)],
         &body,
     );
 
@@ -460,10 +482,20 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalSet(payload),
         ]);
         if !writing {
-            for (spelling, adapter) in [("call", "closure-call-method"), ("apply", "closure-apply-method")] {
+            for (spelling, adapter) in [
+                ("call", "closure-call-method"),
+                ("apply", "closure-apply-method"),
+            ] {
                 body.push(LocalGet(1));
                 name(&mut body, spelling);
-                body.extend([Call(equal), If(BlockType::Empty), LocalGet(0), Call(b.names[adapter]), Return, End]);
+                body.extend([
+                    Call(equal),
+                    If(BlockType::Empty),
+                    LocalGet(0),
+                    Call(b.names[adapter]),
+                    Return,
+                    End,
+                ]);
             }
         }
         reject_host_names(&mut body, equal, INHERITED_NAMES);
@@ -607,10 +639,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         structure(&mut body, 0, 7, 0);
         body.extend([GlobalGet(arrays::TAG_GLOBAL), RefEq, If(BlockType::Empty)]);
         if writing {
-            body.extend([LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["source-array-set"]), Return]);
+            body.extend([
+                LocalGet(0),
+                LocalGet(1),
+                LocalGet(2),
+                Call(b.names["source-array-set"]),
+                Return,
+            ]);
         } else {
-            body.extend([LocalGet(0), LocalGet(1), Call(b.names["source-array-property-has"]), If(BlockType::Empty),
-                LocalGet(0), LocalGet(1), Call(b.names["source-array-property-get"]), Return, End]);
+            body.extend([
+                LocalGet(0),
+                LocalGet(1),
+                Call(b.names["source-array-property-has"]),
+                If(BlockType::Empty),
+                LocalGet(0),
+                LocalGet(1),
+                Call(b.names["source-array-property-get"]),
+                Return,
+                End,
+            ]);
             body.push(LocalGet(1));
             name(&mut body, "length");
             body.extend([
@@ -627,10 +674,22 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             ]);
             body.push(LocalGet(1));
             name(&mut body, "pop");
-            body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-pop-method"]), Return, End]);
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["source-array-pop-method"]),
+                Return,
+                End,
+            ]);
             body.push(LocalGet(1));
             name(&mut body, "push");
-            body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-push-method"]), Return, End]);
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["source-array-push-method"]),
+                Return,
+                End,
+            ]);
             body.push(LocalGet(1));
             name(&mut body, "slice");
             body.extend([
@@ -642,12 +701,34 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             ]);
             body.push(LocalGet(1));
             name(&mut body, "hasOwnProperty");
-            body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-has-own-method"]), Return, End]);
-            for (name_value, export) in [("join", "source-array-join-method"), ("valueOf", "source-array-valueOf-method"), ("toString", "source-array-toString-method")] {
-                body.push(LocalGet(1)); name(&mut body, name_value);
-                body.extend([Call(equal), If(BlockType::Empty), Call(b.names[export]), Return, End]);
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["source-array-has-own-method"]),
+                Return,
+                End,
+            ]);
+            for (name_value, export) in [
+                ("join", "source-array-join-method"),
+                ("valueOf", "source-array-valueOf-method"),
+                ("toString", "source-array-toString-method"),
+            ] {
+                body.push(LocalGet(1));
+                name(&mut body, name_value);
+                body.extend([
+                    Call(equal),
+                    If(BlockType::Empty),
+                    Call(b.names[export]),
+                    Return,
+                    End,
+                ]);
             }
-            body.extend([LocalGet(0), LocalGet(1), Call(b.names["source-array-get"]), Return]);
+            body.extend([
+                LocalGet(0),
+                LocalGet(1),
+                Call(b.names["source-array-get"]),
+                Return,
+            ]);
         }
         body.push(End);
         structure(&mut body, 0, 7, 1);
