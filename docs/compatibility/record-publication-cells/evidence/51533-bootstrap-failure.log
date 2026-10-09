@@ -1,0 +1,3 @@
+    Finished `test` profile [unoptimized] target(s) in 0.09s
+     Running `/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/suss-bootstrap runtime/bootstrap`
+Error: Diagnostic { span: 177827..177835, message: "Parameter destructuring is not lowered yet" }

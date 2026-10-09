@@ -1,0 +1,32 @@
+   Compiling suss-core v0.1.0 (/private/tmp/suss-m4-publication-cells-native/crates/suss-core)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-publication-cells-native/crates/suss-compile)
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-publication-cells-native/crates/suss-reader)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-publication-cells-native/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 9.11s
+     Running tests/compiled_macro_publication_cells.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_publication_cells-b4015ff66d876bfe)
+
+running 2 tests
+test publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc ... FAILED
+test publication_probe_sees_later_class_and_dynamic_overrides_without_replaying ... FAILED
+
+failures:
+
+---- publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc stdout ----
+
+thread 'publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc' (9944709) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:18:45:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..199947, message: "Bootstrap manifest identity mismatch; regenerate the versioned artifacts" })
+
+---- publication_probe_sees_later_class_and_dynamic_overrides_without_replaying stdout ----
+
+thread 'publication_probe_sees_later_class_and_dynamic_overrides_without_replaying' (9944710) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:56:45:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..199947, message: "Bootstrap manifest identity mismatch; regenerate the versioned artifacts" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc
+    publication_probe_sees_later_class_and_dynamic_overrides_without_replaying
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_macro_publication_cells`

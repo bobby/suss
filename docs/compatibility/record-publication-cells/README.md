@@ -29,3 +29,25 @@ regressions for later class publication, independent retained probes, dynamic
 overrides, unbound roots and rejection/recovery are authored UNCOMPILED/UNEXECUTED.
 Rustfmt parsed changed Rust; no Cargo, native execution or bootstrap was run.
 Full original seven reify/fourteen iterator and all prior helper cases remain.
+
+## Hidden boundary correction and validation limit
+
+Independent 51533b4 review found that resolve hides ReaderCell, so declaring the
+missing cell before checking privacy accidentally promoted a reader reservation.
+The probe now checks canonical hidden state before declaration. A genuine reader
+reservation regression checks all three core spellings and both phases, rejection
+without publishing source identities, subsequent explicit source declaration
+promotion, and continued rejection of reader fallback/internal protocol keys.
+The new regression is authored, uncompiled/unexecuted; explicit declaration
+promotion and all original kernel observations/assertions are retained.
+
+Parent's frozen51533 native target compiled, then both tests failed at Session
+construction due stale bootstrap identity (0pass/2fail); no cell-kernel assertion
+ran. Isolated regeneration subsequently failed on the whole update-in `[k & ks]`
+parameter form. Those raw failures/receipt are preserved and parameter
+destructuring is a separate continuing full-graph prerequisite. No assertion,
+manifest guard or source helper was removed to pass.
+
+The historical51533 receipt contains ten hash records (eight files plus two prior
+review reports); thirteen is its changed-file count. Its source projection remains
+historical, while hidden-boundary-repair-receipt.json records this repair's bytes.

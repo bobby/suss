@@ -1848,6 +1848,18 @@ impl Analyzer<'_> {
                     "Compiler cell-defined? requires an explicit namespace identity",
                 ));
             };
+            // resolve filters reader/internal reservations. Reject before the
+            // fallback can promote a ReaderCell through declare_cell; only an
+            // actual source declaration may make that identity public.
+            if self
+                .environment
+                .is_hidden_cell(self.phase, namespace, &target.name)
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler-owned cells are not source publication targets",
+                ));
+            }
             // Existing aliases/refers resolve through the ordinary phase catalog.
             // A fresh generated type can query a real unbound cell only in the
             // current, already declared namespace; no arbitrary namespace or

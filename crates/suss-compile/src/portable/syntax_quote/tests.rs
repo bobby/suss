@@ -425,3 +425,73 @@ fn private_reader_cell_is_absent_from_source_namespace_identities_until_promoted
         assert!(super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&global));
     }
 }
+
+
+#[test]
+fn publication_probe_cannot_promote_real_reader_or_internal_reservations() {
+    use super::super::hir::{SourceNamespace, prepare};
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut env = Environment::default();
+        env.enter_namespace(phase, "cljs.core").unwrap();
+        let (reader, fallback, _) = env.reader_sequence_cells(phase);
+        for spelling in [
+            "suss.core/sequence",
+            "cljs.core/sequence",
+            "clojure.core/sequence",
+        ] {
+            let form = read(&format!("(suss.compiler/cell-defined? {spelling})"));
+            let error = prepare(&[form], 0..0, &env, phase).unwrap_err();
+            assert!(error.message.contains("Compiler-owned cells"));
+            assert!(env.is_hidden_cell(phase, reader.namespace(), reader.name()));
+            assert!(
+                !SourceNamespace::capture(&env, phase)
+                    .identities
+                    .contains(&reader)
+            );
+        }
+        // A real source declaration intentionally promotes the ReaderCell.
+        let (_, promoted) = prepare(&[read("(def sequence)")], 0..0, &env, phase).unwrap();
+        assert!(!promoted.is_hidden_cell(phase, reader.namespace(), reader.name()));
+        assert!(
+            SourceNamespace::capture(&promoted, phase)
+                .identities
+                .contains(&reader)
+        );
+        prepare(
+            &[read("(suss.compiler/cell-defined? suss.core/sequence)")],
+            0..0,
+            &promoted,
+            phase,
+        )
+        .unwrap();
+        assert!(env.is_hidden_cell(phase, reader.namespace(), reader.name()));
+        let protocol = env
+            .declare_cell(phase, "user", "PublicationProtocol")
+            .unwrap();
+        let internal = env.protocol_key(&protocol, "-publication", 1);
+        for reserved in [fallback, internal] {
+            env.enter_namespace(phase, reserved.namespace()).unwrap();
+            let probe = read(&format!(
+                "(suss.compiler/cell-defined? {}/{})",
+                reserved.namespace(),
+                reserved.name()
+            ));
+            let error = prepare(&[probe], 0..0, &env, phase).unwrap_err();
+            assert!(error.message.contains("Compiler-owned cells"));
+            assert!(env.is_hidden_cell(phase, reserved.namespace(), reserved.name()));
+            assert!(
+                !SourceNamespace::capture(&env, phase)
+                    .identities
+                    .contains(&reserved)
+            );
+            let definition = read(&format!("(def {})", reserved.name()));
+            let error = prepare(&[definition], 0..0, &env, phase).unwrap_err();
+            assert!(
+                error
+                    .message
+                    .contains("Cannot redefine a compiler-owned binding")
+            );
+            assert!(env.is_hidden_cell(phase, reserved.namespace(), reserved.name()));
+        }
+    }
+}

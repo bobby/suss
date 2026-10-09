@@ -23170,3 +23170,22 @@ resolution/state and map/scalar munge consumption, complete exists? path handlin
 nominal helper protocol masks/annotations, source deftype*/defrecord* publication
 and physical method adapters, then actual reify/nil-iter and full record factories.
 No Cargo/bootstrap/push while the separate 96451 baseline remains live.
+
+### Publication hidden-cell boundary repair — native pending
+
+Sartre51533 P2 confirmed: resolution hides ReaderCell, and the fallback declaration
+could promote it before the old hidden check. Added canonical hidden-state rejection
+BEFORE declare_cell. Actual reader reservation both-phase compiler regression
+checks canonical/core alias rejection, no source identity publication, intentional
+explicit source declaration promotion, and internal reader/protocol-key rejection.
+Original kernel tests/assertions/runtime remain unchanged. New compiler regression
+authored/uncompiled; no Cargo/bootstrap run by author.
+
+Parent's51533 focused target compiled but0pass2fail at Session stale manifest
+construction, not semantic kernel execution. Isolated bootstrap thenexit1 at
+177827..177835: full update-in [k & ks] parameter destructuring. All raw logs and
+receipt retained in record-publication-cells/evidence, alongside independent P2
+report and bounded repair receipt. Historical51533 receipt records10 hashes, not
+13;13 is changed-file count. Full parameter lowering (vectors/maps/nesting/rest/
+:as/defaults/qualified shorthands/live call/effect order) continues separately;
+no helper subset or guard bypass. Parent coordinates next native lane.
