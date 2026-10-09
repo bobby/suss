@@ -100,13 +100,11 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
         cases[0]["expected"],
         serde_json::json!({"tag":"bool","value":false})
     );
-    // The pin permits named .length writes; this portable named-property adapter
-    // explicitly rejects them. This is a certified separate boundary, not a skip.
-    for source in [
-        cases[0]["source"].as_str().unwrap(),
-        "(set! (.-length iteration-array) 0)",
-        "(rseq)",
-    ] {
+    // Observe the retained iterator's live length against the pinned boundary.
+    let shrunk = session.eval(cases[0]["source"].as_str().unwrap()).unwrap();
+    session.collect().unwrap();
+    assert!(!boolean(&mut session, &shrunk));
+    for source in ["(rseq)"] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
             "{source}"

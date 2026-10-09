@@ -123,5 +123,8 @@ See [reduction scope and limitations](../runtime/sequence-reduction.md).
 Retained complete IndexedSeqIterator/RSeq and patched reversible?/rseq bring
 selection86/artifacts90/reviews176+889. Every upstream type method remains intact;
 actual iteration/reverse views/equality/reduction have53 fresh primary/native
-observations and1 separate named-length-write boundary with typed native rejection.
+observations and1 historical named-length-write boundary with typed native rejection.
+Current Array length support supersedes that rejection; the unchanged pinned
+shrink fixture is now checked as exact Booleanfalse after GC, with new native
+validation pending.
 See [iteration evidence and limits](../runtime/sequence-iteration.md).
