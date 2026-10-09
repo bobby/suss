@@ -750,7 +750,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
                 .contains("sentinel")
         );
         let oversized = session
-            .eval("(new suss.core/IndexedSeq (js/Array. 4294967295) 0 nil)")
+            .eval("(let [a (array)] (set! (.-length a) 4294967295) (new suss.core/IndexedSeq a 0 nil))")
             .unwrap();
         session.collect().unwrap();
         assert!(
