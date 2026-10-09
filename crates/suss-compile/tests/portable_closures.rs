@@ -272,21 +272,20 @@ fn captures_use_lexical_identity_and_retain_parameter_metadata() {
 }
 
 #[test]
-fn source_wrong_arity_and_unimplemented_signatures_are_located_diagnostics() {
+fn source_wrong_arity_and_missing_rest_class_are_located_diagnostics() {
     for source in ["((fn [x] x))", "(let [f (fn [x] x)] (f 1 2))"] {
         let error = portable::compile(source).unwrap_err();
         assert!(error.message.contains("Wrong arity"));
         assert!(source[error.span].starts_with('('));
     }
-    for (source, needle) in [("(fn [& xs] xs)", "(fn [& xs] xs)"), ("(fn [[x]] x)", "[x]")] {
-        let error = portable::compile(source).unwrap_err();
-        assert_eq!(&source[error.span], needle);
-        if source == "(fn [& xs] xs)" {
-            // Variadic lowering now requires the actual source-backed core class.
-            // This standalone compiler fixture has not loaded that core artifact.
-            assert!(error.message.contains("IndexedSeq"));
-        }
-    }
+    let source = "(fn [& xs] xs)";
+    let error = portable::compile(source).unwrap_err();
+    assert_eq!(&source[error.span], source);
+    // Variadic lowering requires the actual source-backed core class.
+    // This standalone compiler fixture has not loaded that core artifact.
+    assert!(error.message.contains("IndexedSeq"));
+    // Vector parameter destructuring is supported with provisioned core;
+    // portable_function_parameters executes the pinned binding corpus.
 }
 
 #[test]
