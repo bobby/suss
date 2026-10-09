@@ -1,0 +1,18 @@
+{
+  "array_inc_dec.cljs": {
+    "sha256": "420ba5343ad4d5eb3c00ee05cc369546d07ac0be5311b86650c31e708d880f29",
+    "bytes": 340
+  },
+  "native.log": {
+    "sha256": "b6c4cdc9fe915cff96b5073d33f7d5faa440fcb0dd859f762300ad1b04dd3bd2",
+    "bytes": 1943
+  },
+  "pinned-compile.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "pinned-observations.json": {
+    "sha256": "2c50461846bc6568d535bf1431c075ddfa22c9214599c0093555294267472ae6",
+    "bytes": 88
+  }
+}

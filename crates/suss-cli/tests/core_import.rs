@@ -519,11 +519,31 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
 }
 
 #[test]
-fn imported_inc_dec_unsupported_object_coercion_is_typed_and_recovers() {
+fn imported_inc_dec_array_conversion_and_unsupported_objects_recover() {
     let mut session = loaded();
     session.eval("(deftype O [])").unwrap();
     for name in ["inc", "dec"] {
-        for argument in ["(O.)", "(array 1)", "(fn [] 1)"] {
+        let value = session
+            .eval(&format!("(let [f {name}] (f (array 1)))"))
+            .unwrap();
+        session.collect().unwrap();
+        if name == "inc" {
+            // Default-hint Array conversion yields "1"; addition concatenates.
+            session
+                .inspect(&value, |mut store, value| {
+                    let text = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                    let units = text
+                        .elems(&mut store)?
+                        .map(|unit| unit.unwrap_i32() as u16)
+                        .collect::<Vec<_>>();
+                    assert_eq!(units, vec![49, 49]);
+                    Ok(())
+                })
+                .unwrap();
+        } else {
+            assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+        }
+        for argument in ["(O.)", "(fn [] 1)"] {
             assert!(
                 matches!(
                     session.eval(&format!("(let [f {name}] (f {argument}))")),
