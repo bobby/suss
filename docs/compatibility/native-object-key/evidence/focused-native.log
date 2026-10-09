@@ -1,0 +1,11 @@
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-native-object-key-repair/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 0.52s
+     Running tests/portable_native_objects.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_native_objects-0b2dfa4a7596b01b)
+
+running 3 tests
+test private_object_errors_are_atomic_or_runtime_and_recover ... ok
+test private_object_factory_and_properties_execute_ordered_source_after_gc ... ok
+test ordinary_object_property_keys_preserve_values_hook_order_and_throw_recovery ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.94s
+
