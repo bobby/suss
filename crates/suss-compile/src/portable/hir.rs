@@ -298,6 +298,8 @@ pub enum Nominal {
     BindCallable,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
+    ObjectDescriptor,
+    MethodGet,
     LiveDispatcher,
     IFnLiveDispatcher,
     NativeMarker(NativeKind),
@@ -365,10 +367,10 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString => count == 1,
+                Self::BindingDefined | Self::CoerceString | Self::ObjectDescriptor => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
-                Self::BindCallable => count == 2,
+                Self::BindCallable | Self::MethodGet => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
@@ -1798,6 +1800,12 @@ impl Analyzer<'_> {
             },
         }, source_method))
     }
+    // Object method names use the pinned hyphen-to-underscore munging.
+    // Raw named property reads/writes deliberately retain their current boundary.
+    // Other munging characters still receive the existing explicit diagnostic.
+    fn object_method_name(form: &Form, name: &str) -> Result<String, Diagnostic> {
+        Self::property_name(form, &format!(".-{}", name.replace('-', "_")))
+    }
     fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
         // Host field/method spellings use the pinned compiler's empty-reserved
         // munge policy; source type declarations use its default reserved set.
@@ -1833,6 +1841,11 @@ impl Analyzer<'_> {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.bootstrap")
+            && symbol.name == "direct-protocol-call"
+        {
+            return self.direct_protocol_call(form, args);
+        }
         if symbol.namespace.as_deref() == Some("suss.async") {
             if symbol.name == "future*" {
                 let suspendable = std::mem::replace(&mut self.suspendable, true);
@@ -2020,7 +2033,7 @@ impl Analyzer<'_> {
             let Some(owner) = args.first() else {
                 return Err(fail(form.span.clone(), "Method call requires a receiver"));
             };
-            let key = Self::property_name(form, &format!(".-{}", &symbol.name[1..]))?;
+            let key = Self::object_method_name(form, &symbol.name[1..])?;
             let owner_value = self.form(owner)?;
             let owner_binding = self.fresh_binding(owner, owner_value);
             let owner_read = self.local(owner, owner_binding.id);

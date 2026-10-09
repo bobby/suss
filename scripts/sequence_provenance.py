@@ -55,7 +55,11 @@ def verify_payload(record, source, loader):
                 original_target[1] = '(.-EMPTY_NODE PersistentVector)'
             if original_target == ['set!', '(.-HASHMAP-THRESHOLD PersistentArrayMap)']:
                 original_target[1] = '(.-HASHMAP_THRESHOLD PersistentArrayMap)'
-            if original_target == ['extend-protocol', 'IPrintWithWriter']:
+            if original_target == ['extend-protocol', 'IComparable']:
+                from tree_node_registration import expand
+                if replacement != expand(text):
+                    raise ValueError('IComparable requires all seven ordered complete adapted stanzas')
+            elif original_target == ['extend-protocol', 'IPrintWithWriter']:
                 # Bootstrap expansion may install the stanzas whose source types
                 # are loaded. Preserve their order, targets and exact methods;
                 # never accept invented types, rewritten bodies or duplicate

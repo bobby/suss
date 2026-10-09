@@ -1,0 +1,3 @@
+sh scripts/test-tree-node-oracle.sh > /private/tmp/suss-m4-tree-nodes-primary-73.log 2>&1
+Terminal exit 0; PASS 73 pinned tree node candidates. Fresh cljs.main compile and Node execution.
+No Cargo, bootstrap regeneration or native Suss execution.

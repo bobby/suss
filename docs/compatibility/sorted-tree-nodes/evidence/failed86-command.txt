@@ -1,0 +1,2 @@
+sh scripts/test-tree-node-oracle.sh > /private/tmp/suss-m4-tree-nodes-primary-86.log 2>&1
+Terminal exit 1. CLJS compiled; Node TypeError: fixed-arity rebound fixture lacks compare-indexed multi-arity entrypoint. Empty observations are failed evidence, not a pass.

@@ -1,0 +1,2 @@
+python3 -B -m unittest discover -s scripts -p 'test_*.py' > /private/tmp/suss-m4-tree-nodes-python-complete.log 2>&1
+Terminal exit 0; see exact count/time in python.log. No native execution.

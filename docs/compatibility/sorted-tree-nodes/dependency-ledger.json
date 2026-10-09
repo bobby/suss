@@ -1,0 +1,1125 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "status": "source authoring only; bootstrap/native pending",
+  "node-method-inventory": {
+    "BlackNode": [
+      {
+        "section": "Object",
+        "name": "add-left",
+        "arguments": "[node ins]"
+      },
+      {
+        "section": "Object",
+        "name": "add-right",
+        "arguments": "[node ins]"
+      },
+      {
+        "section": "Object",
+        "name": "remove-left",
+        "arguments": "[node del]"
+      },
+      {
+        "section": "Object",
+        "name": "remove-right",
+        "arguments": "[node del]"
+      },
+      {
+        "section": "Object",
+        "name": "blacken",
+        "arguments": "[node]"
+      },
+      {
+        "section": "Object",
+        "name": "redden",
+        "arguments": "[node]"
+      },
+      {
+        "section": "Object",
+        "name": "balance-left",
+        "arguments": "[node parent]"
+      },
+      {
+        "section": "Object",
+        "name": "balance-right",
+        "arguments": "[node parent]"
+      },
+      {
+        "section": "Object",
+        "name": "replace",
+        "arguments": "[node key val left right]"
+      },
+      {
+        "section": "Object",
+        "name": "kv-reduce",
+        "arguments": "[node f init]"
+      },
+      {
+        "section": "Object",
+        "name": "indexOf",
+        "arguments": "[coll x]"
+      },
+      {
+        "section": "Object",
+        "name": "indexOf",
+        "arguments": "[coll x start]"
+      },
+      {
+        "section": "Object",
+        "name": "lastIndexOf",
+        "arguments": "[coll x]"
+      },
+      {
+        "section": "Object",
+        "name": "lastIndexOf",
+        "arguments": "[coll x start]"
+      },
+      {
+        "section": "IMapEntry",
+        "name": "-key",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IMapEntry",
+        "name": "-val",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IHash",
+        "name": "-hash",
+        "arguments": "[coll]"
+      },
+      {
+        "section": "IEquiv",
+        "name": "-equiv",
+        "arguments": "[coll other]"
+      },
+      {
+        "section": "IMeta",
+        "name": "-meta",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IWithMeta",
+        "name": "-with-meta",
+        "arguments": "[node meta]"
+      },
+      {
+        "section": "IStack",
+        "name": "-peek",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IStack",
+        "name": "-pop",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ICollection",
+        "name": "-conj",
+        "arguments": "[node o]"
+      },
+      {
+        "section": "IEmptyableCollection",
+        "name": "-empty",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ISeqable",
+        "name": "-seq",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IReversible",
+        "name": "-rseq",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ICounted",
+        "name": "-count",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IIndexed",
+        "name": "-nth",
+        "arguments": "[node n]"
+      },
+      {
+        "section": "IIndexed",
+        "name": "-nth",
+        "arguments": "[node n not-found]"
+      },
+      {
+        "section": "ILookup",
+        "name": "-lookup",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "ILookup",
+        "name": "-lookup",
+        "arguments": "[node k not-found]"
+      },
+      {
+        "section": "IAssociative",
+        "name": "-assoc",
+        "arguments": "[node k v]"
+      },
+      {
+        "section": "IAssociative",
+        "name": "-contains-key?",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IFind",
+        "name": "-find",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IVector",
+        "name": "-assoc-n",
+        "arguments": "[node n v]"
+      },
+      {
+        "section": "IReduce",
+        "name": "-reduce",
+        "arguments": "[node f]"
+      },
+      {
+        "section": "IReduce",
+        "name": "-reduce",
+        "arguments": "[node f start]"
+      },
+      {
+        "section": "IFn",
+        "name": "-invoke",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IFn",
+        "name": "-invoke",
+        "arguments": "[node k not-found]"
+      }
+    ],
+    "RedNode": [
+      {
+        "section": "Object",
+        "name": "add-left",
+        "arguments": "[node ins]"
+      },
+      {
+        "section": "Object",
+        "name": "add-right",
+        "arguments": "[node ins]"
+      },
+      {
+        "section": "Object",
+        "name": "remove-left",
+        "arguments": "[node del]"
+      },
+      {
+        "section": "Object",
+        "name": "remove-right",
+        "arguments": "[node del]"
+      },
+      {
+        "section": "Object",
+        "name": "blacken",
+        "arguments": "[node]"
+      },
+      {
+        "section": "Object",
+        "name": "redden",
+        "arguments": "[node]"
+      },
+      {
+        "section": "Object",
+        "name": "balance-left",
+        "arguments": "[node parent]"
+      },
+      {
+        "section": "Object",
+        "name": "balance-right",
+        "arguments": "[node parent]"
+      },
+      {
+        "section": "Object",
+        "name": "replace",
+        "arguments": "[node key val left right]"
+      },
+      {
+        "section": "Object",
+        "name": "kv-reduce",
+        "arguments": "[node f init]"
+      },
+      {
+        "section": "Object",
+        "name": "indexOf",
+        "arguments": "[coll x]"
+      },
+      {
+        "section": "Object",
+        "name": "indexOf",
+        "arguments": "[coll x start]"
+      },
+      {
+        "section": "Object",
+        "name": "lastIndexOf",
+        "arguments": "[coll x]"
+      },
+      {
+        "section": "Object",
+        "name": "lastIndexOf",
+        "arguments": "[coll x start]"
+      },
+      {
+        "section": "IMapEntry",
+        "name": "-key",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IMapEntry",
+        "name": "-val",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IHash",
+        "name": "-hash",
+        "arguments": "[coll]"
+      },
+      {
+        "section": "IEquiv",
+        "name": "-equiv",
+        "arguments": "[coll other]"
+      },
+      {
+        "section": "IMeta",
+        "name": "-meta",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IWithMeta",
+        "name": "-with-meta",
+        "arguments": "[node meta]"
+      },
+      {
+        "section": "IStack",
+        "name": "-peek",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IStack",
+        "name": "-pop",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ICollection",
+        "name": "-conj",
+        "arguments": "[node o]"
+      },
+      {
+        "section": "IEmptyableCollection",
+        "name": "-empty",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ISeqable",
+        "name": "-seq",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IReversible",
+        "name": "-rseq",
+        "arguments": "[node]"
+      },
+      {
+        "section": "ICounted",
+        "name": "-count",
+        "arguments": "[node]"
+      },
+      {
+        "section": "IIndexed",
+        "name": "-nth",
+        "arguments": "[node n]"
+      },
+      {
+        "section": "IIndexed",
+        "name": "-nth",
+        "arguments": "[node n not-found]"
+      },
+      {
+        "section": "ILookup",
+        "name": "-lookup",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "ILookup",
+        "name": "-lookup",
+        "arguments": "[node k not-found]"
+      },
+      {
+        "section": "IAssociative",
+        "name": "-assoc",
+        "arguments": "[node k v]"
+      },
+      {
+        "section": "IAssociative",
+        "name": "-contains-key?",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IFind",
+        "name": "-find",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IVector",
+        "name": "-assoc-n",
+        "arguments": "[node n v]"
+      },
+      {
+        "section": "IReduce",
+        "name": "-reduce",
+        "arguments": "[node f]"
+      },
+      {
+        "section": "IReduce",
+        "name": "-reduce",
+        "arguments": "[node f start]"
+      },
+      {
+        "section": "IFn",
+        "name": "-invoke",
+        "arguments": "[node k]"
+      },
+      {
+        "section": "IFn",
+        "name": "-invoke",
+        "arguments": "[node k not-found]"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "name": "BlackNode",
+      "id": "runtime:BlackNode:8502",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "RedNode",
+      "id": "runtime:RedNode:8627",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "balance-left",
+      "id": "runtime:balance-left:8404",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "balance-right",
+      "id": "runtime:balance-right:8429",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "balance-left-del",
+      "id": "runtime:balance-left-del:8451",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "balance-right-del",
+      "id": "runtime:balance-right-del:8470",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "tree-map-kv-reduce",
+      "id": "runtime:tree-map-kv-reduce:8489",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "ci-reduce",
+      "id": "runtime:ci-reduce:1545",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "IndexedSeq",
+      "id": "runtime:IndexedSeq:1653",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "MapEntry",
+      "id": "runtime:MapEntry:6722",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "-indexOf",
+      "id": "runtime:-indexOf:1610",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "-lastIndexOf",
+      "id": "runtime:-lastIndexOf:1627",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "hash-ordered-coll",
+      "id": "runtime:hash-ordered-coll:1406",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "equiv-sequential",
+      "id": "runtime:equiv-sequential:3151",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "count",
+      "id": "runtime:count:1906",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "assoc",
+      "id": "runtime:assoc:2076",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "-with-meta",
+      "id": null,
+      "selected": false,
+      "status": "compiler/protocol operation; executable native path unverified"
+    },
+    {
+      "name": "-nth",
+      "id": null,
+      "selected": false,
+      "status": "compiler/protocol operation; executable native path unverified"
+    },
+    {
+      "name": "-assoc-n",
+      "id": null,
+      "selected": false,
+      "status": "compiler/protocol operation; executable native path unverified"
+    },
+    {
+      "name": "reduced?",
+      "id": "runtime:reduced?:1520",
+      "selected": true,
+      "status": "whole declaration selected; executable native path unverified"
+    },
+    {
+      "name": "IMapEntry",
+      "id": "runtime:IMapEntry:693",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IHash",
+      "id": "runtime:IHash:758",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IEquiv",
+      "id": "runtime:IEquiv:753",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IMeta",
+      "id": "runtime:IMeta:728",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IWithMeta",
+      "id": "runtime:IWithMeta:733",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IStack",
+      "id": "runtime:IStack:705",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "ICollection",
+      "id": "runtime:ICollection:630",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IEmptyableCollection",
+      "id": "runtime:IEmptyableCollection:624",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "ISeqable",
+      "id": "runtime:ISeqable:763",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IReversible",
+      "id": "runtime:IReversible:777",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "ICounted",
+      "id": "runtime:ICounted:619",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IIndexed",
+      "id": "runtime:IIndexed:641",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "ILookup",
+      "id": "runtime:ILookup:668",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IAssociative",
+      "id": "runtime:IAssociative:674",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IFind",
+      "id": "runtime:IFind:683",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IVector",
+      "id": "runtime:IVector:715",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IReduce",
+      "id": "runtime:IReduce:738",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "IFn",
+      "id": "runtime:IFn:586",
+      "selected": true,
+      "status": "complete source protocol selected; native execution unverified"
+    },
+    {
+      "name": "ISequential",
+      "id": "runtime:ISequential:768",
+      "selected": true,
+      "status": "complete source marker protocol selected; native execution unverified"
+    }
+  ],
+  "anonymous-parents": [
+    {
+      "label": "BlackNode-es6-iterable",
+      "retained": "docs/compatibility/sorted-tree-nodes/BlackNode-es6-iterable.cljs",
+      "status": "retained whole parent; not installed/executed",
+      "targets": [
+        {
+          "name": "BlackNode",
+          "id": "runtime:BlackNode:8502",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "label": "RedNode-es6-iterable",
+      "retained": "docs/compatibility/sorted-tree-nodes/RedNode-es6-iterable.cljs",
+      "status": "retained whole parent; not installed/executed",
+      "targets": [
+        {
+          "name": "RedNode",
+          "id": "runtime:RedNode:8627",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "label": "full-IComparable",
+      "retained": "docs/compatibility/sorted-tree-nodes/full-IComparable.cljs",
+      "status": "whole seven-target registration authored in after-loader; bootstrap/native pending",
+      "targets": [
+        {
+          "name": "Symbol",
+          "id": "runtime:Symbol:1129",
+          "selected": true
+        },
+        {
+          "name": "Keyword",
+          "id": "runtime:Keyword:3474",
+          "selected": true
+        },
+        {
+          "name": "Subvec",
+          "id": "runtime:Subvec:6077",
+          "selected": true
+        },
+        {
+          "name": "PersistentVector",
+          "id": "runtime:PersistentVector:5713",
+          "selected": true
+        },
+        {
+          "name": "MapEntry",
+          "id": "runtime:MapEntry:6722",
+          "selected": true
+        },
+        {
+          "name": "BlackNode",
+          "id": "runtime:BlackNode:8502",
+          "selected": true
+        },
+        {
+          "name": "RedNode",
+          "id": "runtime:RedNode:8627",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "label": "full-IPrintWithWriter",
+      "retained": "docs/compatibility/sorted-tree-nodes/full-IPrintWithWriter.cljs",
+      "status": "retained whole parent; not installed/executed",
+      "targets": [
+        {
+          "name": "LazySeq",
+          "id": "runtime:LazySeq:3584",
+          "selected": true
+        },
+        {
+          "name": "TransformerIterator",
+          "id": "runtime:TransformerIterator:4335",
+          "selected": false
+        },
+        {
+          "name": "IndexedSeq",
+          "id": "runtime:IndexedSeq:1653",
+          "selected": true
+        },
+        {
+          "name": "RSeq",
+          "id": "runtime:RSeq:1768",
+          "selected": true
+        },
+        {
+          "name": "PersistentQueue",
+          "id": "runtime:PersistentQueue:6505",
+          "selected": true
+        },
+        {
+          "name": "PersistentQueueSeq",
+          "id": "runtime:PersistentQueueSeq:6447",
+          "selected": true
+        },
+        {
+          "name": "PersistentTreeMapSeq",
+          "id": "runtime:PersistentTreeMapSeq:8328",
+          "selected": false
+        },
+        {
+          "name": "NodeSeq",
+          "id": "runtime:NodeSeq:7861",
+          "selected": true
+        },
+        {
+          "name": "ArrayNodeSeq",
+          "id": "runtime:ArrayNodeSeq:7942",
+          "selected": true
+        },
+        {
+          "name": "List",
+          "id": "runtime:List:3209",
+          "selected": true
+        },
+        {
+          "name": "Cons",
+          "id": "runtime:Cons:3391",
+          "selected": true
+        },
+        {
+          "name": "EmptyList",
+          "id": "runtime:EmptyList:3286",
+          "selected": true
+        },
+        {
+          "name": "PersistentVector",
+          "id": "runtime:PersistentVector:5713",
+          "selected": true
+        },
+        {
+          "name": "ChunkedCons",
+          "id": "runtime:ChunkedCons:3722",
+          "selected": true
+        },
+        {
+          "name": "ChunkedSeq",
+          "id": "runtime:ChunkedSeq:5968",
+          "selected": true
+        },
+        {
+          "name": "Subvec",
+          "id": "runtime:Subvec:6077",
+          "selected": true
+        },
+        {
+          "name": "BlackNode",
+          "id": "runtime:BlackNode:8502",
+          "selected": true
+        },
+        {
+          "name": "RedNode",
+          "id": "runtime:RedNode:8627",
+          "selected": true
+        },
+        {
+          "name": "MapEntry",
+          "id": "runtime:MapEntry:6722",
+          "selected": true
+        },
+        {
+          "name": "KeySeq",
+          "id": "runtime:KeySeq:9107",
+          "selected": true
+        },
+        {
+          "name": "ValSeq",
+          "id": "runtime:ValSeq:9186",
+          "selected": false
+        },
+        {
+          "name": "PersistentArrayMapSeq",
+          "id": "runtime:PersistentArrayMapSeq:6827",
+          "selected": true
+        },
+        {
+          "name": "PersistentArrayMap",
+          "id": "runtime:PersistentArrayMap:6912",
+          "selected": true
+        },
+        {
+          "name": "PersistentHashMap",
+          "id": "runtime:PersistentHashMap:8024",
+          "selected": true
+        },
+        {
+          "name": "PersistentTreeMap",
+          "id": "runtime:PersistentTreeMap:8898",
+          "selected": false
+        },
+        {
+          "name": "PersistentHashSet",
+          "id": "runtime:PersistentHashSet:9317",
+          "selected": true
+        },
+        {
+          "name": "PersistentTreeSet",
+          "id": "runtime:PersistentTreeSet:9482",
+          "selected": false
+        },
+        {
+          "name": "Range",
+          "id": "runtime:Range:10024",
+          "selected": false
+        },
+        {
+          "name": "IntegerRange",
+          "id": "runtime:IntegerRange:9895",
+          "selected": false
+        },
+        {
+          "name": "Cycle",
+          "id": "runtime:Cycle:5046",
+          "selected": false
+        },
+        {
+          "name": "Repeat",
+          "id": "runtime:Repeat:5118",
+          "selected": false
+        },
+        {
+          "name": "Iterate",
+          "id": "runtime:Iterate:5244",
+          "selected": false
+        },
+        {
+          "name": "ES6IteratorSeq",
+          "id": "runtime:ES6IteratorSeq:1374",
+          "selected": false
+        },
+        {
+          "name": "Atom",
+          "id": "runtime:Atom:4613",
+          "selected": true
+        },
+        {
+          "name": "Volatile",
+          "id": "runtime:Volatile:4766",
+          "selected": false
+        },
+        {
+          "name": "Var",
+          "id": "runtime:Var:1187",
+          "selected": true
+        }
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "boundary": "ES6 iterable setup",
+      "status": "full parents retained, not installed",
+      "requires": [
+        "complete ES6Iterator/es6-iterator declarations",
+        "canonical ITER_SYMBOL property key",
+        "prototype and physical this bridge"
+      ]
+    },
+    {
+      "boundary": "IComparable",
+      "status": "complete parent expanded to all seven ordered registrations in after-loader; bootstrap/native pending",
+      "requires": [
+        "focused both-phase native comparison, effects and rejection tests",
+        "bootstrap reproduction/full gates; no five-target substitute"
+      ]
+    },
+    {
+      "boundary": "IPrintWithWriter",
+      "status": "complete multi-target parent retained, not installed",
+      "requires": [
+        "remaining target declarations",
+        "complete printer dependencies and live effects",
+        "install whole parent; no node-only replacement"
+      ]
+    },
+    {
+      "boundary": "caching-hash macro",
+      "status": "complete original retained; node calls expanded faithfully",
+      "requires": [
+        "verify mutable hash cache and live hash call with native authored cases",
+        "macro expander full work remains tracked; no macro implementation claimed"
+      ]
+    },
+    {
+      "boundary": "Object hyphen method names",
+      "status": "matching declaration/call hyphen munging authored, uncompiled",
+      "requires": [
+        "focused method/negative tests",
+        "bootstrap regeneration",
+        "full native gates; remaining munging characters explicitly unsupported"
+      ]
+    },
+    {
+      "boundary": "statically nominal protocol lowering",
+      "status": "private direct nominal -nth/-assoc-n adapter authored, uncompiled",
+      "requires": [
+        "actual method capture before argument effects",
+        "canonical key identity; public dispatcher rebinding ignored",
+        "focused native method/negative tests and bootstrap/full gates",
+        "general hint inference/native fallbacks remain unfinished"
+      ]
+    },
+    {
+      "boundary": "typed Error catch",
+      "status": "future complete PersistentTreeSet dependency; not present in these seven declarations",
+      "requires": [
+        "genuine Error-family discrimination",
+        "non-Error throw propagation; no catch-all substitute"
+      ]
+    },
+    {
+      "boundary": "full sorted lane",
+      "status": "not complete; original issues remain open",
+      "requires": [
+        "complete tree-map-add/append/remove/replace",
+        "PersistentTreeMap/Set constructors and factories",
+        "tree iteration, vals and range operations",
+        "ES6, printer and full comparable parents",
+        "full equality/hash/transient acceptance and final-head CI"
+      ]
+    }
+  ],
+  "call-site-bindings": {
+    "direct-nominal": [
+      "node -nth inside ILookup/IFn",
+      "vector -assoc-n inside IVector"
+    ],
+    "live-public": [
+      "-with-meta on newly constructed vector",
+      "ci-reduce",
+      "hash-ordered-coll",
+      "equiv-sequential",
+      "assoc",
+      "count inside lastIndexOf",
+      "-indexOf",
+      "-lastIndexOf",
+      "balance-left/right/-del",
+      "tree-map-kv-reduce",
+      "reduced?",
+      "BlackNode/RedNode/IndexedSeq/MapEntry constructors"
+    ],
+    "immutable-macro": [
+      "nil? expansion",
+      "strict == expansion",
+      "array literal lowering",
+      "caching-hash expansion"
+    ]
+  },
+  "macro-dependencies": [
+    {
+      "id": "macro:caching-hash:1284",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1284,
+      "end-line": 1291,
+      "sha256": "0d36bb2d025f31d5bc5d4dbf3730ec8715ab230f133310e0bc182481fb795197",
+      "retained": "docs/compatibility/sorted-tree-nodes/caching-hash.cljc",
+      "retained-file-sha256": "005297b7531ad35b811e1ff6740d09471358f4f1ddf8f004c450b79a3de7a617",
+      "status": "caching-hash expanded in both whole classes"
+    },
+    {
+      "id": "macro:es6-iterable:2959",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 2959,
+      "end-line": 2963,
+      "sha256": "c5f8d5a6929379a815f3f3601948f1ddf7d67e24f851be80b05e6e54447f711e",
+      "retained": "docs/compatibility/sorted-tree-nodes/es6-iterable.cljc",
+      "retained-file-sha256": "50485dfcfed536d295009f61f36df110796b7c203d5df48b0d6d5067b4fde35b",
+      "status": "retained; symbol/prototype/physical-this bridge pending"
+    },
+    {
+      "id": "macro:extend-protocol:211",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 211,
+      "end-line": 247,
+      "sha256": "0491face2050dc43aed2a66480bb539f483bd666d05fa9f5d3f9edbf2bb6b0ae",
+      "retained": "docs/compatibility/sorted-tree-nodes/extend-protocol.cljc",
+      "retained-file-sha256": "ecd344da4f27942789f1fa3528c27667d9ec04f581329aed5d5b05768da2597e",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:extend-type:1668",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1668,
+      "end-line": 1708,
+      "sha256": "c904915ea6c48bd1cce808b3a9c23482dd8e9311126ad4d65d70af9ffb94de52",
+      "retained": "docs/compatibility/sorted-tree-nodes/extend-type.cljc",
+      "retained-file-sha256": "64fe593af01ee92c886c6fc385de5500552d365a2f688c21cf10fc18e5607ea1",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:deftype:1778",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1778,
+      "end-line": 1851,
+      "sha256": "e9308661076599c2f8bc0e4ae09bcc72b1ecb462d1b0b2855797346d46add88c",
+      "retained": "docs/compatibility/sorted-tree-nodes/deftype.cljc",
+      "retained-file-sha256": "b43fe43df07575b4b19b0c12ad48c4a777f10f0b8994e4729af0ab9ba99587df",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:str_:852",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 852,
+      "end-line": 867,
+      "sha256": "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9",
+      "retained": "docs/compatibility/sorted-tree-nodes/str_.cljc",
+      "retained-file-sha256": "c55172c9190c2737cfeeb3889e49beb6f968954f6a230ffcb3e7b76d96dcc164",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:..:136",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 136,
+      "end-line": 151,
+      "sha256": "669bfed8b95c134fe5fb172cf3bdf012e2db778f20306a9f26e20d29598abf59",
+      "retained": "docs/compatibility/sorted-tree-nodes/dotdot.cljc",
+      "retained-file-sha256": "c7affda09400567449df66c50609a3eb4f2dbf4d069ca8d6c316eeb9db91ede2",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:case:2405",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 2405,
+      "end-line": 2474,
+      "sha256": "5c1ab75133484dc097983f8e30dd306f2d7ae2b4c0d8308b5273d3686798f8d1",
+      "retained": "docs/compatibility/sorted-tree-nodes/case.cljc",
+      "retained-file-sha256": "16bbcb274bcd83b051f2701af3f2537aed6a8c619a911c5c6c8d36bf781cf852",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    }
+  ],
+  "node-structure": {
+    "BlackNode": {
+      "fields": "[key val left right ^:mutable __hash]",
+      "sections": [
+        "Object",
+        "IMapEntry",
+        "IHash",
+        "IEquiv",
+        "IMeta",
+        "IWithMeta",
+        "IStack",
+        "ICollection",
+        "IEmptyableCollection",
+        "ISequential",
+        "ISeqable",
+        "IReversible",
+        "ICounted",
+        "IIndexed",
+        "ILookup",
+        "IAssociative",
+        "IFind",
+        "IVector",
+        "IReduce",
+        "IFn"
+      ]
+    },
+    "RedNode": {
+      "fields": "[key val left right ^:mutable __hash]",
+      "sections": [
+        "Object",
+        "IMapEntry",
+        "IHash",
+        "IEquiv",
+        "IMeta",
+        "IWithMeta",
+        "IStack",
+        "ICollection",
+        "IEmptyableCollection",
+        "ISequential",
+        "ISeqable",
+        "IReversible",
+        "ICounted",
+        "IIndexed",
+        "ILookup",
+        "IAssociative",
+        "IFind",
+        "IVector",
+        "IReduce",
+        "IFn"
+      ]
+    }
+  }
+}

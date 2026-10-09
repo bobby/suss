@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "f5ab66390f7bbc42803d2bf15e3038ee3805c78569617ac77eb4df138765cb71",
-  "reviews-sha256": "71ebacf42e88ca98afa958fad754c3edb3aba9da9dca18f64713fa3cd7a0af31",
+  "recipe-sha256": "75a4a29746d81299eedf915b8a93e8f485b66f47876ce6227c6a081e7242c20a",
+  "reviews-sha256": "7f0f08c6943f282e3108d22ddb3377c1582734145cd535f28d65ec1fd6cf1854",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -11303,16 +11303,254 @@
         "tests/oracle/sorted-prerequisite-cases.json",
         "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"
       ]
+    },
+    {
+      "id": "runtime:balance-left:8404",
+      "name": "balance-left",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8404,
+      "end-line": 8427,
+      "byte-start": 235709,
+      "byte-end": 236529,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b002411fcd55b2bff744528f61339a7594267111905e8fb75fc7705462cb9d9b",
+      "extracted": "extracted/0363.cljs",
+      "extracted-sha256": "016a2302bd0ae8cfa4fba551711292a2ab38dca94cd4b9ded44d85aedfdc465f",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left.json",
+      "patch-sha256": "5b7ce7a95b8f05c55974277e615ac1bccc7229bd71f098134d082bcbd22f5159",
+      "adapted-form-sha256": "7ef12bafdbd9118042447c74bd2115f3cb46b85abffedfa16a654c68cf408cdb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:balance-right:8429",
+      "name": "balance-right",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8429,
+      "end-line": 8449,
+      "byte-start": 236531,
+      "byte-end": 237266,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1cc3c1758816e8eecccd7c1625f33aa48e1ab1964ba0c55cab008212671a4df3",
+      "extracted": "extracted/0364.cljs",
+      "extracted-sha256": "049b77e979e2b7a627f6d76224a40e0e40738015c535aeda1788412783f089d5",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right.json",
+      "patch-sha256": "d875c6338d5f7d7da6425e502d21daffc4ae07e74886b209c20000bcea7b1d20",
+      "adapted-form-sha256": "4e50f035e40a649e67144a6fa093340745b6adf73a382dfe85d74ddd93e4c900",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:balance-left-del:8451",
+      "name": "balance-left-del",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8451,
+      "end-line": 8468,
+      "byte-start": 237268,
+      "byte-end": 237933,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c3372e9c8b3022572e6b498949ba4845304ab693a04071ef89385ef7b890a74e",
+      "extracted": "extracted/0365.cljs",
+      "extracted-sha256": "402c22a41e25bc613dd682b0a40a568bfd5398bff07743fdd656c1b2cda89a2a",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left-del.json",
+      "patch-sha256": "5b950ae84f4e334a85549580b4c76fa9b83f6b0fd5c60ac03b80779e2899a1aa",
+      "adapted-form-sha256": "12b64c473b385398d67648ee87eb7b091b9a07a6efc1715d3405851e9d2a6478",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:balance-right-del:8470",
+      "name": "balance-right-del",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8470,
+      "end-line": 8487,
+      "byte-start": 237935,
+      "byte-end": 238588,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "16fa44adceae5ed06816b136d8cb41f45784caceefbc6eddab05968dae3c3412",
+      "extracted": "extracted/0366.cljs",
+      "extracted-sha256": "4968283eec7a122e9c264217f21b6102d663a1bca91bcb23f5df47a0357a2896",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right-del.json",
+      "patch-sha256": "5ffb9e95ff05d061d8b5324c0032c0617e46f9af9623fa7ef504d232a5297c62",
+      "adapted-form-sha256": "dd8de584d2cdfcf17b2eb044d9d340d3bf8957a2ad6ec5e550c02d78390cf39e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:tree-map-kv-reduce:8489",
+      "name": "tree-map-kv-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8489,
+      "end-line": 8500,
+      "byte-start": 238590,
+      "byte-end": 238999,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "db9c3033b656cf931be05b9ede68affe9d43b82f4cb774a645feda344f995e6c",
+      "extracted": "extracted/0367.cljs",
+      "extracted-sha256": "6e329d5267e394d153c3bc4cc54eb01c56cfa2700647b2a3ba52f47077a39dd2",
+      "patch": "docs/compatibility/patches/sorted-node-tree-map-kv-reduce.json",
+      "patch-sha256": "74ae4af873819c9c78411c1286ed3bf1314a939d6acc0740a007b11321d9b184",
+      "adapted-form-sha256": "00e03c6128f3403ec4105579cccddac1afd6eae3328964f79d435a48fa807333",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:BlackNode:8502",
+      "name": "BlackNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8502,
+      "end-line": 8623,
+      "byte-start": 239001,
+      "byte-end": 241446,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f2038658d1eb89987ac08378c0f83723fc699823831f3d883f9d39226c8dbab8",
+      "extracted": "extracted/0368.cljs",
+      "extracted-sha256": "2a0d79af35b54c921a828f4d6bf1904044d95fa9d5dcd867e1b4e79433e6102b",
+      "patch": "docs/compatibility/patches/sorted-node-BlackNode.json",
+      "patch-sha256": "501f476e93f8bbcd2690f979e31a3ba89d8876cef6ff5370b8182db5c35af86f",
+      "adapted-form-sha256": "a6726516980c41b8063d7de9cb3e6990eb23278cc908eb3c21a2d4c783ada958",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:RedNode:8627",
+      "name": "RedNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8627,
+      "end-line": 8787,
+      "byte-start": 241474,
+      "byte-end": 245179,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f6d8df1d1582177aa1303e86784d8e408f620d0e5b131beba87cce37fbe80554",
+      "extracted": "extracted/0369.cljs",
+      "extracted-sha256": "b544549dad4a76b29707e1f5f12a4211c8af793dbaf4ea9f855bb91af762476f",
+      "patch": "docs/compatibility/patches/sorted-node-RedNode.json",
+      "patch-sha256": "96e020d42d818d169ccacb8da655e0800bd720df8d141891c04f1cff6f76a20c",
+      "adapted-form-sha256": "f2646efb9b237cf9427c444697ef86c64d35c160cae208ad572e2c7428b19999",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "BlackNode/RedNode complete mutually recursive source",
+        "instance?/cond/and/if-not/../==/nil? macro paths",
+        "live balancing and tree-map-kv-reduce cells",
+        "all original protocol dispatch and vector entry dependencies",
+        "caching-hash whole macro expansion",
+        "ES6/IComparable/printer anonymous parents (pending integration)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/tree-node-cases.json",
+        "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "a30e40e2d98db895aa2e3bd7730fd7e84389afb32823d356c7be5e0277e4a7a8"
+      "sha256": "25111f0004d51a246961b28c83c73fa4c54292668fa4068ef2df468bce7f57dc"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "689f03b602fb06f6eda89e9e4163c7930770db2980b206b41c4e42afd4f26fc4"
+      "sha256": "3dfaa8487d934685adf60d6c469486d5601661d36b5b2371b9918d2ad9b22683"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
@@ -11685,6 +11923,13 @@
     "extracted/0360.cljs": "337ef524a07839267e3565a291f9f70096f90eae182d7bc8a5c1d3f2d5887907",
     "extracted/0361.cljs": "50be9605c7717f1d3e8dfee335020289beeae4fcf593511d9a1edf702e187eb5",
     "extracted/0362.cljs": "39d732ae33e91e8313e9225a8eff68b5af8066ebf7d26de4ba4369b3e5764b63",
-    "suss/core.sus": "ffd990e8a4c489fe01fe5d9811cea54baa88581341e6d59f2d281a3d98f2406c"
+    "extracted/0363.cljs": "016a2302bd0ae8cfa4fba551711292a2ab38dca94cd4b9ded44d85aedfdc465f",
+    "extracted/0364.cljs": "049b77e979e2b7a627f6d76224a40e0e40738015c535aeda1788412783f089d5",
+    "extracted/0365.cljs": "402c22a41e25bc613dd682b0a40a568bfd5398bff07743fdd656c1b2cda89a2a",
+    "extracted/0366.cljs": "4968283eec7a122e9c264217f21b6102d663a1bca91bcb23f5df47a0357a2896",
+    "extracted/0367.cljs": "6e329d5267e394d153c3bc4cc54eb01c56cfa2700647b2a3ba52f47077a39dd2",
+    "extracted/0368.cljs": "2a0d79af35b54c921a828f4d6bf1904044d95fa9d5dcd867e1b4e79433e6102b",
+    "extracted/0369.cljs": "b544549dad4a76b29707e1f5f12a4211c8af793dbaf4ea9f855bb91af762476f",
+    "suss/core.sus": "2be11aefcd43d62671b72b04c7b4401227a4ae57392176e0571e77b28e434623"
   }
 }

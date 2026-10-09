@@ -1125,3 +1125,15 @@ unsupported-to-pass conversion and no milestone completion is claimed. The
 original five shared-collection gates, all 397 required operation rows,
 complete sorted/record integration and full source/printer/Error/ES6
 dependencies remain required.
+
+## Complete sorted node authoring checkpoint
+
+[Sorted tree node provenance](sorted-tree-nodes/README.md) retains seven complete
+pinned declarations and all original node methods, with 340 prior selections
+unchanged. The entire seven-target IComparable parent is authored in the loader;
+full ES6/printer parents and macro dependencies remain retained with explicit
+ledgers. Fresh pinned CLJS/Node passes 86 ordered cases. Five native regressions
+and two compiler prerequisites are authored but uncompiled/unexecuted; bootstrap
+artifacts remain unchanged and stale. Reference/source checks are not native
+acceptance. Full tree algorithms, constructors, iteration, ranges and remaining
+host/protocol/macro boundaries continue in the full sorted lane.

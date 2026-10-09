@@ -1,0 +1,9 @@
+PASS closed tree node corpus/driver; not executed reference evidence
+WARNING: BlackNode already refers to: cljs.core/BlackNode being replaced by: suss-oracle.tree-nodes/BlackNode at line 2 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: RedNode already refers to: cljs.core/RedNode being replaced by: suss-oracle.tree-nodes/RedNode at line 3 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-left is not public at line 4 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-right is not public at line 5 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-left-del is not public at line 6 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-right-del is not public at line 7 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/tree-map-kv-reduce is not public at line 8 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+PASS 73 pinned tree node candidates

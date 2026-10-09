@@ -1,0 +1,211 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+  "status": "whole source authoring; bootstrap/native execution pending",
+  "forms": [
+    {
+      "id": "runtime:balance-left:8404",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8404,
+      "end-line": 8427,
+      "sha256": "b002411fcd55b2bff744528f61339a7594267111905e8fb75fc7705462cb9d9b",
+      "retained": "docs/compatibility/sorted-tree-nodes/balance-left.cljs",
+      "retained-file-sha256": "71ea2feae34616cda45b1259da5a9994a057e6e8fcfdc96c684f218ceaca49eb",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left.json",
+      "adapted-form-sha256": "7ef12bafdbd9118042447c74bd2115f3cb46b85abffedfa16a654c68cf408cdb"
+    },
+    {
+      "id": "runtime:balance-right:8429",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8429,
+      "end-line": 8449,
+      "sha256": "1cc3c1758816e8eecccd7c1625f33aa48e1ab1964ba0c55cab008212671a4df3",
+      "retained": "docs/compatibility/sorted-tree-nodes/balance-right.cljs",
+      "retained-file-sha256": "a49bf0d98797d88b0bb303527db7d63dc32e0e6e241b24409965b9da6ff6ef0f",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right.json",
+      "adapted-form-sha256": "4e50f035e40a649e67144a6fa093340745b6adf73a382dfe85d74ddd93e4c900"
+    },
+    {
+      "id": "runtime:balance-left-del:8451",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8451,
+      "end-line": 8468,
+      "sha256": "c3372e9c8b3022572e6b498949ba4845304ab693a04071ef89385ef7b890a74e",
+      "retained": "docs/compatibility/sorted-tree-nodes/balance-left-del.cljs",
+      "retained-file-sha256": "a5539c17ab007b5824406192d503d075d46ea5205872c397bd8280965f739fbe",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left-del.json",
+      "adapted-form-sha256": "12b64c473b385398d67648ee87eb7b091b9a07a6efc1715d3405851e9d2a6478"
+    },
+    {
+      "id": "runtime:balance-right-del:8470",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8470,
+      "end-line": 8487,
+      "sha256": "16fa44adceae5ed06816b136d8cb41f45784caceefbc6eddab05968dae3c3412",
+      "retained": "docs/compatibility/sorted-tree-nodes/balance-right-del.cljs",
+      "retained-file-sha256": "2d7a6d89d344083c5897d382505d546d24d3db61760629b6e699de34b597bab7",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right-del.json",
+      "adapted-form-sha256": "dd8de584d2cdfcf17b2eb044d9d340d3bf8957a2ad6ec5e550c02d78390cf39e"
+    },
+    {
+      "id": "runtime:tree-map-kv-reduce:8489",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8489,
+      "end-line": 8500,
+      "sha256": "db9c3033b656cf931be05b9ede68affe9d43b82f4cb774a645feda344f995e6c",
+      "retained": "docs/compatibility/sorted-tree-nodes/tree-map-kv-reduce.cljs",
+      "retained-file-sha256": "c4405463f010525c52914cdf64a979874d0af248b8b64652c3e156686543a600",
+      "patch": "docs/compatibility/patches/sorted-node-tree-map-kv-reduce.json",
+      "adapted-form-sha256": "00e03c6128f3403ec4105579cccddac1afd6eae3328964f79d435a48fa807333"
+    },
+    {
+      "id": "runtime:BlackNode:8502",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8502,
+      "end-line": 8623,
+      "sha256": "f2038658d1eb89987ac08378c0f83723fc699823831f3d883f9d39226c8dbab8",
+      "retained": "docs/compatibility/sorted-tree-nodes/BlackNode.cljs",
+      "retained-file-sha256": "2a2df645e7e6152f2c7b684eea8483fb0f3bf4f3eb693d7b155c0e4843f18845",
+      "patch": "docs/compatibility/patches/sorted-node-BlackNode.json",
+      "adapted-form-sha256": "a6726516980c41b8063d7de9cb3e6990eb23278cc908eb3c21a2d4c783ada958"
+    },
+    {
+      "id": "runtime:RedNode:8627",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8627,
+      "end-line": 8787,
+      "sha256": "f6d8df1d1582177aa1303e86784d8e408f620d0e5b131beba87cce37fbe80554",
+      "retained": "docs/compatibility/sorted-tree-nodes/RedNode.cljs",
+      "retained-file-sha256": "619a3fdef04189936ae8cf8a56aabf29cc00ceec12ae2d591f58f3720affa2a6",
+      "patch": "docs/compatibility/patches/sorted-node-RedNode.json",
+      "adapted-form-sha256": "f2646efb9b237cf9427c444697ef86c64d35c160cae208ad572e2c7428b19999"
+    }
+  ],
+  "anonymous-parents": [
+    {
+      "label": "BlackNode-es6-iterable",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8625,
+      "end-line": 8625,
+      "sha256": "ea3d5e5b91b359f5c7758098c9a9166f1ed0ecfae7bbc0e5e727056edb43ce0f",
+      "retained": "docs/compatibility/sorted-tree-nodes/BlackNode-es6-iterable.cljs",
+      "retained-file-sha256": "f6933369062567920273f1af03f7acdef83857decd27ff07ca46a200b4aa8380",
+      "status": "retained whole parent; not installed/executed"
+    },
+    {
+      "label": "RedNode-es6-iterable",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8789,
+      "end-line": 8789,
+      "sha256": "a0facc387d828a8d05e67ff030aed81efc4a929b4498d18c384652729cfd7ffa",
+      "retained": "docs/compatibility/sorted-tree-nodes/RedNode-es6-iterable.cljs",
+      "retained-file-sha256": "fbb5f13e3ef914a55badde62725b5a0f20b2e529125bc4abbafde79a612dffaf",
+      "status": "retained whole parent; not installed/executed"
+    },
+    {
+      "label": "full-IComparable",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10813,
+      "end-line": 10854,
+      "sha256": "95b269ad270220dd84f6a25b3c2ec48f0307a90a18d7bc7626aa04939d398f03",
+      "retained": "docs/compatibility/sorted-tree-nodes/full-IComparable.cljs",
+      "retained-file-sha256": "0958e71d3137558e234e8b71af26377152b7a96fe2117b85d304722f0b15ca7d",
+      "status": "whole seven-target registration authored in after-loader; native/bootstrap pending",
+      "patch": "docs/compatibility/patches/sorted-node-full-IComparable.json",
+      "adapted-form-sha256": "f5279f8b4ca530c72d5141fbfd6bc406ff450c618e1f8b0aa5f70f4e3dd63f8c"
+    },
+    {
+      "label": "full-IPrintWithWriter",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10692,
+      "end-line": 10810,
+      "sha256": "1180f4c69308bd2578e2bde1583d6e39463ceadc5c1d73cdbf5b96772cd64032",
+      "retained": "docs/compatibility/sorted-tree-nodes/full-IPrintWithWriter.cljs",
+      "retained-file-sha256": "f0797569c4fcbbd95a9edfb73e7e7eac96191b4de01129fc1776050005efa4a8",
+      "status": "retained whole parent; not installed/executed"
+    }
+  ],
+  "macros": [
+    {
+      "id": "macro:caching-hash:1284",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1284,
+      "end-line": 1291,
+      "sha256": "0d36bb2d025f31d5bc5d4dbf3730ec8715ab230f133310e0bc182481fb795197",
+      "retained": "docs/compatibility/sorted-tree-nodes/caching-hash.cljc",
+      "retained-file-sha256": "005297b7531ad35b811e1ff6740d09471358f4f1ddf8f004c450b79a3de7a617",
+      "status": "caching-hash expanded in both whole classes"
+    },
+    {
+      "id": "macro:es6-iterable:2959",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 2959,
+      "end-line": 2963,
+      "sha256": "c5f8d5a6929379a815f3f3601948f1ddf7d67e24f851be80b05e6e54447f711e",
+      "retained": "docs/compatibility/sorted-tree-nodes/es6-iterable.cljc",
+      "retained-file-sha256": "50485dfcfed536d295009f61f36df110796b7c203d5df48b0d6d5067b4fde35b",
+      "status": "retained; symbol/prototype/physical-this bridge pending"
+    },
+    {
+      "id": "macro:extend-protocol:211",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 211,
+      "end-line": 247,
+      "sha256": "0491face2050dc43aed2a66480bb539f483bd666d05fa9f5d3f9edbf2bb6b0ae",
+      "retained": "docs/compatibility/sorted-tree-nodes/extend-protocol.cljc",
+      "retained-file-sha256": "ecd344da4f27942789f1fa3528c27667d9ec04f581329aed5d5b05768da2597e",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:extend-type:1668",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1668,
+      "end-line": 1708,
+      "sha256": "c904915ea6c48bd1cce808b3a9c23482dd8e9311126ad4d65d70af9ffb94de52",
+      "retained": "docs/compatibility/sorted-tree-nodes/extend-type.cljc",
+      "retained-file-sha256": "64fe593af01ee92c886c6fc385de5500552d365a2f688c21cf10fc18e5607ea1",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:deftype:1778",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1778,
+      "end-line": 1851,
+      "sha256": "e9308661076599c2f8bc0e4ae09bcc72b1ecb462d1b0b2855797346d46add88c",
+      "retained": "docs/compatibility/sorted-tree-nodes/deftype.cljc",
+      "retained-file-sha256": "b43fe43df07575b4b19b0c12ad48c4a777f10f0b8994e4729af0ab9ba99587df",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:str_:852",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 852,
+      "end-line": 867,
+      "sha256": "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9",
+      "retained": "docs/compatibility/sorted-tree-nodes/str_.cljc",
+      "retained-file-sha256": "c55172c9190c2737cfeeb3889e49beb6f968954f6a230ffcb3e7b76d96dcc164",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:..:136",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 136,
+      "end-line": 151,
+      "sha256": "669bfed8b95c134fe5fb172cf3bdf012e2db778f20306a9f26e20d29598abf59",
+      "retained": "docs/compatibility/sorted-tree-nodes/dotdot.cljc",
+      "retained-file-sha256": "c7affda09400567449df66c50609a3eb4f2dbf4d069ca8d6c316eeb9db91ede2",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    },
+    {
+      "id": "macro:case:2405",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 2405,
+      "end-line": 2474,
+      "sha256": "5c1ab75133484dc097983f8e30dd306f2d7ae2b4c0d8308b5273d3686798f8d1",
+      "retained": "docs/compatibility/sorted-tree-nodes/case.cljc",
+      "retained-file-sha256": "16bbcb274bcd83b051f2701af3f2537aed6a8c619a911c5c6c8d36bf781cf852",
+      "status": "whole original retained; bounded compiler/source adaptations do not claim full upstream macro implementation"
+    }
+  ]
+}

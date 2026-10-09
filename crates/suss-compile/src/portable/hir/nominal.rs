@@ -786,6 +786,104 @@ impl Analyzer<'_> {
         let construction = self.nominal(form, Nominal::Construct, arguments);
         Ok(self.do_hir(form, vec![publication, construction]))
     }
+    // Private source adaptation for pinned statically nominal protocol calls.
+    // Resolve a canonical method key, read the actual owner's live method before
+    // argument effects, and invoke with the explicit portable receiver formal.
+    // This is not general hint inference or native protocol fallback dispatch.
+    pub(super) fn direct_protocol_call(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+    ) -> Result<Hir, Diagnostic> {
+        let [protocol_name, method_name, owner, rest @ ..] = args else {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol call requires protocol, method and receiver",
+            ));
+        };
+        let (Kind::Symbol(protocol_symbol), Kind::Symbol(method_symbol)) =
+            (&protocol_name.kind, &method_name.kind)
+        else {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol call requires static protocol/method names",
+            ));
+        };
+        if protocol_symbol.namespace.is_some() || method_symbol.namespace.is_some() {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol names must be unqualified canonical core names",
+            ));
+        }
+        if !matches!(
+            (protocol_symbol.name.as_str(), method_symbol.name.as_str()),
+            ("IIndexed", "-nth") | ("IVector", "-assoc-n")
+        ) {
+            return Err(fail(
+                method_name.span.clone(),
+                "Direct protocol adapter supports only IIndexed/-nth and IVector/-assoc-n",
+            ));
+        }
+        let protocol = self
+            .environment
+            .protocols
+            .keys()
+            .find(|global| {
+                global.phase() == self.phase
+                    && global.namespace() == "suss.core"
+                    && global.name() == protocol_symbol.name
+            })
+            .cloned()
+            .ok_or_else(|| {
+                fail(
+                    protocol_name.span.clone(),
+                    "Direct protocol call requires a declared canonical core protocol",
+                )
+            })?;
+        let arity = rest.len() + 1;
+        if !self.environment.protocols[&protocol].iter().any(|method| {
+            method.name == method_symbol.name && method.signatures.iter().any(|(n, _)| *n == arity)
+        }) {
+            return Err(fail(
+                method_name.span.clone(),
+                "Direct protocol method/arity is not declared",
+            ));
+        }
+        let schema = (0..arity)
+            .map(|_| self.literal_form(form, Literal::String(vec![])))
+            .collect();
+        let key = self.stable_key(form, &protocol, &method_symbol.name, arity, schema);
+        let value = self.form(owner)?;
+        let owner_binding = self.fresh_binding(owner, value);
+        let owner_read = self.local(owner, owner_binding.id);
+        let descriptor = self.nominal(owner, Nominal::ObjectDescriptor, vec![owner_read.clone()]);
+        let lookup = self.nominal(form, Nominal::MethodGet, vec![descriptor, key]);
+        let method = self.fresh_binding(method_name, lookup);
+        let mut arguments = vec![owner_read];
+        for argument in rest {
+            arguments.push(self.form(argument)?);
+        }
+        let body = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Call {
+                callee: Box::new(self.local(method_name, method.id)),
+                arguments,
+            },
+        };
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![owner_binding, method],
+                body: Box::new(body),
+            },
+        })
+    }
     fn protocol_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
         let Some(name) = args.first() else {
             return Err(fail(form.span.clone(), "defprotocol requires a name"));
@@ -1199,7 +1297,7 @@ impl Analyzer<'_> {
                             "Object method requires an unqualified name",
                         ));
                     }
-                    let name = Self::property_name(method_name, &format!(".-{}", symbol.name))?;
+                    let name = Self::object_method_name(method_name, &symbol.name)?;
                     // Pinned add-obj-methods assigns prototype.__proto__; its
                     // inherited setter changes the prototype instead of storing
                     // an ordinary method. The prototype adapter is unfinished.

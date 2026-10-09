@@ -163,6 +163,14 @@
       "line": 6574,
       "end-line": 6574,
       "sha256": "559d0ecee79db5e9427b9380afabb2da488bce58a4963ded1e6fa04079d12089"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10813,
+      "end-line": 10854,
+      "sha256": "95b269ad270220dd84f6a25b3c2ec48f0307a90a18d7bc7626aa04939d398f03",
+      "patch": "docs/compatibility/patches/sorted-node-full-IComparable.json",
+      "patch-sha256": "54709b068281a3ca2d546e943a4b4eff56c6ce9015368927885290462045860a"
     }
   ]
 }

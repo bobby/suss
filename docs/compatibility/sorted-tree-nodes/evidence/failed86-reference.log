@@ -1,0 +1,27 @@
+PASS closed tree node corpus/driver; not executed reference evidence
+WARNING: BlackNode already refers to: cljs.core/BlackNode being replaced by: suss-oracle.tree-nodes/BlackNode at line 2 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: RedNode already refers to: cljs.core/RedNode being replaced by: suss-oracle.tree-nodes/RedNode at line 3 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-left is not public at line 4 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-right is not public at line 5 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-left-del is not public at line 6 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/balance-right-del is not public at line 7 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/tree-map-kv-reduce is not public at line 8 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 99 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 103 /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/src/suss_oracle/tree_nodes.cljs
+/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:34729
+return cljs.core.compare_indexed.cljs$core$IFn$_invoke$arity$2(x__$1,y);
+                                 ^
+
+TypeError: cljs.core.compare_indexed.cljs$core$IFn$_invoke$arity$2 is not a function
+    at Object.cljs$core$IComparable$_compare$arity$2 (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:34729:34)
+    at Object.cljs$core$_compare [as _compare] (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:3425:10)
+    at cljs$core$compare (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:8336:18)
+    at /private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/suss_oracle/tree_nodes.js:353:57
+    at suss_oracle$tree_nodes$_main (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/suss_oracle/tree_nodes.js:355:4)
+    at cljs$core$apply_to_simple.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:13713:10)
+    at cljs$core$apply.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:13998:34)
+    at cljs$core$apply (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/cljs/core.js:13951:24)
+    at Object.<anonymous> (/private/tmp/suss-m4-sorted-tree-nodes/tests/oracle/out/tree-nodes-cljs/nodejscli.js:14:17)
+    at Module._compile (node:internal/modules/cjs/loader:1738:14)
+
+Node.js v24.5.0

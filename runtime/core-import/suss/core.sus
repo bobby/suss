@@ -94,6 +94,9 @@
 
 ;; Comparator forms are loaded after their mutually referenced bindings.
 (declare compare compare-indexed fn->comparator)
+
+;; Whole sorted node/balancing mutually recursive source identities.
+(declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -6264,6 +6267,404 @@ reduces them without incurring seq initialization"
                   (default-compare__ (.-name a) (.-name b))
                   nsc)))
    :default (default-compare__ (.-name a) (.-name b))))))
+
+(def ^:private balance-left
+  (fn [key val ins right]
+  (if (instance? RedNode ins)
+    (cond
+      (instance? RedNode (.-left ins))
+      (RedNode. (.-key ins) (.-val ins)
+              (.blacken (.-left ins))
+              (BlackNode. key val (.-right ins) right nil)
+              nil)
+
+      (instance? RedNode (.-right ins))
+      (RedNode. (.-key (.-right ins)) (.-val (.-right ins))
+                (BlackNode. (.-key ins) (.-val ins)
+                            (.-left ins)
+                            (.-left (.-right ins))
+                            nil)
+                (BlackNode. key val
+                            (.-right (.-right ins))
+                            right
+                            nil)
+                nil)
+
+      :else
+      (BlackNode. key val ins right nil))
+    (BlackNode. key val ins right nil))))
+
+(def ^:private balance-right
+  (fn [key val left ins]
+  (if (instance? RedNode ins)
+    (cond
+      (instance? RedNode (.-right ins))
+      (RedNode. (.-key ins) (.-val ins)
+                (BlackNode. key val left (.-left ins) nil)
+                (.blacken (.-right ins))
+                nil)
+
+      (instance? RedNode (.-left ins))
+      (RedNode. (.-key (.-left ins)) (.-val (.-left ins))
+                (BlackNode. key val left (.-left (.-left ins)) nil)
+                (BlackNode. (.-key ins) (.-val ins)
+                            (.-right (.-left ins))
+                            (.-right ins)
+                            nil)
+                nil)
+
+      :else
+      (BlackNode. key val left ins nil))
+    (BlackNode. key val left ins nil))))
+
+(def ^:private balance-left-del
+  (fn [key val del right]
+  (cond
+    (instance? RedNode del)
+    (RedNode. key val (.blacken del) right nil)
+
+    (instance? BlackNode right)
+    (balance-right key val del (.redden right))
+
+    (and (instance? RedNode right) (instance? BlackNode (.-left right)))
+    (RedNode. (.-key (.-left right)) (.-val (.-left right))
+              (BlackNode. key val del (.-left (.-left right)) nil)
+              (balance-right (.-key right) (.-val right)
+                             (.-right (.-left right))
+                             (.redden (.-right right)))
+              nil)
+
+    :else
+    (throw (suss.bootstrap/error "red-black tree invariant violation")))))
+
+(def ^:private balance-right-del
+  (fn [key val left del]
+  (cond
+    (instance? RedNode del)
+    (RedNode. key val left (.blacken del) nil)
+
+    (instance? BlackNode left)
+    (balance-left key val (.redden left) del)
+
+    (and (instance? RedNode left) (instance? BlackNode (.-right left)))
+    (RedNode. (.-key (.-right left)) (.-val (.-right left))
+              (balance-left (.-key left) (.-val left)
+                            (.redden (.-left left))
+                            (.-left (.-right left)))
+              (BlackNode. key val (.-right (.-right left)) del nil)
+              nil)
+
+    :else
+    (throw (suss.bootstrap/error "red-black tree invariant violation")))))
+
+(def ^:private tree-map-kv-reduce
+  (fn [node f init]
+  (let [init (if-not (suss.bootstrap/nil? (.-left node))
+               (tree-map-kv-reduce (.-left node) f init)
+               init)]
+    (if (reduced? init)
+      init
+      (let [init (f init (.-key node) (.-val node))]
+        (if (reduced? init)
+          init
+          (if-not (suss.bootstrap/nil? (.-right node))
+            (tree-map-kv-reduce (.-right node) f init)
+            init)))))))
+
+(deftype BlackNode [key val left right ^:mutable __hash]
+  Object
+  (add-left [node ins]
+    (.balance-left ins node))
+
+  (add-right [node ins]
+    (.balance-right ins node))
+
+  (remove-left [node del]
+    (balance-left-del key val del right))
+
+  (remove-right [node del]
+    (balance-right-del key val left del))
+
+  (blacken [node] node)
+
+  (redden [node] (RedNode. key val left right nil))
+
+  (balance-left [node parent]
+    (BlackNode. (.-key parent) (.-val parent) node (.-right parent) nil))
+
+  (balance-right [node parent]
+    (BlackNode. (.-key parent) (.-val parent) (.-left parent) node nil))
+
+  (replace [node key val left right]
+    (BlackNode. key val left right nil))
+
+  (kv-reduce [node f init]
+    (tree-map-kv-reduce node f init))
+
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMapEntry
+  (-key [node] key)
+  (-val [node] val)
+
+  IHash
+  (-hash [coll] (let [cached-hash__ __hash]
+                   (if (suss.bootstrap/nil? cached-hash__)
+                     (let [computed-hash__ (hash-ordered-coll coll)]
+                       (set! __hash computed-hash__)
+                       computed-hash__)
+                     cached-hash__)))
+
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IMeta
+  (-meta [node] nil)
+
+  IWithMeta
+  (-with-meta [node meta]
+    (-with-meta [key val] meta))
+
+  IStack
+  (-peek [node] val)
+
+  (-pop [node] [key])
+
+  ICollection
+  (-conj [node o] [key val o])
+
+  IEmptyableCollection
+  (-empty [node] nil)
+
+  ISequential
+  ISeqable
+  (-seq [node] (IndexedSeq. (cljs.core/array key val) 0 nil))
+
+  IReversible
+  (-rseq [node] (IndexedSeq. (cljs.core/array val key) 0 nil))
+
+  ICounted
+  (-count [node] 2)
+
+  IIndexed
+  (-nth [node n]
+    (cond (cljs.core/== n 0) key
+          (cljs.core/== n 1) val
+          :else    (throw (suss.bootstrap/error "Index out of bounds"))))
+
+  (-nth [node n not-found]
+    (cond (cljs.core/== n 0) key
+          (cljs.core/== n 1) val
+          :else    not-found))
+
+  ILookup
+  (-lookup [node k] (suss.bootstrap/direct-protocol-call IIndexed -nth node k nil))
+  (-lookup [node k not-found] (suss.bootstrap/direct-protocol-call IIndexed -nth node k not-found))
+
+  IAssociative
+  (-assoc [node k v]
+    (assoc [key val] k v))
+  (-contains-key? [node k]
+    (or (cljs.core/== k 0) (cljs.core/== k 1)))
+
+  IFind
+  (-find [node k]
+    (case k
+      0 (MapEntry. 0 key nil)
+      1 (MapEntry. 1 val nil)
+      nil))
+
+  IVector
+  (-assoc-n [node n v]
+    (suss.bootstrap/direct-protocol-call IVector -assoc-n [key val] n v))
+
+  IReduce
+  (-reduce [node f]
+    (ci-reduce node f))
+
+  (-reduce [node f start]
+    (ci-reduce node f start))
+
+  IFn
+  (-invoke [node k]
+    (suss.bootstrap/direct-protocol-call IIndexed -nth node k))
+
+  (-invoke [node k not-found]
+    (suss.bootstrap/direct-protocol-call IIndexed -nth node k not-found)))
+
+(deftype RedNode [key val left right ^:mutable __hash]
+  Object
+  (add-left [node ins]
+    (RedNode. key val ins right nil))
+
+  (add-right [node ins]
+    (RedNode. key val left ins nil))
+
+  (remove-left [node del]
+    (RedNode. key val del right nil))
+
+  (remove-right [node del]
+    (RedNode. key val left del nil))
+
+  (blacken [node]
+    (BlackNode. key val left right nil))
+
+  (redden [node]
+    (throw (suss.bootstrap/error "red-black tree invariant violation")))
+
+  (balance-left [node parent]
+    (cond
+      (instance? RedNode left)
+      (RedNode. key val
+                (.blacken left)
+                (BlackNode. (.-key parent) (.-val parent) right (.-right parent) nil)
+                nil)
+
+      (instance? RedNode right)
+      (RedNode. (.-key right) (.-val right)
+                (BlackNode. key val left (.-left right) nil)
+                (BlackNode. (.-key parent) (.-val parent)
+                            (.-right right)
+                            (.-right parent)
+                            nil)
+                nil)
+
+      :else
+      (BlackNode. (.-key parent) (.-val parent) node (.-right parent) nil)))
+
+  (balance-right [node parent]
+    (cond
+      (instance? RedNode right)
+      (RedNode. key val
+                (BlackNode. (.-key parent) (.-val parent)
+                            (.-left parent)
+                            left
+                            nil)
+                (.blacken right)
+                nil)
+
+      (instance? RedNode left)
+      (RedNode. (.-key left) (.-val left)
+                (BlackNode. (.-key parent) (.-val parent)
+                            (.-left parent)
+                            (.-left left)
+                            nil)
+                (BlackNode. key val (.-right left) right nil)
+                nil)
+
+      :else
+      (BlackNode. (.-key parent) (.-val parent) (.-left parent) node nil)))
+
+  (replace [node key val left right]
+    (RedNode. key val left right nil))
+
+  (kv-reduce [node f init]
+    (tree-map-kv-reduce node f init))
+
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMapEntry
+  (-key [node] key)
+  (-val [node] val)
+
+  IHash
+  (-hash [coll] (let [cached-hash__ __hash]
+                   (if (suss.bootstrap/nil? cached-hash__)
+                     (let [computed-hash__ (hash-ordered-coll coll)]
+                       (set! __hash computed-hash__)
+                       computed-hash__)
+                     cached-hash__)))
+
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IMeta
+  (-meta [node] nil)
+
+  IWithMeta
+  (-with-meta [node meta]
+    (-with-meta [key val] meta))
+
+  IStack
+  (-peek [node] val)
+
+  (-pop [node] [key])
+
+  ICollection
+  (-conj [node o] [key val o])
+
+  IEmptyableCollection
+  (-empty [node] nil)
+
+  ISequential
+  ISeqable
+  (-seq [node] (IndexedSeq. (cljs.core/array key val) 0 nil))
+
+  IReversible
+  (-rseq [node] (IndexedSeq. (cljs.core/array val key) 0 nil))
+
+  ICounted
+  (-count [node] 2)
+
+  IIndexed
+  (-nth [node n]
+    (cond (cljs.core/== n 0) key
+          (cljs.core/== n 1) val
+          :else    (throw (suss.bootstrap/error "Index out of bounds"))))
+
+  (-nth [node n not-found]
+    (cond (cljs.core/== n 0) key
+          (cljs.core/== n 1) val
+          :else    not-found))
+
+  ILookup
+  (-lookup [node k] (suss.bootstrap/direct-protocol-call IIndexed -nth node k nil))
+  (-lookup [node k not-found] (suss.bootstrap/direct-protocol-call IIndexed -nth node k not-found))
+
+  IAssociative
+  (-assoc [node k v]
+    (assoc [key val] k v))
+  (-contains-key? [node k]
+    (or (cljs.core/== k 0) (cljs.core/== k 1)))
+
+  IFind
+  (-find [node k]
+    (case k
+      0 (MapEntry. 0 key nil)
+      1 (MapEntry. 1 val nil)
+      nil))
+
+  IVector
+  (-assoc-n [node n v]
+    (suss.bootstrap/direct-protocol-call IVector -assoc-n [key val] n v))
+
+  IReduce
+  (-reduce [node f]
+    (ci-reduce node f))
+
+  (-reduce [node f start]
+    (ci-reduce node f start))
+
+  IFn
+  (-invoke [node k]
+    (suss.bootstrap/direct-protocol-call IIndexed -nth node k))
+
+  (-invoke [node k not-found]
+    (suss.bootstrap/direct-protocol-call IIndexed -nth node k not-found)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -6510,6 +6911,64 @@ reduces them without incurring seq initialization"
     (pr-writer (.-sym a) writer opts))))
 
 (set! (.-EMPTY PersistentQueue) (PersistentQueue. nil 0 nil (.-EMPTY PersistentVector) empty-ordered-hash))
+
+;; Entire pinned seven-target IComparable parent; native/bootstrap pending.
+(do
+(extend-type Symbol IComparable
+  (-compare [x y]
+    (if (symbol? y)
+      (compare-symbols x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type Keyword IComparable
+  (-compare [x y]
+    (if (keyword? y)
+      (compare-keywords x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type Subvec IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type PersistentVector IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type MapEntry IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type BlackNode IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type RedNode IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))
 ;; Original Suss WIT integer foundations, not extracted upstream source.
 ;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
 ;; Decimal parsing never converts the complete integer through binary64.

@@ -244,3 +244,61 @@
     (pr-writer (.-sym a) writer opts))))
 
 (set! (.-EMPTY PersistentQueue) (PersistentQueue. nil 0 nil (.-EMPTY PersistentVector) empty-ordered-hash))
+
+;; Entire pinned seven-target IComparable parent; native/bootstrap pending.
+(do
+(extend-type Symbol IComparable
+  (-compare [x y]
+    (if (symbol? y)
+      (compare-symbols x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type Keyword IComparable
+  (-compare [x y]
+    (if (keyword? y)
+      (compare-keywords x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type Subvec IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type PersistentVector IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type MapEntry IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type BlackNode IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+
+(extend-type RedNode IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
+      (throw (suss.bootstrap/error
+        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))

@@ -190,6 +190,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::Key(_) => {
                             names.insert("protocol-key");
                         }
+                        Nominal::ObjectDescriptor => {
+                            names.insert("object-descriptor");
+                        }
+                        Nominal::MethodGet => {
+                            names.insert("protocol-method-get");
+                        }
                         Nominal::Dispatcher => {
                             names.insert("protocol-dispatcher-new");
                         }
@@ -261,7 +267,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-marker-set" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "descriptor-new"
             | "class-value-new"
@@ -270,6 +276,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-constructor-new"
             | "value-constructor"
             | "constructor-descriptor"
+            | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "source-array-new"
             | "source-array-make"
@@ -1152,6 +1159,8 @@ fn emit_function(
                         | Nominal::NamedSet
                         | Nominal::Protocol
                         | Nominal::Dispatcher
+                        | Nominal::ObjectDescriptor
+                        | Nominal::MethodGet
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
                             for argument in arguments {
@@ -1182,6 +1191,8 @@ fn emit_function(
                                 Nominal::NamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
+                                Nominal::ObjectDescriptor => "object-descriptor",
+                                Nominal::MethodGet => "protocol-method-get",
                                 Nominal::NativeSatisfies => "protocol-native-satisfies",
                                 _ => "protocol-marker-satisfies",
                             })));

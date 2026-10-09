@@ -83,3 +83,6 @@
 
 ;; Comparator forms are loaded after their mutually referenced bindings.
 (declare compare compare-indexed fn->comparator)
+
+;; Whole sorted node/balancing mutually recursive source identities.
+(declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
