@@ -434,11 +434,7 @@ fn publication_probe_cannot_promote_real_reader_or_internal_reservations() {
         let mut env = Environment::default();
         env.enter_namespace(phase, "cljs.core").unwrap();
         let (reader, fallback, _) = env.reader_sequence_cells(phase);
-        for spelling in [
-            "suss.core/sequence",
-            "cljs.core/sequence",
-            "clojure.core/sequence",
-        ] {
+        for spelling in ["suss.core/sequence", "cljs.core/sequence"] {
             let form = read(&format!("(suss.compiler/cell-defined? {spelling})"));
             let error = prepare(&[form], 0..0, &env, phase).unwrap_err();
             assert!(error.message.contains("Compiler-owned cells"));
@@ -449,6 +445,17 @@ fn publication_probe_cannot_promote_real_reader_or_internal_reservations() {
                     .contains(&reader)
             );
         }
+        // JVM Clojure namespace spelling is not a portable canonical alias.
+        let form = read("(suss.compiler/cell-defined? clojure.core/sequence)");
+        let error = prepare(&[form], 0..0, &env, phase).unwrap_err();
+        assert!(error.message.contains("Unresolved"));
+        assert!(error.message.contains("clojure.core/sequence"));
+        assert!(env.is_hidden_cell(phase, reader.namespace(), reader.name()));
+        assert!(
+            !SourceNamespace::capture(&env, phase)
+                .identities
+                .contains(&reader)
+        );
         // A real source declaration intentionally promotes the ReaderCell.
         let (_, promoted) = prepare(&[read("(def sequence)")], 0..0, &env, phase).unwrap();
         assert!(!promoted.is_hidden_cell(phase, reader.namespace(), reader.name()));

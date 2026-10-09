@@ -1,0 +1,14 @@
+{
+  "base": "fd61be3",
+  "repair": "core/cljs aliases require compiler-owned rejection; clojure.core retains unresolved portable-namespace rejection and identical hidden-state preservation",
+  "production": "unchanged",
+  "compiler_regression": "publication_probe_cannot_promote_real_reader_or_internal_reservations",
+  "native": "new expectation uncompiled/unexecuted",
+  "historical_focused_exit_code": 101,
+  "historical_diagnostic_exit_code": 101,
+  "files": {
+    "crates/suss-compile/src/portable/syntax_quote/tests.rs": "dbbe9123f727e145fb4327c2734bc12ad8006f4ad06495d6a694df35c1de11bf",
+    "docs/compatibility/record-publication-cells/evidence/fd61-hidden-focused-failure.log": "50e75593e56d74c1b421957fcd0615f71e387b0566783eabb57258b42fdbd6b0",
+    "docs/compatibility/record-publication-cells/evidence/fd61-hidden-diagnostic-failure.log": "a5069192707de71762279d0326fe5ef8ab2825a6887cef98f12292e2685320c5"
+  }
+}

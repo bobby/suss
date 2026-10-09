@@ -23189,3 +23189,12 @@ report and bounded repair receipt. Historical51533 receipt records10 hashes, not
 13;13 is changed-file count. Full parameter lowering (vectors/maps/nesting/rest/
 :as/defaults/qualified shorthands/live call/effect order) continues separately;
 no helper subset or guard bypass. Parent coordinates next native lane.
+
+Bounded fd61 test correction: parent focused compiler regression compiled then
+failed only because clojure.core/sequence rejects as Unresolved Runtime name, not
+Compiler-owned cells. Keep that portable rejection/hidden state separately;
+suss.core and cljs.core still require the precise compiler-owned diagnostic.
+No JVM alias normalization, production/allowance changes or removed promotion/
+internal checks. Raw focused+diagnostic failures and receipt retained. Test name:
+publication_probe_cannot_promote_real_reader_or_internal_reservations. No Cargo
+by author; corrected candidate pending parent rerun, separate from destructuring.

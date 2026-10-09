@@ -1,0 +1,22 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-hidden-cell-fd61-native/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 4.52s
+     Running unittests src/lib.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss_compile-7dc520c6dd49b147)
+
+running 1 test
+test portable::syntax_quote::tests::publication_probe_cannot_promote_real_reader_or_internal_reservations ... FAILED
+
+failures:
+
+---- portable::syntax_quote::tests::publication_probe_cannot_promote_real_reader_or_internal_reservations stdout ----
+
+thread 'portable::syntax_quote::tests::publication_probe_cannot_promote_real_reader_or_internal_reservations' (9953354) panicked at crates/suss-compile/src/portable/syntax_quote/tests.rs:444:13:
+clojure.core/sequence: Diagnostic { span: 29..50, message: "Unresolved Runtime name clojure.core/sequence" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    portable::syntax_quote::tests::publication_probe_cannot_promote_real_reader_or_internal_reservations
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 87 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p suss-compile --lib`

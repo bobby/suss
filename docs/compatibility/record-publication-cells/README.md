@@ -51,3 +51,11 @@ manifest guard or source helper was removed to pass.
 The historical51533 receipt contains ten hash records (eight files plus two prior
 review reports); thirteen is its changed-file count. Its source projection remains
 historical, while hidden-boundary-repair-receipt.json records this repair's bytes.
+
+The fd61 focused compiler test compiled and failed on diagnostic equality for
+clojure.core/sequence. It remains rejected as an unresolved portable name; that
+spelling is not normalized to the canonical namespace. The test now distinguishes
+that rejection from the compiler-owned-cell error for suss.core/cljs.core, while
+checking unchanged hidden identities in all cases. All explicit promotion and
+internal reservation checks remain; production is unchanged. Raw focused and
+diagnostic failures are retained, and the corrected test has not been rerun.
