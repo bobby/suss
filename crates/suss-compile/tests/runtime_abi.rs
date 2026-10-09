@@ -8028,3 +8028,46 @@ fn runtime_abi_array_ordinary_properties_reject_corrupt_chains_before_writes() {
         assert!(wasmtime::Rooted::ref_eq(&store, recovered.unwrap_anyref().unwrap(), numeric.unwrap_anyref().unwrap()).unwrap());
     }
 }
+
+#[test]
+fn runtime_abi_array_join_rejects_corrupt_active_chains_and_recovers_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let numeric = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0_f64.to_bits())]);
+    let owner = nominal_value(&mut store, runtime, "source-array-holes-new", &[Val::I32(0)]);
+    let active = runtime.get_global(&mut store, "array-join-active").unwrap();
+    for kind in 0..6 {
+        let node = nominal_value(&mut store, runtime, "args-new", &[Val::I32(if kind == 0 { 1 } else { 2 })]);
+        let array = node.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        array.set(&mut store, 0, if kind == 1 { numeric.clone() } else { owner.clone() }).unwrap();
+        if kind != 0 {
+            let tail = match kind {
+                2 => numeric.clone(),
+                3 => node.clone(),
+                4 => {
+                    let second = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+                    let fields = second.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+                    fields.set(&mut store, 0, owner.clone()).unwrap();
+                    fields.set(&mut store, 1, node.clone()).unwrap();
+                    second
+                }
+                _ => nil.clone(),
+            };
+            array.set(&mut store, 1, tail).unwrap();
+        }
+        active.set(&mut store, if kind == 5 { numeric.clone() } else { node }).unwrap();
+        store.gc(None).unwrap();
+        let error = runtime.get_func(&mut store, "source-array-join").unwrap().call(&mut store, &[owner.clone(), nil.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "kind={kind}: {error:#}");
+        assert!(!error.is::<wasmtime::Trap>(), "kind={kind}: {error:#}");
+        assert!(store.take_pending_exception().is_some());
+        active.set(&mut store, nil.clone()).unwrap();
+        store.gc(None).unwrap();
+        let recovered = nominal_value(&mut store, runtime, "source-array-join", &[owner.clone(), nil.clone()]);
+        assert_eq!(nominal_value(&mut store, runtime, "string-length", &[recovered]).unwrap_i32(), 0);
+        let restored = active.get(&mut store);
+        assert!(wasmtime::Rooted::ref_eq(&store, restored.unwrap_anyref().unwrap(), nil.unwrap_anyref().unwrap()).unwrap());
+    }
+}

@@ -22632,3 +22632,63 @@ Next unblocked task: full ordered object ToPrimitive/property-key coercion and
 array join/inherited index behavior for comparator foundations, then original
 sorted-tree/record/M4 acceptance. No required workspace baseline or final CI on
 this checkpoint, no PR readiness, no narrowed milestone completion claim.
+
+### Ordinary object coercion and ArraySetLength effects — uncommitted work
+
+New public eight-case regression initially failed on native js-obj valueOf
+conversion. Original ordered OrdinaryToPrimitive now uses number/default hint
+valueOf→toString and string hint toString→valueOf, skips noncallable properties,
+looks up the second method after the first call, and accepts only primitive
+results. Immutable typed function globals resolve numeric/storage declaration
+cycles; three function types are appended, with no shared recursive ABI changes.
+Relational operations and addition normalize left then right before String
+classification, preserving string/string relations and concatenating addition.
+Fresh pinned eight-case observations are alltrue; compiler warnings are retained.
+
+Independent review found newly supported object length RHS was converted once.
+ArraySetLength now calls checked int32 conversion interpreted as unsigned uint32,
+then independently ToNumber on the original RHS, comparing before logical length
+mutation. Four stateful cases execute mismatched conversion results, second-call
+throw17, mutation before shrink, and first modulo wrap followed by matching
+second result. Fresh pinned four-case observations are alltrue. Reference
+fixtures/output hashes live in docs/compatibility/object-coercion and
+object-length-conversion/evidence. Independent review found no material issue
+in the two-conversion repair.
+
+A full ABI integration failure (65passed/1failed) exposed detached isPrototypeOf
+coercing object arguments instead of throwing for undefined this. I initially
+called its negative assertion obsolete, then inspected and repaired the actual
+bug without changing that assertion. Review found an adjacent anchored coercion
+bug: canonical primitive arguments now return false without conversion;
+unsupported callable/error/foreign prototype shapes explicitly throw before any
+hook. Owned Object7 prototype traversal is retained. This avoids new side effects
+but does NOT complete callable/error prototype semantics or exact TypeError.
+Focused canonical guard test passed1/1,.16s; independent review no material issue.
+
+Latest executed gates (jobs2, existing shared target, sole Cargo graph):
+- Final both-phase bootstrap regeneration terminal0 (`/private/tmp/suss-m4-object-coercion-final-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_object_coercion --test portable_array_constructor -- --test-threads=2`:2object +7Array tests passed,0failed/ignored,5.14s/5.55s,terminal0 (`/private/tmp/suss-m4-object-coercion-final-source.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,7.67s,terminal0 (`/private/tmp/suss-m4-object-coercion-final-abi.log`).
+- Existing core_comparator_foundations gate terminal101:1passed/2failed,8.73s (`/private/tmp/suss-m4-object-coercion-comparator-regression.log`). One expected Array type rejection was obsolete after canonical Array implementation; replaced with positive constructor/identity/length/hole assertion. Focused staged_type_returns test passed1/1,2filtered,6.68s (`/private/tmp/suss-m4-object-coercion-array-type-regression-fixed.log`). The remaining scalar Array conversion failure is retained: default Array join/toString is absent, and the generic failure descriptor differs from the old unsupported boundary. Do not revise that into compatibility success.
+
+No running Cargo handle remains. Source changes are uncommitted after c390f65;
+full baseline, final-head CI and full PR review are still pending. Next implement
+default Array valueOf/toString/join with captured length, live indexed reads,
+nesting/cycle cleanup and inherited behavior, then comparator/sorted-tree work.
+Live second-method replacement, physical this, right-side throws, all relational
+operators, exotic hooks, canonical TypeError and function/error prototypes need
+more proof/implementation. Original full M4/MLIR goal remains unchanged.
+
+
+### 2026-10-09 — sparse Array join follow-up (uncommitted)
+
+Replaced logical-length-sized piece storage with linked nonempty pieces and live sparse-index traversal. Logical length no longer imposes the output-cell resource cap. Module check passed (`runtime_abi_numeric_samples`, 1 passed); regenerated both bootstrap artifacts. Native `portable_array_join` passed both tests (15 value/effect cases in each runtime phase, plus actual runtime OutOfFuel and recovery), log `/private/tmp/suss-m4-array-join-sparse-native-retry.log`. The first strengthened cancellation run failed its callback-entry/recovery assertion at 10,000 fuel; increasing the invocation budget to 1,000,000 reached the looping conversion callback and proved exactly one entry plus subsequent join recovery. Failure log retained at `/private/tmp/suss-m4-array-join-sparse-native.log`. Independent Hilbert review found no new material correctness defect; remaining concerns are quadratic sparse-chain revalidation, missing future-index mutation coverage, forged active roots and nested caller checkpoint evidence. Inherited indices/accessors remain unsupported. Pinned oracle still contains only the prior 12 cases; regenerate and execute all 15 before claiming reference parity. No final-head workspace baseline or CI for this uncommitted patch, and no PR promoted. Next: add sparse future-index mutation tests and forged-root/checkpoint coverage, then fresh pinned comparison and broad ABI/session validation.
+
+
+### 2026-10-09 — object/Array conversion integration checkpoint
+
+Expanded Array join source corpus to 18 ordered cases: added live future sparse insertion, shrink/removal and growth beyond captured length. Native `cargo test -p suss-cli --locked --test portable_array_join --test core_comparator_foundations -- --test-threads=2` passed 2 join + 3 comparator-foundation tests; fresh pinned ClojureScript compilation and Node execution produced 18 ordered boolean true observations. Corpus, original fixture, compile log, observations, native log and hashes retained in `docs/compatibility/array-join/evidence`. Added six forged active-root cases; all raise language errors after GC and recover after explicit caller repair. Full runtime ABI suite passed 67 tests (`/private/tmp/suss-m4-object-join-full-abi.log`). Strengthened async lifecycle evidence enters a looping element conversion, observes original OutOfFuel plus a real secondary recovery interrupt, restores the exact nonnil caller stack/frame and proves one callback entry/no replay. It passed after switching from a minimal session (which correctly rejected unresolved js-obj) to full bootstrap and regenerating artifacts after source identity changed. All failure logs retained.
+
+Broader lifecycle gate initially failed 2 of 11 tests because the native macro decoder still expected the obsolete one-field dense Array owner. Updated direct Rust transport to canonical two-field owners and sparse four-field backing, with exact uint32, mask/layout, ordered/disjoint keys, cycles and bounded suffix validation; undefined holes remain invalid macro syntax. This also updates vector/map/chunk source-element transport. All 11 lifecycle tests then passed (`/private/tmp/suss-m4-sparse-decoder-session-lifecycle.log`). Independent review found a P2: sparse entries in dense-prefix holes were incorrectly admitted. Fixed the guard to reject every dense-prefix sparse key; added the forged-hole negative and exact ordered payload assertions. Final direct macro-data tests passed 2/2 (`/private/tmp/suss-m4-sparse-decoder-overlap-final-direct.log`), including million-length one-element suffix, nil payload, hole/bound rejection, cycle rejection after GC and explicit repair. An intermediate test compile error (move in pattern guard) was fixed without weakening the assertion. Hilbert read-only review found no remaining material findings in the guard/test repair.
+
+Java/Node-free bootstrap verification passed before the final overlap test edit (all four artifacts identical, identity check and four compiled-bootstrap tests); artifacts were regenerated again after the final edit. Final verification and the unchanged full workspace baseline remain required on the checkpoint. No final-head CI or PR promotion yet. Full prototype/inherited/accessor/exotic/TypeError contracts, compare and sorted trees, records/reify and original M4 acceptance remain open. Sparse join chain revalidation is quadratic; direct native transport validates the whole dense mask independently of the suffix result bound. Next unblocked task: final bootstrap verification/full baseline on a frozen checkpoint, fix any real regressions, then continue full object/prototype and comparator/sorted-collection work. No M4 issue is closed by this prerequisite evidence.

@@ -305,8 +305,9 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
         );
         let value = session.eval("type-trace").unwrap();
         number(&mut session, &value, 1.0);
+        boolean(&mut session,
+            "(let [ctor (retained-type (array 1)) a (ctor 3)] (and (identical? ctor (retained-type a)) (= (alength a) 3) (undefined? (aget a 0))))", true);
         for source in [
-            "(retained-type (array 1))",
             "(retained-type (js-obj))",
             "(retained-type (fn [x] x))",
         ] {
@@ -546,23 +547,9 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
         ] {
             boolean(&mut session, source, expected);
         }
-        for source in [
-            "(scalar-number-constructor (array 1))",
-            "(scalar-string-constructor (array 1))",
-        ] {
-            let error = session.eval(source).unwrap_err();
-            expect_language_error(
-                &mut session,
-                error,
-                5,
-                "Unsupported arithmetic object coercion",
-                source,
-            );
-            boolean(
-                &mut session,
-                "(identical? (retained-type 1) scalar-number-constructor)",
-                true,
-            );
-        }
+        boolean(&mut session, "(= (scalar-number-constructor (array 1)) 1)", true);
+        boolean(&mut session, "(= (scalar-string-constructor (array 1)) \"1\")", true);
+        boolean(&mut session, "(identical? (retained-type 1) scalar-number-constructor)", true);
+
     }
 }

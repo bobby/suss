@@ -17,6 +17,12 @@ fn boolean(code: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
     code.extend([I32Const(1), I32Shl, I32Const(2), I32Add, RefI31]);
 }
+fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
+    use Instruction::*;
+    code.extend([LocalGet(local), RefTestNonNull(HeapType::Concrete(NUMBER)),
+        LocalGet(local), RefTestNonNull(HeapType::Concrete(STRING)), I32Or]);
+    for sentinel in [0,2,4,UNDEFINED] { code.extend([LocalGet(local),I32Const(sentinel),RefI31,RefEq,I32Or]); }
+}
 fn callback(b: &mut Builder, locals: &[(u32, ValType)], code: &[Instruction<'static>]) -> u32 {
     let index = b.count;
     b.functions.function(INVOKE);
@@ -214,12 +220,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         RefTestNonNull(HeapType::Concrete(7)),
                         I32Eqz,
                         If(BlockType::Empty),
-                        LocalGet(3),
-                        Call(b.names["coerce-string"]),
-                        Drop,
-                        I32Const(2),
-                        RefI31,
-                        Return,
+                    ]);
+                    primitive_condition(&mut code, 3);
+                    code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+                    // Callable/error and foreign prototype storage is not yet
+                    // implemented. Reject it without invoking conversion hooks.
+                    nominal::error(&mut code);
+                    code.extend([
                         End,
                         LocalGet(2),
                         Call(fields),
@@ -275,15 +282,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 LocalGet(1),
                 I32Const(0),
                 ArrayGet(ARGS),
-                Call(b.names["coerce-string"]),
-                Drop,
-                I32Const(2),
-                RefI31,
+                LocalSet(2),
             ]);
+            primitive_condition(&mut detached_code, 2);
+            detached_code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+            // Undefined this fails for objects, before any conversion hooks.
+            nominal::error(&mut detached_code);
         } else {
             nominal::error(&mut detached_code);
         }
-        let detached = callback(b, &[], &detached_code);
+        let detached = callback(b, &[(1, VALUE)], &detached_code);
         refs.push(detached);
         methods.push((name, anchored, detached));
     }

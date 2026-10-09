@@ -1,0 +1,9 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-sorted-after-queue/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 0.99s
+     Running tests/runtime_abi.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/runtime_abi-93a5441513957571)
+
+running 1 test
+test runtime_abi_array_join_rejects_corrupt_active_chains_and_recovers_after_gc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 66 filtered out; finished in 0.15s
+

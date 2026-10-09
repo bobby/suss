@@ -10,6 +10,7 @@ mod streams;
 mod arrays;
 mod sparse_arrays;
 mod array_methods;
+mod array_join;
 mod array_push;
 mod array_pop;
 mod array_own_properties;
@@ -19,6 +20,7 @@ mod closure_properties;
 mod closure_calls;
 mod callable_properties;
 mod comparisons;
+mod coercions;
 mod dynamic;
 mod exception_info;
 mod exceptions;
@@ -635,7 +637,8 @@ fn build_module() -> Vec<u8> {
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
-    let primitives = numeric::intrinsics(&mut b, numeric_info);
+    let coercion_types = coercions::declare(&mut b);
+    let primitives = numeric::intrinsics(&mut b, numeric_info, coercion_types);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
@@ -647,7 +650,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
-    arithmetic_functions.extend(comparisons::functions(&mut b));
+    arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
     // Original source error adapter: retain the ABI Error descriptor/message
@@ -689,6 +692,8 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(primitive_constructors::functions(&mut b));
     arithmetic_functions.extend(range_errors::functions(&mut b));
     type_values::functions(&mut b);
+    let coercion_functions = coercions::functions(&mut b);
+    arithmetic_functions.extend(coercion_functions);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -945,6 +950,9 @@ fn build_module() -> Vec<u8> {
     primitive_constructors::append_globals(&mut globals);
     range_errors::append_globals(&mut globals);
     array_own_properties::append_globals(&mut globals);
+    coercions::append_globals(&mut globals, coercion_types, coercion_functions);
+    array_join::append_globals(&mut globals);
+    b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

@@ -344,10 +344,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body = vec![
         LocalGet(1), Call(b.names["coerce-string"]), LocalSet(1),
         LocalGet(1), Call(b.names["source-array-length-key?"]), If(BlockType::Empty),
-        LocalGet(2), Call(b.names["coerce-number"]), LocalSet(4),
-        LocalGet(4), F64Const(0.0.into()), F64Lt,
-        LocalGet(4), F64Const(4294967295.0.into()), F64Gt, I32Or,
-        LocalGet(4), LocalGet(4), F64Trunc, F64Ne, I32Or, If(BlockType::Empty),
+        // ArraySetLength performs separate conversions, even for the same
+        // object RHS. First conversion wraps to uint32; second may mutate/throw.
+        LocalGet(2), Call(b.names["coerce-int32"]), F64ConvertI32U, LocalSet(4),
+        LocalGet(2), Call(b.names["coerce-number"]), LocalSet(5),
+        LocalGet(4), LocalGet(5), F64Ne, If(BlockType::Empty),
     ];
     range_errors::invalid_length(&mut body);
     body.extend([
@@ -374,7 +375,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "source-array-set",
         &[VALUE, VALUE, VALUE],
         &[VALUE],
-        &[(1, ValType::I64), (1, ValType::F64)],
+        &[(1, ValType::I64), (2, ValType::F64)],
         &body,
     );
     // Copy mutable backing directly; materialization would turn holes into values.

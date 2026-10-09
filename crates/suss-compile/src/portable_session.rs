@@ -306,25 +306,44 @@ fn own(
         handles: handles.clone(),
     })
 }
+struct DynamicCheckpoint {
+    frame: OwnedRooted<AnyRef>,
+    array_join: OwnedRooted<AnyRef>,
+}
 // Snapshot the caller's rooted dynamic context, including native interop calls.
 fn dynamic_checkpoint(
     scope: &mut RootScope<&mut Store<()>>,
     runtime: Instance,
-) -> Result<OwnedRooted<AnyRef>, SessionError> {
+) -> Result<DynamicCheckpoint, SessionError> {
     let frame = runtime
         .get_global(&mut *scope, "dynamic-frame")
         .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?
         .get(&mut *scope);
-    Ok(frame
+    let frame = frame
         .unwrap_anyref()
         .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?
-        .to_owned_rooted(scope)?)
+        .to_owned_rooted(&mut *scope)?;
+    let array_join = runtime
+        .get_global(&mut *scope, "array-join-active")
+        .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
+        .get(&mut *scope);
+    let array_join = array_join
+        .unwrap_anyref()
+        .ok_or_else(|| wasmtime::Error::msg("Null Array join context"))?
+        .to_owned_rooted(scope)?;
+    Ok(DynamicCheckpoint { frame, array_join })
 }
 fn restore_dynamic(
     scope: &mut RootScope<&mut Store<()>>,
     runtime: Instance,
-    checkpoint: &OwnedRooted<AnyRef>,
+    checkpoint: &DynamicCheckpoint,
 ) -> Result<(), SessionError> {
+    // Host restoration also covers uncatchable Wasm fuel/cancellation traps.
+    let join = checkpoint.array_join.to_rooted(&mut *scope);
+    runtime
+        .get_global(&mut *scope, "array-join-active")
+        .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
+        .set(&mut *scope, Val::AnyRef(Some(join)))?;
     let global = runtime
         .get_global(&mut *scope, "dynamic-frame")
         .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?;
@@ -341,7 +360,7 @@ fn restore_dynamic(
             let current = current
                 .unwrap_anyref()
                 .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?;
-            let expected = checkpoint.to_rooted(&mut *scope);
+            let expected = checkpoint.frame.to_rooted(&mut *scope);
             if wasmtime::Rooted::ref_eq(&*scope, current, &expected)? {
                 return Ok(());
             }
@@ -699,7 +718,10 @@ impl Session {
                     })();
                     if recovery.is_ok() {
                         if let Ok(candidates) = candidates {
-                            recovered_owner = native_async::recovered_owner(&mut scope, runtime, &candidates).ok().flatten();
+                            recovered_owner =
+                                native_async::recovered_owner(&mut scope, runtime, &candidates)
+                                    .ok()
+                                    .flatten();
                         }
                     }
                     scope.as_context_mut().set_fuel(fuel)?;
@@ -1711,16 +1733,38 @@ mod tests {
                 .unwrap();
             result[0].clone()
         }
-        let mut session = Session::new().unwrap();
+        let mut session = Session::new_repl().unwrap();
         session
-            .eval("(def effects 0) (def ^:dynamic *value* 1)")
+            .eval("(def effects 0) (def join-effects 0) (def ^:dynamic *value* 1)")
             .unwrap();
         let resume = session.eval(
-            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (loop [] (recur)))))",
+            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (.join (array (js-obj \"toString\" (fn [] (set! join-effects (+ join-effects 1)) (loop [] (recur)))))))))",
         ).unwrap();
         let runtime = session.runtime;
         let (producer, token, caller) = {
             let mut scope = RootScope::new(&mut session.store);
+            // Model a native caller already inside a different Array join.
+            let owner = value(
+                &mut scope,
+                runtime,
+                "source-array-holes-new",
+                &[Val::I32(0)],
+            );
+            let nil = value(&mut scope, runtime, "nil", &[]);
+            let active = value(&mut scope, runtime, "args-new", &[Val::I32(2)]);
+            let fields = active
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&scope)
+                .unwrap()
+                .unwrap();
+            fields.set(&mut scope, 0, owner).unwrap();
+            fields.set(&mut scope, 1, nil).unwrap();
+            runtime
+                .get_global(&mut scope, "array-join-active")
+                .unwrap()
+                .set(&mut scope, active)
+                .unwrap();
             let caller = dynamic_checkpoint(&mut scope, runtime).unwrap();
             let producer = value(&mut scope, runtime, "future-pending-new", &[]);
             let slots = value(&mut scope, runtime, "args-new", &[Val::I32(0)]);
@@ -1765,7 +1809,7 @@ mod tests {
                 caller,
             )
         };
-        session.set_operation_fuel(50_000);
+        session.set_operation_fuel(1_000_000);
         OBSERVED_RECOVERY_INTERRUPT.with(|observed| observed.set(false));
         INTERRUPT_ASYNC_RECOVERY.with(|armed| armed.set(true));
         let error = session.run_async_turn().unwrap_err();
@@ -1788,8 +1832,11 @@ mod tests {
         {
             let mut scope = RootScope::new(&mut session.store);
             let current = dynamic_checkpoint(&mut scope, runtime).unwrap();
-            let current = current.to_rooted(&mut scope);
-            let caller = caller.to_rooted(&mut scope);
+            let current_join = current.array_join.to_rooted(&mut scope);
+            let caller_join = caller.array_join.to_rooted(&mut scope);
+            assert!(wasmtime::Rooted::ref_eq(&scope, &current_join, &caller_join).unwrap());
+            let current = current.frame.to_rooted(&mut scope);
+            let caller = caller.frame.to_rooted(&mut scope);
             assert!(wasmtime::Rooted::ref_eq(&scope, &current, &caller).unwrap());
         }
         session.set_operation_fuel(1_000_000);
@@ -1832,7 +1879,12 @@ mod tests {
                 Ok(())
             })
             .unwrap();
-        for (source, expected) in [("effects", "1"), ("*value*", "1"), ("(+ 20 22)", "42")] {
+        for (source, expected) in [
+            ("effects", "1"),
+            ("join-effects", "1"),
+            ("*value*", "1"),
+            ("(+ 20 22)", "42"),
+        ] {
             let result = session.eval(source).unwrap();
             assert_eq!(
                 crate::portable_repl::display(&mut session, &result).unwrap(),

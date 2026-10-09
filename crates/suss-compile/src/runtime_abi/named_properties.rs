@@ -138,6 +138,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     callbacks.extend(array_push::functions(b));
     callbacks.extend(array_pop::functions(b));
     callbacks.extend(array_own_properties::functions(b, equal));
+    callbacks.extend(array_join::functions(b));
     let (call, apply) = closure_calls::functions(b);
     callbacks.extend([call, apply]);
 
@@ -642,6 +643,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             body.push(LocalGet(1));
             name(&mut body, "hasOwnProperty");
             body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-has-own-method"]), Return, End]);
+            for (name_value, export) in [("join", "source-array-join-method"), ("valueOf", "source-array-valueOf-method"), ("toString", "source-array-toString-method")] {
+                body.push(LocalGet(1)); name(&mut body, name_value);
+                body.extend([Call(equal), If(BlockType::Empty), Call(b.names[export]), Return, End]);
+            }
             body.extend([LocalGet(0), LocalGet(1), Call(b.names["source-array-get"]), Return]);
         }
         body.push(End);

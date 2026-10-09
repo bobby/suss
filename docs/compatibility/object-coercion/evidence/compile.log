@@ -1,0 +1,6 @@
+WARNING: cljs.core/<, all arguments must be numbers, got [object number] instead at line 4 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs
+WARNING: cljs.core/<, all arguments must be numbers, got [object string] instead at line 5 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs
+WARNING: cljs.core/<, all arguments must be numbers, got [object object] instead at line 6 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs
+WARNING: cljs.core/<, all arguments must be numbers, got [object number] instead at line 8 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs
+WARNING: cljs.core/+, all arguments must be numbers, got [object number] instead at line 10 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs
+WARNING: cljs.core/<, all arguments must be numbers, got [object object] instead at line 11 /private/tmp/suss-m4-sorted-after-queue/tests/oracle/src/suss_oracle/object_coercion.cljs

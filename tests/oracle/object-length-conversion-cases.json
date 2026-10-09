@@ -1,0 +1,37 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "length-two-conversions-mismatch",
+      "source": "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (swap! n inc)))] (try (aset a \"length\" rhs) false (catch :default e (and (= (.-message e) \"Invalid array length\") (= @n 2) (= (alength a) 3)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "length-second-conversion-throw",
+      "source": "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (if (= (swap! n inc) 1) 1 (throw 17))))] (try (aset a \"length\" rhs) false (catch :default e (and (= e 17) (= @n 2) (= (alength a) 3)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "length-first-conversion-mutation",
+      "source": "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (swap! n inc) (if (= @n 1) (do (.push a 23) 1) 1)))] (aset a \"length\" rhs) (and (= @n 2) (= (alength a) 1) (= (aget a 0) 7) (not (.hasOwnProperty a \"3\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "length-first-conversion-uint32-modulo",
+      "source": "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (if (= (swap! n inc) 1) 4294967297 1)))] (aset a \"length\" rhs) (and (= @n 2) (= (alength a) 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

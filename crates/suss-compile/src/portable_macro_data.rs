@@ -939,6 +939,110 @@ mod identity_tests {
     use super::*;
 
     #[test]
+    fn macro_data_reads_sparse_array_abi_without_inventing_hole_syntax() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            for (source, expected) in [
+                (
+                    "(seq (array 1 nil 2))",
+                    vec![Kind::Number(1.0), Kind::Nil, Kind::Number(2.0)],
+                ),
+                (
+                    "[1 nil 2]",
+                    vec![Kind::Number(1.0), Kind::Nil, Kind::Number(2.0)],
+                ),
+                (
+                    "(let [ctor (type (array)) a (ctor 1000001)] (aset a 1000000 7) (IndexedSeq. a 1000000 nil))",
+                    vec![Kind::Number(7.0)],
+                ),
+            ] {
+                let value = session.eval(source).unwrap();
+                session.collect().unwrap();
+                let form = bridge.read(&mut session, &value, 0..1).unwrap();
+                match form.kind {
+                    Kind::List(items) | Kind::Vector(items) => assert_eq!(
+                        items.into_iter().map(|item| item.kind).collect::<Vec<_>>(),
+                        expected
+                    ),
+                    _ => panic!("Expected collection for {source}"),
+                }
+            }
+            // Forge an otherwise-valid sparse node into a dense-prefix hole.
+            let owner = session.eval("(def overlap-array (array 1 nil 2))").unwrap();
+            let seq = session.eval("(IndexedSeq. overlap-array 0 nil)").unwrap();
+            let sparse = session
+                .eval("(let [ctor (type (array)) a (ctor 3)] (aset a 0 9) a)")
+                .unwrap();
+            let head = session
+                .inspect(&sparse, |mut store, value| {
+                    let object = fields(&mut store, &value, 4)?;
+                    let owner = array(&mut store, &object[1])?;
+                    let backing = array(&mut store, &owner[0])?;
+                    reference(&backing[1])?.to_owned_rooted(&mut store)
+                })
+                .unwrap();
+            session
+                .inspect(&owner, |mut store, value| {
+                    let object = fields(&mut store, &value, 4)?;
+                    let owner = array(&mut store, &object[1])?;
+                    let backing = array(&mut store, &owner[0])?;
+                    let mask = reference(&backing[3])?.as_array(&store)?.unwrap();
+                    mask.set(&mut store, 0, Val::I32(0))?;
+                    let fields = reference(&owner[0])?.as_array(&store)?.unwrap();
+                    let head = Val::AnyRef(Some(head.to_rooted(&mut store)));
+                    fields.set(&mut store, 1, head)?;
+                    Ok(())
+                })
+                .unwrap();
+            session.collect().unwrap();
+            let error = bridge
+                .read(&mut session, &seq, 0..1)
+                .err()
+                .expect("Dense-hole sparse overlap must be rejected");
+            assert!(error.to_string().contains("dense/sparse"), "{error}");
+            for source in [
+                "(let [ctor (type (array)) a (ctor 2)] (aset a 1 7) (IndexedSeq. a 0 nil))",
+                "(let [ctor (type (array)) a (ctor 4097)] (IndexedSeq. a 0 nil))",
+            ] {
+                let value = session.eval(source).unwrap();
+                session.collect().unwrap();
+                assert!(bridge.read(&mut session, &value, 0..1).is_err(), "{source}");
+            }
+            let owner = session.eval("(def decoder-array (let [ctor (type (array)) a (ctor 2)] (aset a 0 1) (aset a 1 2) a))").unwrap();
+            let seq = session.eval("(IndexedSeq. decoder-array 0 nil)").unwrap();
+            let (node, saved_tail) = session
+                .inspect(&owner, |mut store, value| {
+                    let object = fields(&mut store, &value, 4)?;
+                    let owner = array(&mut store, &object[1])?;
+                    let backing = array(&mut store, &owner[0])?;
+                    let node = reference(&backing[1])?.as_array(&store)?.unwrap();
+                    let tail = node.get(&mut store, 2)?;
+                    let node_value = backing[1].clone();
+                    node.set(&mut store, 2, node_value.clone())?;
+                    Ok((
+                        reference(&node_value)?.to_owned_rooted(&mut store)?,
+                        reference(&tail)?.to_owned_rooted(&mut store)?,
+                    ))
+                })
+                .unwrap();
+            session.collect().unwrap();
+            assert!(bridge.read(&mut session, &seq, 0..1).is_err());
+            session
+                .inspect(&owner, |mut store, _| {
+                    let node = node.to_rooted(&mut store).as_array(&store)?.unwrap();
+                    let tail = Val::AnyRef(Some(saved_tail.to_rooted(&mut store)));
+                    node.set(&mut store, 2, tail)?;
+                    Ok(())
+                })
+                .unwrap();
+            session.collect().unwrap();
+            assert!(
+                matches!(bridge.read(&mut session, &seq, 0..1).unwrap().kind, Kind::List(items) if items.iter().map(|item| item.kind.clone()).collect::<Vec<_>>() == vec![Kind::Number(1.0), Kind::Number(2.0)])
+            );
+        }
+    }
+
+    #[test]
     fn macro_data_rejects_copied_descriptor_ids_after_gc() {
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
             let bridge = FormBridge::new(&mut session).unwrap();
@@ -1691,55 +1795,12 @@ fn append_indexed<T: DatumTarget>(
     if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
         return Err(error("Invalid IndexedSeq index"));
     }
-    let backing = if let Some(array) = reference(&data[0])?.as_array(&*store)? {
-        if !matches!(
-            array.ty(&*store)?.element_type(),
-            wasmtime::StorageType::I16
-        ) {
-            return Err(error("IndexedSeq string needs UTF16 storage"));
+    if reference(&data[0])?.as_array(&*store)?.is_none() {
+        if index > f64::from(u32::MAX) {
+            return Err(error("IndexedSeq index exceeds source array storage"));
         }
-        (array, true)
-    } else {
-        let (class, owner) = object(store, &data[0], classes)?;
-        if !matches!(class, Class::SourceArray) || owner.len() != 1 {
-            return Err(error("IndexedSeq needs actual source array storage"));
-        }
-        let array = reference(&owner[0])?
-            .as_array(&*store)?
-            .ok_or_else(|| error("Invalid source array element storage"))?;
-        if !matches!(
-            array.ty(&*store)?.element_type(),
-            wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
-        ) {
-            return Err(error("Invalid source array element storage"));
-        }
-        (array, false)
-    };
-    let length = backing.0.len(&*store)?;
-    if index > f64::from(length) {
-        return Err(error("IndexedSeq index exceeds backing storage"));
-    }
-    let index = index as u32;
-    if (length - index) as usize > budget.nodes {
-        return Err(error("IndexedSeq exceeds macro data traversal bound"));
-    }
-    for offset in index..length {
-        let value = backing.0.get(&mut *store, offset)?;
-        if backing.1 {
-            spend(budget)?;
-            budget.units = budget
-                .units
-                .checked_sub(1)
-                .ok_or_else(|| error("Macro data exceeds total UTF16 storage bound"))?;
-            let Val::I32(unit) = value else {
-                return Err(error("Invalid UTF16 indexed unit"));
-            };
-            items.push(T::plain(Form {
-                span: span.clone(),
-                metadata: vec![],
-                kind: Kind::String(vec![unit as u16]),
-            }));
-        } else {
+        let values = source_array_suffix(store, &data[0], classes, index as u32, budget.nodes)?;
+        for value in values {
             items.push(decode_datum(
                 store,
                 &value,
@@ -1749,6 +1810,38 @@ fn append_indexed<T: DatumTarget>(
                 budget,
             )?);
         }
+        return Ok(());
+    }
+    let backing = reference(&data[0])?.as_array(&*store)?.unwrap();
+    if !matches!(
+        backing.ty(&*store)?.element_type(),
+        wasmtime::StorageType::I16
+    ) {
+        return Err(error("IndexedSeq string needs UTF16 storage"));
+    }
+    let length = backing.len(&*store)?;
+    if index > f64::from(length) {
+        return Err(error("IndexedSeq index exceeds backing storage"));
+    }
+    let index = index as u32;
+    if (length - index) as usize > budget.nodes {
+        return Err(error("IndexedSeq exceeds macro data traversal bound"));
+    }
+    for offset in index..length {
+        let value = backing.get(&mut *store, offset)?;
+        spend(budget)?;
+        budget.units = budget
+            .units
+            .checked_sub(1)
+            .ok_or_else(|| error("Macro data exceeds total UTF16 storage bound"))?;
+        let Val::I32(unit) = value else {
+            return Err(error("Invalid UTF16 indexed unit"));
+        };
+        items.push(T::plain(Form {
+            span: span.clone(),
+            metadata: vec![],
+            kind: Kind::String(vec![unit as u16]),
+        }));
     }
     Ok(())
 }
@@ -1769,12 +1862,109 @@ fn source_elements(
     value: &Val,
     classes: &BTreeMap<i64, (Class, SessionValue)>,
 ) -> wasmtime::Result<Vec<Val>> {
-    let (class, owner) = object(store, value, classes)?;
-    if !matches!(class, Class::SourceArray) || owner.len() != 1 {
-        return Err(error("Vector needs canonical source array storage"));
-    }
-    array(store, &owner[0])
+    source_array_suffix(store, value, classes, 0, 4096)
 }
+
+// Read the current sparse source-array ABI directly. Never execute guest code or
+// invent nil for an absent index; undefined remains invalid macro syntax.
+fn source_array_suffix(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    start: u32,
+    bound: usize,
+) -> wasmtime::Result<Vec<Val>> {
+    fn uint32(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
+        let data = fields(store, value, 1)?;
+        let [Val::F64(bits)] = data.as_slice() else {
+            return Err(error("Invalid source array uint32"));
+        };
+        let n = f64::from_bits(*bits);
+        if !n.is_finite() || n < 0.0 || n > f64::from(u32::MAX) || n.fract() != 0.0 {
+            return Err(error("Invalid source array uint32"));
+        }
+        Ok(n as u32)
+    }
+    let (class, owner) = object(store, value, classes)?;
+    if !matches!(class, Class::SourceArray) || owner.len() != 2 {
+        return Err(error("Expected canonical sparse source array owner"));
+    }
+    let backing = array(store, &owner[0])?;
+    if backing.len() != 4 {
+        return Err(error("Invalid source array backing layout"));
+    }
+    let length = uint32(store, &backing[0])?;
+    if start > length {
+        return Err(error("Source array index exceeds logical length"));
+    }
+    let count = (length - start) as usize;
+    if count > bound {
+        return Err(error("Source array suffix exceeds macro transport bound"));
+    }
+    let dense = reference(&backing[2])?
+        .as_array(&*store)?
+        .ok_or_else(|| error("Invalid dense source array storage"))?;
+    let mask = reference(&backing[3])?
+        .as_array(&*store)?
+        .ok_or_else(|| error("Invalid source array presence mask"))?;
+    if !matches!(
+        dense.ty(&*store)?.element_type(),
+        wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
+    ) || !matches!(mask.ty(&*store)?.element_type(), wasmtime::StorageType::I16)
+        || dense.len(&*store)? != mask.len(&*store)?
+        || dense.len(&*store)? > length
+    {
+        return Err(error("Invalid source array dense/presence layout"));
+    }
+    let undefined = Val::AnyRef(Some(AnyRef::from_i31(
+        &mut *store,
+        wasmtime::I31::wrapping_u32(6),
+    )));
+    let mut result = vec![undefined; count];
+    for index in 0..mask.len(&*store)? {
+        let flag = mask.get(&mut *store, index)?.unwrap_i32();
+        if !(0..=1).contains(&flag) {
+            return Err(error("Invalid source array presence bit"));
+        }
+        if flag == 1 && index >= start {
+            result[(index - start) as usize] = dense.get(&mut *store, index)?;
+        }
+    }
+    let mut next = backing[1].clone();
+    let mut seen: Vec<Val> = Vec::new();
+    let mut previous = None;
+    while !nil(store, &next)? {
+        if seen.len() >= 4096 {
+            return Err(error(
+                "Source array sparse chain exceeds macro transport bound",
+            ));
+        }
+        for prior in &seen {
+            if Rooted::ref_eq(&*store, reference(prior)?, reference(&next)?)? {
+                return Err(error("Cyclic source array sparse chain"));
+            }
+        }
+        seen.push(next.clone());
+        let node = array(store, &next)?;
+        if node.len() != 3 {
+            return Err(error("Invalid source array sparse node"));
+        }
+        let key = uint32(store, &node[0])?;
+        if previous.is_some_and(|previous| key <= previous) || (key != u32::MAX && key >= length) {
+            return Err(error("Invalid source array sparse key order/range"));
+        }
+        if key < mask.len(&*store)? {
+            return Err(error("Duplicate dense/sparse source array key"));
+        }
+        if key != u32::MAX && key >= start {
+            result[(key - start) as usize] = node[1].clone();
+        }
+        previous = Some(key);
+        next = node[2].clone();
+    }
+    Ok(result)
+}
+
 fn node_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,

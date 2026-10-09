@@ -247,6 +247,27 @@ sequence/collection/core integration remain unfinished. This does not change the
 397 portable or72 source-core corpus counts, close an issue or certify M4.
 
 
+### Object conversion and sparse Array join evidence
+
+The current prerequisite runtime implements ordinary number/string-hint method
+ordering with physical receivers, two distinct Array length conversions, and
+Array join with holes, live own-index reads, nested cycles and exception cleanup.
+Separate retained evidence covers [ordinary object conversion](object-coercion/evidence/README.md)
+(8 pinned cases), [Array length conversion](object-length-conversion/evidence/README.md)
+(4 pinned cases), and [Array join](array-join/README.md) (18 pinned cases).
+Each corpus has fresh pinned ClojureScript observations and executing native
+checks in both phases. The join suite additionally tests actual OutOfFuel and
+subsequent recovery; host-forged corrupt cycle stacks raise language errors and
+recover after GC. Join caps output at 1,000,000 UTF-16 cells, independently of
+logical array length, and sparse-chain traversal can have quadratic cost.
+
+These cases do not prove full object semantics. Inherited numeric indices,
+accessors, generic borrowed join, full prototypes, exotic ToPrimitive, exact
+TypeError contracts and complete callable/error prototype traversal remain
+unfinished. The evidence does not close an M4 issue or replace broader
+acceptance tests, the full workspace baseline, independent PR review or CI.
+
+
 Two more retained-source forms, inc/dec, have explicit hash-bound defn patches,
 original source/docstrings/notices and byte-preserved EPL packaging. The fresh
 source import corpus now has117 observations (original72 unchanged);45 added

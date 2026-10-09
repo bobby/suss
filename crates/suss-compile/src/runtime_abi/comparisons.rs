@@ -24,21 +24,24 @@ fn relation(op: usize, floating: bool) -> Instruction<'static> {
         _ => unreachable!(),
     }
 }
-pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Vec<u32> {
     use Instruction::*;
     let mut helpers = Vec::new();
     for (op, name) in ["less", "less-equal", "greater", "greater-equal"]
         .into_iter()
         .enumerate()
     {
-        let mut body = vec![
+        let mut body = vec![];
+        coercions::primitive(&mut body, coercion_types, 0, 0);
+        coercions::primitive(&mut body, coercion_types, 1, 0);
+        body.extend([
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(STRING)),
             LocalGet(1),
             RefTestNonNull(HeapType::Concrete(STRING)),
             I32And,
             If(BlockType::Empty),
-        ];
+        ]);
         units(&mut body, 0);
         body.extend([ArrayLen, LocalSet(3)]);
         units(&mut body, 1);

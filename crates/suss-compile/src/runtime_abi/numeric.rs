@@ -261,7 +261,7 @@ fn check(
     code
 }
 
-pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
+pub(super) fn intrinsics(b: &mut Builder, helper: Info, coercion_types: coercions::Types) -> [u32; 5] {
     use Instruction::*;
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
@@ -400,7 +400,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Return,
         End,
     ]);
-    convert.extend_from_slice(&unsupported);
+    coercions::number(&mut convert, coercion_types);
     let convert = b.function_with_locals(
         "coerce-number",
         &[VALUE],
@@ -488,7 +488,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Return,
         End,
     ]);
-    to_string.extend_from_slice(&unsupported);
+    coercions::string(&mut to_string, coercion_types);
     let to_string = b.function_with_locals(
         "coerce-string",
         &[VALUE],
@@ -557,7 +557,10 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         &concat,
     );
 
-    let add = [
+    let mut add = vec![];
+    coercions::primitive(&mut add, coercion_types, 0, 0);
+    coercions::primitive(&mut add, coercion_types, 1, 0);
+    add.extend([
         LocalGet(0),
         RefTestNonNull(string),
         LocalGet(1),
@@ -577,7 +580,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Call(convert),
         F64Add,
         StructNew(NUMBER),
-    ];
+    ]);
     let add = b.function("value-add", &[VALUE, VALUE], &[VALUE], &add);
     let mut binary = Vec::new();
     for (name, operation) in [

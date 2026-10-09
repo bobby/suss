@@ -1,0 +1,1 @@
+[{"id":"number-hint-valueof","value":true},{"id":"both-string-relational","value":true},{"id":"left-before-right","value":true},{"id":"property-key-string-hint","value":true},{"id":"object-result-second-method","value":true},{"id":"noncallable-first-skipped","value":true},{"id":"addition-string-result","value":true},{"id":"throw-before-right-coercion","value":true}]
