@@ -23055,3 +23055,29 @@ anonymous reify class publication, full deftype helper execution, nil-iter or
 record factories. Continue the complete source macro/compiler graph next, then
 regenerate and execute unchanged7/14 plus new33/typed facts when exclusive Cargo
 is available. Full original record/reify acceptance remains open.
+
+
+### Record helper evidence repair (authoring only)
+
+Lagrange's 1c09308 review identified that the 33 guest Boolean assertions did not
+independently establish helper outputs. All original cases/evidence and all four
+whole source adaptations remain unchanged. A parallel closed 33-case corpus now
+returns raw values/projections and ordered effect/throw traces; independently
+specified tagged expectations use exact binary64 bits and nil/Boolean/keyword
+kinds. Promotion observes all 17 groups. A third authored native test decodes each
+result after GC through FormBridge in Runtime and Macro, without guest equality
+or printing. Native remains UNCOMPILED/UNEXECUTED; bootstrap unchanged/stale.
+
+`sh scripts/test-record-helper-raw-oracle.sh` exited 0: all 33 fresh pinned raw
+observations match. Initial compilation failed on a missing generated base fixture;
+the runner now generates the prerequisite, and the failed log is retained.
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` exited 0: 253 passes
+(13.832s), including closed-ID, malformed type/bits/trace, and scoped-path restoration
+checks. `core_import.py --check` verifies 344 files and helper whole-form provenance
+passes. Receipt and raw fixture/logs/observations live in record-helper-foundations/
+evidence/raw-primary-receipt.json. No Cargo/bootstrap/build/push was run.
+
+Next: finish the separate opt-in genuine compiler-catalog transport, consuming
+source macro tests and complete analyzer/nominal helper graph. exists?/reify,
+anonymous captured classes, nil-iter through actual reify and full record factories
+remain pending; original record/reify acceptance is not narrowed or complete.

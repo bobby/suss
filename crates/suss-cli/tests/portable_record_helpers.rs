@@ -124,3 +124,66 @@ fn fnil_sole_host_handle_keeps_callback_captures_and_defaults_across_gc() {
         }
     }
 }
+
+// Host comparisons use decoded values and binary64 bits, never guest equality.
+fn raw_helper_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
+    use serde_json::json;
+    use suss_reader::forms::Kind;
+    assert!(
+        form.metadata.is_empty(),
+        "unexpected raw observation metadata"
+    );
+    match &form.kind {
+        Kind::Nil => json!({"tag":"nil"}),
+        Kind::Bool(value) => json!({"tag":"bool", "value":value}),
+        Kind::Number(value) => json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())}),
+        Kind::Vector(items) => {
+            json!({"tag":"vector", "items":items.iter().map(raw_helper_tag).collect::<Vec<_>>()})
+        }
+        Kind::Map(items) => {
+            assert_eq!(items.len() % 2, 0, "complete decoded map entries");
+            json!({"tag":"map", "entries":items.chunks_exact(2).map(|entry|
+                vec![raw_helper_tag(&entry[0]), raw_helper_tag(&entry[1])]).collect::<Vec<_>>()})
+        }
+        Kind::Keyword(key) => json!({"tag":"keyword",
+            "namespace":match &key.namespace {
+                None => json!({"tag":"nil"}),
+                Some(name) => json!({"tag":"string", "units":name.encode_utf16().collect::<Vec<_>>()}),
+            },
+            "name":{"tag":"string", "units":key.name.encode_utf16().collect::<Vec<_>>()}}),
+        other => panic!("unsupported raw helper observation: {other:?}"),
+    }
+}
+
+#[test]
+fn record_helper_raw_values_and_traces_match_pinned_bits_in_both_phases_after_gc() {
+    use suss_cli::portable_macro_data::FormBridge;
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/record-helper-raw-cases.json"
+    ))
+    .unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(
+        cases
+            .iter()
+            .map(|case| case["id"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        CASE_IDS
+    );
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for case in cases {
+            let source = case["source"].as_str().unwrap();
+            let result = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
+            assert_eq!(raw_helper_tag(&decoded), case["expected"], "{}", case["id"]);
+        }
+    }
+}

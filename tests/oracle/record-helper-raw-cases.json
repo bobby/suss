@@ -1,0 +1,1172 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "vary-meta-args-0",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) )] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": []
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-args-1",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) 1)] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-args-2",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) 1 2)] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-args-3",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) 1 2 3)] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-args-4",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) 1 2 3 4)] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-args-5",
+      "source": "(let [v (with-meta [17] {:old false}) result (vary-meta v (fn [m & xs] {:old (:old m) :args (apply vector xs)}) 1 2 3 4 5)] [(:old (meta result)) (:args (meta result)) (:old (meta v)) (with-meta result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "vary-meta-effect-once",
+      "source": "(let [calls (atom []) v (with-meta [1] {:a 2}) r (vary-meta v (fn [m x] (swap! calls conj m) {:v x}) false)] [(with-meta r nil) (:v (meta r)) (:a (first @calls)) (count @calls) (:a (meta v))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-1-args-1",
+      "source": "((fnil vector 10) nil)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-1-args-2",
+      "source": "((fnil vector 10) nil 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-1-args-3",
+      "source": "((fnil vector 10) nil 2 3)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-1-args-5",
+      "source": "((fnil vector 10) nil 2 3 4 5)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-2-args-2",
+      "source": "((fnil vector 10 11) nil nil)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-2-args-3",
+      "source": "((fnil vector 10 11) nil nil 3)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-2-args-5",
+      "source": "((fnil vector 10 11) nil nil 3 4 5)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-3-args-2",
+      "source": "((fnil vector 10 11 12) nil nil)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-3-args-3",
+      "source": "((fnil vector 10 11 12) nil nil nil)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-defaults-3-args-5",
+      "source": "((fnil vector 10 11 12) nil nil nil 4 5)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-false-values",
+      "source": "((fnil vector 10 11 12) false false false 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-argument-order-and-once",
+      "source": "(let [calls (atom []) f (fnil (fn [a b] (swap! calls conj :call) [a b]) 9) result (f (do (swap! calls conj :a) nil) (do (swap! calls conj :b) false))] [result @calls])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99,
+                    97,
+                    108,
+                    108
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "fnil-immutable-nil-macro",
+      "source": "(let [old nil? f (fnil vector 9)] (try (set! nil? (fn [_] true)) [(f false) (f nil)] (finally (set! nil? old))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-args-0",
+      "source": "(let [m {:outer {:v false}} result (update-in m [:outer :v] (fn [old & xs] [old (apply vector xs)]) )] [(:v (:outer result)) (:v (:outer m))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-args-1",
+      "source": "(let [m {:outer {:v false}} result (update-in m [:outer :v] (fn [old & xs] [old (apply vector xs)]) 1)] [(:v (:outer result)) (:v (:outer m))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-args-2",
+      "source": "(let [m {:outer {:v false}} result (update-in m [:outer :v] (fn [old & xs] [old (apply vector xs)]) 1 2)] [(:v (:outer result)) (:v (:outer m))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-args-3",
+      "source": "(let [m {:outer {:v false}} result (update-in m [:outer :v] (fn [old & xs] [old (apply vector xs)]) 1 2 3)] [(:v (:outer result)) (:v (:outer m))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-args-4",
+      "source": "(let [m {:outer {:v false}} result (update-in m [:outer :v] (fn [old & xs] [old (apply vector xs)]) 1 2 3 4)] [(:v (:outer result)) (:v (:outer m))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-missing-path",
+      "source": "(let [result (update-in nil [:a :b] (fn [v] (if (nil? v) 17 0)))] [(:b (:a result))])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-empty-path",
+      "source": "(let [result (update-in {} [] (fn [v] (if (nil? v) 17 0)))] [(get result nil)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-in-throw-order",
+      "source": "(let [trace (atom []) caught (atom nil)] (try (update-in {:a {:b 3}} [:a :b] (fn [v x] (swap! trace conj v) (throw x)) (do (swap! trace conj :arg) 17)) (catch :default e (reset! caught e))) [@caught @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97,
+                    114,
+                    103
+                  ]
+                }
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "group-by-empty",
+      "source": "(group-by identity [])",
+      "expected": {
+        "tag": "map",
+        "entries": []
+      }
+    },
+    {
+      "id": "group-by-nil-false-keys",
+      "source": "(let [m (group-by identity [nil false nil false])] [(get m nil) (get m false) (count m)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "group-by-callback-order-once",
+      "source": "(let [trace (atom []) v [3 1 2 3] m (group-by (fn [x] (swap! trace conj x) (if (> x 1) :large :small)) v)] [@trace (:large m) (:small m) v])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "group-by-transient-promotion",
+      "source": "(let [m (group-by identity [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16])] [(count m) [(get m 0) (get m 1) (get m 2) (get m 3) (get m 4) (get m 5) (get m 6) (get m 7) (get m 8) (get m 9) (get m 10) (get m 11) (get m 12) (get m 13) (get m 14) (get m 15) (get m 16)]])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4014000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4018000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "401c000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4020000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4022000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4024000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4026000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4028000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "402a000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "402c000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "402e000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4030000000000000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "group-by-callback-throw-order",
+      "source": "(let [trace (atom []) caught (atom nil)] (try (group-by (fn [x] (swap! trace conj x) (if (= x 2) (throw 17) x)) [1 2 3]) (catch :default e (reset! caught e))) [@trace @caught])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}
