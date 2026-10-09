@@ -15,6 +15,8 @@ pub mod bootstrap;
 pub mod artifact_cache;
 pub mod artifact_identity;
 pub mod core_bindings;
+pub mod compiler_facts;
+pub mod compiler_names;
 pub mod aot;
 pub mod command;
 pub use origin::{SourceOrigin, SourcePosition};

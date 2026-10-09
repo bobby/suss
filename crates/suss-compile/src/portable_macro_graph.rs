@@ -839,7 +839,7 @@ impl<'a> AnalysisGraph<'a> {
         })
     }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
-        let catalog = Arc::new(SourceNamespace::capture(context.environment, context.phase));
+        let catalog = context.resolution_catalog();
         let root = self.environment(
             context.namespace_snapshot,
             &catalog,

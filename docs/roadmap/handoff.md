@@ -22958,3 +22958,45 @@ Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` ter
 Copied the reviewed record/reify lane from00c1d7f onto current Array runtime c4c53f9 in an isolated integration worktree. Every current import selection remains ordered and unchanged; complete not-empty and RecordIter forms are appended with their original patches/reviews. Twelve macro forms and native regressions remain unchanged from that lane. Generated importer verification/Python checks are next. Bootstrap regeneration and native execution remain pending; reify/record macro implementation is still required, not implied by retained provenance. No Cargo graph was started while baseline99077 remains live.
 
 Integration validation: all current 334 selections remain identical/in order, plus exactly not-empty and RecordIter. Both native files and all twelve retained macro forms are byte-identical to00c1d7f. `python3 scripts/core_import.py --check` verified340 files; `python3 scripts/check_record_macro_provenance.py` verified12 complete pinned macro forms; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed244 tests in8.053s, log `/private/tmp/suss-m4-record-after-arrays-python.log`, SHA256 135e40d5429b2a876fd76ba7a39d165711993599d81ebc15fe99929608f588a9. No native execution/bootstrap regeneration, no full record acceptance or PR readiness implied. Next unblocked task is focused native record iterator execution after scheduled compiler validation, then complete reify/record macro contracts.
+
+### 2026-10-09 — record/reify typed caller interfaces and complete dependency retention
+
+Authoring worktree `/private/tmp/suss-m4-record-reify-implementation` starts at
+fb29ef98f22f0765b10c0a2859126eef43719900 (7f71 plus the reviewed record import
+checkpoint). The existing 336 recipe selections, 12 retained macro forms and
+7 reify/14 iterator cases remain unchanged. Added 44 complete pinned source
+dependencies/stanzas, exact ranges/reader contexts/hashes and EPL notice, with
+a closed ordered verifier and missing/reordered/duplicate/forged evidence tests.
+
+Typed compiler interfaces expose actual live resolution catalogs, all lexical
+bindings with declaration identity, declared protocol overloads and six-key
+reader metadata elision. Scalar name munging preserves pinned UTF16 behavior,
+reserved segments and the complete CHAR_MAP, including keys which cannot match
+one-unit charAt inputs. The macro analysis graph calls the same catalog interface.
+Four authored Rust tests cover these interfaces; they are UNCOMPILED/UNEXECUTED.
+
+Actual authoring checks: `python3 -B scripts/check_record_analyzer_provenance.py`
+verified44 whole forms/stanzas; focused Python verifier tests3 passed7.327s;
+`python3 -B scripts/check_record_macro_provenance.py` verified12 whole forms;
+`python3 -B scripts/core_import.py --check` verified340 files;
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` passed247 in14.058s.
+The full Python run's printed oracle messages validate retained fixture data,
+not a fresh upstream/native execution. Rustfmt and diff checks pass. No Cargo,
+bootstrap build/regeneration, push or shared ABI changes occurred.
+
+Separately, `sh scripts/test-reify-prerequisite-oracle.sh` freshly compiled the
+unchanged seven-case fixture against the pin and ran Node: terminal0, all7 exact
+matches. Upstream emitted its existing protocol-method-head recur warning; it
+was not suppressed. This is upstream reference evidence, not native evidence.
+Scalar munging exposes both the default reserved table and a custom-table
+non-nil lookup predicate (false-valued table entries remain reserved); no map
+name/shadow branch is claimed implemented.
+
+Required next authoring: complete analyzer fallback/extern/module/warning state
+adapters and map-valued munge scope/rename facts, wire the whole source helper
+graph to compiled macro execution, and implement transactional anonymous-class
+publication with captures, metadata and protocol masks while preserving ordinary
+deftype's no-outer-local restriction. Then import complete nil-iter through real
+reify and implement the full record factory graph. These are not implemented by
+the retention ledger or typed caller APIs. Native/bootstrap acceptance must wait
+for the exclusive Cargo lane; no original issue criterion is marked complete.
