@@ -2312,7 +2312,14 @@ fn runtime_abi_source_array_bad_inputs_and_capacity_fail_as_language_errors() {
         .unwrap()
         .unwrap();
     buffer.set(&mut store, 0, size.clone()).unwrap();
-    buffer.set(&mut store, 1, size).unwrap();
+    buffer.set(&mut store, 1, size.clone()).unwrap();
+    // Sparse leaves cost no logical-length-sized allocation: two dimensions
+    // of 2000 are valid. Three dimensions exceed the real container budget.
+    runtime.get_func(&mut store, "source-array-check-dimensions").unwrap()
+        .call(&mut store, &[dims, Val::I32(0)], &mut []).unwrap();
+    let dims = nominal_value(&mut store, runtime, "args-new", &[Val::I32(3)]);
+    let buffer = dims.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    for index in 0..3 { buffer.set(&mut store, index, size.clone()).unwrap(); }
     let error = runtime
         .get_func(&mut store, "source-array-check-dimensions")
         .unwrap()

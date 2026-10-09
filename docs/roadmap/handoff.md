@@ -22579,3 +22579,56 @@ array join/inherited indices/accessors/prototypes, make-array hole-presence and
 full constructor domains before comparator/sorted-tree integration. No full
 workspace baseline/final-head CI on this checkpoint and no PR readiness claim.
 Original M4 issues16–19 and separate188 acceptance remain the full goal.
+
+### Array primitive assignment proof and make-array hole allocation
+
+New six-case public proof passes named length assignment, coercible primitive
+string/true/false/nil RHS, returned RHS identity, and own builtin shadowing. A
+new five-case regression initially failed: dynamic make-array had explicit
+undefined presence instead of holes. Runtime leaf allocation now uses canonical
+Array construction and accepts full uint32 sparse lengths; nonleaf allocations
+start with holes before writing distinct child owners. Literal macro nil fill
+remains unchanged. Resource accounting counts actual container products and
+excludes sparse leaf logical length. Existing tests that expected1000001 leaf
+length or2000x2000 dimensions to fail were obsolete: these are now positive
+coverage;2000x2000x2000 retains the actual container-budget failure. Failed
+pre-fix and obsolete expectation logs are retained, not skipped.
+
+Independent review found invalid nonleaf numeric sizes still used generic Error.
+Added canonical effective dimension length: nonnumeric single argument means
+one element, valid Number preserves uint32, invalid Number throws RangeError.
+Zero container products suppress unreachable dimensions. Seven initial oracle
+cases exposed our mistaken assertion for *literal* negative/fractional outer
+sizes: the pinned macro uses empty/ceil-sized arrays, not Array length errors.
+The existing compiler HIR already applies that literal adaptation. Corrected
+reference fixtures use dynamic outer inputs for errors and explicitly cover
+both literal results. Fresh nine-case pinned output is alltrue; historical seven
+output with twofalse and its wrong expected cases are retained truthfully.
+This correction did not alter upstream observations or weaken runtime errors.
+
+Pinned11 public-property and9 dimension forms, original fixtures, outputs and
+SHA256 receipts are retained under docs/compatibility/array-public-properties
+and array-make-dimensions/evidence. The11 corpus drives native tests directly;
+all9 dimension forms are also executed in both caller phases after GC.
+Independent review found no material dimension helper/math defect; complete
+object coercion, zero-middle suppression coverage and large nonleaf insertion
+cost remain explicit limitations.
+
+Commands used jobs2 and the existing shared native target, one Cargo graph:
+- Focused capacity/shape runtime:1passed,terminal0,.15s (`/private/tmp/suss-m4-dimension-size-runtime.log`).
+- Both-phase regeneration:terminal0 (`/private/tmp/suss-m4-make-dimensions-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_array_constructor --test portable_arrays -- --test-threads=2`:7constructor/property tests +10existing Array tests passed,0failed/ignored,5.70s/.31s,terminal0 (`/private/tmp/suss-m4-make-dimensions-native.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,8.48s,terminal0 (`/private/tmp/suss-m4-make-dimensions-final-abi.log`).
+- `sh scripts/verify-bootstrap.sh` with same jobs/target:terminal0, Java/Node absent, two reproductions match all four shipped files, build identity passes,4compiled-bootstrap tests pass13.00s (`/private/tmp/suss-m4-make-dimensions-bootstrap-reproduction.log`).
+
+Diagnostics: `/private/tmp/suss-m4-make-array-presence-before.log`,
+`/private/tmp/suss-m4-make-array-resource-regression.log`,
+`/private/tmp/suss-m4-make-array-holes-native.log` (6passed then obsolete capacity
+expectation failed), `/private/tmp/suss-m4-make-dimension-before.log` (wrong
+literal-error expectation), and retained historical oracle output. Corrected
+fresh compile/node logs use `/private/tmp/suss-m4-make-dimensions-nine-pinned-*`.
+
+Next unblocked task: full ordered object ToPrimitive/property-key coercion and
+array join/inherited index behavior for comparator foundations, then original
+sorted-tree/record/M4 acceptance. No required workspace baseline or final CI on
+this checkpoint, no PR readiness, no narrowed milestone completion claim.

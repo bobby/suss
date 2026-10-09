@@ -1,0 +1,9 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "files": {
+    "tests/oracle/array-public-properties-cases.json": "3d214b25da19108e943e737cecc7553591295ce4fcea9c9f62bc44aad86c124b",
+    "tests/oracle/src/suss_oracle/array_public_properties.cljs": "e2ad9a013516d6fe2f1492cbe872b1dc02d1f6272854415b532252c8235165b5",
+    "docs/compatibility/array-public-properties/evidence/observations.json": "a893f8846e14e3ea1773918864de7a4e1502b12b8807b8300dedbeeaef585d59",
+    "docs/compatibility/array-public-properties/evidence/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

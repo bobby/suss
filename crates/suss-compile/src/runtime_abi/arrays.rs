@@ -447,6 +447,19 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, VALUE), (1, ValType::F64)],
         &body,
     );
+    // Effective Array constructor length used for container budgeting. A sole
+    // nonnumeric argument is one element, not a numeric length conversion.
+    body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(NUMBER)), I32Eqz,
+        If(BlockType::Empty), I32Const(1), Return, End,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet { struct_type_index: NUMBER, field_index: 0 }, LocalSet(1),
+        LocalGet(1), F64Const(0.0.into()), F64Lt,
+        LocalGet(1), F64Const(4294967295.0.into()), F64Gt, I32Or,
+        LocalGet(1), LocalGet(1), F64Trunc, F64Ne, I32Or, If(BlockType::Empty)];
+    range_errors::invalid_length(&mut body);
+    body.extend([End, LocalGet(1), I32TruncSatF64U]);
+    let dimension = b.function_with_locals("source-array-dimension-size", &[VALUE], &[ValType::I32],
+        &[(1, ValType::F64)], &body);
     // All dimensions use the runtime holes convention. Literal one-dimensional
     // macro allocation selects fill=nil through a separate entry point below.
     // Bound total cells in a multidimensional allocation, not just each leaf.
@@ -482,7 +495,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(1),
-        LocalGet(2),
+        LocalGet(2), I32Const(1), I32Sub,
         I32GeU,
         BrIf(1),
     ]);
@@ -490,16 +503,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([
         LocalGet(1),
         ArrayGet(ARGS),
-        Call(index),
+        Call(dimension),
         LocalSet(3),
-        LocalGet(3),
-        I32Const(0),
-        I32LtS,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
         LocalGet(4),
         LocalGet(3),
         I64ExtendI32U,
@@ -536,9 +541,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let make_index = b.count;
     body = vec![
         LocalGet(0),
-        LocalGet(1),
-        Call(check_dimensions),
-        LocalGet(0),
         RefTestNonNull(HeapType::Concrete(ARGS)),
         I32Eqz,
         If(BlockType::Empty),
@@ -566,23 +568,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     ]);
     error(&mut body);
     body.push(End);
+    // Runtime leaf allocation uses canonical Array construction: holes and the
+    // full uint32 length domain. Literal nil-filled allocation stays bounded.
     body.extend([
+        LocalGet(2), I32Const(UNDEFINED), I32Eq,
+        LocalGet(1), I32Const(1), I32Add,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(ARGS)), ArrayLen, I32Eq,
+        I32And, If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(ARGS)), LocalGet(1), ArrayGet(ARGS),
+        ArrayNewFixed { array_type_index: ARGS, array_size: 1 },
+        Call(b.names["source-array-constructor-args"]), Return, End,
+        LocalGet(0), LocalGet(1), Call(check_dimensions),
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(1),
         ArrayGet(ARGS),
         LocalSet(3),
         LocalGet(3),
-        Call(index),
+        Call(dimension),
         LocalSet(4),
-        LocalGet(4),
-        I32Const(0),
-        I32LtS,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
         LocalGet(4),
         I32Const(MAX_LENGTH),
         I32GtU,
@@ -591,11 +595,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     error(&mut body);
     body.push(End);
     body.extend([
+        LocalGet(2), I32Const(UNDEFINED), I32Eq, If(BlockType::Result(VALUE)),
+        LocalGet(4), Call(b.names["source-array-holes-new"]), Else,
         LocalGet(2),
         RefI31,
         LocalGet(4),
         ArrayNew(ARGS),
-        Call(create),
+        Call(create), End,
         LocalSet(5),
         LocalGet(1),
         I32Const(1),

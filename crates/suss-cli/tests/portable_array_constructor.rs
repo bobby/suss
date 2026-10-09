@@ -141,3 +141,76 @@ fn array_push_overflow_and_ordinary_properties_match_pinned_cases_in_both_phases
         }
     }
 }
+
+#[test]
+fn array_named_length_primitive_rhs_and_builtin_shadowing() {
+    let corpus = array_public_property_cases();
+    let cases: Vec<_> = corpus["cases"].as_array().unwrap()[..6].iter()
+        .map(|case| case["source"].as_str().unwrap()).collect();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for source in &cases {
+            let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
+            session.collect().unwrap();
+            session.inspect(&value, |store, value| {
+                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+                Ok(())
+            }).unwrap();
+        }
+    }
+}
+
+#[test]
+fn make_array_preserves_holes_and_literal_nil_presence() {
+    let corpus = array_public_property_cases();
+    let cases: Vec<_> = corpus["cases"].as_array().unwrap()[6..].iter()
+        .map(|case| case["source"].as_str().unwrap()).collect();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for source in &cases {
+            let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
+            session.collect().unwrap();
+            session.inspect(&value, |store, value| {
+                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+                Ok(())
+            }).unwrap();
+        }
+    }
+}
+
+fn array_public_property_cases() -> serde_json::Value {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!("../../../tests/oracle/array-public-properties-cases.json")).unwrap();
+    assert_eq!(corpus["upstream"], "c4295f303100bbf5afac449242d30bca1126f1a1");
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 11);
+    let ids: Vec<_> = cases.iter().map(|case| case["id"].as_str().unwrap()).collect();
+    assert_eq!(ids, ["named-length", "string-length-rhs", "boolean-true-length", "boolean-false-length", "nil-length", "shadow-push", "dynamic-make-holes", "first-class-make-holes", "literal-make-nil-own", "multi-make-leaf-holes", "dynamic-make-max-holes"]);
+    for case in cases { assert_eq!(case["expected"], serde_json::json!({"tag":"bool","value":true})); }
+    corpus
+}
+
+#[test]
+fn make_array_dimension_validation_and_unreachable_leaves() {
+    let cases = [
+        "(let [n -1] (try (make-array nil n 2) false (catch :default e (= (.-message e) \"Invalid array length\"))))",
+        "(let [n 1.5] (try (make-array nil n 2) false (catch :default e (= (.-message e) \"Invalid array length\"))))",
+        "(try (make-array nil 2 -1) false (catch :default e (= (.-message e) \"Invalid array length\")))",
+        "(= (alength (make-array nil 0 -1)) 0)",
+        "(= (alength (make-array nil 0 -1 2)) 0)",
+        "(let [a (make-array nil \"2\" 3)] (and (= (alength a) 1) (= (alength (aget a 0)) 3) (not (.hasOwnProperty (aget a 0) \"0\"))))",
+        "(let [a (make-array nil 2 \"3\")] (and (= (alength a) 2) (= (alength (aget a 0)) 1) (= (aget a 0 0) \"3\")))",
+        "(= (alength (make-array nil -1 2)) 0)",
+        "(let [a (make-array nil 1.5 2)] (and (= (alength a) 2) (= (alength (aget a 0)) 2)))",
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for source in cases {
+            let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
+            session.collect().unwrap();
+            session.inspect(&value, |store, value| {
+                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+                Ok(())
+            }).unwrap();
+        }
+    }
+}

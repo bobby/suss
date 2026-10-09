@@ -1,0 +1,11 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "files": {
+    "tests/oracle/array-make-dimension-cases.json": "71debfc6b7ae263705a089a8cff4e9b16bf779b2eaf12f2ae8031a4cea4097fd",
+    "tests/oracle/src/suss_oracle/array_make_dimensions.cljs": "3fb83c23750097a9aa408679fda6d4d114e095da01abe4170c407501ef076774",
+    "docs/compatibility/array-make-dimensions/evidence/observations.json": "cedefd167dd12965eb46e45c0e1a4e4f18b4732e09a0eca98ac2ef7b3487a9f1",
+    "docs/compatibility/array-make-dimensions/evidence/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/compatibility/array-make-dimensions/evidence/historical-seven-cases.json": "13f63757379a721558c0663d422cf3a60fc3ca5e94e56a19e43e166fd978e506",
+    "docs/compatibility/array-make-dimensions/evidence/historical-seven-observations.json": "eb76bec0f22485e893b1e8ab7bd915e5aab6365f0838ea912ac532e1b122775b"
+  }
+}
