@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized] target(s) in 0.26s
+     Running `/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/suss-bootstrap /var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/tmp.tT4AyMoQUi/first`
+    Finished `test` profile [unoptimized] target(s) in 0.08s
+     Running `/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/suss-bootstrap /var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/tmp.tT4AyMoQUi/second`
+compiled build-script identity: checkout-independent; embedded libraries, numeric assets and pinned command WIT graph invalidate
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 0.51s
+     Running tests/compiled_bootstrap.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_bootstrap-170d672419fa8b06)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.44s

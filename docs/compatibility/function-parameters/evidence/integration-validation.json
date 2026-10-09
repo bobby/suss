@@ -1,0 +1,41 @@
+{
+  "scope": "integrated reviewed parameter/runtime sources; focused evidence, full baseline and CI pending",
+  "source_head": "22a16a9515c3c013ba81a31ed74608cbe6e24c62",
+  "compiler_lib_passed": 93,
+  "native_passed": 2,
+  "python_passed": 9,
+  "bootstrap_tests_passed": 4,
+  "setup_failure": "First provenance attempt lacked pinned submodule; retained, then actual c4295f checkout initialized and checks passed",
+  "logs": {
+    "bootstrap": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-bootstrap.log",
+      "sha256": "eaeb3a80d717f4e711f342e1e2af7721c3d3e9679e078a149cabdd3b0143d98c",
+      "exit_code": 0
+    },
+    "compiler-lib": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-compiler-lib.log",
+      "sha256": "e1299cfa62d7b911496a0098a306f513eeb1b34652a17c4211ed1544d328b2d8",
+      "exit_code": 0
+    },
+    "native": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-native.log",
+      "sha256": "0d26e03eebcbbcc21e172314731db174942e1c6f34a7ae6d38258e313caed7a1",
+      "exit_code": 0
+    },
+    "python": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-python.log",
+      "sha256": "eafd46b4cbfbde6afe2460c5ba0583a6f930d18bdf3c6d191702f007b3ebd84f",
+      "exit_code": 1
+    },
+    "python-pinned": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-python-pinned.log",
+      "sha256": "82c6d24ab38fc4aebf50d1e81e23bc66d3eeea3b1b50f7ce71b797c740f56259",
+      "exit_code": 0
+    },
+    "bootstrap-repro": {
+      "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-integration-bootstrap-repro.log",
+      "sha256": "d90f98d1cb71524e41ded8e96d5781fcd4d7e6d9f79ee590967f0fc3d943925b",
+      "exit_code": 0
+    }
+  }
+}
