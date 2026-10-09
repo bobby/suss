@@ -23140,3 +23140,33 @@ docs/compatibility/record-runtime-graph/evidence.
 Continue the complete compiler/source nominal helper graph, actual exists?/reify
 and nil-iter, then record factories/protocol bodies. Full #18/#19 remain open;
 this prerequisite evidence does not establish native record/reify execution.
+
+### Actual anonymous publication cell-state kernel — native pending
+
+Private suss.compiler/cell-defined? now emits a typed check of genuine source
+cells, guarded dynamic-frame lookup before root bound state, exact undefined
+comparison, and no eager unbound read/coercion. Fresh current-namespace names
+create real unbound cell identities without invented source facts. Bootstrap
+bindings/foreign missing namespaces/non-symbol operands remain rejected. No shared
+GC types/new roots or ordinary deftype restriction changes. Whole exists? source
+remains retained; complete resolution/dotted paths/non-symbol branch and actual
+source reify/nominal graph integration continue next, not replaced by this kernel.
+
+Fresh pinned publication_cells fixture compile+Node exited0; nine ordered raw
+observations match, including nil/false/undefined and no object conversion. First
+compile failed due duplicate relative fixture location; corrected and raw failure
+retained. Two native both-phase GC/cross-fragment/class/dynamic/recovery regressions
+are authored UNCOMPILED/UNEXECUTED. Rustfmt parsing and diff check pass. No Cargo,
+bootstrap/build/push; bootstrap unchanged/stale and runtime identity changed.
+Receipt/raw evidence: docs/compatibility/record-publication-cells/evidence.
+
+Independent frozen reviews inspected and retained: 4917033 complete ten-form runtime
+group and 808f7e catalog transaction repair both have no material findings. Their
+reports are copied under record-runtime-graph/evidence; native remains explicitly
+uncompiled, not inferred from provenance/reference success. Original seven reify
+and fourteen iterator tests, complete source parents and original acceptance
+remain unchanged. Next complete integration dependencies are source analyzer
+resolution/state and map/scalar munge consumption, complete exists? path handling,
+nominal helper protocol masks/annotations, source deftype*/defrecord* publication
+and physical method adapters, then actual reify/nil-iter and full record factories.
+No Cargo/bootstrap/push while the separate 96451 baseline remains live.

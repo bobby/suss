@@ -1,0 +1,5 @@
+Unexpected error (IllegalArgumentException) compiling at (REPL:1).
+Namespace suss-oracle.publication-cells does not exist. Please check that namespaces with dashes use underscores in the ClojureScript file name.
+
+Full report at:
+/var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/clojure-11410408230008808726.edn

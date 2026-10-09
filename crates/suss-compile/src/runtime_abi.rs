@@ -635,6 +635,56 @@ fn build_module() -> Vec<u8> {
         },
     ]);
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
+    // Anonymous publication tests the same selected dynamic/root cell value
+    // as an ordinary read. An unbound root must not be read eagerly, while an
+    // active dynamic entry may still provide a value for that root cell.
+    b.function_with_locals(
+        "binding-defined",
+        &[VALUE],
+        &[ValType::I32],
+        &[(1, VALUE), (1, ValType::I32)],
+        &[
+            LocalGet(0),
+            GlobalGet(dynamic::CURRENT),
+            Call(dynamic_lookup),
+            LocalSet(2),
+            LocalSet(1),
+            LocalGet(2),
+            I32Const(0),
+            I32GeS,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(1),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            LocalGet(2),
+            ArrayGet(ARGS),
+            I32Const(UNDEFINED),
+            RefI31,
+            RefEq,
+            I32Eqz,
+            Else,
+            LocalGet(0),
+            Call(b.names["binding-bound"]),
+            RefCastNonNull(HeapType::I31),
+            I31GetU,
+            I32Const(4),
+            I32Eq,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(5)),
+            StructGet {
+                struct_type_index: 5,
+                field_index: 0,
+            },
+            I32Const(UNDEFINED),
+            RefI31,
+            RefEq,
+            I32Eqz,
+            Else,
+            I32Const(0),
+            End,
+            End,
+        ],
+    );
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
     let coercion_types = coercions::declare(&mut b);

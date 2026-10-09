@@ -294,6 +294,8 @@ pub enum Nominal {
     IsString,
     IsClosure,
     BindCallable,
+    /// Private selected binding-cell presence, not value truthiness.
+    BindingDefined,
     LiveDispatcher,
     IFnLiveDispatcher,
     NativeMarker(NativeKind),
@@ -338,7 +340,8 @@ impl Nominal {
         match self {
             Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
             Self::StringIndexOf => Type::Number,
-            Self::IsNumber
+            Self::BindingDefined
+            | Self::IsNumber
             | Self::IsString
             | Self::IsClosure
             | Self::IsNativeObject
@@ -358,7 +361,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::IsNumber | Self::IsString | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
-                Self::CoerceString => count == 1,
+                Self::BindingDefined | Self::CoerceString => count == 1,
                 Self::ConcatString | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable => count == 2,
@@ -1825,6 +1828,63 @@ impl Analyzer<'_> {
                 return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
                     ty: Type::Value, kind: Expression::Await { value: Box::new(value) } });
             }
+        }
+        if symbol.namespace.as_deref() == Some("suss.compiler") && symbol.name == "cell-defined?" {
+            if args.len() != 1 {
+                return Err(fail(
+                    form.span.clone(),
+                    "Compiler cell-defined? requires one qualified symbol",
+                ));
+            }
+            let Kind::Symbol(target) = &args[0].kind else {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler cell-defined? requires a qualified symbol, not an evaluated value",
+                ));
+            };
+            let Some(namespace) = target.namespace.as_deref() else {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler cell-defined? requires an explicit namespace identity",
+                ));
+            };
+            // Existing aliases/refers resolve through the ordinary phase catalog.
+            // A fresh generated type can query a real unbound cell only in the
+            // current, already declared namespace; no arbitrary namespace or
+            // source declaration facts are fabricated for an existence probe.
+            let global = match self
+                .environment
+                .resolve(self.phase, target, args[0].span.clone())
+            {
+                Ok(ResolvedBinding::Cell(global)) => global,
+                Ok(_) => {
+                    return Err(fail(
+                        args[0].span.clone(),
+                        "Compiler cell-defined? requires a source cell, not a compiler bootstrap binding",
+                    ));
+                }
+                Err(_) if namespace == self.environment.current_namespace(self.phase) => self
+                    .environment
+                    .declare_cell(self.phase, namespace, &target.name)?,
+                Err(error) => return Err(error),
+            };
+            if self
+                .environment
+                .is_hidden_cell(self.phase, global.namespace(), global.name())
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler-owned cells are not source publication targets",
+                ));
+            }
+            let cell = Hir {
+                source: None,
+                span: args[0].span.clone(),
+                metadata: Vec::new(),
+                ty: Type::Value,
+                kind: Expression::GlobalCell(global),
+            };
+            return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
