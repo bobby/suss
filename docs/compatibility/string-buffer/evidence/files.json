@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "base": "a4265e7",
+  "primary-cases": 29,
+  "python-tests": 278,
+  "harness-tests": 3,
+  "native-status": "uncompiled/unexecuted",
+  "bootstrap-status": "unchanged/stale",
+  "previous-selections-preserved": 356,
+  "bootstrap-files": [
+    "runtime/bootstrap/macro.json",
+    "runtime/bootstrap/macro.wasm",
+    "runtime/bootstrap/runtime.json",
+    "runtime/bootstrap/runtime.wasm"
+  ],
+  "files": {
+    "docs/compatibility/string-buffer/evidence/direct-macro-compiled-cases.js.gz": "c2d28ec2783887481233c3abd30e0f7f3b0cf3528b97ab2452e58bd25cd67b35",
+    "docs/compatibility/string-buffer/evidence/direct-macro-observations.json": "18060862a0773459b8654790c43c0bf8ffa93e057c83b83d787c6b3c430e90f8",
+    "docs/compatibility/string-buffer/evidence/direct-macro-primary.log": "7147d3c79a3f9d18f45c08bcd1dfd7dc9c771a15aa45a57a9b2c32572d9eab97",
+    "docs/compatibility/string-buffer/evidence/harness.log": "5279d1fc9a1ced44f9c96da1414ef59e4676f963fbad52e7a1a2903538819b0d",
+    "docs/compatibility/string-buffer/evidence/import-check.log": "5e93d43e63c56aa8c0c7a262abd5aa447f61ebbb024a4a1e792d701b0681481f",
+    "docs/compatibility/string-buffer/evidence/initial-cases.json": "23ab21acb849221e0b7769bd03fea5b5bda9a3a18d40ee49ec75251a1ec152bf",
+    "docs/compatibility/string-buffer/evidence/initial-live-shape.log": "1c38bbd65688c0b6f8789a872e674a546e8835861ad20ac2282931de5cb040f7",
+    "docs/compatibility/string-buffer/evidence/initial-observations.json": "59460a4266aa21706e93a24a4133b6b2add6a7073933c9882cd53bae9508eb42",
+    "docs/compatibility/string-buffer/evidence/initial-primary.log": "b798d79ff1eaa5299e29f4a9d4ae53cc2502134431a17b4e8d0b92e7611d37ae",
+    "docs/compatibility/string-buffer/evidence/primary-compiled-cases.js.gz": "a00c1725e0c52a164885c71d7af31cca905897fa4b0582c4956fceafc4d9a7be",
+    "docs/compatibility/string-buffer/evidence/primary-observations.json": "21a977146794120fff4969b99959acac78157caeab4083270c90ba1bb6667fb7",
+    "docs/compatibility/string-buffer/evidence/primary.log": "95b67926eb5dd6396b250c3f5cbf0c0ae761af5a51b202495d5d32cd49b6dcc1",
+    "docs/compatibility/string-buffer/evidence/python.log": "a065aa6a28125cba3142e6826b87e7d187c808a5a7168f488e4f0cb3f0cc35e0"
+  },
+  "direct-macro-reference-cases": 2,
+  "compiled-source-preservation": {
+    "docs/compatibility/string-buffer/evidence/primary-compiled-cases.js.gz": {
+      "uncompressed-sha256": "8edf3604424028d7573dba21dd5c8153cd4f27a8a1889b4e939e565f60c9af34",
+      "uncompressed-bytes": 28709
+    },
+    "docs/compatibility/string-buffer/evidence/direct-macro-compiled-cases.js.gz": {
+      "uncompressed-sha256": "f1a1a28fb89fb22e596a0d143f169f525bb6f58d10808f17dc6c27f3f36e5bbd",
+      "uncompressed-bytes": 1743
+    }
+  }
+}

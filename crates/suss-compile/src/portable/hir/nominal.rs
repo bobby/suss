@@ -439,7 +439,7 @@ impl Analyzer<'_> {
             }
             Self::field_mutable(field)?;
             schema.push(
-                self.literal_form(field, Literal::String(symbol.name.encode_utf16().collect())),
+                self.literal_form(field, Literal::String(crate::portable::compiler_names::munge_name(&symbol.name.encode_utf16().collect::<Vec<_>>()))),
             );
         }
         // parse-type preserves prior declaration fields independently of the
@@ -1053,14 +1053,16 @@ impl Analyzer<'_> {
                     for signature in signatures {
                         // Pinned core.cljc adapt-obj-params anchors this-as outside
                         // the loop, with only user parameters replaced by recur.
+                        let (signature, variadic, rest_parameter) =
+                            Self::normalize_function_method(method_form, signature)?;
                         let (implementation, _) = self.fixed_function_fields(
                             method_form,
-                            signature,
+                            &signature,
                             true,
                             fields,
                             true,
                             true,
-                            None,
+                            rest_parameter,
                             Some(type_declaration),
                         )?;
                         let Expression::Function {
@@ -1069,13 +1071,13 @@ impl Analyzer<'_> {
                         else {
                             unreachable!()
                         };
-                        groups[group].2.push(Method { parameters, body, variadic: false });
+                        groups[group].2.push(Method { parameters, body, variadic });
                     }
                 }
                 for (method_name, name, mut methods) in groups {
                     methods.reverse();
                     let mut arities = BTreeSet::new();
-                    methods.retain(|method| arities.insert(method.parameters.len()));
+                    methods.retain(|method| arities.insert((method.parameters.len(), method.variadic)));
                     methods.reverse();
                     let mut captures = BTreeSet::new();
                     for method in &methods {
@@ -1086,7 +1088,20 @@ impl Analyzer<'_> {
                             .collect();
                         free_bindings(&method.body, &bound, &mut captures);
                     }
-                    let kind = if methods.len() == 1 {
+                    let variadic: Vec<_> = methods.iter().filter(|method| method.variadic).collect();
+                    if variadic.len() > 1 || variadic.first().is_some_and(|method| {
+                        methods.iter().any(|fixed| !fixed.variadic
+                            && fixed.parameters.len() > method.parameters.len() - 1)
+                    }) {
+                        return Err(fail(method_name.span.clone(),
+                            "Object method requires one variadic signature with no larger fixed arity"));
+                    }
+                    let rest_class = if variadic.is_empty() { None } else {
+                        Some(self.environment.resolve(self.phase, &suss_reader::Symbol {
+                            namespace: Some("suss.core".into()), name: "IndexedSeq".into(),
+                        }, method_name.span.clone())?.global().clone())
+                    };
+                    let kind = if methods.len() == 1 && !methods[0].variadic {
                         let method = methods.remove(0);
                         Expression::Function {
                             parameters: method.parameters,
@@ -1098,7 +1113,7 @@ impl Analyzer<'_> {
                             methods,
                             captures: captures.into_iter().collect(),
                             self_binding: None,
-                rest_class: None,
+                rest_class,
                         }
                     };
                     let implementation = Hir {
@@ -1234,5 +1249,73 @@ impl Analyzer<'_> {
             }
         }
         Ok(effects)
+    }
+}
+
+#[cfg(test)]
+mod object_callback_tests {
+    use super::*;
+    use suss_reader::forms::{read_forms, resolve_conditionals};
+
+    #[test]
+    fn object_variadic_callback_retains_rest_class_and_receiver_arity() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut environment = Environment::default();
+            environment.enter_namespace(phase, "cljs.core").unwrap();
+            let source = "(declare IndexedSeq) (deftype* Buffer [some-field] Object (append [this & values] values))";
+            let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+            let (hir, _) = prepare(&forms, 0..source.len(), &environment, phase).unwrap();
+            fn callback(hir: &Hir) -> Option<&Hir> {
+                match &hir.kind {
+                    Expression::Nominal {
+                        operation: Nominal::ObjectSet,
+                        arguments,
+                    } => Some(&arguments[2]),
+                    Expression::Do(items) => items.iter().find_map(callback),
+                    Expression::Let { bindings, body } => bindings
+                        .iter()
+                        .find_map(|binding| callback(&binding.value))
+                        .or_else(|| callback(body)),
+                    _ => None,
+                }
+            }
+            let Expression::GeneralFunction {
+                methods,
+                rest_class,
+                ..
+            } = &callback(&hir).expect("actual ObjectSet callback").kind
+            else {
+                panic!("variadic callback must use general dispatch")
+            };
+            assert_eq!(methods.len(), 1);
+            assert!(methods[0].variadic);
+            assert_eq!(
+                methods[0].parameters.len(),
+                2,
+                "receiver plus raw rest parameter"
+            );
+            assert!(
+                rest_class.is_some(),
+                "real rest sequence class must be resolved"
+            );
+        }
+    }
+
+    #[test]
+    fn host_property_munge_preserves_empty_reserved_policy() {
+        let source = read_forms("some-field").unwrap().remove(0);
+        assert_eq!(
+            Analyzer::property_name(&source, ".-some-field").unwrap(),
+            "some_field"
+        );
+        assert_eq!(Analyzer::property_name(&source, ".-null").unwrap(), "null");
+        assert_eq!(
+            crate::portable::compiler_names::munge_name(&"null".encode_utf16().collect::<Vec<_>>()),
+            "null$".encode_utf16().collect::<Vec<_>>()
+        );
+        assert!(
+            Analyzer::property_name(&source, ".-nested.path").is_err(),
+            "nested access cannot be flattened into a single property"
+        );
     }
 }

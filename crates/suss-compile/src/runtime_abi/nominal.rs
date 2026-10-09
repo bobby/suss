@@ -111,11 +111,45 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     body.extend([ArrayLen, I32Ne, If(BlockType::Empty)]);
     error(&mut body);
     body.push(End);
-    copy_array(&mut body, 1, 2);
+    // Keep constructor argument evaluation outside this storage normalization.
+    // Equal source-munged field names receive the last argument, as in the
+    // pinned JS constructor's duplicate parameter/assignment spelling.
+    copy_array(&mut body, 1, 3);
+    body.extend([I32Const(0), LocalSet(4), Block(BlockType::Empty), Loop(BlockType::Empty)]);
+    array(&mut body, 2);
+    body.extend([ArrayLen, LocalGet(4), I32LeU, BrIf(1)]);
+    array(&mut body, 2);
+    body.extend([LocalGet(4), ArrayGet(ARGS), LocalSet(6)]);
+    body.extend([LocalGet(4), I32Const(1), I32Add, LocalSet(5),
+        Block(BlockType::Empty), Loop(BlockType::Empty)]);
+    array(&mut body, 2);
+    body.extend([ArrayLen, LocalGet(5), I32LeU, BrIf(1)]);
+    array(&mut body, 2);
+    body.extend([LocalGet(5), ArrayGet(ARGS), LocalSet(7)]);
+    body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(STRING)),
+        LocalGet(7), RefTestNonNull(HeapType::Concrete(STRING)), I32And,
+        If(BlockType::Empty)]);
+    body.extend([LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen,
+        LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, I32Eq,
+        LocalSet(9), I32Const(0), LocalSet(8),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(9), I32Eqz, BrIf(1),
+        LocalGet(8), LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen,
+        I32GeU, BrIf(1),
+        LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
+        LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
+        I32Eq, LocalSet(9), LocalGet(8), I32Const(1), I32Add, LocalSet(8), Br(0), End, End,
+        LocalGet(9), If(BlockType::Empty)]);
+    array(&mut body, 3);
+    body.push(LocalGet(4));
+    array(&mut body, 1);
+    body.extend([LocalGet(5), ArrayGet(ARGS), ArraySet(ARGS), End, End,
+        LocalGet(5), I32Const(1), I32Add, LocalSet(5), Br(0), End, End,
+        LocalGet(4), I32Const(1), I32Add, LocalSet(4), Br(0), End, End]);
     body.extend([
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
-        LocalGet(2),
+        LocalGet(3),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(0),
         RefI31,
@@ -125,7 +159,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         "object-new",
         &[VALUE, VALUE],
         &[VALUE],
-        &[(1, VALUE)],
+        &[(2, VALUE), (2, ValType::I32), (2, VALUE), (2, ValType::I32)],
         &body,
     );
 

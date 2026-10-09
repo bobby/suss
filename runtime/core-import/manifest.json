@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "d2bff55997d31b22b584b5a2a732e2a2612f662f9bde1c24e1bf5c0557de46c7",
-  "reviews-sha256": "812c4d875c407e32e43056e29dfec651bfdd727b0ff39f6a95c22e2783abc49c",
+  "recipe-sha256": "7b384fa9c7562b09535f44985e7b9cffa8b35b19e1154d3cacda6086cddbd531",
+  "reviews-sha256": "b4bbf6d3504aced1164a1786cd16a91365ed32588669be8223d1f6ca10738499",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -11057,12 +11057,42 @@
         "runtime:next:1333"
       ],
       "semantic-tests": []
+    },
+    {
+      "id": "runtime:str:3129",
+      "name": "str",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3129,
+      "end-line": 3141,
+      "byte-start": 83739,
+      "byte-end": 84180,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
+      "extracted": "extracted/0356.cljs",
+      "extracted-sha256": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
+      "patch": "docs/compatibility/patches/record-public-str.json",
+      "patch-sha256": "b7baa8d77b1d4058235ae720a5f1848ef11424d64a6e896ecf5346aedf6d2fe1",
+      "adapted-form-sha256": "d55ebc4ddd45e27020de34106e3640db60e336c3d0b1eefcbc5885f3e88b7830",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:to-array:3819",
+        "runtime:IndexedSeq:1653"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_fields.rs",
+        "tests/oracle/string-field-cases.json"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "640e5a0e1ccd4d6a8b8d743322b0e18984752d26d44afabc79cf6defefbd973a"
+      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -11070,7 +11100,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "a2e1e1323f36b7e332a3e136878ecdc92446da797391a834b57d9b2fb9fc81d7"
+      "sha256": "9a6eff337e8aed20e8f11272638112900f479ab1d74749e70c97f1fa424a3c5a"
     }
   },
   "files": {
@@ -11432,6 +11462,7 @@
     "extracted/0353.cljs": "340ffdf274e7ed46206b3a2201d21cf4ff6ab5ca194ca25f820929f0414d3e13",
     "extracted/0354.cljs": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
     "extracted/0355.cljs": "dd494b6a0a6c8737c99a6409bf4ed490819f0b1dc2a6c7415b3da4bb3adbcaf2",
-    "suss/core.sus": "009c2f797ebe63b4e5e5f39655bc30e1fea92911202ef475f2d46fb341ae735b"
+    "extracted/0356.cljs": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
+    "suss/core.sus": "eb36f12a81ed34aa31fb63fa78d24fd71bd738291ea0e481122f12723a4dfc9a"
   }
 }

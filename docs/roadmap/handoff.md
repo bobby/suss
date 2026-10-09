@@ -23717,3 +23717,42 @@ Additional exact eaec prerequisite evidence: record_compiler_facts5pass0fail0ign
 Closure diagnostic fixture correction (pending native validation): final-head CI 37930190032 integration (2) passed all 286 compile_expr cases, then failed portable_closures because the old vector-parameter unsupported assertion expected the whole [x] span. Vector parameter lowering is now supported and executed by portable_function_parameters: 39 pinned raw value/effect cases in both phases and host-only capture retention. Remove only that obsolete unsupported row; retain both wrong-arity checks and the unprovisioned IndexedSeq diagnostic with exact span/message. No production, bootstrap, oracle expectation or ignore changes. Full baseline on a4265e7 is running; independent review and focused closure native validation remain pending before integration. Full reify, records, sorted collections and all original M4 acceptance gates remain required.
 
 Required full baseline a4265e7 completed with exit101: 544 passed,1 failed,0 ignored across116 completed groups; stops at portable_record_graph_runtime unresolved Runtime str59..62. Remaining workspace tests were not executed. Full log/receipt and final eaec CI logs are retained under function-parameters/evidence. Closure fixture c8957e3 passed independent review and focused native1/0/0 on evidence-only child4d973cb; retains wrong-arity and missing IndexedSeq checks, removes only obsolete vector rejection. Integrated locally; no green final-head CI/full-baseline claim. Next source prerequisites remain full str/StringBuffer/field storage and genuine reify staging; Error801 whole-graph generator separately fails unresolved reify192494..192499, so Error native acceptance remains unexecuted.
+
+### Full runtime str / StringBuffer and canonical Object fields (author base a4265e7)
+
+Whole str3129 imported (357 selections, 361 generated files); all356 prior
+selections and extracted bytes preserved. Closure StringBuffer complete source,
+Apache license, jar/pin/hashes and whole macro str/str_ plus immediate helper
+witnesses retained in docs/compatibility/string-buffer/. Native adapter preserves
+all constructor/method branches, string/default hint order and captured-left
+mutation semantics. Compiler retains variadic Object signatures/rest class and
+canonical storage munging; original field declarations/fact indices stay raw.
+Collisions use last-slot named/protocol reads/writes and private constructor
+normalization, preserving once-only argument effects. Stride2 table first policy
+unchanged; full schema checks remain. Existing unsupported extra-property and
+prototype assertions retained; supported named-property cases now execute exact
+post-GC observations. Added raw ABI alias/private-copy/stride-policy regression
+and two-phase29raw +sole-host captured buffer/vector tests, all nativeuncompiled.
+
+Author commands: sh scripts/test-string-field-oracle.sh terminal0 all29 fresh
+pinned rawmatches; sh scripts/test-string-direct-macro-oracle.sh terminal0 two
+fresh direct-call stringcontext matches; python3 -B -m unittest discover -s
+scripts terminal0 278pass (25.9/26.6seconds at earlier stages; final log retained);
+focused test_string_field_oracle3pass; python3 -B scripts/core_import.py --check
+terminal0 361verify; Rustfmt parse and git diff --check pass. No Cargo/bootstrap
+build, allowance changes, commit publication or native acceptance in authorwt.
+Four bootstrap files byteunchanged/stale; actual native cost/correctness pending.
+Both initial expectation mismatch and live single-arity replacement TypeError
+retained as failures, not passes. Runtime alias returns Number23/nil; direct macro
+emits stringcontext producing "23"/"null", with separate obligations/corpus.
+
+Macro str:877 and str_:852 inventory explicitlyunimplemented, whole compiled
+helper/analyzer/js* graph stillrequired; witnesses are not executable adaptation.
+Reify/nil-iter remains genuine source-driven acyclic seed/compiled-macro staging,
+including BOTH generate and restore fact reconstruction and phase-bound seed+
+macrograph identities/deterministicgensym. No milestone/issue closure claim.
+Parent next regenerates frozen artifacts through established Java/Nodefree path,
+then portable_string_fields, named_properties, RecordIter14 and entire runtime
+recordgraph84, constructoralias ABI test, affected compiler/ABI/lifecycle gates,
+reproduction, unchanged locked baseline and final-head CI. Continue complete
+staging/reify graph afterwards; don't drop existing reify or full source tests.

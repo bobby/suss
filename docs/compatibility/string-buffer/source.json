@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "cljs-pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "dependency": "org.clojure/google-closure-library",
+  "version": "0.0-20250515-f04e4c0e",
+  "jar-sha256": "451cc32a6897448c925a9c72338a7a573a874bd3da0b385eda87e81c060d7e1a",
+  "entry": "goog/string/stringbuffer.js",
+  "source-sha256": "bbbaae943f3a7c02cbd76ce6ae650e6c45fdb18cfe56b8b4d36a7204c750a955",
+  "license-sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+  "adapter-sha256": "a30eeca108fde0232c5111fc260eed34a12f9dd6c4b0bea762c2353f6cc94ba4",
+  "macro-witnesses": [
+    {
+      "id": "macro:str_:852",
+      "sha256": "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9"
+    },
+    {
+      "id": "macro:str:877",
+      "sha256": "b55c632681cd22fa6b2f13c9dac4b5f4b5d142d0aebb0cf9f5a92c590d266032"
+    }
+  ],
+  "macro-helper-witnesses": [
+    {
+      "id": "macro:typed-expr?:844",
+      "sha256": "24243a137c28dd0d07b141f9c2f39c9d5e8906f0ad9188ee7d1f4b46cd234900"
+    },
+    {
+      "id": "macro:string-expr:849",
+      "sha256": "f2dd78ad3a2f3cd7e3bf8b3ba54f5f81900eb152e5b135f914ac28431b317cc9"
+    },
+    {
+      "id": "macro:compile-time-constant?:869",
+      "sha256": "d8152bab63271d0147b7d6a53ecf6f712f6401c60a379a697d834ca1a65be74d"
+    }
+  ]
+}

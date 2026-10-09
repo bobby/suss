@@ -78,3 +78,5 @@
 
 ;; Full juxt and merge/merge-with source graph references, not aliases.
 (declare vector some)
+
+(declare str bootstrap-string-buffer BootstrapStringBuffer)

@@ -479,6 +479,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(5),
         I32Const(0),
         I32LtS,
+        // Field aliases use the last constructor assignment. Method tables
+        // retain their existing first-match policy (stride two).
+        LocalGet(2),
+        I32Const(1),
+        I32Eq,
+        I32Or,
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(5),

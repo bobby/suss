@@ -97,3 +97,43 @@
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 (def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
+
+;; Copyright The Closure Library Authors.
+;; SPDX-License-Identifier: Apache-2.0
+;; Adapted from the complete goog/string/stringbuffer.js retained beside this
+;; file. Native owned storage replaces the Closure prototype buffer slot.
+;; All constructor and method branches remain; this is not JS prototype interop.
+(def bootstrap-buffer-to-array to-array)
+(deftype BootstrapStringBuffer [^:mutable buffer_]
+  Object
+  (set [this & values]
+    (let [args (bootstrap-buffer-to-array values) s (aget args 0)]
+      (set! buffer_ (suss.bootstrap/value-add "" s))
+      (aget (array) 0)))
+  (append [this & values]
+    (let [args (bootstrap-buffer-to-array values)
+          old buffer_
+          first-value (aget args 0)
+          converted (suss.bootstrap/coerce-string first-value)]
+      (set! buffer_ (suss.bootstrap/value-add old converted))
+      (if (suss.bootstrap/nil? (aget args 1))
+        nil
+        (loop [i 1]
+          (if (< i (alength args))
+            (let [old buffer_ value (aget args i)]
+              (set! buffer_ (suss.bootstrap/value-add old value))
+              (recur (inc i)))
+            nil)))
+      this))
+  (clear [this & ignored]
+    (set! buffer_ "")
+    (aget (array) 0))
+  (getLength [this & ignored] (.-length buffer_))
+  (toString [this & ignored] buffer_))
+(def bootstrap-string-buffer
+  (fn [& values]
+    (let [args (bootstrap-buffer-to-array values) sb (BootstrapStringBuffer. "")]
+      (if (suss.bootstrap/nil? (aget args 0))
+        nil
+        (.apply (.-append sb) sb args))
+      sb)))

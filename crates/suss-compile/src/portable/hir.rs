@@ -293,6 +293,7 @@ pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
     IsString,
+    IsBoolean,
     IsClosure,
     BindCallable,
     /// Private selected binding-cell presence, not value truthiness.
@@ -323,6 +324,7 @@ pub enum Nominal {
     NativeObjectStrictSet,
     CoerceString,
     ConcatString,
+    ValueAdd,
     StringIndexOf,
     StringSlice,
     LanguageError,
@@ -344,6 +346,7 @@ impl Nominal {
             Self::BindingDefined
             | Self::IsNumber
             | Self::IsString
+            | Self::IsBoolean
             | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
@@ -361,9 +364,9 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::IsNumber | Self::IsString | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString => count == 1,
-                Self::ConcatString | Self::StringIndexOf => count == 2,
+                Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable => count == 2,
                 Self::NativeObjectGet => count == 2,
@@ -1668,7 +1671,17 @@ impl Analyzer<'_> {
                 .first()
                 .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?
                 .id;
-            for (index, field) in fields.iter().enumerate() {
+            for (source_index, field) in fields.iter().enumerate() {
+                // JS constructor assignments alias fields with the same munged name;
+                // the last declaration supplies their shared physical storage slot.
+                let Kind::Symbol(field_symbol) = &field.kind else { unreachable!() };
+                let storage_name = crate::portable::compiler_names::munge_name(
+                    &field_symbol.name.encode_utf16().collect::<Vec<_>>());
+                let index = fields.iter().rposition(|candidate| {
+                    let Kind::Symbol(symbol) = &candidate.kind else { unreachable!() };
+                    crate::portable::compiler_names::munge_name(
+                        &symbol.name.encode_utf16().collect::<Vec<_>>()) == storage_name
+                }).expect("field has its own storage declaration");
                 let Kind::Symbol(symbol) = &field.kind else {
                     unreachable!()
                 };
@@ -1680,7 +1693,7 @@ impl Analyzer<'_> {
                 }
                 let value = if object_method {
                     let key = self
-                        .literal_form(field, Literal::String(symbol.name.encode_utf16().collect()));
+                        .literal_form(field, Literal::String(storage_name));
                     self.nominal(
                         field,
                         Nominal::NamedGet,
@@ -1697,7 +1710,9 @@ impl Analyzer<'_> {
                     identity: std::sync::Arc::new(()),
                     declaration: field.clone(),
                     origin: self.origin.clone(),
-                    index,
+                    // Analyzer facts retain the original declaration order;
+                    // only executable access uses the canonical storage slot.
+                    index: source_index,
                     mutable: Self::field_mutable(field)?,
                     access: value,
                 };
@@ -1784,7 +1799,12 @@ impl Analyzer<'_> {
         }, source_method))
     }
     fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
-        let name = &operator[2..];
+        // Host field/method spellings use the pinned compiler's empty-reserved
+        // munge policy; source type declarations use its default reserved set.
+        let units = crate::portable::compiler_names::munge_name_with_reserved(
+            &operator[2..].encode_utf16().collect::<Vec<_>>(), |_| false);
+        let name = String::from_utf16(&units).map_err(|_| fail(
+            form.span.clone(), "Property name contains invalid UTF16"))?;
         if !name
             .bytes()
             .next()
@@ -1798,7 +1818,7 @@ impl Analyzer<'_> {
                 "Computed or munged property names are not implemented yet",
             ));
         }
-        Ok(name.into())
+        Ok(name)
     }
     fn list(
         &mut self,
@@ -1917,6 +1937,8 @@ impl Analyzer<'_> {
             let operation = match symbol.name.as_str() {
                 "number?" => Some(Nominal::IsNumber),
                 "string?" => Some(Nominal::IsString),
+                "boolean?" => Some(Nominal::IsBoolean),
+                "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),

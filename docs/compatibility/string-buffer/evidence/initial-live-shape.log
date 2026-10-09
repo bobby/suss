@@ -1,0 +1,17 @@
+/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/cljs/core.js:10648
+return cljs.core.str.cljs$core$IFn$_invoke$arity$variadic((arguments[(0)]),argseq__12498__auto__);
+                     ^
+
+TypeError: cljs.core.str.cljs$core$IFn$_invoke$arity$variadic is not a function
+    at cljs$core$str (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/cljs/core.js:10648:22)
+    at /private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/suss_oracle/string_field_cases.js:337:14
+    at suss_oracle$string_field_cases$observations (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/suss_oracle/string_field_cases.js:339:4)
+    at suss_oracle$string_field$_main (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/suss_oracle/string_field.js:32:208)
+    at cljs$core$apply_to_simple.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/cljs/core.js:13713:10)
+    at cljs$core$apply.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/cljs/core.js:13998:34)
+    at cljs$core$apply (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/cljs/core.js:13951:24)
+    at Object.<anonymous> (/private/tmp/suss-m4-pr231-string-field-repair/tests/oracle/out/string-field-cljs/nodejscli.js:14:17)
+    at Module._compile (node:internal/modules/cjs/loader:1738:14)
+    at Object..js (node:internal/modules/cjs/loader:1871:10)
+
+Node.js v24.5.0
