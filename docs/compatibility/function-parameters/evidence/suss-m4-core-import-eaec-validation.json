@@ -1,0 +1,12 @@
+{
+  "head": "eaec26de04336ea70f51c3cb24fd9bea13162673",
+  "scope": "bounded current core import execution; not all original M4 provenance acceptance",
+  "passed": 17,
+  "failed": 0,
+  "ignored": 0,
+  "exit_code": 0,
+  "seconds": 20.74,
+  "command": "cargo test -p suss-cli --test core_import --locked -- --test-threads=2",
+  "log": "/private/tmp/suss-m4-core-import-eaec-native.log",
+  "sha256": "5d288285fad0b72de7647f5dead630b5fde26000d803bd0594644ba8c98121a1"
+}

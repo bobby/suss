@@ -1,0 +1,10 @@
+{
+  "head": "eaec26d",
+  "scope": "five compiler facts regressions, not full reify",
+  "exit_code": 0,
+  "passed": 5,
+  "failed": 0,
+  "ignored": 0,
+  "log": "/private/tmp/suss-m4-record-compiler-facts-eaec-focused.log",
+  "sha256": "60924aec34f0e7fd8e15e42932d3acf8df5a7f3748810a7a18d38d8175521440"
+}
