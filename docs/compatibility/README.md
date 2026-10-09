@@ -1137,3 +1137,12 @@ and two compiler prerequisites are authored but uncompiled/unexecuted; bootstrap
 artifacts remain unchanged and stale. Reference/source checks are not native
 acceptance. Full tree algorithms, constructors, iteration, ranges and remaining
 host/protocol/macro boundaries continue in the full sorted lane.
+
+The [complete sorted tree collections authoring group](sorted-tree-collections/README.md)
+retains all constructors, algorithms, cursor/value sequences, iterator dependencies
+and both range arities, with complete macro/anonymous-parent provenance. Its 142
+fresh pinned raw observations and Python/source checks are authoring evidence;
+native tests remain uncompiled/unexecuted and bootstrap is stale. Reify, typed
+Error ancestry/binding, full ES6/printer integration and original #18/#19/M4 gates
+remain explicit. The prior 86 tree assertions remain supplementary alongside the
+52 independently decoded tree-node observations.

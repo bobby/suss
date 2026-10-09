@@ -817,11 +817,18 @@ impl Analyzer<'_> {
         }
         if !matches!(
             (protocol_symbol.name.as_str(), method_symbol.name.as_str()),
-            ("IIndexed", "-nth") | ("IVector", "-assoc-n")
+            ("IIndexed", "-nth")
+                | ("IVector", "-assoc-n")
+                | ("IEquiv", "-equiv")
+                | ("ILookup", "-lookup")
+                | ("IAssociative", "-assoc")
+                | ("ISeq", "-first")
+                | ("INext", "-next")
+                | ("IMapEntry", "-val")
         ) {
             return Err(fail(
                 method_name.span.clone(),
-                "Direct protocol adapter supports only IIndexed/-nth and IVector/-assoc-n",
+                "Direct protocol adapter supports only enumerated canonical typed core methods",
             ));
         }
         let protocol = self

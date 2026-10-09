@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "dd6093a138588c8b283cb4604f31ab4bb93f2bf56637cc68a7986f713d2fbb81",
+  "replacement": "(defn sorted-set\n  \"Returns a new sorted set with supplied keys.\"\n  ([& keys]\n   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))",
+  "rationale": "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+}

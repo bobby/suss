@@ -97,6 +97,9 @@
 
 ;; Whole sorted node/balancing mutually recursive source identities.
 (declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
+
+;; Whole sorted collection/iteration/range mutual dependencies.
+(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -6665,6 +6668,747 @@ reduces them without incurring seq initialization"
 
   (-invoke [node k not-found]
     (suss.bootstrap/direct-protocol-call IIndexed -nth node k not-found)))
+
+(deftype StringIter [s ^:mutable i]
+  Object
+  (hasNext [_] (cljs.core/< i (.-length s)))
+  (next [_]
+    (let [ret (.charAt s i)]
+      (set! i (cljs.core/inc i))
+      ret))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(defn string-iter [x]
+  (StringIter. x 0))
+
+(deftype ArrayIter [arr ^:mutable i]
+  Object
+  (hasNext [_] (cljs.core/< i (alength arr)))
+  (next [_]
+    (let [ret (cljs.core/aget arr i)]
+      (set! i (cljs.core/inc i))
+      ret))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(defn array-iter [x]
+  (ArrayIter. x 0))
+
+(def INIT (cljs.core/js-obj))
+
+(def START (cljs.core/js-obj))
+
+(deftype SeqIter [^:mutable _seq ^:mutable _next]
+  Object
+  (hasNext [_]
+    (if (cljs.core/== _seq INIT)
+      (do
+        (set! _seq START)
+        (set! _next (seq _next)))
+      (if (cljs.core/== _seq _next)
+        (set! _next (next _seq))))
+    (not (suss.bootstrap/nil? _next)))
+  (next [this]
+    (if-not ^boolean (.hasNext this)
+      (throw (suss.bootstrap/error "No such element"))
+      (do
+        (set! _seq _next)
+        (first _next))))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(defn seq-iter [coll]
+  (SeqIter. INIT coll))
+
+(defn nil-iter []
+  (reify
+    Object
+    (hasNext [_] false)
+    (next [_] (suss.bootstrap/error "No such element"))
+    (remove [_] (suss.bootstrap/error "Unsupported operation"))))
+
+(defn iter [coll]
+  (cond
+    (iterable? coll) (-iterator coll)
+    (suss.bootstrap/nil? coll) (nil-iter)
+    (suss.bootstrap/string? coll) (string-iter coll)
+    (array? coll) (array-iter coll)
+    (seqable? coll) (seq-iter coll)
+    :else (throw (suss.bootstrap/error (let [sorted-text__ (str_ coll)] (.join (cljs.core/array "Cannot create iterator from " sorted-text__) ""))))))
+
+(deftype ES6Iterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (suss.bootstrap/nil? s)
+      (let [x (first s)]
+        (set! s (next s))
+        (cljs.core/js-obj "value" x "done" false))
+      (cljs.core/js-obj "value" nil "done" true))))
+
+(defn es6-iterator
+  "Return a ES2015+ compatible iterator for coll."
+  [coll]
+  (ES6Iterator. (seq coll)))
+
+(deftype ES6EntriesIterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (suss.bootstrap/nil? s)
+      (let [[k v] (first s)]
+        (set! s (next s))
+        (cljs.core/js-obj "value" (cljs.core/array k v) "done" false))
+      (cljs.core/js-obj "value" nil "done" true))))
+
+(defn es6-entries-iterator [coll]
+  (ES6EntriesIterator. (seq coll)))
+
+(deftype ES6SetEntriesIterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (suss.bootstrap/nil? s)
+      (let [x (first s)]
+        (set! s (next s))
+        (cljs.core/js-obj "value" (cljs.core/array x x) "done" false))
+      (cljs.core/js-obj "value" nil "done" true))))
+
+(defn es6-set-entries-iterator [coll]
+  (ES6SetEntriesIterator. (seq coll)))
+
+(def ^:private tree-map-seq-push
+  (fn [node stack ^boolean ascending?]
+  (loop [t node stack stack]
+    (if-not (suss.bootstrap/nil? t)
+      (recur (if ascending? (.-left t) (.-right t))
+             (conj stack t))
+      stack))))
+
+(deftype PersistentTreeMapSeq [meta stack ^boolean ascending? cnt ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ISeqable
+  (-seq [this] this)
+
+  ISequential
+  ISeq
+  (-first [this] (peek stack))
+  (-rest [this]
+    (let [t (first stack)
+          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
+                                        (next stack)
+                                        ascending?)]
+      (if-not (suss.bootstrap/nil? next-stack)
+        (PersistentTreeMapSeq. nil next-stack ascending? (cljs.core/dec cnt) nil)
+        ())))
+  INext
+  (-next [this]
+    (let [t (first stack)
+          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
+                                        (next stack)
+                                        ascending?)]
+      (when-not (suss.bootstrap/nil? next-stack)
+        (PersistentTreeMapSeq. nil next-stack ascending? (cljs.core/dec cnt) nil))))
+
+  ICounted
+  (-count [coll]
+    (if (cljs.core/neg? cnt)
+      (cljs.core/inc (count (next coll)))
+      cnt))
+
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (let [cached-hash__ __hash]
+      (if (suss.bootstrap/nil? cached-hash__)
+        (let [computed-hash__ (hash-ordered-coll coll)]
+          (set! __hash computed-hash__)
+          computed-hash__)
+        cached-hash__)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (cljs.core/== new-meta meta)
+      coll
+      (PersistentTreeMapSeq. new-meta stack ascending? cnt __hash)))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(def ^:private create-tree-map-seq
+  (fn [tree ascending? cnt]
+  (PersistentTreeMapSeq. nil (tree-map-seq-push tree nil ascending?) ascending? cnt nil)))
+
+(def ^:private tree-map-add
+  (fn [comp tree k v found]
+  (if (suss.bootstrap/nil? tree)
+    (RedNode. k v nil nil nil)
+    (let [c (comp k (.-key tree))]
+      (cond
+        (cljs.core/zero? c)
+        (do (cljs.core/aset found 0 tree)
+            nil)
+
+        (cljs.core/neg? c)
+        (let [ins (tree-map-add comp (.-left tree) k v found)]
+          (if-not (suss.bootstrap/nil? ins)
+            (.add-left tree ins)))
+
+        :else
+        (let [ins (tree-map-add comp (.-right tree) k v found)]
+          (if-not (suss.bootstrap/nil? ins)
+            (.add-right tree ins))))))))
+
+(def ^:private tree-map-append
+  (fn [left right]
+  (cond
+    (suss.bootstrap/nil? left)
+    right
+
+    (suss.bootstrap/nil? right)
+    left
+
+    (instance? RedNode left)
+    (if (instance? RedNode right)
+      (let [app (tree-map-append (.-right left) (.-left right))]
+        (if (instance? RedNode app)
+          (RedNode. (.-key app) (.-val app)
+                    (RedNode. (.-key left) (.-val left)
+                              (.-left left)
+                              (.-left app)
+                              nil)
+                    (RedNode. (.-key right) (.-val right)
+                              (.-right app)
+                              (.-right right)
+                              nil)
+                    nil)
+          (RedNode. (.-key left) (.-val left)
+                    (.-left left)
+                    (RedNode. (.-key right) (.-val right) app (.-right right) nil)
+                    nil)))
+      (RedNode. (.-key left) (.-val left)
+                (.-left left)
+                (tree-map-append (.-right left) right)
+                nil))
+
+    (instance? RedNode right)
+    (RedNode. (.-key right) (.-val right)
+              (tree-map-append left (.-left right))
+              (.-right right)
+              nil)
+
+    :else
+    (let [app (tree-map-append (.-right left) (.-left right))]
+      (if (instance? RedNode app)
+        (RedNode. (.-key app) (.-val app)
+                  (BlackNode. (.-key left) (.-val left)
+                              (.-left left)
+                              (.-left app)
+                              nil)
+                  (BlackNode. (.-key right) (.-val right)
+                              (.-right app)
+                              (.-right right)
+                              nil)
+                  nil)
+        (balance-left-del (.-key left) (.-val left)
+                          (.-left left)
+                          (BlackNode. (.-key right) (.-val right)
+                                      app
+                                      (.-right right)
+                                      nil)))))))
+
+(def ^:private tree-map-remove
+  (fn [comp tree k found]
+  (if-not (suss.bootstrap/nil? tree)
+    (let [c (comp k (.-key tree))]
+      (cond
+        (cljs.core/zero? c)
+        (do (cljs.core/aset found 0 tree)
+            (tree-map-append (.-left tree) (.-right tree)))
+
+        (cljs.core/neg? c)
+        (let [del (tree-map-remove comp (.-left tree) k found)]
+          (if (or (not (suss.bootstrap/nil? del)) (not (suss.bootstrap/nil? (cljs.core/aget found 0))))
+            (if (instance? BlackNode (.-left tree))
+              (balance-left-del (.-key tree) (.-val tree) del (.-right tree))
+              (RedNode. (.-key tree) (.-val tree) del (.-right tree) nil))))
+
+        :else
+        (let [del (tree-map-remove comp (.-right tree) k found)]
+          (if (or (not (suss.bootstrap/nil? del)) (not (suss.bootstrap/nil? (cljs.core/aget found 0))))
+            (if (instance? BlackNode (.-right tree))
+              (balance-right-del (.-key tree) (.-val tree) (.-left tree) del)
+              (RedNode. (.-key tree) (.-val tree) (.-left tree) del nil)))))))))
+
+(def ^:private tree-map-replace
+  (fn [comp tree k v]
+  (let [tk (.-key tree)
+        c  (comp k tk)]
+    (cond (cljs.core/zero? c) (.replace tree tk v (.-left tree) (.-right tree))
+          (cljs.core/neg? c)  (.replace tree tk (.-val tree) (tree-map-replace comp (.-left tree) k v) (.-right tree))
+          :else     (.replace tree tk (.-val tree) (.-left tree) (tree-map-replace comp (.-right tree) k v))))))
+
+(deftype ValSeq [^not-native mseq _meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMeta
+  (-meta [coll] _meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (cljs.core/== new-meta _meta)
+      coll
+      (ValSeq. mseq new-meta)))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  ISeq
+  (-first [coll]
+    (let [^not-native me (suss.bootstrap/direct-protocol-call ISeq -first mseq)]
+      (suss.bootstrap/direct-protocol-call IMapEntry -val me)))
+
+  (-rest [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (suss.bootstrap/direct-protocol-call INext -next mseq)
+                 (next mseq))]
+      (if-not (suss.bootstrap/nil? nseq)
+        (ValSeq. nseq nil)
+        ())))
+
+  INext
+  (-next [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (suss.bootstrap/direct-protocol-call INext -next mseq)
+                 (next mseq))]
+      (when-not (suss.bootstrap/nil? nseq)
+        (ValSeq. nseq nil))))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(defn vals
+  "Returns a sequence of the map's values, in the same order as (seq map)."
+  [map]
+  (when-let [mseq (seq map)]
+    (ValSeq. mseq nil)))
+
+(deftype PersistentTreeMap [comp tree cnt meta ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
+  (keys [coll]
+    (es6-iterator (keys coll)))
+  (entries [coll]
+    (es6-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (vals coll)))
+  (has [coll k]
+    (contains? coll k))
+  (get [coll k not-found]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k not-found))
+  (forEach [coll f]
+    (loop [sorted-seq__ (seq coll) sorted-chunk__ nil sorted-count__ 0 sorted-i__ 0]
+      (if (cljs.core/< sorted-i__ sorted-count__)
+        (let [sorted-entry__ (suss.bootstrap/direct-protocol-call IIndexed -nth sorted-chunk__ sorted-i__)
+              k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+          (f v k)
+          (recur sorted-seq__ sorted-chunk__ sorted-count__ (cljs.core/inc sorted-i__)))
+        (when-let [sorted-seq__ (seq sorted-seq__)]
+          (if (chunked-seq? sorted-seq__)
+            (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
+              (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
+            (let [sorted-entry__ (first sorted-seq__)
+                  k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+              (f v k)
+              (recur (next sorted-seq__) nil 0 0)))))))
+
+  (entry-at [coll k]
+    (loop [t tree]
+      (if-not (suss.bootstrap/nil? t)
+        (let [c (comp k (.-key t))]
+          (cond (cljs.core/zero? c) t
+                (cljs.core/neg? c)  (recur (.-left t))
+                :else     (recur (.-right t)))))))
+
+  ICloneable
+  (-clone [_] (PersistentTreeMap. comp tree cnt meta __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (cljs.core/== new-meta meta)
+      coll
+      (PersistentTreeMap. comp tree cnt new-meta __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll entry]
+    (if (vector? entry)
+      (suss.bootstrap/direct-protocol-call IAssociative -assoc coll (-nth entry 0) (-nth entry 1))
+      (loop [ret coll es (seq entry)]
+        (if (suss.bootstrap/nil? es)
+          ret
+          (let [e (first es)]
+            (if (vector? e)
+              (recur (-assoc ret (-nth e 0) (-nth e 1))
+                     (next es))
+              (throw (suss.bootstrap/error "conj on a map takes map entries or seqables of map entries"))))))))
+
+  IEmptyableCollection
+  (-empty [coll] (PersistentTreeMap. comp nil 0 meta 0))
+
+  IEquiv
+  (-equiv [coll other] (equiv-map coll other))
+
+  IHash
+  (-hash [coll] (let [cached-hash__ __hash]
+      (if (suss.bootstrap/nil? cached-hash__)
+        (let [computed-hash__ (hash-unordered-coll coll)]
+          (set! __hash computed-hash__)
+          computed-hash__)
+        cached-hash__)))
+
+  ICounted
+  (-count [coll] cnt)
+
+  IKVReduce
+  (-kv-reduce [coll f init]
+    (if-not (suss.bootstrap/nil? tree)
+      (unreduced (tree-map-kv-reduce tree f init))
+      init))
+
+  IFn
+  (-invoke [coll k]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k))
+
+  (-invoke [coll k not-found]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k not-found))
+
+  ISeqable
+  (-seq [coll]
+    (if (cljs.core/pos? cnt)
+      (create-tree-map-seq tree true cnt)))
+
+  IReversible
+  (-rseq [coll]
+    (if (cljs.core/pos? cnt)
+      (create-tree-map-seq tree false cnt)))
+
+  ILookup
+  (-lookup [coll k]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k nil))
+
+  (-lookup [coll k not-found]
+    (let [n (.entry-at coll k)]
+      (if-not (suss.bootstrap/nil? n)
+        (.-val n)
+        not-found)))
+
+  IAssociative
+  (-assoc [coll k v]
+    (let [found (cljs.core/array nil)
+          t     (tree-map-add comp tree k v found)]
+      (if (suss.bootstrap/nil? t)
+        (let [found-node (nth found 0)]
+          (if (= v (.-val found-node))
+            coll
+            (PersistentTreeMap. comp (tree-map-replace comp tree k v) cnt meta nil)))
+        (PersistentTreeMap. comp (.blacken t) (cljs.core/inc cnt) meta nil))))
+
+  (-contains-key? [coll k]
+    (not (suss.bootstrap/nil? (.entry-at coll k))))
+
+  IFind
+  (-find [coll k]
+    (.entry-at coll k))
+
+  IMap
+  (-dissoc [coll k]
+    (let [found (cljs.core/array nil)
+          t     (tree-map-remove comp tree k found)]
+      (if (suss.bootstrap/nil? t)
+        (if (suss.bootstrap/nil? (nth found 0))
+          coll
+          (PersistentTreeMap. comp nil 0 meta nil))
+        (PersistentTreeMap. comp (.blacken t) (cljs.core/dec cnt) meta nil))))
+
+  ISorted
+  (-sorted-seq [coll ascending?]
+    (if (cljs.core/pos? cnt)
+      (create-tree-map-seq tree ascending? cnt)))
+
+  (-sorted-seq-from [coll k ascending?]
+    (if (cljs.core/pos? cnt)
+      (loop [stack nil t tree]
+        (if-not (suss.bootstrap/nil? t)
+          (let [c (comp k (.-key t))]
+            (cond
+              (cljs.core/zero? c)  (PersistentTreeMapSeq. nil (conj stack t) ascending? -1 nil)
+              ascending? (if (cljs.core/neg? c)
+                           (recur (conj stack t) (.-left t))
+                           (recur stack          (.-right t)))
+              :else      (if (cljs.core/pos? c)
+                           (recur (conj stack t) (.-right t))
+                           (recur stack          (.-left t)))))
+          (when-not (suss.bootstrap/nil? stack)
+            (PersistentTreeMapSeq. nil stack ascending? -1 nil))))))
+
+  (-entry-key [coll entry] (key entry))
+
+  (-comparator [coll] comp))
+
+(deftype PersistentTreeSet [meta tree-map ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
+  (keys [coll]
+    (es6-iterator (seq coll)))
+  (entries [coll]
+    (es6-set-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (seq coll)))
+  (has [coll k]
+    (contains? coll k))
+  (forEach [coll f]
+    (loop [sorted-seq__ (seq coll) sorted-chunk__ nil sorted-count__ 0 sorted-i__ 0]
+      (if (cljs.core/< sorted-i__ sorted-count__)
+        (let [sorted-entry__ (suss.bootstrap/direct-protocol-call IIndexed -nth sorted-chunk__ sorted-i__)
+              k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+          (f v k)
+          (recur sorted-seq__ sorted-chunk__ sorted-count__ (cljs.core/inc sorted-i__)))
+        (when-let [sorted-seq__ (seq sorted-seq__)]
+          (if (chunked-seq? sorted-seq__)
+            (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
+              (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
+            (let [sorted-entry__ (first sorted-seq__)
+                  k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+              (f v k)
+              (recur (next sorted-seq__) nil 0 0)))))))
+
+  ICloneable
+  (-clone [_] (PersistentTreeSet. meta tree-map __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (cljs.core/== new-meta meta)
+      coll
+      (PersistentTreeSet. new-meta tree-map __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll o]
+    (let [m (-assoc tree-map o nil)]
+      (if (cljs.core/== m tree-map)
+        coll
+        (PersistentTreeSet. meta m nil))))
+
+  IEmptyableCollection
+  (-empty [coll] (PersistentTreeSet. meta (-empty tree-map) 0))
+
+  IEquiv
+  (-equiv [coll other]
+    (and
+     (set? other)
+     (cljs.core/== (count coll) (count other))
+     ^boolean
+     (try
+       (reduce-kv
+         (fn [sorted-acc__ sorted-key__ sorted-value__] (or (contains? other sorted-key__) (reduced false)))
+         true tree-map)
+       (catch js/Error ex
+         false))))
+
+  IHash
+  (-hash [coll] (let [cached-hash__ __hash]
+      (if (suss.bootstrap/nil? cached-hash__)
+        (let [computed-hash__ (hash-unordered-coll coll)]
+          (set! __hash computed-hash__)
+          computed-hash__)
+        cached-hash__)))
+
+  ISeqable
+  (-seq [coll] (keys tree-map))
+
+  ISorted
+  (-sorted-seq [coll ascending?]
+    (map key (-sorted-seq tree-map ascending?)))
+
+  (-sorted-seq-from [coll k ascending?]
+    (map key (-sorted-seq-from tree-map k ascending?)))
+
+  (-entry-key [coll entry] entry)
+
+  (-comparator [coll] (-comparator tree-map))
+
+  IReversible
+  (-rseq [coll]
+    (if (cljs.core/pos? (count tree-map))
+      (map key (rseq tree-map))))
+
+  ICounted
+  (-count [coll] (count tree-map))
+
+  ILookup
+  (-lookup [coll v]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll v nil))
+  (-lookup [coll v not-found]
+    (let [n (.entry-at tree-map v)]
+      (if-not (suss.bootstrap/nil? n)
+        (.-key n)
+        not-found)))
+
+  ISet
+  (-disjoin [coll v]
+    (let [m (-dissoc tree-map v)]
+      (if (cljs.core/== m tree-map)
+        coll
+        (PersistentTreeSet. meta m nil))))
+
+  IFn
+  (-invoke [coll k]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k))
+  (-invoke [coll k not-found]
+    (suss.bootstrap/direct-protocol-call ILookup -lookup coll k not-found)))
+
+(defn sorted-map
+  "keyval => key val
+  Returns a new sorted map with supplied mappings."
+  ([& keyvals]
+     (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
+       (if in
+         (recur (nnext in) (assoc out (first in) (second in)))
+         out))))
+
+(defn sorted-map-by
+  "keyval => key val
+  Returns a new sorted map with supplied mappings, using the supplied comparator."
+  ([comparator & keyvals]
+     (loop [in (seq keyvals)
+            out (PersistentTreeMap. (fn->comparator comparator) nil 0 nil 0)]
+       (if in
+         (recur (nnext in) (assoc out (first in) (second in)))
+         out))))
+
+(defn sorted-set
+  "Returns a new sorted set with supplied keys."
+  ([& keys]
+   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))
+
+(defn sorted-set-by
+  "Returns a new sorted set with supplied keys, using the supplied comparator."
+  ([comparator & keys]
+   (reduce -conj
+           (PersistentTreeSet. nil (sorted-map-by comparator) 0)
+           keys)))
+
+(defn take-while
+  "Returns a lazy sequence of successive items from coll while
+  (pred item) returns logical true. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred]
+     (fn [rf]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+            (if (pred input)
+              (rf result input)
+              (reduced result))))))
+  ([pred coll]
+     (lazy-seq
+       (when-let [s (seq coll)]
+         (when (pred (first s))
+           (cons (first s) (take-while pred (rest s))))))))
+
+(defn mk-bound-fn
+  [sc test key]
+  (fn [e]
+    (let [comp (-comparator sc)]
+      (test (comp (-entry-key sc e) key) 0))))
+
+(defn subseq
+  "sc must be a sorted collection, test(s) one of <, <=, > or
+  >=. Returns a seq of those entries with keys ek for
+  which (test (.. sc comparator (compare ek key)) 0) is true"
+  ([sc test key]
+     (let [include (mk-bound-fn sc test key)]
+       (if (#{> >=} test)
+         (when-let [[e :as s] (-sorted-seq-from sc key true)]
+           (if (include e) s (next s)))
+         (take-while include (-sorted-seq sc true)))))
+  ([sc start-test start-key end-test end-key]
+     (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
+       (take-while (mk-bound-fn sc end-test end-key)
+                   (if ((mk-bound-fn sc start-test start-key) e) s (next s))))))
+
+(defn rsubseq
+  "sc must be a sorted collection, test(s) one of <, <=, > or
+  >=. Returns a reverse seq of those entries with keys ek for
+  which (test (.. sc comparator (compare ek key)) 0) is true"
+  ([sc test key]
+     (let [include (mk-bound-fn sc test key)]
+       (if (#{< <=} test)
+         (when-let [[e :as s] (-sorted-seq-from sc key false)]
+           (if (include e) s (next s)))
+         (take-while include (-sorted-seq sc false)))))
+  ([sc start-test start-key end-test end-key]
+     (when-let [[e :as s] (-sorted-seq-from sc end-key false)]
+       (take-while (mk-bound-fn sc start-test start-key)
+                   (if ((mk-bound-fn sc end-test end-key) e) s (next s))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -6969,6 +7713,12 @@ reduces them without incurring seq initialization"
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
         (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))
+
+;; Complete canonical tree singletons; comparator captured once in source order.
+(set! (.-EMPTY PersistentTreeMap) (PersistentTreeMap. compare nil 0 nil empty-unordered-hash))
+
+(set! (.-EMPTY PersistentTreeSet)
+  (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))
 ;; Original Suss WIT integer foundations, not extracted upstream source.
 ;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
 ;; Decimal parsing never converts the complete integer through binary64.

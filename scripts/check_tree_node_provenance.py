@@ -98,7 +98,7 @@ def verify():
     if (ROOT / 'runtime/core-import/epl-v10.html').read_bytes() != pinned_file(ROOT, 'epl-v10.html'): raise ValueError('EPL')
     recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())
     previous = json.loads(subprocess.check_output(['git', 'show', BASE + ':docs/compatibility/core-import.json']))
-    if len(previous['forms']) != 340 or recipe['forms'][:340] != previous['forms'] or [e['id'] for e in recipe['forms'][340:]] != IDS:
+    if len(previous['forms']) != 340 or recipe['forms'][:340] != previous['forms'] or [e['id'] for e in recipe['forms'][340:347]] != IDS:
         raise ValueError('old selections changed/order or appended group mismatch')
     for i in range(340):
         path = f'runtime/core-import/extracted/{i:04d}.cljs'
@@ -109,11 +109,21 @@ def verify():
                            ('tree_nodes.cljs', 'tests/oracle/src/suss_oracle/tree_nodes.cljs')]:
         if (FOLDER / 'evidence' / filename).read_bytes() != (ROOT / path).read_bytes(): raise ValueError('stale reference inputs')
     hashes = json.loads((FOLDER / 'evidence/hashes.json').read_text())
-    files = {p.name for p in (FOLDER / 'evidence').iterdir()} - {'hashes.json'}
+    files = {p.name for p in (FOLDER / 'evidence').iterdir()} - {'hashes.json', 'raw-observations'}
     if files != set(hashes): raise ValueError('evidence receipt file set')
     for name, entry in hashes.items():
         payload = (FOLDER / 'evidence' / name).read_bytes()
         if entry != {'sha256': digest(payload), 'bytes': len(payload)}: raise ValueError('evidence hash/bytes')
+    raw_folder = FOLDER / 'evidence/raw-observations'
+    if raw_folder.exists():
+        raw_receipt = json.loads((raw_folder / 'receipt.json').read_text())
+        if raw_receipt['upstream'] != PIN: raise ValueError('raw reference pin')
+        for path, expected in raw_receipt['sha256'].items():
+            # Generated development JS is not packaged; all retained inputs are mandatory.
+            if path.startswith('tests/oracle/out/'): continue
+            if digest((ROOT / path).read_bytes()) != expected: raise ValueError('raw reference hash')
+        from tree_node_raw_oracle import check as raw_check, compare as raw_compare
+        raw_check(); raw_compare(raw_folder / 'observations.json')
     from tree_node_oracle import compare
     compare(FOLDER / 'evidence/observations.json')
     print('Verified 7 whole declarations, every node method/arity, 4 full anonymous parents, complete seven-target registration, 8 macro originals, EPL, 340 unchanged selections/extracts and reference receipts; native pending')

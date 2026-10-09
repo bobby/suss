@@ -302,3 +302,9 @@
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
         (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))
+
+;; Complete canonical tree singletons; comparator captured once in source order.
+(set! (.-EMPTY PersistentTreeMap) (PersistentTreeMap. compare nil 0 nil empty-unordered-hash))
+
+(set! (.-EMPTY PersistentTreeSet)
+  (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))

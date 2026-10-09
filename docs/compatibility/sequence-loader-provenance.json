@@ -171,6 +171,18 @@
       "sha256": "95b269ad270220dd84f6a25b3c2ec48f0307a90a18d7bc7626aa04939d398f03",
       "patch": "docs/compatibility/patches/sorted-node-full-IComparable.json",
       "patch-sha256": "54709b068281a3ca2d546e943a4b4eff56c6ce9015368927885290462045860a"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9049,
+      "end-line": 9049,
+      "sha256": "536cd4527e31ad69e3f1979dd2928932dac3e58265f0330b658abc7af7a716a1"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9582,
+      "end-line": 9583,
+      "sha256": "749ba6a71c28b36c1688896751bfc4afce0673ece5d80a607091099eeac2c0bc"
     }
   ]
 }

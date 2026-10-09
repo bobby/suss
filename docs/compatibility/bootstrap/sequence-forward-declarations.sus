@@ -86,3 +86,6 @@
 
 ;; Whole sorted node/balancing mutually recursive source identities.
 (declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
+
+;; Whole sorted collection/iteration/range mutual dependencies.
+(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
