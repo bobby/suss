@@ -1,5 +1,13 @@
 # Retained sequence iteration and reversal
 
+Current #230 follow-up: Array length assignment is supported. The unchanged
+`iterator-array-shrink` pinned fixture expects Boolean false; its native test now
+checks that exact result after GC. The original59 shared observations, wrong-rseq
+arity error, retained iterator/reverse handles and subsequent growth assertions
+remain unchanged. Native execution of this correction is pending while the frozen
+7f71 baseline runs. Historical rejection evidence below is retained as historical,
+not current behavior or a newly passing observation.
+
 The canonical import selects complete pinned IndexedSeqIterator1644 and RSeq1768
 type forms, preserving every upstream Object/protocol method and mutable field.
 It also retains reversible?3356 and rseq3361 with explicit source-hash-bound defn
@@ -29,22 +37,16 @@ errors, unchanged array storage and recovery before subsequent growth/read calls
 Python80/import90/setup4/reviews176+889 checks pass. The required full workspace baseline also passes. Independent PR review/fixes
 and exact final-head CI still gate readiness.
 
-## Explicit named-property boundary
+## Historical named-property boundary before Array length support
 
-The accepted portable contract does not promise general JS/Closure interoperability.
-The existing named-property adapter supports array length reads and explicitly
-rejects named array writes. Source IndexedSeqIterator/RSeq only read length; this
-port does not require adding JS-style length assignment. Numeric aset growth and
-live values execute in the shared corpus.
-
-The original `iterator-array-shrink` probe is retained byte-for-byte as a separate
-one-case corpus, tests/oracle/iteration-length-boundary.json. Fresh pinned execution
-certifies false after assignment; native execution must produce SessionError::Language,
-leave retained storage intact and recover after GC. This is an explicit boundary,
-not one more matching native value or a skipped success. Both primary corpora run
-in scripts/test-iteration-oracle.sh; the native negative test reads the exact
-boundary fixture. General named array length writes remain unsupported on this
-adapter; no portable core declaration is marked excluded or implemented by this.
+The earlier adapter supported length reads and rejected writes. The exact pinned
+shrink probe was retained in tests/oracle/iteration-length-boundary.json and
+certified false in the reference, while the historical native test required a
+language error and recovery. Those outcomes document the earlier implementation;
+they do not justify a current rejection or count as current reference parity.
+Both primary corpora and their expected values remain unchanged. The current
+follow-up above replaces that obsolete native expectation with an exact Boolean
+observation, pending execution on the repaired head.
 
 Initial fresh47858 ended101: all53 original primary values matched, then native
 failed at the length-write boundary. Moved that exact probe to the separate explicit

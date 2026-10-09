@@ -127,8 +127,7 @@ fn array_bounds_arity_and_errors_preserve_session_recovery() {
         "(let [f aget] (f (array)))",
         "(let [f aset] (f (array) 0))",
         "(let [n -1] (make-array n))",
-        "(let [n 1000001] (make-array n))",
-        "(make-array nil 2000 2000)",
+        "(make-array nil 2000 2000 2000)",
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
@@ -136,6 +135,7 @@ fn array_bounds_arity_and_errors_preserve_session_recovery() {
         );
         assert_eq!(eval_number(&mut session, "7"), 7.0f64.to_bits());
     }
+    assert_eq!(eval_number(&mut session, "(let [n 1000001] (alength (make-array n)))"), 1000001.0_f64.to_bits());
     for source in [
         "(alength)",
         "(aget (array))",

@@ -1,0 +1,9 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "files": {
+    "tests/oracle/object-length-conversion-cases.json": "7888903cf65bae51a70b5fe500d26e43f86f8cc079106c0d4659b18fcac429b5",
+    "tests/oracle/src/suss_oracle/object_length_conversion.cljs": "94750c6bb3ef1b05e22ec2ae3271000c82ebe07c1a673653524f06e21d1e1808",
+    "docs/compatibility/object-length-conversion/evidence/observations.json": "1f1264665cc902b9b53581f0811d4f490e43a1f88f4ddb5255341c594a452961",
+    "docs/compatibility/object-length-conversion/evidence/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

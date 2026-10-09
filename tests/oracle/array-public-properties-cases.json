@@ -1,0 +1,93 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "named-length",
+      "source": "(let [a (array 17 19)] (set! (.-length a) 1) (and (= (.-length a) 1) (= (aget a \"length\") 1) (undefined? (aget a 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-length-rhs",
+      "source": "(let [a (array) rhs \"2\"] (and (identical? (aset a \"length\" rhs) rhs) (= (alength a) 2) (not (.hasOwnProperty a \"0\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-true-length",
+      "source": "(let [a (array 17 19)] (aset a \"length\" true) (and (= (alength a) 1) (= (aget a 0) 17)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-false-length",
+      "source": "(let [a (array 17)] (aset a \"length\" false) (and (= (alength a) 0) (not (.hasOwnProperty a \"0\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-length",
+      "source": "(let [a (array 17)] (aset a \"length\" nil) (= (alength a) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "shadow-push",
+      "source": "(let [a (array) f (fn [] 23)] (aset a \"push\" f) (and (identical? (.-push a) f) (= (.push a) 23) (= (alength a) 0) (.hasOwnProperty a \"push\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "dynamic-make-holes",
+      "source": "(let [n 2 a (make-array n)] (and (= (alength a) 2) (undefined? (aget a 0)) (not (.hasOwnProperty a \"0\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first-class-make-holes",
+      "source": "(let [f make-array a (f 2)] (and (= (alength a) 2) (not (.hasOwnProperty a \"1\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "literal-make-nil-own",
+      "source": "(let [a (make-array 2)] (and (nil? (aget a 0)) (.hasOwnProperty a \"0\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "multi-make-leaf-holes",
+      "source": "(let [a (make-array nil 2 3)] (and (.hasOwnProperty a \"0\") (= (alength (aget a 0)) 3) (not (.hasOwnProperty (aget a 0) \"0\")) (not (identical? (aget a 0) (aget a 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "dynamic-make-max-holes",
+      "source": "(let [n 4294967295 a (make-array n)] (and (= (alength a) n) (not (.hasOwnProperty a \"4294967294\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+[{"id":"negative-outer","value":false},{"id":"fractional-outer","value":false},{"id":"negative-leaf","value":true},{"id":"zero-outer-invalid-leaf","value":true},{"id":"zero-outer-invalid-middle","value":true},{"id":"nonnumeric-outer","value":true},{"id":"nonnumeric-leaf","value":true}]

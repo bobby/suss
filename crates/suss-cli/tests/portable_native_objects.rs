@@ -45,11 +45,10 @@ fn private_object_errors_are_atomic_or_runtime_and_recover() {
     }
     for source in [
         "(suss.bootstrap/object-get nil \"x\")",
-        "(suss.bootstrap/object-set (factory) (factory) 7)",
         "(let [a (array nil)] (aset a 0 a) (factory a))",
         "(let [a (array nil) b (array nil)] (aset a 0 b) (aset b 0 a) (factory a))",
     ] {
-        let error = session.eval(source).unwrap_err();
+        let error = session.eval(source).err().unwrap_or_else(|| panic!("{source}: unexpectedly succeeded"));
         assert!(
             matches!(error, SessionError::Language(_)),
             "{source}: {error:?}"
@@ -64,4 +63,28 @@ fn private_object_errors_are_atomic_or_runtime_and_recover() {
     );
     assert_eq!(number(&mut session, "(do (def captured_factory factory) (set! factory (fn [] 7)) (suss.bootstrap/object-get (captured_factory \"x\" 23) \"x\"))"), 23.0);
     assert_eq!(number(&mut session, "(factory)"), 7.0);
+}
+
+
+#[test]
+fn ordinary_object_property_keys_preserve_values_hook_order_and_throw_recovery() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def key_factory (suss.bootstrap/object-factory)) (def key_owner (key_factory)) (def key_trace 0)").unwrap();
+        let cases = [
+            ("(suss.bootstrap/object-set (key_factory) (key_factory) 7)", 7.0_f64),
+            ("(suss.bootstrap/object-set key_owner (key_factory) 7)", 7.0),
+            ("(suss.bootstrap/object-get key_owner \"[object Object]\")", 7.0),
+            ("(do (def hook_key (key_factory \"toString\" (fn [] (set! key_trace (+ (* key_trace 10) 4)) \"label\") \"valueOf\" (fn [] (set! key_trace 999) (throw 91)))) (suss.bootstrap/object-set (do (set! key_trace 1) key_owner) (do (set! key_trace (+ (* key_trace 10) 2)) hook_key) (do (set! key_trace (+ (* key_trace 10) 3)) 23)))", 23.0),
+            ("key_trace", 1234.0),
+            ("(suss.bootstrap/object-get key_owner \"label\")", 23.0),
+            ("(do (def throwing_key (key_factory \"toString\" (fn [] (set! key_trace (+ (* key_trace 10) 4)) (throw 73)) \"valueOf\" (fn [] (set! key_trace 999) 1))) (try (suss.bootstrap/object-set (do (set! key_trace 1) key_owner) (do (set! key_trace (+ (* key_trace 10) 2)) throwing_key) (do (set! key_trace (+ (* key_trace 10) 3)) 99)) (catch :default e e)))", 73.0),
+            ("key_trace", 1234.0),
+            ("(suss.bootstrap/object-get key_owner \"label\")", 23.0),
+            ("(suss.bootstrap/object-get (key_factory \"x\" 19) \"x\")", 19.0),
+        ];
+        for (source, expected) in cases {
+            // The host reads the actual boxed Number after GC; guest equality is not evidence.
+            assert_eq!(number(&mut session, source).to_bits(), expected.to_bits(), "{source}");
+        }
+    }
 }

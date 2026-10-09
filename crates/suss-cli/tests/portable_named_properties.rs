@@ -132,7 +132,6 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         .unwrap();
     for source in [
         "(set! (.-newField named-instance) 1)",
-        "(set! (.-length (array 1)) 0)",
         "(set! (.-length \"x\") 0)",
     ] {
         assert!(
@@ -140,6 +139,43 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
             "{source}"
         );
     }
+    session.eval("(def named-array (array 7 8))").unwrap();
+    for source in ["(set! (.-length named-array) 0)", "(.-length named-array)"] {
+        let value = session.eval(source).unwrap();
+        session.collect().unwrap();
+        session
+            .inspect(&value, |mut store, value| {
+                let fields = value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap()
+                    .fields(&mut store)?
+                    .collect::<Vec<_>>();
+                let [Val::F64(bits)] = fields.as_slice() else {
+                    panic!("Number layout")
+                };
+                assert_eq!(*bits, 0.0_f64.to_bits());
+                Ok(())
+            })
+            .unwrap();
+    }
+    let removed = session.eval("(aget named-array 0)").unwrap();
+    session.collect().unwrap();
+    session
+        .inspect(&removed, |store, value| {
+            assert_eq!(
+                value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32(),
+                6
+            );
+            Ok(())
+        })
+        .unwrap();
     let result = session
         .eval("(+ (named-owner 2) (.-cache named-owner) (.-value named-instance))")
         .unwrap();

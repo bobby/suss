@@ -1,0 +1,9 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "files": {
+    "tests/oracle/object-coercion-cases.json": "ddc8164c91c58d53b539edeb0962fb60bfffba4afc805fbf2529e897751a68c9",
+    "tests/oracle/src/suss_oracle/object_coercion.cljs": "0b13296736b2000a1ca39634b0dbb65fca927e46ca32146411913827ed3775d8",
+    "docs/compatibility/object-coercion/evidence/observations.json": "b328b2399f60172bc2d68994ec28454af7354af582b333735936711b034e3a12",
+    "docs/compatibility/object-coercion/evidence/compile.log": "4c5912d227b01b4ce9fe5af57009172a23fa2ce24bf26d306336e0d2290de493"
+  }
+}

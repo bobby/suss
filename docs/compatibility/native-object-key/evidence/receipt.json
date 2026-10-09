@@ -1,0 +1,30 @@
+{
+  "base": "3a50acb08a7674da24550cf8d322de5dc90a3541",
+  "cljs_pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "oracle_compile_exit": 0,
+  "oracle_node_exit": 0,
+  "diagnostic_exit": 101,
+  "focused_native_exit": 0,
+  "focused_native_counts": {
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  "baseline": {
+    "session": 94535,
+    "exit": 101,
+    "passed": 502,
+    "failed": 1,
+    "ignored": 0,
+    "log": "/private/tmp/suss-m4-full-baseline-late-ci.log",
+    "sha256": "a2e5cc42e23b8086d3555afdaf792ddd382d5c0cdd4ffe3307fb421b6e5d6f98"
+  },
+  "sha256": {
+    "tests/oracle/src/suss_oracle/native_object_key.cljs": "9d16ac8a0d2f2064db06e17c9d53179d49d171b2f240703310d88dbfea8e60ff",
+    "tests/oracle/out/native-object-key.js": "76464906018d9776c0b66a99ae3942f4b1584e4eff3c7700a880b77ceae9ebb9",
+    "docs/compatibility/native-object-key/evidence/focused-native.log": "f5cf49ed738aded6cd2cc4c3d16fc133e6dfb5181e835125d7080463adefedcf",
+    "docs/compatibility/native-object-key/evidence/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/compatibility/native-object-key/evidence/observations.json": "f3880f42ad998613823e2738eef0fc8ab7a122a958dad28657201c323e143ed6",
+    "docs/compatibility/native-object-key/evidence/parent-diagnostic.log": "1d31f518a92fd2046617ba10deda667df0c63e11fd3916b4d00534d9eb8c3fd8"
+  }
+}

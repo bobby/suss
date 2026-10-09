@@ -154,8 +154,14 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
                 // Keep the fresh pin's ignored-extra-argument result. The
                 // accepted portable design requires wrong-arity errors; all
                 // three argument effects run before its catch returns111.
-                assert_eq!(case["expected"], serde_json::json!({"tag":"f64","bits":"3ff0000000000000"}));
-                assert_eq!(actual, serde_json::json!({"tag":"f64","bits":"405bc00000000000"}));
+                assert_eq!(
+                    case["expected"],
+                    serde_json::json!({"tag":"f64","bits":"3ff0000000000000"})
+                );
+                assert_eq!(
+                    actual,
+                    serde_json::json!({"tag":"f64","bits":"405bc00000000000"})
+                );
                 strict_arity_boundaries += 1;
             } else {
                 assert_eq!(actual, case["expected"], "{}", case["id"]);
@@ -265,9 +271,63 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
                 == 4))
             .unwrap()
     );
-    assert!(session.eval("(js-mod (js-obj) 3)").is_err());
+    // Ordinary object conversion is supported: the default object string is
+    // nonnumeric, so the remainder is NaN rather than an unsupported error.
+    let value = session.eval("(js-mod (js-obj) 3)").unwrap();
     session.collect().unwrap();
-    assert!(session.eval("(js-mod 7 3)").is_ok());
+    let bits = session
+        .inspect(&value, |mut store, value| {
+            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
+            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
+                panic!("expected independently decoded boxed Number")
+            };
+            Ok(*bits)
+        })
+        .unwrap();
+    assert!(f64::from_bits(bits).is_nan());
+
+    // A conversion throw still stops the later operand's conversion. Both
+    // operand expressions run before the arithmetic operation converts them.
+    session.eval("(def trace 0)").unwrap();
+    let Err(suss_cli::portable_session::SessionError::Language(payload)) = session.eval(
+        "(js-mod (do (set! trace 1) (js-obj \"valueOf\" (fn [] (set! trace (+ (* trace 10) 3)) (throw 73)))) (do (set! trace (+ (* trace 10) 2)) (js-obj \"valueOf\" (fn [] (set! trace 999) 3))))",
+    ) else {
+        panic!("expected original conversion throw")
+    };
+    session.collect().unwrap();
+    let bits = session
+        .inspect(&payload, |mut store, value| {
+            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
+            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
+                panic!("expected original numeric throw payload")
+            };
+            Ok(*bits)
+        })
+        .unwrap();
+    assert_eq!(bits, 73.0_f64.to_bits());
+    let value = session.eval("(== trace 123)").unwrap();
+    assert!(
+        session
+            .inspect(&value, |store, value| Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32()
+                == 4))
+            .unwrap()
+    );
+    let value = session.eval("(js-mod 7 3)").unwrap();
+    session.collect().unwrap();
+    let bits = session
+        .inspect(&value, |mut store, value| {
+            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            Ok(number.field(&mut store, 0)?.unwrap_f64().to_bits())
+        })
+        .unwrap();
+    assert_eq!(bits, 1.0_f64.to_bits());
 }
 
 #[test]

@@ -1,0 +1,19 @@
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-sorted-after-queue/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 0.48s
+     Running tests/core_comparator_foundations.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/core_comparator_foundations-0181ce9db1ecac9d)
+
+running 3 tests
+test private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases ... ok
+test primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases ... ok
+test staged_type_returns_retained_nominal_constructors_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.40s
+
+     Running tests/portable_array_join.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_array_join-e4162cee6c1d08e7)
+
+running 2 tests
+test array_join_cancellation_does_not_leave_a_cycle_marker ... ok
+test array_join_conversion_preserves_holes_nesting_and_live_reads ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.51s
+

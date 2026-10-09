@@ -1,0 +1,26 @@
+   Compiling suss-core v0.1.0 (/private/tmp/suss-m4-native-object-key-repair/crates/suss-core)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-native-object-key-repair/crates/suss-compile)
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-native-object-key-repair/crates/suss-reader)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-native-object-key-repair/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 9.24s
+     Running tests/portable_native_objects.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_native_objects-0b2dfa4a7596b01b)
+
+running 2 tests
+test private_object_errors_are_atomic_or_runtime_and_recover ... FAILED
+test private_object_factory_and_properties_execute_ordered_source_after_gc ... ok
+
+failures:
+
+---- private_object_errors_are_atomic_or_runtime_and_recover stdout ----
+
+thread 'private_object_errors_are_atomic_or_runtime_and_recover' (9858940) panicked at crates/suss-cli/tests/portable_native_objects.rs:52:66:
+(suss.bootstrap/object-set (factory) (factory) 7): unexpectedly succeeded
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    private_object_errors_are_atomic_or_runtime_and_recover
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+error: test failed, to rerun pass `-p suss-cli --test portable_native_objects`

@@ -22157,9 +22157,669 @@ a current-base pass. Independent rebase review, focused gates and the required
 full baseline/final-head CI are pending. Next: validate the rebased experiment
 against new bootstrap content; no MLIR adoption or full M4 completion claimed.
 
-
 ### 2026-10-09 — post-merge MLIR evidence packaging (documentation lane)
 
 Created isolated `/private/tmp/suss-m4-mlir-postmerge-evidence` from verified latest main `f4b13f306ad354c6cbe5bc0c49cc44975249396d`. Preserve the separate running prerequisite baseline at `0f2e3a6` (session50970); no second local Cargo graph or source edits in its frozen worktree. Packaged completed MLIR gates at PR #227 head `b82ad94cf7545a4f80315af3a6f677e57fc4bd13` under `experiments/mlir/evidence/post228`, keeping historical receipts unchanged. Before documentation changes, all 184 experiment files, 120 production files and four bootstrap artifacts matched the executed manifest. Independently hashed/summed the full baseline log: 207 result blocks, 1,550 passed, zero failed, 41 existing ignored, SHA256 dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377. Nine post-rebase gates completed exit0; ten final-head CI checks succeeded in run37875362660. Raw CI capture predates local baseline completion; its pending field remains historical and is explicitly superseded by terminal receipt/full log.
 
 Audit maps all seven #188 criteria to bounded evidence and limitations. Updated README/decision/acceptance work record to distinguish completed historical execution from this documentation head's pending publication gates. Fresh post-#228 paired emission medians: native original/mutated 5.841/5.907ms, MLIR 19.014/19.128ms; excludes builds, execution and absent source-to-MLIR conversion, no performance superiority claim. Deferral remains the recommendation; adoption requires a separate reviewed architectural decision. No shipped implementation changes, no M5–M7 advance, no original M4 issue closed. New documentation checkpoint review, unchanged workspace baseline and final-head CI remain required before promotion. Next: independent evidence-link/hash/audit review; wait for the existing Cargo graph, then run this checkpoint's required gates and publish for user review.
+Sorted prerequisite current-main refresh onto4e0f00d: source copied exactly from
+reviewedcheckpoint8429c26; preserved all325mainrecipeentries/426reviews, add3whole
+protocol/type forms. Five Rustproductionpatches unchanged. Refreshreceipt at
+/private/tmp/suss-m4-sorted-after-queue-refresh.json. NoCargo/native/updatedbootstrap
+pass yet. Typeadapter array/function/nativeObject constructor/ToPrimitive boundary
+still unsupported; fullcompare/tree/record original18scope remains open.
+Map/filter228frozen5f19cf8 fullbaseline99452 is onlySussCargo graph; no secondgraph.
+Next freshprovenance/primary/source review then nativeafterCargo slotfree.
+
+Sorted currentqueue refresh30820terminal0:332imports reproduce,429reviews636
+unassessed,23licensedsetup forms, rustfmt five newRustfiles/diffchecks pass; fresh
+pinned27interfaceobservationsmatch log/private/tmp/suss-m4-sorted-after-queue-primary.log.
+NoCargo/bootstrap/nativeexecution occurred for this refresh; oldcompiler-prototype
+comments and protocol-only numeric observations do not prove sortedcollections.
+Currentdoclabels oldindices/counts historical. Independent source refresh review
+pending; full array/function constructors/ToPrimitive/comparator/tree/record scope
+unchanged. Queuebaseall325recipe426reviewentries preserved; codehashreceipt saved.
+
+Sorted current-main refresh review: no material source defect; verifiedall325base
+selections426reviews/extractedbytes preserved and fiveproductionpatches/twohelpers
+byte-identical to8429c26, reproduced27primary observations. Older22723b4docsection
+markedhistorical/superseded by4e0f00d snapshot. FullPython231pass7.896s, zerofailures.
+This checkpoint has no newnative/bootstrap/fulltype/comparator acceptance claim.
+RequiredCargo slot currentlyownedby228fullbaseline99452; do notstartsecondgraph.
+
+Independent sorted-plan review at82bee29 finds no new material source defect,
+native prerequisites still pending. Next implementation after nativeproof is
+canonical Array constructor identity/lookup (primitive predicate steps already
+authored). Full comparison requires array/function/native constructor identity,
+ordered fresh ToPrimitive for > then <, array string conversion with captured
+length/holes/nesting/cycles, live type/array?/-compare and ordered errorformat
+with arbitrary throw preservation. Comparator wrappers must retain unchanged
+numeric results and CLJS truthiness for reversed0/NaN; compare-indexed order/
+arities remain required. Full tree order/deletion/invariants/persistence/meta/
+equality and records remain original18requirements. No sortedCargo/newsource
+execution. Baseline99452 confirmedlive in conformance suite.
+
+Canonical Array constructor prerequisite regressions authored: six shared
+cases cover actual typeidentity/callable0arity, numeric length/undefinedholes,
+singlefalse/nil element and multipleelements. Fresh pinned compile41017 exits0,
+Node ordered6alltrue; strict drivercompare and3 failclosed harness tests pass.
+Retained primaryobservations/hash under array-constructor/evidence.
+Both-phase native test independently decodesBoolean afterGC, uncompiled.
+Full Array constructor implementation, invalid-length/effect cases and retained
+constructor GC/reload remain pending; notfullsorted acceptance.
+Fuelmeasurement46378 remainssoleCargo; no sortednative started.
+
+Array constructor corpus expanded13: string notnumericlength, -0length0 and
+fiveinvalidnumericlengths throw exact Invalid array length after argument
+effectonce. Fresh pinnedrunner88043 terminal0/13matches;3harnesspass.
+Native13IDs aligned, uncompiled. Retained13results/log/hash; independent
+source/harnessreview pending. Fuelmeasurement46378 stilllive soleCargo.
+
+Array review reproduces13primary/3harness, no material defect; identified hole
+property absence, RangeErroridentity, large sparse validlength gaps. Expanded
+17cases with multiplearg effects and singlearray/object/undefined identity;
+fresh runner38715 exits0/17matches,3harnesspass. Sole-host constructorGC and
+separate invocation identity test authored/uncompiled. Retained17evidencehashes;
+fullconstructor and originalsorted acceptance remain pending. Fuel46378live.
+
+Sorted/Array fullPython81447 terminal0, retained arrayconstructor evidence
+python-suite.log/hash. Allnewnative tests remain uncompiled while228new
+fullbaseline94838 runs on frozen ebdbc16. Next nativeprereqbootstrap execution
+still required before claiming constructor identity or full comparison support.
+
+Array storage inspection for next constructor implementation: existing
+runtime_abi/arrays.rs MAX_LENGTH=1000000 is a bootstrap resource bound,
+source-array-new clones dense ARGS and source-array-make builds dimensions.
+Generic Invalid or unsupported array operation is neither proof of RangeError
+identity nor valid uint32length support. Constructor implementation must first
+distinguish JS invalidnumericlength from resource/storage capacity; do not
+reuse dimension coercion for single nonnumeric elements or silentlytruncate
+large validlengths. Canonical constructor rooting/current bounded identity
+helpers remain uncompiled. Fullsorted/Arrayacceptance still pending.
+
+Independent read-only Array prerequisite review while MLIR baseline78918 runs:
+current dense source-array buffer conflates holes with present undefined and
+cannot represent valid sparse uint32 lengths. Implementation route requires
+semantic storage accessors (logical length/get/set/own-presence/delete/shrink),
+GC-owned sparse entries or pages with dense optimization, then migration of
+array_methods/push/pop/named_properties and array-to-ARGS call consumers.
+Canonical runtime-rooted callable Array belongs in primitive_constructors and
+source-array type lookup in type_values; mutable constructor/prototype lookup
+needs explicit portable-contract resolution. Invalid numeric length requires
+actual RangeError identity; valid large sparse length cannot use the existing
+one-million resource-bound error. Ordered fresh ToPrimitive and join then use
+semantic reads, captured length, later mutations, nesting/cycles and cleanup.
+This is implementation planning, not new source execution or acceptance.
+Next scheduled Cargo step remains existing scalar/type prerequisite validation
+after sole MLIR baseline gates release the lane. Preserve sharing assertions
+and all original #18/#19 criteria during storage migration.
+
+## Remaining M4 refresh after #227/#228 merges — 2026-10-08
+
+Sorted constructor prerequisites refreshed at 82e400d onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus ISorted/IComparable/type. python3 scripts/core_import.py --check:338files verified; git diff --check passes. Seven prerequisite Rust sources are byte-identical to pre-rebase 8fccc93. Bootstrap artifacts remain merged main artifacts; authored native prerequisites are still uncompiled. Next after sole baseline34020 terminal: regenerate both bootstrap phases, execute comparator compiler/ABI and Runtime/Macro protocol/scalar-constructor gates before full Array/comparator/tree work. Original #18/#19 remain incomplete.
+
+Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` terminal0, 238tests pass in 7.801s; log /private/tmp/suss-m4-sorted-post227-python.log, SHA256 764e8539084fed7f6062801ccdfda9d848a749a8e531f04f1e182314fd4f3348. Independent read-only exact-head review 28dea377ac13e918067a4f06b6043abf55a4f0cb found no material refresh defects. This validates harness/provenance and retained observations, not fresh native execution. Bootstrap regeneration and native gates still pending; baseline34020 remains sole Cargo graph.
+
+Array storage regressions expanded17->22 while sole baseline34020 remains live.
+JAVA_TOOL_OPTIONS=-Xmx512m sh scripts/test-array-constructor-oracle.sh, session85955
+terminal0; all22 pinned ordered Boolean observations match. Three fail-closed
+Python harness tests pass. New cases cover own-property hole/undefined distinction,
+valid sparse lengths1000001/4294967295 with last-index writes, and uint32-max
+ordinary property preserving length. Evidence logs/observations and SHA256 receipts
+retained under docs/compatibility/array-constructor/evidence/primary-22-*.
+Native test corpus aligned but uncompiled; implementation and exact RangeError
+identity remain required. Independent addition review requested; no second Cargo.
+
+Independent read-only Array22 review found no material findings and reproduced
+all22 pinned observations, three strict harness tests and clean diff. Native
+execution remains pending; shrink/delete and inherited-property behavior remain
+separate storage requirements alongside RangeError identity.
+
+Post-rebase MLIR validation completed at frozen b82ad94: full required baseline
+34020 terminal0, 1550passed/0failed/41existingignored,207resultblocks; logSHA256
+dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377.
+All10 final-head CI checks pass. Rebuilt bridge97936, native-analysis66760,
+actual two-fragment source-export45617, seven native effects57893,92paired
+comparison18167, fresh seven-case pinned effects81757,CLIbuild40824 and fresh
+pinned source oracle61020 all terminal0. Comparison medians original/mutated:
+native5.841/5.907ms,MLIR19.014/19.128ms; retained exclusions and no speed claim.
+External receipts: /private/tmp/suss-m4-mlir-post228-validation-plan.json and
+/private/tmp/suss-m4-mlir-baseline-b82ad94-receipt.json; executed content identity
+/private/tmp/suss-m4-mlir-identity-executed-post228-b82ad94.json verifies. These
+receipts describe frozen MLIR execution, not later sorted changes or M4 completion.
+
+Sorted bootstrap regeneration15850 terminal0 with jobs2/locked/profiletest and
+CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226. Both
+phases generated in runtime/bootstrap. Identity verifier initially lacked that
+target environment and failed to locate compiled build script; rerunning with
+the exact target environment passed. Focused compiler comparator foundations
+session15756 currently compiling; sole Cargo graph. Next terminal-success step:
+execute both-phase core comparator/interface prerequisites and runtime ABI guards,
+then Java/Node-free reproducibility gate. Full Array/comparator/tree/record and
+original #18/#19 criteria remain incomplete; no native prerequisite pass yet.
+
+Compiler comparator guards15756 terminal0:2passed/0failed/ignored0. Native
+foundations99505 terminal101: all3 scalar/type comparator tests passed in both
+phases; sorted shared nominal27-case corpus passed, but reload/alias test failed
+in Runtime at core_sorted_interfaces.rs:143. Reloading CORE makes conjunction
+identical? cljs.core/ISorted saved-sorted-protocol and implements? false. Log
+/private/tmp/suss-m4-sorted-native-foundations.log retains failure; do not claim
+full prerequisite gate pass or skip it. Next: isolate identity versus implements
+and trace stable protocol key/definition behavior on repeated core loading, fix
+semantics with focused regression, then rerun compiler/native/ABI/bootstrap gates.
+
+Reload investigation77597 terminal101 isolated identityfalse with current
+implements?true. Fresh pinned CLJS69719 terminal0/Node0 gives [false,true,false,17,17]:
+public defprotocol value is fresh, current protocol symbol implements retained
+instance, saved ordinary-var symbol is not a protocol symbol for the macro, and
+new/retained methods dispatch17. Fixture/evidence now tracked in tests/oracle/src/
+suss_oracle/protocol_reload.cljs and docs/compatibility/protocol-reload/evidence.
+Initial49648 oracle compile failed due generated fixture path outside classpath;
+corrected location before terminal successful rerun. Native expectation was wrong,
+not lost implementation: split assertions, expect freshpublic identityfalse.
+Corrected94495 terminal0:2tests pass18.40s in both phases afterGC. Independent
+review finds no material issue; retained aliases/method/arity/recovery coverage.
+No dynamic saved-protocol semantics claim. RuntimeABI98718 now soleCargo graph.
+Next after success: Java/Node-free bootstrap reproduction, then actual sparse
+Array/ToPrimitive/comparator implementation, retaining original sorted/record scope.
+
+RuntimeABI98718 terminal0:50passed/0failed/ignored0,6.86s. Java/Node-free
+verify-bootstrap58067 terminal0: twicegenerated artifacts matchstored4files,
+compiledidentity passes and4compiledbootstraptests pass14.34s. Source Array
+constructor regression3465 terminal101:0passed/2failed/ignored0,4.93s. Both
+initial type(array) lookup and retained-constructor acquisition throw language
+values, confirming Array constructor support is absent; no success or skipclaim.
+Log /private/tmp/suss-m4-sorted-array-before-implementation.log. Added case/source
+context to corpus failure diagnostics. Next implementation: canonical rooted
+Array callable plus true sparse uint32logical-length/presence storage and access
+consumers; exact RangeErroridentity and ordered ToPrimitive remain required.
+Scalar/type prerequisites are validated; fullsorted/tree/record scope remainsopen.
+
+Sparse backing implementation started: runtime_abi/sparse_arrays.rs uses only
+shared Args/Number GC types. Constant-size initial storage holds logical uint32
+length and linked indexed entries; get/has distinguish absence from explicit
+undefined, set updates existing entries and grows length except index4294967295
+which remains ordinary property. No dense allocation for4294967295 logical length.
+Actual focused Wasm test36467 terminal0:1passed/0failed/ignored0,50filtered,0.15s;
+checks sparse max/1M+1 length, ownpresence and scoped payload retention afterGC.
+This backing is not yet wired to source Array constructor or old consumers;
+Array native failure3465 remains valid. Full runtimeABI run started next; no
+newbootstrap/sourceconstructor acceptanceclaim. Independent read-only backing
+review requested. Next: deletion/shrink and accessor migration, then canonical
+Array/type and exact RangeError, fullcoercion/comparator/tree/record originalscope.
+
+Sparse first fullABI51303 terminal0:51passed/0failed/ignored0,5.61s. Added
+delete/unlink and length shrink/grow: removes indexed entries above newlength,
+preserves ordinary4294967295 property, doesnotresurrectremovedentries on grow,
+delete neverchangeslogical length. Secondfocused65329 terminal0:2passed0failed
+50filtered0.24s. Independent initialreview found valid-state ownership/boundary
+logic sound, but ingressvalidation/acyclicity and bulkconstruction needresolution
+beforeowner migration. Repaired malformedlength saturation: exactuint32 check
+throws actual languageexception for negative/fractional/NaN/Inf/overflow. Added
+existingentry overwrite coverage. Thirdfocused91077 terminal0:3passed0failed
+50filtered0.41s. Logs /private/tmp/suss-m4-sparse-array-storage-{abi,second,third}.log.
+Backing remains unwired; complete linked-entry validation/acyclicity or canonical
+owner ingressguard, bulk/hybriddenseconstruction and consumer migration still
+required. Bootstrap now stale afterruntimechanges: regenerateafterintegration.
+FullArray22, comparator/tree/records acceptance remains incomplete.
+
+Sparse ingress guards now validate exactuint32 entrykeys, shape/tails and
+Floyd-detect cycles before mutation. Fourthfocused80535 terminal0:4passed/0failed
+50filtered0.47s; foreign fractional/NaN/badtail/shape/selfcycle all throw language
+exceptions before shrink changeslength. Bulkfromargs visitsinputonce, freshnodes
+avoid repeated find/set; fifthfocused44307 terminal0:5passed/0failed50filtered
+0.64s,1024inputcopy/storageisolation andexplicitundefinedpresence verifiedafterGC.
+Logs /private/tmp/suss-m4-sparse-array-storage-{fourth,fifth}.log. Independent
+review ofnewguards/bulk requested; notwiredtosourceArray yet. Next: migrate
+arraycreation/accessors, rawArgs consumers and push/pop/clone withholepreservation,
+then canonicalArray callable/type/RangeError and fullcoercion/comparator/tree.
+
+Hybrid backing now uses Args4 [logical length,sparse head,dense prefix,UTF16
+presence mask], without adding sharedABItypes. Bulk ingress clonesdenseArgs once
+and marksallpresent; denseget/has/set/delete use directindexed storage. Shrink
+truncatesprefix+mask, sparse highindices remainseparate. Firsthybrid compilefailed
+due delimiters, repaired; second6013 4pass/1fail (obsolete constantbacking assertion
+2 vsnew4), updated layoutcheck. Third2444 terminal0:6passed0failed50filtered0.66s,
+includesdense delete/reinsertundefined and shrink/grow noresurrection. Logs
+/private/tmp/suss-m4-sparse-array-storage-hybrid{,-second,-third}.log retained.
+Independenthybrid review requested; sparse foreign duplicate/outoflogical-length
+entries remain ingressgap beforeownerwiring. SourceArray/constructor migration
+hasnotoccurred yet; bootstrapstale afterruntimeedits. Next rejectforeignsparse
+invariants whilepreservingdensefastpath, then accessor/consumer migration.
+
+Hybrid ingress now requires strictlyascending sparse keys, disjoint fromdense
+prefix and belowlogical length except ordinaryuint32max. Sortedinsert captures
+oldlength beforelink mutation and preservesvalidfinalstate. Ordered12440 terminal0:
+6passed0failed50filtered0.69s. Mutation-only maskscan rejects badpresence before
+set/delete/shrink; readscheckaddressedflag only (dense readsconstant-time when
+sparsechainempty; sparsechains stillvalidated/scanned). Focused83696 terminal0:
+8passed0failed50filtered0.93s, duplicate/outofrange/unordered/denseoverlap and
+malformedmask regressions preserveunmutatedstate. FullABI runstartedafterfocus;
+independentrepairs reviewrequested. Source-arrayowner/constructor notwired,
+bootstrapstale; nextactualwork accessor/consumer migration plus canonicalArray.
+
+FullhybridABI19590 terminal0:58passed0failedignored0,6.50s; independentreview
+foundfunctionalguards sound but fullmaskscan madeindividualdensewritesquadratic.
+Set/delete nowvalidateaddressedpresence beforewrite, neverrepairinvalidtarget;
+shrink retainsfullmaskscan. Reads/writesdirectwhenno sparsechain. Eightfocused
+58508 terminal0 .89s. Added explicit sparse-to-args independentdense snapshot:
+copydensepresentpayloads andwalksparseonce, holesbecomeundefined, ordinaryMAXkey
+excluded. MAX_LENGTH bounds only this materializedArgs allocation, notvalid
+sparselogicalarray. Newmaterialization/isolation/boundary focused16776 terminal0:9passed0failed
+50filtered1.66s;
+log /private/tmp/suss-m4-sparse-array-storage-materialize-second.log. Backing
+reviewrequested; actualsourceowner/accessor andmutation/sliceconsumers still
+requiremigration beforeconstructor22pass. Bootstrapstale; no sourcearrayclaim.
+
+SourceArray owner nowstoresvalidatedhybridbacking inits existingonefield. New/
+holes-new/bkg/length/get/set andpush/pop usebacking, not rawArgs. Numericproperty
+parserusesi64 todistinguish valid4294967295 frominvalid; stringindex path unchanged.
+RawArgs consumers receiveexplicit independentmaterialization. Sourceclone now
+copybacking directly preservesholes/undefinedpresence/maxlogicallength, excludes
+ordinaryproperties. Ownership41358 terminal0; firstfull54244 terminal101:
+58pass1failobsolete testexpected1Mindexgrow rejection. Revised topositivegrowth
+1_000_002 and boundedArgsmaterializationnegative; second16241 terminal0:
+59passed0failedignored0,6.97s. Actual sourceownerclone66676 terminal0:
+1passed59filtered0.16s, MAXsparseclone/independentmutation/presence/GC retained.
+Logs /private/tmp/suss-m4-source-array-{migration-first,migration-full-first,
+migration-full-second,owner-clone}.log. Independentmigration reviewrequested.
+Slice remainsoldmaterialization andmustpreserveholes; make-array allocation/holes
+stillneedsalignment; canonicalArray/type/RangeError andfullToPrimitive/comparator
+remainpending. Bootstrapstale aftermigration; nofullArray22/corephase acceptance.
+
+Slice migratedfrommaterializedArgs tophysicaldense/sparse rangecopy; holesand
+shiftedhighindices preserved without logical-length allocation. Newregression
+71247 terminal101 exposedzero-count ArrayCopy withsourceoffsetoutsideprefix;
+guardrepair19632 terminal0:1passed60filtered0.16s, dense/sparse/nearMAX ranges
+andcapturedendaftershrink verified. Clone reusesrangehelper. Independentmigration
+review foundP1 freshsnapshots defeatingnativefactoryFloyd identity andP2push
+overflow prematurelyrejectingbefore ordinaryMAXpropertywrites. P1repaired by
+walkingstableowners/materializingterminalleaf only; self/mutualcycle andacyclic
+recovery15597 terminal0:2passed60filtered0.27s, typedlanguageexceptionsafterGC.
+Logs /private/tmp/suss-m4-sparse-array-slice-{before-zero-copy-fix,fixed}.log and
+/private/tmp/suss-m4-array-factory-cycle-fix.log. Independentrepairreviewrequested;
+fullABI runstartedlog/private/tmp/suss-m4-source-array-slice-cycle-full-abi.log.
+P2 remainsOPEN: implementpushordinarypropertiesbeforeRangeErrorlengthwrite with
+exactRangeErroridentity/payload, then Arraycallable/type/propertyapis, make-array
+holes/constructor22 andcorebothphases afterbootstrapregeneration. NoPRreadyclaim.
+
+### Array constructor and canonical RangeError runtime execution
+
+The sorted worktree now roots Array and RangeError callables without changing
+ABI v2's recursive types. Array's single Number argument accepts exact uint32
+lengths, creates holes without length-sized allocation, and rejects invalid
+lengths with a canonical RangeError and exact `Invalid array length` payload.
+Non-numeric arguments remain elements. `value-constructor` returns the rooted
+Array/RangeError callable; nominal instance checks now recognize exception
+payload descriptors as well as ordinary object descriptors.
+
+The first integration test failed Wasm validation because the RangeError
+callback's message branch was eqref at the typed String field. An explicit
+String cast repaired it; the owner-clone regression then passed (1/1).
+The new constructor test initially had Rust type/API mistakes and a nonexistent
+undefined export; these test mistakes were repaired without weakening its
+assertions. It executes lengths 0, 3, 1000001 and 4294967295, invalid negative,
+fractional, NaN, infinite and 4294967296 lengths, exact error identity/message,
+constructor retention after GC, and explicit undefined's own presence.
+
+With `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226`:
+- `cargo test -p suss-compile --locked --test runtime_abi runtime_abi_array_constructor_lengths -- --test-threads=2`: 1 passed, 62 filtered, terminal 0.
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`: 63 passed, 0 failed/ignored, terminal 0 (6.32s).
+
+Logs: `/private/tmp/suss-m4-array-range-constructor-first.log`,
+`/private/tmp/suss-m4-array-range-constructor-repair.log`,
+`/private/tmp/suss-m4-array-range-identity{,-repair,-final}.log`, and
+`/private/tmp/suss-m4-array-range-all-abi.log`. Independent review requested.
+These are runtime tests, not proof of regenerated source bootstrap or full M4.
+The next task is still push's ordinary overflow-property writes before the
+RangeError length assignment, followed by source property APIs and both-phase
+Array corpus execution after regeneration. The required full workspace baseline
+has not been run on this dirty head; no PR readiness or milestone closure claim.
+
+Independent review found `RangeError(undefined)` incorrectly coerced its message.
+The adapter now bypasses coercion for undefined; focused execution also checks
+Number 7 yields UTF-16 `7`. Reviewer found no remaining material issue in that
+fix. `runtime_abi_array_constructor_lengths` passed 1/1 (62 filtered, 0.17s),
+log `/private/tmp/suss-m4-range-review-fix.log`. This post-review fix follows the
+63-test ABI pass above; that earlier full ABI result does not cover this fix.
+
+Both shipped bootstrap phases were regenerated successfully after the fix:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`,
+terminal 0, log `/private/tmp/suss-m4-range-review-bootstrap.log`.
+Actual public source gate `cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`
+then exited 101: 1 passed / 1 failed (5.34s). Constructor retention across
+separate fragments after GC now passes. The ordered corpus reaches
+`holes-have-no-own-index` and throws because the public Array hasOwnProperty
+adapter is absent. Log `/private/tmp/suss-m4-sparse-array-source-constructor.log`.
+No skips or revised success assertions. Next implement this own-property adapter
+and execute the same corpus; push overflow semantics remain independently open.
+
+### Public Array own-property adapter and executable constructor corpus
+
+Implemented `hasOwnProperty` for Array length and its indexed/uint32-MAX data
+properties, with canonical decimal key parsing (rejecting leading zeros, -0,
+whitespace, exponents, fractional forms, non-ASCII digits and uint32 overflow).
+The adapter coerces its key once and checks presence rather than payload, so
+holes and explicit undefined remain distinct. Unsupported general property
+storage and complete object-to-property-key coercion remain future work.
+
+The public 22-case pinned Array corpus passed in both Runtime/Macro phases,
+along with separate-fragment retained-constructor GC execution: 2 passed,
+terminal 0, 5.64s (`/private/tmp/suss-m4-array-own-source-corpus.log`). Independent
+review then found freshly allocated own-method identity on each read. Added a
+rooted canonical method cache; review found no material issue in the fix.
+Focused runtime checks execute 16 canonical/noncanonical names, GC identity,
+bound numeric key dispatch, holes versus explicit undefined, missing key and
+detached language exception: 1 passed, terminal 0, 0.17s
+(`/private/tmp/suss-m4-array-own-identity-fixed.log`).
+
+Regenerated both bootstrap phases after the cache fix, terminal 0
+(`/private/tmp/suss-m4-array-own-identity-bootstrap.log`). Reran unchanged
+`cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`:
+2 passed, terminal 0, 5.80s (`/private/tmp/suss-m4-array-own-identity-source.log`).
+Added and executed public property-read identity across fragments/GC, own length,
+numeric key and noncanonical/missing key assertions in both phases:
+`cargo test -p suss-cli --locked --test portable_array_constructor array_own_method_identity -- --test-threads=2`,
+1 passed, 2 filtered, terminal 0, 5.20s
+(`/private/tmp/suss-m4-array-own-public-identity.log`). Final runtime ABI suite:
+`cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`,
+64 passed, 0 failed/ignored, terminal 0, 7.92s
+(`/private/tmp/suss-m4-array-own-final-abi.log`). All Cargo used jobs2 and the same
+external native target; no concurrent graph. These gates do not replace the
+required full workspace baseline or prove full M4. Next resolve push overflow
+ordinary writes, complete source coercion/property semantics, then comparator
+and sorted trees. No milestone closure or PR-ready claim.
+
+### Push overflow partial writes and ordinary Array property storage
+
+The authored regression first failed on the previous preflight generic Error
+(`/private/tmp/suss-m4-push-overflow-before.log`, terminal101). Push now uses I64
+key sums, writes every supplied value in order through Array property storage,
+and only then throws canonical RangeError for the invalid final length. Direct
+execution verifies all three values after GC from starts4294967294/4294967295,
+with logical length4294967295. New ordinary storage is a GC-rooted linked chain
+in owner Args slot1; slot0 remains the hybrid indexed backing. Owners now have
+two private fields, without changing shared ABI types. Canonical indexed names
+use backing; ordinary negative/fractional/NaN/infinite/overflow/string names use
+the independent chain. Source key values are normalized once before dispatch.
+Chain shape/tail guards and Floyd checks reject malformed/cyclic chains before
+ordinary mutation; a five-shape execution test verifies typed errors and recovery
+after GC (1passed, terminal0,0.18s).
+
+Independent review found that indexed `length` would conflict with logical/named
+length. Implemented its logical read and exact uint32 primitive RHS assignment,
+with canonical RangeError before invalid mutation. Shrink drops indexed entries;
+ordinary properties survive shrink/grow. Named assignment uses the same setter;
+ordinary own data shadows builtin named methods. Review found no material issue
+in supported primitive length behavior, but object RHS requires separate
+prescribed uint32/number conversions and is still unsupported. Named length,
+coercible primitive RHS/assignment-result identity, builtin shadowing and general
+object coercion effects need more focused public proof.
+
+A local parser-movement declaration typo and length-branch delimiter typo were
+caught by Cargo and repaired; retained failed logs are
+`/private/tmp/suss-m4-push-properties-abi.log` and
+`/private/tmp/suss-m4-push-length-integration.log`. The first oracle command used
+the wrong cwd and failed to write/find the original fixture. Corrected fixture
+creation and fresh compilation/Node execution exited0; this was our runner
+mistake, not an upstream result. All8 exact ordered Boolean reference results
+match the corpus. Original fixture, observations, compile log and source/output
+hashes are retained under docs/compatibility/array-push-properties/evidence.
+
+Validation, all jobs2/shared external native target with one Cargo graph:
+- Focused push after length integration:1passed,.15s,terminal0 (`/private/tmp/suss-m4-push-length-integration-fixed.log`).
+- Regenerated both bootstrap phases:terminal0 (`/private/tmp/suss-m4-push-properties-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`:4passed,0failed/ignored,6.07s,terminal0 (`/private/tmp/suss-m4-push-properties-native.log`). This executes existing22 and new8 cases in both phases plus constructor/own-method GC identity.
+- `cargo test -p suss-compile --locked --test runtime_abi runtime_abi_array_ordinary_properties_reject -- --test-threads=2`:1passed,65filtered,terminal0 (`/private/tmp/suss-m4-array-ordinary-corrupt.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,8.27s,terminal0 (`/private/tmp/suss-m4-push-properties-final-abi.log`).
+
+Known remaining semantics include complete object ToPropertyKey/ToPrimitive,
+array join/inherited indices/accessors/prototypes, make-array hole-presence and
+full constructor domains before comparator/sorted-tree integration. No full
+workspace baseline/final-head CI on this checkpoint and no PR readiness claim.
+Original M4 issues16–19 and separate188 acceptance remain the full goal.
+
+### Array primitive assignment proof and make-array hole allocation
+
+New six-case public proof passes named length assignment, coercible primitive
+string/true/false/nil RHS, returned RHS identity, and own builtin shadowing. A
+new five-case regression initially failed: dynamic make-array had explicit
+undefined presence instead of holes. Runtime leaf allocation now uses canonical
+Array construction and accepts full uint32 sparse lengths; nonleaf allocations
+start with holes before writing distinct child owners. Literal macro nil fill
+remains unchanged. Resource accounting counts actual container products and
+excludes sparse leaf logical length. Existing tests that expected1000001 leaf
+length or2000x2000 dimensions to fail were obsolete: these are now positive
+coverage;2000x2000x2000 retains the actual container-budget failure. Failed
+pre-fix and obsolete expectation logs are retained, not skipped.
+
+Independent review found invalid nonleaf numeric sizes still used generic Error.
+Added canonical effective dimension length: nonnumeric single argument means
+one element, valid Number preserves uint32, invalid Number throws RangeError.
+Zero container products suppress unreachable dimensions. Seven initial oracle
+cases exposed our mistaken assertion for *literal* negative/fractional outer
+sizes: the pinned macro uses empty/ceil-sized arrays, not Array length errors.
+The existing compiler HIR already applies that literal adaptation. Corrected
+reference fixtures use dynamic outer inputs for errors and explicitly cover
+both literal results. Fresh nine-case pinned output is alltrue; historical seven
+output with twofalse and its wrong expected cases are retained truthfully.
+This correction did not alter upstream observations or weaken runtime errors.
+
+Pinned11 public-property and9 dimension forms, original fixtures, outputs and
+SHA256 receipts are retained under docs/compatibility/array-public-properties
+and array-make-dimensions/evidence. The11 corpus drives native tests directly;
+all9 dimension forms are also executed in both caller phases after GC.
+Independent review found no material dimension helper/math defect; complete
+object coercion, zero-middle suppression coverage and large nonleaf insertion
+cost remain explicit limitations.
+
+Commands used jobs2 and the existing shared native target, one Cargo graph:
+- Focused capacity/shape runtime:1passed,terminal0,.15s (`/private/tmp/suss-m4-dimension-size-runtime.log`).
+- Both-phase regeneration:terminal0 (`/private/tmp/suss-m4-make-dimensions-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_array_constructor --test portable_arrays -- --test-threads=2`:7constructor/property tests +10existing Array tests passed,0failed/ignored,5.70s/.31s,terminal0 (`/private/tmp/suss-m4-make-dimensions-native.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,8.48s,terminal0 (`/private/tmp/suss-m4-make-dimensions-final-abi.log`).
+- `sh scripts/verify-bootstrap.sh` with same jobs/target:terminal0, Java/Node absent, two reproductions match all four shipped files, build identity passes,4compiled-bootstrap tests pass13.00s (`/private/tmp/suss-m4-make-dimensions-bootstrap-reproduction.log`).
+
+Diagnostics: `/private/tmp/suss-m4-make-array-presence-before.log`,
+`/private/tmp/suss-m4-make-array-resource-regression.log`,
+`/private/tmp/suss-m4-make-array-holes-native.log` (6passed then obsolete capacity
+expectation failed), `/private/tmp/suss-m4-make-dimension-before.log` (wrong
+literal-error expectation), and retained historical oracle output. Corrected
+fresh compile/node logs use `/private/tmp/suss-m4-make-dimensions-nine-pinned-*`.
+
+Next unblocked task: full ordered object ToPrimitive/property-key coercion and
+array join/inherited index behavior for comparator foundations, then original
+sorted-tree/record/M4 acceptance. No required workspace baseline or final CI on
+this checkpoint, no PR readiness, no narrowed milestone completion claim.
+
+### Ordinary object coercion and ArraySetLength effects — uncommitted work
+
+New public eight-case regression initially failed on native js-obj valueOf
+conversion. Original ordered OrdinaryToPrimitive now uses number/default hint
+valueOf→toString and string hint toString→valueOf, skips noncallable properties,
+looks up the second method after the first call, and accepts only primitive
+results. Immutable typed function globals resolve numeric/storage declaration
+cycles; three function types are appended, with no shared recursive ABI changes.
+Relational operations and addition normalize left then right before String
+classification, preserving string/string relations and concatenating addition.
+Fresh pinned eight-case observations are alltrue; compiler warnings are retained.
+
+Independent review found newly supported object length RHS was converted once.
+ArraySetLength now calls checked int32 conversion interpreted as unsigned uint32,
+then independently ToNumber on the original RHS, comparing before logical length
+mutation. Four stateful cases execute mismatched conversion results, second-call
+throw17, mutation before shrink, and first modulo wrap followed by matching
+second result. Fresh pinned four-case observations are alltrue. Reference
+fixtures/output hashes live in docs/compatibility/object-coercion and
+object-length-conversion/evidence. Independent review found no material issue
+in the two-conversion repair.
+
+A full ABI integration failure (65passed/1failed) exposed detached isPrototypeOf
+coercing object arguments instead of throwing for undefined this. I initially
+called its negative assertion obsolete, then inspected and repaired the actual
+bug without changing that assertion. Review found an adjacent anchored coercion
+bug: canonical primitive arguments now return false without conversion;
+unsupported callable/error/foreign prototype shapes explicitly throw before any
+hook. Owned Object7 prototype traversal is retained. This avoids new side effects
+but does NOT complete callable/error prototype semantics or exact TypeError.
+Focused canonical guard test passed1/1,.16s; independent review no material issue.
+
+Latest executed gates (jobs2, existing shared target, sole Cargo graph):
+- Final both-phase bootstrap regeneration terminal0 (`/private/tmp/suss-m4-object-coercion-final-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_object_coercion --test portable_array_constructor -- --test-threads=2`:2object +7Array tests passed,0failed/ignored,5.14s/5.55s,terminal0 (`/private/tmp/suss-m4-object-coercion-final-source.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,7.67s,terminal0 (`/private/tmp/suss-m4-object-coercion-final-abi.log`).
+- Existing core_comparator_foundations gate terminal101:1passed/2failed,8.73s (`/private/tmp/suss-m4-object-coercion-comparator-regression.log`). One expected Array type rejection was obsolete after canonical Array implementation; replaced with positive constructor/identity/length/hole assertion. Focused staged_type_returns test passed1/1,2filtered,6.68s (`/private/tmp/suss-m4-object-coercion-array-type-regression-fixed.log`). The remaining scalar Array conversion failure is retained: default Array join/toString is absent, and the generic failure descriptor differs from the old unsupported boundary. Do not revise that into compatibility success.
+
+No running Cargo handle remains. Source changes are uncommitted after c390f65;
+full baseline, final-head CI and full PR review are still pending. Next implement
+default Array valueOf/toString/join with captured length, live indexed reads,
+nesting/cycle cleanup and inherited behavior, then comparator/sorted-tree work.
+Live second-method replacement, physical this, right-side throws, all relational
+operators, exotic hooks, canonical TypeError and function/error prototypes need
+more proof/implementation. Original full M4/MLIR goal remains unchanged.
+
+
+### 2026-10-09 — sparse Array join follow-up (uncommitted)
+
+Replaced logical-length-sized piece storage with linked nonempty pieces and live sparse-index traversal. Logical length no longer imposes the output-cell resource cap. Module check passed (`runtime_abi_numeric_samples`, 1 passed); regenerated both bootstrap artifacts. Native `portable_array_join` passed both tests (15 value/effect cases in each runtime phase, plus actual runtime OutOfFuel and recovery), log `/private/tmp/suss-m4-array-join-sparse-native-retry.log`. The first strengthened cancellation run failed its callback-entry/recovery assertion at 10,000 fuel; increasing the invocation budget to 1,000,000 reached the looping conversion callback and proved exactly one entry plus subsequent join recovery. Failure log retained at `/private/tmp/suss-m4-array-join-sparse-native.log`. Independent Hilbert review found no new material correctness defect; remaining concerns are quadratic sparse-chain revalidation, missing future-index mutation coverage, forged active roots and nested caller checkpoint evidence. Inherited indices/accessors remain unsupported. Pinned oracle still contains only the prior 12 cases; regenerate and execute all 15 before claiming reference parity. No final-head workspace baseline or CI for this uncommitted patch, and no PR promoted. Next: add sparse future-index mutation tests and forged-root/checkpoint coverage, then fresh pinned comparison and broad ABI/session validation.
+
+
+### 2026-10-09 — object/Array conversion integration checkpoint
+
+Expanded Array join source corpus to 18 ordered cases: added live future sparse insertion, shrink/removal and growth beyond captured length. Native `cargo test -p suss-cli --locked --test portable_array_join --test core_comparator_foundations -- --test-threads=2` passed 2 join + 3 comparator-foundation tests; fresh pinned ClojureScript compilation and Node execution produced 18 ordered boolean true observations. Corpus, original fixture, compile log, observations, native log and hashes retained in `docs/compatibility/array-join/evidence`. Added six forged active-root cases; all raise language errors after GC and recover after explicit caller repair. Full runtime ABI suite passed 67 tests (`/private/tmp/suss-m4-object-join-full-abi.log`). Strengthened async lifecycle evidence enters a looping element conversion, observes original OutOfFuel plus a real secondary recovery interrupt, restores the exact nonnil caller stack/frame and proves one callback entry/no replay. It passed after switching from a minimal session (which correctly rejected unresolved js-obj) to full bootstrap and regenerating artifacts after source identity changed. All failure logs retained.
+
+Broader lifecycle gate initially failed 2 of 11 tests because the native macro decoder still expected the obsolete one-field dense Array owner. Updated direct Rust transport to canonical two-field owners and sparse four-field backing, with exact uint32, mask/layout, ordered/disjoint keys, cycles and bounded suffix validation; undefined holes remain invalid macro syntax. This also updates vector/map/chunk source-element transport. All 11 lifecycle tests then passed (`/private/tmp/suss-m4-sparse-decoder-session-lifecycle.log`). Independent review found a P2: sparse entries in dense-prefix holes were incorrectly admitted. Fixed the guard to reject every dense-prefix sparse key; added the forged-hole negative and exact ordered payload assertions. Final direct macro-data tests passed 2/2 (`/private/tmp/suss-m4-sparse-decoder-overlap-final-direct.log`), including million-length one-element suffix, nil payload, hole/bound rejection, cycle rejection after GC and explicit repair. An intermediate test compile error (move in pattern guard) was fixed without weakening the assertion. Hilbert read-only review found no remaining material findings in the guard/test repair.
+
+Java/Node-free bootstrap verification passed before the final overlap test edit (all four artifacts identical, identity check and four compiled-bootstrap tests); artifacts were regenerated again after the final edit. Final verification and the unchanged full workspace baseline remain required on the checkpoint. No final-head CI or PR promotion yet. Full prototype/inherited/accessor/exotic/TypeError contracts, compare and sorted trees, records/reify and original M4 acceptance remain open. Sparse join chain revalidation is quadratic; direct native transport validates the whole dense mask independently of the suffix result bound. Next unblocked task: final bootstrap verification/full baseline on a frozen checkpoint, fix any real regressions, then continue full object/prototype and comparator/sorted-collection work. No M4 issue is closed by this prerequisite evidence.
+
+
+### 2026-10-09 — unchanged-fuel source-AST regression repair
+
+The required full workspace baseline at frozen `0f2e3a6` (session50970) terminated exit101, failing `compiled_macro_collection_source_asts::collection_source_nodes_retain_original_children_before_factory_lowering` on actual compiled-macro OutOfFuel. Preserve the full failure log `/private/tmp/suss-m4-full-baseline-0f2e3a6.log` and terminal receipt `/private/tmp/suss-m4-validation-0f2e3a6.json`. The original 40,000,000 operation allowances and all original semantic/source assertions were kept unchanged. No full-baseline pass is claimed for that head.
+
+Reduced unnecessary checked-runtime work: canonical boxed Number/String primitive paths return early; canonical numeric uint32 Array keys avoid formatting/parsing while non-index numbers and effectful keys retain the checked string route; owner adapters delegate backing checks once to checked sparse operations; unexported typed sparse traversal reuses prior full validation without callbacks or writes intervening; snapshots absorb only contiguous present sparse entries into an independently owned dense prefix, preserving masks, distant sparse indices and maximum logical length. The new ABI regression proves hole/payload identity, private buffer/mask ownership, source isolation and zero dense allocation for an empty MAX-length clone.
+
+Those changes alone still exhausted the unchanged AST allowance; their separate failure logs remain under `/private/tmp/suss-m4-{guard-cost,sparse-clone-coalescing,inline-primitives,numeric-index,single-backing-check,private-find}-source-ast.log`. Temporary diagnostics at the same 40M allowance proved child iteration terminates at 33, while full projection truncated to 16 children passed and 32 still exhausted fuel. These were diagnostic probes, not substitutes for the original test; both temporary source examples were removed. The hot remaining trace was schema reserved-word validation: every schema field compared against all 64 unchanged ASCII spellings. Grouping comparisons by exact UTF-16-compatible length retains every reserved/character/type/schema check, including corrupt fields after a matching field, while avoiding impossible comparisons and allocations.
+
+The original complete `compiled_macro_collection_source_asts` suite now passed all 3 tests, unchanged 40M allowances, 61.65s (`/private/tmp/suss-m4-schema-reserved-length-source-ast.log`). Final runtime ABI passed 68 tests, zero failures/ignores, 6.48s (`/private/tmp/suss-m4-schema-length-final-full-abi.log`). All five selected CLI suites (Array constructors, join, object coercion, original arrays and vector trie) passed unchanged commands/allowances (`/private/tmp/suss-m4-optimized-arrays-vector-native.log`). Independent Hilbert review found no material findings in the combined optimization/guard/regression delta. Bootstrap artifacts were regenerated; exact-head reproducibility, the required unchanged full workspace baseline and final-head CI still remain before promotion. Next: freeze this checkpoint, verify bootstrap reproduction, rerun the original full baseline, and resolve any additional real failures without weakening validation. Full original M4 acceptance is still open.
+
+### 2026-10-09 — core-import Array conversion expectations
+
+At `f8ce859`, Java/Node-free `sh scripts/verify-bootstrap.sh` passed, reproducing all four artifacts and passing four compiled-bootstrap tests (`/private/tmp/suss-m4-f8ce859-verify-bootstrap.log`). The core-import gate then passed 16 tests but failed its obsolete assertion that first-class inc/dec on an Array must be unsupported. Updated that assertion to exact String `"11"` for inc and Number `0` for dec, both after GC; remaining Object/closure typed-error/recovery checks are retained. Fresh pinned ClojureScript compile and Node execution independently confirmed both results. Evidence is retained in `docs/compatibility/array-inc-dec/`. Retry `sh scripts/verify-core-import.sh` passed all 17 tests plus inventory/import/provenance gates (`/private/tmp/suss-m4-array-inc-dec-core-import.log`). No runtime source or allowances changed. Required full baseline and final-head CI remain pending on the new checkpoint; original M4 acceptance remains open.
+
+### 2026-10-09 — #230 CI remainder assertion repair (native pending)
+
+Exact head95fe332 CI run37894840801 shard2 failed `compiled_macro_metadata::compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_after_gc`, line268: obsolete `(js-mod (js-obj) 3)` error expectation. Preserve raw CI log `/private/tmp/suss-m4-pr230-integration2.log`; 9 tests passed, 1failed. The unchanged full baseline at95fe332 remains live in session99077; no second Cargo graph was started.
+
+Isolated repair replaces that assertion with independent boxed Number/NaN decoding after GC, adds original73 thrown-payload and trace123 proofs (both operand expressions precede left conversion; right conversion is not entered), and strengthens scalar recovery to exact1 bits. Fresh pinned compilation/Node returned allthree prewritten observations true; fixture/log/observations/hashes in `docs/compatibility/object-remainder/`. Native execution and independent review remain pending, not implied by pinned results. No runtime or allowance changes. Next: wait for terminal old-head baseline, execute focused macro metadata gate on repair, then review/freeze/push repair and rerun unchanged full baseline/final-head CI. #229 own baseline is still queued; full M4 and bounded MLIR publication goal remains active.
+
+### 2026-10-09 — #230 independent collection decoder repair (native pending)
+
+Repaired-head CI c4c53f9 run37895758098 shard2 passed macro metadata but later failed six `compile_expr` collection observations: empty/vector/map/set literals hit the independent test decoder's obsolete one-field dense Array owner assumption. The suite recorded271 passes,6failures,37 existing ignores; retain `/private/tmp/suss-m4-pr230-c4-integration2.log`. This is a decoder failure, not accepted collection output.
+
+Isolated decoder repair recognizes canonical two-field owners and sparse four-field backing, verifies exact uint32 length/keys, dense/mask layout and bits, ordered/disjoint/in-range sparse nodes, and reconstructs logical slots without guest operations. Strict key ordering rejects cycles; holes remain undefined6 rather than fabricated nil. MAXuint32 ordinary entries are excluded from indexed slots. Host snapshot allocation is bounded at1,000,000 logical entries before allocation; this is an explicit observation limit, not a guest Array limit. Vector/node/tail, map/HAMT, chunk and IndexedSeq readers consume the same independently validated storage. UTF16 indexed bounds still precede host allocation.
+
+New both-phase tests author exact dense/sparse7,nil,false observations, MAXordinary exclusion, valid sparse suffix/unobserved holes, observed-hole rejection and MAXlogical bound rejection. Raw post-GC negatives cover mask2, cyclic sparse links and key==length, then explicit repair plus exact undefined7 slots. Existing negative assertions and operation allowances remain intact. Rustfmt and `git diff --check` pass; independent review requested. Native test compilation/execution is pending while #229 full baseline session82409 owns the sole Cargo graph; no source/runtime implementation changed. Next execute full `portable_value_decoder` and original `compile_expr` suites after the scheduled baseline releases Cargo, repair any actual failures, then freeze/push and require own full baseline/final-head CI before promotion. Original full M4 acceptance remains open.
+
+### 2026-10-09 — #230 Function arithmetic diagnostic regression (native pending)
+
+CI at8ca9a61 run37897209788 shard3 failed the unchanged `persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once`: unsupported Function arithmetic yielded nominal descriptor7 instead of established numeric descriptor5. Preserve `/private/tmp/suss-m4-pr230-8ca-integration3.log`;32pass1fail. This is a diagnostic regression, not a reason to weaken the exact existing error/message/initializer-preservation/effect assertions.
+
+Isolated runtime repair shares the numeric unsupported-object error constructor and rejects unsupported Function conversion in number/default-hint conversion with the original descriptor5 and exact message `Unsupported arithmetic object coercion`, before unsupported property-kernel lookup. Ordinary object conversion retains its ordered hooks and original throws; string-hint and full Function prototype conversion remain explicit unfinished dependencies. The existing failing persistent-session test is unchanged. Rustfmt/diff checks and independent review are next; native/bootstrap/full/final-head gates remain pending while #229 baseline82409 owns Cargo. No full Function coercion/TypeError or M4 completion claim follows.
+
+### 2026-10-09 — #230 supported length-write regression and unchanged vector fuel failure
+
+Final-head8ca9a61 CI run37897209788 shard4 failed an obsolete Array length-write negative in `portable_named_properties` (3pass1fail). The replacement preserves nominal/String unsupported writes and all64 corpus observations; it checks assignment and length as exact boxed +0 after GC, then removed index as undefined6 after GC, followed by the original session-recovery assertion. Sartre independent static review found no material findings in this delta; native execution remains pending. The preceding Function diagnostic repair d596a8e also received independent review without material findings; bootstrap regeneration remains required.
+
+Shard2 independently failed `decoder_observes_nested_values_and_trie_boundaries` on the original1057-vector loop at its unchanged100M allowance (10pass1fail2existingignore). Raw logs remain `/private/tmp/suss-m4-pr230-8ca-integration{2,3,4}.log`. Runtime-cost investigation is active; no allowance or semantic assertion has been weakened. #229 baseline82409 is still live and remains the sole local Cargo graph. Next: repair vector runtime cost, regenerate bootstrap, execute focused unchanged gates including conformance and named properties, then required full baseline and final-head CI. Full M4 acceptance remains open.
+
+### 2026-10-09 — additional #230 queue-layout and vector-cost failures
+
+Same8ca CI shard6 failed `queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc` at its obsolete one-field Array owner assertion (2pass1fail). The pending repair independently checks canonical two-field owner with nil ordinary properties, four-field backing, exact boxed logical length4, nil sparse chain, dense four versions and all-present mask before retaining every original queue identity/sharing/GC assertion. Static rustfmt/diff checks pass; Hilbert independent review found no material findings in the queue delta. Native execution remains pending. Raw log `/private/tmp/suss-m4-pr230-8ca-integration6.log`.
+
+Shard7 failed two unchanged `compiled_macro_vectors` tests on actual OutOfFuel, including collapse/regrowth at1057 (6pass2fail). Raw log `/private/tmp/suss-m4-pr230-8ca-integration7.log`. Both original suites and allowances are now required optimization regressions alongside conformance1057; no increased fuel or reduced observations. Baseline82409 remains live; no second Cargo graph.
+
+### 2026-10-09 — #230 bounded small-hole storage and private Number repair
+
+Read-only source/trace investigation `/private/tmp/suss-m4-pr230-vector-cost-review.md` identified repeated linked sparse validation/traversal while retained vector source populates small tails/nodes. New Arrays of logical length0..32 now allocate independent dense payload storage with all-zero presence masks; larger lengths retain empty physical buffers and sparse entries. Undefined/nil/false remain distinct from absence and all public validation guards remain. Added boundary0/1/31/32/33/MAX regression proves zero masks, absent undefined, explicit undefined presence, private clone storage and delete isolation after GC. Focused new ABI test passed; fullABI initial67pass2fixturefail retained `/private/tmp/suss-m4-small-hole-full-abi.log`. Two corruption fixtures now construct33 then shrink to their original9/10 lengths before writes, preserving every original corruption/rejection/length assertion. FullABI retry69pass0fail (`/private/tmp/suss-m4-small-hole-full-abi-retry.log`).
+
+Original conformance1057-vector passed at unchanged100M in6.21s (`/private/tmp/suss-m4-small-hole-conformance1057.log`). Final shard5 also exposed general coercion leaking into private Number-only hash adapters; restored strictNumber field access only for f64-finite and safe-integer-remainder, preserving original tests, expression order and numeric checks. Public floor/remainder/coercion remain separate. Hilbert independent review found no material findings in runtime policy, fixture repairs and privateNumber guard.
+
+Bootstrap regeneration passed first for storage policy and again after privateNumber source change. An intervening macro-vector run correctly rejected stale manifest identities (0pass8fail, `/private/tmp/suss-m4-small-hole-macro-vectors.log`); retain this sequencing failure. Regenerated-head native combined macro-vectors/numeric-boundaries/named-properties/queues is running (`/private/tmp/suss-m4-small-hole-private-number-native.log`). Final69ABI/conformance on combined source, unchanged persistent-session/core-import/decoder/sourceAST40M, bootstrap reproduction, required full baseline and final-head CI remain pending.
+
+#229 exact567421b own unchanged fullbaseline completed exit0 with207blocks1550pass0fail41existingignore; logSHA256 d33696caf391e0975426fed9a63bd7041f8624bd6da7010960746480f7ee7759. All ten final-head CI checks and independent review passed; #229 was promoted for Bobby’s review, not merged. Full M4 acceptance remains open.
+
+### 2026-10-09 — private scalar boundary correction after full corpus failure
+
+Combined native initial run failed test compilation E0716 in queue fixture; retained `/private/tmp/suss-m4-small-hole-private-number-native.log`. Binding the fetched Val before borrowing fixes lifetime only, independently reviewed. Retry `/private/tmp/suss-m4-small-hole-private-number-native-retry.log` passed all8 original macro-vector tests (7.83s), then passed3 numeric-boundary tests but failed the75-case corpus. The Number-only guard was too narrow: original corpus intentionally covers nil/Boolean/String finite conversion and String/Boolean safe remainder. No corpus case was deleted or weakened.
+
+Corrected private helper admits only Number, String and exact0/2/4/6 sentinels before existing scalar coerce-number; all object/foreign representations reject before hooks. Only private finite/remainder call it; public conversions remain unchanged. Hilbert independent review found no material findings. Bootstrap regenerated successfully; combined native retry now running `/private/tmp/suss-m4-hash-scalar-native.log`. Original conformance1057 and finalABI must be rerun on this combined identity, followed by remaining unchanged gates/fullbaseline/finalCI.
+
+### 2026-10-09 — combined compiler gate and MAX-length decoder fixture
+
+At c203fee, original `compile_expr` passed278 tests with37existingignores and full conformance passed11 with2existingmanualcaptureignores, including unchanged1057-vector100M. Log `/private/tmp/suss-m4-c203fee-compiler-regression.log` then failed the new decoder oversized fixture because minimal Session does not expose js/Array (24pass1fail); retain original failure. The fixture now creates `(array)`, writes MAXuint32 logical length with the supported setter and constructs the same IndexedSeq, preserving original post-GC observation-limit rejection. Retry `/private/tmp/suss-m4-decoder-max-length-abi-native.log` passed25decoder and69ABI tests, zero failures/ignores. Hilbert independent one-line fixture review found no material findings.
+
+Unchanged persistent_session/core_import/object-coercion and collection/constructor sourceAST suites are now running, retaining original40M allowance (`/private/tmp/suss-m4-c203-session-source-ast-native.log`). After these gates, freeze reviewed finalhead, reproduce bootstrap withoutJava/Node and run unchanged fullworkspacebaseline/finalCI. #230 remains draft; full M4 open.
+
+### 2026-10-09 — #230 linked corruption-fixture repair (native pending)
+
+Finalhead7f71aa0 foundation CI failed `portable_macro_data::identity_tests::macro_data_reads_sparse_array_abi_without_inventing_hole_syntax` at dense/sparse overlap assertion: small constructor now uses masked dense storage, so its forged linked head was nil and the observation instead rejected a hole sentinel. Foundation library suite86pass1fail; raw log `/private/tmp/suss-m4-7f71aa0-foundation-ci.log`.
+
+Isolated repair constructs33 then shrinks to original3 before building the overlap node; the subsequent cyclic-chain fixture similarly constructs33 then shrinks to original2 before writes. Both therefore create genuine linked nodes. Every original overlap/cycle/hole/bound rejection and explicit-repair/exact-value assertion is retained. No runtime behavior or fuel allowance changed. Independent review requested; native execution/bootstrap regeneration pending while unchanged frozen7f71 fullbaseline27640 remains live. Rust source identity changes even for cfg-test fixture edits, so regenerate/reproduce artifacts before final-head gates. Next: preserve terminal baseline, execute exact macro-data unit tests on repair, regenerate bootstrap and freeze/push reviewed repair, then required full baseline/finalCI. FullM4 remains open.
+
+### 2026-10-09 — #230 iterator boundary and unchanged async fuel failures
+
+Finalhead7f71 CI shard3 failed `retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors` because its old certified boundary expected Array length writes to error (1pass1fail); pin already records iterator hasNext=false after shrink. Isolated test repair observes that same closed pinned source as raw Booleanfalse after GC, retains the wrong-rseq-arity error and every subsequent retained-array/reverse/iterator/growth assertion. Independent review and native execution remain pending. Log `/private/tmp/suss-m4-7f71aa0-integration3-ci.log`.
+
+Shard2 failed `parent_return_drains_cancelled_child_finally_before_retiring_invocation` on actual OutOfFuel during the second invocation, line357, under its original total2M fuel (7pass1fail). Log `/private/tmp/suss-m4-7f71aa0-integration2-ci.log`. All original cleanup ordering/drops/effects/assertions and fuel remain unchanged. Runtime-cost diagnosis is queued after frozenbaseline27640 releases Cargo; no allowance increase or scheduler-completeness claim. Original fullM4 remains open.
+
+### 2026-10-09 — original2M async fuel measurement and reserved-unit optimization
+
+Frozen7f71 baseline27640 ended101 at the already repaired obsolete iterator length-write assertion:96 resultblocks474pass1fail0ignore. Full failure log `/private/tmp/suss-m4-full-baseline-7f71aa0.log`, SHA2560031d7e0e3b3190fe3d3af038d9d2660a8d675c4e49d7bddb8ef87edd4c7acf2; terminalreceipt `/private/tmp/suss-m4-validation-7f71aa0.json`. No fullbaseline pass claimed.
+
+Isolated exact7f71 async diagnostic retained original2M total and every original assertion, adding only three get_fuel observations. Native log `/private/tmp/suss-m4-async-fuel-diagnostic-native.log` shows initialization consumes1,784,952 leaving215,048; this run exhausts fuel during firstinvocation (CI exhausted during second). Diagnostic observations are not acceptance substitutes.
+
+Schema reserved-word validation still allocated temporarystrings for candidates. New cost repair keeps all64 spellings and full character/schema guards, groups exactlength/firstunit and compares literalUTF16 units without allocations. FullABI69pass (`/private/tmp/suss-m4-reserved-unit-full-abi.log`); added exhaustive64reserved+64near-miss postGC regression passed (`/private/tmp/suss-m4-reserved-unit-regression.log`). Bootstrap regenerated successfully. Optimized same-budget diagnostic now running `/private/tmp/suss-m4-reserved-unit-async-fuel.log`; measured savings/unchanged originalasync acceptance remain unproven. Independent review requested; finalwholeABI70, corruption/iteration native gates, reproduction/fullbaseline/finalCI pending. Temporary diagnostic files will be removed after measurement; no budgetincrease or scheduler-completeness claim. FullM4 remains open.
+
+## Empty schema-name review repair — 2026-10-09
+
+Independent review found that the reserved-name unit comparison read UTF-16 index zero for an empty string. Added an early empty-name acceptance return and a post-GC empty-name regression, preserving the prior contract. Focused native command: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-compile --test runtime_abi runtime_abi_reserved_schema_names_keep_all_spellings_and_near_misses --locked -- --test-threads=2`; exit 0, one passed, zero failed. Log: `/private/tmp/suss-m4-reserved-empty-name-regression.log`. Covers the empty name, all 64 reserved spellings and 64 near misses. Bootstrap regeneration and independent repair review remain pending. The earlier optimized async diagnostic still failed at the original 2M total fuel budget; this optimization is not an async fix. Exact original component maps the failure to stream receipt recovery, with unconditional 256-slot scans; next inspect root publication/retirement and interruption safety before optimizing.
+
+## Stream scan-bound candidate — 2026-10-09
+
+Exact original component evidence maps the async OutOfFuel stack to `stream-recover-receipts`, called by raw service on scheduler boundaries. Added an appended private monotonic i32 high-water global; publication raises the bound before rooting each journal row, so interruption can retain excess empty scan slots but cannot hide published receipts. Recovery and service retain separate passes and all existing transition logic; retirement never reduces the bound. No public budgets or assertions changed. Bootstrap generation exited 0 (`/private/tmp/suss-m4-high-water-bootstrap.log`). Initial pre-regeneration attempt failed manifest identity, not behavior (`/private/tmp/suss-m4-stream-high-water-parent.log`). Combined eight generated bridge tests and stream lifecycle suite are running in session17935 (`/private/tmp/suss-m4-high-water-async-streams.log`); the original parent-return test has passed with its unchanged cumulative2M allowance, but combined terminal result, independent review and final-head CI are still pending.
+
+Combined native async/stream candidate gate completed exit0: eight generated bridge tests and nine runtime stream tests passed, zero failures/ignores. Includes unchanged2M parent-return regression, both existing interruption fuel sweeps and later-published receipt preservation. Log `/private/tmp/suss-m4-high-water-async-streams.log`. Independent review, bootstrap reproducibility, remaining CI repairs and unchanged full workspace baseline remain required.
+
+## Remaining repair gate dispatch — 2026-10-09
+
+Two attempted combined commands incorrectly selected `portable_iteration` in suss-compile, and Cargo rejected both before executing tests (logs `/private/tmp/suss-m4-macro-fixture-iteration-native.log` and `...-retry.log`). The iterator integration target belongs to suss-cli. Correct compiler lib gate is now running in session52720: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-compile --lib --locked -- --test-threads=2`, log `/private/tmp/suss-m4-macro-fixture-compiler-lib.log`. Await terminal result before starting suss-cli portable_iteration and Java/Node-free bootstrap reproducibility; no overlapping local Cargo graph.
+
+Compiler library gate session52720 completed exit0: 87 passed, zero failed/ignored, including both repaired genuine-sparse macro-data corruption fixtures. Iterator gate now running session43113: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-cli --test portable_iteration --locked -- --test-threads=2`; log `/private/tmp/suss-m4-iterator-repair-native.log`.
+
+Iterator gate session43113 completed exit0: both integration tests passed, zero failures/ignores. Java/Node-free bootstrap reproducibility now dispatched, log `/private/tmp/suss-m4-high-water-bootstrap-repro.log`; terminal result pending.
+
+Java/Node-free bootstrap reproducibility session93480 completed exit0: both independent generations matched each other and all four checked-in artifacts; identity verifier passed and all four compiled bootstrap tests passed. Log `/private/tmp/suss-m4-high-water-bootstrap-repro.log`. Temporary diagnostic test source preserved outside the tracked candidate at `/private/tmp/suss-m4-final-candidate-async-diagnostic.rs`; original production regressions remain unchanged. Freeze this candidate for the unchanged full workspace baseline; independent review and final-head CI still required before readiness.
+
+## Late PR230 CI repairs authored — 2026-10-09
+
+Completed original7f71 CI shards5/7 exposed two additional failures. Logs `/private/tmp/suss-m4-7f71aa0-integration5-ci.log` and `/private/tmp/suss-m4-7f71aa0-integration7-ci.log`: chunk identity inspection assumed obsolete one-field owner; private f64-ceil accepted Array through object coercion. In a separate worktree, update the chunk inspector to independently verify owner2/backing4, boxed length2, absent sparse/ordinary properties and both presence bits before recovering dense entries; preserve the original post-GC exact reference-sharing assertion. Route private ceil through the existing scalar-number helper, preserving numeric/string/nil/boolean/undefined conversion while rejecting objects before hooks. Public floor/coercion paths unchanged. These repairs are authored only: native compilation, regenerated bootstrap, independent review and CI remain pending. Original full baseline continues unchanged at3b42b6a in session16960; do not overlap local Cargo graphs. Next when it terminates: regenerate this candidate and run both original failing suites before another unchanged baseline.
+
+Added focused private-ceil regression in both original session phases: an object with effectful valueOf/toString must throw before either hook, retain independently decoded zero counter after GC, and allow subsequent quot recovery. Authored only, no native success claimed; pending lane release and bootstrap regeneration.
+
+Pinned-source initialization and importer gate found manifest reviews-sha256 stale after the iterator evidence-only override edits. Compared computed/retained JSON: only reviews-sha256 differed; imported source bodies matched. Regenerated importer manifest then `python3 -B scripts/core_import.py --check` passed, 338 files verified. Upstream independent checkout remains exact c4295f303100bbf5afac449242d30bca1126f1a1. Native/bootstrap still pending; running baseline candidate remains untouched.
+
+## Full baseline3b42 terminal and late repair validation — 2026-10-09
+
+Unchanged full workspace baseline at3b42b6a3925b7a2cbd5a14c3272b01b133366cbb completed exit101: 98 test-result blocks,482passed/1failed/0ignored before stopping at the known obsolete chunk owner-length assertion (actual2 vs expected1). Log `/private/tmp/suss-m4-full-baseline-3b42b6a.log`; SHA256 `5da848062c56ebda5a277576452f87655025aad78d38c69ed5cc5bae9db10676`; receipt `/private/tmp/suss-m4-validation-3b42b6a.json`. This is not full baseline success. Isolated late repair candidate d9ef9cb independently reviewed without material findings,338import files/inventory435reviewed630unassessed/238Python tests pass. Regeneration now executing session79388 with jobs2/shared external target (`/private/tmp/suss-m4-late-ci-bootstrap.log`); native failing suites and bootstrap reproducibility next, then freeze and rerun original full command.
+
+Late-candidate bootstrap regeneration session79388 exited0. Focused native gate session21058 exited0: all4 portable_lazy_transformations and6 portable_map_mutation_helpers tests passed, zero failures/ignores; includes unchanged exactchunksharing andnumericboundary suites plus the new objecthookeffect guard/recovery in bothphases. Log `/private/tmp/suss-m4-late-ci-focused-native.log`. Java/Node-free bootstrap reproducibility now running (`/private/tmp/suss-m4-late-ci-bootstrap-repro.log`); terminal result pending. Require finalfrozen fullbaseline andCI before readiness.
+
+Bootstrap reproducibility session15450 completed exit0: Java/Node absent, two generations byte-identical to each other and all four checked-in artifacts; identity verifier and four compiled bootstrap tests passed (`/private/tmp/suss-m4-late-ci-bootstrap-repro.log`). Freeze generated artifacts plus this validation evidence before unchanged full workspace baseline. Independent source review d9ef9cb has no material findings; cumulative stream-scan-bound review, final generated-artifact review and final-head CI remain pending. Original budgets/assertions/ignored tests unchanged.
+
+## Ordinary object-key baseline assertion repair — 2026-10-09
+
+Frozen3a50 full baseline session94535 terminated101:502passed/1failed/0ignored; `/private/tmp/suss-m4-full-baseline-late-ci.log`. Failure was `private_object_errors_are_atomic_or_runtime_and_recover` line52: obsolete negative `(suss.bootstrap/object-set (factory) (factory) 7)`. Isolated3a50 worktree `/private/tmp/suss-m4-native-object-key-repair` source-labelled diagnostic session77163 exited101,1passed/1failed (`/private/tmp/suss-m4-native-object-key-parent-diagnostic.log`). Fresh pinned c4295f CLJS compilation/Node execution both exited0: ordinary object key converts to `[object Object]`, assignment and property both7. Raw hook trace1234, thrown payload73, preserved property23 and recovery19 retained in `docs/compatibility/native-object-key/evidence`; reproduction command and hashes accompany them.
+
+Replace only obsolete negative with post-GC independently decoded Number bits; new regression covers both caller phases, source operand order before string-hint hooks, toString precedence, original thrown payload, preserved property and recovery. Retain original nil-get/self-cycle/mutual-cycle failures, compile atomicity, captured factory behavior and original source-order test. No production semantics or bootstrap changes. Authorized focused command `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-cli --test portable_native_objects --locked -- --test-threads=2` session83059 exited0:3passed/0failed/0ignored; log `/private/tmp/suss-m4-native-object-key-repair-focused.log`. No full baseline/bootstrap/push executed. Next: independent other-agent committed-head review, then coordinate full baseline and final-head CI; no milestone completion claimed.

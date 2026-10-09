@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "0cedba45b0f502afa011a5980e3160ae593748ed0056fc1e0466c01ae1f67f01",
-  "reviews-sha256": "89bd26948cfe7ae9aa6ef8a8e203b1afa78ddeb8e1f7f2a2233c8fd71678690c",
+  "recipe-sha256": "896b93486ce064e477d15d0b93881dd8c8cb68083f36e24c1153b9a78ed9c05b",
+  "reviews-sha256": "ef7fb98764374781408f9f65b618ae2bdbb4fad391a19a376d043bf31ca115cd",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10236,6 +10236,101 @@
         "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
         "scripts/test-lazy-transformation-oracle.sh"
       ]
+    },
+    {
+      "id": "runtime:ISorted:782",
+      "name": "ISorted",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 782,
+      "end-line": 797,
+      "byte-start": 22617,
+      "byte-end": 23407,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1",
+      "extracted": "extracted/0331.cljs",
+      "extracted-sha256": "7b7f23e1a16947181877905e65eb3df15df3469d85e649d04d24c2f7d0f20ecc",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sorted_interfaces.rs",
+        "tests/oracle/sorted-interface-cases.json",
+        "tests/oracle/fixtures/sorted-interface-probe.sus"
+      ]
+    },
+    {
+      "id": "runtime:IComparable:865",
+      "name": "IComparable",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 865,
+      "end-line": 869,
+      "byte-start": 26113,
+      "byte-end": 26342,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "88f0015b03c6b1abe54df3846a812e146076e59cb95105c6fe39bd1d2678ed6f",
+      "extracted": "extracted/0332.cljs",
+      "extracted-sha256": "f104973e3e889bf6b2e09d9cfd09fe6b3079b20ace69021d95807c8363090402",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "88f0015b03c6b1abe54df3846a812e146076e59cb95105c6fe39bd1d2678ed6f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sorted_interfaces.rs",
+        "tests/oracle/sorted-interface-cases.json",
+        "tests/oracle/fixtures/sorted-interface-probe.sus"
+      ]
+    },
+    {
+      "id": "runtime:type:347",
+      "name": "type",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 347,
+      "end-line": 351,
+      "byte-start": 9408,
+      "byte-end": 9497,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7",
+      "extracted": "extracted/0333.cljs",
+      "extracted-sha256": "29649717e40ecd5a5f30c654d67bbc980299c9879f99858701e17a583f3110c0",
+      "patch": "docs/compatibility/patches/sorted-type.json",
+      "patch-sha256": "a86830abe46b2b094503133636a182d5285384aa61bdd9b2b09c9fca13644496",
+      "adapted-form-sha256": "25fb6c750b37779953f64a9ab68334758d05ab4a669f17ebfdfad4c445e44f84",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:when-not:427",
+        "macro:nil?:923",
+        "private value-constructor and descriptor-owned class cache",
+        "canonical Number/String/Boolean constructors and existing scalar coercion exports",
+        "canonical array/function/native-object constructors (unsupported)"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_comparator_foundations.rs"
+      ]
     }
   ],
   "loader": {
@@ -10586,6 +10681,9 @@
     "extracted/0328.cljs": "79888494e9bbea4b5e90ad97508fd97a80c60a85ede9a516cdee90f6dfa9a43c",
     "extracted/0329.cljs": "675024866fc83041f393dccad216a15167e895fc955e25160b82d8daac7b39bf",
     "extracted/0330.cljs": "867d62d6b4ffba862da2554053db4d3ced54c4983fa0fb12f2a50eba17ee27f1",
-    "suss/core.sus": "12c4d8460876ff5d5c1a809e51904093f5bfabc155d8196dc9f2b78177b483dc"
+    "extracted/0331.cljs": "7b7f23e1a16947181877905e65eb3df15df3469d85e649d04d24c2f7d0f20ecc",
+    "extracted/0332.cljs": "f104973e3e889bf6b2e09d9cfd09fe6b3079b20ace69021d95807c8363090402",
+    "extracted/0333.cljs": "29649717e40ecd5a5f30c654d67bbc980299c9879f99858701e17a583f3110c0",
+    "suss/core.sus": "96a24862cf39db8940835e349453a26250e8e7f6e7c10f7cdc2b94b967948a48"
   }
 }

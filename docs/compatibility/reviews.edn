@@ -68,6 +68,40 @@
    :adaptation-path "docs/compatibility/patches/lazy-filter.json"
    :alternative nil
    :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+
+  "runtime:ISorted:782"
+  {:source-sha256 "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retain the complete unchanged pinned protocol form, including all method signatures, documentation and annotations. Original shared nominal probes cover sorted dispatch and comparable dispatch; these are protocol fixtures, not persistent trees or records. Native Runtime/Macro execution, compiled defprotocol macro compatibility and bootstrap regeneration remain pending."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sorted_interfaces.rs" "tests/oracle/sorted-interface-cases.json" "tests/oracle/fixtures/sorted-interface-probe.sus"]}
+  "runtime:IComparable:865"
+  {:source-sha256 "88f0015b03c6b1abe54df3846a812e146076e59cb95105c6fe39bd1d2678ed6f"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retain the complete unchanged pinned protocol form, including all method signatures, documentation and annotations. Original shared nominal probes cover sorted dispatch and comparable dispatch; these are protocol fixtures, not persistent trees or records. Native Runtime/Macro execution, compiled defprotocol macro compatibility and bootstrap regeneration remain pending."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sorted_interfaces.rs" "tests/oracle/sorted-interface-cases.json" "tests/oracle/fixtures/sorted-interface-probe.sus"]}
+  "runtime:type:347"
+  {:source-sha256 "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:when-not:427" "macro:nil?:923" "private value-constructor and descriptor-owned class cache" "canonical Number/String/Boolean constructors and existing scalar coercion exports" "canonical array/function/native-object constructors (unsupported)"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned form, its documentation and nil/constructor branches. Explicit def/fn and if lowering use immutable private nil and nominal constructor lookup. Descriptor-owned retention returns the actual original class across public redefinition and GC without source-name inference or a global owner registry. Canonical scalar constructors are rooted callable values with Number/String scalar conversions and ECMAScript Boolean conversion; array/function/native-object constructors and object coercion remain explicit language-error boundaries; complete type/compare compatibility and native execution are pending. Recipe staging does not imply regenerated artifacts."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sorted-type.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_comparator_foundations.rs"]}
   "runtime:last:1858"
   {:source-sha256 "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
@@ -1098,7 +1132,7 @@
    :arities nil
    :dependencies ["runtime:alength" "runtime:aget" "runtime:inc:1505" "literal Object methods and mutable fields"]
    :classification :portable
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -1108,7 +1142,7 @@
    :arities nil
    :dependencies ["runtime:equiv-sequential:3151" "runtime:seq-reduce:2582" "runtime:cons:3451" "runtime:empty-ordered-hash:1417" "runtime:hash-ordered-coll:1406" "pending pr-str* -indexOf -lastIndexOf"]
    :classification :portable
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -1118,7 +1152,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IReversible:777" "macro:satisfies?"]
    :classification :adapted
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-reversible-predicate.json"
    :alternative nil
@@ -1128,7 +1162,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IReversible:777"]
    :classification :adapted
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-rseq.json"
    :alternative nil

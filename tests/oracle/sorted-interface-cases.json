@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "implements-ISorted",
+      "source": "(cljs.core/implements? cljs.core/ISorted sorted-interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-not-ISorted",
+      "source": "(cljs.core/implements? cljs.core/ISorted nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "implements-IComparable",
+      "source": "(cljs.core/implements? cljs.core/IComparable sorted-interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-not-IComparable",
+      "source": "(cljs.core/implements? cljs.core/IComparable nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ascending",
+      "source": "(cljs.core/-sorted-seq sorted-interface-probe true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "descending",
+      "source": "(cljs.core/-sorted-seq sorted-interface-probe false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c031000000000000"
+      }
+    },
+    {
+      "id": "from-ascending",
+      "source": "(cljs.core/-sorted-seq-from sorted-interface-probe 5 true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4036000000000000"
+      }
+    },
+    {
+      "id": "from-descending",
+      "source": "(cljs.core/-sorted-seq-from sorted-interface-probe 5 false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "entry-key",
+      "source": "(cljs.core/-entry-key sorted-interface-probe 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4039000000000000"
+      }
+    },
+    {
+      "id": "compare-less",
+      "source": "(cljs.core/-compare sorted-interface-probe 20)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c008000000000000"
+      }
+    },
+    {
+      "id": "compare-equal",
+      "source": "(cljs.core/-compare sorted-interface-probe 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "compare-greater",
+      "source": "(cljs.core/-compare sorted-interface-probe 10)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "comparator-invoke",
+      "source": "((cljs.core/-comparator sorted-interface-probe) 11 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "saved-seq",
+      "source": "(saved-sorted-seq sorted-interface-probe true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "saved-from",
+      "source": "(saved-sorted-from sorted-interface-probe 5 false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "saved-entry",
+      "source": "(saved-entry-key sorted-interface-probe 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4039000000000000"
+      }
+    },
+    {
+      "id": "saved-comparator",
+      "source": "((saved-comparator sorted-interface-probe) 11 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "saved-compare",
+      "source": "(saved-compare sorted-interface-probe 20)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c008000000000000"
+      }
+    },
+    {
+      "id": "comparator-identity",
+      "source": "(identical? sorted-interface-comparator (cljs.core/-comparator sorted-interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-operand-order",
+      "source": "(do (aset sorted-interface-trace 0 0) (cljs.core/-sorted-seq (sorted-interface-mark 1 sorted-interface-probe) (sorted-interface-mark 2 true)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f000000000000"
+      }
+    },
+    {
+      "id": "from-operand-order",
+      "source": "(do (aset sorted-interface-trace 0 0) (cljs.core/-sorted-seq-from (sorted-interface-mark 1 sorted-interface-probe) (sorted-interface-mark 2 5) (sorted-interface-mark 3 false)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093480000000000"
+      }
+    },
+    {
+      "id": "entry-operand-order",
+      "source": "(do (aset sorted-interface-trace 0 0) (cljs.core/-entry-key (sorted-interface-mark 1 sorted-interface-probe) (sorted-interface-mark 2 8)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f000000000000"
+      }
+    },
+    {
+      "id": "comparator-operand-order",
+      "source": "(do (aset sorted-interface-trace 0 0) (cljs.core/-comparator (sorted-interface-mark 1 sorted-interface-probe)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402c000000000000"
+      }
+    },
+    {
+      "id": "compare-operand-order",
+      "source": "(do (aset sorted-interface-trace 0 0) (cljs.core/-compare (sorted-interface-mark 1 sorted-interface-probe) (sorted-interface-mark 2 20)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f000000000000"
+      }
+    },
+    {
+      "id": "nominal-not-ISorted",
+      "source": "(cljs.core/implements? cljs.core/ISorted unsorted-interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-not-IComparable",
+      "source": "(cljs.core/implements? cljs.core/IComparable unsorted-interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "callee-before-operands",
+      "source": "(do (aset sorted-interface-trace 0 0) ((sorted-interface-mark 1 saved-sorted-from) (sorted-interface-mark 2 sorted-interface-probe) (sorted-interface-mark 3 5) (sorted-interface-mark 5 true)) (aget sorted-interface-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40c8210000000000"
+      }
+    }
+  ]
+}

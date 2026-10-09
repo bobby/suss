@@ -4,8 +4,9 @@
 use super::*;
 use Instruction::*;
 const OBJECT: u32 = 7;
-pub(super) const GLOBAL_COUNT: u32 = 9;
+pub(super) const GLOBAL_COUNT: u32 = 10;
 const ROOT_LIMIT: i32 = 256;
+const ROOT_HIGH_WATER: u32 = 9;
 const STATE: u32 = 0;
 const READER: u32 = 1;
 const WRITER: u32 = 2;
@@ -138,6 +139,14 @@ pub(super) fn append_globals(globals: &mut GlobalSection, base: u32) {
             RefI31,
             StructNew(OBJECT),
         ]),
+    );
+    globals.global(
+        GlobalType {
+            val_type: ValType::I32,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::i32_const(0),
     );
 }
 pub(super) fn intrinsics(b: &mut Builder, base: u32) {
@@ -459,6 +468,22 @@ fn begin(b: &mut Builder, base: u32, write: bool, pending: u32, owner: u32) {
     object(&mut v, base, OP, 13);
     v.push(LocalSet(7));
     set(&mut v, 6, if write { 6 } else { 5 }, &[LocalGet(7)]);
+    // Raise the scan bound before rooting. An interruption may leave an extra
+    // empty slot in the bound, but can never hide a published journal row.
+    // Keep the bound monotonic so retirement cannot lose an interrupted receipt.
+    v.extend([
+        LocalGet(9),
+        I32Const(1),
+        I32Add,
+        GlobalGet(base + ROOT_HIGH_WATER),
+        I32GtU,
+        If(BlockType::Empty),
+        LocalGet(9),
+        I32Const(1),
+        I32Add,
+        GlobalSet(base + ROOT_HIGH_WATER),
+        End,
+    ]);
     // Root before any pointer publication. A trap now is recovered by service.
     v.extend([
         GlobalGet(base + 7),
@@ -753,7 +778,7 @@ fn recover_receipts(b: &mut Builder, base: u32) -> u32 {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(0),
-        I32Const(ROOT_LIMIT),
+        GlobalGet(base + ROOT_HIGH_WATER),
         I32GeU,
         BrIf(1),
         GlobalGet(base + 7),
@@ -1001,7 +1026,7 @@ fn service(b: &mut Builder, base: u32, status: u32, cancelled: u32) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(0),
-        I32Const(ROOT_LIMIT),
+        GlobalGet(base + ROOT_HIGH_WATER),
         I32GeU,
         BrIf(1),
         GlobalGet(base + 7),

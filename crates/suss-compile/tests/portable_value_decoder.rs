@@ -709,3 +709,56 @@ fn string_decoder_rejects_immutable_utf16_array_impostor() {
         })
         .unwrap();
 }
+
+#[test]
+fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_holes() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
+        for source in [
+            "(new suss.core/IndexedSeq (array 7 nil false) 0 nil)",
+            "(let [a (array)] (aset a 0 7) (aset a 1 nil) (aset a 2 false) (aset a 4294967295 99) (new suss.core/IndexedSeq a 0 nil))",
+        ] {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            assert_eq!(
+                decoder.decode_session(&mut session, &value).unwrap(),
+                Observation::List(vec![
+                    Observation::Number(7.0_f64.to_bits()),
+                    Observation::Nil,
+                    Observation::Bool(false)
+                ]),
+                "{source}"
+            );
+        }
+        let tail = session
+            .eval("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 2 nil))")
+            .unwrap();
+        session.collect().unwrap();
+        assert_eq!(
+            decoder.decode_session(&mut session, &tail).unwrap(),
+            Observation::List(vec![Observation::Number(7.0_f64.to_bits())])
+        );
+        let hole = session
+            .eval("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 1 nil))")
+            .unwrap();
+        session.collect().unwrap();
+        assert!(
+            decoder
+                .decode_session(&mut session, &hole)
+                .unwrap_err()
+                .to_string()
+                .contains("sentinel")
+        );
+        let oversized = session
+            .eval("(let [a (array)] (set! (.-length a) 4294967295) (new suss.core/IndexedSeq a 0 nil))")
+            .unwrap();
+        session.collect().unwrap();
+        assert!(
+            decoder
+                .decode_session(&mut session, &oversized)
+                .unwrap_err()
+                .to_string()
+                .contains("source array limit")
+        );
+    }
+}

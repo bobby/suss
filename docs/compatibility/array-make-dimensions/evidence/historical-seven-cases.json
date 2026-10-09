@@ -1,0 +1,61 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "negative-outer",
+      "source": "(try (make-array nil -1 2) false (catch :default e (= (.-message e) \"Invalid array length\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fractional-outer",
+      "source": "(try (make-array nil 1.5 2) false (catch :default e (= (.-message e) \"Invalid array length\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-leaf",
+      "source": "(try (make-array nil 2 -1) false (catch :default e (= (.-message e) \"Invalid array length\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-outer-invalid-leaf",
+      "source": "(= (alength (make-array nil 0 -1)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-outer-invalid-middle",
+      "source": "(= (alength (make-array nil 0 -1 2)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nonnumeric-outer",
+      "source": "(let [a (make-array nil \"2\" 3)] (and (= (alength a) 1) (= (alength (aget a 0)) 3) (not (.hasOwnProperty (aget a 0) \"0\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nonnumeric-leaf",
+      "source": "(let [a (make-array nil 2 \"3\")] (and (= (alength a) 2) (= (alength (aget a 0)) 1) (= (aget a 0 0) \"3\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

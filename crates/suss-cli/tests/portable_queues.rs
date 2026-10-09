@@ -70,13 +70,51 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
-                assert_eq!(array_fields.len(&store)?, 1);
-                let versions = array_fields
+                assert_eq!(array_fields.len(&store)?, 2);
+                assert_eq!(
+                    array_fields
+                        .get(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32(),
+                    0
+                );
+                let backing = array_fields
                     .get(&mut store, 0)?
                     .unwrap_anyref()
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
+                assert_eq!(backing.len(&store)?, 4);
+                let length = backing
+                    .get(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap()
+                    .field(&mut store, 0)?;
+                assert_eq!(length.unwrap_f64().to_bits(), 4.0_f64.to_bits());
+                let sparse_value = backing.get(&mut store, 1)?;
+                let sparse = sparse_value.unwrap_anyref().unwrap();
+                assert_eq!(sparse.as_i31(&store)?.unwrap().get_u32(), 0);
+                let versions = backing
+                    .get(&mut store, 2)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                let mask = backing
+                    .get(&mut store, 3)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                assert_eq!(mask.len(&store)?, 4);
+                for index in 0..4 {
+                    assert_eq!(mask.get(&mut store, index)?.unwrap_i32(), 1);
+                }
                 assert_eq!(versions.len(&store)?, 4);
                 let mut fronts = Vec::new();
                 let mut rears = Vec::new();

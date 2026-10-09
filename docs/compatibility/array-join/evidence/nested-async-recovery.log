@@ -1,0 +1,10 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-sorted-after-queue/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-sorted-after-queue/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 5.50s
+     Running unittests src/lib.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss_compile-7dc520c6dd49b147)
+
+running 1 test
+test portable_session::tests::session_lifecycle_secondary_interrupt_preserves_async_fuel_trap_and_retires_roots ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 2.79s
+

@@ -1,0 +1,77 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "negative-dynamic-outer",
+      "source": "(let [n -1] (try (make-array nil n 2) false (catch :default e (= (.-message e) \"Invalid array length\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fractional-dynamic-outer",
+      "source": "(let [n 1.5] (try (make-array nil n 2) false (catch :default e (= (.-message e) \"Invalid array length\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-leaf",
+      "source": "(try (make-array nil 2 -1) false (catch :default e (= (.-message e) \"Invalid array length\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-outer-invalid-leaf",
+      "source": "(= (alength (make-array nil 0 -1)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-outer-invalid-middle",
+      "source": "(= (alength (make-array nil 0 -1 2)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nonnumeric-outer",
+      "source": "(let [a (make-array nil \"2\" 3)] (and (= (alength a) 1) (= (alength (aget a 0)) 3) (not (.hasOwnProperty (aget a 0) \"0\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nonnumeric-leaf",
+      "source": "(let [a (make-array nil 2 \"3\")] (and (= (alength a) 2) (= (alength (aget a 0)) 1) (= (aget a 0 0) \"3\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-literal-outer-empty",
+      "source": "(= (alength (make-array nil -1 2)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fractional-literal-outer-ceil",
+      "source": "(let [a (make-array nil 1.5 2)] (and (= (alength a) 2) (= (alength (aget a 0)) 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

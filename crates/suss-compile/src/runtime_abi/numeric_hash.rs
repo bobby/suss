@@ -3,6 +3,27 @@
 use super::*;
 pub(super) fn intrinsics(b: &mut Builder) {
     use Instruction::*;
+    // Private hash adapters retain scalar coercion, but never invoke object
+    // conversion hooks. Keep the existing nil/boolean/string corpus intact.
+    let mut number = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(STRING)),
+        I32Or,
+    ];
+    for sentinel in [0, 2, 4, UNDEFINED] {
+        number.extend([LocalGet(0), I32Const(sentinel), RefI31, RefEq, I32Or]);
+    }
+    number.extend([I32Eqz, If(BlockType::Empty)]);
+    nominal::error(&mut number);
+    number.extend([End, LocalGet(0), Call(b.names["coerce-number"])]);
+    let hash_number = b.function(
+        "hash-scalar-number-value",
+        &[VALUE],
+        &[ValType::F64],
+        &number,
+    );
     // Original numeric milliseconds adapter for portable Date storage.
     // ECMAScript TimeClip: reject nonfinite/out-of-range, truncate, normalize zero.
     let mut time_clip = vec![
@@ -107,7 +128,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[
             LocalGet(0),
-            Call(b.names["coerce-number"]),
+            Call(hash_number),
             F64Ceil,
             Call(b.names["number-box"]),
         ],
@@ -129,7 +150,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[
             LocalGet(0),
-            Call(b.names["coerce-number"]),
+            Call(hash_number),
             F64Abs,
             F64Const(f64::INFINITY.into()),
             F64Lt,
@@ -277,7 +298,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
     for (input, slot) in [(0, 2), (1, 3)] {
         body.extend([
             LocalGet(input),
-            Call(b.names["coerce-number"]),
+            Call(hash_number),
             LocalSet(slot),
             LocalGet(slot),
             LocalGet(slot),

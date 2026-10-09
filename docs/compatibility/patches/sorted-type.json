@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7",
+  "replacement": "(def type\n  \"Return x's constructor.\"\n  (fn [x]\n    (if (suss.bootstrap/nil? x)\n      nil\n      (suss.bootstrap/value-constructor x))))",
+  "rationale": "Retain the complete pinned type declaration, documentation, one-argument arity and nil/constructor branches. Expand defn and when-not explicitly and lower constructor lookup through a private adapter returning canonical Number/String/Boolean callable constructor values or the actual retained nominal class value, independent of live public cells. Scalar Number/String conversion reuses the existing exports; Boolean uses ECMAScript conversion truth values, distinct from comparator callback truthiness. Array/function/native-object constructor lookup and object ToPrimitive remain explicit language-error boundaries; no constructor kind marker or freshly allocated class is substituted. This prerequisite remains in progress and is not complete type/compare compatibility."
+}

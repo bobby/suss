@@ -1,0 +1,69 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "number-hint-valueof",
+      "source": "(< (js-obj \"valueOf\" (fn [] 2)) 3)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "both-string-relational",
+      "source": "(not (< (js-obj \"valueOf\" (fn [] \"2\")) \"10\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "left-before-right",
+      "source": "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2)) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (and (< x y) (= @trace [:x :y])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "property-key-string-hint",
+      "source": "(let [trace (atom []) a (array) key (js-obj \"toString\" (fn [] (swap! trace conj :string) \"label\") \"valueOf\" (fn [] (swap! trace conj :number) 7))] (aset a key 23) (and (= (aget a \"label\") 23) (= @trace [:string])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-result-second-method",
+      "source": "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :number) (js-obj)) \"toString\" (fn [] (swap! trace conj :string) \"2\"))] (and (< x 3) (= @trace [:number :string])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "noncallable-first-skipped",
+      "source": "(let [a (array) key (js-obj \"toString\" 17 \"valueOf\" (fn [] 7))] (aset a key 23) (= (aget a 7) 23))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "addition-string-result",
+      "source": "(= (+ (js-obj \"valueOf\" (fn [] \"2\")) 3) \"23\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "throw-before-right-coercion",
+      "source": "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) (throw 17))) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (try (< x y) false (catch :default e (and (= e 17) (= @trace [:x])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

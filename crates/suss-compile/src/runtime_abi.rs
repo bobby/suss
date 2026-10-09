@@ -8,14 +8,19 @@ mod r#async;
 mod async_library;
 mod streams;
 mod arrays;
+mod sparse_arrays;
 mod array_methods;
+mod array_join;
 mod array_push;
 mod array_pop;
+mod array_own_properties;
+mod array_properties;
 mod bitwise;
 mod closure_properties;
 mod closure_calls;
 mod callable_properties;
 mod comparisons;
+mod coercions;
 mod dynamic;
 mod exception_info;
 mod exceptions;
@@ -26,6 +31,9 @@ mod native_object_methods;
 mod native_object_factory;
 mod native_object_properties;
 mod nominal;
+mod type_values;
+mod primitive_constructors;
+mod range_errors;
 mod numeric;
 mod numeric_hash;
 mod identity_hash;
@@ -629,18 +637,20 @@ fn build_module() -> Vec<u8> {
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
-    let primitives = numeric::intrinsics(&mut b, numeric_info);
+    let coercion_types = coercions::declare(&mut b);
+    let primitives = numeric::intrinsics(&mut b, numeric_info, coercion_types);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    sparse_arrays::functions(&mut b);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
-    arithmetic_functions.extend(comparisons::functions(&mut b));
+    arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
     // Original source error adapter: retain the ABI Error descriptor/message
@@ -656,7 +666,7 @@ fn build_module() -> Vec<u8> {
         LocalGet(0), RefTestNonNull(HeapType::Concrete(8)),
         If(BlockType::Result(ValType::I32)), I32Const(0),
     ];
-    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL]) {
+    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL, range_errors::DESCRIPTOR_GLOBAL]) {
         error_test.extend([
             LocalGet(0), RefCastNonNull(HeapType::Concrete(8)),
             StructGet { struct_type_index: 8, field_index: 0 },
@@ -679,6 +689,11 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
     arithmetic_functions.extend(async_library::functions(&mut b));
+    arithmetic_functions.extend(primitive_constructors::functions(&mut b));
+    arithmetic_functions.extend(range_errors::functions(&mut b));
+    type_values::functions(&mut b);
+    let coercion_functions = coercions::functions(&mut b);
+    arithmetic_functions.extend(coercion_functions);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -723,7 +738,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 4),
+        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 5),
     );
     globals.global(
         GlobalType {
@@ -931,6 +946,13 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::i64_const(1));
     r#async::append_descriptor(&mut globals);
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
+    type_values::append_globals(&mut globals);
+    primitive_constructors::append_globals(&mut globals);
+    range_errors::append_globals(&mut globals);
+    array_own_properties::append_globals(&mut globals);
+    coercions::append_globals(&mut globals, coercion_types, coercion_functions);
+    array_join::append_globals(&mut globals);
+    b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

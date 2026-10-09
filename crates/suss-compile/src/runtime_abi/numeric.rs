@@ -233,11 +233,19 @@ fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
     ]);
     code
 }
+// Keep the established numeric unsupported-boundary descriptor/message shared
+// with the ordered conversion adapter until Function conversion is implemented.
+pub(super) fn unsupported_object_error() -> Vec<Instruction<'static>> {
+    error("Unsupported arithmetic object coercion", 4)
+}
+
 fn text(value: &str) -> Vec<Instruction<'static>> {
     let units = value.encode_utf16().collect::<Vec<_>>();
     let mut code = units
@@ -261,11 +269,15 @@ fn check(
     code
 }
 
-pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
+pub(super) fn intrinsics(
+    b: &mut Builder,
+    helper: Info,
+    coercion_types: coercions::Types,
+) -> [u32; 5] {
     use Instruction::*;
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
-    let unsupported = error("Unsupported arithmetic object coercion", 4);
+    let unsupported = unsupported_object_error();
     let allocation = error("Numeric conversion scratch allocation failed", 5);
     let byte = MemArg {
         offset: 0,
@@ -400,7 +412,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Return,
         End,
     ]);
-    convert.extend_from_slice(&unsupported);
+    coercions::number(&mut convert, coercion_types);
     let convert = b.function_with_locals(
         "coerce-number",
         &[VALUE],
@@ -488,7 +500,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Return,
         End,
     ]);
-    to_string.extend_from_slice(&unsupported);
+    coercions::string(&mut to_string, coercion_types);
     let to_string = b.function_with_locals(
         "coerce-string",
         &[VALUE],
@@ -557,7 +569,10 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         &concat,
     );
 
-    let add = [
+    let mut add = vec![];
+    coercions::primitive(&mut add, coercion_types, 0, 0);
+    coercions::primitive(&mut add, coercion_types, 1, 0);
+    add.extend([
         LocalGet(0),
         RefTestNonNull(string),
         LocalGet(1),
@@ -577,7 +592,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         Call(convert),
         F64Add,
         StructNew(NUMBER),
-    ];
+    ]);
     let add = b.function("value-add", &[VALUE, VALUE], &[VALUE], &add);
     let mut binary = Vec::new();
     for (name, operation) in [

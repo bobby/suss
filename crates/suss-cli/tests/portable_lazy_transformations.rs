@@ -1,5 +1,5 @@
 //! Full pinned lazy map/filter corpus; actual native execution remains required.
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{Form, Kind};
 
@@ -201,9 +201,62 @@ fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
-                assert_eq!(fields.len(&store)?, 1, "owned array storage");
-                let items = fields
+                assert_eq!(
+                    fields.len(&store)?,
+                    2,
+                    "array owner and ordinary properties"
+                );
+                assert_eq!(
+                    fields
+                        .get(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32(),
+                    0
+                );
+                let backing_storage = fields
                     .get(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                assert_eq!(
+                    backing_storage.len(&store)?,
+                    4,
+                    "length, sparse chain, dense values, presence"
+                );
+                let length = backing_storage
+                    .get(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap()
+                    .field(&mut store, 0)?;
+                assert_eq!(length.unwrap_f64().to_bits(), 2.0_f64.to_bits());
+                assert_eq!(
+                    backing_storage
+                        .get(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32(),
+                    0
+                );
+                let presence = backing_storage
+                    .get(&mut store, 3)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .unwrap();
+                assert_eq!(presence.len(&store)?, 2);
+                for index in 0..2 {
+                    assert_eq!(presence.get(&mut store, index)?.unwrap_i32(), 1);
+                }
+                let items = backing_storage
+                    .get(&mut store, 2)?
                     .unwrap_anyref()
                     .unwrap()
                     .as_array(&store)?

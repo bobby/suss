@@ -1658,6 +1658,21 @@
       "id": "runtime:filter:5370",
       "source-sha256": "149b4f72e71e76f158efb21f6f4dbcdad44f341429b91b3109305c7f2faa2911",
       "patch": "docs/compatibility/patches/lazy-filter.json"
+    },
+    {
+      "id": "runtime:ISorted:782",
+      "source-sha256": "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1",
+      "patch": null
+    },
+    {
+      "id": "runtime:IComparable:865",
+      "source-sha256": "88f0015b03c6b1abe54df3846a812e146076e59cb95105c6fe39bd1d2678ed6f",
+      "patch": null
+    },
+    {
+      "id": "runtime:type:347",
+      "source-sha256": "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7",
+      "patch": "docs/compatibility/patches/sorted-type.json"
     }
   ],
   "loader": {
