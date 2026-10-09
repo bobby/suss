@@ -59,11 +59,23 @@ pub(super) fn functions(b: &mut Builder) {
         Return,
         End,
         LocalGet(0),
+        Call(b.names["source-array?"]),
+        If(BlockType::Empty),
+        Call(b.names["array-constructor"]),
+        Return,
+        End,
+        LocalGet(0),
+        Call(b.names["range-error?"]),
+        If(BlockType::Empty),
+        Call(b.names["range-error-constructor"]),
+        Return,
+        End,
+        LocalGet(0),
         RefTestNonNull(HeapType::Concrete(7)),
         I32Eqz,
         If(BlockType::Empty),
     ]);
-    // Array/function constructors and native-object constructor properties
+    // Function constructors and native-object constructor properties
     // remain an explicit unsupported boundary, never kind markers.
     nominal::error(&mut body);
     body.extend([

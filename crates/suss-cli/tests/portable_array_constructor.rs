@@ -101,3 +101,43 @@ fn retained_array_constructor_is_callable_after_gc_in_separate_fragment() {
             .unwrap();
     }
 }
+
+#[test]
+fn array_own_method_identity_survives_public_property_reads_and_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        let method = session.eval("(.-hasOwnProperty (array))").unwrap();
+        session.collect().unwrap();
+        let check = session.eval("(fn [saved] (let [a (array 7)] (and (identical? saved (.-hasOwnProperty a)) (.hasOwnProperty a 0) (.hasOwnProperty a \"length\") (not (.hasOwnProperty a \"00\")) (not (.hasOwnProperty a \"-0\")) (not (.hasOwnProperty a \"1e0\")) (not (.hasOwnProperty a)))))").unwrap();
+        let value = session.invoke(&check, &[&method]).unwrap();
+        session.collect().unwrap();
+        session.inspect(&value, |store, value| {
+            assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 4);
+            Ok(())
+        }).unwrap();
+    }
+}
+
+#[test]
+fn array_push_overflow_and_ordinary_properties_match_pinned_cases_in_both_phases() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!("../../../tests/oracle/array-push-properties-cases.json")).unwrap();
+    assert_eq!(corpus["upstream"], "c4295f303100bbf5afac449242d30bca1126f1a1");
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 8);
+    let ids: Vec<_> = cases.iter().map(|c| c["id"].as_str().unwrap()).collect();
+    assert_eq!(ids, ["push-max-three-writes", "push-max-minus-one-three-writes", "push-to-max-succeeds", "push-max-empty-succeeds", "ordinary-numeric-properties", "ordinary-string-properties-and-index-spelling", "indexed-length-shrink-preserves-ordinary", "invalid-length-assignment-no-write"]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for case in cases {
+            let source = case["source"].as_str().unwrap();
+            let value = session.eval(source).unwrap_or_else(|error| panic!("Array property case {}: {error}", case["id"]));
+            session.collect().unwrap();
+            let actual = session.inspect(&value, |store, value| {
+                match value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32() {
+                    2 => Ok(false), 4 => Ok(true), other => panic!("Unexpected sentinel {other}"),
+                }
+            }).unwrap();
+            assert_eq!(serde_json::json!({"tag":"bool", "value":actual}), case["expected"], "{}", case["id"]);
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "files": {
+    "tests/oracle/array-push-properties-cases.json": "2417b6dc8d0375cd1e55ac0d30eb608499436ada1dad5c3a5892074d02070f62",
+    "tests/oracle/src/suss_oracle/array_push_properties.cljs": "256733f8fba845cd5b73161124a73184471672ab6da5d5373aace4daad4ebbd1",
+    "docs/compatibility/array-push-properties/evidence/observations.json": "143dcfc3ab9ffd0898238c98a456da0b703f7ad46ef9df0e026c73561aaa3b14",
+    "docs/compatibility/array-push-properties/evidence/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

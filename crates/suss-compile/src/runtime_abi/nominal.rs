@@ -137,7 +137,13 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         If(BlockType::Result(ValType::I32)),
     ]);
     get(&mut body, 1, OBJECT, 0);
-    body.extend([LocalGet(0), RefEq, Else, I32Const(0), End]);
+    body.extend([
+        LocalGet(0), RefEq, Else,
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(8)),
+        If(BlockType::Result(ValType::I32)),
+    ]);
+    get(&mut body, 1, 8, 0);
+    body.extend([LocalGet(0), RefEq, Else, I32Const(0), End, End]);
     b.function("object-instance", &[VALUE, VALUE], &[ValType::I32], &body);
 
     let mut body = vec![];

@@ -8,9 +8,12 @@ mod r#async;
 mod async_library;
 mod streams;
 mod arrays;
+mod sparse_arrays;
 mod array_methods;
 mod array_push;
 mod array_pop;
+mod array_own_properties;
+mod array_properties;
 mod bitwise;
 mod closure_properties;
 mod closure_calls;
@@ -28,6 +31,7 @@ mod native_object_properties;
 mod nominal;
 mod type_values;
 mod primitive_constructors;
+mod range_errors;
 mod numeric;
 mod numeric_hash;
 mod identity_hash;
@@ -636,6 +640,7 @@ fn build_module() -> Vec<u8> {
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    sparse_arrays::functions(&mut b);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
@@ -658,7 +663,7 @@ fn build_module() -> Vec<u8> {
         LocalGet(0), RefTestNonNull(HeapType::Concrete(8)),
         If(BlockType::Result(ValType::I32)), I32Const(0),
     ];
-    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL]) {
+    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL, range_errors::DESCRIPTOR_GLOBAL]) {
         error_test.extend([
             LocalGet(0), RefCastNonNull(HeapType::Concrete(8)),
             StructGet { struct_type_index: 8, field_index: 0 },
@@ -682,6 +687,7 @@ fn build_module() -> Vec<u8> {
     r#async::intrinsics(&mut b);
     arithmetic_functions.extend(async_library::functions(&mut b));
     arithmetic_functions.extend(primitive_constructors::functions(&mut b));
+    arithmetic_functions.extend(range_errors::functions(&mut b));
     type_values::functions(&mut b);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
@@ -727,7 +733,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 4),
+        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 5),
     );
     globals.global(
         GlobalType {
@@ -937,6 +943,8 @@ fn build_module() -> Vec<u8> {
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
     type_values::append_globals(&mut globals);
     primitive_constructors::append_globals(&mut globals);
+    range_errors::append_globals(&mut globals);
+    array_own_properties::append_globals(&mut globals);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

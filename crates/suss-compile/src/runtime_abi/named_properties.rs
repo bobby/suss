@@ -137,6 +137,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     callbacks.extend(array_methods::functions(b));
     callbacks.extend(array_push::functions(b));
     callbacks.extend(array_pop::functions(b));
+    callbacks.extend(array_own_properties::functions(b, equal));
     let (call, apply) = closure_calls::functions(b);
     callbacks.extend([call, apply]);
 
@@ -605,8 +606,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         structure(&mut body, 0, 7, 0);
         body.extend([GlobalGet(arrays::TAG_GLOBAL), RefEq, If(BlockType::Empty)]);
         if writing {
-            nominal::error(&mut body);
+            body.extend([LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["source-array-set"]), Return]);
         } else {
+            body.extend([LocalGet(0), LocalGet(1), Call(b.names["source-array-property-has"]), If(BlockType::Empty),
+                LocalGet(0), LocalGet(1), Call(b.names["source-array-property-get"]), Return, End]);
             body.push(LocalGet(1));
             name(&mut body, "length");
             body.extend([
@@ -636,7 +639,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Return,
                 End,
             ]);
-            nominal::error(&mut body); // Other source-array names need an explicit adapter.
+            body.push(LocalGet(1));
+            name(&mut body, "hasOwnProperty");
+            body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-has-own-method"]), Return, End]);
+            body.extend([LocalGet(0), LocalGet(1), Call(b.names["source-array-get"]), Return]);
         }
         body.push(End);
         structure(&mut body, 0, 7, 1);

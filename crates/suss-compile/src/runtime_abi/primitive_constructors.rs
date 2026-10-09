@@ -7,9 +7,10 @@ use Instruction::*;
 pub(super) const NUMBER_ROOT: u32 = type_values::KEY_GLOBAL + 1;
 pub(super) const STRING_ROOT: u32 = NUMBER_ROOT + 1;
 pub(super) const BOOLEAN_ROOT: u32 = STRING_ROOT + 1;
+pub(super) const ARRAY_ROOT: u32 = BOOLEAN_ROOT + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
-    for _ in 0..3 {
+    for _ in 0..4 {
         globals.global(
             GlobalType {
                 val_type: VALUE,
@@ -139,5 +140,39 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ]);
         b.function(export, &[], &[VALUE], &body);
     }
+    let invoke = callback(
+        b,
+        &[LocalGet(1), Call(b.names["source-array-constructor-args"])],
+    );
+    declared.push(invoke);
+    let mut body = vec![
+        GlobalGet(ARRAY_ROOT),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        If(BlockType::Empty),
+        GlobalGet(ARRAY_ROOT),
+        Return,
+        End,
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 0,
+        },
+        RefFunc(invoke),
+        I32Const(0),
+        I32Const(-1),
+        Call(b.names["closure-new"]),
+        GlobalSet(ARRAY_ROOT),
+        GlobalGet(ARRAY_ROOT),
+    ];
+    let units: Vec<_> = "Array".encode_utf16().collect();
+    body.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+    body.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: units.len() as u32,
+        },
+        Call(b.names["closure-source-name-initialize"]),
+        GlobalGet(ARRAY_ROOT),
+    ]);
+    b.function("array-constructor", &[], &[VALUE], &body);
     declared
 }

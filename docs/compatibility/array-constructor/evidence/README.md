@@ -23,3 +23,11 @@ Fresh pinned runner exited0 with all22 ordered Boolean results; three strict
 harness regressions pass. Existing historical evidence is preserved. These are
 reference results only; native tests remain uncompiled and Array storage and
 RangeError identity still require implementation and execution.
+
+The preceding uncompiled/native-missing notes describe their historical
+snapshots. The later sparse Array implementation executes all22 unchanged
+constructor cases in both Runtime/Macro phases after GC, plus cross-fragment
+retained constructor and public own-method identity checks. Four current native
+constructor/property tests pass; the additional eight-case pinned corpus and
+limits are recorded in [Array push/property evidence](../../array-push-properties/evidence/README.md).
+This does not certify full coercion, prototypes/accessors or sorted collections.

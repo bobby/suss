@@ -46,11 +46,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(1),
         I32Const(0),
         ArrayGet(ARGS),
-        Call(b.names["source-array-storage"]),
+        Call(b.names["source-array-backing"]),
         LocalSet(2),
         LocalGet(2),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
+        Call(b.names["source-array-sparse-length"]),
         LocalSet(3),
         I32Const(0),
         LocalSet(4),
@@ -98,30 +97,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(4),
         LocalSet(5),
         End,
-        LocalGet(5),
-        LocalGet(4),
-        I32Sub,
-        ArrayNewDefault(ARGS),
-        LocalSet(6),
-        LocalGet(6),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
         LocalGet(2),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(4),
         LocalGet(5),
-        LocalGet(4),
-        I32Sub,
-        ArrayCopy {
-            array_type_index_dst: ARGS,
-            array_type_index_src: ARGS,
-        },
-        LocalGet(6),
-        Call(b.names["source-array-new"]),
+        Call(b.names["source-array-sparse-slice"]),
+        Call(b.names["source-array-from-backing"]),
     ];
     let anchored = b.count;
     b.functions.function(INVOKE);
-    let mut f = Function::new([(1, VALUE), (3, ValType::I32), (1, VALUE)]);
+    let mut f = Function::new([(1, VALUE), (3, ValType::I32)]);
     for i in body {
         f.instruction(&i);
     }

@@ -3,40 +3,69 @@
 use super::*;
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
-    let next = b.function("native-object-factory-next", &[VALUE], &[VALUE], &{
-        let mut code = vec![
-            LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(ARGS)),
-            I32Eqz,
-            If(BlockType::Empty),
-        ];
-        nominal::error(&mut code);
-        code.push(End);
-        code.extend([
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(ARGS)),
-            ArrayLen,
-            I32Const(1),
-            I32Eq,
-            If(BlockType::Empty),
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(ARGS)),
-            I32Const(0),
-            ArrayGet(ARGS),
-            Call(b.names["source-array?"]),
-            If(BlockType::Empty),
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(ARGS)),
-            I32Const(0),
-            ArrayGet(ARGS),
-            Call(b.names["source-array-storage"]),
-            Return,
-            End,
-            End,
-            LocalGet(0),
-        ]);
-        code
-    });
+    // Walk stable array owner identities; Args snapshots are produced only
+    // after traversal ends, otherwise identity-based cycle detection is unsound.
+    let mut code = vec![
+        LocalGet(0),
+        Call(b.names["source-array?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["source-array-backing"]),
+        LocalSet(1),
+        LocalGet(1),
+        Call(b.names["source-array-sparse-length"]),
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
+        LocalGet(1),
+        I32Const(0),
+        Call(b.names["source-array-sparse-get"]),
+        LocalTee(1),
+        Call(b.names["source-array?"]),
+        If(BlockType::Empty),
+        LocalGet(1),
+        Return,
+        End,
+        End,
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut code);
+    code.extend([
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalTee(1),
+        Call(b.names["source-array?"]),
+        If(BlockType::Empty),
+        LocalGet(1),
+        Return,
+        End,
+        End,
+        I32Const(0),
+        RefI31,
+    ]);
+    let next = b.function_with_locals(
+        "native-object-factory-next",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &code,
+    );
     let mut code = vec![
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(ARGS)),
@@ -54,33 +83,39 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Loop(BlockType::Empty),
         LocalGet(1),
         Call(next),
-        LocalSet(3),
-        LocalGet(1),
-        LocalGet(3),
+        LocalTee(3),
+        I32Const(0),
+        RefI31,
         RefEq,
         If(BlockType::Empty),
         LocalGet(1),
+        Call(b.names["source-array?"]),
+        If(BlockType::Result(VALUE)),
+        LocalGet(1),
+        Call(b.names["source-array-storage"]),
+        Else,
+        LocalGet(1),
+        End,
         Return,
         End,
         LocalGet(3),
         LocalSet(1),
-        LocalGet(2),
-        Call(next),
-        Call(next),
-        LocalSet(2),
-        LocalGet(1),
-        LocalGet(2),
-        RefEq,
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(next),
-        LocalGet(1),
-        RefEq,
-        If(BlockType::Empty),
-        LocalGet(1),
-        Return,
-        End,
     ]);
+    for _ in 0..2 {
+        code.extend([
+            LocalGet(2),
+            I32Const(0),
+            RefI31,
+            RefEq,
+            I32Eqz,
+            If(BlockType::Empty),
+            LocalGet(2),
+            Call(next),
+            LocalSet(2),
+            End,
+        ]);
+    }
+    code.extend([LocalGet(1), LocalGet(2), RefEq, If(BlockType::Empty)]);
     nominal::error(&mut code);
     code.extend([End, Br(0), End, End, LocalGet(1)]);
     let flatten = b.function_with_locals(

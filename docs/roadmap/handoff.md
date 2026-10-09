@@ -22334,3 +22334,248 @@ context to corpus failure diagnostics. Next implementation: canonical rooted
 Array callable plus true sparse uint32logical-length/presence storage and access
 consumers; exact RangeErroridentity and ordered ToPrimitive remain required.
 Scalar/type prerequisites are validated; fullsorted/tree/record scope remainsopen.
+
+Sparse backing implementation started: runtime_abi/sparse_arrays.rs uses only
+shared Args/Number GC types. Constant-size initial storage holds logical uint32
+length and linked indexed entries; get/has distinguish absence from explicit
+undefined, set updates existing entries and grows length except index4294967295
+which remains ordinary property. No dense allocation for4294967295 logical length.
+Actual focused Wasm test36467 terminal0:1passed/0failed/ignored0,50filtered,0.15s;
+checks sparse max/1M+1 length, ownpresence and scoped payload retention afterGC.
+This backing is not yet wired to source Array constructor or old consumers;
+Array native failure3465 remains valid. Full runtimeABI run started next; no
+newbootstrap/sourceconstructor acceptanceclaim. Independent read-only backing
+review requested. Next: deletion/shrink and accessor migration, then canonical
+Array/type and exact RangeError, fullcoercion/comparator/tree/record originalscope.
+
+Sparse first fullABI51303 terminal0:51passed/0failed/ignored0,5.61s. Added
+delete/unlink and length shrink/grow: removes indexed entries above newlength,
+preserves ordinary4294967295 property, doesnotresurrectremovedentries on grow,
+delete neverchangeslogical length. Secondfocused65329 terminal0:2passed0failed
+50filtered0.24s. Independent initialreview found valid-state ownership/boundary
+logic sound, but ingressvalidation/acyclicity and bulkconstruction needresolution
+beforeowner migration. Repaired malformedlength saturation: exactuint32 check
+throws actual languageexception for negative/fractional/NaN/Inf/overflow. Added
+existingentry overwrite coverage. Thirdfocused91077 terminal0:3passed0failed
+50filtered0.41s. Logs /private/tmp/suss-m4-sparse-array-storage-{abi,second,third}.log.
+Backing remains unwired; complete linked-entry validation/acyclicity or canonical
+owner ingressguard, bulk/hybriddenseconstruction and consumer migration still
+required. Bootstrap now stale afterruntimechanges: regenerateafterintegration.
+FullArray22, comparator/tree/records acceptance remains incomplete.
+
+Sparse ingress guards now validate exactuint32 entrykeys, shape/tails and
+Floyd-detect cycles before mutation. Fourthfocused80535 terminal0:4passed/0failed
+50filtered0.47s; foreign fractional/NaN/badtail/shape/selfcycle all throw language
+exceptions before shrink changeslength. Bulkfromargs visitsinputonce, freshnodes
+avoid repeated find/set; fifthfocused44307 terminal0:5passed/0failed50filtered
+0.64s,1024inputcopy/storageisolation andexplicitundefinedpresence verifiedafterGC.
+Logs /private/tmp/suss-m4-sparse-array-storage-{fourth,fifth}.log. Independent
+review ofnewguards/bulk requested; notwiredtosourceArray yet. Next: migrate
+arraycreation/accessors, rawArgs consumers and push/pop/clone withholepreservation,
+then canonicalArray callable/type/RangeError and fullcoercion/comparator/tree.
+
+Hybrid backing now uses Args4 [logical length,sparse head,dense prefix,UTF16
+presence mask], without adding sharedABItypes. Bulk ingress clonesdenseArgs once
+and marksallpresent; denseget/has/set/delete use directindexed storage. Shrink
+truncatesprefix+mask, sparse highindices remainseparate. Firsthybrid compilefailed
+due delimiters, repaired; second6013 4pass/1fail (obsolete constantbacking assertion
+2 vsnew4), updated layoutcheck. Third2444 terminal0:6passed0failed50filtered0.66s,
+includesdense delete/reinsertundefined and shrink/grow noresurrection. Logs
+/private/tmp/suss-m4-sparse-array-storage-hybrid{,-second,-third}.log retained.
+Independenthybrid review requested; sparse foreign duplicate/outoflogical-length
+entries remain ingressgap beforeownerwiring. SourceArray/constructor migration
+hasnotoccurred yet; bootstrapstale afterruntimeedits. Next rejectforeignsparse
+invariants whilepreservingdensefastpath, then accessor/consumer migration.
+
+Hybrid ingress now requires strictlyascending sparse keys, disjoint fromdense
+prefix and belowlogical length except ordinaryuint32max. Sortedinsert captures
+oldlength beforelink mutation and preservesvalidfinalstate. Ordered12440 terminal0:
+6passed0failed50filtered0.69s. Mutation-only maskscan rejects badpresence before
+set/delete/shrink; readscheckaddressedflag only (dense readsconstant-time when
+sparsechainempty; sparsechains stillvalidated/scanned). Focused83696 terminal0:
+8passed0failed50filtered0.93s, duplicate/outofrange/unordered/denseoverlap and
+malformedmask regressions preserveunmutatedstate. FullABI runstartedafterfocus;
+independentrepairs reviewrequested. Source-arrayowner/constructor notwired,
+bootstrapstale; nextactualwork accessor/consumer migration plus canonicalArray.
+
+FullhybridABI19590 terminal0:58passed0failedignored0,6.50s; independentreview
+foundfunctionalguards sound but fullmaskscan madeindividualdensewritesquadratic.
+Set/delete nowvalidateaddressedpresence beforewrite, neverrepairinvalidtarget;
+shrink retainsfullmaskscan. Reads/writesdirectwhenno sparsechain. Eightfocused
+58508 terminal0 .89s. Added explicit sparse-to-args independentdense snapshot:
+copydensepresentpayloads andwalksparseonce, holesbecomeundefined, ordinaryMAXkey
+excluded. MAX_LENGTH bounds only this materializedArgs allocation, notvalid
+sparselogicalarray. Newmaterialization/isolation/boundary focused16776 terminal0:9passed0failed
+50filtered1.66s;
+log /private/tmp/suss-m4-sparse-array-storage-materialize-second.log. Backing
+reviewrequested; actualsourceowner/accessor andmutation/sliceconsumers still
+requiremigration beforeconstructor22pass. Bootstrapstale; no sourcearrayclaim.
+
+SourceArray owner nowstoresvalidatedhybridbacking inits existingonefield. New/
+holes-new/bkg/length/get/set andpush/pop usebacking, not rawArgs. Numericproperty
+parserusesi64 todistinguish valid4294967295 frominvalid; stringindex path unchanged.
+RawArgs consumers receiveexplicit independentmaterialization. Sourceclone now
+copybacking directly preservesholes/undefinedpresence/maxlogicallength, excludes
+ordinaryproperties. Ownership41358 terminal0; firstfull54244 terminal101:
+58pass1failobsolete testexpected1Mindexgrow rejection. Revised topositivegrowth
+1_000_002 and boundedArgsmaterializationnegative; second16241 terminal0:
+59passed0failedignored0,6.97s. Actual sourceownerclone66676 terminal0:
+1passed59filtered0.16s, MAXsparseclone/independentmutation/presence/GC retained.
+Logs /private/tmp/suss-m4-source-array-{migration-first,migration-full-first,
+migration-full-second,owner-clone}.log. Independentmigration reviewrequested.
+Slice remainsoldmaterialization andmustpreserveholes; make-array allocation/holes
+stillneedsalignment; canonicalArray/type/RangeError andfullToPrimitive/comparator
+remainpending. Bootstrapstale aftermigration; nofullArray22/corephase acceptance.
+
+Slice migratedfrommaterializedArgs tophysicaldense/sparse rangecopy; holesand
+shiftedhighindices preserved without logical-length allocation. Newregression
+71247 terminal101 exposedzero-count ArrayCopy withsourceoffsetoutsideprefix;
+guardrepair19632 terminal0:1passed60filtered0.16s, dense/sparse/nearMAX ranges
+andcapturedendaftershrink verified. Clone reusesrangehelper. Independentmigration
+review foundP1 freshsnapshots defeatingnativefactoryFloyd identity andP2push
+overflow prematurelyrejectingbefore ordinaryMAXpropertywrites. P1repaired by
+walkingstableowners/materializingterminalleaf only; self/mutualcycle andacyclic
+recovery15597 terminal0:2passed60filtered0.27s, typedlanguageexceptionsafterGC.
+Logs /private/tmp/suss-m4-sparse-array-slice-{before-zero-copy-fix,fixed}.log and
+/private/tmp/suss-m4-array-factory-cycle-fix.log. Independentrepairreviewrequested;
+fullABI runstartedlog/private/tmp/suss-m4-source-array-slice-cycle-full-abi.log.
+P2 remainsOPEN: implementpushordinarypropertiesbeforeRangeErrorlengthwrite with
+exactRangeErroridentity/payload, then Arraycallable/type/propertyapis, make-array
+holes/constructor22 andcorebothphases afterbootstrapregeneration. NoPRreadyclaim.
+
+### Array constructor and canonical RangeError runtime execution
+
+The sorted worktree now roots Array and RangeError callables without changing
+ABI v2's recursive types. Array's single Number argument accepts exact uint32
+lengths, creates holes without length-sized allocation, and rejects invalid
+lengths with a canonical RangeError and exact `Invalid array length` payload.
+Non-numeric arguments remain elements. `value-constructor` returns the rooted
+Array/RangeError callable; nominal instance checks now recognize exception
+payload descriptors as well as ordinary object descriptors.
+
+The first integration test failed Wasm validation because the RangeError
+callback's message branch was eqref at the typed String field. An explicit
+String cast repaired it; the owner-clone regression then passed (1/1).
+The new constructor test initially had Rust type/API mistakes and a nonexistent
+undefined export; these test mistakes were repaired without weakening its
+assertions. It executes lengths 0, 3, 1000001 and 4294967295, invalid negative,
+fractional, NaN, infinite and 4294967296 lengths, exact error identity/message,
+constructor retention after GC, and explicit undefined's own presence.
+
+With `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226`:
+- `cargo test -p suss-compile --locked --test runtime_abi runtime_abi_array_constructor_lengths -- --test-threads=2`: 1 passed, 62 filtered, terminal 0.
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`: 63 passed, 0 failed/ignored, terminal 0 (6.32s).
+
+Logs: `/private/tmp/suss-m4-array-range-constructor-first.log`,
+`/private/tmp/suss-m4-array-range-constructor-repair.log`,
+`/private/tmp/suss-m4-array-range-identity{,-repair,-final}.log`, and
+`/private/tmp/suss-m4-array-range-all-abi.log`. Independent review requested.
+These are runtime tests, not proof of regenerated source bootstrap or full M4.
+The next task is still push's ordinary overflow-property writes before the
+RangeError length assignment, followed by source property APIs and both-phase
+Array corpus execution after regeneration. The required full workspace baseline
+has not been run on this dirty head; no PR readiness or milestone closure claim.
+
+Independent review found `RangeError(undefined)` incorrectly coerced its message.
+The adapter now bypasses coercion for undefined; focused execution also checks
+Number 7 yields UTF-16 `7`. Reviewer found no remaining material issue in that
+fix. `runtime_abi_array_constructor_lengths` passed 1/1 (62 filtered, 0.17s),
+log `/private/tmp/suss-m4-range-review-fix.log`. This post-review fix follows the
+63-test ABI pass above; that earlier full ABI result does not cover this fix.
+
+Both shipped bootstrap phases were regenerated successfully after the fix:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`,
+terminal 0, log `/private/tmp/suss-m4-range-review-bootstrap.log`.
+Actual public source gate `cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`
+then exited 101: 1 passed / 1 failed (5.34s). Constructor retention across
+separate fragments after GC now passes. The ordered corpus reaches
+`holes-have-no-own-index` and throws because the public Array hasOwnProperty
+adapter is absent. Log `/private/tmp/suss-m4-sparse-array-source-constructor.log`.
+No skips or revised success assertions. Next implement this own-property adapter
+and execute the same corpus; push overflow semantics remain independently open.
+
+### Public Array own-property adapter and executable constructor corpus
+
+Implemented `hasOwnProperty` for Array length and its indexed/uint32-MAX data
+properties, with canonical decimal key parsing (rejecting leading zeros, -0,
+whitespace, exponents, fractional forms, non-ASCII digits and uint32 overflow).
+The adapter coerces its key once and checks presence rather than payload, so
+holes and explicit undefined remain distinct. Unsupported general property
+storage and complete object-to-property-key coercion remain future work.
+
+The public 22-case pinned Array corpus passed in both Runtime/Macro phases,
+along with separate-fragment retained-constructor GC execution: 2 passed,
+terminal 0, 5.64s (`/private/tmp/suss-m4-array-own-source-corpus.log`). Independent
+review then found freshly allocated own-method identity on each read. Added a
+rooted canonical method cache; review found no material issue in the fix.
+Focused runtime checks execute 16 canonical/noncanonical names, GC identity,
+bound numeric key dispatch, holes versus explicit undefined, missing key and
+detached language exception: 1 passed, terminal 0, 0.17s
+(`/private/tmp/suss-m4-array-own-identity-fixed.log`).
+
+Regenerated both bootstrap phases after the cache fix, terminal 0
+(`/private/tmp/suss-m4-array-own-identity-bootstrap.log`). Reran unchanged
+`cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`:
+2 passed, terminal 0, 5.80s (`/private/tmp/suss-m4-array-own-identity-source.log`).
+Added and executed public property-read identity across fragments/GC, own length,
+numeric key and noncanonical/missing key assertions in both phases:
+`cargo test -p suss-cli --locked --test portable_array_constructor array_own_method_identity -- --test-threads=2`,
+1 passed, 2 filtered, terminal 0, 5.20s
+(`/private/tmp/suss-m4-array-own-public-identity.log`). Final runtime ABI suite:
+`cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`,
+64 passed, 0 failed/ignored, terminal 0, 7.92s
+(`/private/tmp/suss-m4-array-own-final-abi.log`). All Cargo used jobs2 and the same
+external native target; no concurrent graph. These gates do not replace the
+required full workspace baseline or prove full M4. Next resolve push overflow
+ordinary writes, complete source coercion/property semantics, then comparator
+and sorted trees. No milestone closure or PR-ready claim.
+
+### Push overflow partial writes and ordinary Array property storage
+
+The authored regression first failed on the previous preflight generic Error
+(`/private/tmp/suss-m4-push-overflow-before.log`, terminal101). Push now uses I64
+key sums, writes every supplied value in order through Array property storage,
+and only then throws canonical RangeError for the invalid final length. Direct
+execution verifies all three values after GC from starts4294967294/4294967295,
+with logical length4294967295. New ordinary storage is a GC-rooted linked chain
+in owner Args slot1; slot0 remains the hybrid indexed backing. Owners now have
+two private fields, without changing shared ABI types. Canonical indexed names
+use backing; ordinary negative/fractional/NaN/infinite/overflow/string names use
+the independent chain. Source key values are normalized once before dispatch.
+Chain shape/tail guards and Floyd checks reject malformed/cyclic chains before
+ordinary mutation; a five-shape execution test verifies typed errors and recovery
+after GC (1passed, terminal0,0.18s).
+
+Independent review found that indexed `length` would conflict with logical/named
+length. Implemented its logical read and exact uint32 primitive RHS assignment,
+with canonical RangeError before invalid mutation. Shrink drops indexed entries;
+ordinary properties survive shrink/grow. Named assignment uses the same setter;
+ordinary own data shadows builtin named methods. Review found no material issue
+in supported primitive length behavior, but object RHS requires separate
+prescribed uint32/number conversions and is still unsupported. Named length,
+coercible primitive RHS/assignment-result identity, builtin shadowing and general
+object coercion effects need more focused public proof.
+
+A local parser-movement declaration typo and length-branch delimiter typo were
+caught by Cargo and repaired; retained failed logs are
+`/private/tmp/suss-m4-push-properties-abi.log` and
+`/private/tmp/suss-m4-push-length-integration.log`. The first oracle command used
+the wrong cwd and failed to write/find the original fixture. Corrected fixture
+creation and fresh compilation/Node execution exited0; this was our runner
+mistake, not an upstream result. All8 exact ordered Boolean reference results
+match the corpus. Original fixture, observations, compile log and source/output
+hashes are retained under docs/compatibility/array-push-properties/evidence.
+
+Validation, all jobs2/shared external native target with one Cargo graph:
+- Focused push after length integration:1passed,.15s,terminal0 (`/private/tmp/suss-m4-push-length-integration-fixed.log`).
+- Regenerated both bootstrap phases:terminal0 (`/private/tmp/suss-m4-push-properties-bootstrap.log`).
+- `cargo test -p suss-cli --locked --test portable_array_constructor -- --test-threads=2`:4passed,0failed/ignored,6.07s,terminal0 (`/private/tmp/suss-m4-push-properties-native.log`). This executes existing22 and new8 cases in both phases plus constructor/own-method GC identity.
+- `cargo test -p suss-compile --locked --test runtime_abi runtime_abi_array_ordinary_properties_reject -- --test-threads=2`:1passed,65filtered,terminal0 (`/private/tmp/suss-m4-array-ordinary-corrupt.log`).
+- `cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2`:66passed,0failed/ignored,8.27s,terminal0 (`/private/tmp/suss-m4-push-properties-final-abi.log`).
+
+Known remaining semantics include complete object ToPropertyKey/ToPrimitive,
+array join/inherited indices/accessors/prototypes, make-array hole-presence and
+full constructor domains before comparator/sorted-tree integration. No full
+workspace baseline/final-head CI on this checkpoint and no PR readiness claim.
+Original M4 issues16–19 and separate188 acceptance remain the full goal.
