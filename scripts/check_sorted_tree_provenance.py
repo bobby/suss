@@ -70,5 +70,16 @@ def verify():
             if digest((ROOT / path).read_bytes()) != expected: raise ValueError('sorted evidence receipt hash')
         from sorted_tree_oracle import check as raw_check, compare as raw_compare
         raw_check(); raw_compare(FOLDER / 'evidence/observations.json')
+    sharing = FOLDER / 'evidence/sharing-repair/receipt.json'
+    if sharing.exists():
+        record = json.loads(sharing.read_text())
+        if record['upstream'] != PIN or record['native'] != 'authored/uncompiled/unexecuted' or record['reference']['exit'] != 0:
+            raise ValueError('sharing reference/native status')
+        for path, expected in record['sha256'].items():
+            if path.startswith('tests/oracle/out/'): continue
+            if digest((ROOT / path).read_bytes()) != expected:
+                raise ValueError('sharing receipt hash')
+        from sorted_tree_sharing_oracle import check as sharing_check
+        sharing_check(FOLDER / 'evidence/sharing-repair/observations.json')
     print('Verified 35 complete forms, every field/protocol/method/arity, 7 anonymous parents, 15 macros, loader, EPL and 347 unchanged selections/extracts; native pending')
 if __name__=='__main__':verify()

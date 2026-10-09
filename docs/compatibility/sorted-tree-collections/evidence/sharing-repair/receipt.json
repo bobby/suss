@@ -1,0 +1,31 @@
+{
+  "base": "76eef532549ef293adde863620cec98704bf9958",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference": {
+    "command": "sh scripts/test-sorted-tree-sharing-oracle.sh",
+    "exit": 0
+  },
+  "native": "authored/uncompiled/unexecuted",
+  "bootstrap": "unchanged/stale",
+  "sha256": {
+    "scripts/sorted_tree_sharing_oracle.py": "ced3aeeb85f224cc5c678ab9d2d5f36376807f3b09f74c50e4c2511f416cb8cf",
+    "scripts/test_sorted_tree_sharing_oracle.py": "8706510304340281681e41f93883e4b343b8ff60af78195e31eb343caae4f136",
+    "scripts/test-sorted-tree-sharing-oracle.sh": "7a9d7b60683fb5f2d3e4cdf7a13723d0695eecef209246ed343f9779fbc9f6fe",
+    "tests/oracle/src/suss_oracle/sorted_tree_sharing.cljs": "0a414d535c0ce059ae64e3a744537c41ac62388c8fe60c0efb3ea22daa922b51",
+    "crates/suss-cli/tests/portable_sorted_tree_collections.rs": "82544fbe4506db43f650900b7bb73191bbb0d39fad7a2408b7ab08f58bc6b2b3",
+    "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/original-main-receipt.json": "45c1bc7182ef26afbce8323942d188b33172e9ec5b5901dddd7c38933d83e91f",
+    "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/reference.log": "d9f48710abdc7b2afc54e8ec3b448a892535eeab363d87e7e8edde199aaa13de",
+    "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/observations.json": "2929f8538f51019f898831f38352726ab17bdb0cd37b99cc949194d05e2b8f48",
+    "tests/oracle/out/sorted-tree-sharing.js": "1fe6673a4df69027e805d2032c39a7d59999ab5c5741527c0184716126cc0d10",
+    "tests/oracle/out/sorted-tree-sharing-cljs/cljs/core.js": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205",
+    "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/python.log": "d2b6691f11d428adf475447ff14c8e31b66dbf58df1630d09536b93c39ebfb56",
+    "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/provenance.log": "7829c8343d1d9abbb18d6a0e9d31fa9975c9548d730552338ac63b2ee045dc67",
+    "scripts/check_sorted_tree_provenance.py": "c58d014badf552af37b82de5e99fffd03270e6ff01c5da68c537033f796c875e"
+  },
+  "python": {
+    "command": "python3 -B -m unittest discover -s scripts",
+    "exit": 0,
+    "passed": 261,
+    "seconds": 13.267
+  }
+}

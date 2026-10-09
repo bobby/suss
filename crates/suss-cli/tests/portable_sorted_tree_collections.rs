@@ -243,7 +243,56 @@ fn tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc() {
             &updated,
             &[(MAP_FIELDS, "tree"), (NODE_FIELDS, "left")],
         );
-        assert!(same(&mut s, &updated, &next_left, &left_root));
+        assert!(!same(&mut s, &updated, &next_left, &left_root));
+        let nested_left = field(
+            &mut s,
+            &updated,
+            &[
+                (MAP_FIELDS, "tree"),
+                (NODE_FIELDS, "left"),
+                (NODE_FIELDS, "left"),
+            ],
+        );
+        assert!(same(&mut s, &updated, &nested_left, &left_root));
+        let reference: Value=serde_json::from_str(include_str!("../../../docs/compatibility/sorted-tree-collections/evidence/sharing-repair/observations.json")).unwrap();
+        let mut classes = Vec::new();
+        for (name, source) in [
+            ("BlackNode", "(BlackNode. 0 0 nil nil nil)"),
+            ("RedNode", "(RedNode. 0 0 nil nil nil)"),
+        ] {
+            let anchor = s.eval(source).unwrap();
+            let (descriptor, ty) = s
+                .inspect(&anchor, |mut store, value| {
+                    let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    Ok((
+                        owner
+                            .field(&mut store, 0)?
+                            .unwrap_anyref()
+                            .unwrap()
+                            .to_owned_rooted(&mut store)?,
+                        owner.ty(&store)?,
+                    ))
+                })
+                .unwrap();
+            classes.push((anchor, descriptor, ty, name));
+        }
+        s.collect().unwrap();
+        assert_rotation_shape(
+            &mut s,
+            &original,
+            &[(MAP_FIELDS, "tree")],
+            &reference["old"],
+            &classes,
+            &mut Vec::new(),
+        );
+        assert_rotation_shape(
+            &mut s,
+            &updated,
+            &[(MAP_FIELDS, "tree")],
+            &reference["updated"],
+            &classes,
+            &mut Vec::new(),
+        );
         let next_comp = field(&mut s, &updated, &[(MAP_FIELDS, "comp")]);
         assert!(same(&mut s, &updated, &next_comp, &comp_root));
         let old_root = s
@@ -399,4 +448,100 @@ fn additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_or
             assert!(session.eval(source).is_err(), "{source}");
         }
     }
+}
+
+// Independently compare every actual canonical node, source field and exact
+// numeric bits with the freshly observed old/new rotation trees.
+fn assert_rotation_shape(
+    session: &mut Session,
+    anchor: &SessionValue,
+    path: &[(&[&str], &str)],
+    expected: &Value,
+    classes: &[(
+        SessionValue,
+        OwnedRooted<AnyRef>,
+        wasmtime::StructType,
+        &str,
+    )],
+    ancestors: &mut Vec<OwnedRooted<AnyRef>>,
+) {
+    assert!(ancestors.len() < 64);
+    let actual = field(session, anchor, path);
+    session
+        .inspect(anchor, |mut store, _| {
+            let rooted = actual.to_rooted(&mut store);
+            if expected.is_null() {
+                assert_eq!(rooted.as_i31(&store)?.expect("nil tree child").get_u32(), 0);
+                return Ok(());
+            }
+            for parent in ancestors.iter() {
+                assert!(
+                    !wasmtime::Rooted::ref_eq(&store, parent, &actual)?,
+                    "tree cycle"
+                );
+            }
+            let owner = rooted.as_struct(&store)?.expect("node storage");
+            assert_eq!(owner.fields(&mut store)?.count(), 4);
+            let descriptor = owner.field(&mut store, 0)?;
+            let descriptor = descriptor.unwrap_anyref().unwrap();
+            let class = classes
+                .iter()
+                .find_map(|(_, known, ty, name)| {
+                    if wasmtime::Rooted::ref_eq(&store, known, descriptor).unwrap() {
+                        Some((ty, *name))
+                    } else {
+                        None
+                    }
+                })
+                .expect("canonical node class");
+            assert!(wasmtime::StructType::eq(&owner.ty(&store)?, class.0));
+            assert_eq!(class.1, expected["class"].as_str().unwrap());
+            Ok(())
+        })
+        .unwrap();
+    if expected.is_null() {
+        return;
+    }
+    ancestors.push(actual);
+    for name in ["key", "val"] {
+        let mut child_path = path.to_vec();
+        child_path.push((NODE_FIELDS, name));
+        let value = field(session, anchor, &child_path);
+        session
+            .inspect(anchor, |mut store, _| {
+                let rooted = value.to_rooted(&mut store);
+                let number = rooted.as_struct(&store)?.expect("raw Number");
+                assert_eq!(number.fields(&mut store)?.count(), 1);
+                let Val::F64(bits) = number.field(&mut store, 0)? else {
+                    panic!("raw Number layout")
+                };
+                assert_eq!(bits, (expected[name].as_i64().unwrap() as f64).to_bits());
+                Ok(())
+            })
+            .unwrap();
+    }
+    let mut hash_path = path.to_vec();
+    hash_path.push((NODE_FIELDS, "__hash"));
+    let hash = field(session, anchor, &hash_path);
+    session
+        .inspect(anchor, |mut store, _| {
+            assert!(expected["hash"].is_null());
+            let rooted = hash.to_rooted(&mut store);
+            assert_eq!(rooted.as_i31(&store)?.expect("nil hash").get_u32(), 0);
+            Ok(())
+        })
+        .unwrap();
+    for name in ["left", "right"] {
+        let mut child_path = path.to_vec();
+        child_path.push((NODE_FIELDS, name));
+        assert_rotation_shape(
+            session,
+            anchor,
+            &child_path,
+            &expected[name],
+            classes,
+            ancestors,
+        );
+    }
+    ancestors.pop();
 }

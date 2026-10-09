@@ -1,0 +1,4 @@
+PASS 142 closed sorted tree cases/driver; not executed
+PASS 142 independent pinned sorted tree observations
+PASS exact old/new rotation shapes and four reference observations
+Verified 35 complete forms, every field/protocol/method/arity, 7 anonymous parents, 15 macros, loader, EPL and 347 unchanged selections/extracts; native pending
