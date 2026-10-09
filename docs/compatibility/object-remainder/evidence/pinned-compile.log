@@ -1,0 +1,2 @@
+WARNING: cljs.core/js-mod, all arguments must be numbers, got [object object] instead at line 5 /private/tmp/suss-m4-pr230-validation-repair/tests/oracle/src/suss_oracle/object_remainder.cljs
+WARNING: cljs.core/js-mod, all arguments must be numbers, got [object number] instead at line 11 /private/tmp/suss-m4-pr230-validation-repair/tests/oracle/src/suss_oracle/object_remainder.cljs

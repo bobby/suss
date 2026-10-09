@@ -1,0 +1,14 @@
+{
+  "object_remainder.cljs": {
+    "sha256": "165c7657229474c93de19fb2c516a54be59fa0941e3de43a353b4088cabaef9d",
+    "bytes": 742
+  },
+  "pinned-compile.log": {
+    "sha256": "00a0d498b95ec630062083eb6e4f686d2ce2902b62d15c93959ae9ab1ea16411",
+    "bytes": 385
+  },
+  "pinned-observations.json": {
+    "sha256": "1b95bf928e065bbfe9c750988187cc48562e4715357df64088de337d53fee6d0",
+    "bytes": 149
+  }
+}
