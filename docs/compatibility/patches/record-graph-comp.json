@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e90a81aaace8b2de220cd9f816a0359e6b0b0d003f375946c70f6bae29acdb71",
+  "replacement": "(def comp\n  \"Takes a set of functions and returns a fn that is the composition\n  of those fns.  The returned fn takes a variable number of args,\n  applies the rightmost of fns to the args, the next\n  fn (right-to-left) to the result, etc.\"\n  (fn ([] identity)\n  ([f] f)\n  ([f g]\n     (fn\n       ([] (f (g)))\n       ([x] (f (g x)))\n       ([x y] (f (g x y)))\n       ([x y z] (f (g x y z)))\n       ([x y z & args] (f (apply g x y z args)))))\n  ([f g h]\n     (fn\n       ([] (f (g (h))))\n       ([x] (f (g (h x))))\n       ([x y] (f (g (h x y))))\n       ([x y z] (f (g (h x y z))))\n       ([x y z & args] (f (g (apply h x y z args))))))\n  ([f1 f2 f3 & fs]\n    (let [fs (reverse (list* f1 f2 f3 fs))]\n      (fn [& args]\n        (loop [ret (apply (first fs) args) fs (next fs)]\n          (if fs\n            (recur ((first fs) ret) (next fs))\n            ret)))))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+}

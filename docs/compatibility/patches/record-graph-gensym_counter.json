@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9",
+  "replacement": "(def\n  ^{:jsdoc [\"@type {*}\"]}\n  gensym_counter nil)",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Whole metadata and nil initializer retained; no defonce substitution."
+}

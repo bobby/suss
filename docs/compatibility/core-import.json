@@ -1703,6 +1703,56 @@
       "id": "runtime:group-by:11244",
       "source-sha256": "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378",
       "patch": "docs/compatibility/patches/record-helper-group-by.json"
+    },
+    {
+      "id": "runtime:comp:4468",
+      "source-sha256": "e90a81aaace8b2de220cd9f816a0359e6b0b0d003f375946c70f6bae29acdb71",
+      "patch": "docs/compatibility/patches/record-graph-comp.json"
+    },
+    {
+      "id": "runtime:partial:4497",
+      "source-sha256": "ab48b02fc09bc7c185d7daabfda6733efa50f202292ef3294bcd9c0a974cc0b7",
+      "patch": "docs/compatibility/patches/record-graph-partial.json"
+    },
+    {
+      "id": "runtime:juxt:10251",
+      "source-sha256": "512be1a1ca88483dc7b6626b8d41ff24001696c38478fea0e84d07e97206ee92",
+      "patch": "docs/compatibility/patches/record-graph-juxt.json"
+    },
+    {
+      "id": "runtime:merge:9265",
+      "source-sha256": "69bd6db6de3a2c8657b5267084b6c5d8303328738cd7be36b98ec60c263d72a4",
+      "patch": "docs/compatibility/patches/record-graph-merge.json"
+    },
+    {
+      "id": "runtime:merge-with:9273",
+      "source-sha256": "d3344bf57b4192d4a1fc5128ba58e52d6a54fdbd2d13b12b77960eaa09abccdc",
+      "patch": "docs/compatibility/patches/record-graph-merge-with.json"
+    },
+    {
+      "id": "runtime:update:5557",
+      "source-sha256": "33f80b5d1e5b92f15b4b85bff016d3238edd3decc12d3db6c8b9671a491a69ba",
+      "patch": "docs/compatibility/patches/record-graph-update.json"
+    },
+    {
+      "id": "runtime:select-keys:9289",
+      "source-sha256": "69a9eea1a2c747d38ae5619ebdf414285f88336c2496c1291099e23b0fda9790",
+      "patch": "docs/compatibility/patches/record-graph-select-keys.json"
+    },
+    {
+      "id": "runtime:zipmap:9690",
+      "source-sha256": "1e48695851a1b59d3024003e67841389efce480d9a8c56f65864b09d578b94be",
+      "patch": "docs/compatibility/patches/record-graph-zipmap.json"
+    },
+    {
+      "id": "runtime:gensym_counter:10903",
+      "source-sha256": "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9",
+      "patch": "docs/compatibility/patches/record-graph-gensym_counter.json"
+    },
+    {
+      "id": "runtime:gensym:10907",
+      "source-sha256": "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a",
+      "patch": "docs/compatibility/patches/record-graph-gensym.json"
     }
   ],
   "loader": {

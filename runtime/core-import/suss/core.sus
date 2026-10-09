@@ -5883,6 +5883,180 @@
         (let [k (f x)]
           (assoc! ret k (conj (get ret k []) x))))
       (transient {}) coll))))
+
+(def comp
+  "Takes a set of functions and returns a fn that is the composition
+  of those fns.  The returned fn takes a variable number of args,
+  applies the rightmost of fns to the args, the next
+  fn (right-to-left) to the result, etc."
+  (fn ([] identity)
+  ([f] f)
+  ([f g]
+     (fn
+       ([] (f (g)))
+       ([x] (f (g x)))
+       ([x y] (f (g x y)))
+       ([x y z] (f (g x y z)))
+       ([x y z & args] (f (apply g x y z args)))))
+  ([f g h]
+     (fn
+       ([] (f (g (h))))
+       ([x] (f (g (h x))))
+       ([x y] (f (g (h x y))))
+       ([x y z] (f (g (h x y z))))
+       ([x y z & args] (f (g (apply h x y z args))))))
+  ([f1 f2 f3 & fs]
+    (let [fs (reverse (list* f1 f2 f3 fs))]
+      (fn [& args]
+        (loop [ret (apply (first fs) args) fs (next fs)]
+          (if fs
+            (recur ((first fs) ret) (next fs))
+            ret)))))))
+
+(def partial
+  "Takes a function f and fewer than the normal arguments to f, and
+  returns a fn that takes a variable number of additional args. When
+  called, the returned function calls f with args + additional args."
+  (fn ([f] f)
+  ([f arg1]
+   (fn
+     ([] (f arg1))
+     ([x] (f arg1 x))
+     ([x y] (f arg1 x y))
+     ([x y z] (f arg1 x y z))
+     ([x y z & args] (apply f arg1 x y z args))))
+  ([f arg1 arg2]
+   (fn
+     ([] (f arg1 arg2))
+     ([x] (f arg1 arg2 x))
+     ([x y] (f arg1 arg2 x y))
+     ([x y z] (f arg1 arg2 x y z))
+     ([x y z & args] (apply f arg1 arg2 x y z args))))
+  ([f arg1 arg2 arg3]
+   (fn
+     ([] (f arg1 arg2 arg3))
+     ([x] (f arg1 arg2 arg3 x))
+     ([x y] (f arg1 arg2 arg3 x y))
+     ([x y z] (f arg1 arg2 arg3 x y z))
+     ([x y z & args] (apply f arg1 arg2 arg3 x y z args))))
+  ([f arg1 arg2 arg3 & more]
+   (fn [& args] (apply f arg1 arg2 arg3 (concat more args))))))
+
+(def juxt
+  "Takes a set of functions and returns a fn that is the juxtaposition
+  of those fns.  The returned fn takes a variable number of args, and
+  returns a vector containing the result of applying each fn to the
+  args (left-to-right).
+  ((juxt a b c) x) => [(a x) (b x) (c x)]"
+  (fn ([f]
+     (fn
+       ([] (vector (f)))
+       ([x] (vector (f x)))
+       ([x y] (vector (f x y)))
+       ([x y z] (vector (f x y z)))
+       ([x y z & args] (vector (apply f x y z args)))))
+  ([f g]
+     (fn
+       ([] (vector (f) (g)))
+       ([x] (vector (f x) (g x)))
+       ([x y] (vector (f x y) (g x y)))
+       ([x y z] (vector (f x y z) (g x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args)))))
+  ([f g h]
+     (fn
+       ([] (vector (f) (g) (h)))
+       ([x] (vector (f x) (g x) (h x)))
+       ([x y] (vector (f x y) (g x y) (h x y)))
+       ([x y z] (vector (f x y z) (g x y z) (h x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args) (apply h x y z args)))))
+  ([f g h & fs]
+     (let [fs (list* f g h fs)]
+       (fn
+         ([] (reduce (fn* [%1 %2] (conj %1 (%2))) [] fs))
+         ([x] (reduce (fn* [%1 %2] (conj %1 (%2 x))) [] fs))
+         ([x y] (reduce (fn* [%1 %2] (conj %1 (%2 x y))) [] fs))
+         ([x y z] (reduce (fn* [%1 %2] (conj %1 (%2 x y z))) [] fs))
+         ([x y z & args] (reduce (fn* [%1 %2] (conj %1 (apply %2 x y z args))) [] fs)))))))
+
+(def merge
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping from
+  the latter (left-to-right) will be the mapping in the result."
+  (fn [& maps]
+  (when (some identity maps)
+    (reduce (fn* [%1 %2] (conj (or %1 {}) %2)) maps))))
+
+(def merge-with
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping(s)
+  from the latter (left-to-right) will be combined with the mapping in
+  the result by calling (f val-in-result val-in-latter)."
+  (fn [f & maps]
+  (when (some identity maps)
+    (let [merge-entry (fn [m e]
+                        (let [k (key e) v (val e)]
+                          (if (contains? m k)
+                            (assoc m k (f (get m k) v))
+                            (assoc m k v))))
+          merge2 (fn [m1 m2]
+                   (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge2 maps)))))
+
+(def update
+  "'Updates' a value in an associative structure, where k is a
+  key and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  structure.  If the key does not exist, nil is passed as the old value."
+  (fn ([m k f]
+   (assoc m k (f (get m k))))
+  ([m k f x]
+   (assoc m k (f (get m k) x)))
+  ([m k f x y]
+   (assoc m k (f (get m k) x y)))
+  ([m k f x y z]
+   (assoc m k (f (get m k) x y z)))
+  ([m k f x y z & more]
+   (assoc m k (apply f (get m k) x y z more)))))
+
+(def select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  (fn [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key :cljs.core/not-found)]
+          (recur
+           (if (not= entry :cljs.core/not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map))))))
+
+(def zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  (fn [keys vals]
+    (loop [map (transient {})
+           ks (seq keys)
+           vs (seq vals)]
+      (if (and ks vs)
+        (recur (assoc! map (first ks) (first vs))
+               (next ks)
+               (next vs))
+        (persistent! map)))))
+
+(def
+  ^{:jsdoc ["@type {*}"]}
+  gensym_counter nil)
+
+(def gensym
+  "Returns a new symbol with a unique name. If a prefix string is
+  supplied, the name is prefix# where # is some unique number. If
+  prefix is not supplied, the prefix is 'G__'."
+  (fn ([] (gensym "G__"))
+  ([prefix-string]
+     (when (suss.bootstrap/nil? gensym_counter)
+       (set! gensym_counter (atom 0)))
+     (symbol (str_ prefix-string (swap! gensym_counter inc))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

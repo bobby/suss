@@ -23118,3 +23118,25 @@ compiled-script preparation failure now exercises the actual binding checkpoint
 rollback, independently decoding the restored callable/catalog result after GC
 and then checking successful replacement. No production loader change, Cargo,
 bootstrap or native execution; all four consuming tests remain uncompiled.
+
+### Whole record runtime graph dependencies — authored, native pending
+
+Appended ten complete pinned forms: comp/partial/juxt/merge/merge-with/update/
+select-keys/zipmap/gensym_counter/gensym. Original 340 selections/extracted forms
+and 441 reviews are unchanged and ordered. Generated import now has 354 files;
+overlay 451 reviewed/614 unassessed. Complete docs/arities/branches, callback order,
+live public dispatch and pinned sentinel collision remain. Counter is upstream
+ordinary def, not defonce; no per-expansion reset. Immutable nil? macro guard only.
+
+Fresh pinned runner exited0: 84 raw tagged values/projections/effect traces match.
+Full Python exited0: 260 tests in17.405s. Whole ten-form and prior four-form
+provenance checks pass; prior verifier anchors original positions and rejects
+duplicates rather than assuming the group is the recipe tail. Native both-phase
+independent host decoding and sole-host captured function GC tests are authored,
+UNCOMPILED/UNEXECUTED. Bootstrap bytes unchanged/stale, no Cargo/build/push.
+Raw fixture/observations/log/Python log and content receipt retained under
+docs/compatibility/record-runtime-graph/evidence.
+
+Continue the complete compiler/source nominal helper graph, actual exists?/reify
+and nil-iter, then record factories/protocol bodies. Full #18/#19 remain open;
+this prerequisite evidence does not establish native record/reify execution.

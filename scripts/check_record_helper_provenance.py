@@ -31,9 +31,11 @@ def verify():
     path = 'src/main/cljs/cljs/core.cljs'
     forms = extract_forms(pinned_file(ROOT, path).decode(), 'runtime', 'clojurescript/' + path)
     recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())
-    if recipe['upstream-commit'] != PIN or [entry['id'] for entry in recipe['forms'][-4:]] != IDENTITIES:
+    if recipe['upstream-commit'] != PIN or [entry['id'] for entry in recipe['forms'][336:340]] != IDENTITIES:
         raise ValueError('closed ordered helper selections')
-    for entry in recipe['forms'][-4:]:
+    if any(sum(entry['id'] == identity for entry in recipe['forms']) != 1 for identity in IDENTITIES):
+        raise ValueError('duplicate helper selection')
+    for entry in recipe['forms'][336:340]:
         source = forms[entry['id']]
         digest = hashlib.sha256(source['form'].encode()).hexdigest()
         patch = json.loads((ROOT / entry['patch']).read_text())

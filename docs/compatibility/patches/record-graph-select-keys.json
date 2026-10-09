@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "69a9eea1a2c747d38ae5619ebdf414285f88336c2496c1291099e23b0fda9790",
+  "replacement": "(def select-keys\n  \"Returns a map containing only those entries in map whose key is in keys\"\n  (fn [map keyseq]\n    (loop [ret {} keys (seq keyseq)]\n      (if keys\n        (let [key   (first keys)\n              entry (get map key :cljs.core/not-found)]\n          (recur\n           (if (not= entry :cljs.core/not-found)\n             (assoc ret key entry)\n             ret)\n           (next keys)))\n        (-with-meta ret (meta map))))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Preserve actual pinned ::not-found as :cljs.core/not-found to avoid changing observable sentinel collision behavior in canonical suss.core."
+}

@@ -1,0 +1,3616 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "comp-zero",
+      "source": "((comp) false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "comp-one",
+      "source": "((comp (fn [x] [x])) nil)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-2-args-0",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((comp f1 f2) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-2-args-1",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((comp f1 f2) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-2-args-2",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((comp f1 f2) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-2-args-3",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((comp f1 f2) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-2-args-5",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((comp f1 f2) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-3-args-0",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((comp f1 f2 f3) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-3-args-1",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((comp f1 f2 f3) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "0000000000000000"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-3-args-2",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((comp f1 f2 f3) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "0000000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "3ff0000000000000"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-3-args-3",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((comp f1 f2 f3) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "0000000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "3ff0000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4000000000000000"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-3-args-5",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((comp f1 f2 f3) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "0000000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "3ff0000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4000000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4010000000000000"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-5-args-0",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [x] (swap! trace conj 3) [3 x]) f4 (fn [x] (swap! trace conj 4) [4 x]) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((comp f1 f2 f3 f4 f5) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "vector",
+                        "items": [
+                          {
+                            "tag": "f64",
+                            "bits": "4010000000000000"
+                          },
+                          {
+                            "tag": "vector",
+                            "items": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-5-args-1",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [x] (swap! trace conj 3) [3 x]) f4 (fn [x] (swap! trace conj 4) [4 x]) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((comp f1 f2 f3 f4 f5) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "vector",
+                        "items": [
+                          {
+                            "tag": "f64",
+                            "bits": "4010000000000000"
+                          },
+                          {
+                            "tag": "vector",
+                            "items": [
+                              {
+                                "tag": "f64",
+                                "bits": "0000000000000000"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-5-args-2",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [x] (swap! trace conj 3) [3 x]) f4 (fn [x] (swap! trace conj 4) [4 x]) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((comp f1 f2 f3 f4 f5) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "vector",
+                        "items": [
+                          {
+                            "tag": "f64",
+                            "bits": "4010000000000000"
+                          },
+                          {
+                            "tag": "vector",
+                            "items": [
+                              {
+                                "tag": "f64",
+                                "bits": "0000000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "3ff0000000000000"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-5-args-3",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [x] (swap! trace conj 3) [3 x]) f4 (fn [x] (swap! trace conj 4) [4 x]) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((comp f1 f2 f3 f4 f5) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "vector",
+                        "items": [
+                          {
+                            "tag": "f64",
+                            "bits": "4010000000000000"
+                          },
+                          {
+                            "tag": "vector",
+                            "items": [
+                              {
+                                "tag": "f64",
+                                "bits": "0000000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "3ff0000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "4000000000000000"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-5-args-5",
+      "source": "(let [trace (atom []) f1 (fn [x] (swap! trace conj 1) [1 x]) f2 (fn [x] (swap! trace conj 2) [2 x]) f3 (fn [x] (swap! trace conj 3) [3 x]) f4 (fn [x] (swap! trace conj 4) [4 x]) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((comp f1 f2 f3 f4 f5) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "f64",
+                        "bits": "4008000000000000"
+                      },
+                      {
+                        "tag": "vector",
+                        "items": [
+                          {
+                            "tag": "f64",
+                            "bits": "4010000000000000"
+                          },
+                          {
+                            "tag": "vector",
+                            "items": [
+                              {
+                                "tag": "f64",
+                                "bits": "0000000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "3ff0000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "4000000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "4008000000000000"
+                              },
+                              {
+                                "tag": "f64",
+                                "bits": "4010000000000000"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-0-args-0",
+      "source": "((partial vector ) )",
+      "expected": {
+        "tag": "vector",
+        "items": []
+      }
+    },
+    {
+      "id": "partial-0-args-1",
+      "source": "((partial vector ) 0)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-0-args-2",
+      "source": "((partial vector ) 0 1)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-0-args-3",
+      "source": "((partial vector ) 0 1 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-0-args-5",
+      "source": "((partial vector ) 0 1 2 3 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-1-args-0",
+      "source": "((partial vector nil) )",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-1-args-1",
+      "source": "((partial vector nil) 0)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-1-args-2",
+      "source": "((partial vector nil) 0 1)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-1-args-3",
+      "source": "((partial vector nil) 0 1 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-1-args-5",
+      "source": "((partial vector nil) 0 1 2 3 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-2-args-0",
+      "source": "((partial vector nil false) )",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-2-args-1",
+      "source": "((partial vector nil false) 0)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-2-args-2",
+      "source": "((partial vector nil false) 0 1)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-2-args-3",
+      "source": "((partial vector nil false) 0 1 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-2-args-5",
+      "source": "((partial vector nil false) 0 1 2 3 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-3-args-0",
+      "source": "((partial vector nil false 17) )",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-3-args-1",
+      "source": "((partial vector nil false 17) 0)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-3-args-2",
+      "source": "((partial vector nil false 17) 0 1)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-3-args-3",
+      "source": "((partial vector nil false 17) 0 1 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-3-args-5",
+      "source": "((partial vector nil false 17) 0 1 2 3 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-5-args-0",
+      "source": "((partial vector nil false 17 23 29) )",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-5-args-1",
+      "source": "((partial vector nil false 17 23 29) 0)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-5-args-2",
+      "source": "((partial vector nil false 17 23 29) 0 1)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-5-args-3",
+      "source": "((partial vector nil false 17 23 29) 0 1 2)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-5-args-5",
+      "source": "((partial vector nil false 17 23 29) 0 1 2 3 4)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403d000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-1-args-0",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) result ((juxt f1) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-1-args-1",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) result ((juxt f1) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-1-args-2",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) result ((juxt f1) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-1-args-3",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) result ((juxt f1) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-1-args-5",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) result ((juxt f1) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-2-args-0",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((juxt f1 f2) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-2-args-1",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((juxt f1 f2) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-2-args-2",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((juxt f1 f2) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-2-args-3",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((juxt f1 f2) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-2-args-5",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) result ((juxt f1 f2) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-3-args-0",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((juxt f1 f2 f3) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-3-args-1",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((juxt f1 f2 f3) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-3-args-2",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((juxt f1 f2 f3) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-3-args-3",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((juxt f1 f2 f3) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-3-args-5",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) result ((juxt f1 f2 f3) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-5-args-0",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) f4 (fn [& xs] (swap! trace conj 4) (apply vector xs)) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((juxt f1 f2 f3 f4 f5) )] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-5-args-1",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) f4 (fn [& xs] (swap! trace conj 4) (apply vector xs)) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((juxt f1 f2 f3 f4 f5) 0)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-5-args-2",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) f4 (fn [& xs] (swap! trace conj 4) (apply vector xs)) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((juxt f1 f2 f3 f4 f5) 0 1)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-5-args-3",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) f4 (fn [& xs] (swap! trace conj 4) (apply vector xs)) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((juxt f1 f2 f3 f4 f5) 0 1 2)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "juxt-5-args-5",
+      "source": "(let [trace (atom []) f1 (fn [& xs] (swap! trace conj 1) (apply vector xs)) f2 (fn [& xs] (swap! trace conj 2) (apply vector xs)) f3 (fn [& xs] (swap! trace conj 3) (apply vector xs)) f4 (fn [& xs] (swap! trace conj 4) (apply vector xs)) f5 (fn [& xs] (swap! trace conj 5) (apply vector xs)) result ((juxt f1 f2 f3 f4 f5) 0 1 2 3 4)] [result @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4010000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "merge-zero",
+      "source": "(merge)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "merge-all-nil",
+      "source": "(merge nil nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "merge-false-nil-values",
+      "source": "(let [a {:a false :b nil} b {:b 17 :c false} r (merge nil a b)] [(get r :a) (get r :b) (get r :c) (count r) (get a :b)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "nil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "merge-with-zero",
+      "source": "(merge-with vector)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "merge-with-order",
+      "source": "(let [trace (atom []) r (merge-with (fn [a b] (swap! trace conj [a b]) [a b]) {:k false} {:k nil} {:k 17})] [(get r :k) @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "vector",
+                    "items": [
+                      {
+                        "tag": "bool",
+                        "value": false
+                      },
+                      {
+                        "tag": "nil"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4031000000000000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "merge-with-absence",
+      "source": "(let [trace (atom []) r (merge-with (fn [a b] (swap! trace conj [a b]) [a b]) nil {:k false} {:x nil})] [(get r :k) (get r :x) (count r) @trace])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-args-0",
+      "source": "(let [m {:v false} trace (atom []) r (update m :v (fn [old & xs] (swap! trace conj old) [old (apply vector xs)]) )] [(get r :v) @trace (get m :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-args-1",
+      "source": "(let [m {:v false} trace (atom []) r (update m :v (fn [old & xs] (swap! trace conj old) [old (apply vector xs)]) 0)] [(get r :v) @trace (get m :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-args-2",
+      "source": "(let [m {:v false} trace (atom []) r (update m :v (fn [old & xs] (swap! trace conj old) [old (apply vector xs)]) 0 1)] [(get r :v) @trace (get m :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-args-3",
+      "source": "(let [m {:v false} trace (atom []) r (update m :v (fn [old & xs] (swap! trace conj old) [old (apply vector xs)]) 0 1 2)] [(get r :v) @trace (get m :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-args-4",
+      "source": "(let [m {:v false} trace (atom []) r (update m :v (fn [old & xs] (swap! trace conj old) [old (apply vector xs)]) 0 1 2 3)] [(get r :v) @trace (get m :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "0000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-missing",
+      "source": "(let [r (update {} :v vector 17)] [(get r :v)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "update-throw-order",
+      "source": "(let [trace (atom []) caught (atom nil)] (try (update {:v false} :v (fn [old x] (swap! trace conj old) (throw x)) (do (swap! trace conj 1) 73)) (catch :default e (reset! caught e))) [@trace @caught])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4052400000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "select-keys-meta-presence",
+      "source": "(let [m (with-meta {:a nil :b false :c 17} {:stamp false}) r (select-keys m [:a :b :a :missing])] [(count r) (get r :a 99) (get r :b 99) (get r :missing 99) (:stamp (meta r)) (count m)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4058c00000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "select-keys-pinned-sentinel",
+      "source": "(let [r (select-keys {:a :cljs.core/not-found :b false} [:a :b])] [(count r) (get r :a 99) (get r :b)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4058c00000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "zipmap-empty",
+      "source": "(count (zipmap [] []))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "zipmap-shortest",
+      "source": "(let [r (zipmap [:a :b :c] [false nil])] [(count r) (get r :a 99) (get r :b 99) (get r :c 99)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4058c00000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zipmap-duplicate",
+      "source": "(let [r (zipmap [nil false nil] [17 nil 23])] [(count r) (get r nil) (get r false 99)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "nil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zipmap-promotion",
+      "source": "(let [r (zipmap [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16] [20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36])] [(count r) [(get r 0) (get r 1) (get r 2) (get r 3) (get r 4) (get r 5) (get r 6) (get r 7) (get r 8) (get r 9) (get r 10) (get r 11) (get r 12) (get r 13) (get r 14) (get r 15) (get r 16)]])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4034000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4035000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4036000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4038000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4039000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403a000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403b000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403c000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403d000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403e000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4040000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4040800000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4041000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4041800000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4042000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gensym-both-arities-counter",
+      "source": "(let [old gensym_counter] (try (set! gensym_counter nil) [(str (gensym)) (str (gensym \"r\")) @gensym_counter] (finally (set! gensym_counter old))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              71,
+              95,
+              95,
+              49
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              114,
+              50
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gensym-counter-reuse",
+      "source": "(let [old gensym_counter counter (atom 9)] (try (set! gensym_counter counter) [(str (gensym \"r\")) @counter] (finally (set! gensym_counter old))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              114,
+              49,
+              48
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gensym-immutable-nil-guard",
+      "source": "(let [old-counter gensym_counter old-nil nil? counter (atom 9)] (try (set! gensym_counter counter) (set! nil? (fn [_] true)) [(str (gensym \"r\")) @counter] (finally (set! nil? old-nil) (set! gensym_counter old-counter))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              114,
+              49,
+              48
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

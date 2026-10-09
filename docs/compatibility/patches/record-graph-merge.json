@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "69bd6db6de3a2c8657b5267084b6c5d8303328738cd7be36b98ec60c263d72a4",
+  "replacement": "(def merge\n  \"Returns a map that consists of the rest of the maps conj-ed onto\n  the first.  If a key occurs in more than one map, the mapping from\n  the latter (left-to-right) will be the mapping in the result.\"\n  (fn [& maps]\n  (when (some identity maps)\n    (reduce (fn* [%1 %2] (conj (or %1 {}) %2)) maps))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Expand each exact two-argument reader shorthand into fn* [%1 %2] with the complete unchanged body; preserve capture/order and arity."
+}
