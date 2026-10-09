@@ -128,7 +128,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[
             LocalGet(0),
-            Call(b.names["coerce-number"]),
+            Call(hash_number),
             F64Ceil,
             Call(b.names["number-box"]),
         ],
