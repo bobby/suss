@@ -96,7 +96,8 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                     .unwrap()
                     .field(&mut store, 0)?;
                 assert_eq!(length.unwrap_f64().to_bits(), 4.0_f64.to_bits());
-                let sparse = backing.get(&mut store, 1)?.unwrap_anyref().unwrap();
+                let sparse_value = backing.get(&mut store, 1)?;
+                let sparse = sparse_value.unwrap_anyref().unwrap();
                 assert_eq!(sparse.as_i31(&store)?.unwrap().get_u32(), 0);
                 let versions = backing
                     .get(&mut store, 2)?
