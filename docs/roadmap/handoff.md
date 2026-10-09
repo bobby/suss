@@ -22259,3 +22259,18 @@ and all original #18/#19 criteria during storage migration.
 Sorted constructor prerequisites refreshed at 82e400d onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus ISorted/IComparable/type. python3 scripts/core_import.py --check:338files verified; git diff --check passes. Seven prerequisite Rust sources are byte-identical to pre-rebase 8fccc93. Bootstrap artifacts remain merged main artifacts; authored native prerequisites are still uncompiled. Next after sole baseline34020 terminal: regenerate both bootstrap phases, execute comparator compiler/ABI and Runtime/Macro protocol/scalar-constructor gates before full Array/comparator/tree work. Original #18/#19 remain incomplete.
 
 Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` terminal0, 238tests pass in 7.801s; log /private/tmp/suss-m4-sorted-post227-python.log, SHA256 764e8539084fed7f6062801ccdfda9d848a749a8e531f04f1e182314fd4f3348. Independent read-only exact-head review 28dea377ac13e918067a4f06b6043abf55a4f0cb found no material refresh defects. This validates harness/provenance and retained observations, not fresh native execution. Bootstrap regeneration and native gates still pending; baseline34020 remains sole Cargo graph.
+
+Array storage regressions expanded17->22 while sole baseline34020 remains live.
+JAVA_TOOL_OPTIONS=-Xmx512m sh scripts/test-array-constructor-oracle.sh, session85955
+terminal0; all22 pinned ordered Boolean observations match. Three fail-closed
+Python harness tests pass. New cases cover own-property hole/undefined distinction,
+valid sparse lengths1000001/4294967295 with last-index writes, and uint32-max
+ordinary property preserving length. Evidence logs/observations and SHA256 receipts
+retained under docs/compatibility/array-constructor/evidence/primary-22-*.
+Native test corpus aligned but uncompiled; implementation and exact RangeError
+identity remain required. Independent addition review requested; no second Cargo.
+
+Independent read-only Array22 review found no material findings and reproduced
+all22 pinned observations, three strict harness tests and clean diff. Native
+execution remains pending; shrink/delete and inherited-property behavior remain
+separate storage requirements alongside RangeError identity.

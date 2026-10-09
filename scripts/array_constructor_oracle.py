@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
-CASE_IDS = ['canonical-array-type', 'zero-arity', 'single-numeric-length-holes', 'single-false-element', 'single-nil-element', 'multiple-elements', 'single-string-element', 'negative-zero-length', 'invalid-length-negative', 'invalid-length-fractional', 'invalid-length-nan', 'invalid-length-infinite', 'invalid-length-overflow', 'multiple-argument-effect-order', 'single-array-element-identity', 'single-object-element-identity', 'single-undefined-element']
+CASE_IDS = ['canonical-array-type', 'zero-arity', 'single-numeric-length-holes', 'single-false-element', 'single-nil-element', 'multiple-elements', 'single-string-element', 'negative-zero-length', 'invalid-length-negative', 'invalid-length-fractional', 'invalid-length-nan', 'invalid-length-infinite', 'invalid-length-overflow', 'multiple-argument-effect-order', 'single-array-element-identity', 'single-object-element-identity', 'single-undefined-element', 'holes-have-no-own-index', 'explicit-undefined-has-own-index', 'valid-sparse-length-above-resource-cap', 'maximum-valid-sparse-length', 'uint32-max-is-ordinary-property']
 
 def unique(pairs):
     out = {}
@@ -22,7 +22,7 @@ def cases():
     if set(corpus) != {'upstream', 'cases'} or corpus['upstream'] != 'c4295f303100bbf5afac449242d30bca1126f1a1':
         raise ValueError('corpus schema/pin')
     entries = corpus['cases']
-    if not isinstance(entries, list) or len(entries) != 17:
+    if not isinstance(entries, list) or len(entries) != 22:
         raise ValueError('case count')
     ids = set()
     for case in entries:
@@ -47,7 +47,7 @@ def compare():
     expected = [{'id': c['id'], 'value': c['expected']['value']} for c in cases()]
     if actual != expected or not isinstance(actual, list) or any(type(row.get('value')) is not bool for row in actual):
         raise ValueError('complete ordered Boolean observations differ')
-    print('PASS 17 pinned Array constructor observations')
+    print('PASS 22 pinned Array constructor observations')
 
 if __name__ == '__main__':
     {'generate': generate, 'compare': compare}[sys.argv[1]]()

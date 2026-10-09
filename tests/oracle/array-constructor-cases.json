@@ -136,6 +136,46 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "holes-have-no-own-index",
+      "source": "(let [ctor (type (array)) a (ctor 3)] (and (not (.hasOwnProperty a \"0\")) (not (.hasOwnProperty a \"2\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "explicit-undefined-has-own-index",
+      "source": "(let [ctor (type (array)) a (ctor (aget (array) 0))] (and (= (alength a) 1) (undefined? (aget a 0)) (.hasOwnProperty a \"0\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "valid-sparse-length-above-resource-cap",
+      "source": "(let [ctor (type (array)) a (ctor 1000001)] (aset a 1000000 17) (and (= (alength a) 1000001) (undefined? (aget a 999999)) (= (aget a 1000000) 17) (not (.hasOwnProperty a \"999999\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "maximum-valid-sparse-length",
+      "source": "(let [ctor (type (array)) a (ctor 4294967295)] (aset a 4294967294 23) (and (= (alength a) 4294967295) (undefined? (aget a 4294967293)) (= (aget a 4294967294) 23) (.hasOwnProperty a \"4294967294\") (not (.hasOwnProperty a \"4294967293\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "uint32-max-is-ordinary-property",
+      "source": "(let [ctor (type (array)) a (ctor)] (aset a 4294967295 29) (and (= (alength a) 0) (= (aget a 4294967295) 29) (.hasOwnProperty a \"4294967295\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

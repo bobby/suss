@@ -15,3 +15,11 @@ single-element behavior. Fresh runner and strict comparison pass all17.
 Undefined reads do not prove absent indexed properties; exact RangeError
 identity/independent payload and large valid sparse lengths remain unproven.
 A retained-constructor GC/cross-fragment native test is authored, uncompiled.
+
+Later22-case files distinguish absent indexed properties from explicitly stored
+undefined, test valid sparse lengths1000001 and4294967295 with last-index
+writes, and verify4294967295 is an ordinary property that does not grow length.
+Fresh pinned runner exited0 with all22 ordered Boolean results; three strict
+harness regressions pass. Existing historical evidence is preserved. These are
+reference results only; native tests remain uncompiled and Array storage and
+RangeError identity still require implementation and execution.

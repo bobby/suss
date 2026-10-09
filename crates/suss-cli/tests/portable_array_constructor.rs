@@ -11,7 +11,7 @@ fn array_constructor_preserves_identity_arity_length_and_holes_in_both_phases() 
         corpus["upstream"],
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
-    assert_eq!(corpus["cases"].as_array().unwrap().len(), 17);
+    assert_eq!(corpus["cases"].as_array().unwrap().len(), 22);
     let ids: Vec<_> = corpus["cases"]
         .as_array()
         .unwrap()
@@ -37,7 +37,12 @@ fn array_constructor_preserves_identity_arity_length_and_holes_in_both_phases() 
             "multiple-argument-effect-order",
             "single-array-element-identity",
             "single-object-element-identity",
-            "single-undefined-element"
+            "single-undefined-element",
+            "holes-have-no-own-index",
+            "explicit-undefined-has-own-index",
+            "valid-sparse-length-above-resource-cap",
+            "maximum-valid-sparse-length",
+            "uint32-max-is-ordinary-property",
         ]
     );
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
