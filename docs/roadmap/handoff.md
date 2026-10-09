@@ -23690,3 +23690,5 @@ forms unchanged. Four bootstrap files unchanged/stale due manifest identity;
 parent must regenerate before exactnative. Rustfmt parse/diffcheckpass. Initial
 external-source symlink and stale-manifest checks failed truthfully, corrected
 local exactpinclone and metadataregeneration. Native not yet executed.
+
+Compiled-support c2cf native: entire compile_expr286pass0fail30existingunsupportedignores83.50s; seven original tests reactivated with unchanged assertions, new11raw values/effects/capture cases passed, remaining30 exact diagnostics retained. Bootstrap regeneration and two-generation Java/Nodefree reproducibility passed with4compiledbootstraptests14.43s. Evidence compiled-support-reactivation/evidence/native-validation.json. Publicationundefinedfixture, str sourceclosure, RecordIter/reify, upstreamsuitebaseline, finalfullbaseline/CI remain required; PR231 draft.

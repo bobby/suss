@@ -1,0 +1,325 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 5.71s
+     Running tests/compile_expr.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compile_expr-a8bf9055875ba010)
+
+running 316 tests
+test comparison_arguments_follow_pinned_variadic_macro_expansion ... ok
+test condition_evaluates_effect_once ... ok
+test arithmetic_and_equality_preserve_argument_effect_order ... ok
+test known_function_wrong_arity_raises_runtime_exceptions ... ok
+test condition_preserves_falsey_and_truthy_effects ... ok
+test legacy_dispatch_receiver_precedes_arguments_once ... ok
+test legacy_bitwise_operands_preserve_source_order_once ... ok
+test legacy_hash_inspects_each_evaluated_operand_once ... ok
+test nested_conditions_preserve_effect_order ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers ... ok
+test lexical_callees_shadow_global_and_intrinsic_names ... ok
+test reactivated_helpers_preserve_raw_values_effects_and_captures_after_gc ... ok
+test reduce_without_initial_value ... ok
+test test_abs ... ok
+test test_add_single_arg ... ok
+test test_add_zero_args ... ok
+test test_addition ... ok
+test test_and_all_true ... ok
+test prototype_cases_awaiting_compiled_support ... ok
+test test_and_empty ... ok
+test test_and_returns_first_falsy ... ok
+test test_and_one_false ... ok
+test test_and_returns_last_value ... ok
+test test_and_single ... ok
+test test_apply_basic_add ... ok
+test test_apply_basic_mul ... ok
+test test_apply_captured_closure ... ok
+test test_apply_closure ... ok
+test test_apply_large_vector_builtin ... ignored, compiled pipeline: Unresolved Runtime name take; see prototype_cases_awaiting_compiled_support
+test test_apply_large_vector_variadic_capture ... ignored, compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support
+test test_apply_closure_as_value ... ok
+test test_apply_one_arity ... ok
+test test_apply_three_args ... ok
+test test_apply_variadic_add_one_arg ... ok
+test test_apply_variadic_add_zero_args ... ok
+test test_apply_variadic_add_many_args ... ok
+test test_apply_variadic_div_many_args ... ok
+test test_apply_variadic_div_one_arg ... ok
+test test_apply_variadic_div_two_args ... ok
+test test_apply_variadic_let_bound ... ok
+test test_apply_variadic_mul_many_args ... ok
+test test_apply_variadic_mul_one_arg ... ok
+test test_apply_variadic_mul_zero_args ... ok
+test test_apply_variadic_sub_many_args ... ok
+test test_apply_variadic_sub_one_arg ... ok
+test test_apply_variadic_sub_two_args ... ok
+test test_apply_vector_from_expr ... ok
+test test_apply_zero_arity ... ok
+test test_as_thread ... ok
+test test_atom_basic ... ok
+test test_atom_deref_syntax ... ok
+test test_atom_reset ... ok
+test test_atom_validator_accepts ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+test test_atom_validator_rejects ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+test test_atom_validator_swap_rejects ... ignored, compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support
+test test_atom_swap ... ok
+test test_boolean_false ... ok
+test test_boolean_true ... ok
+test test_builtin_as_value_add ... ok
+test test_builtin_as_value_dec ... ok
+test test_builtin_as_value_div ... ok
+test test_builtin_as_value_inc ... ok
+test test_builtin_as_value_mul ... ok
+test test_builtin_as_value_sub ... ok
+test test_builtin_comparison_as_value ... ok
+test test_builtin_conditional_selection ... ok
+test test_builtin_same_function_twice ... ok
+test test_case_default ... ok
+test test_case_match_first ... ok
+test test_case_match_second ... ok
+test test_case_match_third ... ok
+test test_case_with_expression ... ok
+test test_closure_as_value ... ok
+test test_closure_call_twice ... ok
+test test_closure_capture_multiple_vars ... ok
+test test_closure_multiple_params ... ok
+test test_closure_nested_capture ... ok
+test test_closure_simple ... ok
+test test_closure_with_capture ... ok
+test test_closure_zero_arity ... ok
+test test_closure_zero_arity_with_capture ... ok
+test test_comp ... ok
+test test_comparison_equals ... ok
+test test_comparison_greater_than ... ok
+test test_cond_else ... ok
+test test_comparison_less_than ... ok
+test test_cond_first_true ... ok
+test test_cond_no_else ... ok
+test test_cond_thread_first ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support
+test test_cond_thread_first_false ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support
+test test_cond_second_true ... ok
+test test_conj_on_vector ... ok
+test test_conj_past_32_boundary ... ok
+test test_cons_creates_list ... ok
+test test_debug_comp_simple ... ok
+test test_debug_lazy_seq_simple ... ignored, compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support
+test test_count_vector ... ok
+test test_debug_seq_vec ... ok
+test test_debug_set_mutable ... ok
+test test_debug_vec_nth ... ok
+test test_defn_map_destructuring ... ok
+test test_dec ... ok
+test test_division ... ok
+test test_doseq_basic ... ignored, compiled pipeline: Unresolved Runtime name doseq; see prototype_cases_awaiting_compiled_support
+test test_do_block ... ok
+test test_empty_map ... ok
+test test_empty_set ... ok
+test test_empty_vector ... ok
+test test_first_on_cons ... ok
+test test_float_addition ... ok
+test test_float_literal ... ok
+test test_finally_preserves_result_and_runs_on_throw ... ok
+test test_fn_map_destructuring_as ... ok
+test test_fn_map_destructuring_keys ... ok
+test test_get_on_vector ... ok
+test test_hash_false ... ok
+test test_greater_than_or_equal ... ok
+test test_hash_float_deterministic ... ok
+test test_hash_float_different_values ... ok
+test test_hash_nil ... ok
+test test_hash_negative ... ok
+test test_hash_small_int ... ok
+test test_hash_string_basic ... ok
+test test_hash_string_empty ... ok
+test test_hash_true ... ok
+test test_hash_string_deterministic ... ok
+test test_if_false_branch ... ok
+test test_hash_zero ... ok
+test test_if_true_branch ... ok
+test test_if_with_condition ... ok
+test test_immediate_variadic_fn_call_count ... ok
+test test_immediate_variadic_fn_call_nth ... ok
+test test_immediate_variadic_fn_with_fixed_params ... ok
+test test_inc ... ok
+test test_integer_literal ... ok
+test test_keyword_3arg_with_default ... ok
+test test_keyword_3arg_with_default_missing ... ok
+test test_keyword_as_map_key ... ok
+test test_keyword_from_string ... ok
+test test_keyword_ns_from_string ... ok
+test test_large_map_assoc_preserves ... ok
+test test_large_map_assoc_update ... ok
+test test_large_map_count_100 ... ok
+test test_large_map_count_50 ... ok
+test test_large_map_get_first ... ok
+test test_large_map_get_last ... ok
+test test_large_map_get_middle ... ok
+test test_large_map_get_missing ... ok
+test test_large_set_conj_new ... ok
+test test_large_set_conj_preserves ... ok
+test test_large_set_contains_first ... ok
+test test_large_set_contains_last ... ok
+test test_large_set_contains_middle ... ok
+test test_large_set_contains_missing ... ok
+test test_large_set_count_100 ... ok
+test test_large_vector_count_100 ... ok
+test test_large_set_count_50 ... ok
+test test_large_vector_count_33 ... ok
+test test_large_vector_nth_32nd_element ... ok
+test test_large_vector_nth_first_element ... ok
+test test_large_vector_nth_last ... ok
+test test_large_vector_nth_middle ... ok
+test test_let_simple ... ok
+test test_let_with_expression ... ok
+test test_less_than_or_equal ... ok
+test test_map_assoc_preserves_existing ... ok
+test test_map_assoc_new_key ... ok
+test test_map_assoc_update_existing ... ok
+test test_map_chained_assoc ... ok
+test test_map_count ... ok
+test test_map_destructuring_direct ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+test test_map_destructuring_keys ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+test test_map_count_empty ... ok
+test test_map_dissoc_compiles ... ok
+test test_map_dissoc_nonexistent_key ... ok
+test test_map_dissoc_on_empty ... ok
+test test_map_get ... ok
+test test_map_get_first_entry ... ok
+test test_map_get_empty ... ok
+test test_map_get_missing_key ... ok
+test test_map_get_last_entry ... ok
+test test_map_let_bound_assoc ... ok
+test test_map_get_multiple_entries ... ok
+test test_map_literal ... ok
+test test_map_let_bound_get ... ok
+test test_map_structural_sharing ... ok
+test test_max_multiple_args ... ok
+test test_max_single_arg ... ok
+test test_min_multiple_args ... ok
+test test_max_two_args ... ok
+test test_min_single_arg ... ok
+test test_mod ... ok
+test test_min_two_args ... ok
+test test_mul_single_arg ... ok
+test test_mul_zero_args ... ok
+test test_multi_arity_basic ... ok
+test test_multi_arity_map_destructuring ... ok
+test test_multi_arity_two_args ... ok
+test test_multi_arity_variadic_basic ... ok
+test test_multi_arity_variadic_fixed_dispatch ... ok
+test test_multi_arity_variadic_guard ... ok
+test test_multi_arity_variadic_rest_first ... ok
+test test_multi_arity_variadic_zero_fixed ... ok
+test test_multiplication ... ok
+test test_nested_arithmetic ... ok
+test test_not_false ... ok
+test test_not_equal ... ok
+test test_not_true ... ok
+test test_or_all_false ... ok
+test test_or_empty ... ok
+test test_nth_vector ... ok
+test test_or_one_true ... ok
+test test_or_returns_first_truthy ... ok
+test test_or_returns_last_if_all_falsy ... ok
+test test_or_single ... ok
+test test_partial ... ok
+test test_or_with_zero_is_truthy ... ok
+test test_partial_apply_concat ... ok
+test test_partial_apply_cons ... ok
+test test_partial_apply_vec ... ok
+test test_partial_debug_concat ... ok
+test test_partial_debug_apply_rest ... ok
+test test_partial_debug_concat_count ... ok
+test test_partial_debug_lazy_seq ... ignored, compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support
+test test_partial_debug_range_alength ... ignored, compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support
+test test_partial_debug_fixed_and_rest ... ok
+test test_partial_debug_rest_count ... ok
+test test_partial_debug_rest_first ... ok
+test test_polymorphic_count_dispatches_correctly ... ok
+test test_polymorphic_first_on_empty_vector ... ok
+test test_polymorphic_count_on_list ... ok
+test test_polymorphic_mixed_operations ... ok
+test test_polymorphic_first_on_vector ... ok
+test test_print_no_newline ... ignored, compiled pipeline: Unresolved Runtime name print; see prototype_cases_awaiting_compiled_support
+test test_println_basic ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+test test_println_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+test test_println_no_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+test test_println_number ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support
+test test_prn_basic ... ignored, compiled pipeline: Unresolved Runtime name prn; see prototype_cases_awaiting_compiled_support
+test test_recur_in_do_last_expr_allowed ... ok
+test test_recur_in_do_non_last_rejected ... ok
+test test_polymorphic_nth_on_list ... ok
+test test_recur_in_if_branches_allowed ... ok
+test test_recur_in_let_binding_rejected ... ok
+test test_recur_not_in_tail_position_rejected ... ok
+test test_recur_in_let_body_allowed ... ok
+test test_recur_outside_loop_rejected ... ok
+test test_set_chained_conj ... ok
+test test_rest_on_cons ... ok
+test test_set_conj_new_element ... ok
+test test_set_conj_preserves_existing ... ok
+test test_set_contains_empty ... ok
+test test_set_contains_false ... ok
+test test_set_contains_true ... ok
+test test_set_count ... ok
+test test_set_count_empty ... ok
+test test_set_disj_compiles ... ok
+test test_set_disj_nonexistent_element ... ok
+test test_set_disj_on_empty ... ok
+test test_set_let_bound_conj ... ok
+test test_set_let_bound_contains ... ok
+test test_set_literal ... ok
+test test_set_structural_sharing ... ok
+test test_simple_loop_countdown ... ok
+test test_simple_loop_sum ... ok
+test test_some_thread_first ... ignored, compiled pipeline: Unresolved Runtime name some->; see prototype_cases_awaiting_compiled_support
+test test_str_empty ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+test test_str_mixed_types ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+test test_str_multi_arg_literals ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+test test_str_single_int ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+test test_str_with_nil ... ignored, compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support
+test test_simple_loop_with_vector ... ok
+test test_string_hash_map_count ... ok
+test test_string_hash_map_lookup ... ok
+test test_structural_sharing ... ok
+test test_subtraction ... ok
+test test_symbol_from_string ... ok
+test test_tco_deep_recursion ... ok
+test test_tco_mutual_recursion_style ... ok
+test test_tco_tail_recursive_factorial ... ok
+test test_truthiness_and_with_zero ... ok
+test test_truthiness_comparison_false ... ok
+test test_truthiness_comparison_true ... ok
+test test_truthiness_cond_with_zero ... ok
+test test_truthiness_false_is_falsy ... ok
+test test_tco_tail_recursive_sum ... ok
+test test_truthiness_float_zero_is_truthy ... ok
+test test_truthiness_negative_is_truthy ... ok
+test test_truthiness_positive_is_truthy ... ok
+test test_truthiness_true_is_truthy ... ok
+test test_truthiness_when_with_zero ... ok
+test test_truthiness_zero_is_truthy ... ok
+test test_try_catch_throw ... ok
+test test_try_catch_with_expressions ... ok
+test test_try_no_exception ... ok
+test test_unary_negate ... ok
+test test_unary_reciprocal ... ok
+test test_variadic_closure_inline_zero_args ... ok
+test test_variadic_closure_with_capture_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support
+test test_variadic_closure_with_capture_zero_args ... ignored, compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support
+test test_variadic_add_chain ... ok
+test test_variadic_div_chain ... ok
+test test_variadic_mul_chain ... ok
+test test_vector_32_elements ... ok
+test test_vector_destructuring_let ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+test test_vector_destructuring_rest ... ignored, compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support
+test test_variadic_sub_chain ... ok
+test test_vector_literal ... ok
+test test_when_first ... ignored, compiled pipeline: Unresolved Runtime name when-first; see prototype_cases_awaiting_compiled_support
+test test_when_false ... ok
+test test_when_multiple_body ... ok
+test test_when_not_false ... ok
+test test_when_not_true ... ok
+test test_when_true ... ok
+
+test result: ok. 286 passed; 0 failed; 30 ignored; 0 measured; 0 filtered out; finished in 83.50s
+

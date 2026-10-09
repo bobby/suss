@@ -1,0 +1,28 @@
+{
+  "source_head": "c2cf3bf77fabcd102c1901bf2f39cfa6c973053b",
+  "scope": "full compile_expr and bootstrap reproducibility, not full workspace or M4 acceptance",
+  "compiler": {
+    "passed": 286,
+    "failed": 0,
+    "ignored": 30,
+    "seconds": 83.5
+  },
+  "bootstrap_tests": 4,
+  "logs": {
+    "bootstrap": {
+      "exit_code": 0,
+      "log": "docs/compatibility/compiled-support-reactivation/evidence/suss-m4-compiled-support-c2cf-bootstrap.log",
+      "sha256": "3d5e3ce60447fec54924f8907d1f855a908431baf6f7a22933c34d19d47340a1"
+    },
+    "native": {
+      "exit_code": 0,
+      "log": "docs/compatibility/compiled-support-reactivation/evidence/suss-m4-compiled-support-c2cf-native.log",
+      "sha256": "96885149cdc3f27fef6c803d258218cd63c88569208d3df2c57ee4264b132219"
+    },
+    "repro": {
+      "exit_code": 0,
+      "log": "docs/compatibility/compiled-support-reactivation/evidence/suss-m4-compiled-support-c2cf-repro.log",
+      "sha256": "3bab4a7fe3736f2ddf5c7fc158b515788b9b9ec1ed3134cfcb3512dbd89200e7"
+    }
+  }
+}
