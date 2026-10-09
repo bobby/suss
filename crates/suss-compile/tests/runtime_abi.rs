@@ -6832,8 +6832,11 @@ fn runtime_abi_sparse_array_rejects_corrupt_chains_before_shrink_mutates_length(
             &mut store,
             runtime,
             "source-array-sparse-new",
-            &[Val::I32(9)],
+            &[Val::I32(33)],
         );
+        // Larger construction followed by shrink keeps this fixture sparse.
+        runtime.get_func(&mut store, "source-array-sparse-set-length").unwrap()
+            .call(&mut store, &[storage.clone(), Val::I32(9)], &mut []).unwrap();
         let value = nominal_value(
             &mut store,
             runtime,
@@ -7165,9 +7168,14 @@ fn runtime_abi_sparse_array_rejects_duplicate_out_of_range_and_dense_overlap_key
                 &mut store,
                 runtime,
                 "source-array-sparse-new",
-                &[Val::I32(10)],
+                &[Val::I32(33)],
             )
         };
+        // Larger construction followed by shrink keeps this fixture sparse.
+        if mode != "dense-overlap" {
+        runtime.get_func(&mut store, "source-array-sparse-set-length").unwrap()
+            .call(&mut store, &[storage.clone(), Val::I32(10)], &mut []).unwrap();
+        }
         let value = nominal_value(
             &mut store,
             runtime,
@@ -8114,4 +8122,42 @@ fn runtime_abi_sparse_clone_coalesces_present_prefix_without_filling_holes_or_al
     let dense = fields.get(&mut store, 2).unwrap();
     assert_eq!(dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 0);
     assert_eq!(nominal_value(&mut store, runtime, "source-array-sparse-length", &[huge]).unwrap_i32() as u32, u32::MAX);
+}
+
+#[test]
+fn runtime_abi_small_hole_arrays_use_private_masked_storage_without_changing_presence() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    for length in [0_u32, 1, 31, 32, 33, u32::MAX] {
+        let source = nominal_value(&mut store, runtime, "source-array-sparse-new", &[Val::I32(length as i32)]);
+        let fields = source.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        let dense = fields.get(&mut store, 2).unwrap();
+        let mask = fields.get(&mut store, 3).unwrap();
+        let physical = if length <= 32 { length } else { 0 };
+        assert_eq!(dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), physical);
+        let flags = mask.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        assert_eq!(flags.len(&store).unwrap(), physical);
+        for index in 0..physical {
+            assert_eq!(flags.get(&mut store, index).unwrap().unwrap_i32(), 0);
+        }
+        let absent = nominal_value(&mut store, runtime, "source-array-sparse-get", &[source.clone(), Val::I32(0)]);
+        assert_eq!(absent.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+        let present = nominal_value(&mut store, runtime, "source-array-sparse-has", &[source.clone(), Val::I32(0)]);
+        assert_eq!(present.unwrap_i32(), 0);
+        let undefined = absent;
+        nominal_value(&mut store, runtime, "source-array-sparse-set", &[source.clone(), Val::I32(0), undefined]);
+        assert_eq!(nominal_value(&mut store, runtime, "source-array-sparse-has", &[source.clone(), Val::I32(0)]).unwrap_i32(), 1);
+        let copy = nominal_value(&mut store, runtime, "source-array-sparse-clone", &[source.clone()]);
+        store.gc(None).unwrap();
+        let copied = copy.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        for slot in [2, 3] {
+            let original = fields.get(&mut store, slot).unwrap();
+            let cloned = copied.get(&mut store, slot).unwrap();
+            assert!(!wasmtime::Rooted::ref_eq(&store, original.unwrap_anyref().unwrap(), cloned.unwrap_anyref().unwrap()).unwrap());
+        }
+        nominal_value(&mut store, runtime, "source-array-sparse-delete", &[source.clone(), Val::I32(0)]);
+        assert_eq!(nominal_value(&mut store, runtime, "source-array-sparse-has", &[source, Val::I32(0)]).unwrap_i32(), 0);
+        assert_eq!(nominal_value(&mut store, runtime, "source-array-sparse-has", &[copy, Val::I32(0)]).unwrap_i32(), 1);
+    }
 }

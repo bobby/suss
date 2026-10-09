@@ -1,5 +1,6 @@
 //! GC-owned sparse backing for source arrays. Logical uint32 length does not
-//! allocate elements; linked entries preserve presence independently of value.
+//! require proportional allocation; small hole arrays use masked dense storage.
+//! Linked entries preserve presence independently of value for larger arrays.
 //! Uses only the existing shared Args and Number types, with no owner registry.
 use super::*;
 use Instruction::*;
@@ -129,14 +130,35 @@ pub(super) fn functions(b: &mut Builder) {
             Call(b.names["number-box"]),
             I32Const(0),
             RefI31,
+            // Vector tails/nodes repeatedly populate at most32 slots. Allocate
+            // bounded private storage, retaining absence through zero masks.
+            LocalGet(0),
+            I32Const(32),
+            I32LeU,
+            If(BlockType::Result(VALUE)),
+            I32Const(UNDEFINED),
+            RefI31,
+            LocalGet(0),
+            ArrayNew(ARGS),
+            Else,
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 0,
             },
+            End,
+            LocalGet(0),
+            I32Const(32),
+            I32LeU,
+            If(BlockType::Result(VALUE)),
+            I32Const(0),
+            LocalGet(0),
+            ArrayNew(STRING),
+            Else,
             ArrayNewFixed {
                 array_type_index: STRING,
                 array_size: 0,
             },
+            End,
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 4,
