@@ -334,7 +334,8 @@ impl Decoder {
                     | Class::BitmapNode
                     | Class::ArrayNode
                     | Class::ExceptionInfo => 3,
-                    Class::SourceArray | Class::EmptyList => 1,
+                    Class::SourceArray => 2,
+                    Class::EmptyList => 1,
                 };
                 if args.len(&*store)? != expected {
                     return Err(wasmtime::Error::msg("Malformed nominal field count"));
@@ -350,22 +351,10 @@ impl Decoder {
         store: &mut StoreContextMut<'_, ()>,
         value: &Val,
         expected: usize,
-    ) -> wasmtime::Result<wasmtime::Rooted<wasmtime::ArrayRef>> {
-        let (class, data) = self.object(store, value)?;
-        if class != Class::SourceArray {
-            return Err(wasmtime::Error::msg("Expected canonical source array"));
-        }
-        let array = non_null_ref(&data[0])?
-            .as_array(&*store)?
-            .ok_or_else(|| wasmtime::Error::msg("Malformed source array storage"))?;
-        if !matches!(
-            array.ty(&*store)?.element_type(),
-            StorageType::ValType(wasmtime::ValType::Ref(_))
-        ) || array.len(&*store)? as usize != expected
-        {
-            return Err(wasmtime::Error::msg(
-                "Malformed source array length or element type",
-            ));
+    ) -> wasmtime::Result<Vec<Val>> {
+        let array = self.raw_array(store, value)?;
+        if array.len() != expected {
+            return Err(wasmtime::Error::msg("Malformed source array length"));
         }
         Ok(array)
     }
@@ -374,7 +363,7 @@ impl Decoder {
         &mut self,
         store: &mut StoreContextMut<'_, ()>,
         value: &Val,
-    ) -> wasmtime::Result<wasmtime::Rooted<wasmtime::ArrayRef>> {
+    ) -> wasmtime::Result<Vec<Val>> {
         self.spend(1)?;
         let (class, data) = self.object(store, value)?;
         if class != Class::Node {
@@ -433,16 +422,16 @@ impl Decoder {
         let mut result = Vec::with_capacity(count - start);
         for index in start..count {
             let item = if index >= tail_start {
-                tail.get(&mut *store, (index - tail_start) as u32)?
+                tail[index - tail_start].clone()
             } else {
                 let mut current = data[3].clone();
                 let mut level = shift;
                 loop {
                     let array = self.node(store, &current)?;
                     if level == 0 {
-                        break array.get(&mut *store, (index & 31) as u32)?;
+                        break array[index & 31].clone();
                     }
-                    current = array.get(&mut *store, ((index >> level) & 31) as u32)?;
+                    current = array[(index >> level) & 31].clone();
                     level -= 5;
                 }
             };
@@ -467,7 +456,7 @@ impl Decoder {
         let index = count_field(store, &data[2])?;
         let offset = count_field(store, &data[3])?;
         let node = self.raw_array(store, &data[1])?;
-        let length = node.len(&*store)? as usize;
+        let length = node.len();
         if index >= count
             || index % 32 != 0
             || length != (count - index).min(32)
@@ -480,7 +469,7 @@ impl Decoder {
         }
         let mut result = Vec::with_capacity(count - index - offset);
         for item in offset..length {
-            let value = node.get(&mut *store, item as u32)?;
+            let value = node[item].clone();
             result.push(self.value(store, &value, depth + 1)?);
         }
         result.extend(self.vector_range(store, &vector, index + length, depth)?);
@@ -491,21 +480,101 @@ impl Decoder {
         &self,
         store: &mut StoreContextMut<'_, ()>,
         value: &Val,
-    ) -> wasmtime::Result<Rooted<wasmtime::ArrayRef>> {
+    ) -> wasmtime::Result<Vec<Val>> {
+        fn uint32(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
+            let n = f64::from_bits(number_bits(store, value)?);
+            if !n.is_finite() || n < 0.0 || n > f64::from(u32::MAX) || n.fract() != 0.0 {
+                return Err(wasmtime::Error::msg("Invalid source array uint32"));
+            }
+            Ok(n as u32)
+        }
+        fn args(
+            store: &mut StoreContextMut<'_, ()>,
+            value: &Val,
+        ) -> wasmtime::Result<Rooted<wasmtime::ArrayRef>> {
+            let array = non_null_ref(value)?
+                .as_array(&*store)?
+                .ok_or_else(|| wasmtime::Error::msg("Malformed source array storage"))?;
+            if !matches!(
+                array.ty(&*store)?.element_type(),
+                StorageType::ValType(wasmtime::ValType::Ref(_))
+            ) {
+                return Err(wasmtime::Error::msg("Malformed source array element type"));
+            }
+            Ok(array)
+        }
         let (class, data) = self.object(store, value)?;
         if class != Class::SourceArray {
             return Err(wasmtime::Error::msg("Expected canonical source array"));
         }
-        let array = non_null_ref(&data[0])?
-            .as_array(&*store)?
-            .ok_or_else(|| wasmtime::Error::msg("Malformed source array storage"))?;
-        if !matches!(
-            array.ty(&*store)?.element_type(),
-            StorageType::ValType(wasmtime::ValType::Ref(_))
-        ) {
-            return Err(wasmtime::Error::msg("Malformed source array element type"));
+        let backing = args(store, &data[0])?;
+        if backing.len(&*store)? != 4 {
+            return Err(wasmtime::Error::msg(
+                "Malformed source array backing layout",
+            ));
         }
-        Ok(array)
+        let backing = backing.elems(&mut *store)?.collect::<Vec<_>>();
+        let length = uint32(store, &backing[0])?;
+        // Host observation is bounded before allocation, independently of the
+        // sparse logical length. No guest operations or fabricated nil values.
+        if length > 1_000_000 {
+            return Err(wasmtime::Error::msg("ABI2 decoder source array limit"));
+        }
+        let dense = args(store, &backing[2])?;
+        let mask = non_null_ref(&backing[3])?
+            .as_array(&*store)?
+            .ok_or_else(|| wasmtime::Error::msg("Malformed source array presence mask"))?;
+        if !matches!(mask.ty(&*store)?.element_type(), StorageType::I16)
+            || mask.len(&*store)? != dense.len(&*store)?
+            || dense.len(&*store)? > length
+        {
+            return Err(wasmtime::Error::msg(
+                "Malformed source array dense/presence layout",
+            ));
+        }
+        let undefined = Val::AnyRef(Some(AnyRef::from_i31(
+            &mut *store,
+            wasmtime::I31::wrapping_u32(6),
+        )));
+        let mut result = vec![undefined; length as usize];
+        let dense_length = dense.len(&*store)?;
+        for index in 0..dense_length {
+            match mask.get(&mut *store, index)?.unwrap_i32() {
+                0 => (),
+                1 => result[index as usize] = dense.get(&mut *store, index)?,
+                _ => return Err(wasmtime::Error::msg("Malformed source array presence bit")),
+            }
+        }
+        let mut next = backing[1].clone();
+        let mut previous = None;
+        let mut nodes = 0;
+        while sentinel(store, &next)? != Some(0) {
+            nodes += 1;
+            if nodes > 1_000_001 {
+                return Err(wasmtime::Error::msg("ABI2 decoder sparse chain limit"));
+            }
+            let node = args(store, &next)?;
+            if node.len(&*store)? != 3 {
+                return Err(wasmtime::Error::msg("Malformed source array sparse node"));
+            }
+            let node = node.elems(&mut *store)?.collect::<Vec<_>>();
+            let key = uint32(store, &node[0])?;
+            // Strict ordering also rejects every cycle when its key repeats.
+            if previous.is_some_and(|prior| key <= prior)
+                || key < dense_length
+                || (key != u32::MAX && key >= length)
+            {
+                return Err(wasmtime::Error::msg(
+                    "Malformed source array sparse key order/range",
+                ));
+            }
+            if key != u32::MAX {
+                result[key as usize] = node[1].clone();
+            }
+            previous = Some(key);
+            next = node[2].clone();
+        }
+        Ok(result)
     }
 
     fn map(
@@ -523,8 +592,8 @@ impl Decoder {
         if class == Class::ArrayMap {
             let array = self.source_array(store, &data[2], declared * 2)?;
             for index in 0..declared {
-                let key = array.get(&mut *store, (index * 2) as u32)?;
-                let value = array.get(&mut *store, (index * 2 + 1) as u32)?;
+                let key = array[index * 2].clone();
+                let value = array[index * 2 + 1].clone();
                 pairs.push((
                     self.value(store, &key, depth + 1)?,
                     self.value(store, &value, depth + 1)?,
@@ -571,7 +640,7 @@ impl Decoder {
                 let array = self.source_array(store, &data[2], 32)?;
                 let mut occupied = 0;
                 for index in 0..32 {
-                    let child = array.get(&mut *store, index)?;
+                    let child = array[index].clone();
                     if !internal_absent(store, &child)? {
                         occupied += 1;
                         self.hash_node(store, &child, level + 1, depth, declared, pairs)?;
@@ -595,15 +664,15 @@ impl Decoder {
                     return Err(wasmtime::Error::msg("Empty hash collision node"));
                 }
                 let array = self.raw_array(store, &data[if collision { 3 } else { 2 }])?;
-                let length = array.len(&*store)? as usize;
+                let length = array.len();
                 if length % 2 != 0 || count * 2 > length || count > self.remaining {
                     return Err(wasmtime::Error::msg(
                         "Hash node population exceeds storage or traversal bound",
                     ));
                 }
                 for index in 0..count {
-                    let key = array.get(&mut *store, (index * 2) as u32)?;
-                    let value = array.get(&mut *store, (index * 2 + 1) as u32)?;
+                    let key = array[index * 2].clone();
+                    let value = array[index * 2 + 1].clone();
                     if internal_absent(store, &key)? {
                         if collision {
                             return Err(wasmtime::Error::msg("Absent key in hash collision node"));
@@ -645,28 +714,17 @@ impl Decoder {
                     "Indexed string requires ABI2 UTF16 storage",
                 ));
             }
-            (array, true)
+            let length = array.len(&*store)? as usize;
+            if index > length || length - index > self.remaining {
+                return Err(wasmtime::Error::msg(
+                    "ABI2 decoder indexed bounds/traversal limit",
+                ));
+            }
+            (array.elems(&mut *store)?.collect::<Vec<_>>(), true)
         } else {
-            let (class, owner) = self.object(store, &data[0])?;
-            if class != Class::SourceArray {
-                return Err(wasmtime::Error::msg(
-                    "Indexed sequence requires canonical source array",
-                ));
-            }
-            let array = non_null_ref(&owner[0])?
-                .as_array(&*store)?
-                .ok_or_else(|| wasmtime::Error::msg("Malformed indexed sequence backing"))?;
-            if !matches!(
-                array.ty(&*store)?.element_type(),
-                StorageType::ValType(wasmtime::ValType::Ref(_))
-            ) {
-                return Err(wasmtime::Error::msg(
-                    "Malformed indexed sequence element type",
-                ));
-            }
-            (array, false)
+            (self.raw_array(store, &data[0])?, false)
         };
-        let length = array.len(&*store)? as usize;
+        let length = array.len();
         if index > length {
             return Err(wasmtime::Error::msg(
                 "Indexed offset exceeds backing storage",
@@ -677,7 +735,7 @@ impl Decoder {
         }
         let mut result = Vec::with_capacity(length - index);
         for offset in index..length {
-            let item = array.get(&mut *store, offset as u32)?;
+            let item = array[offset].clone();
             result.push(if string {
                 self.spend(1)?;
                 let Val::I32(unit) = item else {
@@ -848,6 +906,50 @@ fn signed_word(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Re
 #[cfg(test)]
 mod adversarial_owner {
     use super::*;
+    #[test]
+    fn sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers() {
+        let mut session = Session::new_repl().unwrap();
+        let decoder = Decoder::capture(&mut session, 4096).unwrap();
+        let dense = session.eval("(array 7)").unwrap();
+        let sparse = session.eval("(let [a (array)] (aset a 1 7) a)").unwrap();
+        session.collect().unwrap();
+        session
+            .inspect(&dense, |mut store, value| {
+                let (_, owner) = decoder.object(&mut store, &value)?;
+                let backing = non_null_ref(&owner[0])?.as_array(&store)?.unwrap();
+                let mask = non_null_ref(&backing.get(&mut store, 3)?)?
+                    .as_array(&store)?
+                    .unwrap();
+                mask.set(&mut store, 0, Val::I32(2))?;
+                assert!(decoder.raw_array(&mut store, &value).is_err());
+                mask.set(&mut store, 0, Val::I32(1))?;
+                assert_eq!(decoder.raw_array(&mut store, &value)?.len(), 1);
+                Ok(())
+            })
+            .unwrap();
+        session
+            .inspect(&sparse, |mut store, value| {
+                let (_, owner) = decoder.object(&mut store, &value)?;
+                let backing = non_null_ref(&owner[0])?.as_array(&store)?.unwrap();
+                let head = backing.get(&mut store, 1)?;
+                let node = non_null_ref(&head)?.as_array(&store)?.unwrap();
+                let old_next = node.get(&mut store, 2)?;
+                node.set(&mut store, 2, head.clone())?;
+                assert!(decoder.raw_array(&mut store, &value).is_err());
+                node.set(&mut store, 2, old_next)?;
+                let old_key = node.get(&mut store, 0)?;
+                let length = backing.get(&mut store, 0)?;
+                node.set(&mut store, 0, length)?;
+                assert!(decoder.raw_array(&mut store, &value).is_err());
+                node.set(&mut store, 0, old_key)?;
+                let slots = decoder.raw_array(&mut store, &value)?;
+                assert_eq!(slots.len(), 2);
+                assert_eq!(sentinel(&store, &slots[0])?, Some(6));
+                assert_eq!(number_bits(&mut store, &slots[1])?, 7.0_f64.to_bits());
+                Ok(())
+            })
+            .unwrap();
+    }
     #[test]
     fn indexed_string_rejects_immutable_utf16_backing() {
         let mut session = Session::new_repl().unwrap();
