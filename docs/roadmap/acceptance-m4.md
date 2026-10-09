@@ -1,5 +1,28 @@
 # M4 acceptance work record
 
+## Bounded MLIR evidence audit after merged #227/#228 — 2026-10-09
+
+This section supersedes older pending execution status for #188 only. It does
+not remove or complete any criterion of original M4 issues #16–#19.
+
+The [post-#228 audit](../../experiments/mlir/evidence/post228/README.md) maps all
+seven bounded #188 criteria to actual WasmGC/source/effect/GC/ABI observations,
+route assessment, measurements, risks and the published deferral recommendation.
+Nine execution gates passed at `b82ad94`; its exact-head workspace baseline
+passed 1,550 tests, zero failures and 41 existing ignores. All ten final-head CI
+checks succeeded before PR #227 was merged as `f4b13f3`. All 184 experiment files,
+120 production files and four bootstrap artifacts matched that executed snapshot
+before the evidence documentation edit. Historical logs/receipts remain intact.
+
+The evaluation recommends **deferral**, not compiler adoption. Root CI does not
+run the isolated bridge or C++ checks, so their independent execution logs and
+identity manifest are retained. This documentation checkpoint still needs its
+own independent review, required workspace baseline and final-head CI before
+promotion. Original M4 extraction/sequence/associative/collection-contract issues
+remain open; sorted collections, nominal records and full acceptance are not
+proved by this bounded compiler investigation.
+
+
 
 ## Current execution snapshot after merged #226 — 2026-10-08
 

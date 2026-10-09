@@ -1,17 +1,22 @@
 # MLIR evaluation recommendation — #188
 
-Draft evidence record, 2026-10-08. Recommend **deferring compiler adoption**.
+Evidence record, updated 2026-10-09. Recommend **deferring compiler adoption**.
 This is an isolated investigation, not an architectural decision or authorization
-to migrate the shipped compiler. Earlier rebuilding on main `22723b4` passed all
-18 unit tests, actual v2 source preservation/correspondence, seven effects cases
-and 92 paired executions. The evidence and measurements below refer to that
-retained snapshot unless explicitly labeled post-#226. Fresh rebuilding and
-execution on the rebased `4e0f00d` checkout now pass: 18 Rust tests, genuine
-source-v2 preservation, seven native/pinned effects cases, 92 paired executions,
-and pinned/CLI source observations. Post-#226 C++ gates also pass. See
-[evidence receipts](evidence/post226-execution-gates.json) and the fresh content
-identity manifest. Independent review at `db79427` found no material issues;
-full baseline and final-head CI remain pending.
+to migrate the shipped compiler. Original before-main and post-#226 evidence
+remains retained unchanged. The completed post-#228 rerun at PR #227 head
+`b82ad94cf7545a4f80315af3a6f677e57fc4bd13` passed all nine execution gates,
+including genuine source preservation, seven native/pinned effect examples and
+92 paired executions. Its unchanged full workspace baseline passed 1,550 tests,
+zero failures and 41 existing ignores; all ten final-head CI checks succeeded.
+PR #227 was subsequently merged as `f4b13f3`.
+
+The [post-#228 audit](evidence/post228/README.md) maps every #188 criterion to
+retained commands, terminal logs, results and limits. Before this documentation
+update, all 184 experiment files, 120 production files and four bootstrap
+artifacts matched the executed snapshot exactly. This is historical execution
+proof, not certification of future compiler changes. Independent implementation
+review found no material issues; this documentation update still requires its
+own review, workspace baseline and final-head CI before promotion.
 
 The custom dialect provides useful registered types, region structure and
 verifier hooks. This slice still implements the language-specific source-facts
@@ -26,10 +31,10 @@ ongoing maintenance has been established.
 | --- | --- | --- |
 | Actual WasmGC and shared closure | Executed numeric original9/mutation13, two independent fragments, rooted binding cell, forced GC, pinned Wasmtime49.0.1 | Bounded numeric graph, not complete source compiler |
 | ABI compatibility | Incompatible ABI/compiler manifests reject before a synthetic initializer marker; compatible control runs once | Synthetic initializer; actual fragment manifest and integrity validation also required |
-| Original source analysis | Genuine native facts survive complete registered MLIR parse/print twice, including source forms/children, lexical and physical identities, metadata and spans | Actual v2 section preservation/resealing passes before-main; current-base execution passed; final gates pending |
-| Source observations | Fresh pinned CLJS gives exact binary64 9/13 for the identical original/mutated closure source; existing Suss CLI prints 9/13 | CLI printed scalars are separate from the bridge's independent boxed-value decoder; graph is hand-authored; bounded identity/operand correspondence now checked before-main, current-base passed; strict-type repair independently reviewed |
+| Original source analysis | Genuine native facts survive complete registered MLIR parse/print twice, including source forms/children, lexical and physical identities, metadata and spans | Actual v2 section preservation/resealing passes before-main; post-#228 execution passed; bounded profile only |
+| Source observations | Fresh pinned CLJS gives exact binary64 9/13 for the identical original/mutated closure source; existing Suss CLI prints 9/13 | CLI printed scalars are separate from the bridge's independent boxed-value decoder; graph is hand-authored; bounded identity/operand correspondence now checked before-main, post-#228 passed; strict-type repair independently reviewed |
 | Ordered effects and cleanup | Seven actual exported MLIR graphs match result and ordered cell snapshots, plus fresh pinned CLJS observations | Supports these closed profiles; no general effects or scheduler claim |
-| Same-example comparison | Native producer/caller source and verified MLIR represent the same capture, arithmetic and live-cell call; strict execution/measurement driver authored | Actual92 executions and timed emission pass; current-base execution passed; final gates pending; source-to-MLIR conversion absent |
+| Same-example comparison | Native producer/caller source and verified MLIR represent the same capture, arithmetic and live-cell call; strict execution/measurement driver authored | Actual92 executions and timed emission pass; post-#228 execution passed; bounded profile only; source-to-MLIR conversion absent |
 
 Original commands and limitations live in [README](README.md),
 [source profile](bridge/source-schema.md), [effects profile](bridge/effects-schema.md)
@@ -65,10 +70,10 @@ counts must be refreshed after final source formatting; dense C++ formatting and
 comments affect physical lines. Reused native groups support much more behavior
 and remain required. They are not equivalent replacement costs.
 
-The [current-main comparison](evidence/pipeline-comparison-current-main.json)
+The [post-#228 comparison](evidence/post228/pipeline-comparison.json)
 executes 92 fragment pairs and independently decodes 9/13 after GC/ABI gates.
-Compilation/emission medians are 6.087/6.137ms for native original/mutated source,
-versus 19.432/19.420ms for hand-authored MLIR export plus Rust reconstruction/emission.
+Compilation/emission medians are 5.841/5.907ms for native original/mutated source,
+versus 19.014/19.128ms for hand-authored MLIR export plus Rust reconstruction/emission.
 The earlier before-main report remains available as historical evidence.
 Native producer/caller artifacts are1036/910bytes; MLIR940/845bytes. Native source
 identity annotations differ from IR annotations. Timings include launches/file
@@ -77,7 +82,7 @@ sidecars. MLIR uses two processes versus one native process; shared-host schedul
 is not isolated. No production-performance or faster-compiler claim follows.
 The source code of native production crates is unchanged by the rebase, but
 library data changed; the rebuilt current-base binary and full comparison now
-pass. Final publication gates remain required. Raw samples, platform and binary/fixture/artifact hashes are retained.
+pass. The executed snapshot passed its publication gates. This documentation update has its own gates. Raw samples, platform and binary/fixture/artifact hashes are retained.
 
 MLIR verifies registered operation types, captures, arities, region ownership and
 source-schema consistency; actual negative fixtures retain diagnostics and

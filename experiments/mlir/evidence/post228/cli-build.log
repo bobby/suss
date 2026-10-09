@@ -1,0 +1,4 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-mlir-recovery/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-mlir-recovery/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-mlir-recovery/crates/suss-cli)
+    Finished `dev` profile [unoptimized] target(s) in 9.51s

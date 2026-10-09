@@ -1,12 +1,15 @@
 # Bounded MLIR evaluation (#188)
 
-Earlier main `22723b4`: 18 Rust tests, source-v2 actual original/mutation,
-seven effects cases and 92 paired GC executions passed. Those retained results
-do not certify the rebased `4e0f00d` checkout. The restored pinned C++ tools pass
-their post-#226 gates; current-base Rust rebuilding, actual execution, root
-baseline and final-head CI remain pending. See [decision](decision.md),
-[clean reproduction](reproduce.md) and [portable evidence](evidence/).
-Historical stages below retain failures and their superseding results.
+The completed post-#228 rerun at PR #227 head `b82ad94` passed all nine
+execution gates: 18 Rust tests, genuine source-v2 original/mutation WasmGC,
+seven pinned/native effects examples and 92 paired GC executions. The required
+workspace baseline passed 1,550 tests with zero failures and 41 existing ignores;
+all ten exact-head CI checks succeeded before user merge as `f4b13f3`.
+See the [post-#228 acceptance/evidence audit](evidence/post228/README.md),
+[decision](decision.md), [clean reproduction](reproduce.md) and [portable evidence](evidence/).
+Recommend deferring adoption. No new execution is inferred from evidence packaging;
+this documentation update still has its own review/baseline/CI gates. Historical
+stages below retain failures and their superseding results.
 
 This experiment leaves shipped compilation paths unchanged. Toolchain acquisition
 is pinned in `toolchain-lock.json`; its archive was SHA-256 verified and extracted

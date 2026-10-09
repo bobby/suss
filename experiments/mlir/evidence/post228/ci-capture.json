@@ -1,0 +1,57 @@
+{
+  "head": "b82ad94cf7545a4f80315af3a6f677e57fc4bd13",
+  "pr": 227,
+  "checks": [
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113652265518",
+      "name": "test",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600204",
+      "name": "integration (7)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600130",
+      "name": "integration (6)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600264",
+      "name": "integration (5)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600240",
+      "name": "integration (4)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600212",
+      "name": "integration (1)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600010",
+      "name": "foundation",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600159",
+      "name": "integration (0)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600098",
+      "name": "integration (2)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/bobby/suss/actions/runs/37875362660/job/113642600275",
+      "name": "integration (3)",
+      "state": "SUCCESS"
+    }
+  ],
+  "local_baseline": "session34020 still live; not certified"
+}

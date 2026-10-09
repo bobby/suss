@@ -1,0 +1,28 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-mlir-recovery/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-mlir-recovery/crates/suss-compile)
+   Compiling suss-mlir-bridge-draft v0.0.0 (/private/tmp/suss-m4-mlir-recovery/experiments/mlir/bridge)
+    Finished `test` profile [unoptimized] target(s) in 25.11s
+     Running unittests src/main.rs (/private/tmp/suss-m4-mlir-toolchain/rust-target-post226/debug/deps/suss_mlir_bridge_draft-e8ec68b675bd3bd5)
+
+running 18 tests
+test analysis::tests::lossless_forms_and_presence ... ok
+test analysis::tests::transport_rejects_duplicate_keys_recursively ... ok
+test analysis::tests::transport_accepts_unique_keys_and_preserves_values ... ok
+test analysis::tests::transport_rejects_trailing_input_size_and_recursion_overflow ... ok
+test effects::tests::every_scalar_type_rejects_extra_fields ... ok
+test effects::tests::multiply_and_if_use_value_edges_without_id_aliasing ... ok
+test numeric_type_tests::f64_type_rejects_unknown_fields_including_nested_captures ... ok
+test numeric_type_tests::source_carrier_rejects_null_instead_of_extending_v1_profile ... ok
+test effects::tests::transport_rejects_unknown_duplicate_forward_and_wrong_type ... ok
+test analysis::tests::bootstrap_global_resolution_retains_absent_declaration ... ok
+test source_section::tests::full_bytes_and_rejection_boundaries ... ok
+test source_section::tests::source_attachment_requires_resealing_and_survives_identity_verification ... ok
+test effects::tests::rejects_cross_arm_try_capture_cells_and_escaped_duplicates ... ok
+test effects::tests::retained_exported_graphs_reconstruct_real_ir ... ok
+test analysis::tests::global_source_binding_preserves_selected_declaration_and_revision_facts ... ok
+test analysis::tests::source_control_pinned_representatives ... ok
+test analysis::tests::unsupported_control_is_rejected ... ok
+test analysis::tests::representative_source_roundtrip_and_mutation ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+

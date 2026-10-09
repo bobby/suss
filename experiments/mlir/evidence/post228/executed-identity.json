@@ -1,0 +1,1323 @@
+{
+  "schema": "suss.mlir.evidence-identity.v1",
+  "base_commit": "b82ad94cf7545a4f80315af3a6f677e57fc4bd13",
+  "binding": "experiment content hashes are authoritative across the subsequent commit; no self-referential commit hash",
+  "experiment_files": {
+    "experiments/mlir/CMakeLists.txt": {
+      "bytes": 2114,
+      "sha256": "0f815494f631efa412827ddb516509ddd17f83735183a671f7354a21c244be02"
+    },
+    "experiments/mlir/README.md": {
+      "bytes": 13585,
+      "sha256": "929bc6492f9bd4b194d06bcc4bc0c06a620a3b6f0dcbd940e231bf0460810006"
+    },
+    "experiments/mlir/bridge/Cargo.lock": {
+      "bytes": 50637,
+      "sha256": "57a7011c3485ca897e207dfb53e649a53195fb837043b90adb72d6e361591c06"
+    },
+    "experiments/mlir/bridge/Cargo.toml": {
+      "bytes": 541,
+      "sha256": "90f9264a28dd4a4c167bb15a9c096db4463240bea0b53dd9189106637665b7d7"
+    },
+    "experiments/mlir/bridge/README.md": {
+      "bytes": 4582,
+      "sha256": "6165c193fbb6ba3a57e3e2bed2ff52fdae4020202f728974e3ef59841789e7e7"
+    },
+    "experiments/mlir/bridge/analysis-schema.md": {
+      "bytes": 13715,
+      "sha256": "783d7f9a6710c7768ba56f7aadb10d65f984cef5160b851adf66e23643f58e12"
+    },
+    "experiments/mlir/bridge/effects-fixtures/README.md": {
+      "bytes": 3920,
+      "sha256": "d4cb8742bbde619bb13af9bc98f586e8e07e2b900a0cf30549a870a3db9f312f"
+    },
+    "experiments/mlir/bridge/effects-fixtures/alternative.json": {
+      "bytes": 13726,
+      "sha256": "dad6b1568d4290d5332b053231e7270f3d94033d6fba2f4efe538944cb55a575"
+    },
+    "experiments/mlir/bridge/effects-fixtures/alternative.mlir": {
+      "bytes": 4404,
+      "sha256": "d9a939b18439734423a1a13993b63a5e4812ba78612d8c37402742c3810dd57d"
+    },
+    "experiments/mlir/bridge/effects-fixtures/captured-f64.json": {
+      "bytes": 14971,
+      "sha256": "397c0f8089966ad9e58d69dc634fb991c467a2bd97ef9c40be69e0732fad4082"
+    },
+    "experiments/mlir/bridge/effects-fixtures/captured-f64.mlir": {
+      "bytes": 4700,
+      "sha256": "3e94b7e498c15a68f217c411efa7ed77b783e4ae3f69836925bd0cd8da13870d"
+    },
+    "experiments/mlir/bridge/effects-fixtures/check-cljs.py": {
+      "bytes": 2081,
+      "sha256": "7f0ce59130f9441a1e8f428856942cf48e7f47ee0889da7c33bc30da7c35feab"
+    },
+    "experiments/mlir/bridge/effects-fixtures/check-effects.py": {
+      "bytes": 4156,
+      "sha256": "6658d7a80035eb806c68a3811e96547b37e4635d3e097d86222fd1fbc580697d"
+    },
+    "experiments/mlir/bridge/effects-fixtures/check-native.py": {
+      "bytes": 1006,
+      "sha256": "f39b9214e365cd9098ff6ba5308287a40978cfc13faafd78f112714f30f9c55e"
+    },
+    "experiments/mlir/bridge/effects-fixtures/check-oracle.cjs": {
+      "bytes": 3415,
+      "sha256": "00276d66c452a9a6508711da2eca1e70c3fccc9ed3c7635a466ee89c6a652295"
+    },
+    "experiments/mlir/bridge/effects-fixtures/cleanup-overrides-handler.json": {
+      "bytes": 21371,
+      "sha256": "b6f50d39c51c7bdaee2a2774ad020edfa7aae9cca9541c3f18bd5344a0498a19"
+    },
+    "experiments/mlir/bridge/effects-fixtures/cleanup-overrides-handler.mlir": {
+      "bytes": 6146,
+      "sha256": "b9dd1845dcb6afabb389231dcb053753e7244d9554381dcaf0602b061f32cc2f"
+    },
+    "experiments/mlir/bridge/effects-fixtures/cleanup-overrides-success.json": {
+      "bytes": 21122,
+      "sha256": "56074d040fb37b47a1c3aab8a8a804f87daabfdef9493f2a1afbc9878e7d2907"
+    },
+    "experiments/mlir/bridge/effects-fixtures/cleanup-overrides-success.mlir": {
+      "bytes": 6110,
+      "sha256": "0ffccbee6f6134642578d3684d98ab71d4ea9dd7d06c88a30df1ae52be9ad7d3"
+    },
+    "experiments/mlir/bridge/effects-fixtures/cljs-observations.json": {
+      "bytes": 915,
+      "sha256": "9cc337b2711f038a9983ae9d13c25a3b32761c98201d222f51c325462d6246ba"
+    },
+    "experiments/mlir/bridge/effects-fixtures/expected.json": {
+      "bytes": 1010,
+      "sha256": "29ee67ca62a723fafa4edcd691e6abc8f4ed6b29c7a739607117bdaa9b8f1a0c"
+    },
+    "experiments/mlir/bridge/effects-fixtures/generate.py": {
+      "bytes": 2949,
+      "sha256": "3d05cdeb07e72df9ab6f2051a747adf5e43e0a1d9a96d7c3d85a2eb1dbc655f5"
+    },
+    "experiments/mlir/bridge/effects-fixtures/handled-throw.json": {
+      "bytes": 13926,
+      "sha256": "bd19b49b034779692dc782025f3cfc99bdcb49292bf51027a0db66235a18fbf8"
+    },
+    "experiments/mlir/bridge/effects-fixtures/handled-throw.mlir": {
+      "bytes": 4439,
+      "sha256": "516e9c064dbbdc9aa7a4329898c63fb6a806668f8a39216f0d0cb36a8d1b2270"
+    },
+    "experiments/mlir/bridge/effects-fixtures/mlir_effects.cljs": {
+      "bytes": 6313,
+      "sha256": "e07c682f9b3e080a8c3f00b225b83af5ef0e764ce04147de08119c5c038876dc"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/duplicate-cell.mlir": {
+      "bytes": 4405,
+      "sha256": "e99dac98e508719fb42fc2394d4732f90cad8de2d21698572863b3fae990a575"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/dynamic-throw.mlir": {
+      "bytes": 4450,
+      "sha256": "f990eabb56d140ec455ed55040cfac4263c8e9b70e673af4483128847ea3ddd6"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/empty-arm.mlir": {
+      "bytes": 4371,
+      "sha256": "acf9cda4274dd7b6c3378d332c1b2a9fb07a9fbb3d92fdb5819c54438abbc9a6"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/escaping-arm.mlir": {
+      "bytes": 4399,
+      "sha256": "c1972385c9a952d1f23322813fdc98a97ea93896c08d9823391856aa6d60fbbe"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/implicit-capture.mlir": {
+      "bytes": 4402,
+      "sha256": "9af5b20b073a41a67ddc44a2d2b3eab6e85c9367019f2ebc778de0c2348f5561"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/invalid-bits.mlir": {
+      "bytes": 4403,
+      "sha256": "6842bdf37cd600fa105bf00959aa71d1b9dedcf4f65b7932f1b9f1c63c7730ab"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/multi-result.mlir": {
+      "bytes": 4418,
+      "sha256": "10ddf6c90d4c87d990469a4649fd426278ee78d41cb6520a7534e504412edacb"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/source-attr.mlir": {
+      "bytes": 4437,
+      "sha256": "eb704adc1b399c2c1bc5de6b0fa2cf88e42a56f919db29f2b2517674aa4e82ed"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/undeclared-cell.mlir": {
+      "bytes": 4403,
+      "sha256": "9bc15ebc0bb781c5b508fcbf33fb2301ee3125fd84f54fa61b494c3a5be2f81a"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/unknown-module-attr.mlir": {
+      "bytes": 4422,
+      "sha256": "d0fbb565d5b3d39900471a3647527770ad80c272e01c67d4d844d490c19a9706"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/unknown-op-attr.mlir": {
+      "bytes": 4419,
+      "sha256": "ff5fc5f0b322a15b48f1c07445149e43c5203f95dfef2c797ef14d528da9a150"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/unknown-op.mlir": {
+      "bytes": 4405,
+      "sha256": "fb462347a717d0c272c93ae1646f48a6727e6854dc65a3b5062d5f5292d136cb"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/wrong-argument-type.mlir": {
+      "bytes": 4395,
+      "sha256": "597dccbfca9a5e253d16dd7d3742e7233f520e400aacf030c05151c4e5bea711"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/wrong-capture-type.mlir": {
+      "bytes": 4406,
+      "sha256": "5eb29862beaacef3bc86b3ab9f950f50a7600c58bb0b9fb6e0ea37b2116ff72f"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/wrong-condition.mlir": {
+      "bytes": 4414,
+      "sha256": "baae894adb1b67de5b2c0f2ca0fc036c8967777d8d64b53e61033eb5dd842302"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/wrong-return-parent.mlir": {
+      "bytes": 4411,
+      "sha256": "db0f5645ed1112b125457456f542f2df37e309130f23ca2b0c068210145d16e2"
+    },
+    "experiments/mlir/bridge/effects-fixtures/negative/wrong-try-arity.mlir": {
+      "bytes": 4403,
+      "sha256": "1c24e2298d17ad82fcdde432c425b680acdf28b571f57457c307a9f415d9161e"
+    },
+    "experiments/mlir/bridge/effects-fixtures/nested-join.json": {
+      "bytes": 14514,
+      "sha256": "16bed4c702c645c5c02cde57fa48966b68e00514db981132343745c0f767f228"
+    },
+    "experiments/mlir/bridge/effects-fixtures/nested-join.mlir": {
+      "bytes": 4538,
+      "sha256": "e2ea4f2a11a9593a8548697596297c080b32e74f1a59a885877b3434e0d283b9"
+    },
+    "experiments/mlir/bridge/effects-fixtures/run-cljs.py": {
+      "bytes": 2056,
+      "sha256": "814a5de76654a57485b791bce833cf36f97a8ad32d7fdf7a1950dbd054460602"
+    },
+    "experiments/mlir/bridge/effects-fixtures/success.json": {
+      "bytes": 13725,
+      "sha256": "a7b5546e61b56cc0a88cc1f3f6b4eccf34534884c27e187f02933b4f46f46fec"
+    },
+    "experiments/mlir/bridge/effects-fixtures/success.mlir": {
+      "bytes": 4403,
+      "sha256": "4b676efaea80bd3e654c50f4742f5968be3477502c6270883582fe391d363e29"
+    },
+    "experiments/mlir/bridge/effects-schema-proposal.md": {
+      "bytes": 5022,
+      "sha256": "6900f6c1276c78a48d7e294ec13e9c84cd39742aedfad96896b28cb415fa1b1d"
+    },
+    "experiments/mlir/bridge/effects-schema.md": {
+      "bytes": 4151,
+      "sha256": "f8ce227206551087273132a2cb3a32ab216a54790aa5e5f4d9e4c385ddd764ad"
+    },
+    "experiments/mlir/bridge/export-fixtures/README.md": {
+      "bytes": 5086,
+      "sha256": "cd084a63fe81ce6ca81b5cc10b98bb37e6f8688c333ff70a36a7dc8372efeb8f"
+    },
+    "experiments/mlir/bridge/export-fixtures/check-export.py": {
+      "bytes": 2898,
+      "sha256": "eb1826c8bd1a63e339e4a58a6a164b9599de8c469a516146f624b44f003147e6"
+    },
+    "experiments/mlir/bridge/export-fixtures/exported-mutated.json": {
+      "bytes": 1168,
+      "sha256": "5ba306def294e9246e85e0cd6250f049021fb81449716a9b985bc5713237fc52"
+    },
+    "experiments/mlir/bridge/export-fixtures/exported-original.json": {
+      "bytes": 1168,
+      "sha256": "3f5fa0b26b055f03178278487cf565ecd02107f75e8400a553f8aaca431e757c"
+    },
+    "experiments/mlir/bridge/export-fixtures/native-caller.sus": {
+      "bytes": 112,
+      "sha256": "48efbbe3f9500c03e0b4ac16efaee0ba39a4fc5c2f4471b016ea44ea2a874a4e"
+    },
+    "experiments/mlir/bridge/export-fixtures/native-producer.sus": {
+      "bytes": 171,
+      "sha256": "7a58b2c64ee859c67d230e9369ef78abc8f91a90337139b02de9da6f7253a622"
+    },
+    "experiments/mlir/bridge/export-fixtures/negative-numeric-producer.mlir": {
+      "bytes": 410,
+      "sha256": "6d3ec6a59d2b729f3d01b764ba1155552ec0306076df2785015ac0a1069d3980"
+    },
+    "experiments/mlir/bridge/export-fixtures/producer-caller-mutated.mlir": {
+      "bytes": 896,
+      "sha256": "8487c9bc190a6abed3817ac5db07ff8175b79c0b945c09de98f8912e75bfff9c"
+    },
+    "experiments/mlir/bridge/export-fixtures/producer-caller.mlir": {
+      "bytes": 895,
+      "sha256": "9b3124ed3a20b0b85096397be1a00a64b5899d22f8ec5837fd7d659c03ba5a6c"
+    },
+    "experiments/mlir/bridge/sample-mutated.json": {
+      "bytes": 1168,
+      "sha256": "166a525c6e770f1e1f27c2b0e035a05aaa2796eb025419cade28d55e91e1ed31"
+    },
+    "experiments/mlir/bridge/sample.json": {
+      "bytes": 1168,
+      "sha256": "073fd43f7ca1e3c9041e06900a1a446fbb4d2949dc2cd7014012ed287012efc4"
+    },
+    "experiments/mlir/bridge/schema.json": {
+      "bytes": 5069,
+      "sha256": "ebb75cf5c420338a3225762db3bbf35a8718b8909147e6487625c9dc581d5ee0"
+    },
+    "experiments/mlir/bridge/source-fixtures/check-source-export.py": {
+      "bytes": 5473,
+      "sha256": "015ffbdaf4a5e9e4c1eff18b3304c692cc8bcd6beef4998aad365dee13777a77"
+    },
+    "experiments/mlir/bridge/source-fixtures/check-source-oracles.py": {
+      "bytes": 3313,
+      "sha256": "6d4f3b83a536a196d3db712d10d10582db946afd097bb510b77d8a1817b9a5d0"
+    },
+    "experiments/mlir/bridge/source-fixtures/closure.sus": {
+      "bytes": 82,
+      "sha256": "eee6c2dd56f9808d179bff92d6023c0cf2449000153b4f5d54bbcdc5e43f8f5c"
+    },
+    "experiments/mlir/bridge/source-fixtures/source_correspondence.py": {
+      "bytes": 5527,
+      "sha256": "5e36c6147064b47ae1388a2b8ceb0698dc8adcc8f6ad34633cf8ae09a5fa5e97"
+    },
+    "experiments/mlir/bridge/source-schema.md": {
+      "bytes": 5398,
+      "sha256": "b650bd9cfc1725b276061791fe271a874a0389ab11249a364d686921859490be"
+    },
+    "experiments/mlir/bridge/src/abi_probe.rs": {
+      "bytes": 2704,
+      "sha256": "28eec7ae714c21c697c3323311e2f36b87df91a05ceb8c13b508f3e0ba75fcda"
+    },
+    "experiments/mlir/bridge/src/analysis.rs": {
+      "bytes": 35667,
+      "sha256": "d2d86f5da146f33dcfa0043956df4b0b8b65de942870e3621cd64eea43d6f616"
+    },
+    "experiments/mlir/bridge/src/comparison.rs": {
+      "bytes": 6065,
+      "sha256": "f1f255fcc20b79b8f3d82b3b927c1ac3eafebe47de33e3ab799dea44c22af26f"
+    },
+    "experiments/mlir/bridge/src/effects.rs": {
+      "bytes": 33674,
+      "sha256": "98a73767abe975b718987b25f6d701545616e23f34ca4a68ba82caa711523a68"
+    },
+    "experiments/mlir/bridge/src/main.rs": {
+      "bytes": 20822,
+      "sha256": "1b24ae586f1106d3d6e8553cc4e9e144b17444b01a5b58198e2cbc9d5f5b3553"
+    },
+    "experiments/mlir/bridge/src/source_section.rs": {
+      "bytes": 4079,
+      "sha256": "4f22517efc2dec79b93c883d24adde006212b53c4dad2c6f8d8ef73c1be0e4af"
+    },
+    "experiments/mlir/decision.md": {
+      "bytes": 10853,
+      "sha256": "f6a6f7fe89bea6ac0cd851e773d50a9a8a4282fa2ccaaf88aaeddff6b9d28a53"
+    },
+    "experiments/mlir/feature-probes/exception-throw.mlir": {
+      "bytes": 40,
+      "sha256": "820f0a52b9551b5205f6985b8c2b5b798baad1e3f35e2765934be88e277d7e53"
+    },
+    "experiments/mlir/feature-probes/gc-struct-new.mlir": {
+      "bytes": 51,
+      "sha256": "33ec63a3dbf1dd4f72e5d5d86491889506a81ba9be1027715779be1cfefba9cb"
+    },
+    "experiments/mlir/feature-probes/gc-type.mlir": {
+      "bytes": 52,
+      "sha256": "3e4811b105a701a23189a68ae3d4a8ae34419e9d14dcd47f3548e78953ebafa8"
+    },
+    "experiments/mlir/feature-probes/numeric-constant.mlir": {
+      "bytes": 64,
+      "sha256": "7f7ecc96a74e7a8b441c17cccaf959372c45beb55e04945fdf5a4d2a10e3d3e2"
+    },
+    "experiments/mlir/feature-probes/observations.json": {
+      "bytes": 3238,
+      "sha256": "a998be79597a08ff6d6aaab7668f3c7bbdedd2c43c6cab9d4da0edf0704578af"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-field-still-unsupported.mlir": {
+      "bytes": 719,
+      "sha256": "8dcc4aba39ffaadc1d58b68c4a5559c3f0589bc22394e14ec8e0337c5cb71d4c"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-absent-extra.mlir": {
+      "bytes": 1703,
+      "sha256": "8345c967c8995fb323708250e79b85c6327d1ccb757d725dd842659db052115c"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-declaration-extra.mlir": {
+      "bytes": 1771,
+      "sha256": "f1db26d27f55c9ccc75d05a04ba8b71b16d3ddfc18bd02dfda35505dc4a4fb36"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-declaration-name.mlir": {
+      "bytes": 1756,
+      "sha256": "3d5c77e05be62a7734dda0a1a50985d8be05084e64ab084a6e04f034c2fd8ead"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-docstring-unit.mlir": {
+      "bytes": 1750,
+      "sha256": "abcf706b0fa1dfb7aaa86163feb56c6700f79010f56d3dd96f8eb8580d4cf3b7"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-extra.mlir": {
+      "bytes": 1771,
+      "sha256": "41081d368c0228b8546ce25e5d5cd83033d92409694034e14679ae989d6591a7"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-initializer-presence.mlir": {
+      "bytes": 1760,
+      "sha256": "73bf0e30ed160ddd454a54268be7e4155d39ca66feb3f8c00d63e335867b9d61"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-name.mlir": {
+      "bytes": 1756,
+      "sha256": "d3e2ccf4281a04d5339dd3b4d5030aa76b26818da0454c8beb22ce23446586f9"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-on-literal.mlir": {
+      "bytes": 1750,
+      "sha256": "6e9d3c6d26156fa55eb8802df4138067888b56557e4dfc568c0172a41fb280cb"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-on-vector.mlir": {
+      "bytes": 1735,
+      "sha256": "fd5a18528617b7e3fbbfb53046dbc68c85b0deafae48bb36c0f08260728f293c"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-origin-extra.mlir": {
+      "bytes": 1771,
+      "sha256": "7b918e4d71d2212d1e6f2df9032cb4c509aae9f73e7b6432acd4f427a7f581de"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-origin-size.mlir": {
+      "bytes": 1755,
+      "sha256": "e1bb54b10dc4b335295d52d2d500bb06aed50f403e27f48e54dd0a71bfbd3b01"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-path-unit.mlir": {
+      "bytes": 1753,
+      "sha256": "9951874f4f9587dbf717f296e95a2bd58a40a93c9cdcde1ddffe2500350bf3cf"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-phase.mlir": {
+      "bytes": 1754,
+      "sha256": "614c99da7bb03a6ca047fad49f548fc83f6a0b6cc6cd40f5f4bd655873753d79"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-global-type-fields.mlir": {
+      "bytes": 1757,
+      "sha256": "e809e06a24148255d654d3a14fdcd6256ccb9ab70e717151e0a650bda1fa448e"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-invoke-callee-resolution.mlir": {
+      "bytes": 5706,
+      "sha256": "497939e44a54d8dabf26bb4699a452524474d6161a7f4696c761ef6ff3c6ea2b"
+    },
+    "experiments/mlir/fixtures/analysis-global/negative-invoke-head-name.mlir": {
+      "bytes": 6609,
+      "sha256": "9d4573e92154a844220a6b11a241e90acd559a35a03ef11ecb46da7c9686d84f"
+    },
+    "experiments/mlir/fixtures/analysis-global/positive-global-declaration.mlir": {
+      "bytes": 1756,
+      "sha256": "9a42c0357411782e7d218dbd3536251916f0a675846a1df5b5efbdd2e45de16f"
+    },
+    "experiments/mlir/fixtures/analysis-global/positive-global-head.mlir": {
+      "bytes": 1688,
+      "sha256": "ce6af6ede8f2eca91460d7ed62bc1088c2803b7e72ff8717ed5743738b9cef41"
+    },
+    "experiments/mlir/fixtures/analysis-global/positive-local-invoke-head.mlir": {
+      "bytes": 6605,
+      "sha256": "5bce84f130dfdc83f14432ba42bc5b1f9ba9e3437e5fce09754763ec36a795a5"
+    },
+    "experiments/mlir/fixtures/analysis-shapes.py": {
+      "bytes": 11243,
+      "sha256": "e4e3d2a7322ca85acfc8281743adeec2c872252848793bb2394c61e7ba242425"
+    },
+    "experiments/mlir/fixtures/check-analysis-globals.py": {
+      "bytes": 4695,
+      "sha256": "f494dc833e8413b8902a7aa2d8bb2669266711fbc719eb764480728090db02b7"
+    },
+    "experiments/mlir/fixtures/check-analysis.py": {
+      "bytes": 3165,
+      "sha256": "e71384d2179fa1d3180d778810a89f237115d38eb62b834b0be53589df474442"
+    },
+    "experiments/mlir/fixtures/check-native-analysis.py": {
+      "bytes": 2550,
+      "sha256": "c5bc822f7c8c6df290304db46b9a4bd808986112627c38faf1eac9701c36a306"
+    },
+    "experiments/mlir/fixtures/check.py": {
+      "bytes": 2438,
+      "sha256": "0ae97356532c137358f35dde6c86abcf3334dfa84136b1dedf3a92b374375739"
+    },
+    "experiments/mlir/fixtures/negative-analysis-bits.mlir": {
+      "bytes": 208276,
+      "sha256": "a3b903e424441f0c91b525f1415277b4a576ab462da2681f3161d747be292985"
+    },
+    "experiments/mlir/fixtures/negative-analysis-capture-reference.mlir": {
+      "bytes": 7330,
+      "sha256": "05eecefe2392eb38fbc79a6647a1606970b43d9e54aff48ab219f0e687ee9b5f"
+    },
+    "experiments/mlir/fixtures/negative-analysis-child-order.mlir": {
+      "bytes": 208296,
+      "sha256": "c87515713358e187e63fd3037d5119bc87b3e98013a7a0637b906e5b07f92fd6"
+    },
+    "experiments/mlir/fixtures/negative-analysis-child-reference.mlir": {
+      "bytes": 208298,
+      "sha256": "b49d019eadbac28c7a26d90b85cf51e827cb462a5741e7896b3284ce44052022"
+    },
+    "experiments/mlir/fixtures/negative-analysis-closure-arity.mlir": {
+      "bytes": 7329,
+      "sha256": "f3a11df3b16b9d9e994a37d572f871ac739484176475cbcd1b8fc31a67f8e95e"
+    },
+    "experiments/mlir/fixtures/negative-analysis-conflicting-binding.mlir": {
+      "bytes": 7323,
+      "sha256": "e1d48239d77cac9679275262e73bfd84a3ace2e818d64dd61c6463ea98e8a68b"
+    },
+    "experiments/mlir/fixtures/negative-analysis-conflicting-hir-id.mlir": {
+      "bytes": 7316,
+      "sha256": "c2104367f8b95aeffeae6d226a99187cf72d57daa35a676e7c06ef5dbcb62999"
+    },
+    "experiments/mlir/fixtures/negative-analysis-duplicate-declaration.mlir": {
+      "bytes": 209800,
+      "sha256": "17114115a2a58271c8c67a4d377d5214c21ffad488c3e54ce0a94761163e52b3"
+    },
+    "experiments/mlir/fixtures/negative-analysis-duplicate-key.mlir": {
+      "bytes": 827,
+      "sha256": "160be4b2327f76aa7e3068c518fd6b5da3228b6bbd0da424346d6ae21584e1be"
+    },
+    "experiments/mlir/fixtures/negative-analysis-escaped-duplicate-key.mlir": {
+      "bytes": 833,
+      "sha256": "be7c79764b65aab231927c4c8af0788cf854aced843e54b43b725299418b93be"
+    },
+    "experiments/mlir/fixtures/negative-analysis-hidden-unbound-argument.mlir": {
+      "bytes": 6588,
+      "sha256": "fc063b29e16d9b25e30b17ec48c7a1ffb46ec3cca09f4494666d8613057d9391"
+    },
+    "experiments/mlir/fixtures/negative-analysis-json.mlir": {
+      "bytes": 131,
+      "sha256": "b2ef332d6b28c616c991e5f5e768998a241faa4664da8f6cde6c19650218c7c2"
+    },
+    "experiments/mlir/fixtures/negative-analysis-legacy.mlir": {
+      "bytes": 175,
+      "sha256": "c11359cf4f074363059ac7278656113bae862e6ec9c3237579014c2de0c6356f"
+    },
+    "experiments/mlir/fixtures/negative-analysis-local-name.mlir": {
+      "bytes": 7327,
+      "sha256": "ca82e9d43377fa9c2e485c67f75574b7e3e1e8074680435f15355af4f5a7a85f"
+    },
+    "experiments/mlir/fixtures/negative-analysis-method-entry-scope.mlir": {
+      "bytes": 6438,
+      "sha256": "d97e7240af8d4df4626c196d51d87cbf3ea9b2673fb8451dd856f92cccd1b8c3"
+    },
+    "experiments/mlir/fixtures/negative-analysis-missing-field.mlir": {
+      "bytes": 208044,
+      "sha256": "5976eba1e010c7f4c47dad9fce900ad7d7d10d24897452fc5d789c84037b6d4e"
+    },
+    "experiments/mlir/fixtures/negative-analysis-non-f64-const.mlir": {
+      "bytes": 819,
+      "sha256": "55090592dc9cb5462cb16ad1a13f295f4e61217483ba516b707d5f45e90b04df"
+    },
+    "experiments/mlir/fixtures/negative-analysis-optional.mlir": {
+      "bytes": 208300,
+      "sha256": "fe98cbedb4b09a11c3ce0095f67bf69b11774a070055078a7214c52fbbde15d5"
+    },
+    "experiments/mlir/fixtures/negative-analysis-parameter-identity.mlir": {
+      "bytes": 7317,
+      "sha256": "a40c626aaae2ece346f91d46b4666f6d85fa1c446dbfe254a81875890592762b"
+    },
+    "experiments/mlir/fixtures/negative-analysis-resolved-literal.mlir": {
+      "bytes": 2596,
+      "sha256": "ff26bb8d2b03b1b9294e40c77756ce5a0fe188b44a96214de15d057fa51ad430"
+    },
+    "experiments/mlir/fixtures/negative-analysis-resolved-symbol-name.mlir": {
+      "bytes": 7324,
+      "sha256": "e0953b91ff3ed7ec31db9f40ee6388f68ae5a8e984215a61224a58d7b21dbf74"
+    },
+    "experiments/mlir/fixtures/negative-analysis-shadow-scope.mlir": {
+      "bytes": 207423,
+      "sha256": "9b1cf852134f2a0e08bc1449404b64077f586a14f6a15b9b915b7099aaf3b9e4"
+    },
+    "experiments/mlir/fixtures/negative-analysis-source-op.mlir": {
+      "bytes": 208290,
+      "sha256": "53ccc7dafce1de5f3fb133b1accd7e9fa29d4f7edc35b4b7785bd8a317081a67"
+    },
+    "experiments/mlir/fixtures/negative-analysis-span.mlir": {
+      "bytes": 208269,
+      "sha256": "9657a043ecf3dff97195594bab4b909a020b338710c4fd7352eec2130a992e47"
+    },
+    "experiments/mlir/fixtures/negative-analysis-unbound-method-argument.mlir": {
+      "bytes": 6949,
+      "sha256": "eca61794fd6212ec7642c922eb1b9eee54df387399ffcc53f50b2b836d8ec6ee"
+    },
+    "experiments/mlir/fixtures/negative-analysis-unknown-field.mlir": {
+      "bytes": 208297,
+      "sha256": "d41fe847e76015cbf3bbcb53102a18da6319cf6ba34b07128e1c8bac388cc2c4"
+    },
+    "experiments/mlir/fixtures/negative-analysis-unrelated-attachment.mlir": {
+      "bytes": 892,
+      "sha256": "45730f1cbfe9165744e79515d8690b2edd6b3b33da030257c3876ad4887c0294"
+    },
+    "experiments/mlir/fixtures/negative-analysis-utf16.mlir": {
+      "bytes": 208271,
+      "sha256": "900c5de0b3dfc3546de4bdcf5cfc446c435d8b279591a4b8cc7c9302ffd8348a"
+    },
+    "experiments/mlir/fixtures/negative-analysis-version.mlir": {
+      "bytes": 208276,
+      "sha256": "f8403bec9c5c9e353dbe184da758ecbf34dc0abfe9d27f34467840aee826a065"
+    },
+    "experiments/mlir/fixtures/negative-arithmetic-type.mlir": {
+      "bytes": 403,
+      "sha256": "0e9a166edc30eaa76382e92cad5ae49f616945f100deefb5fcd25bf6f679c170"
+    },
+    "experiments/mlir/fixtures/negative-call-arity.mlir": {
+      "bytes": 582,
+      "sha256": "0ece7a3137b6eac52199e9c389a4721f6582a6a69695cd1f65994e7fe93d42af"
+    },
+    "experiments/mlir/fixtures/negative-call-result.mlir": {
+      "bytes": 622,
+      "sha256": "17442a5ac49a09812c71a167c9982305a99c66249ac819bf2dead6ec02d96c2d"
+    },
+    "experiments/mlir/fixtures/negative-call-type.mlir": {
+      "bytes": 476,
+      "sha256": "6917a2095a2946e7149025139d0c77b9069eb31056c54915dc578dfa14fcba88"
+    },
+    "experiments/mlir/fixtures/negative-capture-count.mlir": {
+      "bytes": 594,
+      "sha256": "db38f01b74ef8e052bdc90d71852e5c4720b53f6daffcee2a56bcdfa51d1d546"
+    },
+    "experiments/mlir/fixtures/negative-capture-type.mlir": {
+      "bytes": 649,
+      "sha256": "9f19f59182df8f36996fdf9882e5dfd5cb1dacdda85b475a61273c08b9022476"
+    },
+    "experiments/mlir/fixtures/negative-empty-body.mlir": {
+      "bytes": 124,
+      "sha256": "4013348b210569acea5a41c3105cd1169b8a8609b1c161720c6ebeb1eae6f1d0"
+    },
+    "experiments/mlir/fixtures/negative-entry-shape.mlir": {
+      "bytes": 618,
+      "sha256": "1f2d810ef59f0ffa912d22175d311b0e68fb3852522654d4b024ed6b6dbd600e"
+    },
+    "experiments/mlir/fixtures/negative-implicit-capture.mlir": {
+      "bytes": 579,
+      "sha256": "b47faa76e980d96b1b3f35d7cba3f7bc29d1682b5822a622f81972e884137991"
+    },
+    "experiments/mlir/fixtures/negative-missing-return.mlir": {
+      "bytes": 218,
+      "sha256": "0d9ac8b7232cf3c5bea6568d94c835460b056c6fc59dd7dcb452464283dc1a09"
+    },
+    "experiments/mlir/fixtures/negative-multiple-blocks.mlir": {
+      "bytes": 270,
+      "sha256": "ed20b80b11cf28ef715555f5219b3dc36d5a6e3ff042df2bb29d6a1b581533f2"
+    },
+    "experiments/mlir/fixtures/negative-nested-implicit-capture.mlir": {
+      "bytes": 351,
+      "sha256": "71bb01c716f367f380b417f7bc4fc57f2b28a8913b9c1955035716a0c4d0c6eb"
+    },
+    "experiments/mlir/fixtures/negative-non-callable.mlir": {
+      "bytes": 150,
+      "sha256": "3656d10022ccb26be57c157556d1492f770c700c96f702caec07504a142f68a2"
+    },
+    "experiments/mlir/fixtures/negative-nonclosure-result.mlir": {
+      "bytes": 232,
+      "sha256": "2bdb452e2d5faab43bec971508ef3ebe69b15d3b57f7be5ad007753bcfc95e2a"
+    },
+    "experiments/mlir/fixtures/negative-return-type.mlir": {
+      "bytes": 293,
+      "sha256": "f29e49d55289efa6f145c2e2838ea44e29bda3a84b6dbd75be79ecefbd3cf608"
+    },
+    "experiments/mlir/fixtures/negative-type-multi-argument.mlir": {
+      "bytes": 367,
+      "sha256": "1293cde9d3106943755c5d439c1b76fa47b65879a6c44d87db5b652e059e120c"
+    },
+    "experiments/mlir/fixtures/negative-type-multi-attribute.mlir": {
+      "bytes": 184,
+      "sha256": "f940add377ee43645491e335818cc873ed8965a9748d3921cb3338a2728739b1"
+    },
+    "experiments/mlir/fixtures/negative-type-multi-nested-capture.mlir": {
+      "bytes": 212,
+      "sha256": "16fdd14742e48ed9807373fe7a333dc6f79e96358b402194548e8482bbf1f2ec"
+    },
+    "experiments/mlir/fixtures/negative-type-multi-nested-input.mlir": {
+      "bytes": 212,
+      "sha256": "aad828a44343f9d1b071188d5c2753b5d515a93e501b0c1ad8baaf0de0720e04"
+    },
+    "experiments/mlir/fixtures/negative-type-multi-nested-result.mlir": {
+      "bytes": 209,
+      "sha256": "46f8b870bdc34a0e3a92b03f02ac7f3b736e1683fa5892d278fab197ad174424"
+    },
+    "experiments/mlir/fixtures/negative-type-unsupported-capture.mlir": {
+      "bytes": 186,
+      "sha256": "ebef5b09876a3c561f1786529a9532adffba39f48fc0d3dad7bf443383320c99"
+    },
+    "experiments/mlir/fixtures/negative-type-unsupported-input.mlir": {
+      "bytes": 186,
+      "sha256": "ae96a57045b003ecebbe5db30a54f8c42bdd1d618ef57b99de437831b753024e"
+    },
+    "experiments/mlir/fixtures/negative-type-unsupported-nested.mlir": {
+      "bytes": 211,
+      "sha256": "aacff52de321fcb5920c194b946edc2c103c1a501f825e9268d45424189afd1a"
+    },
+    "experiments/mlir/fixtures/negative-type-unsupported-result.mlir": {
+      "bytes": 183,
+      "sha256": "fbb7e29eafa30f259f884a7f0e82a9829d958b72356d1a6360a36c31950ca910"
+    },
+    "experiments/mlir/fixtures/negative-type-zero-argument.mlir": {
+      "bytes": 335,
+      "sha256": "b8f98cb550a8e86c665c6600337d96644dcde40cb53b53aa6dc6e5893b2583b4"
+    },
+    "experiments/mlir/fixtures/negative-type-zero-attribute.mlir": {
+      "bytes": 176,
+      "sha256": "0601cba186029017b0286332f84ba4e7dfbeeef512dd53c82318dfd794681d7f"
+    },
+    "experiments/mlir/fixtures/negative-type-zero-nested-capture.mlir": {
+      "bytes": 204,
+      "sha256": "ee64fa7d60917875ac379695931724b7c4d0bbaa04708919431d5c856597c75e"
+    },
+    "experiments/mlir/fixtures/negative-type-zero-nested-input.mlir": {
+      "bytes": 204,
+      "sha256": "890d00847e8bfb50600dcefedb3ede8e41fe58646e8e6e1daa56acd7ac90153f"
+    },
+    "experiments/mlir/fixtures/negative-type-zero-nested-result.mlir": {
+      "bytes": 201,
+      "sha256": "c1887553fea6ef2a0145644a4b8f5251f558aeb2d99402ca363cace4020a3f7b"
+    },
+    "experiments/mlir/fixtures/negative-unknown-op.mlir": {
+      "bytes": 81,
+      "sha256": "703592a68021cf148d9f73069f5fae48e158cd4f71b18f2f75e2ea8da0834f35"
+    },
+    "experiments/mlir/fixtures/negative-wrong-return-parent.mlir": {
+      "bytes": 191,
+      "sha256": "22a1c469129b633f00f29473fec63ef04940dfc8c2c788c00c6e233812a702bd"
+    },
+    "experiments/mlir/fixtures/nested-external-value.mlir": {
+      "bytes": 337,
+      "sha256": "034792dd87ae001b67216c07aa0374d5a8887a3250facf05fdc4fe8cf0f3e40a"
+    },
+    "experiments/mlir/fixtures/positive-analysis-source.mlir": {
+      "bytes": 216393,
+      "sha256": "1b07129b083b33ddb250aba0cad2ab5f21b5041feacaadd33e57bfadc7078c2b"
+    },
+    "experiments/mlir/fixtures/positive-nested-higher-order.mlir": {
+      "bytes": 1408,
+      "sha256": "1f8bdddadb524472d6262f8dd13a7639dc9d1c1dbee2597582c6210849b7fbd2"
+    },
+    "experiments/mlir/fixtures/positive-zero-capture.mlir": {
+      "bytes": 311,
+      "sha256": "d3a93cadb6ba55467fbcc3e0182ada2e36de65269ec8878df2141f0329115760"
+    },
+    "experiments/mlir/fixtures/positive.mlir": {
+      "bytes": 558,
+      "sha256": "3e859f9afbbfad26fb54c3346857107a81ced304034afda506b2ca7de55f8332"
+    },
+    "experiments/mlir/reproduce.md": {
+      "bytes": 6749,
+      "sha256": "436907824936faa7868982c4b7727b43e5a88ef3ca9d86c8548cc2f5e7df0dcd"
+    },
+    "experiments/mlir/scripts/capture-evidence.py": {
+      "bytes": 4758,
+      "sha256": "20f779ff88c127eccd6dcb5311b0f681cb818611354002eae39b0762fdc58629"
+    },
+    "experiments/mlir/scripts/measure-export.py": {
+      "bytes": 2219,
+      "sha256": "296ad36de07973ed048c42cb62bd0e707b17e2e3779d7cabda1fce15834557ff"
+    },
+    "experiments/mlir/scripts/measure-implementation.py": {
+      "bytes": 2100,
+      "sha256": "0386edd74efc34fcc449bb9029682be006c0eb31af179ac8fc0bc12f9b1c4cf0"
+    },
+    "experiments/mlir/scripts/measure-pipelines.py": {
+      "bytes": 5740,
+      "sha256": "4ce72c531e6e0180e8dc58451984f10abbe7742e63b88d0dbc784eafb24ce4e5"
+    },
+    "experiments/mlir/scripts/verify-toolchain.py": {
+      "bytes": 2130,
+      "sha256": "8cce9f1b4309072bbcb5df690cc3f75ba520e965a1bdcb806e1fabe41457f412"
+    },
+    "experiments/mlir/src/Analysis.h": {
+      "bytes": 27931,
+      "sha256": "53fe3975c36cf381fd5e4f27e42f970a2a3ba4f95a1e3820e3a60c1940edbbc0"
+    },
+    "experiments/mlir/src/EffectsExport.h": {
+      "bytes": 6969,
+      "sha256": "58ff49d3fb730ee5b88f36af7789ee54a9b3c1c8953722209029943c94ed5100"
+    },
+    "experiments/mlir/src/Export.cpp": {
+      "bytes": 8104,
+      "sha256": "e6e32e62bc410eb3b4a218637437504a4eb97bb060dd8615cfd3f7cc6d1e6218"
+    },
+    "experiments/mlir/src/Export.h": {
+      "bytes": 512,
+      "sha256": "eb52e734fe98f111ad2c6ef0892e04ff60b818d556d574d084a7da59506ff6fb"
+    },
+    "experiments/mlir/src/Suss.cpp": {
+      "bytes": 10648,
+      "sha256": "93379acc44b9142c5bc1d25c95cb92ace8901d7beca377e66c3f59641deae32e"
+    },
+    "experiments/mlir/src/Suss.h": {
+      "bytes": 442,
+      "sha256": "dc9384e795acc6e11a9d8d4cd30d4bafa89312f0a1b451c5e9b74b547074594d"
+    },
+    "experiments/mlir/src/Suss.td": {
+      "bytes": 3713,
+      "sha256": "553f72359242b80a4005e003d720cc88fca0f78a32ab043d3493361be139b1df"
+    },
+    "experiments/mlir/src/export-main.cpp": {
+      "bytes": 2640,
+      "sha256": "fbed0d1e70034b74b720f58b8e2065cf56b6a9815a4e26d1ce6c32e6fa2d861d"
+    },
+    "experiments/mlir/src/main.cpp": {
+      "bytes": 363,
+      "sha256": "7f28c901dbe6655d4a279b0168ac8515ad9519d59d1f94e6eb6e0928d4b81fa3"
+    },
+    "experiments/mlir/toolchain-lock.json": {
+      "bytes": 558,
+      "sha256": "60f3ebff3af762d702e1b548a2ad259d84f456aa812a5de4ff3a3f10b8ce59c5"
+    }
+  },
+  "bootstrap_files": {
+    "runtime/bootstrap/macro.json": {
+      "bytes": 37605,
+      "sha256": "56ee2ccdf220a1bb7715d9ad2adaf6214d73677de572345da990867bb4ee6d94"
+    },
+    "runtime/bootstrap/macro.wasm": {
+      "bytes": 1507172,
+      "sha256": "cbf32092910f7cb80c3d41ba3dfcf30d60979629d6604f2a902e9f4235c5eba4"
+    },
+    "runtime/bootstrap/runtime.json": {
+      "bytes": 38821,
+      "sha256": "fe1778123ab00425275eeeeab8fef25f9eaf407f095eb614b2dc4c0f62feec81"
+    },
+    "runtime/bootstrap/runtime.wasm": {
+      "bytes": 1508378,
+      "sha256": "4c7c6aed5017df0ca07e919a56a1f5342e5b4ee0227ac7ef1964527d119025e2"
+    }
+  },
+  "production_files": {
+    "Cargo.lock": {
+      "bytes": 78381,
+      "sha256": "5865b83c399128d0b6074b7099c32b93d98b2f6d61696788c44f8edde44fbbed"
+    },
+    "Cargo.toml": {
+      "bytes": 1364,
+      "sha256": "43bbdc294307acd14137aa7fad6a71dc73595b4c355ba50fc77a6f4be6182b8f"
+    },
+    "crates/suss-cli/Cargo.toml": {
+      "bytes": 805,
+      "sha256": "68a5e0becafaae094925c73e80b690a4b2b850039317151c4687dc2286c35d09"
+    },
+    "crates/suss-cli/src/args.rs": {
+      "bytes": 14714,
+      "sha256": "d29bec2a5aff0880683318e46c4717409162c060b41554158f0e721e6fe9b1a7"
+    },
+    "crates/suss-cli/src/bin/suss-bootstrap.rs": {
+      "bytes": 885,
+      "sha256": "c1537cb796ea35864df233b2c087e41c9ad73f3517a1cbb36559786db4277b38"
+    },
+    "crates/suss-cli/src/lib.rs": {
+      "bytes": 340,
+      "sha256": "3bbc6ac82eba798911fa8c0548aaade6d2fb23fd1d0b121d3071b98b112599db"
+    },
+    "crates/suss-cli/src/main.rs": {
+      "bytes": 31813,
+      "sha256": "3dbe0b0b38705d17c998e57866e08b4eb36ebb7f9c6e2ab780a8f45112d5447d"
+    },
+    "crates/suss-cli/src/native_repl_host.rs": {
+      "bytes": 67675,
+      "sha256": "74754cb8ace6eeceaca042841ab657f66db65f9622ac67b8f1bf6d58c12e098c"
+    },
+    "crates/suss-cli/src/session_event_loop.rs": {
+      "bytes": 27145,
+      "sha256": "4d4b44d883064efdea8254afb67b2232a7f18bc00c9faba08968a97c3eed6261"
+    },
+    "crates/suss-cli/src/terminal_input.rs": {
+      "bytes": 17226,
+      "sha256": "9c703d403d74174816988a7e81fdd3bf35a8fbe891c46b12b1c5d7c9170e22c4"
+    },
+    "crates/suss-compile/Cargo.toml": {
+      "bytes": 1084,
+      "sha256": "0a4a32ead3219c8c006f8fe5b10d1e61dbd7c16fac333fa067ed39a67c254335"
+    },
+    "crates/suss-compile/src/config.rs": {
+      "bytes": 11791,
+      "sha256": "ecece11cfbab17037589ab7ec8993d8dc59cd6442d2d866c32b0e78116e50618"
+    },
+    "crates/suss-compile/src/error.rs": {
+      "bytes": 1747,
+      "sha256": "f1ff0a51ee81de52204aa24260629f73fea1777d32d733fd938c524ed4a9cec9"
+    },
+    "crates/suss-compile/src/lib.rs": {
+      "bytes": 27409,
+      "sha256": "0f790d459d7c87aedeb0f8cf351b21ad3959973f04be6ec274cc5eaafc281568"
+    },
+    "crates/suss-compile/src/portable/aot/exact.rs": {
+      "bytes": 2354,
+      "sha256": "491b8e5450e41725ea432825aac0a737fa8dd3984558be4d353b28a87c2ad335"
+    },
+    "crates/suss-compile/src/portable/aot/exact_schema.rs": {
+      "bytes": 1240,
+      "sha256": "b80b4474e4998c337cd3a8708e9c96e3a414ac62d77e702761108928e75b7287"
+    },
+    "crates/suss-compile/src/portable/aot/list_schema.rs": {
+      "bytes": 7911,
+      "sha256": "a24a5a75625b28b4d082249191a116b5547d8a5ac231afeeb2e0aa5897f5adc4"
+    },
+    "crates/suss-compile/src/portable/aot/lists.rs": {
+      "bytes": 10893,
+      "sha256": "dbd1c4566826bd1170bc4625c68753dd35a8cc97efcce102c507779f99b80eb4"
+    },
+    "crates/suss-compile/src/portable/aot/strings.rs": {
+      "bytes": 6313,
+      "sha256": "5c3a01e1d17cce39fcf44fc7c3c32baa3a0e12d78bdf57dd9a6472a7a3101532"
+    },
+    "crates/suss-compile/src/portable/aot.rs": {
+      "bytes": 76764,
+      "sha256": "788d2d2b561b2dda594c81779c541afb1657d3965d57fa8798aac1540e9085ae"
+    },
+    "crates/suss-compile/src/portable/artifact_cache.rs": {
+      "bytes": 12500,
+      "sha256": "4d28142bfc48d6586088836b99f66082e256a0c84a1647c3aff692ed2ddeaa4f"
+    },
+    "crates/suss-compile/src/portable/artifact_identity.rs": {
+      "bytes": 16507,
+      "sha256": "1a45fdbc861caca42ef7d755185969773032a663fd131d5dab26003fc1792084"
+    },
+    "crates/suss-compile/src/portable/bootstrap.rs": {
+      "bytes": 6274,
+      "sha256": "60f953b84912b100eadc15097aca5863fc5c378d97c5f306c1289c2d7f9f8515"
+    },
+    "crates/suss-compile/src/portable/command/adapter.rs": {
+      "bytes": 12109,
+      "sha256": "755f6cdb6b6b6e45823a7e77be6ddaa5aa555f5c5518de2630b6a275bed0c043"
+    },
+    "crates/suss-compile/src/portable/command/assembly.rs": {
+      "bytes": 10953,
+      "sha256": "fb1dc8ff35c3f650b1bb23652e69755c9626c88c30e13d1b00f6b4016d01f73a"
+    },
+    "crates/suss-compile/src/portable/command/async_bridge.rs": {
+      "bytes": 34663,
+      "sha256": "4c349606b99985a8faab9f9b635d668c3a9986f33660c629edb077e35633298f"
+    },
+    "crates/suss-compile/src/portable/command/async_component.rs": {
+      "bytes": 30850,
+      "sha256": "0d1a64f27ad1df6113675a5d4a0336cdf4430a6224e5d7da1f28b533b9a90112"
+    },
+    "crates/suss-compile/src/portable/command/async_component_entry_tests.rs": {
+      "bytes": 11013,
+      "sha256": "35bfcac7fd51b6b8e6dc379f388dffeafa7e6b251462001c0f41f6b305d72c75"
+    },
+    "crates/suss-compile/src/portable/command/exit.rs": {
+      "bytes": 5305,
+      "sha256": "155b381cada8e7995af33a954fb49f96c138e289af6eaca45e896b4f112eb9ad"
+    },
+    "crates/suss-compile/src/portable/command/memory.rs": {
+      "bytes": 15410,
+      "sha256": "0342c555bc595f247099801bb46fc04cd5d1edf5ab3b021a94e62ba678f73cc6"
+    },
+    "crates/suss-compile/src/portable/command/shape.rs": {
+      "bytes": 4890,
+      "sha256": "c95f88d5815c826ec479b688695efeb88985b71ba1a08dfdcd7ca07431100fae"
+    },
+    "crates/suss-compile/src/portable/command.rs": {
+      "bytes": 3270,
+      "sha256": "3926404e0a14296ace10454040f4816125b65352d0e94dd68718c57d28a0ca42"
+    },
+    "crates/suss-compile/src/portable/core_bindings.rs": {
+      "bytes": 6855,
+      "sha256": "182d92ffa7cb54b1380e3ecd03a76e48d6cbbc9b64948e01edf20d216c5d4d8b"
+    },
+    "crates/suss-compile/src/portable/emit/async.rs": {
+      "bytes": 16256,
+      "sha256": "e15213ac421df482ee2a71d87fbe0fc570fcdabe269953d89578453c5c88a4aa"
+    },
+    "crates/suss-compile/src/portable/emit.rs": {
+      "bytes": 65162,
+      "sha256": "77c0b412aec8547489e643c6692445dced0ec9562af1a89383d0c5b80be8328c"
+    },
+    "crates/suss-compile/src/portable/function_names.rs": {
+      "bytes": 4894,
+      "sha256": "eba0987d51f89c4736b8bedf256906a130c59bee132a2b771e807a5278851978"
+    },
+    "crates/suss-compile/src/portable/hir/arrays.rs": {
+      "bytes": 5045,
+      "sha256": "994f1b2296368ca237126812cf5a7a3e95b974c357fe20df1c11f85c0dc1d1b5"
+    },
+    "crates/suss-compile/src/portable/hir/bitwise.rs": {
+      "bytes": 1511,
+      "sha256": "c7244c69dbf1bc7ec16af8a2ee96b92168f143196486d1f3bdc0a7c7588d8ab0"
+    },
+    "crates/suss-compile/src/portable/hir/callable_signatures.rs": {
+      "bytes": 7237,
+      "sha256": "6167333b09f94c8901ce1e23bf38bb0730ae297e5d9bdfde53e9441cf5c1433d"
+    },
+    "crates/suss-compile/src/portable/hir/cases.rs": {
+      "bytes": 6238,
+      "sha256": "5aaa2f2b9173da50cf811a56f3f9fe7d3849f9666b4db88c27ed05e78c1266d1"
+    },
+    "crates/suss-compile/src/portable/hir/collections.rs": {
+      "bytes": 10114,
+      "sha256": "3cad0d40b52481902a99a0eced28bedf8999e8141dd81ba91603acbfa5c0de09"
+    },
+    "crates/suss-compile/src/portable/hir/comparisons.rs": {
+      "bytes": 1858,
+      "sha256": "458627588c1511ea958d5e49c1a1de53e597f3e44b44e8e075305d339421544a"
+    },
+    "crates/suss-compile/src/portable/hir/controls.rs": {
+      "bytes": 22239,
+      "sha256": "4e9e976148a26584e6c4f1431aa101d418a75f86663bd54f9cade6285ec8f147"
+    },
+    "crates/suss-compile/src/portable/hir/dynamic.rs": {
+      "bytes": 2663,
+      "sha256": "2c5116276c7d7544df054c14436d130ff18347277fdbacff9b265c3a6e9c1f0c"
+    },
+    "crates/suss-compile/src/portable/hir/exceptions.rs": {
+      "bytes": 10098,
+      "sha256": "9ffb6ced3080e4b9457f3b1a64b1619b800b880386ed5728d0dfeecd91d7c700"
+    },
+    "crates/suss-compile/src/portable/hir/function_parameters.rs": {
+      "bytes": 6069,
+      "sha256": "fae01e601aba300fb9dcb0f94cc444d00552e0cfd375df84e3553df0ce9834ce"
+    },
+    "crates/suss-compile/src/portable/hir/local_bindings.rs": {
+      "bytes": 11202,
+      "sha256": "8fb7657a87c1149637047f05bbae4afdf428705961e903ee350c31dffd31a30a"
+    },
+    "crates/suss-compile/src/portable/hir/nominal.rs": {
+      "bytes": 53662,
+      "sha256": "a1f43bde4c5060b499fee9f2e5163256d31c353408ebdf3436c418f62b7d654d"
+    },
+    "crates/suss-compile/src/portable/hir/quotes.rs": {
+      "bytes": 21488,
+      "sha256": "7972bc87ac915cefbd42db6a14444831f66938233936bad9b3b66ff59824cecc"
+    },
+    "crates/suss-compile/src/portable/hir/source_tags.rs": {
+      "bytes": 23672,
+      "sha256": "09b0223198862988d30f3e610a5696b7a879cdda3a638a57bc1dfbd0c78b49ae"
+    },
+    "crates/suss-compile/src/portable/hir.rs": {
+      "bytes": 102355,
+      "sha256": "2ba6bb2e909fc9b6316cead080996488c483de515ebcce6cb0e32b7a9929be66"
+    },
+    "crates/suss-compile/src/portable/ir/async.rs": {
+      "bytes": 23436,
+      "sha256": "a4f3b45a6935ac82e8b6ee3ed68a553c4215bd7d6452b3b11ee196d0ce06bc5b"
+    },
+    "crates/suss-compile/src/portable/ir/liveness.rs": {
+      "bytes": 5097,
+      "sha256": "72b2f4f589e38b43ee654c0fa346c7d1bf9184caf5ad52ac3d6cc7ccab466ec7"
+    },
+    "crates/suss-compile/src/portable/ir.rs": {
+      "bytes": 58183,
+      "sha256": "2051271fa9435131737ccf80a65d6aa973df336aef7f5f7f596e8fe7fc556591"
+    },
+    "crates/suss-compile/src/portable/mod.rs": {
+      "bytes": 10804,
+      "sha256": "cedc349e63c131feacc0fdce502c639271cd6c128f7ef018bc0892cfbc994b6a"
+    },
+    "crates/suss-compile/src/portable/modules.rs": {
+      "bytes": 17648,
+      "sha256": "a364e447cf1878248e2715f52a1558fa4d8bc6c9da430825d0a2435b71bfd85f"
+    },
+    "crates/suss-compile/src/portable/origin/form_metadata.rs": {
+      "bytes": 19948,
+      "sha256": "8078c2ffd2e16f2644bdaf5234b04f32ac2e8b2b4b14ac13d383940d7aff7626"
+    },
+    "crates/suss-compile/src/portable/origin.rs": {
+      "bytes": 3290,
+      "sha256": "5f806a6b4e479fb392c61c11decd68f0a8c3f3a879382cd303e522db1f3a2ff7"
+    },
+    "crates/suss-compile/src/portable/resolve.rs": {
+      "bytes": 56148,
+      "sha256": "9d25b613b8c26a07ff65573d4177e50ae2ec00bf3e52e0ea780bef80b5270088"
+    },
+    "crates/suss-compile/src/portable/source.rs": {
+      "bytes": 17615,
+      "sha256": "f25503420cebb7eaaa37f466ecfb9452534682cc6a3c63ade96a39a7c2ba794e"
+    },
+    "crates/suss-compile/src/portable/stdlib/async-macros.sus": {
+      "bytes": 364,
+      "sha256": "716d811657dea2c0592aed44511b09e3ce85227e499bd3f0a20af26aa78000c0"
+    },
+    "crates/suss-compile/src/portable/stdlib/async.sus": {
+      "bytes": 3897,
+      "sha256": "b63b4a702ce6b83ef53ba18340a237872020d04c6f09106e08ab53d5eb127e9e"
+    },
+    "crates/suss-compile/src/portable/stdlib.rs": {
+      "bytes": 577,
+      "sha256": "93ec7d296904b688c23cceffe15c22c97df16d7ba0d03420294f212ebd27cb40"
+    },
+    "crates/suss-compile/src/portable/syntax_quote/core_names.rs": {
+      "bytes": 19881,
+      "sha256": "b8689c908c5ffb765a12e1f518ae79159ab1b32f284ae3b393b018550f16b4a7"
+    },
+    "crates/suss-compile/src/portable/syntax_quote/tests.rs": {
+      "bytes": 15404,
+      "sha256": "d5c742cbf72ac1b832a57cd7bef53993199d220bcec8e0e7dd9726d4d8fa8436"
+    },
+    "crates/suss-compile/src/portable/syntax_quote.rs": {
+      "bytes": 21894,
+      "sha256": "05ed052fd278309686f19ecc8d0c36a71d871ba5e5c95347c4edc1ade95ecfc7"
+    },
+    "crates/suss-compile/src/portable_aot.rs": {
+      "bytes": 19116,
+      "sha256": "3369cbb24bf75ed7f5de9c34c3270cbded1f2b24703026e5edd5d9cb3f5bdfaf"
+    },
+    "crates/suss-compile/src/portable_defn.rs": {
+      "bytes": 2466,
+      "sha256": "1a63de269b3fa0a99899de633629cfe333483cdc80f76c19907eed78c83c23b0"
+    },
+    "crates/suss-compile/src/portable_expression.rs": {
+      "bytes": 4437,
+      "sha256": "a84bf414e7c4a5a8b73e79e493294d65199f89c841b898d7b975b644459b239e"
+    },
+    "crates/suss-compile/src/portable_macro_data.rs": {
+      "bytes": 82939,
+      "sha256": "55d7032fd525e0524c57a7d9123c9647a6fc1c2cdef060db40f38d6f9b632670"
+    },
+    "crates/suss-compile/src/portable_macro_graph.rs": {
+      "bytes": 115298,
+      "sha256": "d62d53e6611b599b188729a1d8e5242424028620f8f62fdc04b41efa3f9e00d0"
+    },
+    "crates/suss-compile/src/portable_macros.rs": {
+      "bytes": 23698,
+      "sha256": "88434fbc6a945fe91b35d0b77639c3178851b78cf64c62e7cfb903d898754f4d"
+    },
+    "crates/suss-compile/src/portable_module_cache.rs": {
+      "bytes": 5291,
+      "sha256": "b5b6f18feac122c2dacbb0d450cac3d45b8fb2cf3ace4a514e9709512ccc7c69"
+    },
+    "crates/suss-compile/src/portable_project.rs": {
+      "bytes": 8652,
+      "sha256": "39079932db010f024b9df59dadf427b72dce19028635002493eb6cac0451c223"
+    },
+    "crates/suss-compile/src/portable_repl.rs": {
+      "bytes": 19733,
+      "sha256": "4e5b1869138397f4cd36971905b14cf40c4dafcf32b8b5837b1126b7125f9c5b"
+    },
+    "crates/suss-compile/src/portable_session/frontend.rs": {
+      "bytes": 29954,
+      "sha256": "bd033e8297fc7bf1af0e9c231617430e3fd36e580f9ad2870c3254ef08c052b2"
+    },
+    "crates/suss-compile/src/portable_session/native_async.rs": {
+      "bytes": 23197,
+      "sha256": "d24ac97feeea29f6c337f1cd07e0170b4734e273f931106d382762de35b53aa8"
+    },
+    "crates/suss-compile/src/portable_session.rs": {
+      "bytes": 98394,
+      "sha256": "12339940571a790a034125c0807d4c9d06e469dc386921fcb905ad03a6b1a953"
+    },
+    "crates/suss-compile/src/runtime_abi/arithmetic.rs": {
+      "bytes": 3784,
+      "sha256": "f80b36704d55a3529c5aa6a05cd3dfaa770849ee87de7c37422b6d3523213935"
+    },
+    "crates/suss-compile/src/runtime_abi/array_methods.rs": {
+      "bytes": 4553,
+      "sha256": "d51937082e2fc932b9c55935030615a8beed531f5e989cebbd2b2e6895a7f615"
+    },
+    "crates/suss-compile/src/runtime_abi/array_pop.rs": {
+      "bytes": 2800,
+      "sha256": "64d78a56aed744b8dee1423ae05c100b188b2ea45c85959b030e3c89c1fc1a50"
+    },
+    "crates/suss-compile/src/runtime_abi/array_push.rs": {
+      "bytes": 3381,
+      "sha256": "099312f727dffe611cf43a23e141573df39e362125dcc47c8ed51e5406cedd9d"
+    },
+    "crates/suss-compile/src/runtime_abi/arrays.rs": {
+      "bytes": 19014,
+      "sha256": "b5be88f13c2057c198f7d0ca2b98641320ea33ac00d135a24764ec42defa2860"
+    },
+    "crates/suss-compile/src/runtime_abi/async.rs": {
+      "bytes": 87267,
+      "sha256": "0dd9cef4aafea49a04fc2d6492eafc873011ab9b682468319df49228700fd808"
+    },
+    "crates/suss-compile/src/runtime_abi/async_library.rs": {
+      "bytes": 4371,
+      "sha256": "d82174666aeaa32fe5d0b41af405c7cbc0c63d3130dca71ea7592d90b375bab0"
+    },
+    "crates/suss-compile/src/runtime_abi/bitwise.rs": {
+      "bytes": 7196,
+      "sha256": "c3ff8eaec85c031d77d2013118bc98118d4d8827f184314066be1dc6bd325126"
+    },
+    "crates/suss-compile/src/runtime_abi/callable_properties.rs": {
+      "bytes": 8324,
+      "sha256": "35abd2333e977b5b8a3e2e55c1d287e5553865e8ed14f329b9b4dc42950534d5"
+    },
+    "crates/suss-compile/src/runtime_abi/closure_calls.rs": {
+      "bytes": 4467,
+      "sha256": "fdac0c5992180e3dd75d1eac059142c4e342bcf524bd7927d95c2e0cbc8ecfd4"
+    },
+    "crates/suss-compile/src/runtime_abi/closure_properties.rs": {
+      "bytes": 8172,
+      "sha256": "6306d8ee4434d1f36356f78feb4700659f26d4ec4df9f649b998f88c813e02d2"
+    },
+    "crates/suss-compile/src/runtime_abi/comparisons.rs": {
+      "bytes": 5637,
+      "sha256": "cf00eccdfd5d4dc9e0c68e88cffffb671055e97648e38e69c47fda51695a3767"
+    },
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": {
+      "bytes": 15553,
+      "sha256": "918b2de61fd5577674f7becb23b741e4cd362b81d3141aabb56f1961838eb6d0"
+    },
+    "crates/suss-compile/src/runtime_abi/exception_info.rs": {
+      "bytes": 9520,
+      "sha256": "c2c7b82972b174e0e9ce9ae88bfb8169d0e02c85076b9718fd8e2d5d7093dee8"
+    },
+    "crates/suss-compile/src/runtime_abi/exceptions.rs": {
+      "bytes": 1955,
+      "sha256": "1c3c2750f9fd5d788243c3c340e757472e95bd0202548d458d37dd3d439b6ee6"
+    },
+    "crates/suss-compile/src/runtime_abi/identity_hash.rs": {
+      "bytes": 2668,
+      "sha256": "d73dcfb8e64693e2b12440229738cb80e2f6846225cc5e8e46d31f744f224a22"
+    },
+    "crates/suss-compile/src/runtime_abi/named_properties.rs": {
+      "bytes": 20305,
+      "sha256": "55507a2ebb2f347d8153c8e166d8c5d8f34a79f1dcfe08c8ffa84203e26dfa43"
+    },
+    "crates/suss-compile/src/runtime_abi/native_object_factory.rs": {
+      "bytes": 4161,
+      "sha256": "68a9b29d505489202f3039470ee10c7db956e4d48fc73c875caac1f4d8c97a8e"
+    },
+    "crates/suss-compile/src/runtime_abi/native_object_methods.rs": {
+      "bytes": 15864,
+      "sha256": "b60b5ca7d9a946e84510d2bf97e378d7c37bbc0580558720f026cbe0a99b95bb"
+    },
+    "crates/suss-compile/src/runtime_abi/native_object_properties.rs": {
+      "bytes": 14119,
+      "sha256": "ba56676366675951d72c32196c4e7cce4905219f19d4a2b6b810f225507bf434"
+    },
+    "crates/suss-compile/src/runtime_abi/native_objects.rs": {
+      "bytes": 15242,
+      "sha256": "01b93378b324b78ff7caaa0f4f804a1847485842f5a705ed07210eb97818d4ca"
+    },
+    "crates/suss-compile/src/runtime_abi/native_protocols.rs": {
+      "bytes": 16042,
+      "sha256": "5d5b03640c2ee76b5c2187472e44d51cccd1923a0a989737e43783fa3e5d614b"
+    },
+    "crates/suss-compile/src/runtime_abi/nominal.rs": {
+      "bytes": 18427,
+      "sha256": "b4b64207b1338239983c2fcae07dc262d1d354744afd3d2cfd73c27a6d61cd7a"
+    },
+    "crates/suss-compile/src/runtime_abi/numeric.rs": {
+      "bytes": 18604,
+      "sha256": "c21cc4aeec14d0fb323c600f4a5db1bff9c69a93d061ec2a4832538bb5c45d76"
+    },
+    "crates/suss-compile/src/runtime_abi/numeric_hash.rs": {
+      "bytes": 8709,
+      "sha256": "f1470829c45da543ed44cbc9d5dea26226da181d748f3a63a783fdcecc36a433"
+    },
+    "crates/suss-compile/src/runtime_abi/object_methods.rs": {
+      "bytes": 7579,
+      "sha256": "7a3a8c2a56d4ca741787d42315910a4d22c58c4723e6a601713c8facfd437d9a"
+    },
+    "crates/suss-compile/src/runtime_abi/predicates.rs": {
+      "bytes": 5121,
+      "sha256": "d63cbca8bc5aeb7024ed6b3f56aa5e19d4853c781b3900c6364b10e8f5aaec52"
+    },
+    "crates/suss-compile/src/runtime_abi/streams.rs": {
+      "bytes": 40800,
+      "sha256": "56d1c003823f8efc07635ebbf8854513abd12326b193dda6a5482a27fc06dab4"
+    },
+    "crates/suss-compile/src/runtime_abi/string_methods.rs": {
+      "bytes": 8021,
+      "sha256": "215539d4eac28c78442f3527e66f78fb716c653bc83667059483c500bfe1131a"
+    },
+    "crates/suss-compile/src/runtime_abi.rs": {
+      "bytes": 31359,
+      "sha256": "acd25af1641f7cc806d614a58b07625372c48abceca125ff05258d57dca57a59"
+    },
+    "crates/suss-compile/src/worlds.rs": {
+      "bytes": 3569,
+      "sha256": "4233efd96055de4cb0e6967f99edd3e1dda9da3d508fd99fac1a82db72e496c4"
+    },
+    "crates/suss-core/Cargo.toml": {
+      "bytes": 394,
+      "sha256": "5c7f06621857508894ff7f1ad915ff7baa7be7877b025545827345210b3f878b"
+    },
+    "crates/suss-core/src/edn.rs": {
+      "bytes": 11282,
+      "sha256": "59f8b117e05561635aef015418ec449b1074c01c5126f315e47e2bf8595a9a87"
+    },
+    "crates/suss-core/src/env.rs": {
+      "bytes": 2057,
+      "sha256": "5aa90585d10bfb75d256e86f0b5d6cb306aabebac5238626ca280f9c3b2b410a"
+    },
+    "crates/suss-core/src/lib.rs": {
+      "bytes": 402,
+      "sha256": "cfeaf7cbca223096b7dc5e1f9d19cfbef857948288901e606976612dc38d1f12"
+    },
+    "crates/suss-core/src/number.rs": {
+      "bytes": 6720,
+      "sha256": "ca00b9302a54531f9ca9b4148981d9de43f1d863553bd323969760d6484c788c"
+    },
+    "crates/suss-reader/Cargo.toml": {
+      "bytes": 519,
+      "sha256": "730a613f627f884e44175a2d8faff83a5df8e91ee1de0bcf78b007d1a19d940f"
+    },
+    "crates/suss-reader/src/component.rs": {
+      "bytes": 7027,
+      "sha256": "e6e79cf30b883538f0bbaccf418ac585ea715a2fa751e2aaac3a678b707ca2f2"
+    },
+    "crates/suss-reader/src/forms/source_metadata.rs": {
+      "bytes": 7162,
+      "sha256": "8ab132454d91c4823c72c72045b5589e757e2a8dd90165e57b3e36547004cc23"
+    },
+    "crates/suss-reader/src/forms.rs": {
+      "bytes": 27755,
+      "sha256": "a3351ff6ccc959eae2575120600fd92e4520b75b5d32e8a2950c9403f78b2a66"
+    },
+    "crates/suss-reader/src/lib.rs": {
+      "bytes": 601,
+      "sha256": "276bd0356293ca7be357daaa2e492cdb3c2ab49ef2c001a63c8f95c469d4b374"
+    },
+    "crates/suss-reader/src/parser.rs": {
+      "bytes": 19786,
+      "sha256": "d76eda97d10939dfd915d70a164d21e1a4f2a91700eb22569135683c50626a5c"
+    }
+  },
+  "root_lock": {
+    "bytes": 78381,
+    "sha256": "5865b83c399128d0b6074b7099c32b93d98b2f6d61696788c44f8edde44fbbed"
+  },
+  "binaries": {
+    "bridge": {
+      "path": "/private/tmp/suss-m4-mlir-toolchain/rust-target-post226/debug/suss-mlir-bridge-draft",
+      "bytes": 77643536,
+      "sha256": "c8377b779d021376d905be6caea70725a1f37681d0ca105d6a5f85f6ea5130c3"
+    },
+    "native_cli": {
+      "path": "/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/suss",
+      "bytes": 141531744,
+      "sha256": "0d44c27517545c0ca15c4dd688506b8d02f247a6afd39acd62af3f5687481a76"
+    },
+    "exporter": {
+      "path": "/private/tmp/suss-m4-mlir-toolchain/build-post226/suss-mlir-export",
+      "bytes": 5002288,
+      "sha256": "adc5515abca4a24bb68687815bc457cb3134cefb474696b35c6173aed9fd3d0c"
+    },
+    "opt": {
+      "path": "/private/tmp/suss-m4-mlir-toolchain/build-post226/suss-mlir-opt",
+      "bytes": 5710416,
+      "sha256": "c8f2a0849d46877e2df4dd98facef21a459c77b3a0e19e689e9cd366b2d6be20"
+    }
+  },
+  "tool_versions": {
+    "llvm": "LLVM (http://llvm.org/):\n  LLVM version 23.1.3\n  Optimized build.",
+    "clang": "clang version 23.1.3 (https://github.com/llvm/llvm-project 0d261d1ca552c95a8f007e061c787ac7132fbcbc)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "cargo": "cargo 1.99.0 (5f94df478 2026-08-27)",
+    "node": "v24.5.0",
+    "python": "3.9.6",
+    "platform": "macOS-26.5.2-arm64-arm-64bit"
+  },
+  "intended_build_profiles": {
+    "cpp": {
+      "generator": "Unix Makefiles",
+      "build_type": "",
+      "workers": 1,
+      "compiler": "pinned Clang23",
+      "linker": "pinned ld64.lld"
+    },
+    "rust_dev": {
+      "debug": 0,
+      "incremental": false
+    },
+    "rust_test": {
+      "debug": 0,
+      "incremental": false,
+      "dependency_opt_level": 2,
+      "dependency_debug_assertions": true,
+      "dependency_overflow_checks": true
+    },
+    "root_test_command": "cargo test --workspace --locked -- --test-threads=2"
+  },
+  "upstream_definitions": {
+    "WasmSSAOps.td": {
+      "bytes": 40386,
+      "sha256": "1bd8231c54894ec79c2604ccb6cdecaae3a1e6d0461e2e835f27b109872195af"
+    },
+    "WasmSSATypes.td": {
+      "bytes": 2967,
+      "sha256": "ac0ab15852ebcbdaaecfc796b492a34d93e7c7f403a39c9881ee3ce80432d796"
+    }
+  },
+  "profile_limits": "Rust profiles are declared from tracked Cargo.toml, not an audit of externally managed compiler flags; effective CMake values separately recorded",
+  "effective_cmake_cache": {
+    "CMAKE_BUILD_TYPE": "",
+    "CMAKE_CXX_COMPILER": "/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_C_COMPILER": "/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/clang",
+    "CMAKE_EXE_LINKER_FLAGS": "-fuse-ld=/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/bin/ld64.lld",
+    "CMAKE_OSX_SYSROOT": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+    "LLVM_DIR": "/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/lib/cmake/llvm",
+    "MLIR_DIR": "/private/tmp/suss-m4-mlir-toolchain/LLVM-23.1.3-macOS-ARM64/lib/cmake/mlir",
+    "CMAKE_GENERATOR": "Unix Makefiles"
+  },
+  "test_status": "not inferred here; explicit command/status records and retained terminal logs required",
+  "ci_scope": "root CI does not execute isolated Rust workspace or LLVM/C++ gates"
+}

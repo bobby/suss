@@ -1,0 +1,12 @@
+{
+  "head": "b82ad94cf7545a4f80315af3a6f677e57fc4bd13",
+  "session": 34020,
+  "exit_code": 0,
+  "command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test --workspace --locked -- --test-threads=2",
+  "result_blocks": 207,
+  "passed": 1550,
+  "failed": 0,
+  "ignored": 41,
+  "log": "/private/tmp/suss-m4-mlir-post228-full-baseline-b82ad94.log",
+  "sha256": "dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377"
+}

@@ -1,0 +1,100 @@
+{
+  "schema": "suss.mlir.postmerge-audit.v1",
+  "executed_head": "b82ad94cf7545a4f80315af3a6f677e57fc4bd13",
+  "merged_main": "f4b13f306ad354c6cbe5bc0c49cc44975249396d",
+  "snapshot_match_before_documentation_update": {
+    "experiment_files": {
+      "count": 184,
+      "mismatches": []
+    },
+    "production_files": {
+      "count": 120,
+      "mismatches": []
+    },
+    "bootstrap_files": {
+      "count": 4,
+      "mismatches": []
+    }
+  },
+  "scope": "Evidence packaging and decision update only; no new execution is inferred from copying receipts. These historical gates do not certify later prerequisite compiler changes.",
+  "gates": {
+    "nine_execution_gates": "completed_exit_0",
+    "baseline": {
+      "result_blocks": 207,
+      "passed": 1550,
+      "failed": 0,
+      "ignored": 41,
+      "sha256": "dd242b49ddbc048a8ed476a150e8175fd5f023f3526827e7f17cf7cca6b94377"
+    },
+    "final_head_ci": {
+      "checks": 10,
+      "all": "SUCCESS",
+      "run": "https://github.com/bobby/suss/actions/runs/37875362660"
+    },
+    "ci_capture_note": "Raw CI capture local_baseline field predates completion; baseline-receipt.json and verified baseline.log supersede that pending field."
+  },
+  "criteria": [
+    {
+      "criterion": "Actual WasmGC through prototype and pinned Wasmtime",
+      "evidence": [
+        "source-export.log",
+        "pipeline-comparison.json"
+      ],
+      "conclusion": "Bounded original/mutated two-fragment graphs execute; not a general source compiler."
+    },
+    {
+      "criterion": "Shared recursive GC types, rooted captured closure after GC, ABI gate",
+      "evidence": [
+        "pipeline-comparison.json"
+      ],
+      "conclusion": "92 actual fragment-pair executions decode exact 9/13 after GC and check ABI initializer rejection/control."
+    },
+    {
+      "criterion": "Original source analysis, binding identity, metadata, macro children; pinned/native observations",
+      "evidence": [
+        "native-analysis.log",
+        "source-export.log",
+        "source-primary.log",
+        "executed-identity.json"
+      ],
+      "conclusion": "Genuine native facts pass strict MLIR parse/print twice and source-v2 preservation/correspondence; pinned binary64 and native printed 9/13 remain separate observations."
+    },
+    {
+      "criterion": "Effectful control flow and exception/cleanup; continuation/cancellation work identified",
+      "evidence": [
+        "native-effects.log",
+        "effects-primary.log",
+        "../../decision.md"
+      ],
+      "conclusion": "Seven closed examples match values, ordered effects and counts; no scheduler completeness claim."
+    },
+    {
+      "criterion": "Assess WasmSSA and alternative GC/call/EH routes",
+      "evidence": [
+        "../../decision.md",
+        "../../feature-probes/observations.json",
+        "executed-identity.json"
+      ],
+      "conclusion": "Pinned definitions/direct probes expose missing GC, recursive groups, typed calls and EH; local dialect/export/Rust reconstruction reuses existing emitter."
+    },
+    {
+      "criterion": "Complexity, diagnostics, verifiers, dependencies, reproducibility, latency and sizes",
+      "evidence": [
+        "pipeline-comparison.json",
+        "../implementation-footprint.json",
+        "executed-identity.json",
+        "../../decision.md"
+      ],
+      "conclusion": "Raw paired samples and artifact hashes/sizes retained; excluded source-to-MLIR, build and runtime costs prevent maintenance/performance superiority claims."
+    },
+    {
+      "criterion": "Publish recommendation with risks and smallest integration boundary",
+      "evidence": [
+        "../../decision.md"
+      ],
+      "conclusion": "Recommend deferral. Optional analysis adapter is a future proposal; adoption still requires a separate reviewed architectural decision."
+    }
+  ],
+  "decision": "defer compiler adoption",
+  "publication_gate": "New documentation checkpoint still requires independent review, unchanged full workspace baseline and final-head CI before promotion."
+}

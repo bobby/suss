@@ -1,0 +1,2 @@
+PASS: fresh pinned CLJS 7 source examples exactly match frozen result/journal/count bits and exported graph model
+PASS: actual native 7 effects artifacts agree with fresh pinned CLJS observations
