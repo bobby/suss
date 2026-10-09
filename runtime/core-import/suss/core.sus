@@ -5681,6 +5681,84 @@
       (if-not (suss.bootstrap/nil? sn)
         (recur sn)
         (first s)))))
+
+(deftype ChunkBuffer [^:mutable buf ^:mutable end]
+  Object
+  (add [_ o]
+    (aset buf end o)
+    (set! end (inc end)))
+
+  (chunk [_]
+    (let [ret (ArrayChunk. buf 0 end)]
+      (set! buf nil)
+      ret))
+
+  ICounted
+  (-count [_] end))
+
+(def chunk-buffer (fn [capacity] (ChunkBuffer. (make-array capacity) 0)))
+
+(def chunk-append (fn [b x] (.add b x)))
+
+(def chunk (fn [b] (.chunk b)))
+
+(def map "Returns a lazy sequence consisting of the result of applying f to
+  the set of first items of each coll, followed by applying f to the
+  set of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments. Returns a transducer when
+  no collection is provided." (fn ([f]
+    (fn [rf]
+      (fn
+        ([] (rf))
+        ([result] (rf result))
+        ([result input]
+           (rf result (f input)))
+        ([result input & inputs]
+           (rf result (apply f input inputs)))))) ([f coll]
+   (new LazySeq nil (fn* [] (let [lazy-when-value__635 (seq coll)] (if lazy-when-value__635 (let [s lazy-when-value__635] (if (chunked-seq? s)
+        (let [c (chunk-first s)
+              size (count c)
+              b (chunk-buffer size)]
+          (let [lazy-dotimes-limit__795 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__795) (chunk-append b (f (-nth c i))) (recur (cljs.core/inc i)))))
+          (chunk-cons (chunk b) (map f (chunk-rest s))))
+        (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]
+   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]
+      (when (and s1 s2)
+        (cons (f (first s1) (first s2))
+              (map f (rest s1) (rest s2)))))) nil nil)) ([f c1 c2 c3]
+   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]
+      (when (and  s1 s2 s3)
+        (cons (f (first s1) (first s2) (first s3))
+              (map f (rest s1) (rest s2) (rest s3)))))) nil nil)) ([f c1 c2 c3 & colls]
+   (let [step (fn step [cs]
+                 (new LazySeq nil (fn* [] (let [ss (map seq cs)]
+                    (when (every? identity ss)
+                      (cons (map first ss) (step (map rest ss)))))) nil nil))]
+     (map (fn* [lazy-map-inputs__] (apply f lazy-map-inputs__)) (step (conj colls c3 c2 c1)))))))
+
+(def filter "Returns a lazy sequence of the items in coll for which
+  (pred item) returns logical true. pred must be free of side-effects.
+  Returns a transducer when no collection is provided." (fn ([pred]
+    (fn [rf]
+      (fn
+        ([] (rf))
+        ([result] (rf result))
+        ([result input]
+           (if (pred input)
+             (rf result input)
+             result))))) ([pred coll]
+   (new LazySeq nil (fn* [] (let [lazy-when-value__420 (seq coll)] (if lazy-when-value__420 (let [s lazy-when-value__420] (if (chunked-seq? s)
+        (let [c (chunk-first s)
+              size (count c)
+              b (chunk-buffer size)]
+          (let [lazy-dotimes-limit__580 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__580) (when (pred (-nth c i))
+                (chunk-append b (-nth c i))) (recur (cljs.core/inc i)))))
+          (chunk-cons (chunk b) (filter pred (chunk-rest s))))
+        (let [f (first s) r (rest s)]
+          (if (pred f)
+            (cons f (filter pred r))
+            (filter pred r))))) nil))) nil nil))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

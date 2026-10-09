@@ -1,0 +1,19 @@
+1065 upstream declarations; inventory verified
+Picked up JAVA_TOOL_OPTIONS: -Xmx512m
+/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:18174
+})(),cljs.core.map.cljs$core$IFn$_invoke$arity$2(f,cljs.core.rest(s)));
+                   ^
+
+TypeError: cljs.core.map.cljs$core$IFn$_invoke$arity$2 is not a function
+    at /private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:18174:20
+    at Object.sval (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:12059:110)
+    at Object.cljs$core$ISeqable$_seq$arity$1 (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:12214:10)
+    at Object.cljs$core$ISeq$_first$arity$1 (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:12190:10)
+    at cljs$core$first (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:4979:13)
+    at /private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/suss_oracle/lazy_transformation_cases.js:462:107
+    at suss_oracle$lazy_transformation_cases$observations (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/suss_oracle/lazy_transformation_cases.js:464:4)
+    at suss_oracle$lazy_transformations$_main (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/suss_oracle/lazy_transformations.js:7:215)
+    at cljs$core$apply_to_simple.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:13713:10)
+    at cljs$core$apply.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-lazy-current/tests/oracle/out/lazy-transformation-cljs/cljs/core.js:13998:34)
+
+Node.js v24.5.0

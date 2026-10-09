@@ -21776,3 +21776,171 @@ session49148 exited0, 8passed/0failed/ignored/filtered,11.20s. Rustfmt and diff
 checks passed. Independent review found no material findings; finite initializer
 and cumulative invocation limits retained, every cleanup/outcome assertion intact.
 New exact-head full baseline and CI remain pending; do not promote yet.
+
+M4 full map/filter refresh onto merged #226 main4e0f00d: preserved every current
+recipe/review and queue/bootstrap source, additively carried six complete pinned
+forms and explicit hashbound patches plus expanded34-case primary/native sources.
+Fresh prior-worktree primary34match; original failed expectations/raw observations
+retained under/private/tmp. Livefirst result21 comes from body plus LazySeq.-first
+live dispatch, initial11 expectation retained as failure. New bothphase unforced
+GC/capture/cache test authored, not compiled/executed. Refresh receipt
+/private/tmp/suss-m4-lazy-current-refresh.json records copied hashes. Bootstrap
+regeneration/focused actual native/provenance/fullbaseline/review/CI still needed.
+MLIR baseline51551 continues frozen54c5ce6; do not start second Cargo graph.
+Old24-case CLI probe53077 still runs against complete-source file inputs; it does
+not certify regenerated current-main bootstrap or the ten added cases.
+
+Current-main map/filter expanded gate: all41 shared cases match fresh pinned
+ClojureScript (force/cache-analysis-false), terminal0 log
+/private/tmp/suss-m4-lazy-current-primary-live-shaped.log. Original34cases retained;
+added repeated filter -nth read under callback backing mutation (99 vs map1), live
+recursive map/filter and chunk helper dispatch, variadic transducer apply. First
+single-arity replacements failed pinned generated arity entrypoints with TypeError;
+retained source /private/tmp/suss-m4-lazy-live-single-arity-replacements.json and
+/private/tmp/suss-m4-lazy-current-primary-live.log. Multi-arity replacements preserve
+that call shape and pass. Current provenance335files/432reviews633unassessed;
+231Python pass12.771s. Four native tests now authored:41cases bothphases/postGC,
+fragmented captured lazy callbacks with pre-demand GC, solehosthandle retention,
+independent raw Wasmtime ArrayChunk backing ref_eq afterGC. All remain uncompiled/
+unexecuted pending bootstrap regeneration; no native acceptance inferred.
+Owned queue baseline cache had no Cargo owner (active Cargo37564 is unrelated
+Everwood; do not touch it). With disk685MiB, retained suss/bootstrap in-place and
+copied/hashes at/private/tmp/suss-m4-queue-retained-binaries, removed ONLY inactive
+owned queue debug deps/build/.fingerprint/incremental; disk7.8GiB. Raw logs/source
+untouched; currentCLI53077stillusespreservedbinary. MLIR51551 tests nowexecute
+frozen54c5ce6, not terminal. Independent current-draft review dispatched. Full
+original M4 sorted/record/sequence/reduction criteria remain open; no goal scope
+change and no PR merge performed by agent.
+
+Old complete-source CLI24probe session53077 terminal0: each subprocess exited0,
+no stderr, every closed printed vector/f64/bool/nil observation matches original
+24case expectations (bounded strict parser rejects unknown tokens/trailing data).
+Logs/results at/private/tmp/suss-m4-lazy-native-cases. These numeric observations
+are finite exact integers; printed equality is supplemental evidence, not the
+independent canonical storage/bothphase/bootstrap gate. Additional17current-main
+complete-source cases now queued against retained unchanged compiler CLI, results
+/private/tmp/suss-m4-lazy-current-native-extra. Cargo51551stillowns baseline.
+
+Independent current-base whole-form/source/test review completed: no material
+findings. Confirmed every325base recipe selection and426review unchanged/inorder,
+331total selections335artifacts, allfivepatches preserved, baseextractedbytes
+unchanged,41freshprimary reproduced, solehostGC/rawbackingidentity tests sound.
+Reviewer explicitly requires regenerated bootstrap and execution of allfourtests;
+100M authored finite corpus allowance remains unmeasured. Next after51551Cargo
+owner terminates: reconcile227withmain4e0f00d/evidence, regeneratecurrentlazy
+bootstrap in isolatedtarget, focusednative first, then fullbaseline/finalreviewCI.
+
+Cleanup interruption: MLIR baseline51551 terminal101 after its worktree/target/log
+vanished; user confirmed cleanup job. No diagnostic log survives, so cause of exit
+is not a proven semantic failure and no baseline pass is claimed. Restored committed
+54c5ce6 source detached at/private/tmp/suss-m4-mlir-recovery. SDK/build vanished too;
+pinned acquisition/repro instructions and committed portable evidence remain.
+Checkpointed reviewed lazy draft b2b565d on currentmain4e0f00d before any loss.
+User requests no change to validation procedure: same focused-first/full locked
+commands, jobs2, one Suss Cargo graph, no RUSTFLAGS. Current bootstrap regeneration
+49767 already started before that reply with isolated target
+/Users/bobby/code/github/bobby/suss/target/m4-lazy-current and log
+/Users/bobby/code/github/bobby/suss/target/m4-evidence/lazy-bootstrap-regenerate.log;
+leave this live process intact. Native17CLI14384stillruns/noCargo. No promotion
+of227/fullM4completion. Next: bootstrap terminal, four lazy native tests, preserve
+all failures, then required reproducibility/fullbaseline/review/CI; reconcile188
+against currentmain before final acceptance.
+
+Oracle harness follow-up: scoped path override/main guard avoids import-time
+mutation of shared portable_oracle globals and restores paths on failure. Added
+four strict evidence-verifier regressions; focused4pass0.092s, complete235Python
+pass36.645s. Independent reviewer reproduced4tests/41primary and found no material
+issue. Required native/GC tests remain authored, not accepted from Python alone.
+New docs/runtime/lazy-transformations.md records whole forms/adaptations/current
+limits. acceptance-m4.md preserves original open16–19/188requirements and explicitly
+labels historical publication state. Provenance335artifacts/432reviews/23licensed
+setup forms pass. 17extra CLI owner14384 stilllive; original24passed independently
+bounded printed-value comparison, not canonical/nativebothphase proof.
+
+MLIR recovery branch portable/m4-mlir-current-main d4750b7 rebased onto4e0f00d;
+onlyhandoffconflict resolved by retaining both complete additions57+144lines.
+Experimentfiles/productioncrate-source identities match oldmanifest exactly;
+allfourbootstrapfiles differ and must be revalidated. Download/extraction3417
+terminal0:871033366bytes SHAa3f181b1176406893c097443e21b2a54b85afeac2d10eca3b6d251e6dca32eb3,
+LLVM/Clang23.1.3 source0d261d1 confirmed. NormaldocumentedCMakeconfigure/oneworker
+build/CTest/strictfixture gates7196 nowlive log/private/tmp/suss-m4-mlir-post226-cpp.log.
+CurrentCargo49767 remains the only Suss graph; unrelatedEverwoodCargountouched.
+No measurement attempted while builds/probes are concurrently active.
+
+17 current-main extra CLI probes14384 terminal0; every subprocess0/no stderr,
+closed printed values independently match frozen41-case snapshot. Combined with
+original24CLIprobes, all41have supplemental complete-source Runtime execution.
+These are not canonical storage/GC/bothphase/regenerated-bootstrap passes. Four
+Rust native tests still await49767bootstrap. C++7196terminal0: pinnedoneworkerbuild,
+CTest3/3 and all explicit dialect/global/export/effect positive/negative gates
+pass. Portable post226-cpp-gates.json/log retained in MLIR recovery evidence with
+source/base/SDKarchive/binary/log hashes and exact command argv. New main Rust/
+Wasmtime/genuine-source/measurement/fullbaseline gates remain pending. SDKrestore
+used unchanged documented acquisition/configure/gate procedure; no RUSTFLAGS.
+
+Lazy bootstrap49767terminal0: generation finished after12m22s initialbuild; both
+Runtime/Macro pairs changed and written. Focused native95665terminal0:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target/m4-lazy-current cargo test -p suss-cli --test portable_lazy_transformations --locked -- --test-threads=2`
+4passed0failed/ignored/filtered14.63s; allfourrunbothphases, complete41cases plus
+fragmented GC captures/cache, solehosthandles, rawArrayChunk backingidentity.
+Actualcompiledbuild-script identity probe also passes; no100Mdefaultbudget or
+measuredfuelclaim. Reproducibility/coreimport/affectedgates65754currentlylive.
+Its queued affected-suite argument mistakenly names nonexistent
+compiled_macro_lazy_sequences; actual targetportable_lazy_sequences identified
+beforethatqueuedcommandexecutes. Let repro/import finish; retain selection failure
+ifitoccurs then rerun exactcorrecttargets onceownerterminal. No secondCargoGraph.
+
+Bootstrap/import65754 completed reproductions andnativegates before the queued
+invalidtargetselection failed: bothartifactpairs byte-identical twice/noJavaNode,
+identityinvalidationpass, compiled_bootstrap4pass38.40s; core_import17pass37.24s.
+Then Cargo rejected nonexistent compiled_macro_lazy_sequences, terminal101 with
+nosemantic testexecuted. Corrected actualtargets portable_chunk_effects,
+portable_lazy_sequences, portable_reduction nowowner52405; allassertionsunchanged.
+Logs under /Users/bobby/code/github/bobby/suss/target/m4-evidence. No known failure
+replaced with success. Draft PRbody prepared /private/tmp/suss-m4-lazy-pr-body.md
+withRefs16/17/19 and fullbaseline/review/CIstillpending; notpublishedyet.
+
+Affected52405terminal0: chunk2pass10.65s/lazy4pass12.47s/reduction3pass16.92s,
+all0failed/ignored/filtered. Six review evidence references updated from authored/
+pending to actual41primary/native andfourbothphaseGCpasses; statuses remain
+in-progress for full original M4. Regenerated importer335/reviews432 and dependency
+manifest. Manifest is embedded by portable/bootstrap.rs; therefore regenerated
+bootstrap again58149terminal0 (7.41s build) after this metadata-only update. Final
+four native + bootstraprepro + coreimport nowrunsequentially in oneCargo owner,
+with lazy-final-* logs under/Users/bobby/code/github/bobby/suss/target/m4-evidence.
+No semantic/sourcefunction change, no assertions removed, no arbitrarybudget
+increase. Freeze/commit/publishdraft and exactheadfullbaseline/finalreviewCI after
+these final-identity gates. #188currentmainRust/native/fullbaseline stillpending;
+noM4complete/noPRmergeclaim. Validation commands/procedure unchanged peruser.
+
+Final-identity gate72285terminal0: native4pass20.96s, bootstrapbytepairs reproducible
+withJavaNodeabsent/identityinvalidation/fourtests23.43s, coreimport17pass26.01s,
+zero failures/ignores/filters. Retained source/primary/CLI/failure/native/provenance
+logs with hashes underdocs/compatibility/lazy-transformations/evidence, including
+wrongoriginalexpectations and rejection failures; missing captures explicit.
+Nextfreezecommit exactverifiedsource/artifacts, startrequiredfullworkspacebaseline,
+independentfinalheadreview anddraftPR/CI. No16–19completion orM4scopechange.
+
+Lazy final-head baseline99452 terminal101 at5f19cf8: scalar generated async
+import exhausted shared2M fuel at testline160,7neighboring tests pass. Full log
+target/m4-evidence/lazy-full-workspace-baseline.log retained. Exact existing
+binary reproduction61431 exits101/3.72s; separate reprolog retained. PR228
+body updated with failure; remainsdraft despite reviewedhead/10greenCI.
+Temporary diagnostic10M measurement keeps every result/poll assertion and
+reports initializer/per-call/GC fuel. Focused Cargo46378 sole live graph in
+existing lazy target/jobs2; no productionrepair/defaultbudgetchange yet.
+Restore original source after terminal measurement, then measured bounded fix
+with independent review and new finalhead baseline/CI. No blanketskip/fuelpatch.
+
+Fuelmeasurement46378 exits0/5.62s: initializer1711536, fourcalls313070 total,
+GC0, polls2/4/6/8; combined2024606>2M. Restoredoriginalsource removed10M
+diagnostics, added once-only2Mreset after successful init, retained2Minit and
+cumulativefourcall2M. Everyassertion unchanged. Full8testfocused50519live;
+independent fixreview dispatched. Failedbaseline/exactrepro/measurement logs
+retained in lazy-transformations/evidence with hashes. Newfinalhead baseline
+andCI required. No productionruntime/defaultbudget change.
+
+Fuel fix focused50519 terminal0: complete8tests pass23.27s/no failures or
+ignores/filters. Independent review no materialfindings; diagnosticsremoved,
+finite2Minit andshared2Mfourcalls preserveeveryassertion. Retainedfixedsuite
+log/hash. Next commit/push newhead then full lockedworkspacebaseline/finalCI.

@@ -1,0 +1,13 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 14.64s
+     Running tests/portable_lazy_transformations.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/portable_lazy_transformations-650438ddb7b2fb0d)
+
+running 4 tests
+test handed_chunk_preserves_actual_backing_array_identity_after_gc ... ok
+test unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments ... ok
+test unforced_transformations_survive_with_only_host_handles ... ok
+test lazy_transformations_match_complete_pinned_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.96s
+

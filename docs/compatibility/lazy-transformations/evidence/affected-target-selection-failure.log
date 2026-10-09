@@ -1,0 +1,3 @@
+error: no test target named `compiled_macro_lazy_sequences` in `suss-cli` package
+
+help: a target with a similar name exists: `compiled_macro_hamt_sequences`

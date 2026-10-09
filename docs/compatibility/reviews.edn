@@ -2,6 +2,72 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:ChunkBuffer:3673"
+  {:source-sha256 "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680"
+   :visibility :public
+   :arities nil
+   :dependencies ["runtime:ArrayChunk:3690" "macro:aset:1056" "runtime:inc:1505" "macro:inc:1192" "owned mutable nominal fields/Object method dispatch"]
+   :classification :portable
+   :rationale "Retain the entire unchanged pinned ChunkBuffer type, both mutable fields, both Object methods and ICounted method. add performs aset before incrementing end; chunk captures storage before clearing buf. No field, method or effect is omitted. Imported extraction is not native proof; actual value/effect, sharing and post-chunk failures remain required."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+  "runtime:chunk-buffer:3687"
+  {:source-sha256 "2a70931729b2d2d1f92bd6c7998df902beae7a1aaca8f3d49072382ebe7775ef"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:ChunkBuffer:3673" "runtime:make-array:452" "existing owned-array macro adapter"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/lazy-chunk-buffer.json"
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+  "runtime:chunk-append:3800"
+  {:source-sha256 "8eddb32814093aea3927919fd224f0876b84898e789e97b52db9a1eae4cd4a9e"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "live nominal Object method dispatch on ChunkBuffer"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/lazy-chunk-append.json"
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+  "runtime:chunk:3803"
+  {:source-sha256 "15d1bef59d2cee977c7c18b05065afbba3beace6173cc31af2ecb47773e350b2"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "live nominal Object method dispatch on ChunkBuffer"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/lazy-chunk.json"
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+  "runtime:map:4902"
+  {:source-sha256 "bca949770a7855d7b73a3558d845f393f8dda41e3b8fa5a79e89e8f62b7f5e32"
+   :visibility :public
+   :arities {:fixed [1 2 3 4] :variadic-min 4}
+   :dependencies ["macro:defn:3364" "macro:lazy-seq:2285" "macro:when-let:412" "macro:dotimes:2781" "runtime:chunk-buffer:3687" "runtime:chunk-append:3800" "runtime:chunk:3803" "chunked and nonchunked sequences" "live callback/protocol dependencies"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress. Expand the single pinned shorthand #(apply f %) to an explicit one-parameter fn* preserving its captured f and live apply; this is not general reader support."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/lazy-map.json"
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+  "runtime:filter:5370"
+  {:source-sha256 "149b4f72e71e76f158efb21f6f4dbcdad44f341429b91b3109305c7f2faa2911"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:lazy-seq:2285" "macro:when-let:412" "macro:dotimes:2781" "runtime:chunk-buffer:3687" "runtime:chunk-append:3800" "runtime:chunk:3803" "chunked and nonchunked sequences" "live callback/protocol dependencies"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/lazy-filter.json"
+   :alternative nil
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
   "runtime:last:1858"
   {:source-sha256 "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7" :visibility :public
    :arities {:fixed [1] :variadic-min nil}

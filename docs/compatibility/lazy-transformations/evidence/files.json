@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "files": {
+    "final-native-focused.log": {
+      "bytes": 840,
+      "sha256": "86fc9699c0106d9e38c05793b356df282960fab4a76ad022c80dd06b099c4cfa"
+    },
+    "final-bootstrap-reproducibility.log": {
+      "bytes": 1285,
+      "sha256": "68397bb84dab544ce9a816425d2dee828b0a5eaa3fd38eb49165406e1772f139"
+    },
+    "final-core-import.log": {
+      "bytes": 1939,
+      "sha256": "8b9bb7eecd3c7608f10c9f8b0a9b31250ed628b172eb482d43dd64e2c304b983"
+    },
+    "affected-suites.log": {
+      "bytes": 1660,
+      "sha256": "cc89b5a1ff43d57264b9b76599023d874010720199e16fab8958b6e800010fa4"
+    },
+    "affected-target-selection-failure.log": {
+      "bytes": 158,
+      "sha256": "2c9898d76ea60808068b783589ac141b1ac3d673140c0907b0492f57dc11f119"
+    },
+    "primary-41.log": {
+      "bytes": 138,
+      "sha256": "db205d836bfd2a2c7a7c87197a24242e08ef3648ed9f43261a298931e5b28880"
+    },
+    "primary-41-observations.json": {
+      "bytes": 10425,
+      "sha256": "1881caf1fc78789fc589a620bf1fcd5d2af335b9d175dc0ddfb52a70c24ece18"
+    },
+    "python-235.log": {
+      "bytes": 514,
+      "sha256": "49e78b46ca8b7c7697f5e160dc777d22d92f55b1d8cb42251c9f0ca15f9d16c0"
+    },
+    "initial-expectations.json": {
+      "bytes": 19217,
+      "sha256": "67c25a46f143bca2c1e03ee2829e3b170fbfc6ecbda12c653510e623a73c2bb1"
+    },
+    "initial-primary-observations.json": {
+      "bytes": 5984,
+      "sha256": "3e25cc8a9bd3ec6a0d9df8611aec017af196e1d47132be7dee42b5f1a6e5518a"
+    },
+    "initial-live-helper-expectations.json": {
+      "bytes": 31608,
+      "sha256": "95d99adfaea375bc90b1884f970f42f3f9eeaa839e0dfd88460956f97df4d28d"
+    },
+    "initial-live-helper-observations.json": {
+      "bytes": 9141,
+      "sha256": "a3fb3a0180560be2c9a29b94ddfea134c8c5b11f6b6dce3a4e88f0ea707e31af"
+    },
+    "initial-single-arity-replacements.json": {
+      "bytes": 36993,
+      "sha256": "a7e547fe8c9cfbdc487490dd7e421543e92c5f640badf45eb8b25a5f7b07c076"
+    },
+    "single-arity-replacement-failure.log": {
+      "bytes": 1798,
+      "sha256": "e0a249e1d2ce0241780d40bbfbe756a41f2e98a63ae0f5d6defbc50f7e1661d3"
+    },
+    "before-import-unresolved-map.log": {
+      "bytes": 50,
+      "sha256": "6a0f9170a357f68f394afe163e80e54b6b23e0c66dc68582e1010d36e4de8a6a"
+    },
+    "repl-reload-failure.log": {
+      "bytes": 4973,
+      "sha256": "e8d12c1c1e79ac2589028be02fec657ff634bf001ea41eb1c78b902c2cce209c"
+    },
+    "cli-original-24-results.json": {
+      "bytes": 2651,
+      "sha256": "e0d3bb7ff077829003cbb8e90f3959ec99e0273a9add19fa20525800ff82a921"
+    },
+    "cli-extra-17-results.json": {
+      "bytes": 1987,
+      "sha256": "7bc85e7895ab13f1fb3fad98d993bcb220c1b42a6ae7c28ccb48c36de20535f3"
+    },
+    "baseline-failed-5f19cf8.log": {
+      "bytes": 120516,
+      "sha256": "3dde1c88f149dd6c1d7a92c1e554c8cb6d6104408d67762a07bc3139c700e7a8"
+    },
+    "import-exact-reproduction.log": {
+      "bytes": 1007,
+      "sha256": "52675046e7aede40e3a6d982040a18bca84d73ccf87478137ba17b15d2f1e60d"
+    },
+    "import-fuel-measurement.log": {
+      "bytes": 3003,
+      "sha256": "db5645c559c1a03ee56d9a31171fb9134fab42dd04466cab541bc6f547090383"
+    },
+    "import-fuel-fixed-suite.log": {
+      "bytes": 1100,
+      "sha256": "fb128bf3fc55ef1f193d37a6080f976fce7b21522b92b3940772a07530f1c88d"
+    }
+  },
+  "missing_at_capture": [],
+  "limits": "Historical wrong expectations and failed probes are retained as failures. Printed CLI evidence is supplemental; native raw-storage assertions are in the four focused tests. Full workspace baseline/final-head CI pending."
+}

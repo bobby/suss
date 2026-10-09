@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized] target(s) in 0.61s
+     Running `/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/suss-bootstrap /var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/tmp.sYH2KMAWdW/first`
+    Finished `test` profile [unoptimized] target(s) in 0.15s
+     Running `/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/suss-bootstrap /var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/tmp.sYH2KMAWdW/second`
+compiled build-script identity: checkout-independent; embedded libraries, numeric assets and pinned command WIT graph invalidate
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 1.97s
+     Running tests/compiled_bootstrap.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/compiled_bootstrap-170d672419fa8b06)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.43s
+

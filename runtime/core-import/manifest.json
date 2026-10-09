@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "71e70d33235147cfb4bdaabdae104b7347073dd59cb8a737aeddd9b24bf30752",
-  "reviews-sha256": "fdcbba52fade3d619a79abc9ce049b614f27c693f233152d30bd1f337cadb94b",
+  "recipe-sha256": "0cedba45b0f502afa011a5980e3160ae593748ed0056fc1e0466c01ae1f67f01",
+  "reviews-sha256": "89bd26948cfe7ae9aa6ef8a8e203b1afa78ddeb8e1f7f2a2233c8fd71678690c",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10031,6 +10031,211 @@
         "crates/suss-cli/tests/portable_queues.rs",
         "tests/oracle/queue-cases.json"
       ]
+    },
+    {
+      "id": "runtime:ChunkBuffer:3673",
+      "name": "ChunkBuffer",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3673,
+      "end-line": 3685,
+      "byte-start": 96670,
+      "byte-end": 96907,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
+      "extracted": "extracted/0325.cljs",
+      "extracted-sha256": "f9e270ce4007e474fc2aca5beb8942b5d9d31079b718ebbcba2162171065ed31",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:ArrayChunk:3690",
+        "macro:aset:1056",
+        "runtime:inc:1505",
+        "macro:inc:1192",
+        "owned mutable nominal fields/Object method dispatch"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
+    },
+    {
+      "id": "runtime:chunk-buffer:3687",
+      "name": "chunk-buffer",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3687,
+      "end-line": 3688,
+      "byte-start": 96909,
+      "byte-end": 96980,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2a70931729b2d2d1f92bd6c7998df902beae7a1aaca8f3d49072382ebe7775ef",
+      "extracted": "extracted/0326.cljs",
+      "extracted-sha256": "c9e7d45305b4f75eac903c30b7ccffac77959173e3b4c2fa4b20053b7a79310f",
+      "patch": "docs/compatibility/patches/lazy-chunk-buffer.json",
+      "patch-sha256": "be7ddeae012f16714ecf1b68871fd1efcb7784a315645c304b94d5228cb89250",
+      "adapted-form-sha256": "3fda363305f05804a80be8953add3fb9fccf472f8924d2bb24bf7e55d30c01c7",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:ChunkBuffer:3673",
+        "runtime:make-array:452",
+        "existing owned-array macro adapter"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
+    },
+    {
+      "id": "runtime:chunk-append:3800",
+      "name": "chunk-append",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3800,
+      "end-line": 3801,
+      "byte-start": 99218,
+      "byte-end": 99256,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8eddb32814093aea3927919fd224f0876b84898e789e97b52db9a1eae4cd4a9e",
+      "extracted": "extracted/0327.cljs",
+      "extracted-sha256": "7fcabd9b17652802692da1614146d1a4006050d47dfb5de98a1dd49c50f0f108",
+      "patch": "docs/compatibility/patches/lazy-chunk-append.json",
+      "patch-sha256": "da0c276e365f099c26f53621192d1171c3aa9555dd49fb6fde15163a40e3a488",
+      "adapted-form-sha256": "53777a1833c2998e88ec49601177cd71eb2dcb842602712bbc38b48149015cfd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "live nominal Object method dispatch on ChunkBuffer"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
+    },
+    {
+      "id": "runtime:chunk:3803",
+      "name": "chunk",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3803,
+      "end-line": 3804,
+      "byte-start": 99258,
+      "byte-end": 99287,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "15d1bef59d2cee977c7c18b05065afbba3beace6173cc31af2ecb47773e350b2",
+      "extracted": "extracted/0328.cljs",
+      "extracted-sha256": "79888494e9bbea4b5e90ad97508fd97a80c60a85ede9a516cdee90f6dfa9a43c",
+      "patch": "docs/compatibility/patches/lazy-chunk.json",
+      "patch-sha256": "382496f262241d9e9e74d3cf791eba60dfdf546254101e1d500ff2a604d12a34",
+      "adapted-form-sha256": "1e6873d35650951ff90931a2712487833700190d2122e2830741c9ae950aedd1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "live nominal Object method dispatch on ChunkBuffer"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
+    },
+    {
+      "id": "runtime:map:4902",
+      "name": "map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4902,
+      "end-line": 4947,
+      "byte-start": 132898,
+      "byte-end": 134541,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "bca949770a7855d7b73a3558d845f393f8dda41e3b8fa5a79e89e8f62b7f5e32",
+      "extracted": "extracted/0329.cljs",
+      "extracted-sha256": "675024866fc83041f393dccad216a15167e895fc955e25160b82d8daac7b39bf",
+      "patch": "docs/compatibility/patches/lazy-map.json",
+      "patch-sha256": "370e13b622b8432ad11febf0a9da5aba251d3f995dc28a1f31f53298f2cee497",
+      "adapted-form-sha256": "876dab87d9b8e289c0cefb646613f27cda753bf3900b3a83f149fd69f904b2dc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:lazy-seq:2285",
+        "macro:when-let:412",
+        "macro:dotimes:2781",
+        "runtime:chunk-buffer:3687",
+        "runtime:chunk-append:3800",
+        "runtime:chunk:3803",
+        "chunked and nonchunked sequences",
+        "live callback/protocol dependencies"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
+    },
+    {
+      "id": "runtime:filter:5370",
+      "name": "filter",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5370,
+      "end-line": 5397,
+      "byte-start": 145134,
+      "byte-end": 146011,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "149b4f72e71e76f158efb21f6f4dbcdad44f341429b91b3109305c7f2faa2911",
+      "extracted": "extracted/0330.cljs",
+      "extracted-sha256": "867d62d6b4ffba862da2554053db4d3ced54c4983fa0fb12f2a50eba17ee27f1",
+      "patch": "docs/compatibility/patches/lazy-filter.json",
+      "patch-sha256": "42e2ae9a6b4de5cea8ef163446489ae317c305d3edfdb104dd525fd47c4385e9",
+      "adapted-form-sha256": "083918bd36e37d441dda9661d66e2ade6f08dd05380345df3ff31a13b7b18e66",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:lazy-seq:2285",
+        "macro:when-let:412",
+        "macro:dotimes:2781",
+        "runtime:chunk-buffer:3687",
+        "runtime:chunk-append:3800",
+        "runtime:chunk:3803",
+        "chunked and nonchunked sequences",
+        "live callback/protocol dependencies"
+      ],
+      "semantic-tests": [
+        "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
+        "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
+        "scripts/test-lazy-transformation-oracle.sh"
+      ]
     }
   ],
   "loader": {
@@ -10375,6 +10580,12 @@
     "extracted/0322.cljs": "e8891cd5c6111ccd61f9574174147f917da19536cd1fb3fa951f912e8a3b83ff",
     "extracted/0323.cljs": "25bc3aac442142884044d036c174bc5b441c5ab571999e8bddf2a6bf377de03b",
     "extracted/0324.cljs": "2d31b0f2a6db0a43a40ca0b4e93c9d3ac0917195f0b6ffee098e43392327b57b",
-    "suss/core.sus": "095cfe2a23256015d287c4e5df19f44aab74eb70d02043d4d4435bbb5755c73b"
+    "extracted/0325.cljs": "f9e270ce4007e474fc2aca5beb8942b5d9d31079b718ebbcba2162171065ed31",
+    "extracted/0326.cljs": "c9e7d45305b4f75eac903c30b7ccffac77959173e3b4c2fa4b20053b7a79310f",
+    "extracted/0327.cljs": "7fcabd9b17652802692da1614146d1a4006050d47dfb5de98a1dd49c50f0f108",
+    "extracted/0328.cljs": "79888494e9bbea4b5e90ad97508fd97a80c60a85ede9a516cdee90f6dfa9a43c",
+    "extracted/0329.cljs": "675024866fc83041f393dccad216a15167e895fc955e25160b82d8daac7b39bf",
+    "extracted/0330.cljs": "867d62d6b4ffba862da2554053db4d3ced54c4983fa0fb12f2a50eba17ee27f1",
+    "suss/core.sus": "12c4d8460876ff5d5c1a809e51904093f5bfabc155d8196dc9f2b78177b483dc"
   }
 }

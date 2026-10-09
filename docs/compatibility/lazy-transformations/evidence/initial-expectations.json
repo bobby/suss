@@ -1,0 +1,684 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "map-demand-0",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [])] [lazy-map-count (first mapped) lazy-map-count (count mapped) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-1",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 0) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-31",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 30) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-32",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 31) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-33",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 32) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040800000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-64",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 63) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "404f800000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-demand-65",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 64) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050400000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-nonchunk-demand",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) (list 0 1 2))] [lazy-map-count (first mapped) lazy-map-count (first mapped) lazy-map-count (nth mapped 2) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-nil-false",
+      "source": "[(into [] (map identity (list nil false 0))) (into [] (map identity nil))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "f64",
+                "bits": "0000000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-two-input-shortest",
+      "source": "[(into [] (map + [1 2 3] [10 20])) (into [] (map + [] [10 20]))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4026000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4036000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-three-input-shortest",
+      "source": "[(into [] (map + [1 2 3] [10 20] [100 200 300]))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "405bc00000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "406bc00000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-four-input-variadic",
+      "source": "[(into [] (map + [1 2 3] [10 20] [100 200 300] [1000 2000 3000]))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "40915c0000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "40a15c0000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-five-input-variadic",
+      "source": "[(into [] (map + [1 2] [10 20] [100 200] [1000 2000] [10000]))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "40c5b38000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-transducer-all-reducer-arities",
+      "source": "(let [step ((map (fn [& xs] (apply + xs))) (fn ([] 7) ([result] (+ result 10)) ([result input] (+ result input))))] [(step) (step 1) (step 0 2) (step 0 1 2 3)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-transducer-all-reducer-arities",
+      "source": "(let [step ((filter (fn [x] x)) (fn ([] 7) ([result] (+ result 10)) ([result input] (+ result input))))] [(step) (step 1) (step 2 false) (step 2 nil) (step 2 0) (step 2 3)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-nonchunk-nil-false-zero",
+      "source": "[(into [] (filter identity (list nil false 0 1))) (into [] (filter identity nil))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "0000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-chunk-empty-prefix",
+      "source": "(do (set! lazy-filter-count 0) (let [filtered (filter (fn [x] (set! lazy-filter-count (inc lazy-filter-count)) (>= x 63)) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])] [lazy-filter-count (first filtered) lazy-filter-count (first filtered) lazy-filter-count (nth filtered 1) lazy-filter-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "404f800000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "404f800000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4050400000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-chunk-all-rejected",
+      "source": "(do (set! lazy-filter-count 0) (let [filtered (filter (fn [x] (set! lazy-filter-count (inc lazy-filter-count)) false) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32])] [(first filtered) lazy-filter-count (first filtered) lazy-filter-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040800000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040800000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-zero-is-truthy",
+      "source": "[(into [] (filter (fn [x] 0) [nil false 1]))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-throw-false-cached-cleared",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) (if (= x 2) (throw false) x)) [0 1 2 3])] [(try (first mapped) (catch :default payload payload)) lazy-map-count (first mapped) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-throw-nil-cached-cleared",
+      "source": "(do (set! lazy-filter-count 0) (let [filtered (filter (fn [x] (set! lazy-filter-count (inc lazy-filter-count)) (if (= x 2) (throw nil) true)) [0 1 2 3])] [(try (first filtered) (catch :default payload payload)) lazy-filter-count (first filtered) lazy-filter-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-reduced-first",
+      "source": "(do (set! lazy-map-count 0) (let [mapped (map (fn [x] (set! lazy-map-count (inc lazy-map-count)) x) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])] [(reduce (fn [acc x] (reduced (+ acc x))) 0 mapped) lazy-map-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "filter-reduced-first",
+      "source": "(do (set! lazy-filter-count 0) (let [filtered (filter (fn [x] (set! lazy-filter-count (inc lazy-filter-count)) true) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])] [(reduce (fn [acc x] (reduced (+ acc x))) 0 filtered) lazy-filter-count]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "chunk-buffer-handoff",
+      "source": "(let [buffer (cljs.core/chunk-buffer 2)] (cljs.core/chunk-append buffer nil) (cljs.core/chunk-append buffer false) (let [handed (cljs.core/chunk buffer)] [(count buffer) (count handed) (nth handed 0) (nth handed 1)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    }
+  ]
+}

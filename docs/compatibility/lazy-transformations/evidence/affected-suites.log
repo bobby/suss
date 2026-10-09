@@ -1,0 +1,29 @@
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-lazy-current/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 2.58s
+     Running tests/portable_chunk_effects.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/portable_chunk_effects-7ec03cfa59466d6b)
+
+running 2 tests
+test chunk_demand_cache_and_retry_survive_gc_between_source_fragments ... ok
+test chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.65s
+
+     Running tests/portable_lazy_sequences.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/portable_lazy_sequences-1f52a6b1cdb6651c)
+
+running 4 tests
+test retained_lazy_sequence_metadata_delays_realization_and_failed_thunks_retry ... ok
+test retained_concat_preserves_laziness_all_arities_and_chunk_boundaries ... ok
+test retained_lazy_sequence_realizes_once_and_keeps_state_after_gc ... ok
+test retained_lazy_sequences_match_actual_pinned_shared_execution ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.47s
+
+     Running tests/portable_reduction.rs (/Users/bobby/code/github/bobby/suss/target/m4-lazy-current/debug/deps/portable_reduction-f0cdf3b680a62a96)
+
+running 3 tests
+test reduced_values_and_saved_reducers_survive_gc_and_language_errors ... ok
+test reduction_contract_match_independently_encoded_primary_observations ... ok
+test reduced_stops_vector_callbacks_at_chunk_boundaries_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.92s
+

@@ -1,0 +1,3 @@
+(def lazy-map-count 0)
+(def lazy-filter-count 0)
+(def lazy-transform-trace [])

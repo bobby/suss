@@ -150,6 +150,9 @@ fn generated_scalar_import_resumes_actual_source_future_and_releases_each_transf
     let mut store = Store::new(&engine, ());
     store.set_fuel(2_000_000).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
+    // Bound bootstrap initialization separately from the cumulative four-call
+    // scenario: the shipped core initializer also consumes Wasmtime fuel.
+    store.set_fuel(2_000_000).unwrap();
     let run = instance
         .get_typed_func::<(u32,), (u32,)>(&mut store, "run")
         .unwrap();

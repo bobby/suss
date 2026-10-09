@@ -1628,6 +1628,36 @@
       "id": "runtime:last:1858",
       "source-sha256": "8f69ae03ed6f21bc76c09d46b270bbcf27cd35bbc2d3d560817e3c651a465ca7",
       "patch": "docs/compatibility/patches/collection-last.json"
+    },
+    {
+      "id": "runtime:ChunkBuffer:3673",
+      "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
+      "patch": null
+    },
+    {
+      "id": "runtime:chunk-buffer:3687",
+      "source-sha256": "2a70931729b2d2d1f92bd6c7998df902beae7a1aaca8f3d49072382ebe7775ef",
+      "patch": "docs/compatibility/patches/lazy-chunk-buffer.json"
+    },
+    {
+      "id": "runtime:chunk-append:3800",
+      "source-sha256": "8eddb32814093aea3927919fd224f0876b84898e789e97b52db9a1eae4cd4a9e",
+      "patch": "docs/compatibility/patches/lazy-chunk-append.json"
+    },
+    {
+      "id": "runtime:chunk:3803",
+      "source-sha256": "15d1bef59d2cee977c7c18b05065afbba3beace6173cc31af2ecb47773e350b2",
+      "patch": "docs/compatibility/patches/lazy-chunk.json"
+    },
+    {
+      "id": "runtime:map:4902",
+      "source-sha256": "bca949770a7855d7b73a3558d845f393f8dda41e3b8fa5a79e89e8f62b7f5e32",
+      "patch": "docs/compatibility/patches/lazy-map.json"
+    },
+    {
+      "id": "runtime:filter:5370",
+      "source-sha256": "149b4f72e71e76f158efb21f6f4dbcdad44f341429b91b3109305c7f2faa2911",
+      "patch": "docs/compatibility/patches/lazy-filter.json"
     }
   ],
   "loader": {
