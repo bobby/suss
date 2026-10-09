@@ -1,0 +1,12 @@
+PASS 52 closed raw tree cases/driver; not executed
+WARNING: BlackNode already refers to: cljs.core/BlackNode being replaced by: suss-oracle.tree-node-raw/BlackNode at line 2 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: RedNode already refers to: cljs.core/RedNode being replaced by: suss-oracle.tree-node-raw/RedNode at line 3 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: MapEntry already refers to: cljs.core/MapEntry being replaced by: suss-oracle.tree-node-raw/MapEntry at line 4 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/balance-left is not public at line 5 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/balance-right is not public at line 6 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/balance-left-del is not public at line 7 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/balance-right-del is not public at line 8 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/tree-map-kv-reduce is not public at line 9 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 58 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 59 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/tree_node_raw.cljs
+PASS 52 independent pinned raw tree observations

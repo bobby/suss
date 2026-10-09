@@ -1,7 +1,7 @@
 //! Complete tree nodes; authored tests, compilation/bootstrap/native execution pending.
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
+use wasmtime::{AsContextMut, Val};
 const IDS: &[&str] = &[
     "balance-left-nonred",
     "balance-left-red-no-red-child",
@@ -342,7 +342,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                     let number = field.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
                     assert_eq!(number.fields(&mut store)?.count(), 1);
                     assert_eq!(
-                        number.field(&mut store, 0)?.unwrap_f64(),
+                        number.field(&mut store, 0)?.unwrap_f64().to_bits(),
                         expected.to_bits()
                     );
                 }
@@ -364,7 +364,8 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                             .as_struct(&store)?
                             .unwrap()
                             .field(&mut store, 0)?
-                            .unwrap_f64(),
+                            .unwrap_f64()
+                            .to_bits(),
                         n.to_bits()
                     ),
                 }
@@ -597,5 +598,279 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
         let effects = s.eval("direct-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
+    }
+}
+
+// Supplement the original 86 Boolean assertions with actual returned storage.
+// The reference reads upstream JS fields; this decoder reads ABI storage and
+// canonical descriptors. Neither path invokes guest equality or printing.
+struct RawTreeClass {
+    _anchor: SessionValue,
+    descriptor: wasmtime::OwnedRooted<wasmtime::AnyRef>,
+    owner_type: wasmtime::StructType,
+    name: &'static str,
+}
+fn raw_tree_decode(
+    store: &mut wasmtime::StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &[RawTreeClass],
+    path: &mut Vec<wasmtime::OwnedRooted<wasmtime::AnyRef>>,
+    remaining: &mut usize,
+) -> wasmtime::Result<serde_json::Value> {
+    use serde_json::json;
+    if path.len() >= 64 || *remaining == 0 {
+        return Err(wasmtime::Error::msg("raw tree depth/budget"));
+    }
+    *remaining -= 1;
+    let reference = value
+        .unwrap_anyref()
+        .ok_or_else(|| wasmtime::Error::msg("raw tree null reference"))?;
+    if let Some(i) = reference.as_i31(&*store)? {
+        return match i.get_u32() {
+            0 => Ok(json!({"tag":"nil"})),
+            2 => Ok(json!({"tag":"bool","value":false})),
+            4 => Ok(json!({"tag":"bool","value":true})),
+            _ => Err(wasmtime::Error::msg("raw tree unsupported immediate")),
+        };
+    }
+    let owner = reference
+        .as_struct(&*store)?
+        .ok_or_else(|| wasmtime::Error::msg("raw tree nonstruct"))?;
+    let count = owner.fields(&mut *store)?.count();
+    if count == 1 {
+        return match owner.field(&mut *store, 0)? {
+            Val::F64(bits) => Ok(json!({"tag":"number","bits":format!("{bits:016x}")})),
+            _ => Err(wasmtime::Error::msg("raw tree number storage")),
+        };
+    }
+    if count != 4 && count != 5 {
+        return Err(wasmtime::Error::msg("raw tree owner layout"));
+    }
+    let descriptor = owner.field(&mut *store, 0)?;
+    let descriptor_ref = descriptor.unwrap_anyref().unwrap();
+    let class = classes
+        .iter()
+        .find_map(|class| {
+            match wasmtime::Rooted::ref_eq(&*store, &class.descriptor, descriptor_ref) {
+                Ok(true) => Some(Ok(class)),
+                Ok(false) => None,
+                Err(e) => Some(Err(e)),
+            }
+        })
+        .transpose()?
+        .ok_or_else(|| wasmtime::Error::msg("raw tree unknown canonical descriptor"))?;
+    if !wasmtime::StructType::eq(&owner.ty(&*store)?, &class.owner_type) {
+        return Err(wasmtime::Error::msg("raw tree canonical owner type"));
+    }
+    for ancestor in path.iter() {
+        if wasmtime::Rooted::ref_eq(&*store, ancestor, reference)? {
+            return Err(wasmtime::Error::msg("raw tree cycle"));
+        }
+    }
+    path.push(reference.to_owned_rooted(&mut *store)?);
+    let result = (|| {
+        if class.name == "Error" {
+            assert_eq!(count, 5);
+            let descriptor = descriptor_ref.as_struct(&*store)?.unwrap();
+            assert_eq!(descriptor.fields(&mut *store)?.count(), 5);
+            assert_eq!(descriptor.field(&mut *store, 0)?.unwrap_i64(), 7);
+            let message = owner.field(&mut *store, 1)?;
+            let array = message.unwrap_anyref().unwrap().as_array(&*store)?.unwrap();
+            assert!(matches!(
+                array.ty(&*store)?.field_type().element_type(),
+                wasmtime::StorageType::I16
+            ));
+            let len = array.len(&*store)?;
+            if len > 4096 {
+                return Err(wasmtime::Error::msg("raw tree Error message bound"));
+            }
+            let mut units = Vec::with_capacity(len as usize);
+            for i in 0..len {
+                units.push(array.get(&mut *store, i)?.unwrap_i32() as u16);
+            }
+            for i in [2, 3] {
+                let field = owner.field(&mut *store, i)?;
+                assert_eq!(
+                    field
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&*store)?
+                        .unwrap()
+                        .get_u32(),
+                    0
+                );
+            }
+            return Ok(json!({"tag":"error","class":"Error","message":units}));
+        }
+        assert_eq!(count, 4);
+        let descriptor_storage = descriptor_ref.as_struct(&*store)?.unwrap();
+        assert_eq!(descriptor_storage.fields(&mut *store)?.count(), 5);
+        let schema_value = descriptor_storage.field(&mut *store, 1)?;
+        let schema = schema_value
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&*store)?
+            .unwrap();
+        let expected_fields = if class.name == "Reduced" { 1 } else { 5 };
+        assert_eq!(schema.len(&*store)?, expected_fields);
+        // Bound every metadata string before source_field collects its units.
+        for i in 0..expected_fields {
+            let name_value = schema.get(&mut *store, i)?;
+            let name = name_value
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&*store)?
+                .unwrap();
+            if name.len(&*store)? > 32
+                || !matches!(name.ty(&*store)?.element_type(), wasmtime::StorageType::I16)
+            {
+                return Err(wasmtime::Error::msg("raw tree bounded schema name"));
+            }
+        }
+        if class.name == "Reduced" {
+            let mut store = store.as_context_mut();
+            let field = source_field!(store, value, &["val"], "val");
+            return Ok(
+                json!({"tag":"reduced","value":raw_tree_decode(&mut store,&field,classes,path,remaining)?}),
+            );
+        }
+        let mut result = json!({"tag":"node","class":class.name});
+        for (source_name, json_name) in [
+            ("key", "key"),
+            ("val", "val"),
+            ("left", "left"),
+            ("right", "right"),
+            ("__hash", "hash"),
+        ] {
+            let mut store = store.as_context_mut();
+            let field = source_field!(store, value, NODE_FIELDS, source_name);
+            let observed = raw_tree_decode(&mut store, &field, classes, path, remaining)?;
+            if matches!(source_name, "left" | "right")
+                && !matches!(observed["tag"].as_str(), Some("nil" | "node"))
+            {
+                return Err(wasmtime::Error::msg("raw tree child class"));
+            }
+            result[json_name] = observed;
+        }
+        Ok(result)
+    })();
+    path.pop();
+    result
+}
+#[test]
+fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observations() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/tree-node-raw-cases.json"
+    ))
+    .unwrap();
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 52);
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut s = setup(phase);
+        s.eval("(def raw-tree-trace 0)").unwrap();
+        let mut classes = Vec::new();
+        for (name, source) in [
+            ("BlackNode", "(BlackNode. 0 0 nil nil nil)"),
+            ("RedNode", "(RedNode. 0 0 nil nil nil)"),
+            ("Reduced", "(reduced nil)"),
+            ("Error", "(suss.bootstrap/error \"anchor\")"),
+        ] {
+            let anchor = s.eval(source).unwrap();
+            let (descriptor, owner_type) = s
+                .inspect(&anchor, |mut store, value| {
+                    let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    let descriptor = owner
+                        .field(&mut store, 0)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .to_owned_rooted(&mut store)?;
+                    Ok((descriptor, owner.ty(&store)?))
+                })
+                .unwrap();
+            classes.push(RawTreeClass {
+                _anchor: anchor,
+                descriptor,
+                owner_type,
+                name,
+            });
+        }
+        // Decoder rejection controls are authored, not yet executed natively.
+        let unknown = s.eval("(js-obj)").unwrap();
+        assert!(
+            s.inspect(&unknown, |mut store, value| raw_tree_decode(
+                &mut store,
+                &value,
+                &classes,
+                &mut Vec::new(),
+                &mut 4096
+            ))
+            .is_err()
+        );
+        let cycle = s.eval("(BlackNode. 1 10 nil nil nil)").unwrap();
+        let non_tree_child = s.eval("false").unwrap();
+        let false_root = s
+            .inspect(&non_tree_child, |mut store, value| {
+                value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
+            })
+            .unwrap();
+        s.inspect(&cycle, |mut store, value| {
+            assert!(
+                raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 0).is_err()
+            );
+            let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = owner.field(&mut store, 1)?;
+            let slots = fields.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            let saved = slots.get(&mut store, 2)?;
+            slots.set(&mut store, 2, value.clone())?;
+            let rejected =
+                raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096).is_err();
+            slots.set(&mut store, 2, saved.clone())?;
+            assert!(rejected, "cycle must fail closed");
+            let false_value = Val::AnyRef(Some(false_root.to_rooted(&mut store)));
+            slots.set(&mut store, 2, false_value)?;
+            let rejected =
+                raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096).is_err();
+            slots.set(&mut store, 2, saved)?;
+            assert!(rejected, "non-tree child must fail closed");
+            Ok(())
+        })
+        .unwrap();
+        s.collect().unwrap();
+        s.inspect(&cycle, |mut store, value| {
+            raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096)
+        })
+        .unwrap();
+        for case in cases {
+            s.eval("(set! raw-tree-trace 0)").unwrap();
+            let value = match (
+                case["mode"].as_str().unwrap(),
+                s.eval(case["source"].as_str().unwrap()),
+            ) {
+                ("return", Ok(v)) | ("throw", Err(SessionError::Language(v))) => v,
+                (_, result) => panic!("{}: unexpected return/throw: {result:?}", case["id"]),
+            };
+            s.collect().unwrap();
+            let actual = s
+                .inspect(&value, |mut store, value| {
+                    raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096)
+                })
+                .unwrap();
+            assert_eq!(actual, case["expected"]["value"], "{}", case["id"]);
+            let trace = s.eval("raw-tree-trace").unwrap();
+            s.collect().unwrap();
+            assert_eq!(
+                format!("{:016x}", number_bits(&mut s, &trace)),
+                case["expected"]["trace"]["bits"].as_str().unwrap(),
+                "{} trace",
+                case["id"]
+            );
+            // Recovery is observed directly even after an original thrown value.
+            let recovery = s.eval("(+ 17 43)").unwrap();
+            assert_eq!(number_bits(&mut s, &recovery), 60.0_f64.to_bits());
+        }
     }
 }
