@@ -28,11 +28,14 @@ revisions (nil for a declared namespace without a source scope), and actual
 protocol method arities. Existing source graph construction/limits and declaration
 identity sharing remain in use. Ordinary macros retain their existing graph.
 False/nil or absent policy does not request the catalog; malformed policy fails.
-Policy rolls back with macro bindings during failed publication/reload.
+Policy rolls back with callable bindings when script staging fails during preparation.
+Namespace reload has a different boundary: definitions published before a later
+initializer failure remain published; a successful reload can replace them.
 
-Three authored consuming source-macro regressions check independently decoded
+Four authored consuming source-macro regressions check independently decoded
 namespace names/docs/overloads and retained results after GC, opt-in/malformed
-policy, and failed-reload restoration. They are UNCOMPILED/UNEXECUTED. These
+policy, failed-script staging rollback, and partial namespace publication followed
+by successful reload recovery. They are UNCOMPILED/UNEXECUTED. These
 transport keys are a Suss compiler interface, not an assertion of upstream
 analyzer-state schema equality. Canonical namespaces remain `suss.core`; no
 fabricated `cljs.core` revision or extern/module/warning state is inserted.

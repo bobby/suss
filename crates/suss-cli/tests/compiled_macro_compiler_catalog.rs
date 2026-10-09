@@ -125,7 +125,7 @@ fn compiler_catalog_policy_is_opt_in_and_invalid_metadata_keeps_old_macro() {
 }
 
 #[test]
-fn failed_macro_reload_restores_catalog_policy_with_the_original_binding() {
+fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() {
     let project = tempfile::tempdir().unwrap();
     let source = project.path().join("tools.sus");
     std::fs::write(&source, "(ns tools) (defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
@@ -143,7 +143,7 @@ fn failed_macro_reload_restores_catalog_policy_with_the_original_binding() {
     let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
     assert!(matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
     // The replacement publishes a false policy before a later runtime failure.
-    // The transaction must restore both its original callable and catalog flag.
+    // Namespace initialization is not a binding transaction: the replacement remains published.
     std::fs::write(
         &source,
         "(ns tools) (defmacro ^{:suss/compiler-catalog false} policy [] nil) (throw 73)",
@@ -157,6 +157,58 @@ fn failed_macro_reload_restores_catalog_policy_with_the_original_binding() {
             )
             .is_err()
     );
+    assert_eq!(session.current_namespace(), "user");
     let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
+    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
+    std::fs::write(&source, "(ns tools) (defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote [(:phase (:suss/compiler-catalog &env)) (:current (:suss/compiler-catalog &env))]))").unwrap();
+    session
+        .eval_with_macros(
+            "(ns user (:require-macros ^{:reload :reload} [tools :as t]))",
+            &mut macros,
+        )
+        .unwrap();
+    let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
+    let form = decode(&mut session, &value);
+    let Kind::Vector(items) = form.kind else {
+        panic!("recovered catalog facts")
+    };
+    assert_eq!(items.len(), 2);
+    assert!(
+        matches!(&items[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "runtime")
+    );
+    assert!(
+        matches!(&items[1].kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
+    );
+}
+
+#[test]
+fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    session.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(100_000_000);
+    macros.define("(defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
+    let error = suss_cli::portable_repl::evaluate_script_compiled(
+        &mut session,
+        &mut macros,
+        "(defmacro ^{:suss/compiler-catalog false} policy [] nil) record-catalog-unresolved",
+        None,
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("record-catalog-unresolved"));
+    assert_eq!(session.current_namespace(), "user");
+    assert_eq!(macros.current_namespace(), "user");
+    let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
+    assert!(
+        matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
+    );
+    suss_cli::portable_repl::evaluate_script_compiled(
+        &mut session,
+        &mut macros,
+        "(defmacro ^{:suss/compiler-catalog false} policy [] nil)",
+        None,
+    )
+    .unwrap();
+    let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
+    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
 }

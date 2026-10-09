@@ -23089,15 +23089,17 @@ An explicit qualified Boolean/nil macro metadata policy now controls materializi
 phase/current namespace, actual cross-namespace source revisions and actual
 protocol-signature arities into &env. Absent/false/nil keeps the ordinary graph.
 Malformed metadata fails before macro publication; macro transaction checkpoints
-include the policy and restore it with the original callable on failed reload.
+include the policy and restore it with the original callable on failed script staging.
+Namespace reload retains definitions published before a later initializer failure.
 No runtime-value guessing, host source evaluator, new shared ABI types or graph
 budget changes were introduced. Canonical namespaces are unchanged, and missing
 source scopes remain nil. The graph still enforces its existing recipe/form/unit
 limits; full-catalog cost has not been measured or certified.
 
-Three new compiled_macro_compiler_catalog Rust regressions are authored only:
+Four new compiled_macro_compiler_catalog Rust regressions are authored only:
 actual two-phase cross-namespace docs/overloads and retained old results after GC,
-opt-in/invalid metadata preservation, and failed reload policy restoration.
+opt-in/invalid metadata preservation, failed script-staging policy rollback, and
+partial namespace publication followed by successful reload recovery.
 They are UNCOMPILED/UNEXECUTED. No Cargo/bootstrap/push. Whole 46 analyzer dependency
 stanzas and original 12 macro forms, 340 selections, all 33 Boolean/raw helper
 cases, seven reify and fourteen iterator cases remain unchanged. Next dependency
@@ -23105,3 +23107,14 @@ group is the complete executing nominal macro helper graph and its required
 whole runtime functions; extern/module/warning/resolve fallback, scalar and map
 munge adapter consumption, anonymous publication/reify/nil-iter and full records
 remain pending rather than replaced with a subset.
+
+### Compiler catalog transaction-boundary correction — native pending
+
+Independent review of 2f4cd61 found the authored reload test incorrectly expected
+whole namespace rollback. Corrected it to retain the initialization failure,
+observe the already published nil-returning replacement after GC, and verify
+successful reload restores genuine runtime phase/current facts. A separate
+compiled-script preparation failure now exercises the actual binding checkpoint
+rollback, independently decoding the restored callable/catalog result after GC
+and then checking successful replacement. No production loader change, Cargo,
+bootstrap or native execution; all four consuming tests remain uncompiled.
