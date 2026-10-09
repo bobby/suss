@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0",
+  "replacement": "(def ^:private fn->comparator\n  \"Given a fn that might be boolean valued or a comparator,\n   return a fn that is a comparator.\"\n  (fn [f]\n    (if (= f compare)\n      compare\n      (fn [x y]\n        (let [r (f x y)]\n          (if (suss.bootstrap/number? r)\n            r\n            (if r -1 (if (f y x) 1 0))))))))",
+  "rationale": "Retain the complete pinned declaration, exact documentation, private metadata and every arity/branch. Expand defn explicitly to def/fn; preserve all live callable reads and ordered operands. Immutable number? and qualified comparison/zero?/+/inc macro paths reproduce call-site macro semantics. compare-indexed retains length-first ordering, ordered count/nth calls and four-argument recurrence; fn->comparator retains two live compare reads around live =, unchanged numeric return and reverse callback truthiness without a second number classification. Dependency gaps and native execution remain pending; no subset algorithm or acceptance claim."
+}

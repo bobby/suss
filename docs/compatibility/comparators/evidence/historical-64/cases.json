@@ -1,0 +1,829 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "nil-nil",
+      "source": "(compare nil nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "nil-false",
+      "source": "(compare nil false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "false-nil",
+      "source": "(compare false nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nil-undefined",
+      "source": "(compare nil js/undefined)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "undefined-nil",
+      "source": "(compare js/undefined nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "undefined-undefined",
+      "source": "(compare js/undefined js/undefined)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "number-less",
+      "source": "(compare 2 10)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "number-greater",
+      "source": "(compare 10 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "number-equal",
+      "source": "(compare 2 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "signed-zero",
+      "source": "(compare -0.0 0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "nan-self",
+      "source": "(compare js/NaN js/NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "nan-left",
+      "source": "(compare js/NaN 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "nan-right",
+      "source": "(compare 2 js/NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "infinity",
+      "source": "(compare js/Infinity (- js/Infinity))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "false-true",
+      "source": "(compare false true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "true-false",
+      "source": "(compare true false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "string-prefix",
+      "source": "(compare \"a\" \"aa\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "string-numeric-text",
+      "source": "(compare \"2\" \"10\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "utf16-astral-bmp",
+      "source": "(compare \"\\ud83d\\ude00\" \"\\ue000\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "utf16-lone",
+      "source": "(compare \"\\ud800\" \"\\ud801\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "array-empty",
+      "source": "(compare (array) (array))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "array-number-lex",
+      "source": "(compare (array 2) (array 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "array-multiple-lex",
+      "source": "(compare (array 1 2) (array 1 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "array-nil-undefined",
+      "source": "(compare (array nil) (array js/undefined))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "array-boolean-lex",
+      "source": "(compare (array true) (array false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "array-nan-lex",
+      "source": "(compare (array js/NaN) (array js/Infinity))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "array-nested",
+      "source": "(compare (array (array 2 3)) (array 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "array-hole",
+      "source": "(compare (js/Array. 1) (array nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "array-cycle",
+      "source": "(let [a (array)] (aset a 0 a) (compare a (array)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "custom-comparable",
+      "source": "(compare (CompareProbe. 17) 5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "custom-comparable-false",
+      "source": "(compare (CompareProbe. 17) false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "same-object-bypasses-dispatch",
+      "source": "(let [x (CompareProbe. 17)] (reset! effects []) (compare x x) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": []
+      }
+    },
+    {
+      "id": "dispatch-before-type",
+      "source": "(do (reset! effects []) (compare (CompareProbe. 17) 5) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fn-compare-identity",
+      "source": "(identical? (cljs.core/fn->comparator compare) compare)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-numeric-negative",
+      "source": "((cljs.core/fn->comparator (fn [x y] -7)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c01c000000000000"
+      }
+    },
+    {
+      "id": "fn-numeric-zero",
+      "source": "((cljs.core/fn->comparator (fn [x y] -0.0)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "fn-numeric-nan",
+      "source": "(js/isNaN ((cljs.core/fn->comparator (fn [x y] js/NaN)) 2 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-numeric-infinity",
+      "source": "((cljs.core/fn->comparator (fn [x y] js/Infinity)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "fn-true",
+      "source": "((cljs.core/fn->comparator (fn [x y] true)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "fn-false",
+      "source": "((cljs.core/fn->comparator (fn [x y] false)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "fn-nil",
+      "source": "((cljs.core/fn->comparator (fn [x y] nil)) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "fn-empty-string-truthy",
+      "source": "((cljs.core/fn->comparator (fn [x y] \"\")) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "fn-empty-array-truthy",
+      "source": "((cljs.core/fn->comparator (fn [x y] (array))) 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "fn-reverse-number-zero-truthy",
+      "source": "(let [f (fn [x y] (if (< x y) false 0))] ((cljs.core/fn->comparator f) 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "fn-reverse-nan-truthy",
+      "source": "(let [f (fn [x y] (if (< x y) false js/NaN))] ((cljs.core/fn->comparator f) 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "fn-predicate-reversal",
+      "source": "(do (reset! effects []) (let [f (fn [x y] (swap! effects conj x y) (< x y))] ((cljs.core/fn->comparator f) 3 2)) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fn-numeric-once",
+      "source": "(do (reset! effects []) (let [f (fn [x y] (swap! effects conj x y) 0)] ((cljs.core/fn->comparator f) 3 2)) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-coercion-both-relations",
+      "source": "(let [a (array (CoerceProbe. 1 \"a\")) b (array (CoerceProbe. 2 \"z\"))] (reset! effects []) (compare a b) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-coercion-first-relation",
+      "source": "(let [a (array (CoerceProbe. 1 \"z\")) b (array (CoerceProbe. 2 \"a\"))] (reset! effects []) (compare a b) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "number-string-error",
+      "source": "(try (compare 1 \"1\") (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              49,
+              32,
+              116,
+              111,
+              32,
+              49
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "string-number-error",
+      "source": "(try (compare \"1\" 1) (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              49,
+              32,
+              116,
+              111,
+              32,
+              49
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "boolean-number-error",
+      "source": "(try (compare false 0) (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              102,
+              97,
+              108,
+              115,
+              101,
+              32,
+              116,
+              111,
+              32,
+              48
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-string-error",
+      "source": "(try (compare (array 1 2) \"x\") (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              49,
+              44,
+              50,
+              32,
+              116,
+              111,
+              32,
+              120
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "number-array-error",
+      "source": "(try (compare 1 (array 2 3)) (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              49,
+              32,
+              116,
+              111,
+              32,
+              50,
+              44,
+              51
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "object-error",
+      "source": "(try (compare (UncomparableProbe. \"left\") (UncomparableProbe. \"right\")) (catch js/Error ex [(instance? js/Error ex) (.-message ex)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              67,
+              97,
+              110,
+              110,
+              111,
+              116,
+              32,
+              99,
+              111,
+              109,
+              112,
+              97,
+              114,
+              101,
+              32,
+              108,
+              101,
+              102,
+              116,
+              32,
+              116,
+              111,
+              32,
+              114,
+              105,
+              103,
+              104,
+              116
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "error-format-order",
+      "source": "(do (reset! effects []) (try (compare (CoerceProbe. 1 \"left\") (CoerceProbe. 2 \"right\")) (catch js/Error ex nil)) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "primitive-relations-ignore-public-rebind",
+      "source": "(with-redefs [cljs.core/> (fn [x y] false) cljs.core/< (fn [x y] false)] (compare 2 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "primitive-predicates-ignore-public-rebind",
+      "source": "(with-redefs [cljs.core/number? (fn [x] false) cljs.core/string? (fn [x] false) cljs.core/identical? (fn [x y] false) cljs.core/nil? (fn [x] false) cljs.core/true? (fn [x] false) cljs.core/false? (fn [x] false)] [(compare 2 10) (compare \"a\" \"z\") (compare false true) (compare nil 2)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "bff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "bff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "bff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "bff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-predicate-stays-live",
+      "source": "(with-redefs [cljs.core/array? (fn [x] false)] (try (compare (array 2) (array 10)) (catch js/Error ex (.-message ex))))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          67,
+          97,
+          110,
+          110,
+          111,
+          116,
+          32,
+          99,
+          111,
+          109,
+          112,
+          97,
+          114,
+          101,
+          32,
+          50,
+          32,
+          116,
+          111,
+          32,
+          49,
+          48
+        ]
+      }
+    },
+    {
+      "id": "type-function-stays-live",
+      "source": "(with-redefs [cljs.core/type (fn [x] nil)] (compare \"2\" 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "compare-var-stays-live-for-wrapper",
+      "source": "(let [f (fn [x y] 123)] (with-redefs [cljs.core/compare f] (identical? (cljs.core/fn->comparator f) f)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "custom-thrown-payload",
+      "source": "(try (compare (ThrowingCompareProbe.) 5) (catch :default ex ex))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "indexed-length-before-elements",
+      "source": "(compare [100] [0 0])",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "indexed-equal-length-lex",
+      "source": "(compare [2 3] [2 10])",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+PASS closed comparator corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/fn->comparator is not public at line 2 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 3 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 4 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 60 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 64 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+PASS 49 pinned comparator candidates

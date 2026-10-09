@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "7b384fa9c7562b09535f44985e7b9cffa8b35b19e1154d3cacda6086cddbd531",
-  "reviews-sha256": "849144a752451bab22f0a806be0b34e4566be7546b62fa5f40ed6fe9755b73ee",
+  "recipe-sha256": "5fa3338978f38c04999ece1ea739d700685f376ff019504f01e3896bc5252d32",
+  "reviews-sha256": "7a97f42baa98e3d1ba7900adaa987e6295390a74afe138c8642aed52b36a7fb0",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10329,7 +10329,7 @@
       "extracted": "extracted/0333.cljs",
       "extracted-sha256": "29649717e40ecd5a5f30c654d67bbc980299c9879f99858701e17a583f3110c0",
       "patch": "docs/compatibility/patches/sorted-type.json",
-      "patch-sha256": "a86830abe46b2b094503133636a182d5285384aa61bdd9b2b09c9fca13644496",
+      "patch-sha256": "4fd813fde878b41c715472c897130caafe6ba497848f24cf1965b70c393da69e",
       "adapted-form-sha256": "25fb6c750b37779953f64a9ab68334758d05ab4a669f17ebfdfad4c445e44f84",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
@@ -11101,12 +11101,114 @@
         "crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)",
         "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"
       ]
+    },
+    {
+      "id": "runtime:compare:2499",
+      "name": "compare",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2499,
+      "end-line": 2523,
+      "byte-start": 67191,
+      "byte-end": 67981,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9f7d9f48983e13389705d5883db9910a21146c05b3d16c530cbef44dcd05b7f6",
+      "extracted": "extracted/0357.cljs",
+      "extracted-sha256": "cdc08b5c9eafaa9ca8018c15e4a3ade8772da8b23bc2b5bfbb5bf79dcb9c2b99",
+      "patch": "docs/compatibility/patches/comparator-compare.json",
+      "patch-sha256": "e6927336d3a0cb3071197659070822cdde92aa05927afc809607826e2648ac4b",
+      "adapted-form-sha256": "4779ab80edcb9138423ada526744ab37dc4c61cdaa9fc3dd98edee8947eb8a7d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn",
+        "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?",
+        "IComparable/satisfies?/-compare",
+        "live type/array?/str_/count/nth/=/compare",
+        "ordered runtime relations and Array join/ToPrimitive",
+        "complete constructor/property and coercion contracts (pending)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/comparator-cases.json",
+        "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:compare-indexed:2525",
+      "name": "compare-indexed",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2525,
+      "end-line": 2539,
+      "byte-start": 67983,
+      "byte-end": 68384,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9eaf284492de47c9f9e999847036bacf8a6cf5f04410636c47c01fe2a140ea78",
+      "extracted": "extracted/0358.cljs",
+      "extracted-sha256": "3b1a8b9b7a7393a1b16ed6d4f6c52ccfa8336de755afc50124c2cb7c296d9db4",
+      "patch": "docs/compatibility/patches/comparator-compare-indexed.json",
+      "patch-sha256": "d2c3fd2c8aa593ed97d3eb43770af395ef86d6c52dd7500cbd3bc6697a379c59",
+      "adapted-form-sha256": "19f853e4e03d219bbfa30d1fad59a483d08d0fe5b12f834e3b20e590569f8f63",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn",
+        "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?",
+        "IComparable/satisfies?/-compare",
+        "live type/array?/str_/count/nth/=/compare",
+        "ordered runtime relations and Array join/ToPrimitive",
+        "complete constructor/property and coercion contracts (pending)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/comparator-cases.json",
+        "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:fn->comparator:2541",
+      "name": "fn->comparator",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2541,
+      "end-line": 2553,
+      "byte-start": 68386,
+      "byte-end": 68691,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0",
+      "extracted": "extracted/0359.cljs",
+      "extracted-sha256": "a5418eda5c2b389fd2457193f147926c4fb89b6cfe9f267945b883dd40bcff08",
+      "patch": "docs/compatibility/patches/comparator-fn-comparator.json",
+      "patch-sha256": "9fd6e49074147a6e69117ee54023a6310ac73853dd0bf343de6f67af2341652f",
+      "adapted-form-sha256": "cd9c4675b880e6a06446f11b1bfc77a5a64f6d37b89f9dc9a7b75a741e98bded",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn",
+        "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?",
+        "IComparable/satisfies?/-compare",
+        "live type/array?/str_/count/nth/=/compare",
+        "ordered runtime relations and Array join/ToPrimitive",
+        "complete constructor/property and coercion contracts (pending)"
+      ],
+      "semantic-tests": [
+        "tests/oracle/comparator-cases.json",
+        "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
+      "sha256": "a30e40e2d98db895aa2e3bd7730fd7e84389afb32823d356c7be5e0277e4a7a8"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -11477,6 +11579,9 @@
     "extracted/0354.cljs": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
     "extracted/0355.cljs": "dd494b6a0a6c8737c99a6409bf4ed490819f0b1dc2a6c7415b3da4bb3adbcaf2",
     "extracted/0356.cljs": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
-    "suss/core.sus": "3ea758ec66db9dbe6ba2f1b409e0f5b1037cc5b764512e0c1e3628b341a9291c"
+    "extracted/0357.cljs": "cdc08b5c9eafaa9ca8018c15e4a3ade8772da8b23bc2b5bfbb5bf79dcb9c2b99",
+    "extracted/0358.cljs": "3b1a8b9b7a7393a1b16ed6d4f6c52ccfa8336de755afc50124c2cb7c296d9db4",
+    "extracted/0359.cljs": "a5418eda5c2b389fd2457193f147926c4fb89b6cfe9f267945b883dd40bcff08",
+    "suss/core.sus": "ab754cb0dee2d59bab76690833ad3d948b232404823828292cf478f6545b05f3"
   }
 }

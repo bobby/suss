@@ -1788,12 +1788,27 @@
       "id": "runtime:str:3129",
       "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
       "patch": "docs/compatibility/patches/record-public-str.json"
+    },
+    {
+      "id": "runtime:compare:2499",
+      "source-sha256": "9f7d9f48983e13389705d5883db9910a21146c05b3d16c530cbef44dcd05b7f6",
+      "patch": "docs/compatibility/patches/comparator-compare.json"
+    },
+    {
+      "id": "runtime:compare-indexed:2525",
+      "source-sha256": "9eaf284492de47c9f9e999847036bacf8a6cf5f04410636c47c01fe2a140ea78",
+      "patch": "docs/compatibility/patches/comparator-compare-indexed.json"
+    },
+    {
+      "id": "runtime:fn->comparator:2541",
+      "source-sha256": "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0",
+      "patch": "docs/compatibility/patches/comparator-fn-comparator.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
+      "sha256": "a30e40e2d98db895aa2e3bd7730fd7e84389afb32823d356c7be5e0277e4a7a8"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

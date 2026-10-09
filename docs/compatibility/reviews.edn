@@ -4432,4 +4432,37 @@
   "macro:str_:852" {:source-sha256 "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
 
   "macro:str:877" {:source-sha256 "b55c632681cd22fa6b2f13c9dac4b5f4b5d142d0aebb0cf9f5a92c590d266032" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
+  "runtime:compare:2499"
+  {:source-sha256 "9f7d9f48983e13389705d5883db9910a21146c05b3d16c530cbef44dcd05b7f6"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, metadata, every arity and branch. Explicit def/fn expands defn; primitive macro tests and arithmetic use immutable bootstrap/qualified macro paths. All source-level callable dependencies remain live, including type, array?, -compare, =, compare, count, nth and str_. Closure defaultCompare is re-expressed as an original private binary > then < helper with repeated ordered conversions, never a scalar gate or subtraction. Error macro expansion calls live single-argument str_ for x then y, then joins the four original macro pieces with an empty separator using canonical Array literal storage, preserving later conversion of arbitrary values returned by a rebound str_. No branch is omitted. Runtime dependency gaps (constructor overrides, string conversion defaults/prototypes, inherited Array indices, exotic hooks and exact TypeError) remain explicit; generated source is not executed acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-compare.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-indexed:2525"
+  {:source-sha256 "9eaf284492de47c9f9e999847036bacf8a6cf5f04410636c47c01fe2a140ea78"
+   :visibility :private
+   :arities {:fixed [2 4] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, private metadata and every arity/branch. Expand defn explicitly to def/fn; preserve all live callable reads and ordered operands. Immutable number? and qualified comparison/zero?/+/inc macro paths reproduce call-site macro semantics. compare-indexed retains length-first ordering, ordered count/nth calls and four-argument recurrence; fn->comparator retains two live compare reads around live =, unchanged numeric return and reverse callback truthiness without a second number classification. Dependency gaps and native execution remain pending; no subset algorithm or acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-compare-indexed.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:fn->comparator:2541"
+  {:source-sha256 "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, private metadata and every arity/branch. Expand defn explicitly to def/fn; preserve all live callable reads and ordered operands. Immutable number? and qualified comparison/zero?/+/inc macro paths reproduce call-site macro semantics. compare-indexed retains length-first ordering, ordered count/nth calls and four-argument recurrence; fn->comparator retains two live compare reads around live =, unchanged numeric return and reverse callback truthiness without a second number classification. Dependency gaps and native execution remain pending; no subset algorithm or acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-fn-comparator.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
 }}

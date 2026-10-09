@@ -91,6 +91,9 @@
 (declare vector some)
 
 (declare str bootstrap-string-buffer BootstrapStringBuffer)
+
+;; Comparator forms are loaded after their mutually referenced bindings.
+(declare compare compare-indexed fn->comparator)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -6141,6 +6144,68 @@
      (if more
        (recur (.append sb (str (first more))) (next more))
        (.toString sb))))))
+
+(def ^number compare
+  "Comparator. Returns a negative number, zero, or a positive number
+  when x is logically 'less than', 'equal to', or 'greater than'
+  y. Uses IComparable if available and google.array.defaultCompare for objects
+ of the same type and special-cases nil to be less than any other object."
+  (let [default-compare__ (fn [a b]
+                           (if (cljs.core/> a b)
+                             1
+                             (if (cljs.core/< a b) -1 0)))]
+    (fn [x y]
+      (cond
+        (cljs.core/== x y) 0
+        (suss.bootstrap/nil? x) -1
+        (suss.bootstrap/nil? y) 1
+        (suss.bootstrap/number? x)
+        (if (suss.bootstrap/number? y)
+          (default-compare__ x y)
+          (let [compare-x-text__ (str_ x)
+                        compare-y-text__ (str_ y)]
+                    (throw (suss.bootstrap/error
+                             (.join (cljs.core/array "Cannot compare " compare-x-text__
+                                                    " to " compare-y-text__) "")))))
+        (satisfies? IComparable x) (-compare x y)
+        :else
+        (if (and (or (suss.bootstrap/string? x) (array? x)
+                     (cljs.core/== x true) (cljs.core/== x false))
+                 (cljs.core/== (type x) (type y)))
+          (default-compare__ x y)
+          (let [compare-x-text__ (str_ x)
+                        compare-y-text__ (str_ y)]
+                    (throw (suss.bootstrap/error
+                             (.join (cljs.core/array "Cannot compare " compare-x-text__
+                                                    " to " compare-y-text__) "")))))))))
+
+(def ^:private compare-indexed
+  "Compare indexed collection."
+  (fn
+    ([xs ys]
+      (let [xl (count xs) yl (count ys)]
+        (cond
+          (cljs.core/< xl yl) -1
+          (cljs.core/> xl yl) 1
+          (cljs.core/== xl 0) 0
+          :else (compare-indexed xs ys xl 0))))
+    ([xs ys len n]
+      (let [d (compare (nth xs n) (nth ys n))]
+        (if (and (cljs.core/zero? d) (cljs.core/< (cljs.core/+ n 1) len))
+          (recur xs ys len (cljs.core/inc n))
+          d)))))
+
+(def ^:private fn->comparator
+  "Given a fn that might be boolean valued or a comparator,
+   return a fn that is a comparator."
+  (fn [f]
+    (if (= f compare)
+      compare
+      (fn [x y]
+        (let [r (f x y)]
+          (if (suss.bootstrap/number? r)
+            r
+            (if r -1 (if (f y x) 1 0))))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

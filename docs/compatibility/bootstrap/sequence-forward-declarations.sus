@@ -80,3 +80,6 @@
 (declare vector some)
 
 (declare str bootstrap-string-buffer BootstrapStringBuffer)
+
+;; Comparator forms are loaded after their mutually referenced bindings.
+(declare compare compare-indexed fn->comparator)
