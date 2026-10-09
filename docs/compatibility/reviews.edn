@@ -4465,4 +4465,28 @@
    :adaptation-path "docs/compatibility/patches/comparator-fn-comparator.json"
    :alternative nil
    :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ci-reduce:1545"
+  {:source-sha256 "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["macro:defn-" "macro:zero?/< /inc" "ICounted/-count canonical dispatcher; pinned not-native call" "IIndexed/-nth canonical dispatcher; pinned not-native call" "live reduced?/deref" "reducer callback"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration, exact docstring, both arities, not-native argument metadata and every branch. Expand defn- to private def/fn; qualify immutable zero?/</inc call-site macro lowering. Retain dynamic protocol method dispatch through definition-time canonical -count/-nth dispatchers, matching the pinned not-native direct-method lowering and preventing added mutable public dispatcher dependencies; keep live reduced? and deref, empty zero-argument reducer call, first-element seed and ordered reducer invocation, early reduced dereference and recurrence. No seq substitute, reduction normalization, mutable public arithmetic/comparison dependency or omitted branch. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-symbols:1115"
+  {:source-sha256 "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn-/cond/and/if-not/identical?/==" "live not" "stored identifier fields" "Closure defaultCompare algorithm (original re-expression)" "immutable >/< lowering"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration and every identity/namespace/name branch with original field-read and conversion order. Expand defn- to private def/let/fn; strict identity and numeric == use qualified immutable lowering. Re-express Closure defaultCompare with an original private lexical > then < helper using immutable qualified comparison lowering and repeated ordered conversion. Never call public compare or capture mutable >/< cells. Namespace presence, live not call, if-not branch and namespace tie/name fallback are preserved. No IComparable registrations are substituted; all seven targets remain deferred until BlackNode/RedNode exist. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-keywords:3462"
+  {:source-sha256 "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn-/cond/and/if-not/identical?/==" "live not" "stored identifier fields" "Closure defaultCompare algorithm (original re-expression)" "immutable >/< lowering"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration and every identity/namespace/name branch with original field-read and conversion order. Expand defn- to private def/let/fn; strict identity and numeric == use qualified immutable lowering. Re-express Closure defaultCompare with an original private lexical > then < helper using immutable qualified comparison lowering and repeated ordered conversion. Never call public compare or capture mutable >/< cells. Namespace presence, live not call, if-not branch and namespace tie/name fallback are preserved. No IComparable registrations are substituted; all seven targets remain deferred until BlackNode/RedNode exist. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
 }}

@@ -6206,6 +6206,64 @@
           (if (suss.bootstrap/number? r)
             r
             (if r -1 (if (f y x) 1 0))))))))
+
+(def ^:private ci-reduce
+  "Accepts any collection which satisfies the ICount and IIndexed protocols and
+reduces them without incurring seq initialization"
+  (let [-count -count -nth -nth]
+    (fn
+  ([^not-native cicoll f]
+     (let [cnt (-count cicoll)]
+       (if (cljs.core/zero? cnt)
+         (f)
+         (loop [val (-nth cicoll 0), n 1]
+           (if (cljs.core/< n cnt)
+             (let [nval (f val (-nth cicoll n))]
+               (if (reduced? nval)
+                 @nval
+                 (recur nval (cljs.core/inc n))))
+             val)))))
+  ([^not-native cicoll f val]
+     (let [cnt (-count cicoll)]
+       (loop [val val, n 0]
+         (if (cljs.core/< n cnt)
+           (let [nval (f val (-nth cicoll n))]
+             (if (reduced? nval)
+               @nval
+               (recur nval (cljs.core/inc n))))
+           val)))))))
+
+(def ^:private compare-symbols
+  (let [default-compare__ (fn [a b]
+                           (if (cljs.core/> a b) 1
+                             (if (cljs.core/< a b) -1 0)))]
+    (fn [a b]
+  (cond
+   (cljs.core/== (.-str a) (.-str b)) 0
+   (and (not (.-ns a)) (.-ns b)) -1
+   (.-ns a) (if-not (.-ns b)
+              1
+              (let [nsc (default-compare__ (.-ns a) (.-ns b))]
+                (if (cljs.core/== 0 nsc)
+                  (default-compare__ (.-name a) (.-name b))
+                  nsc)))
+   :default (default-compare__ (.-name a) (.-name b))))))
+
+(def ^:private compare-keywords
+  (let [default-compare__ (fn [a b]
+                           (if (cljs.core/> a b) 1
+                             (if (cljs.core/< a b) -1 0)))]
+    (fn [a b]
+  (cond
+   (cljs.core/== (.-fqn a) (.-fqn b)) 0
+   (and (not (.-ns a)) (.-ns b)) -1
+   (.-ns a) (if-not (.-ns b)
+              1
+              (let [nsc (default-compare__ (.-ns a) (.-ns b))]
+                (if (cljs.core/== 0 nsc)
+                  (default-compare__ (.-name a) (.-name b))
+                  nsc)))
+   :default (default-compare__ (.-name a) (.-name b))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

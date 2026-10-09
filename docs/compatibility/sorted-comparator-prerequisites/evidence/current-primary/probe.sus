@@ -1,0 +1,12 @@
+(deftype SortedIndexedProbe [values trace]
+  ICounted
+  (-count [_] (swap! trace conj :count) (count values))
+  IIndexed
+  (-nth [_ n] (swap! trace conj n) (nth values n))
+  (-nth [_ n nf] (swap! trace conj n) (nth values n nf)))
+(deftype SortedThrowingCount [trace]
+  ICounted
+  (-count [_] (swap! trace conj :count) (throw 73))
+  IIndexed
+  (-nth [_ n] (swap! trace conj n) 0)
+  (-nth [_ n nf] (swap! trace conj n) nf))

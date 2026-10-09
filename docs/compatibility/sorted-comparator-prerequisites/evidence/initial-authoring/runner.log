@@ -1,0 +1,10 @@
+PASS closed comparator corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/ci-reduce is not public at line 2 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-symbols is not public at line 3 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-keywords is not public at line 4 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-sorted-comparator-prerequisites/scripts/sorted_prerequisite_oracle.py", line 72, in <module>
+    {'generate': generate, 'check': check, 'compare': compare}[sys.argv[1]]()
+  File "/private/tmp/suss-m4-sorted-comparator-prerequisites/scripts/sorted_prerequisite_oracle.py", line 68, in compare
+    raise ValueError('complete ordered observations differ')
+ValueError: complete ordered observations differ

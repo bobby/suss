@@ -1803,6 +1803,21 @@
       "id": "runtime:fn->comparator:2541",
       "source-sha256": "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0",
       "patch": "docs/compatibility/patches/comparator-fn-comparator.json"
+    },
+    {
+      "id": "runtime:ci-reduce:1545",
+      "source-sha256": "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json"
+    },
+    {
+      "id": "runtime:compare-symbols:1115",
+      "source-sha256": "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json"
+    },
+    {
+      "id": "runtime:compare-keywords:3462",
+      "source-sha256": "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json"
     }
   ],
   "loader": {

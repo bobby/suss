@@ -1,0 +1,12 @@
+PASS closed sorted prerequisite corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/ci-reduce is not public at line 2 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-symbols is not public at line 3 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-keywords is not public at line 4 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+
+/private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/out/sorted-prerequisites-cljs/suss_oracle/sorted_prerequisites.js:570
+throw (73);
+^
+73
+(Use `node --trace-uncaught ...` to show where the exception was thrown)
+
+Node.js v24.5.0

@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "5fa3338978f38c04999ece1ea739d700685f376ff019504f01e3896bc5252d32",
-  "reviews-sha256": "7a97f42baa98e3d1ba7900adaa987e6295390a74afe138c8642aed52b36a7fb0",
+  "recipe-sha256": "f5ab66390f7bbc42803d2bf15e3038ee3805c78569617ac77eb4df138765cb71",
+  "reviews-sha256": "71ebacf42e88ca98afa958fad754c3edb3aba9da9dca18f64713fa3cd7a0af31",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -11203,6 +11203,106 @@
         "tests/oracle/comparator-cases.json",
         "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"
       ]
+    },
+    {
+      "id": "runtime:ci-reduce:1545",
+      "name": "ci-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1545,
+      "end-line": 1567,
+      "byte-start": 44583,
+      "byte-end": 45332,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454",
+      "extracted": "extracted/0360.cljs",
+      "extracted-sha256": "337ef524a07839267e3565a291f9f70096f90eae182d7bc8a5c1d3f2d5887907",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json",
+      "patch-sha256": "8f76bf57505f509705433430bb991754fd51f04c905f05b9b6e73571091c8bea",
+      "adapted-form-sha256": "2356c6037509deaf5db5cc0d41adb4c0dc66f4399d53ba457d989f57b34217c6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn-",
+        "macro:zero?/< /inc",
+        "ICounted/-count canonical dispatcher; pinned not-native call",
+        "IIndexed/-nth canonical dispatcher; pinned not-native call",
+        "live reduced?/deref",
+        "reducer callback"
+      ],
+      "semantic-tests": [
+        "tests/oracle/sorted-prerequisite-cases.json",
+        "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:compare-symbols:1115",
+      "name": "compare-symbols",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1115,
+      "end-line": 1125,
+      "byte-start": 33439,
+      "byte-end": 33841,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f",
+      "extracted": "extracted/0361.cljs",
+      "extracted-sha256": "50be9605c7717f1d3e8dfee335020289beeae4fcf593511d9a1edf702e187eb5",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json",
+      "patch-sha256": "84c0d33115d5a491a0c9ef160f4202d771b3034ed5c3cb5eb36d64fb41fc6f30",
+      "adapted-form-sha256": "04b57dd9f4c9717e79c8e14518fed2e05896be1d6785e2b1411ed4d22e1a1dc1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn-/cond/and/if-not/identical?/==",
+        "live not",
+        "stored identifier fields",
+        "Closure defaultCompare algorithm (original re-expression)",
+        "immutable >/< lowering"
+      ],
+      "semantic-tests": [
+        "tests/oracle/sorted-prerequisite-cases.json",
+        "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"
+      ]
+    },
+    {
+      "id": "runtime:compare-keywords:3462",
+      "name": "compare-keywords",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3462,
+      "end-line": 3472,
+      "byte-start": 91199,
+      "byte-end": 91602,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b",
+      "extracted": "extracted/0362.cljs",
+      "extracted-sha256": "39d732ae33e91e8313e9225a8eff68b5af8066ebf7d26de4ba4369b3e5764b63",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json",
+      "patch-sha256": "66e2d09e26a372574cfafe9fd6d54cf68e8e39ba78864ffcb18eceaa8a9f200c",
+      "adapted-form-sha256": "cea916358d1e182f7046c664eb18532227a33e543cbd94cee3e9b28d2858d4f0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn-/cond/and/if-not/identical?/==",
+        "live not",
+        "stored identifier fields",
+        "Closure defaultCompare algorithm (original re-expression)",
+        "immutable >/< lowering"
+      ],
+      "semantic-tests": [
+        "tests/oracle/sorted-prerequisite-cases.json",
+        "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"
+      ]
     }
   ],
   "loader": {
@@ -11582,6 +11682,9 @@
     "extracted/0357.cljs": "cdc08b5c9eafaa9ca8018c15e4a3ade8772da8b23bc2b5bfbb5bf79dcb9c2b99",
     "extracted/0358.cljs": "3b1a8b9b7a7393a1b16ed6d4f6c52ccfa8336de755afc50124c2cb7c296d9db4",
     "extracted/0359.cljs": "a5418eda5c2b389fd2457193f147926c4fb89b6cfe9f267945b883dd40bcff08",
-    "suss/core.sus": "ab754cb0dee2d59bab76690833ad3d948b232404823828292cf478f6545b05f3"
+    "extracted/0360.cljs": "337ef524a07839267e3565a291f9f70096f90eae182d7bc8a5c1d3f2d5887907",
+    "extracted/0361.cljs": "50be9605c7717f1d3e8dfee335020289beeae4fcf593511d9a1edf702e187eb5",
+    "extracted/0362.cljs": "39d732ae33e91e8313e9225a8eff68b5af8066ebf7d26de4ba4369b3e5764b63",
+    "suss/core.sus": "ffd990e8a4c489fe01fe5d9811cea54baa88581341e6d59f2d281a3d98f2406c"
   }
 }
