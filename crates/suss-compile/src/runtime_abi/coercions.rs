@@ -84,6 +84,20 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
         LocalGet(0),
         Return,
         End,
+        // Function conversion remains unsupported by the prototype. Preserve
+        // the existing numeric diagnostic instead of leaking a property-kernel
+        // nominal error. Own conversion hooks are not supported on Functions;
+        // ordinary object hooks below retain their ordered lookup/invocation.
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        LocalGet(1),
+        I32Eqz,
+        I32And,
+        If(BlockType::Empty),
+    ];
+    code.extend(numeric::unsupported_object_error());
+    code.extend([
+        End,
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(7)),
         LocalGet(0),
@@ -91,7 +105,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
         I32Or,
         I32Eqz,
         If(BlockType::Empty),
-    ];
+    ]);
     nominal::error(&mut code);
     code.push(End);
     // Number/default hint uses valueOf then toString; string hint reverses them.

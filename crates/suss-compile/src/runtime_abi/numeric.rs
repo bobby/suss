@@ -233,11 +233,19 @@ fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
         RefI31,
         I32Const(0),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0),
+        RefI31,
+        StructNew(8),
         Throw(0),
     ]);
     code
 }
+// Keep the established numeric unsupported-boundary descriptor/message shared
+// with the ordered conversion adapter until Function conversion is implemented.
+pub(super) fn unsupported_object_error() -> Vec<Instruction<'static>> {
+    error("Unsupported arithmetic object coercion", 4)
+}
+
 fn text(value: &str) -> Vec<Instruction<'static>> {
     let units = value.encode_utf16().collect::<Vec<_>>();
     let mut code = units
@@ -261,11 +269,15 @@ fn check(
     code
 }
 
-pub(super) fn intrinsics(b: &mut Builder, helper: Info, coercion_types: coercions::Types) -> [u32; 5] {
+pub(super) fn intrinsics(
+    b: &mut Builder,
+    helper: Info,
+    coercion_types: coercions::Types,
+) -> [u32; 5] {
     use Instruction::*;
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
-    let unsupported = error("Unsupported arithmetic object coercion", 4);
+    let unsupported = unsupported_object_error();
     let allocation = error("Numeric conversion scratch allocation failed", 5);
     let byte = MemArg {
         offset: 0,
