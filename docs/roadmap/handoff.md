@@ -22140,3 +22140,19 @@ CLI90448 terminal0; source primary8091 terminal0 at the same 9dddc89 source.
 Fresh pinned binary64 9/13 and current CLI printed9/13 match; retained post226
 source-primary log and CLJS/native observations. Packaging fresh content identity
 (identity-post226.json), then final committed-head review/full baseline/CI.
+
+## PR #227 rebase after merged #228 — 2026-10-08
+
+Rebased onto origin/main c46cee5 at Bobby’s request. The only conflict was
+this handoff: preserved both complete additive sections (167 main lines and
+144 MLIR lines). All experiment files remain byte-identical to reviewed
+f7b40fb; latest main brings #228’s lazy transformations and bootstrap changes.
+The f7b40fb required full baseline completed with exit0:1546passed/0failed/
+41ignored; receipt /private/tmp/suss-m4-mlir-baseline-f7b40fb-receipt.json,
+log SHA256 4dbfe721f07288e945fdadeab05e41eac3616a09fc8c77a6f4cea4c09f421f1d.
+That review/baseline/CI justified promotion before this rebase, but does not
+certify the new head. The retained identity-post226 check correctly rejects
+changed bootstrap content; keep this evidence historical rather than implying
+a current-base pass. Independent rebase review, focused gates and the required
+full baseline/final-head CI are pending. Next: validate the rebased experiment
+against new bootstrap content; no MLIR adoption or full M4 completion claimed.
