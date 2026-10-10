@@ -333,6 +333,17 @@ Decisions accepted 2026-09-29: ClojureScript contract; WASI first; WasmGC requir
 persistent compiled REPL in the first release; no shipped JVM; futures/streams
 before CSP; explicit browser bridge; incremental replacement of the prototype.
 
+2026-10-10 MLIR evaluation decision: defer compiler adoption. Keep the existing
+Rust frontend/IR, lowering, WasmGC emitter and Wasmtime runtime as the shipped
+path; retain the bounded MLIR experiment as evidence, without adding a shipped
+MLIR/LLVM dependency or claiming a migration. The executed slice demonstrated
+real WasmGC and source/effect checks but no ongoing maintenance saving, and still
+depends on local semantic validation, ABI adaptation and the existing backend.
+Reconsider only through a separate reviewed decision supported by a concrete
+maintenance case and full-cost, reproducible evidence. This decision does not
+change the portable source contract, M4 collection criteria, or future adoption
+gates. See [ADR-0002](../adr/0002-defer-mlir-adoption.md) and its linked evidence.
+
 2026-09-29 evidence clarification: WebAssembly arithmetic producing a canonical
 NaN permits either sign. The differential observation comparator accepts this
 sign difference while retaining raw bits; changed NaN payloads, finite bits and
