@@ -23868,3 +23868,7 @@ The focused 3-test oracle module passes. Every other command in the foundation
 block also passed locally when rerun as one sequential block. The obsolete CI
 run was cancelled after diagnosis; push this correction and require a new
 final-head CI run before considering PR readiness.
+
+Correction is pushed as c8c7dd5. GitHub Actions run 38044038651 passed on that
+head: foundation and integration partitions 0 through 7 all succeeded. The
+handoff-only result update that follows requires its own final-head CI pass.
