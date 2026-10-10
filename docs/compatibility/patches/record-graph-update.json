@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "33f80b5d1e5b92f15b4b85bff016d3238edd3decc12d3db6c8b9671a491a69ba",
+  "replacement": "(def update\n  \"'Updates' a value in an associative structure, where k is a\n  key and f is a function that will take the old value\n  and any supplied args and return the new value, and returns a new\n  structure.  If the key does not exist, nil is passed as the old value.\"\n  (fn ([m k f]\n   (assoc m k (f (get m k))))\n  ([m k f x]\n   (assoc m k (f (get m k) x)))\n  ([m k f x y]\n   (assoc m k (f (get m k) x y)))\n  ([m k f x y z]\n   (assoc m k (f (get m k) x y z)))\n  ([m k f x y z & more]\n   (assoc m k (apply f (get m k) x y z more)))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+}

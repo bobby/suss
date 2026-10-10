@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "literal-make-array-present-nil",
+      "source": "(let [a (make-array 1) value (aget a 0)] [(undefined? value) (identical? value nil) (.hasOwnProperty a 0) (exists? value)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "constructor-array-hole-undefined",
+      "source": "(let [a (js/Array. 1) value (aget a 0)] [(undefined? value) (identical? value nil) (.hasOwnProperty a 0) (exists? value)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "global-hole-then-nil-publication",
+      "source": "(do (def publication-value (let [make make-array] (aget (make 1) 0))) (let [before (exists? publication-value)] (def publication-value nil) [before (exists? publication-value)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "dynamic-hole-restores-nil-publication",
+      "source": "(do (def ^:dynamic publication-dynamic nil) [(binding [publication-dynamic (let [make make-array] (aget (make 1) 0))] (exists? publication-dynamic)) (exists? publication-dynamic)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "first-class-make-array-hole-undefined",
+      "source": "(let [make make-array a (make 1) value (aget a 0)] [(undefined? value) (identical? value nil) (.hasOwnProperty a 0) (exists? value)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    }
+  ]
+}

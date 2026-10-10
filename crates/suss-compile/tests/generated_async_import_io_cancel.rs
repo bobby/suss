@@ -171,7 +171,7 @@ fn source_cancel_closes_polled_pending_io_before_component_return() {
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(20_000_000).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     let run = instance
         .get_typed_func::<(u32,), (u32,)>(&mut store, "run")

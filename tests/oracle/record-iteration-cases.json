@@ -1,0 +1,117 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "not-empty-nil",
+      "source": "(nil? (not-empty nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-empty-empty-vector",
+      "source": "(nil? (not-empty []))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-empty-identity",
+      "source": "(let [v [nil false]] (identical? v (not-empty v)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "declared-field-order",
+      "source": "(let [r (RecordIter. 0 {:a nil :b false} 2 [:a :b] (EmptyRecordExtension.)) a (.next r) b (.next r)] (and (= (key a) :a) (nil? (val a)) (= (key b) :b) (false? (val b)) (false? (.hasNext r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "short-circuit-extension",
+      "source": "(do (set! record-iteration-trace []) (let [r (RecordIter. 0 {:a 7} 1 [:a] (TracedRecordExtension.))] (and (true? (.hasNext r)) (= record-iteration-trace []))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "extension-availability-delegation",
+      "source": "(do (set! record-iteration-trace []) (let [r (RecordIter. 0 {} 0 [] (TracedRecordExtension.))] (and (= (.hasNext r) :available) (= record-iteration-trace [:has-next]))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "extension-next-delegation",
+      "source": "(do (set! record-iteration-trace []) (let [r (RecordIter. 0 {} 0 [] (TracedRecordExtension.))] (and (= (.next r) :extension-result) (= record-iteration-trace [:next]))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lookup-throw-advances-index",
+      "source": "(do (set! record-iteration-trace []) (let [r (RecordIter. 0 (ThrowingRecordLookup.) 2 [:a :b] (EmptyRecordExtension.)) caught (try (.next r) false (catch :default e (= e :lookup-failure))) second (.next r)] (and caught (= (key second) :b) (= (val second) 19) (= record-iteration-trace [:a :b]))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-field-lookup-nil",
+      "source": "(let [r (RecordIter. 0 {} 1 [:missing] (EmptyRecordExtension.)) e (.next r)] (and (= (key e) :missing) (nil? (val e))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "returned-remove-error",
+      "source": "(let [r (RecordIter. 0 {} 0 [] (EmptyRecordExtension.)) result (.remove r)] (and (instance? js/Error result) (= (.-message result) \"Unsupported operation\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-empty-argument-once",
+      "source": "(do (set! record-iteration-trace []) (let [v [1] result (not-empty (do (set! record-iteration-trace (conj record-iteration-trace :argument)) v))] (and (identical? v result) (= record-iteration-trace [:argument]))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-empty-live-seq-once",
+      "source": "(let [original seq calls (atom 0) v [1]] (set! seq (fn [coll] (swap! calls inc) (original coll))) (try (let [result (not-empty v)] (and (identical? result v) (= @calls 1))) (finally (set! seq original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "record-iterator-live-nth",
+      "source": "(let [original nth calls (atom 0) r (RecordIter. 0 {:replacement 29} 1 [:original] (EmptyRecordExtension.))] (set! nth (fn ([coll i] (swap! calls inc) :replacement) ([coll i not-found] (swap! calls inc) :replacement))) (try (let [e (.next r)] (and (= (key e) :replacement) (= (val e) 29) (= @calls 1))) (finally (set! nth original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "record-iterator-live-lookup",
+      "source": "(let [original -lookup calls (atom 0) r (RecordIter. 0 {:a 1} 1 [:a] (EmptyRecordExtension.))] (set! -lookup (fn ([coll k] (swap! calls inc) 37) ([coll k not-found] (swap! calls inc) 37))) (try (let [e (.next r)] (and (= (key e) :a) (= (val e) 37) (= @calls 1))) (finally (set! -lookup original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "896b93486ce064e477d15d0b93881dd8c8cb68083f36e24c1153b9a78ed9c05b",
-  "reviews-sha256": "ef7fb98764374781408f9f65b618ae2bdbb4fad391a19a376d043bf31ca115cd",
+  "recipe-sha256": "7b384fa9c7562b09535f44985e7b9cffa8b35b19e1154d3cacda6086cddbd531",
+  "reviews-sha256": "849144a752451bab22f0a806be0b34e4566be7546b62fa5f40ed6fe9755b73ee",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1719,8 +1719,8 @@
       "extracted": "extracted/0054.cljs",
       "extracted-sha256": "2f8ba40c57214e9a6f8b05afae8a26c643f89e7c22f1db6633d208a114b0e685",
       "patch": "docs/compatibility/patches/sequence-seq.json",
-      "patch-sha256": "580068c12a7b08cc13c450037f99dc15d4a16c6b9de25f824a012470ff90aacc",
-      "adapted-form-sha256": "ed209db86ac523a9be724f52bb1a9b7a5ac11ac30421c777748ceb65c19bc351",
+      "patch-sha256": "52d785491e18e91ed30ddfc8e6fb65d4dd6c3e8e05eb662cd675133209067c30",
+      "adapted-form-sha256": "7bdb69256034cc71dbf29db81e2b5338b1bc105c1541d5723853263afb9ac00c",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1733,12 +1733,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1757,8 +1760,8 @@
       "extracted": "extracted/0055.cljs",
       "extracted-sha256": "26a7c3d91558a4ce5f6bf6b67d2c9e078ae65e5f11343ecae2397059f0daa975",
       "patch": "docs/compatibility/patches/sequence-first.json",
-      "patch-sha256": "40ce689d27453d96ddfc8e0b2a51c1409b718eb71b485a968ce91721d392c637",
-      "adapted-form-sha256": "daf05db3d6989de38b1ced0dc883fddb540135db7428d4fc0d12f3bb4e9aed64",
+      "patch-sha256": "02e93e5fa4968906fade39b178dfecd1910550d30deaa0db901a7e86d90bb93c",
+      "adapted-form-sha256": "4e27483ed83abe4c4fc69c2f9a1c82d6167f5cac99061d3a3302ef2bf42368c8",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1771,12 +1774,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1795,8 +1801,8 @@
       "extracted": "extracted/0056.cljs",
       "extracted-sha256": "e69b12e0ec23a68df7b0a8a6182e039cae2ed78f8cd00ab63c7d43df616c43e6",
       "patch": "docs/compatibility/patches/sequence-rest.json",
-      "patch-sha256": "dca3fd1b0f394526b1f29942da830a9ada8d58cfe3b8f04a0276a688bf8405c6",
-      "adapted-form-sha256": "7bc78c9910256ec72d1696601d507a9411c1a8dc1aba5d3054daab6a97986a2f",
+      "patch-sha256": "c1b182bdb023de1854e2bce6f049a9ccbd831676392a533861e4a326edeab48e",
+      "adapted-form-sha256": "16991dc39d0941902edbcd5698426060aee041f56869d8749c77984346958537",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1809,12 +1815,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1833,8 +1842,8 @@
       "extracted": "extracted/0057.cljs",
       "extracted-sha256": "d3980c181e57432de735c57e0976fc601fc0035ede78e12d2a90f94bdde81fa4",
       "patch": "docs/compatibility/patches/sequence-next.json",
-      "patch-sha256": "507b18c2c30ef7b537a774c8d4384d1f236b3ea2f808923452acf1c1a570ee45",
-      "adapted-form-sha256": "9de55442408b190049be956037d19a39720209ad8990ca89d0193d70adc215c5",
+      "patch-sha256": "9052f893231d7eb5a5f8686c7e12c4f010dcf5b1feb368a5fc5b237d9f5f1cc7",
+      "adapted-form-sha256": "178ea863c86828a07d08ec657fb36b26714e16891557dd15dd91f038378b248f",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1847,12 +1856,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -5204,7 +5216,9 @@
         "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/compiled_macro_maps.rs"
+        "crates/suss-cli/tests/compiled_macro_maps.rs",
+        "crates/suss-cli/tests/portable_string_char_at.rs (2 tests pass after GC; 74 pinned raw UTF16/effect observations match; 0 failed/ignored/filtered)",
+        "tests/oracle/string-char-at-cases.json"
       ]
     },
     {
@@ -8804,14 +8818,14 @@
       "extracted": "extracted/0283.cljs",
       "extracted-sha256": "4abe6482527e9bc9ba8a70c01886b4ec633ce0785917c5680f197763f3efd330",
       "patch": "docs/compatibility/patches/expression-internal-str.json",
-      "patch-sha256": "1f104e89191a9435ae6ce79af97f83b2c01f89cbcf7ed05d18aa10dc08307c76",
-      "adapted-form-sha256": "353ad533684f4834ca821d0fe2f8d42ab8b258b83b34a947b8d9bca6a84622ba",
+      "patch-sha256": "fd341429cd906cc1cff60cef9c2d52511d0a8d0eb2bae8166fabca2f91b8f8bb",
+      "adapted-form-sha256": "87404082740daa7f1d079fd13bd901bfc60fb8c73bfa9718e870bc972d6f2021",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
         "existing coerce-string/string-concat runtime exports",
-        "captured seq/first/next and scalar predicates",
+        "captured seq/first/next, scalar predicates and nil? nil-guard",
         "nominal toString methods"
       ],
       "semantic-tests": [
@@ -10331,12 +10345,768 @@
       "semantic-tests": [
         "crates/suss-cli/tests/core_comparator_foundations.rs"
       ]
+    },
+    {
+      "id": "runtime:not-empty:4194",
+      "name": "not-empty",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4194,
+      "end-line": 4196,
+      "byte-start": 110861,
+      "byte-end": 110954,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+      "extracted": "extracted/0334.cljs",
+      "extracted-sha256": "ed9964b16cd3164620b7f19ea1abb3affee32dc0788aabd1144f33853c7512d7",
+      "patch": "docs/compatibility/patches/record-iteration-not-empty.json",
+      "patch-sha256": "19ca8ddeea212ffb0a5657b59ead295f0e453f6c50a912975b2a38d51a8545ec",
+      "adapted-form-sha256": "343336b7eab90f119f15fd60e82acd7ef63168c70f8925119043e2034990920b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:seq:1282",
+        "macro:defn",
+        "macro:when"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"
+      ]
+    },
+    {
+      "id": "runtime:RecordIter:6607",
+      "name": "RecordIter",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6607,
+      "end-line": 6617,
+      "byte-start": 181581,
+      "byte-end": 181946,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+      "extracted": "extracted/0335.cljs",
+      "extracted-sha256": "1a6695915f06855611c8e87c9eaaa5e575b288f24c50a5c4b0d5e9ce12a8c240",
+      "patch": "docs/compatibility/patches/record-iteration-RecordIter.json",
+      "patch-sha256": "e46fbf74215eca1d57c433a1728a2a6af1394dd45672f70f5e9b23cbd6c9bd2a",
+      "adapted-form-sha256": "f68cb88fc4d793e9276adb846421a94d54e0aca2d4da99bddc74af80226e1522",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:deftype",
+        "runtime:nth",
+        "runtime:inc:1505",
+        "macro:inc:1192",
+        "MapEntry/-lookup",
+        "Object iterator methods"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"
+      ]
+    },
+    {
+      "id": "runtime:vary-meta:4171",
+      "name": "vary-meta",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4171,
+      "end-line": 4185,
+      "byte-start": 110250,
+      "byte-end": 110722,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9",
+      "extracted": "extracted/0336.cljs",
+      "extracted-sha256": "900c7ef8a8cbf445cdb4c895446156984ffa997378868fa9a7d17e53dcee4a34",
+      "patch": "docs/compatibility/patches/record-helper-vary-meta.json",
+      "patch-sha256": "675032f51198bbaa9a6b338c8dd1cf3b283bd51691d166a6097077fff95f94d5",
+      "adapted-form-sha256": "607f7ef8b1ad725c6733be1317566a2a902f2dcd8b1900ed5a0e25c8ad63f722",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:with-meta",
+        "runtime:meta",
+        "runtime:apply"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:fnil:4526",
+      "name": "fnil",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4526,
+      "end-line": 4547,
+      "byte-start": 120042,
+      "byte-end": 120989,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e6404742f0365e0e74ebf2956cc0a058d5c6da08fc0f30c6d3b3e943868f7453",
+      "extracted": "extracted/0337.cljs",
+      "extracted-sha256": "6b1374a3dc98958ebc4741cd141738db0ae894b4d81c8db09a308320b1e9a501",
+      "patch": "docs/compatibility/patches/record-helper-fnil.json",
+      "patch-sha256": "4dfb9b408a8e7a0ed2128a7441b9d1a31f5fd0d3e0049a8eb4bfaf337096ab07",
+      "adapted-form-sha256": "a87e9ef258e42d91b7aa3edc8fb24f24662d373dcb65611aac773d95e7e2456d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:nil?:923",
+        "immutable suss.bootstrap/nil? adapter",
+        "runtime:apply"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:update-in:5530",
+      "name": "update-in",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5530,
+      "end-line": 5555,
+      "byte-start": 150521,
+      "byte-end": 151430,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ab3dd984b2e2cbc71fd41fdc97140cee4505c5e6d491447eaed6e1cc5f2dea47",
+      "extracted": "extracted/0338.cljs",
+      "extracted-sha256": "67d3d51394ae561ac3951960ce3cea28b6385b77f9d46f6134475cd8f71e7793",
+      "patch": "docs/compatibility/patches/record-helper-update-in.json",
+      "patch-sha256": "8a3066083d5d2d51d0b41b3f9e5263e26c3bbdab055f740acc3e07fb424b40bf",
+      "adapted-form-sha256": "0f1235a9474cf12197344260dda5378bc7e0a40bd49c1c57084e60b6e4fa314d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:assoc",
+        "runtime:get",
+        "runtime:apply",
+        "compiler vector/rest destructuring"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:group-by:11244",
+      "name": "group-by",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11244,
+      "end-line": 11254,
+      "byte-start": 316203,
+      "byte-end": 316570,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378",
+      "extracted": "extracted/0339.cljs",
+      "extracted-sha256": "74f92c6abb1002e854a76e013ee15a2a66df1c67a10d273410e1b7b29ffbc74d",
+      "patch": "docs/compatibility/patches/record-helper-group-by.json",
+      "patch-sha256": "03da0816f2e5a9d6aa0c3a3b97f96fc145ddae4a990678e60972bfc5a45a16df",
+      "adapted-form-sha256": "87ca14975a25421da23845a2a248d9fdfdd84df07a19da7b10645b55d6976e44",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:transient:3987",
+        "runtime:persistent!:3992",
+        "runtime:assoc!:4012",
+        "runtime:reduce",
+        "runtime:conj",
+        "runtime:get",
+        "runtime:TransientArrayMap:7210",
+        "runtime:TransientHashMap:8202"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:comp:4468",
+      "name": "comp",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4468,
+      "end-line": 4495,
+      "byte-start": 118275,
+      "byte-end": 119128,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e90a81aaace8b2de220cd9f816a0359e6b0b0d003f375946c70f6bae29acdb71",
+      "extracted": "extracted/0340.cljs",
+      "extracted-sha256": "ab51b92ffa6b3960b3a371aa96b060f5afdf3fed2594d4fc8e3d8b8831704a63",
+      "patch": "docs/compatibility/patches/record-graph-comp.json",
+      "patch-sha256": "d23eaee5ce8c36c5323470036310a12b6ce1f40877d8f226fab246c3b1fd2f6d",
+      "adapted-form-sha256": "d48cb2b74f0b17c316e028b463b825237531b27ed18bf3f0c2a5e83fb49e1442",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:identity",
+        "runtime:reverse",
+        "runtime:list*",
+        "runtime:first",
+        "runtime:next",
+        "runtime:apply"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)",
+        "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
+      ]
+    },
+    {
+      "id": "runtime:partial:4497",
+      "name": "partial",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4497,
+      "end-line": 4524,
+      "byte-start": 119130,
+      "byte-end": 120040,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ab48b02fc09bc7c185d7daabfda6733efa50f202292ef3294bcd9c0a974cc0b7",
+      "extracted": "extracted/0341.cljs",
+      "extracted-sha256": "984d4a741e842a67dfa8aedcda3cc75f8ed50668066c1d5857f830fb72cde2f1",
+      "patch": "docs/compatibility/patches/record-graph-partial.json",
+      "patch-sha256": "d9905be81e8985c7896f6e5c04a69293e5e43448e96d0fafcf2f64a874c75117",
+      "adapted-form-sha256": "a4199d7af7167ab9968260b7cd2b4dc121f01ff212ee4f90a616dc630a0fc325",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:apply",
+        "runtime:concat"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)",
+        "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
+      ]
+    },
+    {
+      "id": "runtime:juxt:10251",
+      "name": "juxt",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10251,
+      "end-line": 10285,
+      "byte-start": 285114,
+      "byte-end": 286470,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "512be1a1ca88483dc7b6626b8d41ff24001696c38478fea0e84d07e97206ee92",
+      "extracted": "extracted/0342.cljs",
+      "extracted-sha256": "2789cf4c922db0380cf0b5c16982612b2240b46c54cedd7a8a76a5eb5b3f7f9f",
+      "patch": "docs/compatibility/patches/record-graph-juxt.json",
+      "patch-sha256": "0bbaa59dbfd983a223910bc2a8085bd39a10602a06f48614b0fcf74cf3101b94",
+      "adapted-form-sha256": "1069dccf012df056cf8de0cb4a464d6cf127bd06b85e1a4860469fab4e9745e7",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:vector",
+        "runtime:list*",
+        "runtime:reduce",
+        "runtime:conj",
+        "runtime:apply"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:merge:9265",
+      "name": "merge",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9265,
+      "end-line": 9271,
+      "byte-start": 258171,
+      "byte-end": 258466,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "69bd6db6de3a2c8657b5267084b6c5d8303328738cd7be36b98ec60c263d72a4",
+      "extracted": "extracted/0343.cljs",
+      "extracted-sha256": "860fa95977d00c16eea86680d418e9cc78e1e31f9cf5f505da94890070ab0e8e",
+      "patch": "docs/compatibility/patches/record-graph-merge.json",
+      "patch-sha256": "5c9720837f4f1d23baab800774cc71d7f4c2a79bcafcc0171746e3924ca32cd8",
+      "adapted-form-sha256": "6ee1aa548f4c53ad7df77dcf2cb16c092df393c3b088c72ff4c7eecba4d16f83",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:some",
+        "runtime:identity",
+        "runtime:reduce",
+        "runtime:conj",
+        "macro:when",
+        "macro:or"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:merge-with:9273",
+      "name": "merge-with",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9273,
+      "end-line": 9287,
+      "byte-start": 258468,
+      "byte-end": 259141,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d3344bf57b4192d4a1fc5128ba58e52d6a54fdbd2d13b12b77960eaa09abccdc",
+      "extracted": "extracted/0344.cljs",
+      "extracted-sha256": "36ea6dd76a90ab6d7d34b355694edacf8f242417d5fc90f89e230aa3df6c81ec",
+      "patch": "docs/compatibility/patches/record-graph-merge-with.json",
+      "patch-sha256": "f9737d2eb656a152522bda40aebf349ed70bf051a5c6d985768c03590a7f97e7",
+      "adapted-form-sha256": "f27b620b5e3f2a63f901df24137c8ed2aeda0df8391dbb3351df45c1686ae39a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:some",
+        "runtime:identity",
+        "runtime:reduce",
+        "runtime:key",
+        "runtime:val",
+        "runtime:contains?",
+        "runtime:assoc",
+        "runtime:get",
+        "runtime:seq",
+        "macro:when",
+        "macro:or"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:update:5557",
+      "name": "update",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5557,
+      "end-line": 5571,
+      "byte-start": 151432,
+      "byte-end": 151964,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "33f80b5d1e5b92f15b4b85bff016d3238edd3decc12d3db6c8b9671a491a69ba",
+      "extracted": "extracted/0345.cljs",
+      "extracted-sha256": "d511310258fa868009b68c7de7b85fd2551682c7547b384cc33f69c4dc18562d",
+      "patch": "docs/compatibility/patches/record-graph-update.json",
+      "patch-sha256": "2d9e6fa61fca2047a165ae1daab7c0126e718770b1159aa393e31e94674c6d25",
+      "adapted-form-sha256": "04ce1271d471b597efbb7aefc08b82296840a94b86df4f2e8cd5ed7584c2daef",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:assoc",
+        "runtime:get",
+        "runtime:apply"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:select-keys:9289",
+      "name": "select-keys",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9289,
+      "end-line": 9301,
+      "byte-start": 259143,
+      "byte-end": 259557,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "69a9eea1a2c747d38ae5619ebdf414285f88336c2496c1291099e23b0fda9790",
+      "extracted": "extracted/0346.cljs",
+      "extracted-sha256": "72374a9e8f9face4fa7e580914f15a6ee073206d68aa70228efb953870b02ffa",
+      "patch": "docs/compatibility/patches/record-graph-select-keys.json",
+      "patch-sha256": "9bba4dd9b35b2b0fc58fdfbca11e6cf95e40217f9919f0925474e0f3182d5ff7",
+      "adapted-form-sha256": "988d61851cb73b23a50f2fda5543e39d0e8ef330b6e8185ef4446a8ab72930ce",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:seq",
+        "runtime:first",
+        "runtime:next",
+        "runtime:get",
+        "runtime:not=",
+        "runtime:assoc",
+        "runtime:-with-meta",
+        "runtime:meta"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:zipmap:9690",
+      "name": "zipmap",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9690,
+      "end-line": 9700,
+      "byte-start": 269470,
+      "byte-end": 269795,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1e48695851a1b59d3024003e67841389efce480d9a8c56f65864b09d578b94be",
+      "extracted": "extracted/0347.cljs",
+      "extracted-sha256": "a53d90d357175d32720ab3729c31e8346063d42074cabb670e7eb3a8c7a58c7b",
+      "patch": "docs/compatibility/patches/record-graph-zipmap.json",
+      "patch-sha256": "a3e3f5b527a595aa4970213d65f76f26699725ecc6a8d5156681aa223af59060",
+      "adapted-form-sha256": "54f872f41744defa4dd6afd235103a9cb17c63dab5056b398c24e38b144670fa",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:transient",
+        "runtime:seq",
+        "runtime:first",
+        "runtime:next",
+        "runtime:assoc!",
+        "runtime:persistent!",
+        "macro:and"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:gensym_counter:10903",
+      "name": "gensym_counter",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10903,
+      "end-line": 10905,
+      "byte-start": 305328,
+      "byte-end": 305380,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9",
+      "extracted": "extracted/0348.cljs",
+      "extracted-sha256": "1ebdf3faa21957f69dbcd3ba479de27454154aec9b1db85cbbf7ae57e81c8205",
+      "patch": "docs/compatibility/patches/record-graph-gensym_counter.json",
+      "patch-sha256": "922623d61e5552463bfbef4ef63e95dab91a633896acf92e3dcca9a8fbd91428",
+      "adapted-form-sha256": "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:gensym:10907",
+      "name": "gensym",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10907,
+      "end-line": 10915,
+      "byte-start": 305382,
+      "byte-end": 305751,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a",
+      "extracted": "extracted/0349.cljs",
+      "extracted-sha256": "194e3538691ca64f42efe86ac7c940c0dba0337a4a0f067332315c33376d28d4",
+      "patch": "docs/compatibility/patches/record-graph-gensym.json",
+      "patch-sha256": "3f720d35fef55671528ff4d83561e73ef16e819c06c6ebd1340a283464df5e99",
+      "adapted-form-sha256": "db003185e3c4dec7d74f53749bd6d109c0226458076d46d462a5c0ea731ef217",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:gensym_counter",
+        "runtime:atom",
+        "runtime:swap!",
+        "runtime:symbol",
+        "runtime:str_",
+        "macro:nil?:923",
+        "macro:inc:1192",
+        "macro:when"
+      ],
+      "semantic-tests": [
+        "tests/oracle/record-graph-runtime-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
+      ]
+    },
+    {
+      "id": "runtime:LITE_MODE:56",
+      "name": "LITE_MODE",
+      "kind": "goog-define",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 56,
+      "end-line": 59,
+      "byte-start": 2183,
+      "byte-end": 2284,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3aa9752d7ee11c9d97bf8ecb35bb2504f9ef879aa1dbd4ee09b20200d2755fcb",
+      "extracted": "extracted/0350.cljs",
+      "extracted-sha256": "e581918ae937892f70a1c5190f8157f72c578ff35cecd73f939b1f9cb1b63e20",
+      "patch": "docs/compatibility/patches/destructuring-LITE_MODE.json",
+      "patch-sha256": "f14641156472dd18d64d60bbf25a85eb9109ea2846d8dfb2d34d320b7408331b",
+      "adapted-form-sha256": "5a0d6b096c3b97a0cccd78e8119904641baef501830ad23a119db77ce6388dca",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:to-array:3819",
+      "name": "to-array",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3819,
+      "end-line": 3827,
+      "byte-start": 99504,
+      "byte-end": 99731,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "53e0f3d75b831ef2028703b8168977bb4c834d5dcb3d0d25a4c34e22473e22bb",
+      "extracted": "extracted/0351.cljs",
+      "extracted-sha256": "e6b4d6ebc3d92e8b95648c0efa8ac1e0aefb94ce3009b1ebcb08e870b1bf5f58",
+      "patch": "docs/compatibility/patches/destructuring-to-array.json",
+      "patch-sha256": "98c106828a1f6385f6f7cc109253757bd62dec50bbed94f604815b9faa945b61",
+      "adapted-form-sha256": "ecb9b9e5dc93fcea4aa687492dbdc3c04d439a086c036a57414a1714b745f1c6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:nil?:923",
+        "runtime:array:477",
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:next:1333"
+      ],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:--destructure-map:4154",
+      "name": "--destructure-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4154,
+      "end-line": 4169,
+      "byte-start": 109781,
+      "byte-end": 110248,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d12f57bee88d8103d6b605125ffdf2f66336545ea5247cb686d054967b5e1973",
+      "extracted": "extracted/0352.cljs",
+      "extracted-sha256": "319b5a2a1438b1137fa7bb3f98ef210576681d9ce3dc9417c2aaee5aa532a99a",
+      "patch": "docs/compatibility/patches/destructuring---destructure-map.json",
+      "patch-sha256": "d5a6f8fe6b24fcf29784c324998d1992bfea8baa76361e9e1ad7a7830de935d4",
+      "adapted-form-sha256": "87f47a09b52ca605cc4d9584db97042167108f176cae9e0bc7576ae99eee1f0c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:LITE_MODE:56",
+        "runtime:ISeq:650",
+        "runtime:next:1333",
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:to-array:3819",
+        "runtime:PersistentArrayMap:6912",
+        "runtime:ObjMap:12612"
+      ],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:reverse:3367",
+      "name": "reverse",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3367,
+      "end-line": 3372,
+      "byte-start": 89005,
+      "byte-end": 89171,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "87142e78c06d83a690a9f0bd8ac6801bec92b0e999b5de6174ba2c1a17da7941",
+      "extracted": "extracted/0353.cljs",
+      "extracted-sha256": "340ffdf274e7ed46206b3a2201d21cf4ff6ab5ca194ca25f820929f0414d3e13",
+      "patch": "docs/compatibility/patches/destructuring-reverse.json",
+      "patch-sha256": "b9b33bd36675942b05b5bad51db9de37c8931515ccbe9afdc33ca2acdb4efb53",
+      "adapted-form-sha256": "8bb63582e43955aedc74ab526b925748a477b34c8fbc145079e171ca2b1d192a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:reversible?:3356",
+        "runtime:rseq:3361",
+        "runtime:reduce:2628",
+        "runtime:conj:1870"
+      ],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:vector:5959",
+      "name": "vector",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5959,
+      "end-line": 5964,
+      "byte-start": 163519,
+      "byte-end": 163739,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c",
+      "extracted": "extracted/0354.cljs",
+      "extracted-sha256": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
+      "patch": "docs/compatibility/patches/destructuring-vector.json",
+      "patch-sha256": "8d6d4ac9c0e32d7e36ccd208f1bfb4a6d648ced75ddfc1b5a696ddfda6b2b9b1",
+      "adapted-form-sha256": "8eff22abe84639a1106cf8404380b0020abbb371458470afa7efa0813c1a732b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "runtime:IndexedSeq:1653",
+        "runtime:PersistentVector:5713",
+        "runtime:vec:5939",
+        "runtime:array?:251"
+      ],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:some:4430",
+      "name": "some",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4430,
+      "end-line": 4437,
+      "byte-start": 117094,
+      "byte-end": 117426,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "034b8c7d5e1dd0f04c8e7d3dba7c38f106a5194bacac6b52e0b37d3c54ebffd0",
+      "extracted": "extracted/0355.cljs",
+      "extracted-sha256": "dd494b6a0a6c8737c99a6409bf4ed490819f0b1dc2a6c7415b3da4bb3adbcaf2",
+      "patch": "docs/compatibility/patches/destructuring-some.json",
+      "patch-sha256": "4bc6e0961d9a88672a13e4322ce43c0b23fef89de624b03b45b212feadfd511d",
+      "adapted-form-sha256": "ec058943f50fefa54b0673d881a8db317f75acd1689b072a4ba61e19f7de9987",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:when-let:412",
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:next:1333"
+      ],
+      "semantic-tests": []
+    },
+    {
+      "id": "runtime:str:3129",
+      "name": "str",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3129,
+      "end-line": 3141,
+      "byte-start": 83739,
+      "byte-end": 84180,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
+      "extracted": "extracted/0356.cljs",
+      "extracted-sha256": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
+      "patch": "docs/compatibility/patches/record-public-str.json",
+      "patch-sha256": "b7baa8d77b1d4058235ae720a5f1848ef11424d64a6e896ecf5346aedf6d2fe1",
+      "adapted-form-sha256": "d55ebc4ddd45e27020de34106e3640db60e336c3d0b1eefcbc5885f3e88b7830",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:to-array:3819",
+        "runtime:IndexedSeq:1653"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "4d938f880bed003f44c8aa8fe05464d4972279bede26d81c5960af9218a07aa3"
+      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -10344,7 +11114,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "a2e1e1323f36b7e332a3e136878ecdc92446da797391a834b57d9b2fb9fc81d7"
+      "sha256": "9a6eff337e8aed20e8f11272638112900f479ab1d74749e70c97f1fa424a3c5a"
     }
   },
   "files": {
@@ -10684,6 +11454,29 @@
     "extracted/0331.cljs": "7b7f23e1a16947181877905e65eb3df15df3469d85e649d04d24c2f7d0f20ecc",
     "extracted/0332.cljs": "f104973e3e889bf6b2e09d9cfd09fe6b3079b20ace69021d95807c8363090402",
     "extracted/0333.cljs": "29649717e40ecd5a5f30c654d67bbc980299c9879f99858701e17a583f3110c0",
-    "suss/core.sus": "96a24862cf39db8940835e349453a26250e8e7f6e7c10f7cdc2b94b967948a48"
+    "extracted/0334.cljs": "ed9964b16cd3164620b7f19ea1abb3affee32dc0788aabd1144f33853c7512d7",
+    "extracted/0335.cljs": "1a6695915f06855611c8e87c9eaaa5e575b288f24c50a5c4b0d5e9ce12a8c240",
+    "extracted/0336.cljs": "900c7ef8a8cbf445cdb4c895446156984ffa997378868fa9a7d17e53dcee4a34",
+    "extracted/0337.cljs": "6b1374a3dc98958ebc4741cd141738db0ae894b4d81c8db09a308320b1e9a501",
+    "extracted/0338.cljs": "67d3d51394ae561ac3951960ce3cea28b6385b77f9d46f6134475cd8f71e7793",
+    "extracted/0339.cljs": "74f92c6abb1002e854a76e013ee15a2a66df1c67a10d273410e1b7b29ffbc74d",
+    "extracted/0340.cljs": "ab51b92ffa6b3960b3a371aa96b060f5afdf3fed2594d4fc8e3d8b8831704a63",
+    "extracted/0341.cljs": "984d4a741e842a67dfa8aedcda3cc75f8ed50668066c1d5857f830fb72cde2f1",
+    "extracted/0342.cljs": "2789cf4c922db0380cf0b5c16982612b2240b46c54cedd7a8a76a5eb5b3f7f9f",
+    "extracted/0343.cljs": "860fa95977d00c16eea86680d418e9cc78e1e31f9cf5f505da94890070ab0e8e",
+    "extracted/0344.cljs": "36ea6dd76a90ab6d7d34b355694edacf8f242417d5fc90f89e230aa3df6c81ec",
+    "extracted/0345.cljs": "d511310258fa868009b68c7de7b85fd2551682c7547b384cc33f69c4dc18562d",
+    "extracted/0346.cljs": "72374a9e8f9face4fa7e580914f15a6ee073206d68aa70228efb953870b02ffa",
+    "extracted/0347.cljs": "a53d90d357175d32720ab3729c31e8346063d42074cabb670e7eb3a8c7a58c7b",
+    "extracted/0348.cljs": "1ebdf3faa21957f69dbcd3ba479de27454154aec9b1db85cbbf7ae57e81c8205",
+    "extracted/0349.cljs": "194e3538691ca64f42efe86ac7c940c0dba0337a4a0f067332315c33376d28d4",
+    "extracted/0350.cljs": "e581918ae937892f70a1c5190f8157f72c578ff35cecd73f939b1f9cb1b63e20",
+    "extracted/0351.cljs": "e6b4d6ebc3d92e8b95648c0efa8ac1e0aefb94ce3009b1ebcb08e870b1bf5f58",
+    "extracted/0352.cljs": "319b5a2a1438b1137fa7bb3f98ef210576681d9ce3dc9417c2aaee5aa532a99a",
+    "extracted/0353.cljs": "340ffdf274e7ed46206b3a2201d21cf4ff6ab5ca194ca25f820929f0414d3e13",
+    "extracted/0354.cljs": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
+    "extracted/0355.cljs": "dd494b6a0a6c8737c99a6409bf4ed490819f0b1dc2a6c7415b3da4bb3adbcaf2",
+    "extracted/0356.cljs": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
+    "suss/core.sus": "3ea758ec66db9dbe6ba2f1b409e0f5b1037cc5b764512e0c1e3628b341a9291c"
   }
 }

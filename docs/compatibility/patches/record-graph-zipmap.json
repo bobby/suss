@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1e48695851a1b59d3024003e67841389efce480d9a8c56f65864b09d578b94be",
+  "replacement": "(def zipmap\n  \"Returns a map with the keys mapped to the corresponding vals.\"\n  (fn [keys vals]\n    (loop [map (transient {})\n           ks (seq keys)\n           vs (seq vals)]\n      (if (and ks vs)\n        (recur (assoc! map (first ks) (first vs))\n               (next ks)\n               (next vs))\n        (persistent! map)))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+}

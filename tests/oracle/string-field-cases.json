@@ -1,0 +1,639 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "str-empty",
+      "source": "(str)",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "str-scalars",
+      "source": "[(str nil) (str false) (str true) (str 17) (str \"λ\")]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": []
+          },
+          {
+            "tag": "string",
+            "units": [
+              102,
+              97,
+              108,
+              115,
+              101
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              116,
+              114,
+              117,
+              101
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              49,
+              55
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              955
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "str-many",
+      "source": "(str \"a\" nil false 17 \"z\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97,
+          102,
+          97,
+          108,
+          115,
+          101,
+          49,
+          55,
+          122
+        ]
+      }
+    },
+    {
+      "id": "str-raw-number-return",
+      "source": "(let [f str] (f (js-obj \"toString\" (fn [] 23))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "str-raw-nil-return",
+      "source": "(let [f str] (f (js-obj \"toString\" (fn [] nil))))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "str-conversion-order",
+      "source": "(let [t (atom []) a (js-obj \"toString\" (fn [] (swap! t conj 1) \"a\")) b (js-obj \"toString\" (fn [] (swap! t conj 2) \"b\"))] [(str a b) @t])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              97,
+              98
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "str-conversion-throw",
+      "source": "(let [t (atom []) a (js-obj \"toString\" (fn [] (swap! t conj 1) (throw 73))) b (js-obj \"toString\" (fn [] (swap! t conj 2) \"b\"))] [(try (str a b) (catch :default e e)) @t])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4052400000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-zero-nil-first",
+      "source": "[(.toString (make-buffer)) (.toString (make-buffer nil \"ignored\"))]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": []
+          },
+          {
+            "tag": "string",
+            "units": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-second-nil-suppresses-rest",
+      "source": "(let [b (make-buffer \"a\" nil \"ignored\")] [(.toString b) (.getLength b)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              97
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-append-empty",
+      "source": "(let [b (make-buffer \"a\")] (.append b) (.toString b))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97,
+          117,
+          110,
+          100,
+          101,
+          102,
+          105,
+          110,
+          101,
+          100
+        ]
+      }
+    },
+    {
+      "id": "buffer-append-self",
+      "source": "(let [b (make-buffer)] [(identical? b (.append b \"a\" \"b\" \"c\")) (.toString b)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-clear-set",
+      "source": "(let [b (make-buffer \"ab\")] [(.getLength b) (undefined? (.clear b)) (.toString b) (undefined? (.set b 17)) (.toString b)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": []
+          },
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "string",
+            "units": [
+              49,
+              55
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-first-string-later-default-hints",
+      "source": "(let [t (atom []) o (js-obj \"toString\" (fn [] (swap! t conj 1) \"s\") \"valueOf\" (fn [] (swap! t conj 2) \"v\")) b (make-buffer o o)] [(.toString b) @t])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              115,
+              118
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-set-default-hint",
+      "source": "(let [t (atom []) o (js-obj \"toString\" (fn [] (swap! t conj 1) \"s\") \"valueOf\" (fn [] (swap! t conj 2) 7)) b (make-buffer)] (.set b o) [(.toString b) @t])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "string",
+            "units": [
+              55
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-conversion-mutation-captured-left",
+      "source": "(let [b (make-buffer \"old\") o (js-obj \"toString\" (fn [] (.set b \"mutated\") \"x\"))] (.append b o) (.toString b))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          111,
+          108,
+          100,
+          120
+        ]
+      }
+    },
+    {
+      "id": "field-collision-constructor-read-write",
+      "source": "(do (deftype Collision [^:mutable x-y ^:mutable x_y] Object (readBoth [this] [x-y x_y]) (writeFirst [this v] (set! x-y v) [x-y x_y])) (let [t (atom []) a (Collision. (do (swap! t conj 1) 7) (do (swap! t conj 2) 9)) before [(.readBoth a) (.-x_y a)] via-method (.writeFirst a 17)] (set! (.-x_y a) 23) [before via-method (.readBoth a) (.-x_y a) @t]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "4022000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4022000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "field-hyphen-callback",
+      "source": "(do (deftype Hyphen [^:mutable some-field] Object (read [this] some-field) (write [this v] (set! some-field v))) (let [a (Hyphen. 7)] (set! (.-some-field a) 11) [(.read a) (.-some_field a)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "object-variadic-receiver-rest",
+      "source": "(do (deftype Variadic [] Object (collect [this & xs] (vec xs))) (let [a (Variadic.)] [(.collect a) (.collect a 1 2 3)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": []
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "field-borrowed-callback",
+      "source": "(do (deftype Borrowed [x-y] Object (read [this] x-y)) (let [a (Borrowed. 7) other (js-obj \"x_y\" 29)] (.call (.-read a) other)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "str-live-recursive-var",
+      "source": "(let [saved str body (.-cljs$core$IFn$_invoke$arity$variadic str)] (try (set! str (fn ([x] \"X\") ([x & xs] \"X\"))) (body \"a\" (list \"b\")) (finally (set! str saved))))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          88,
+          88
+        ]
+      }
+    },
+    {
+      "id": "str-immutable-nil-macro",
+      "source": "(let [saved nil? f str] (try (set! nil? (fn [x] true)) (f 17) (finally (set! nil? saved))))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          55
+        ]
+      }
+    },
+    {
+      "id": "buffer-captured-to-array",
+      "source": "(let [saved to-array] (try (set! to-array (fn [xs] (array \"bad\"))) (.toString (make-buffer \"a\" \"b\")) (finally (set! to-array saved))))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97,
+          98
+        ]
+      }
+    },
+    {
+      "id": "field-collision-protocol-read-write",
+      "source": "(do (defprotocol CollisionProtocol (collision-read [this]) (collision-write [this v])) (deftype ProtocolCollision [^:mutable x-y ^:mutable x_y] CollisionProtocol (collision-read [this] [x-y x_y]) (collision-write [this v] (set! x_y v))) (let [a (ProtocolCollision. 7 9) before (collision-read a)] (collision-write a 17) [before (collision-read a) (.-x_y a)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "object-fixed-rest-overlap",
+      "source": "(do (deftype Overlap [] Object (collect [this x] 10) (collect [this x & xs] 20)) (let [a (Overlap.)] [(.collect a 1) (.collect a 1 2)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reserved-field-storage",
+      "source": "(do (deftype Reserved [null]) (deftype Punctuation [some-field]) (let [a (Reserved. 7) b (Punctuation. 9) absent (undefined? (.-null a)) old (.-null$ a)] (set! (.-null$ a) 11) [absent old (.-null$ a) (.-null$ a) (.-some_field b)]))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffer-append-nil",
+      "source": "(let [b (make-buffer)] (.append b nil) (.toString b))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          117,
+          108,
+          108
+        ]
+      }
+    },
+    {
+      "id": "buffer-undefined-second-suppresses-rest",
+      "source": "(let [b (make-buffer)] (.append b \"a\" (aget (array) 0) \"ignored\") (.toString b))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97
+        ]
+      }
+    },
+    {
+      "id": "buffer-set-missing",
+      "source": "(let [b (make-buffer)] (.set b) (.toString b))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          117,
+          110,
+          100,
+          101,
+          102,
+          105,
+          110,
+          101,
+          100
+        ]
+      }
+    },
+    {
+      "id": "buffer-utf16-length-and-ignored-effects",
+      "source": "(let [t (atom []) b (make-buffer \"λ🙂\") len (.getLength b (do (swap! t conj 1) nil)) text (.toString b (do (swap! t conj 2) false))] [len text @t])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "string",
+            "units": [
+              955,
+              55357,
+              56898
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

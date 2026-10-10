@@ -1,0 +1,34 @@
+{
+  "base": "1c093089f5d0716d7d6bff5954070d910e6aff70",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference": {
+    "command": "sh scripts/test-record-helper-raw-oracle.sh",
+    "exit_code": 0,
+    "cases": 33
+  },
+  "python": {
+    "command": "python3 -B -m unittest discover -s scripts -p 'test_*.py'",
+    "exit_code": 0,
+    "passed": 253
+  },
+  "initial_reference_compile": {
+    "exit_code": 1,
+    "reason": "missing generated base fixture required by shared transport; prerequisite now generated"
+  },
+  "native": "authored/uncompiled/unexecuted",
+  "bootstrap": "unchanged/stale",
+  "original_boolean_corpus_sha256": "31aebb463402fbf16592e96ef274a6f8d379b3790c559fb04b92736ef5d8bc16",
+  "files": {
+    "tests/oracle/record-helper-raw-cases.json": "823bbff8f95fc54c9d1592d55ad5b42a5508bbcfe8c49d410fc52cc7886b2b11",
+    "tests/oracle/src/suss_oracle/record_helper_raw.cljs": "5a0709a0774cdfad2a558d500ba6efecc88e07381b99cd5d7fe307e688b31380",
+    "scripts/record_helper_raw_oracle.py": "0d880e3ae81bd0fb2eec715cf853ef3a8a57ef8d77fcde70a69db0d68c12a39e",
+    "scripts/test-record-helper-raw-oracle.sh": "cb5a8820cdb1086252d5a5e2fcd544f2680b2addaa72173d57535a3e4385de66",
+    "scripts/test_record_helper_raw_oracle.py": "4d00724f9b12b01ca2d6f653c2e64daf54387a549f88a88ca87f33306571ad91",
+    "crates/suss-cli/tests/portable_record_helpers.rs": "37c247b12796c429724918b5375a5237df6e90b61a9f1d4b97333e4c3fc05d3a",
+    "docs/compatibility/record-helper-foundations/evidence/raw-primary-observations.json": "a7f98daad1610ef3437d2926796a6bb19f5d8732fbc13821732b03202b7be871",
+    "docs/compatibility/record-helper-foundations/evidence/raw-primary-fixture.cljs": "2dff06a22151469794e674c913e1ecaea038d60a8d50c567c871f91ba4842734",
+    "docs/compatibility/record-helper-foundations/evidence/raw-primary-initial-failure.log": "b47206e947f1f103e3d5cb7d669c01af7a345acf9690221fc9297ee62e5bd910",
+    "docs/compatibility/record-helper-foundations/evidence/raw-primary-final.log": "ea85a0ab8ff13397e4508027640470166fdafa1def26ef26e22ce6437daa1b13",
+    "docs/compatibility/record-helper-foundations/evidence/raw-python-final.log": "c035242a447c88960713e6651e685636cffba2d9f0fcb46b37921f2d91ba2c10"
+  }
+}

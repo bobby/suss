@@ -1,0 +1,25 @@
+{
+  "head": "51533b4d547c5212ee85a034dd57e1dbbb34f122",
+  "worktree": "/private/tmp/suss-m4-publication-cells-native",
+  "command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-cli --locked --test compiled_macro_publication_cells -- --test-threads=2",
+  "session": 86162,
+  "state": "completed",
+  "log": "/private/tmp/suss-m4-publication-cells-51533-focused.log",
+  "started_observed_utc": "2026-10-09T10:40:43.194268+00:00",
+  "exit_code": 101,
+  "passed": 0,
+  "failed": 2,
+  "ignored": 0,
+  "log_sha256": "725103d3966c15a24aaaeec5197bcf9f5e1ca282af8b217aa2259691b4fd2e48",
+  "regeneration": {
+    "exit_code": 1,
+    "log": "/private/tmp/suss-m4-publication-cells-51533-bootstrap.log",
+    "sha256": "67578f25533f084388096dced768e095bf0e412f55bc217923c13e2eb26df55e",
+    "diagnostic": "Parameter destructuring is not lowered yet",
+    "span": [
+      177827,
+      177835
+    ],
+    "native_semantics": "not executed; stale bootstrap initialization failures followed by source lowering prerequisite"
+  }
+}

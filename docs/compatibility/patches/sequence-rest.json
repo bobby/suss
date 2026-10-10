@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "5c4c485ef887f7c3ce4c77908685dc481f045910df23a4a180f0a8b8b7f67f76",
-  "replacement": "(def ^seq rest\n  \"Returns a possibly empty seq of the items after the first. Calls seq on its\n  argument.\"\n  (fn [coll]\n  (if-not (nil? coll)\n    (if (implements? ISeq coll)\n      (-rest coll)\n      (let [s (seq coll)]\n        (if s\n          (-rest ^not-native s)\n          ())))\n    ())))",
-  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+  "replacement": "(def ^seq rest\n  \"Returns a possibly empty seq of the items after the first. Calls seq on its\n  argument.\"\n  (fn [coll]\n  (if-not (suss.bootstrap/nil? coll)\n    (if (implements? ISeq coll)\n      (-rest coll)\n      (let [s (seq coll)]\n        (if s\n          (-rest ^not-native s)\n          ())))\n    ())))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. The pinned upstream compiles the nil? macro guard in place at this definition site, so the retained nil-guard is spelled with the existing private inline nil test and stays immutable against public redefinition; the pinned gensym nil-guard corpus case (tests/oracle/record-graph-runtime-cases.json) requires this immunity through the captured str_ variadic traversal path, while public redefinition of this function itself remains live for user code."
 }

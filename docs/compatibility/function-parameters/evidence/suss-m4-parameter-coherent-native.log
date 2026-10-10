@@ -1,0 +1,12 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 8.62s
+     Running tests/portable_function_parameters.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_function_parameters-68ae74c52eaef917)
+
+running 2 tests
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.13s
+

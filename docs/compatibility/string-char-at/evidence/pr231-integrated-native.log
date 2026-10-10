@@ -1,0 +1,43 @@
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 2.20s
+     Running tests/portable_object_methods.rs (target/debug/deps/portable_object_methods-a7f7ef0ecd6c4fc9)
+
+running 2 tests
+test malformed_object_methods_fail_atomically_and_session_recovers ... ok
+test object_methods_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.99s
+
+     Running tests/portable_record_graph_runtime.rs (target/debug/deps/portable_record_graph_runtime-da26903045a20e05)
+
+running 2 tests
+test composition_partial_and_juxt_retain_sole_host_callback_captures_across_invocations ... ok
+test whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.96s
+
+     Running tests/portable_record_iteration.rs (target/debug/deps/portable_record_iteration-70abb899d05dd784)
+
+running 3 tests
+test record_iterator_remove_returns_independently_decoded_error ... ok
+test record_iterator_matches_pinned_order_and_effects_in_both_phases ... ok
+test record_iterator_survives_with_only_host_handle_and_mutates_across_fragments ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.04s
+
+     Running tests/portable_reify.rs (target/debug/deps/portable_reify-7334d8d4e61c81f5)
+
+running 2 tests
+test reify_preserves_capture_metadata_and_nominal_identity_in_both_phases ... ok
+test reified_object_retains_capture_with_only_host_handle_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.14s
+
+     Running tests/portable_string_char_at.rs (target/debug/deps/portable_string_char_at-586db0d4eeca6bad)
+
+running 2 tests
+test char_at_public_method_identity_is_canonical_shared_after_gc ... ok
+test genuine_char_at_and_complete_get_match_raw_pin_after_gc_and_recover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.28s
+

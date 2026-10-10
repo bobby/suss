@@ -1,0 +1,125 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-compile)
+warning: unused imports: `prepare_fragment` and `prepare_selected_fragment`
+ --> crates/suss-compile/src/portable/modules.rs:3:35
+  |
+3 |     Diagnostic, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+  |                                   ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `suss_reader::ParserState`
+   --> crates/suss-compile/src/lib.rs:104:5
+    |
+104 | use suss_reader::ParserState;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `std::sync::atomic::Atomic::<u64>::fetch_update`: renamed to `try_update` for consistency
+   --> crates/suss-compile/src/portable_session.rs:533:14
+    |
+533 |             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+    |              ^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+help: replace the use of the deprecated method
+    |
+533 -             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+533 +             .try_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+    |
+
+warning: unused variable: `base`
+   --> crates/suss-compile/src/runtime_abi/streams.rs:513:30
+    |
+513 | fn withdraw(b: &mut Builder, base: u32) -> u32 {
+    |                              ^^^^ help: if this is intentional, prefix it with an underscore: `_base`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/portable/hir/nominal.rs:635:13
+    |
+635 |         let mut synthetic = |stem: &str| -> String {
+    |             ----^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `form`
+    --> crates/suss-compile/src/portable/hir/nominal.rs:1166:9
+     |
+1166 |         form: &Form,
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_form`
+
+warning: unused variable: `depth`
+    --> crates/suss-compile/src/portable_macro_graph.rs:2183:39
+     |
+2183 |     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+     |                                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_depth`
+
+warning: function `input_header` is never used
+   --> crates/suss-compile/src/portable/source.rs:301:15
+    |
+301 | pub(crate) fn input_header(
+    |               ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `dependencies` is never used
+   --> crates/suss-compile/src/portable/source.rs:346:15
+    |
+346 | pub(crate) fn dependencies(
+    |               ^^^^^^^^^^^^
+
+warning: function `children` is never used
+  --> crates/suss-compile/src/portable/origin/form_metadata.rs:17:4
+   |
+17 | fn children(form: &Form) -> impl Iterator<Item = &Form> {
+   |    ^^^^^^^^
+
+warning: `suss-compile` (lib) generated 10 warnings (run `cargo fix --lib -p suss-compile` to apply 7 suggestions)
+warning: method `decode` is never used
+   --> crates/suss-compile/tests/support/portable_decode.rs:175:12
+    |
+ 59 | impl Decoder {
+    | ------------ method in this implementation
+...
+175 |     pub fn decode(
+    |            ^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-compile` (test "clojure_test_suite") generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 5.44s
+     Running tests/clojure_test_suite.rs (/private/tmp/suss-m4-param-target/debug/deps/clojure_test_suite-cf1810ea08ca5ef4)
+
+running 6 tests
+test clojure_test_suite_fixture_matches_reviewed_baseline ... ok
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+test clojure_test_suite_routes_suite_namespace_requires_to_the_harness ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers ... ok
+
+failures:
+
+---- clojure_test_suite_matches_reviewed_baseline stdout ----
+clojure-test-suite suite: fail=20 guest-judged=0 namespaces-failed=233 not-executed=5684 pass=150 skipped=0
+namespaces clojure.core-test.fnil: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.fnil (Some("<root>/clojure/core_test/fnil.cljc")): Unresolved Runtime name fnil at bytes 222..1452'}, observed None
+namespaces clojure.core-test.get: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.get (Some("<root>/clojure/core_test/get.cljc")): Unresolved Runtime name to-array at bytes 222..1377'}, observed None
+namespaces clojure.core-test.group-by: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.group-by (Some("<root>/clojure/core_test/group_by.cljc")): Unresolved Runtime name group-by at bytes 244..1876'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.group-by (Some("<root>/clojure/core_test/group_by.cljc")): Unresolved Runtime name range at bytes 244..1876'}
+namespaces clojure.core-test.with-out-str: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.with-out-str (Some("<root>/clojure/core_test/with_out_str.cljc")): Unresolved Runtime name str at bytes 588..1478'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.with-out-str (Some("<root>/clojure/core_test/with_out_str.cljc")): Unresolved Runtime name with-out-str at bytes 588..1478'}
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (10964267) panicked at crates/suss-compile/tests/clojure_test_suite.rs:548:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 148.61s
+
+error: test failed, to rerun pass `-p suss-compile --test clojure_test_suite`

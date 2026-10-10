@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3aa9752d7ee11c9d97bf8ecb35bb2504f9ef879aa1dbd4ee09b20200d2755fcb",
+  "replacement": "(def\n  ^{:doc \"Boolean flag for LITE_MODE\"\n    :jsdoc [\"@type {boolean}\"]}\n  LITE_MODE false)",
+  "rationale": "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending. goog-define becomes an ordinary portable declaration with the identical metadata and pinned false value; Closure build-time override is not implemented."
+}

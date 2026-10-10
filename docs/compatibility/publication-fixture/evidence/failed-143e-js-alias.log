@@ -1,0 +1,30 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-integration/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 7.49s
+     Running tests/compiled_macro_publication_cells.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_publication_cells-b4015ff66d876bfe)
+
+running 2 tests
+test publication_probe_sees_later_class_and_dynamic_overrides_without_replaying ... FAILED
+test publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc ... FAILED
+
+failures:
+
+---- publication_probe_sees_later_class_and_dynamic_overrides_without_replaying stdout ----
+
+thread 'publication_probe_sees_later_class_and_dynamic_overrides_without_replaying' (10076069) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:71:148:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 37..46, message: "Unresolved Runtime name js/Array" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc stdout ----
+
+thread 'publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc' (10076068) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:37:34:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 30..39, message: "Unresolved Runtime name js/Array" })
+
+
+failures:
+    publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc
+    publication_probe_sees_later_class_and_dynamic_overrides_without_replaying
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.74s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_macro_publication_cells`

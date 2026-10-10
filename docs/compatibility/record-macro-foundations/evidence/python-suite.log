@@ -1,0 +1,9 @@
+.............................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 237 tests in 10.897s
+
+OK
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 14 pinned record iterator/not-empty observations
+PASS 5 pinned reify prerequisite observations
+45 pinned portable source observations match exactly

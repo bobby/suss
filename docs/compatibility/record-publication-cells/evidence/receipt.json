@@ -1,0 +1,43 @@
+{
+  "base": "491703306cc439404dd3f507d4d8d5eee587bf25",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference_compile": {
+    "command": "cd tests/oracle; CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M -m cljs.main -co '{:target :nodejs :output-to \"out/publication-cells.js\" :output-dir \"out/publication-cells-cljs\" :optimizations :none :source-map false :cache-analysis false}' -c suss-oracle.publication-cells",
+    "exit_code": 0
+  },
+  "reference_execute": {
+    "command": "cd tests/oracle; node out/publication-cells.js > out/publication-cells-observations.json",
+    "exit_code": 0,
+    "raw_ordered_observations": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      0
+    ]
+  },
+  "initial_compile": {
+    "exit_code": 1,
+    "reason": "fixture authored under duplicate relative tests/oracle path; corrected, not an upstream failure"
+  },
+  "native": "2 authored tests UNCOMPILED/UNEXECUTED",
+  "bootstrap": "unchanged/stale",
+  "files": {
+    "crates/suss-compile/src/portable/hir.rs": "bbed70e412dfb7402041e0c0c92b99581ff27a0ee47260238d86a7331616c229",
+    "crates/suss-compile/src/portable/emit.rs": "8c90bc22e62594089007b4c4b54b91dd6719489cfb8934961ae8ab628c9c0346",
+    "crates/suss-compile/src/runtime_abi.rs": "dbe0b4dece6c36c755e621d69c6b0cbd55a3073d9fa3c6e11c3bd150a9751397",
+    "crates/suss-cli/tests/compiled_macro_publication_cells.rs": "1a2035f8858c479a5e55223d45ceb92e7d3b0e8d44e93fc72badf55e111a04f6",
+    "tests/oracle/src/suss_oracle/publication_cells.cljs": "02937ad8dd19889d2b126b3784d2430e989eaf57da2a80ce044689b260c6b87c",
+    "docs/compatibility/record-publication-cells/evidence/primary-compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/compatibility/record-publication-cells/evidence/primary-initial-failure.log": "52c5406faa6b3ed82c6012aaa1da8408f3eeed7eef48724ce4db738fed36ac64",
+    "docs/compatibility/record-publication-cells/evidence/primary-observations.json": "5435999eb52427b17ef61123dabd192c92d9370c342a8ec45c88cda5eb55db40"
+  },
+  "prior_independent_reviews": {
+    "docs/compatibility/record-runtime-graph/evidence/4917033-independent-review.md": "7cfc7142a8980f5c1eb31e80c71754bf33cb6cec1f33db9d53bf83bd1c2134ab",
+    "docs/compatibility/record-runtime-graph/evidence/808f7e-independent-review.md": "3fea5d98ba99aa9aa939a4bc538da6e546f17db8f6bafea6053b0dde09a4c30e"
+  }
+}

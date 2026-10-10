@@ -1,0 +1,28 @@
+{
+  "base": "51533b4d547c5212ee85a034dd57e1dbbb34f122",
+  "repair": "reject canonical hidden ReaderCell/InternalCell before fresh declaration; explicit source promotion unchanged",
+  "source_boundary_test": "authored/uncompiled/unexecuted",
+  "historical_focused": {
+    "exit_code": 101,
+    "passed": 0,
+    "failed": 2,
+    "stage": "Session initialization stale bootstrap manifest; no cell-kernel assertions entered"
+  },
+  "historical_bootstrap": {
+    "exit_code": 1,
+    "stage": "whole update-in parameter destructuring at177827..177835; no source subset or identity bypass"
+  },
+  "native_kernel": "not executed",
+  "bootstrap": "unchanged/stale",
+  "files": {
+    "crates/suss-compile/src/portable/hir.rs": "1d9f1561513359e7830bfa66e70c867cb16738971c0b16e1d36e24a03ffebd91",
+    "crates/suss-compile/src/portable/syntax_quote/tests.rs": "6276ce945ffd0c8a1b30de7298af3d681748d204258b87bf0d502cc83cee04ed",
+    "crates/suss-compile/src/portable/emit.rs": "8c90bc22e62594089007b4c4b54b91dd6719489cfb8934961ae8ab628c9c0346",
+    "crates/suss-compile/src/runtime_abi.rs": "dbe0b4dece6c36c755e621d69c6b0cbd55a3073d9fa3c6e11c3bd150a9751397",
+    "crates/suss-cli/tests/compiled_macro_publication_cells.rs": "1a2035f8858c479a5e55223d45ceb92e7d3b0e8d44e93fc72badf55e111a04f6",
+    "docs/compatibility/record-publication-cells/evidence/51533b4-independent-review.md": "d993ed6b09f22cd61531253e80f8364d0a67f77347c6ced6d3f65d294c1f540b",
+    "docs/compatibility/record-publication-cells/evidence/51533-focused-failure.log": "725103d3966c15a24aaaeec5197bcf9f5e1ca282af8b217aa2259691b4fd2e48",
+    "docs/compatibility/record-publication-cells/evidence/51533-focused-validation.json": "78ced3612f6abbe5eddcc06723f56a1caf0a96450efa2097eb16d9fec46bab37",
+    "docs/compatibility/record-publication-cells/evidence/51533-bootstrap-failure.log": "67578f25533f084388096dced768e095bf0e412f55bc217923c13e2eb26df55e"
+  }
+}

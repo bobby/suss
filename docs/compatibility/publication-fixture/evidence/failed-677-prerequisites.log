@@ -1,0 +1,28 @@
+    Finished `test` profile [unoptimized] target(s) in 0.09s
+     Running tests/compiled_macro_publication_cells.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/compiled_macro_publication_cells-b4015ff66d876bfe)
+
+running 2 tests
+test publication_probe_sees_later_class_and_dynamic_overrides_without_replaying ... FAILED
+test publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc ... FAILED
+
+failures:
+
+---- publication_probe_sees_later_class_and_dynamic_overrides_without_replaying stdout ----
+
+thread 'publication_probe_sees_later_class_and_dynamic_overrides_without_replaying' (10061322) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:13:5:
+assertion failed: matches!(actual.kind, Kind::Bool(value) if value == expected)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc stdout ----
+
+thread 'publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc' (10061321) panicked at crates/suss-cli/tests/compiled_macro_publication_cells.rs:13:5:
+assertion failed: matches!(actual.kind, Kind::Bool(value) if value == expected)
+
+
+failures:
+    publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc
+    publication_probe_sees_later_class_and_dynamic_overrides_without_replaying
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.57s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_macro_publication_cells`

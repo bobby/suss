@@ -1,0 +1,20 @@
+......................................................................................................................................................................................................................................................................
+======================================================================
+FAIL: test_missing_reordered_duplicate_and_wrong_hash_rejected (test_record_graph_runtime_provenance.RuntimeGraphProvenance) (change='missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-record-reify-implementation/scripts/test_record_graph_runtime_provenance.py", line 21, in test_missing_reordered_duplicate_and_wrong_hash_rejected
+    with self.subTest(change=change),self.assertRaises(ValueError): verify(recipe,self.patches)
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 263 tests in 16.049s
+
+FAILED (failures=1)
+PASS 22 pinned Array constructor observations
+41 pinned portable source observations match exactly
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 33 pinned record helper observations
+PASS 14 pinned record iterator/not-empty observations
+PASS 7 pinned reify prerequisite observations
+45 pinned portable source observations match exactly

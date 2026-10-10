@@ -1,0 +1,4 @@
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-cli)
+    Finished `test` profile [unoptimized] target(s) in 4.02s
+     Running `/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/suss-bootstrap runtime/bootstrap`

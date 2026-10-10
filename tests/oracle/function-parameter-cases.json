@@ -1,0 +1,1253 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "vector-missing",
+      "source": "((fn [[a b c]] [a b c]) [17 false])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "nil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "vector-nested",
+      "source": "((fn [[[a b] [c]]] [a b c]) [[17 nil] [23]])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "vector-rest-empty",
+      "source": "((fn [[a & more]] [a (nil? more)]) [17])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "vector-rest-nested",
+      "source": "((fn [[a & [b c]]] [a b c]) [17 23 31])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "vector-as",
+      "source": "((fn [[a & more :as all]] [a (vec more) all]) [17 23 31])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "variadic-rest-pattern",
+      "source": "((fn [a & [b c :as more]] [a b c (vec more)]) 17 23 31)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "403f000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-keys",
+      "source": "((fn [{:keys [a b]}] [a b]) {:a 17 :b false})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-qualified-keys",
+      "source": "((fn [{:box/keys [a] :keys [other/b]}] [a b]) {:box/a 17 :other/b 23})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-syms",
+      "source": "((fn [{:box/syms [a] :syms [other/b]}] [a b]) {'box/a 17 'other/b 23})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-strs",
+      "source": "((fn [{:strs [a other/b]}] [a b]) {\"a\" 17 \"other/b\" 23})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-nested",
+      "source": "((fn [{[a {:keys [b]}] :entry}] [a b]) {:entry [17 {:b 23}]})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-as",
+      "source": "((fn [{:keys [a] :as all}] [a (get all :a)]) {:a false})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-default-eager",
+      "source": "(let [effects (atom 0)] [((fn [{:keys [a] :or {a (swap! effects inc)}}] a) {:a 17}) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-default-nil-false",
+      "source": "((fn [{:keys [a b c] :or {a 1 b 2 c 3}}] [a b c]) {:a nil :b false})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-seq-pairs",
+      "source": "((fn [{:keys [a b]}] [a b]) (list :a 17 :b 23))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-single-map",
+      "source": "((fn [{:keys [a]}] a) (list {:a 17}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "map-empty-seq",
+      "source": "((fn [{:keys [a] :or {a 17}}] a) ())",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "map-trailing-map",
+      "source": "((fn [{:keys [a b]}] [a b]) (list :a 17 {:b 23}))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recur-vector",
+      "source": "((fn again [[n total]] (if (< n 3) (recur [(inc n) (+ total n)]) [n total])) [0 0])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recur-map",
+      "source": "((fn again [{:keys [n total]}] (if (< n 3) (recur {:n (inc n) :total (+ total n)}) [n total])) {:n 0 :total 0})",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "multi-arity-pattern",
+      "source": "(let [f (fn ([[a]] a) ([{:keys [a]} [b]] (+ a b)))] [(f [17]) (f {:a 23} [31])])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "404b000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "argument-evaluation-once",
+      "source": "(let [effects (atom 0)] [((fn [[a] {:keys [b]}] [a b]) (do (swap! effects inc) [17]) (do (swap! effects inc) {:b 23})) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-large-order",
+      "source": "(let [effects (atom [])] ((fn [{a :a b :b c :c d :d e :e f :f g :g h :h i :i :or {a (do (swap! effects conj 1) 0) b (do (swap! effects conj 2) 0) c (do (swap! effects conj 3) 0) d (do (swap! effects conj 4) 0) e (do (swap! effects conj 5) 0) f (do (swap! effects conj 6) 0) g (do (swap! effects conj 7) 0) h (do (swap! effects conj 8) 0) i (do (swap! effects conj 9) 0)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-shorthand-promotion-order",
+      "source": "(let [effects (atom [])] ((fn [{:keys [a b c d e f g h i] :or {a (do (swap! effects conj 1) 0) b (do (swap! effects conj 2) 0) c (do (swap! effects conj 3) 0) d (do (swap! effects conj 4) 0) e (do (swap! effects conj 5) 0) f (do (swap! effects conj 6) 0) g (do (swap! effects conj 7) 0) h (do (swap! effects conj 8) 0) i (do (swap! effects conj 9) 0)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "map-dissoc-keeps-hash-order",
+      "source": "(let [effects (atom [])] ((fn [{a :a b :b c :c d :d e :e f :f g :g :as all :or {a (do (swap! effects conj 1) 0) b (do (swap! effects conj 2) 0) c (do (swap! effects conj 3) 0) d (do (swap! effects conj 4) 0) e (do (swap! effects conj 5) 0) f (do (swap! effects conj 6) 0) g (do (swap! effects conj 7) 0)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "default-throw-and-recovery",
+      "source": "(let [effects (atom [])] [(try ((fn [{:keys [a b] :or {a (do (swap! effects conj 1) (throw 73)) b (do (swap! effects conj 2) 0)}}] 0) {}) (catch :default e e)) @effects ((fn [[x]] x) [17])])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4052400000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "live-nth-order",
+      "source": "(let [old nth effects (atom 9)] (try (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i missing) (finally (set! nth replacement))))))) [((fn [[a b]] [a b]) [17 23]) @effects] (finally (set! nth old))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "408c280000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "live-get-arities",
+      "source": "(let [old get effects (atom 0)] (try (set! get (fn replacement ([m k] (do (swap! effects (fn [n] (+ (* n 10) 2))) (set! get old) (try (old m k) (finally (set! get replacement))))) ([m k missing] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! get old) (try (old m k missing) (finally (set! get replacement))))))) [((fn [{a :a b :b :or {b 31}}] [a b]) {:a 17}) @effects] (finally (set! get old))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "live-rest-next-before-nesting",
+      "source": "(let [f first n next t nth effects (atom 0)] (try (set! first (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 1))) (f v)))) (set! next (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 2))) (n v)))) (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i missing) (finally (set! nth replacement))))))) [((fn [[[a] & [b]]] [a b]) [[17] 23]) @effects] (finally (set! first f) (set! next n) (set! nth t))))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4093440000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recur-defaults-repeat",
+      "source": "(let [effects (atom 0)] [((fn again [{:keys [n step] :or {step (swap! effects inc)}}] (if (< n 2) (recur {:n (inc n)}) [n step])) {:n 0}) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pinned-identifier-hash-collision",
+      "source": "[(hash 'binding12119) (hash 'binding59407) (hash 'Aa/x) (hash 'BB/x)]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "41ada7a65c000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "41ada7a65c000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "c1c08ae270000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "c1c08ae270000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "symbol-collision-insertion-with-removal",
+      "source": "(let [effects (atom [])] ((fn [{binding12119 (do (swap! effects conj 1) :1) binding59407 (do (swap! effects conj 2) :2) a (do (swap! effects conj 3) :3) b (do (swap! effects conj 4) :4) c (do (swap! effects conj 5) :5) d (do (swap! effects conj 6) :6) e (do (swap! effects conj 7) :7) f (do (swap! effects conj 8) :8) g (do (swap! effects conj 9) :9) :as all :or {binding12119 (do (swap! effects conj 11) 71) binding59407 (do (swap! effects conj 12) 72) a (do (swap! effects conj 13) 73) b (do (swap! effects conj 14) 74) c (do (swap! effects conj 15) 75) d (do (swap! effects conj 16) 76) e (do (swap! effects conj 17) 77) f (do (swap! effects conj 18) 78) g (do (swap! effects conj 19) 79)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "symbol-collision-reversed-with-removal",
+      "source": "(let [effects (atom [])] ((fn [{binding59407 (do (swap! effects conj 1) :1) binding12119 (do (swap! effects conj 2) :2) a (do (swap! effects conj 3) :3) b (do (swap! effects conj 4) :4) c (do (swap! effects conj 5) :5) d (do (swap! effects conj 6) :6) e (do (swap! effects conj 7) :7) f (do (swap! effects conj 8) :8) g (do (swap! effects conj 9) :9) :as all :or {binding59407 (do (swap! effects conj 11) 71) binding12119 (do (swap! effects conj 12) 72) a (do (swap! effects conj 13) 73) b (do (swap! effects conj 14) 74) c (do (swap! effects conj 15) 75) d (do (swap! effects conj 16) 76) e (do (swap! effects conj 17) 77) f (do (swap! effects conj 18) 78) g (do (swap! effects conj 19) 79)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nested-vector-collision-promotion-removal",
+      "source": "(let [effects (atom [])] [((fn [{[Aa/x] (do (swap! effects conj 1) :1) [BB/x] (do (swap! effects conj 2) :2) [a] (do (swap! effects conj 3) :3) [b] (do (swap! effects conj 4) :4) [c] (do (swap! effects conj 5) :5) [d] (do (swap! effects conj 6) :6) [e] (do (swap! effects conj 7) :7) [f] (do (swap! effects conj 8) :8) [g] (do (swap! effects conj 9) :9) :as all :or {[Aa/x] (do (swap! effects conj 11) [71]) [BB/x] (do (swap! effects conj 12) [72]) [a] (do (swap! effects conj 13) [73]) [b] (do (swap! effects conj 14) [74]) [c] (do (swap! effects conj 15) [75]) [d] (do (swap! effects conj 16) [76]) [e] (do (swap! effects conj 17) [77]) [f] (do (swap! effects conj 18) [78]) [g] (do (swap! effects conj 19) [79])}}] x) {:1 [false] :2 [nil]}) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "nil"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "401c000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4020000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4032000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4018000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4030000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402e000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4026000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4028000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4033000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402c000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402a000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "nested-map-pattern-key-hash-order",
+      "source": "(let [effects (atom [])] [((fn [{{a :entry} (do (swap! effects conj 1) :1) {b :entry} (do (swap! effects conj 2) :2) {c :entry} (do (swap! effects conj 3) :3) {d :entry} (do (swap! effects conj 4) :4) {e :entry} (do (swap! effects conj 5) :5) {f :entry} (do (swap! effects conj 6) :6) {g :entry} (do (swap! effects conj 7) :7) {h :entry} (do (swap! effects conj 8) :8) {i :entry} (do (swap! effects conj 9) :9) :or {{a :entry} (do (swap! effects conj 11) {:entry 71}) {b :entry} (do (swap! effects conj 12) {:entry 72}) {c :entry} (do (swap! effects conj 13) {:entry 73}) {d :entry} (do (swap! effects conj 14) {:entry 74}) {e :entry} (do (swap! effects conj 15) {:entry 75}) {f :entry} (do (swap! effects conj 16) {:entry 76}) {g :entry} (do (swap! effects conj 17) {:entry 77}) {h :entry} (do (swap! effects conj 18) {:entry 78}) {i :entry} (do (swap! effects conj 19) {:entry 79})}}] [a i]) {}) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4051c00000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4053c00000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4014000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402e000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4026000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4020000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4032000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4028000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4018000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4030000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "401c000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4010000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402c000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "402a000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4022000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4033000000000000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-node-promoted-shorthand-order",
+      "source": "(let [effects (atom [])] ((fn [{:keys [slot0 slot1 slot2 slot3 slot4 slot5 slot6 slot7 slot8 slot9 slot10 slot11 slot12 slot13 slot14 slot15 slot16 slot17 slot18 slot19 slot20 slot21 slot22 slot23] :or {slot0 (do (swap! effects conj 0) 0) slot1 (do (swap! effects conj 1) 0) slot2 (do (swap! effects conj 2) 0) slot3 (do (swap! effects conj 3) 0) slot4 (do (swap! effects conj 4) 0) slot5 (do (swap! effects conj 5) 0) slot6 (do (swap! effects conj 6) 0) slot7 (do (swap! effects conj 7) 0) slot8 (do (swap! effects conj 8) 0) slot9 (do (swap! effects conj 9) 0) slot10 (do (swap! effects conj 10) 0) slot11 (do (swap! effects conj 11) 0) slot12 (do (swap! effects conj 12) 0) slot13 (do (swap! effects conj 13) 0) slot14 (do (swap! effects conj 14) 0) slot15 (do (swap! effects conj 15) 0) slot16 (do (swap! effects conj 16) 0) slot17 (do (swap! effects conj 17) 0) slot18 (do (swap! effects conj 18) 0) slot19 (do (swap! effects conj 19) 0) slot20 (do (swap! effects conj 20) 0) slot21 (do (swap! effects conj 21) 0) slot22 (do (swap! effects conj 22) 0) slot23 (do (swap! effects conj 23) 0)}}] nil) {}) @effects)",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4026000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4022000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4035000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402a000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "402c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4020000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4030000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4032000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4036000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4024000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4033000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "default-present-still-throws",
+      "source": "(let [effects (atom 0)] [(try ((fn [{:keys [a] :or {a (do (swap! effects inc) (throw 73))}}] a) {:a 17}) (catch :default e e)) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4052400000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "captured-defaults-and-repeat",
+      "source": "(let [captured [17 23] effects (atom 0) f (fn [[x] {:keys [y] :or {y (do (swap! effects inc) (nth captured 1))}}] [x y])] [(f [(nth captured 0)] {:y false}) (f [31] {}) @effects])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "403f000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "vector-string-repeated-local",
+      "source": "[((fn [[a b c]] [a b c]) \"ab\") ((fn [[x x]] x) [17 23])]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

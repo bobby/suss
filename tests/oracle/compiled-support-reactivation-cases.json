@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "test_comp",
+      "source": "(do (let [f (comp inc inc)] (f 10)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "test_debug_comp_simple",
+      "source": "(do (let [f (comp inc inc)] (f 10)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "test_partial",
+      "source": "(do (let [add5 (partial + 5)] (add5 10)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "test_fn_map_destructuring_keys",
+      "source": "(do ((fn [{:keys [a b]}] (+ a b)) {:a 10 :b 20}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403e000000000000"
+      }
+    },
+    {
+      "id": "test_defn_map_destructuring",
+      "source": "(do (defn foo [{:keys [x y]}] (+ x y)) (foo {:x 3 :y 7}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "test_fn_map_destructuring_as",
+      "source": "(do ((fn [{:keys [a] :as m}] (+ a (count m))) {:a 10 :b 20}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "test_multi_arity_map_destructuring",
+      "source": "(do (let [f (fn ([] 0) ([{:keys [a b]}] (+ a b)))] (f {:a 5 :b 15})))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "comp-effect-order-and-capture",
+      "source": "(let [a (atom 0) captured [17 23] f (comp (do (swap! a (fn [n] (+ (* n 10) 1))) (fn [x] (swap! a (fn [n] (+ (* n 10) 4))) (+ x (nth captured 1)))) (do (swap! a (fn [n] (+ (* n 10) 2))) (fn [x] (swap! a (fn [n] (+ (* n 10) 3))) (inc x)))) result (f (do (swap! a (fn [n] (+ (* n 10) 5))) 10))] [result @a])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4041000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "40c87b0000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-effect-order-and-capture",
+      "source": "(let [a (atom 0) captured [17 23] f (partial (do (swap! a (fn [n] (+ (* n 10) 1))) (fn [x y] (swap! a (fn [n] (+ (* n 10) 4))) (+ x y (nth captured 0)))) (do (swap! a (fn [n] (+ (* n 10) 2))) 5)) result (f (do (swap! a (fn [n] (+ (* n 10) 3))) 10))] [result @a])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4040000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4093480000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "parameter-eager-default-capture-once",
+      "source": "(let [a (atom 0) captured [17 23] f (fn [{:keys [x] :or {x (do (swap! a inc) (nth captured 1))}}] x) p (f (do (swap! a (fn [n] (+ (* n 10) 2))) {:x 7})) q (f {})] [p q @a])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4037000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4010000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "multi-arity-zero-and-map",
+      "source": "(let [f (fn ([] 0) ([{:keys [a b]}] (+ a b)))] [(f) (f {:a 5 :b 15})])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4034000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

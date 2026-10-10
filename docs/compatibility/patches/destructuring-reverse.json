@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "87142e78c06d83a690a9f0bd8ac6801bec92b0e999b5de6174ba2c1a17da7941",
+  "replacement": "(def reverse\n  \"Returns a seq of the items in coll in reverse order. Not lazy.\"\n  (fn [coll]\n  (if (reversible? coll)\n    (or (rseq coll) ())\n    (reduce conj () coll))))",
+  "rationale": "Complete pinned reverse preserves reversible? -> rseq/or-empty and reduce/conj fallback, original docstring, eager source traversal and metadata/hash semantics of original result. Expand only defn to def/fn. Required by complete comp variadic factory, whose source remains unchanged; actual authoring-snapshot bootstrap reached reverse after clearing parameter lowering. Native pending."
+}

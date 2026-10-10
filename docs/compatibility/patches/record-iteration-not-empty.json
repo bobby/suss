@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+  "replacement": "(def not-empty\n  \"If coll is empty, returns nil, else coll\"\n  (fn [coll] (if (seq coll) coll nil)))",
+  "rationale": "Expand the complete defn to def/fn and when to if, retaining documentation, sole arity, once-only live seq call, original collection identity and nil when empty. No emptiness shortcut or collection reconstruction. Execution remains required."
+}

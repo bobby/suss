@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "direct-str-raw-number-return",
+      "source": "(str (js-obj \"toString\" (fn [] 23)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50,
+          51
+        ]
+      }
+    },
+    {
+      "id": "direct-str-raw-nil-return",
+      "source": "(str (js-obj \"toString\" (fn [] nil)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          117,
+          108,
+          108
+        ]
+      }
+    }
+  ]
+}

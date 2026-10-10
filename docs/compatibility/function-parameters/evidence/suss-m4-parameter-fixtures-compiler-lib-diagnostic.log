@@ -1,0 +1,115 @@
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-parameter-authoring-diagnostic/crates/suss-compile)
+    Finished `test` profile [unoptimized] target(s) in 5.06s
+     Running unittests src/lib.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/suss_compile-7dc520c6dd49b147)
+
+running 93 tests
+test config::tests::test_parse_config_with_src_paths ... ok
+test config::tests::test_parse_config_with_deps ... ok
+test config::tests::test_parse_simple_config ... ok
+test config::tests::test_parse_multiple_worlds ... ok
+test deftype_tests::test_deftype_basic ... ok
+test deftype_tests::test_deftype_constructor ... ok
+test deftype_tests::test_deftype_field_access ... ok
+test deftype_tests::test_deftype_mixed_fields ... ok
+test deftype_tests::test_deftype_rejects_metadata_on_a_number ... ok
+test deftype_tests::test_deftype_mutable_field ... ok
+test deftype_tests::test_deftype_typed_f64_field ... ok
+test deftype_tests::test_deftype_typed_i32_fields ... ok
+test portable::artifact_cache::tests::source_cache_distinguishes_source_dependency_phase_and_origin ... ok
+test deftype_tests::test_deftype_with_protocol ... ok
+test portable::artifact_cache::tests::source_cache_preserves_nan_payload_bits_and_checks_integrity ... ok
+test portable::artifact_cache::tests::source_cache_rejected_single_entry_releases_accounting_and_recovers ... ok
+test portable::artifact_cache::tests::source_cache_unknown_provenance_bypasses_reuse_and_reverifies_graph ... ok
+test portable::artifact_identity::tests::artifact_identity_checks_compiler_abi_profile_flags_and_selected_dependency_versions ... ok
+test portable::artifact_cache::tests::source_cache_eviction_keeps_memory_and_entry_counts_bounded ... ok
+test portable::artifact_identity::tests::artifact_identity_preserves_custom_sections_and_code_across_reannotation ... ok
+test portable::artifact_identity::tests::artifact_identity_rejects_missing_duplicate_corrupt_and_malformed_records ... ok
+test portable::artifact_identity::tests::artifact_identity_preserves_exact_source_and_phase_and_unknown_provenance ... ok
+test portable::command::adapter::tests::command_adapter_core_validates_against_resolved_official_signatures ... ok
+test portable::command::async_component::entry_tests::rejected_second_entry_preserves_first_context_and_source_owner ... ok
+test portable::command::memory::tests::canonical_allocator_rejects_invalid_ownership_alignment_and_overflow ... ok
+test portable::command::memory::tests::canonical_realloc_copies_grows_shrinks_and_reuses_freed_capacity ... ok
+test portable::command::memory::tests::failed_growth_preserves_original_owned_block_and_contents ... ok
+test portable::hir::destructuring::tests::parameter_binding_large_map_uses_pinned_hash_order_after_dissoc ... ok
+test portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity ... FAILED
+test portable::hir::destructuring::tests::parameter_binding_primitive_fn_star_stays_strict_and_bad_rest_fails ... ok
+test portable::hir::destructuring::tests::parameter_binding_qualified_shorthand_and_hygiene_preserve_local_metadata ... ok
+test portable::hir::destructuring::tests::parameter_binding_vector_rest_advances_before_nested_extraction ... ok
+test portable::hir::quotes::metadata_reader_tests::metadata_reader_keys_compare_canonical_duplicate_map_and_set_data ... ok
+test portable::hir::source_tags::quoted_tag_tests::quoted_child_tag_retains_nil_false_hints_and_elides_only_bookkeeping ... ok
+test portable::hir::source_tags::quoted_tag_tests::scalar_quote_preserves_outer_source_instead_of_private_literal_source ... ok
+test portable::ir::r#async::tests::a_lower_numbered_join_is_not_a_loop_checkpoint ... ok
+test portable::ir::r#async::tests::checkpoints_true_backedges_and_verifies_the_catalog ... ok
+test portable::ir::r#async::tests::consecutive_awaits_keep_result_dependency_and_entry_once ... ok
+test portable::ir::r#async::tests::rejects_irreducible_cycles_without_a_cooperative_cut ... ok
+test portable::ir::r#async::tests::rejects_replayed_entry_and_missing_pending_dependency ... ok
+test portable::origin::form_metadata::tests::provenance_index_late_unique_span_has_one_candidate ... ok
+test portable::command::async_component::entry_tests::production_entry_fuel_boundaries_restore_scope_without_replaying_entry ... ok
+test portable::origin::form_metadata::tests::provenance_index_preserves_colliding_spans_float_bits_and_child_order ... ok
+test portable::origin::form_metadata::tests::provenance_index_snapshot_keeps_shared_original_and_located_budget ... ok
+test portable::origin::form_metadata::tests::provenance_index_truncation_preserves_early_matches_and_exhaustion ... ok
+test portable::syntax_quote::tests::bootstrap_lowering_preserves_quoted_reader_data_and_ordinary_sequence_calls ... ok
+test portable::syntax_quote::tests::bounded_expansion_rejects_large_synthetic_inputs_without_consuming_ids ... ok
+test portable::syntax_quote::tests::collection_constructor_threshold_is_sixteen_map_entries ... ok
+test portable::syntax_quote::tests::independent_runtime_and_macro_reader_states_do_not_collide ... ok
+test portable::syntax_quote::tests::namespace_aliases_referrals_exclusions_and_phase_are_observed ... ok
+test portable::syntax_quote::tests::pinned_reader_trees_match_with_generated_identity_preserved ... ok
+test portable::syntax_quote::tests::private_reader_cell_is_absent_from_source_namespace_identities_until_promoted ... ok
+test portable::syntax_quote::tests::publication_probe_cannot_promote_real_reader_or_internal_reservations ... ok
+test portable::syntax_quote::tests::reader_core_catalog_qualifies_names_without_claiming_runtime_bindings ... ok
+test portable::syntax_quote::tests::reader_state_is_transactional_and_distinct_between_templates_and_inputs ... ok
+test portable::syntax_quote::tests::scalar_bits_utf16_and_textual_collection_effect_order_are_preserved ... ok
+test portable::syntax_quote::tests::templates_inside_quote_expand_but_ordinary_named_calls_do_not ... ok
+test portable::origin::form_metadata::tests::provenance_index_matches_linear_reader_trees_and_budget_boundaries ... ok
+test portable_expression::tests::expression_artifact_invalid_last_module_rejects_entire_bundle ... ok
+test portable_macro_data::identity_tests::macro_data_rejects_copied_descriptor_ids_after_gc ... ok
+test portable_macro_data::identity_tests::macro_data_reads_sparse_array_abi_without_inventing_hole_syntax ... ok
+test portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results ... ok
+test portable_macro_graph::sharing_tests::reader_data_identity_preserves_number_bits_metadata_and_order ... ok
+test portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order ... ok
+test portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery ... ok
+test portable_macro_graph::sharing_tests::shared_dag_validation_charges_each_dependency_edge_once ... ok
+test portable_macro_graph::sharing_tests::retained_declaration_metadata_keeps_cold_budgets_and_releases_dead_revisions ... ok
+test portable_module_cache::tests::eviction_is_bounded_and_failures_do_not_displace_code ... ok
+test portable_module_cache::tests::production_cache_reuses_the_compiled_module ... ok
+test portable_module_cache::tests::reuse_requires_exact_bytes_and_the_same_engine ... ok
+test portable_session::frontend::tests::backpressured_write_is_idle_until_capacity_or_terminal_state_changes ... ok
+test portable_session::frontend::tests::blocked_stream_read_becomes_actionable_on_data_close_or_cancel ... ok
+test portable_session::frontend::tests::cancellation_and_yielded_work_cannot_be_declared_idle ... ok
+test portable_session::frontend::tests::idle_dispatch_observation_interrupt_is_real_and_preserves_pending_roots ... ok
+test portable_session::frontend::tests::ready_dependency_without_enqueued_turn_still_requires_dispatch ... ok
+test portable_session::frontend::tests::stream_journal_roots_require_service_even_without_source_queue ... ok
+test portable_session::frontend::tests::terminal_native_registry_requires_housekeeping_without_runnable_source ... ok
+test portable_macro_graph::sharing_tests::shared_reader_data_matches_existing_canonical_transport_after_gc ... ok
+test portable_session::tests::session_lifecycle_all_artifacts_are_gated_before_allocating_or_publishing_cells ... ok
+test portable_session::tests::session_lifecycle_callback_translated_exception_clears_pending_state ... ok
+test portable_session::tests::session_lifecycle_compiler_build_identity_is_checked_before_any_cells ... ok
+test portable_session::tests::session_lifecycle_host_registry_roots_are_independent_and_completion_releases_hook ... ok
+test portable_session::tests::session_lifecycle_native_callback_foreign_exception_does_not_poison_the_store ... ok
+test portable_session::tests::session_lifecycle_native_callback_trap_restores_dynamic_context ... ok
+test portable_session::tests::session_lifecycle_numeric_helper_trap_resets_interrupted_rust_stack ... ok
+test portable_session::tests::session_lifecycle_phase_identity_rejects_entire_batch_before_publication ... ok
+test portable_session::native_async::tests::native_factory_installation_fuel_failures_leave_catalog_unchanged_and_retryable ... ok
+test portable_session::tests::session_lifecycle_reset_host_hook_once_and_cleanup_catches_cancellation ... ok
+test portable_session::tests::session_lifecycle_secondary_interrupt_preserves_async_fuel_trap_and_retires_roots ... ok
+test worlds::tests::test_build_script_world ... ok
+test worlds::tests::test_cli_world_has_run_export ... ok
+test worlds::tests::test_repl_world_has_eval_export ... ok
+test portable_session::tests::session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup ... ok
+
+failures:
+
+---- portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity stdout ----
+
+thread 'portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity' (10013155) panicked at crates/suss-compile/src/portable/hir/destructuring.rs:624:82:
+called `Result::unwrap()` on an `Err` value: Diagnostic { span: 115..139, message: "Unresolved Runtime name suss.core/PersistentVector" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity
+
+test result: FAILED. 92 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.99s
+
+error: test failed, to rerun pass `-p suss-compile --lib`

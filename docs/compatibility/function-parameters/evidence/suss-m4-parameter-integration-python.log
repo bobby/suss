@@ -1,0 +1,33 @@
+E..E.....
+======================================================================
+ERROR: test_complete_closed_retention (scripts.test_function_parameter_provenance.FunctionParameterProvenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-parameter-integration/scripts/test_function_parameter_provenance.py", line 12, in test_complete_closed_retention
+    self.assertEqual(verify(self.provenance), 5)
+  File "/private/tmp/suss-m4-parameter-integration/scripts/check_function_parameter_provenance.py", line 36, in verify
+    expected = expected_forms()
+  File "/private/tmp/suss-m4-parameter-integration/scripts/check_function_parameter_provenance.py", line 16, in expected_forms
+    inventory_records()  # Requires the actual clean pinned checkout.
+  File "/private/tmp/suss-m4-parameter-integration/scripts/cljs_inventory.py", line 157, in inventory_records
+    raise ValueError(f'upstream revision {pin} differs from reviewed pin {PIN}')
+ValueError: upstream revision 22a16a9515c3c013ba81a31ed74608cbe6e24c62 differs from reviewed pin c4295f303100bbf5afac449242d30bca1126f1a1
+
+======================================================================
+ERROR: test_complete_group (scripts.test_function_parameter_runtime_provenance.ParameterRuntimeProvenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-parameter-integration/scripts/test_function_parameter_runtime_provenance.py", line 11, in test_complete_group
+    self.assertEqual(verify(self.recipe, self.patches), 6)
+  File "/private/tmp/suss-m4-parameter-integration/scripts/check_function_parameter_runtime_provenance.py", line 34, in verify
+    source = extract_forms(pinned_file(ROOT, 'src/main/cljs/cljs/core.cljs').decode(), 'runtime', 'clojurescript/src/main/cljs/cljs/core.cljs')
+  File "/private/tmp/suss-m4-parameter-integration/scripts/core_import.py", line 33, in pinned_file
+    actual = repository_file(root, 'clojurescript/' + relative).read_bytes()
+  File "/private/tmp/suss-m4-parameter-integration/scripts/core_import.py", line 95, in repository_file
+    raise ValueError(f'missing or escaping repository file: {path}')
+ValueError: missing or escaping repository file: clojurescript/src/main/cljs/cljs/core.cljs
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.144s
+
+FAILED (errors=2)

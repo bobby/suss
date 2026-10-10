@@ -1,0 +1,13 @@
+{
+  "source_commit": "c8957e3fcdd8c3cd6afde9d9eb97053ac0e34de9",
+  "tested_head": "4d973cb",
+  "command": "cargo test -p suss-compile --locked --test portable_closures source_wrong_arity_and_missing_rest_class_are_located_diagnostics -- --test-threads=2",
+  "status": "passed",
+  "passed": 1,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 13,
+  "log": "docs/compatibility/function-parameters/evidence/suss-m4-closure-c895-native.log",
+  "sha256": "6c3ab2534a9be8153947a53aa0f0534a31de1ee9d0fd677207a03550bcd77414",
+  "scope": "Obsolete vector rejection removed; both wrong arities and missing IndexedSeq diagnostics retained. No production/bootstrap/oracle changes. Full baseline a426 failed on unresolved str."
+}

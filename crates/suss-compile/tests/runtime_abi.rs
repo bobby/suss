@@ -8249,3 +8249,149 @@ fn runtime_abi_reserved_schema_names_keep_all_spellings_and_near_misses() {
         }
     }
 }
+
+#[test]
+fn runtime_abi_munged_field_aliases_copy_last_constructor_value_and_use_last_named_slot() {
+    // Authored regression; no execution claimed in the source author checkout.
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    fn key(store: &mut Store<()>, runtime: Instance) -> Val {
+        let value = nominal_value(store, runtime, "string-new", &[Val::I32(3)]);
+        let array = value
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&*store)
+            .unwrap()
+            .unwrap();
+        for (i, unit) in "x_y".encode_utf16().enumerate() {
+            array
+                .set(&mut *store, i as u32, Val::I32(unit as i32))
+                .unwrap();
+        }
+        value
+    }
+    fn set(store: &mut Store<()>, args: &Val, index: u32, value: Val) {
+        args.unwrap_anyref()
+            .unwrap()
+            .as_array(&*store)
+            .unwrap()
+            .unwrap()
+            .set(store, index, value)
+            .unwrap();
+    }
+    fn bits(store: &mut Store<()>, value: &Val) -> u64 {
+        let value = value
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&*store)
+            .unwrap()
+            .unwrap();
+        let Val::F64(bits) = value.field(store, 0).unwrap() else {
+            panic!("Number ABI")
+        };
+        bits
+    }
+    let first_key = key(&mut store, runtime);
+    let second_key = key(&mut store, runtime);
+    let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    set(&mut store, &schema, 0, first_key.clone());
+    set(&mut store, &schema, 1, second_key.clone());
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[schema.clone()]);
+    let first = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(7.0f64.to_bits())],
+    );
+    let last = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(9.0f64.to_bits())],
+    );
+    let input = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    set(&mut store, &input, 0, first);
+    set(&mut store, &input, 1, last);
+    let object = nominal_value(
+        &mut store,
+        runtime,
+        "object-new",
+        &[descriptor, input.clone()],
+    );
+    store.gc(None).unwrap();
+    for index in [0, 1] {
+        let field = nominal_value(
+            &mut store,
+            runtime,
+            "object-field-get",
+            &[object.clone(), Val::I32(index)],
+        );
+        assert_eq!(bits(&mut store, &field), 9.0f64.to_bits());
+    }
+    let original = input
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .get(&mut store, 0)
+        .unwrap();
+    assert_eq!(
+        bits(&mut store, &original),
+        7.0f64.to_bits(),
+        "constructor input was not mutated"
+    );
+    let replacement = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(17.0f64.to_bits())],
+    );
+    nominal_value(
+        &mut store,
+        runtime,
+        "named-property-set",
+        &[object.clone(), first_key.clone(), replacement],
+    );
+    store.gc(None).unwrap();
+    let named = nominal_value(
+        &mut store,
+        runtime,
+        "named-property-get",
+        &[object.clone(), second_key.clone()],
+    );
+    let canonical = nominal_value(
+        &mut store,
+        runtime,
+        "object-field-get",
+        &[object, Val::I32(1)],
+    );
+    assert_eq!(bits(&mut store, &named), 17.0f64.to_bits());
+    assert_eq!(bits(&mut store, &canonical), 17.0f64.to_bits());
+    let table = nominal_value(&mut store, runtime, "args-new", &[Val::I32(4)]);
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    set(&mut store, &table, 0, first_key.clone());
+    set(&mut store, &table, 1, nil.clone());
+    set(&mut store, &table, 2, second_key);
+    set(&mut store, &table, 3, nil);
+    store.gc(None).unwrap();
+    for (table, stride, expected) in [(schema, 1, 1), (table, 2, 0)] {
+        let mut result = [Val::I32(-1)];
+        runtime
+            .get_func(&mut store, "property-find")
+            .unwrap()
+            .call(
+                &mut store,
+                &[table, first_key.clone(), Val::I32(stride)],
+                &mut result,
+            )
+            .unwrap();
+        assert!(matches!(result[0], Val::I32(actual) if actual == expected));
+    }
+}

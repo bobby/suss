@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "base": "677340c",
+  "pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "scope": "publication fixture nil vs genuine undefined; no production/bootstrap/fuel change",
+  "gates": {
+    "primary": {
+      "exit_code": 0,
+      "cases": 5
+    },
+    "harness": {
+      "exit_code": 0,
+      "passed": 3
+    },
+    "core_import": {
+      "exit_code": 0,
+      "files": 360
+    },
+    "native": "consistent authoring diagnostic2pass7.24s; frozen/integrated pending"
+  },
+  "files": {
+    "crates/suss-cli/tests/compiled_macro_publication_cells.rs": "3f8e53b4ad8d3b3cb6ccc48033fe9585ad22d1752fdb36cba4872f955937b77c",
+    "docs/compatibility/publication-fixture/README.md": "1be3fdcd7b2205d1c823b3b37d64d629fafeb4637712cf0dd8342f6c17d48265",
+    "docs/compatibility/publication-fixture/evidence/caller-diagnostic.log": "71fca9412a62206dc98071f587c83b3605466c5b884c93ff04d02e4f02c6d0ff",
+    "docs/compatibility/publication-fixture/evidence/core.log": "b45846d4ee41c1d2427bf52383bf96ab211b33c922f3073290277a9953dec31e",
+    "docs/compatibility/publication-fixture/evidence/failed-677-prerequisites.log": "646d2bcfe7dd055e13630ca8cc9aaa63c28533101714d158eb3c20ab39331896",
+    "docs/compatibility/publication-fixture/evidence/primary-observations.json": "1f0687d6311c7e5e99da6b540f8ab79766a9a220ebf31dfabcb96e6d159c25f9",
+    "docs/compatibility/publication-fixture/evidence/primary.log": "7c9692db6b797d8808224e32d71d86a739b788cb214b5ce6d1af32df8a97910c",
+    "docs/compatibility/publication-fixture/evidence/python.log": "199ba496f288116d36c62f29346d4fbf0bd75745a1c893abfcbdaa4c6d5b1033",
+    "docs/compatibility/publication-fixture/evidence/value-diagnostic.log": "08594a7d333f7e58fdfe883fd3253c4a8b75ae49c0b0e191615820ac9f57ed20",
+    "docs/compatibility/publication-fixture/make-array-2644.cljc": "2b28114788670529542c194653b80424e4408025b30d9ff3e36c991037f3141a",
+    "docs/roadmap/handoff.md": "0197334074d0060b2da2eb3e368889623db7357fc396935872728bc3c268dc78",
+    "scripts/publication_fixture_oracle.py": "f1cdfe3c9e0b18d002758fb004189f135a5c92a38004207018660083b0805379",
+    "scripts/test-publication-fixture-oracle.sh": "88000f428143fa54c02e53c76c065ab0d00514c0356ab4f2b6012a72c712b4af",
+    "scripts/test_publication_fixture_oracle.py": "ad8bc6d1665e2d1dec6a8eb95eec5715d825613c44a7ff56a772452b906c4729",
+    "tests/oracle/publication-fixture-cases.json": "3ddf964a4e4b92bf8e43432bd4d4d11cdbddc3e62e448b7cf400eecdabbbbfc8",
+    "tests/oracle/src/suss_oracle/publication_fixture.cljs": "626485807a21228c18b79b0be334b5f18c143e4b383de52aafee899e8837ab11",
+    "docs/compatibility/publication-fixture/evidence/firstclass-primary.log": "2dad7822db4d2fdff143be5b13c2ba660bfd7f678c9e57c3e4bdeab3576500f9",
+    "docs/compatibility/publication-fixture/evidence/firstclass-observations.json": "ea8e0dc3b783402705899e73f87893f58021e0a64a789ae1e407992e93ec65ce",
+    "docs/compatibility/publication-fixture/evidence/firstclass-authoring-native-diagnostic.log": "1fa4765b634b706c0a97230de07e84f6ed41c4220a227136a2fc232f8d32316c",
+    "docs/compatibility/publication-fixture/evidence/initial-four-cases.json": "29971f482a53934ddb6a45e11fe9fbe7947add0c583061b9fb866c4f4404fc71",
+    "docs/compatibility/publication-fixture/evidence/firstclass-python.log": "199ba496f288116d36c62f29346d4fbf0bd75745a1c893abfcbdaa4c6d5b1033",
+    "docs/compatibility/publication-fixture/evidence/failed-143e-js-alias.log": "34c07a4a41ba5b00470f0f0f07397fb620309589a8d1481487c7ec08d4e5e736"
+  },
+  "followup_base": "143e107"
+}

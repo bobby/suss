@@ -134,6 +134,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
 
     let mut callbacks = object_methods::functions(b, equal);
     callbacks.extend(string_methods::functions(b));
+    callbacks.extend(string_char_at::functions(b));
     callbacks.extend(array_methods::functions(b));
     callbacks.extend(array_push::functions(b));
     callbacks.extend(array_pop::functions(b));
@@ -479,6 +480,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(5),
         I32Const(0),
         I32LtS,
+        // Field aliases use the last constructor assignment. Method tables
+        // retain their existing first-match policy (stride two).
+        LocalGet(2),
+        I32Const(1),
+        I32Eq,
+        I32Or,
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(5),
@@ -661,6 +668,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(equal),
                 If(BlockType::Empty),
                 Call(b.names["string-char-code-at-method"]),
+                Return,
+                End,
+            ]);
+            body.push(LocalGet(1));
+            name(&mut body, "charAt");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["string-char-at-method"]),
                 Return,
                 End,
             ]);

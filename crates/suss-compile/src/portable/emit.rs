@@ -118,8 +118,11 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
+                        Nominal::ValueAdd => { names.insert("value-add"); }
+                        Nominal::IsBoolean => {}
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
+                        Nominal::BindingDefined => { names.insert("binding-defined"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -234,7 +237,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -991,6 +994,14 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::IsBoolean => {
+                            for sentinel in [2, 4] {
+                                function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                    .instruction(&I32Const(sentinel)).instruction(&RefI31)
+                                    .instruction(&RefEq);
+                            }
+                            function.instruction(&I32Or);
+                        }
                         Nominal::IsNumber | Nominal::IsString => {
                             // Reuse the runtime factory, never a mutable public cell.
                             // Arguments are already evaluated once in source order.
@@ -1118,8 +1129,10 @@ fn emit_function(
                                 .instruction(&Call(index("object-method-invoke")));
                         }
                         Nominal::Class
+                        | Nominal::BindingDefined
                         | Nominal::CoerceString
                         | Nominal::ConcatString
+                        | Nominal::ValueAdd
                         | Nominal::StringIndexOf
                         | Nominal::StringSlice
                         | Nominal::LanguageError
@@ -1146,8 +1159,10 @@ fn emit_function(
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
+                                Nominal::BindingDefined => "binding-defined",
                                 Nominal::CoerceString => "coerce-string",
                                 Nominal::ConcatString => "string-concat",
+                                Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
                                 Nominal::StringSlice => "string-slice",
                                 Nominal::LanguageError => "language-error-new",

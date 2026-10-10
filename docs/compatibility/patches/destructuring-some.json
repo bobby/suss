@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "034b8c7d5e1dd0f04c8e7d3dba7c38f106a5194bacac6b52e0b37d3c54ebffd0",
+  "replacement": "(def some\n  \"Returns the first logical true value of (pred x) for any x in coll,\n  else nil.  One common idiom is to use a set as pred, for example\n  this will return :fred if :fred is in the sequence, otherwise nil:\n  (some #{:fred} coll)\"\n  (fn [pred coll]\n  (let [some_seq_once__ (seq coll)]\n    (when some_seq_once__\n      (let [s some_seq_once__]\n        (or (pred (first s)) (recur pred (next s))))))))",
+  "rationale": "Complete pinned runtime graph dependency; only defn -> def/fn declaration expansion. Source docstring, every branch, public dispatch, physical source arguments and once-only/effect order retained. Authoring snapshot bootstrap exposed this genuine dependency; native execution not established. Retain full when-let sequence demand, first logical truthy predicate value (not Booleanized), short circuit and next/tail recurrence. Expand the exact sole when-let through the complete pinned macro let/temp/when/inner-let shape. The fixed private temporary is hygienic against every identifier in this whole declaration, condition initializes once and s is visible only on the truthy branch; nil and original result/tail-recur unchanged."
+}

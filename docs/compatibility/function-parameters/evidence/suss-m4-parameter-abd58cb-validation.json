@@ -1,0 +1,35 @@
+{
+  "head": "abd58cb7eed2b2a5e494b9fe6405288701464e76",
+  "worktree": "/private/tmp/suss-m4-parameter-integration",
+  "full_baseline": {
+    "status": "completed",
+    "session_id": 25069,
+    "command": "cargo test --workspace --locked -- --test-threads=2",
+    "log": "/private/tmp/suss-m4-parameter-abd58cb-full-baseline.log",
+    "observed_failure": "compiled_macro_compiler_catalog::failed_macro_reload_keeps_published_policy_then_successful_reload_recovers",
+    "exit_code": 101,
+    "groups": 17,
+    "passed": 86,
+    "failed": 1,
+    "ignored": 0,
+    "sha256": "9aea87a663f8720945704aad1f62e057cfb07a27a0928b0c1cc2671d5767bed5",
+    "failure": "initial macro symbol result requires shipped core; minimal Session::with_options left Runtime Symbol unresolved"
+  },
+  "focused": {
+    "compiler_lib": 93,
+    "parameter_native": 2,
+    "pinned_python": 9,
+    "compiled_bootstrap": 4,
+    "failures": 0
+  },
+  "scope": "parameter and reviewed runtime prerequisites; original M4 gates remain required",
+  "core_import_read_only_checks": {
+    "inventory_declarations": 1065,
+    "reviewed_declarations": 457,
+    "unassessed_declarations": 608,
+    "complete_sequence_setup_forms": 23,
+    "import_files": 360,
+    "all_four_exit_codes": 0,
+    "scope": "Python portions only; cargo core_import still covered by live full baseline; not full M4 provenance acceptance"
+  }
+}

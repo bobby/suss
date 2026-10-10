@@ -80,6 +80,17 @@
          ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
 
 (declare ^:private keyword-name-parts)
+
+;; Full parameter map-normalization mutual references. ObjMap is pending, not a stub.
+(declare --destructure-map LITE_MODE to-array ObjMap)
+
+;; Complete comp variadic factory mutual reference, initialized by whole reverse.
+(declare reverse)
+
+;; Full juxt and merge/merge-with source graph references, not aliases.
+(declare vector some)
+
+(declare str bootstrap-string-buffer BootstrapStringBuffer)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -636,7 +647,7 @@
   empty, returns nil.  (seq nil) returns nil. seq also works on
   Strings."
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (cond
       (implements? ISeqable coll)
       (-seq coll)
@@ -658,18 +669,18 @@
   "Returns the first item in the collection. Calls seq on its
   argument. If coll is nil, returns nil."
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (if (implements? ISeq coll)
       (-first coll)
       (let [s (seq coll)]
-        (when-not (nil? s)
+        (when-not (suss.bootstrap/nil? s)
           (-first s)))))))
 
 (def ^seq rest
   "Returns a possibly empty seq of the items after the first. Calls seq on its
   argument."
   (fn [coll]
-  (if-not (nil? coll)
+  (if-not (suss.bootstrap/nil? coll)
     (if (implements? ISeq coll)
       (-rest coll)
       (let [s (seq coll)]
@@ -682,7 +693,7 @@
   "Returns a seq of the items after the first. Calls seq on its
   argument.  If there are no more items, returns nil"
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (if (implements? INext coll)
       (-next coll)
       (seq (rest coll))))))
@@ -5007,7 +5018,7 @@
 "Implementation detail. Internal str without circularity on IndexedSeq.
   @param x
   @param {...*} var_args"
-  (let [seq seq first first next next number? number? string? string? identical? identical?]
+  (let [seq seq first first next next number? number? string? string? identical? identical? nil? nil?]
     (fn
       ([] "")
       ([x] (if (nil? x) ""
@@ -5789,6 +5800,347 @@
     (if (suss.bootstrap/nil? x)
       nil
       (suss.bootstrap/value-constructor x))))
+
+(def not-empty
+  "If coll is empty, returns nil, else coll"
+  (fn [coll] (if (seq coll) coll nil)))
+
+(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]
+  Object
+  (hasNext [_]
+    (or (< i base-count) (.hasNext ext-map-iter)))
+  (next [_]
+    (if (< i base-count)
+      (let [k (nth fields i)]
+        (set! i (inc i))
+        (MapEntry. k (-lookup record k) nil))
+      (.next ext-map-iter)))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(def vary-meta
+  "Returns an object of the same type and value as obj, with
+  (apply f (meta obj) args) as its metadata."
+  (fn ([obj f]
+   (with-meta obj (f (meta obj))))
+  ([obj f a]
+   (with-meta obj (f (meta obj) a)))
+  ([obj f a b]
+   (with-meta obj (f (meta obj) a b)))
+  ([obj f a b c]
+   (with-meta obj (f (meta obj) a b c)))
+  ([obj f a b c d]
+   (with-meta obj (f (meta obj) a b c d)))
+  ([obj f a b c d & args]
+   (with-meta obj (apply f (meta obj) a b c d args)))))
+
+(def fnil
+  "Takes a function f, and returns a function that calls f, replacing
+  a nil first argument to f with the supplied value x. Higher arity
+  versions can replace arguments in the second and third
+  positions (y, z). Note that the function f can take any number of
+  arguments, not just the one(s) being nil-patched."
+  (fn ([f x]
+   (fn
+     ([a] (f (if (suss.bootstrap/nil? a) x a)))
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) b))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) b c))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) b c ds))))
+  ([f x y]
+   (fn
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b)))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) c))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) c ds))))
+  ([f x y z]
+   (fn
+     ([a b] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b)))
+     ([a b c] (f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) (if (suss.bootstrap/nil? c) z c)))
+     ([a b c & ds] (apply f (if (suss.bootstrap/nil? a) x a) (if (suss.bootstrap/nil? b) y b) (if (suss.bootstrap/nil? c) z c) ds))))))
+
+(def update-in
+  "'Updates' a value in a nested associative structure, where ks is a
+  sequence of keys and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  nested structure.  If any levels do not exist, hash-maps will be
+  created."
+  (fn ([m [k & ks] f]
+   (if ks
+     (assoc m k (update-in (get m k) ks f))
+     (assoc m k (f (get m k)))))
+  ([m [k & ks] f a]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a))
+     (assoc m k (f (get m k) a))))
+  ([m [k & ks] f a b]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b))
+     (assoc m k (f (get m k) a b))))
+  ([m [k & ks] f a b c]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b c))
+     (assoc m k (f (get m k) a b c))))
+  ([m [k & ks] f a b c & args]
+   (if ks
+     (assoc m k (apply update-in (get m k) ks f a b c args))
+     (assoc m k (apply f (get m k) a b c args))))))
+
+(def group-by
+  "Returns a map of the elements of coll keyed by the result of
+  f on each element. The value at each key will be a vector of the
+  corresponding elements, in the order they appeared in coll."
+  (fn [f coll]
+  (persistent!
+    (reduce
+      (fn [ret x]
+        (let [k (f x)]
+          (assoc! ret k (conj (get ret k []) x))))
+      (transient {}) coll))))
+
+(def comp
+  "Takes a set of functions and returns a fn that is the composition
+  of those fns.  The returned fn takes a variable number of args,
+  applies the rightmost of fns to the args, the next
+  fn (right-to-left) to the result, etc."
+  (fn ([] identity)
+  ([f] f)
+  ([f g]
+     (fn
+       ([] (f (g)))
+       ([x] (f (g x)))
+       ([x y] (f (g x y)))
+       ([x y z] (f (g x y z)))
+       ([x y z & args] (f (apply g x y z args)))))
+  ([f g h]
+     (fn
+       ([] (f (g (h))))
+       ([x] (f (g (h x))))
+       ([x y] (f (g (h x y))))
+       ([x y z] (f (g (h x y z))))
+       ([x y z & args] (f (g (apply h x y z args))))))
+  ([f1 f2 f3 & fs]
+    (let [fs (reverse (list* f1 f2 f3 fs))]
+      (fn [& args]
+        (loop [ret (apply (first fs) args) fs (next fs)]
+          (if fs
+            (recur ((first fs) ret) (next fs))
+            ret)))))))
+
+(def partial
+  "Takes a function f and fewer than the normal arguments to f, and
+  returns a fn that takes a variable number of additional args. When
+  called, the returned function calls f with args + additional args."
+  (fn ([f] f)
+  ([f arg1]
+   (fn
+     ([] (f arg1))
+     ([x] (f arg1 x))
+     ([x y] (f arg1 x y))
+     ([x y z] (f arg1 x y z))
+     ([x y z & args] (apply f arg1 x y z args))))
+  ([f arg1 arg2]
+   (fn
+     ([] (f arg1 arg2))
+     ([x] (f arg1 arg2 x))
+     ([x y] (f arg1 arg2 x y))
+     ([x y z] (f arg1 arg2 x y z))
+     ([x y z & args] (apply f arg1 arg2 x y z args))))
+  ([f arg1 arg2 arg3]
+   (fn
+     ([] (f arg1 arg2 arg3))
+     ([x] (f arg1 arg2 arg3 x))
+     ([x y] (f arg1 arg2 arg3 x y))
+     ([x y z] (f arg1 arg2 arg3 x y z))
+     ([x y z & args] (apply f arg1 arg2 arg3 x y z args))))
+  ([f arg1 arg2 arg3 & more]
+   (fn [& args] (apply f arg1 arg2 arg3 (concat more args))))))
+
+(def juxt
+  "Takes a set of functions and returns a fn that is the juxtaposition
+  of those fns.  The returned fn takes a variable number of args, and
+  returns a vector containing the result of applying each fn to the
+  args (left-to-right).
+  ((juxt a b c) x) => [(a x) (b x) (c x)]"
+  (fn ([f]
+     (fn
+       ([] (vector (f)))
+       ([x] (vector (f x)))
+       ([x y] (vector (f x y)))
+       ([x y z] (vector (f x y z)))
+       ([x y z & args] (vector (apply f x y z args)))))
+  ([f g]
+     (fn
+       ([] (vector (f) (g)))
+       ([x] (vector (f x) (g x)))
+       ([x y] (vector (f x y) (g x y)))
+       ([x y z] (vector (f x y z) (g x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args)))))
+  ([f g h]
+     (fn
+       ([] (vector (f) (g) (h)))
+       ([x] (vector (f x) (g x) (h x)))
+       ([x y] (vector (f x y) (g x y) (h x y)))
+       ([x y z] (vector (f x y z) (g x y z) (h x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args) (apply h x y z args)))))
+  ([f g h & fs]
+     (let [fs (list* f g h fs)]
+       (fn
+         ([] (reduce (fn* [%1 %2] (conj %1 (%2))) [] fs))
+         ([x] (reduce (fn* [%1 %2] (conj %1 (%2 x))) [] fs))
+         ([x y] (reduce (fn* [%1 %2] (conj %1 (%2 x y))) [] fs))
+         ([x y z] (reduce (fn* [%1 %2] (conj %1 (%2 x y z))) [] fs))
+         ([x y z & args] (reduce (fn* [%1 %2] (conj %1 (apply %2 x y z args))) [] fs)))))))
+
+(def merge
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping from
+  the latter (left-to-right) will be the mapping in the result."
+  (fn [& maps]
+  (when (some identity maps)
+    (reduce (fn* [%1 %2] (conj (or %1 {}) %2)) maps))))
+
+(def merge-with
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping(s)
+  from the latter (left-to-right) will be combined with the mapping in
+  the result by calling (f val-in-result val-in-latter)."
+  (fn [f & maps]
+  (when (some identity maps)
+    (let [merge-entry (fn [m e]
+                        (let [k (key e) v (val e)]
+                          (if (contains? m k)
+                            (assoc m k (f (get m k) v))
+                            (assoc m k v))))
+          merge2 (fn [m1 m2]
+                   (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge2 maps)))))
+
+(def update
+  "'Updates' a value in an associative structure, where k is a
+  key and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  structure.  If the key does not exist, nil is passed as the old value."
+  (fn ([m k f]
+   (assoc m k (f (get m k))))
+  ([m k f x]
+   (assoc m k (f (get m k) x)))
+  ([m k f x y]
+   (assoc m k (f (get m k) x y)))
+  ([m k f x y z]
+   (assoc m k (f (get m k) x y z)))
+  ([m k f x y z & more]
+   (assoc m k (apply f (get m k) x y z more)))))
+
+(def select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  (fn [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key :cljs.core/not-found)]
+          (recur
+           (if (not= entry :cljs.core/not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map))))))
+
+(def zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  (fn [keys vals]
+    (loop [map (transient {})
+           ks (seq keys)
+           vs (seq vals)]
+      (if (and ks vs)
+        (recur (assoc! map (first ks) (first vs))
+               (next ks)
+               (next vs))
+        (persistent! map)))))
+
+(def
+  ^{:jsdoc ["@type {*}"]}
+  gensym_counter nil)
+
+(def gensym
+  "Returns a new symbol with a unique name. If a prefix string is
+  supplied, the name is prefix# where # is some unique number. If
+  prefix is not supplied, the prefix is 'G__'."
+  (fn ([] (gensym "G__"))
+  ([prefix-string]
+     (when (suss.bootstrap/nil? gensym_counter)
+       (set! gensym_counter (atom 0)))
+     (symbol (str_ prefix-string (swap! gensym_counter inc))))))
+
+(def
+  ^{:doc "Boolean flag for LITE_MODE"
+    :jsdoc ["@type {boolean}"]}
+  LITE_MODE false)
+
+(def to-array
+  "Returns an array containing the contents of coll."
+  (fn [coll]
+  (let [ary (array)]
+    (loop [s (seq coll)]
+      (if-not (suss.bootstrap/nil? s)
+        (do (.push ary (first s))
+            (recur (next s)))
+        ary)))))
+
+(def --destructure-map
+  (fn [gmap]
+  (if ^boolean LITE_MODE
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc ObjMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY ObjMap)))
+      gmap)
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY PersistentArrayMap)))
+      gmap))))
+
+(def reverse
+  "Returns a seq of the items in coll in reverse order. Not lazy."
+  (fn [coll]
+  (if (reversible? coll)
+    (or (rseq coll) ())
+    (reduce conj () coll))))
+
+(def vector
+  "Creates a new vector containing the args."
+  (fn [& args]
+  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+    (vec args))))
+
+(def some
+  "Returns the first logical true value of (pred x) for any x in coll,
+  else nil.  One common idiom is to use a set as pred, for example
+  this will return :fred if :fred is in the sequence, otherwise nil:
+  (some #{:fred} coll)"
+  (fn [pred coll]
+  (let [some_seq_once__ (seq coll)]
+    (when some_seq_once__
+      (let [s some_seq_once__]
+        (or (pred (first s)) (recur pred (next s))))))))
+
+(def str
+  "With no args, returns the empty string. With one arg x, returns
+  x.toString().  (str nil) returns the empty string. With more than
+  one arg, returns the concatenation of the str values of the args."
+  (fn
+  ([] "")
+  ([x] (if (suss.bootstrap/nil? x)
+         ""
+         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x)) (suss.bootstrap/coerce-string x) (.toString x))))
+  ([x & ys]
+   (loop [sb (bootstrap-string-buffer (str x)) more ys]
+     (if more
+       (recur (.append sb (str (first more))) (next more))
+       (.toString sb))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -6134,3 +6486,43 @@
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 (def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
+
+;; Copyright The Closure Library Authors.
+;; SPDX-License-Identifier: Apache-2.0
+;; Adapted from the complete goog/string/stringbuffer.js retained beside this
+;; file. Native owned storage replaces the Closure prototype buffer slot.
+;; All constructor and method branches remain; this is not JS prototype interop.
+(def bootstrap-buffer-to-array to-array)
+(deftype BootstrapStringBuffer [^:mutable buffer_]
+  Object
+  (set [this & values]
+    (let [args (bootstrap-buffer-to-array values) s (aget args 0)]
+      (set! buffer_ (suss.bootstrap/value-add "" s))
+      (aget (array) 0)))
+  (append [this & values]
+    (let [args (bootstrap-buffer-to-array values)
+          old buffer_
+          first-value (aget args 0)
+          converted (suss.bootstrap/coerce-string first-value)]
+      (set! buffer_ (suss.bootstrap/value-add old converted))
+      (if (suss.bootstrap/nil? (aget args 1))
+        nil
+        (loop [i 1]
+          (if (< i (alength args))
+            (let [old buffer_ value (aget args i)]
+              (set! buffer_ (suss.bootstrap/value-add old value))
+              (recur (inc i)))
+            nil)))
+      this))
+  (clear [this & ignored]
+    (set! buffer_ "")
+    (aget (array) 0))
+  (getLength [this & ignored] (.-length buffer_))
+  (toString [this & ignored] buffer_))
+(def bootstrap-string-buffer
+  (fn [& values]
+    (let [args (bootstrap-buffer-to-array values) sb (BootstrapStringBuffer. "")]
+      (if (suss.bootstrap/nil? (aget args 0))
+        nil
+        (.apply (.-append sb) sb args))
+      sb)))

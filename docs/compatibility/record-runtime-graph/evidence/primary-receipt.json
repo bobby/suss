@@ -1,0 +1,47 @@
+{
+  "base": "808f7e1523ac14a8d706196b716e4dfed48801bc",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference": {
+    "command": "sh scripts/test-record-graph-runtime-oracle.sh",
+    "exit_code": 0,
+    "cases": 84
+  },
+  "python": {
+    "command": "python3 -B -m unittest discover -s scripts -p 'test_*.py'",
+    "exit_code": 0,
+    "passed": 260
+  },
+  "preservation": {
+    "ordered_selections": 340,
+    "unchanged_reviews": 441,
+    "unchanged_extracted": 340,
+    "unchanged_bootstrap_files": 4
+  },
+  "native": "authored/uncompiled/unexecuted",
+  "bootstrap": "unchanged/stale",
+  "files": {
+    "tests/oracle/record-graph-runtime-cases.json": "0f4ea1045df579b427c2e300f708c1c61c59f00728ab210cf8ef7a627cbf5878",
+    "tests/oracle/src/suss_oracle/record_graph_runtime.cljs": "69fe5fb738aef69ad4fd293d7e036442ab875eda3dae382f3d5a7d03858eb7aa",
+    "scripts/record_graph_runtime_oracle.py": "6ed3d14cbd2396ea8f1e9544d50dbeeb9f1e1cc693dc33bd2c8106b161e5cf45",
+    "scripts/test-record-graph-runtime-oracle.sh": "b736730f51a1c58af8d1ad74e8ee5bad412db2273c337811b63ea274e3d8bd4f",
+    "scripts/check_record_graph_runtime_provenance.py": "d4eda49a44801b7c88ac104ea51b6c0f91031efe54f3c35990f66066e44d151a",
+    "scripts/check_record_helper_provenance.py": "affc51102747afdf5dbb0fa14627acce5f2c6d30ec6c569124c8eef892af7c56",
+    "scripts/test_record_graph_runtime_oracle.py": "5436dbeecdc4e69d5b3795f7cb1438ceeb1bc1d9453aca58c0fe323716007c17",
+    "scripts/test_record_graph_runtime_provenance.py": "a4bdd4b064f8120b920cc5fea47ba4084e0b945e5feeaeee8b1822ff22faceb4",
+    "crates/suss-cli/tests/portable_record_graph_runtime.rs": "f2a8508678ec106272fe755dbcd41ce38f30a45241eda9c2adb2d9892f59e2da",
+    "docs/compatibility/patches/record-graph-comp.json": "d23eaee5ce8c36c5323470036310a12b6ce1f40877d8f226fab246c3b1fd2f6d",
+    "docs/compatibility/patches/record-graph-partial.json": "d9905be81e8985c7896f6e5c04a69293e5e43448e96d0fafcf2f64a874c75117",
+    "docs/compatibility/patches/record-graph-juxt.json": "0bbaa59dbfd983a223910bc2a8085bd39a10602a06f48614b0fcf74cf3101b94",
+    "docs/compatibility/patches/record-graph-merge.json": "5c9720837f4f1d23baab800774cc71d7f4c2a79bcafcc0171746e3924ca32cd8",
+    "docs/compatibility/patches/record-graph-merge-with.json": "f9737d2eb656a152522bda40aebf349ed70bf051a5c6d985768c03590a7f97e7",
+    "docs/compatibility/patches/record-graph-update.json": "2d9e6fa61fca2047a165ae1daab7c0126e718770b1159aa393e31e94674c6d25",
+    "docs/compatibility/patches/record-graph-select-keys.json": "9bba4dd9b35b2b0fc58fdfbca11e6cf95e40217f9919f0925474e0f3182d5ff7",
+    "docs/compatibility/patches/record-graph-zipmap.json": "a3e3f5b527a595aa4970213d65f76f26699725ecc6a8d5156681aa223af59060",
+    "docs/compatibility/patches/record-graph-gensym_counter.json": "922623d61e5552463bfbef4ef63e95dab91a633896acf92e3dcca9a8fbd91428",
+    "docs/compatibility/patches/record-graph-gensym.json": "3f720d35fef55671528ff4d83561e73ef16e819c06c6ebd1340a283464df5e99",
+    "docs/compatibility/record-runtime-graph/evidence/primary-fixture.cljs": "e382b7afcd106e3b8a181c4cb549aa68a8fbd2b76a217205c7812f46f77e6957",
+    "docs/compatibility/record-runtime-graph/evidence/primary-observations.json": "7952b98cfd707c42724ae547bb0f1f95666186561ab33f6e53926d160ca9fd63",
+    "docs/compatibility/record-runtime-graph/evidence/primary.log": "6dcec7070cf917ce0f9199502b51bffe769013283b6f97bfc43b7c32910c1cd4",
+    "docs/compatibility/record-runtime-graph/evidence/python.log": "953aaaf694a257fe722521fede7c20f90deb8a587663baa0fec043a4d044b4d2"
+  }
+}

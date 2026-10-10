@@ -3,6 +3,7 @@ mod arrays;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
 mod function_parameters;
+mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
 mod bitwise;
 mod callable_signatures;
@@ -292,8 +293,11 @@ pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
     IsString,
+    IsBoolean,
     IsClosure,
     BindCallable,
+    /// Private selected binding-cell presence, not value truthiness.
+    BindingDefined,
     LiveDispatcher,
     IFnLiveDispatcher,
     NativeMarker(NativeKind),
@@ -320,6 +324,7 @@ pub enum Nominal {
     NativeObjectStrictSet,
     CoerceString,
     ConcatString,
+    ValueAdd,
     StringIndexOf,
     StringSlice,
     LanguageError,
@@ -338,8 +343,10 @@ impl Nominal {
         match self {
             Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
             Self::StringIndexOf => Type::Number,
-            Self::IsNumber
+            Self::BindingDefined
+            | Self::IsNumber
             | Self::IsString
+            | Self::IsBoolean
             | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
@@ -357,9 +364,9 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::IsNumber | Self::IsString | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
-                Self::CoerceString => count == 1,
-                Self::ConcatString | Self::StringIndexOf => count == 2,
+                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
+                Self::BindingDefined | Self::CoerceString => count == 1,
+                Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable => count == 2,
                 Self::NativeObjectGet => count == 2,
@@ -428,8 +435,13 @@ pub struct SourceNamespace {
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
-        let scope = environment.namespace_scope(phase);
-        Self {
+        Self::capture_namespace(environment, phase, environment.current_namespace(phase))
+            .expect("declared current namespace")
+    }
+    /// Capture an actual namespace revision without installing it as current.
+    pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
+        let scope = environment.namespace_scope_for(phase, namespace)?;
+        Some(Self {
             namespace: scope.namespace.into(),
             aliases: scope.aliases.clone(),
             refers: scope.refers.clone(),
@@ -452,7 +464,7 @@ impl SourceNamespace {
                 .filter(|global| global.phase() == phase && global.namespace() == scope.namespace
                     && !environment.is_hidden_cell(phase, global.namespace(), global.name()))
                 .collect(),
-        }
+        })
     }
 }
 #[derive(Debug, Clone)]
@@ -1298,6 +1310,13 @@ impl Analyzer<'_> {
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
+        let expanded;
+        let args = if bootstrap_macro {
+            expanded = self.destructured_function_arguments(form, args)?;
+            expanded.as_slice()
+        } else {
+            args
+        };
         let outer_scope_count = self.function_scopes.len();
         let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
@@ -1552,6 +1571,13 @@ impl Analyzer<'_> {
         // Object and protocol methods also enter through this boundary rather
         // than the ordinary function wrapper. Their bodies are synchronous;
         // only a nested future may introduce a new suspendable context.
+        let expanded;
+        let args = if bootstrap_macro {
+            expanded = self.destructured_function_arguments(form, args)?;
+            expanded.as_slice()
+        } else {
+            args
+        };
         let suspendable = std::mem::replace(&mut self.suspendable, false);
         let result = self.fixed_function_fields_inner(
             form, args, bootstrap_macro, fields, method_receiver, object_method,
@@ -1645,7 +1671,17 @@ impl Analyzer<'_> {
                 .first()
                 .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?
                 .id;
-            for (index, field) in fields.iter().enumerate() {
+            for (source_index, field) in fields.iter().enumerate() {
+                // JS constructor assignments alias fields with the same munged name;
+                // the last declaration supplies their shared physical storage slot.
+                let Kind::Symbol(field_symbol) = &field.kind else { unreachable!() };
+                let storage_name = crate::portable::compiler_names::munge_name(
+                    &field_symbol.name.encode_utf16().collect::<Vec<_>>());
+                let index = fields.iter().rposition(|candidate| {
+                    let Kind::Symbol(symbol) = &candidate.kind else { unreachable!() };
+                    crate::portable::compiler_names::munge_name(
+                        &symbol.name.encode_utf16().collect::<Vec<_>>()) == storage_name
+                }).expect("field has its own storage declaration");
                 let Kind::Symbol(symbol) = &field.kind else {
                     unreachable!()
                 };
@@ -1657,7 +1693,7 @@ impl Analyzer<'_> {
                 }
                 let value = if object_method {
                     let key = self
-                        .literal_form(field, Literal::String(symbol.name.encode_utf16().collect()));
+                        .literal_form(field, Literal::String(storage_name));
                     self.nominal(
                         field,
                         Nominal::NamedGet,
@@ -1674,7 +1710,9 @@ impl Analyzer<'_> {
                     identity: std::sync::Arc::new(()),
                     declaration: field.clone(),
                     origin: self.origin.clone(),
-                    index,
+                    // Analyzer facts retain the original declaration order;
+                    // only executable access uses the canonical storage slot.
+                    index: source_index,
                     mutable: Self::field_mutable(field)?,
                     access: value,
                 };
@@ -1761,7 +1799,12 @@ impl Analyzer<'_> {
         }, source_method))
     }
     fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
-        let name = &operator[2..];
+        // Host field/method spellings use the pinned compiler's empty-reserved
+        // munge policy; source type declarations use its default reserved set.
+        let units = crate::portable::compiler_names::munge_name_with_reserved(
+            &operator[2..].encode_utf16().collect::<Vec<_>>(), |_| false);
+        let name = String::from_utf16(&units).map_err(|_| fail(
+            form.span.clone(), "Property name contains invalid UTF16"))?;
         if !name
             .bytes()
             .next()
@@ -1775,7 +1818,7 @@ impl Analyzer<'_> {
                 "Computed or munged property names are not implemented yet",
             ));
         }
-        Ok(name.into())
+        Ok(name)
     }
     fn list(
         &mut self,
@@ -1821,10 +1864,81 @@ impl Analyzer<'_> {
                     ty: Type::Value, kind: Expression::Await { value: Box::new(value) } });
             }
         }
+        if symbol.namespace.as_deref() == Some("suss.compiler") && symbol.name == "cell-defined?" {
+            if args.len() != 1 {
+                return Err(fail(
+                    form.span.clone(),
+                    "Compiler cell-defined? requires one qualified symbol",
+                ));
+            }
+            let Kind::Symbol(target) = &args[0].kind else {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler cell-defined? requires a qualified symbol, not an evaluated value",
+                ));
+            };
+            let Some(namespace) = target.namespace.as_deref() else {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler cell-defined? requires an explicit namespace identity",
+                ));
+            };
+            // resolve filters reader/internal reservations. Reject before the
+            // fallback can promote a ReaderCell through declare_cell; only an
+            // actual source declaration may make that identity public.
+            if self
+                .environment
+                .is_hidden_cell(self.phase, namespace, &target.name)
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler-owned cells are not source publication targets",
+                ));
+            }
+            // Existing aliases/refers resolve through the ordinary phase catalog.
+            // A fresh generated type can query a real unbound cell only in the
+            // current, already declared namespace; no arbitrary namespace or
+            // source declaration facts are fabricated for an existence probe.
+            let global = match self
+                .environment
+                .resolve(self.phase, target, args[0].span.clone())
+            {
+                Ok(ResolvedBinding::Cell(global)) => global,
+                Ok(_) => {
+                    return Err(fail(
+                        args[0].span.clone(),
+                        "Compiler cell-defined? requires a source cell, not a compiler bootstrap binding",
+                    ));
+                }
+                Err(_) if namespace == self.environment.current_namespace(self.phase) => self
+                    .environment
+                    .declare_cell(self.phase, namespace, &target.name)?,
+                Err(error) => return Err(error),
+            };
+            if self
+                .environment
+                .is_hidden_cell(self.phase, global.namespace(), global.name())
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Compiler-owned cells are not source publication targets",
+                ));
+            }
+            let cell = Hir {
+                source: None,
+                span: args[0].span.clone(),
+                metadata: Vec::new(),
+                ty: Type::Value,
+                kind: Expression::GlobalCell(global),
+            };
+            return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "number?" => Some(Nominal::IsNumber),
                 "string?" => Some(Nominal::IsString),
+                "boolean?" => Some(Nominal::IsBoolean),
+                "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),

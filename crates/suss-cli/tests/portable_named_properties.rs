@@ -103,12 +103,11 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         "(.-cache)",
         "(.-cache named-owner 1)",
         "(.-cache nil)",
-        "(.-bad-name named-owner)",
         "(.-1cache named-owner)",
         "(set! (.-1cache named-owner) 3)",
         "(set! (.-cache) 3)",
         "(set! (.-cache nil) 3)",
-        "(do (def property-should-not-publish 17) (.-bad-name named-owner))",
+        "(do (def property-should-not-publish 17) (.-1cache named-owner))",
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Compile(_))),
@@ -120,6 +119,22 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         session.eval("property-should-not-publish"),
         Err(SessionError::Compile(_))
     ));
+    // Canonical munging makes hyphenated spellings legitimate host names;
+    // an absent closure property reads as canonical undefined, not an error.
+    let absent = session
+        .eval("(.-bad-name named-owner)")
+        .unwrap();
+    session.collect().unwrap();
+    session
+        .inspect(&absent, |store, value| {
+            assert_eq!(
+                value.unwrap_anyref().unwrap().as_i31(&store)?.expect("undefined ABI").get_u32(),
+                6,
+                "absent hyphenated property must be canonical undefined after GC"
+            );
+            Ok(())
+        })
+        .unwrap();
     for source in ["(set! (.-newField (new NamedUnsupported)) 1)"] {
         // An unresolved constructor is a compile error, not a nil/property fallback.
         assert!(matches!(
@@ -199,22 +214,33 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
 }
 
 #[test]
-fn named_access_rejects_munged_schemas_without_breaking_lexical_fields() {
+fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol NamedReviewRead (named-review-read [owner])) (deftype NamedReviewReserved [null] NamedReviewRead (named-review-read [owner] null)) (def named-review-reserved (NamedReviewReserved. 7)) (deftype NamedReviewHyphen [some-field]) (def named-review-hyphen (NamedReviewHyphen. 9))").unwrap();
-    for source in [
-        "(.-null named-review-reserved)",
-        "(.-null$ named-review-reserved)",
-        "(set! (.-null named-review-reserved) 11)",
-        "(set! (.-null$ named-review-reserved) 11)",
-        "(.-some_field named-review-hyphen)",
+    assert!(matches!(session.eval("(set! (.-null named-review-reserved) 11)"),
+        Err(SessionError::Language(_))), "extra instance properties remain unsupported");
+    session.collect().unwrap();
+    let missing = session.eval("(.-null named-review-reserved)").unwrap();
+    session.collect().unwrap();
+    session.inspect(&missing, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("undefined ABI").get_u32(), 6,
+            "raw absent property must be canonical undefined after GC");
+        Ok(())
+    }).unwrap();
+    for (source, expected) in [
+        ("(.-null$ named-review-reserved)", 7.0f64),
+        ("(.-some_field named-review-hyphen)", 9.0f64),
+        ("(set! (.-null$ named-review-reserved) 11)", 11.0f64),
     ] {
-        assert!(
-            matches!(session.eval(source), Err(SessionError::Language(_))),
-            "{source}"
-        );
+        let value = session.eval(source).unwrap();
         session.collect().unwrap();
+        session.inspect(&value, |mut store, value| {
+            let fields = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap()
+                .fields(&mut store)?.collect::<Vec<_>>();
+            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == expected.to_bits()), "{source}");
+            Ok(())
+        }).unwrap();
     }
     let value = session
         .eval("(named-review-read named-review-reserved)")
@@ -228,7 +254,7 @@ fn named_access_rejects_munged_schemas_without_breaking_lexical_fields() {
                 .unwrap()
                 .fields(&mut store)?
                 .collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 7.0f64.to_bits()));
+            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 11.0f64.to_bits()));
             Ok(())
         })
         .unwrap();

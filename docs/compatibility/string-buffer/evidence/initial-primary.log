@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-pr231-string-field-repair/scripts/string_field_oracle.py", line 44, in <module>
+    {'generate': generate, 'compare': compare}[sys.argv[1]]()
+  File "/private/tmp/suss-m4-pr231-string-field-repair/scripts/string_field_oracle.py", line 41, in compare
+    oracle.compare()
+  File "/private/tmp/suss-m4-pr231-string-field-repair/scripts/portable_oracle.py", line 56, in compare
+    raise ValueError('fresh pinned compiler observations differ from reviewed portable corpus')
+ValueError: fresh pinned compiler observations differ from reviewed portable corpus

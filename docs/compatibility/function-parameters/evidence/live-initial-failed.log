@@ -1,0 +1,17 @@
+/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:21056
+(cljs.core.PersistentVector.prototype.cljs$core$ICollection$_conj$arity$2 = (function (coll,o){
+                                                                                      ^
+
+RangeError: Maximum call stack size exceeded
+    at Object.cljs$core$ICollection$_conj$arity$2 (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:21056:87)
+    at Object.cljs$core$_conj [as _conj] (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:1843:13)
+    at cljs$core$conj.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:6486:18)
+    at /private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:16555:45
+    at cljs$core$swap_BANG_.cljs$core$IFn$_invoke$arity$3 (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:16556:3)
+    at cljs$core$swap_BANG_ (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:16512:29)
+    at G__13008.G__13008__3 [as cljs$core$IFn$_invoke$arity$3] (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/suss_oracle/function_parameter_cases.js:434:22)
+    at cljs$core$nth (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:6683:22)
+    at G__13008.G__13008__3 [as cljs$core$IFn$_invoke$arity$3] (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/suss_oracle/function_parameter_cases.js:436:12)
+    at cljs$core$nth (/private/tmp/suss-m4-record-reify-implementation/tests/oracle/out/function-parameter-cljs/cljs/core.js:6683:22)
+
+Node.js v24.5.0

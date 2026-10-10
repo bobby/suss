@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d12f57bee88d8103d6b605125ffdf2f66336545ea5247cb686d054967b5e1973",
+  "replacement": "(def --destructure-map\n  (fn [gmap]\n  (if ^boolean LITE_MODE\n    (if (implements? ISeq gmap)\n      (if (next gmap)\n        (.createAsIfByAssoc ObjMap (to-array gmap))\n        (if (seq gmap)\n          (first gmap)\n          (.-EMPTY ObjMap)))\n      gmap)\n    (if (implements? ISeq gmap)\n      (if (next gmap)\n        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))\n        (if (seq gmap)\n          (first gmap)\n          (.-EMPTY PersistentArrayMap)))\n      gmap))))",
+  "rationale": "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending."
+}

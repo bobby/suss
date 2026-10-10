@@ -69,3 +69,14 @@
          ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
 
 (declare ^:private keyword-name-parts)
+
+;; Full parameter map-normalization mutual references. ObjMap is pending, not a stub.
+(declare --destructure-map LITE_MODE to-array ObjMap)
+
+;; Complete comp variadic factory mutual reference, initialized by whole reverse.
+(declare reverse)
+
+;; Full juxt and merge/merge-with source graph references, not aliases.
+(declare vector some)
+
+(declare str bootstrap-string-buffer BootstrapStringBuffer)

@@ -2,6 +2,173 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:vector:5959"
+  {:source-sha256 "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["macro:defn:3364" "runtime:IndexedSeq:1653" "runtime:PersistentVector:5713" "runtime:vec:5939" "runtime:array?:251"] :classification :adapted :rationale "Complete pinned runtime graph dependency; only defn -> def/fn declaration expansion. Source docstring, every branch, public dispatch, physical source arguments and once-only/effect order retained. Authoring snapshot bootstrap exposed this genuine dependency; native execution not established. Retain full variadic IndexedSeq/zero offset/fromArray fast path, original source array alias flag and complete vec fallback; no vector intrinsic alias." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-vector.json" :alternative nil :tests []}
+  "runtime:some:4430"
+  {:source-sha256 "034b8c7d5e1dd0f04c8e7d3dba7c38f106a5194bacac6b52e0b37d3c54ebffd0" :visibility :public :arities {:fixed [2] :variadic-min nil} :dependencies ["macro:defn:3364" "macro:when-let:412" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333"] :classification :adapted :rationale "Complete pinned runtime graph dependency; only defn -> def/fn declaration expansion. Source docstring, every branch, public dispatch, physical source arguments and once-only/effect order retained. Authoring snapshot bootstrap exposed this genuine dependency; native execution not established. Retain full when-let sequence demand, first logical truthy predicate value (not Booleanized), short circuit and next/tail recurrence. Expand the exact sole when-let through the complete pinned macro let/temp/when/inner-let shape. The fixed private temporary is hygienic against every identifier in this whole declaration, condition initializes once and s is visible only on the truthy branch; nil and original result/tail-recur unchanged." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-some.json" :alternative nil :tests []}
+  "runtime:reverse:3367"
+  {:source-sha256 "87142e78c06d83a690a9f0bd8ac6801bec92b0e999b5de6174ba2c1a17da7941" :visibility :public :arities {:fixed [1] :variadic-min nil} :dependencies ["macro:defn:3364" "runtime:reversible?:3356" "runtime:rseq:3361" "runtime:reduce:2628" "runtime:conj:1870"] :classification :adapted :rationale "Complete pinned reverse preserves reversible? -> rseq/or-empty and reduce/conj fallback, original docstring, eager source traversal and metadata/hash semantics of original result. Expand only defn to def/fn. Required by complete comp variadic factory, whose source remains unchanged; actual authoring-snapshot bootstrap reached reverse after clearing parameter lowering. Native pending." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-reverse.json" :alternative nil :tests []}
+
+  "runtime:LITE_MODE:56"
+  {:source-sha256 "3aa9752d7ee11c9d97bf8ecb35bb2504f9ef879aa1dbd4ee09b20200d2755fcb" :visibility :public :arities nil :dependencies [] :classification :adapted :rationale "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending. goog-define becomes an ordinary portable declaration with the identical metadata and pinned false value; Closure build-time override is not implemented." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-LITE_MODE.json" :alternative nil :tests []}
+  "runtime:to-array:3819"
+  {:source-sha256 "53e0f3d75b831ef2028703b8168977bb4c834d5dcb3d0d25a4c34e22473e22bb" :visibility :public :arities {:fixed [1] :variadic-min nil} :dependencies ["macro:defn:3364" "macro:nil?:923" "runtime:array:477" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333"] :classification :adapted :rationale "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending. Preserve immutable nil? macro with suss.bootstrap/nil?; all element reads and pushes remain live. Spell the exact canonical dot invocation (. ary push (first s)) as (.push ary (first s)); identical receiver, property and ordered arguments, no computed-name omission." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-to-array.json" :alternative nil :tests []}
+  "runtime:--destructure-map:4154"
+  {:source-sha256 "d12f57bee88d8103d6b605125ffdf2f66336545ea5247cb686d054967b5e1973" :visibility :public :arities {:fixed [1] :variadic-min nil} :dependencies ["macro:defn:3364" "runtime:LITE_MODE:56" "runtime:ISeq:650" "runtime:next:1333" "runtime:seq:1282" "runtime:first:1309" "runtime:to-array:3819" "runtime:PersistentArrayMap:6912" "runtime:ObjMap:12612"] :classification :adapted :rationale "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring---destructure-map.json" :alternative nil :tests []}
+  "runtime:comp:4468"
+  {:source-sha256 "e90a81aaace8b2de220cd9f816a0359e6b0b0d003f375946c70f6bae29acdb71"
+   :visibility :public
+   :arities {:fixed [0 1 2 3] :variadic-min 3}
+   :dependencies ["macro:defn:3364" "runtime:identity" "runtime:reverse" "runtime:list*" "runtime:first" "runtime:next" "runtime:apply"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-comp.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)" "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)" "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"]}
+  "runtime:partial:4497"
+  {:source-sha256 "ab48b02fc09bc7c185d7daabfda6733efa50f202292ef3294bcd9c0a974cc0b7"
+   :visibility :public
+   :arities {:fixed [1 2 3 4] :variadic-min 4}
+   :dependencies ["macro:defn:3364" "runtime:apply" "runtime:concat"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-partial.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)" "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)" "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"]}
+  "runtime:juxt:10251"
+  {:source-sha256 "512be1a1ca88483dc7b6626b8d41ff24001696c38478fea0e84d07e97206ee92"
+   :visibility :public
+   :arities {:fixed [1 2 3] :variadic-min 3}
+   :dependencies ["macro:defn:3364" "runtime:vector" "runtime:list*" "runtime:reduce" "runtime:conj" "runtime:apply"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Expand each exact two-argument reader shorthand into fn* [%1 %2] with the complete unchanged body; preserve capture/order and arity."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-juxt.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:merge:9265"
+  {:source-sha256 "69bd6db6de3a2c8657b5267084b6c5d8303328738cd7be36b98ec60c263d72a4"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["macro:defn:3364" "runtime:some" "runtime:identity" "runtime:reduce" "runtime:conj" "macro:when" "macro:or"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Expand each exact two-argument reader shorthand into fn* [%1 %2] with the complete unchanged body; preserve capture/order and arity."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-merge.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:merge-with:9273"
+  {:source-sha256 "d3344bf57b4192d4a1fc5128ba58e52d6a54fdbd2d13b12b77960eaa09abccdc"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:defn:3364" "runtime:some" "runtime:identity" "runtime:reduce" "runtime:key" "runtime:val" "runtime:contains?" "runtime:assoc" "runtime:get" "runtime:seq" "macro:when" "macro:or"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-merge-with.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:update:5557"
+  {:source-sha256 "33f80b5d1e5b92f15b4b85bff016d3238edd3decc12d3db6c8b9671a491a69ba"
+   :visibility :public
+   :arities {:fixed [3 4 5 6] :variadic-min 6}
+   :dependencies ["macro:defn:3364" "runtime:assoc" "runtime:get" "runtime:apply"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-update.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:select-keys:9289"
+  {:source-sha256 "69a9eea1a2c747d38ae5619ebdf414285f88336c2496c1291099e23b0fda9790"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:seq" "runtime:first" "runtime:next" "runtime:get" "runtime:not=" "runtime:assoc" "runtime:-with-meta" "runtime:meta"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Preserve actual pinned ::not-found as :cljs.core/not-found to avoid changing observable sentinel collision behavior in canonical suss.core."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-select-keys.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:zipmap:9690"
+  {:source-sha256 "1e48695851a1b59d3024003e67841389efce480d9a8c56f65864b09d578b94be"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:transient" "runtime:seq" "runtime:first" "runtime:next" "runtime:assoc!" "runtime:persistent!" "macro:and"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-zipmap.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:gensym_counter:10903"
+  {:source-sha256 "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Whole metadata and nil initializer retained; no defonce substitution."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-gensym_counter.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:gensym:10907"
+  {:source-sha256 "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a"
+   :visibility :public
+   :arities {:fixed [0 1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:gensym_counter" "runtime:atom" "runtime:swap!" "runtime:symbol" "runtime:str_" "macro:nil?:923" "macro:inc:1192" "macro:when"]
+   :classification :adapted
+   :rationale "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Immutable nil? macro guard is suss.bootstrap/nil?; counter, atom, swap!, inc macro and str_ path remain complete. Counter initializes nil once at source declaration evaluation, not per expansion; no invented defonce."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-graph-gensym.json"
+   :alternative nil
+   :tests ["tests/oracle/record-graph-runtime-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"]}
+  "runtime:vary-meta:4171"
+  {:source-sha256 "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9"
+   :visibility :public
+   :arities {:fixed [2 3 4 5 6] :variadic-min 6}
+   :dependencies ["macro:defn:3364" "runtime:with-meta" "runtime:meta" "runtime:apply"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. The native helper regression executes and passes; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-vary-meta.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)" "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"]}
+  "runtime:fnil:4526"
+  {:source-sha256 "e6404742f0365e0e74ebf2956cc0a058d5c6da08fc0f30c6d3b3e943868f7453"
+   :visibility :public
+   :arities {:fixed [2 3 4] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:nil?:923" "immutable suss.bootstrap/nil? adapter" "runtime:apply"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. The native helper regression executes and passes; no record/reify completion is implied. Qualify every emitted nil? macro application through immutable suss.bootstrap/nil?, preserving behavior under public nil? rebinding; all other helper calls remain live."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-fnil.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)" "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"]}
+  "runtime:update-in:5530"
+  {:source-sha256 "ab3dd984b2e2cbc71fd41fdc97140cee4505c5e6d491447eaed6e1cc5f2dea47"
+   :visibility :public
+   :arities {:fixed [3 4 5 6] :variadic-min 6}
+   :dependencies ["macro:defn:3364" "runtime:assoc" "runtime:get" "runtime:apply" "compiler vector/rest destructuring"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. The native helper regression executes and passes; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-update-in.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)" "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"]}
+  "runtime:group-by:11244"
+  {:source-sha256 "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:transient:3987" "runtime:persistent!:3992" "runtime:assoc!:4012" "runtime:reduce" "runtime:conj" "runtime:get" "runtime:TransientArrayMap:7210" "runtime:TransientHashMap:8202"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, documentation, all fixed and variadic arities and every algorithm branch. Expand only defn to def/fn for bootstrap. Preserve source callback and argument order, live recursive/public helper dispatch, nil/false values and all transient or metadata paths. The native helper regression executes and passes; no record/reify completion is implied."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/record-helper-group-by.json"
+   :alternative nil
+   :tests ["tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)" "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"]}
   "runtime:ChunkBuffer:3673"
   {:source-sha256 "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680"
    :visibility :public
@@ -2868,43 +3035,43 @@
   "runtime:seq:1282"
   {:source-sha256 "a5f7566fb9a39433f3d1a9a983d7fd56b43709dd8f8bab95395207ca5edbd0b4" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified" "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. Host JavaScript Symbol.iterator objects are not portable interoperability; that branch is excluded from this adapter while direct/array/UTF-16/native-protocol paths remain. Typed bridge/portable iterators and str_ error formatting remain unfinished."
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. Host JavaScript Symbol.iterator objects are not portable interoperability; that branch is excluded from this adapter while direct/array/UTF-16/native-protocol paths remain. Typed bridge/portable iterators and str_ error formatting remain unfinished. The pinned upstream compiles the nil? macro guard in place at this definition site, so the retained nil-guard is spelled with the existing private inline nil test and stays immutable against public redefinition; the pinned gensym nil-guard corpus case (tests/oracle/record-graph-runtime-cases.json) requires this immunity through the captured str_ variadic traversal path, while public redefinition of this function itself remains live for user code."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-seq.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs" "tests/oracle/record-graph-runtime-cases.json"]}
   "runtime:first:1309"
   {:source-sha256 "4726f2adea1be67a47e70037f3cd1b0af74751b8b25f4c2b1e9f92c447c8b7f7" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified" "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. The pinned upstream compiles the nil? macro guard in place at this definition site, so the retained nil-guard is spelled with the existing private inline nil test and stays immutable against public redefinition; the pinned gensym nil-guard corpus case (tests/oracle/record-graph-runtime-cases.json) requires this immunity through the captured str_ variadic traversal path, while public redefinition of this function itself remains live for user code."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-first.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs" "tests/oracle/record-graph-runtime-cases.json"]}
   "runtime:rest:1320"
   {:source-sha256 "5c4c485ef887f7c3ce4c77908685dc481f045910df23a4a180f0a8b8b7f67f76" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified" "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. The pinned upstream compiles the nil? macro guard in place at this definition site, so the retained nil-guard is spelled with the existing private inline nil test and stays immutable against public redefinition; the pinned gensym nil-guard corpus case (tests/oracle/record-graph-runtime-cases.json) requires this immunity through the captured str_ variadic traversal path, while public redefinition of this function itself remains live for user code."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-rest.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs" "tests/oracle/record-graph-runtime-cases.json"]}
   "runtime:next:1333"
   {:source-sha256 "bfbcaf41f9d3162ec35c6722e6852ea8e48741b0322500da3900e2bc48adb6c6" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified" "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. The pinned upstream compiles the nil? macro guard in place at this definition site, so the retained nil-guard is spelled with the existing private inline nil test and stays immutable against public redefinition; the pinned gensym nil-guard corpus case (tests/oracle/record-graph-runtime-cases.json) requires this immunity through the captured str_ variadic traversal path, while public redefinition of this function itself remains live for user code."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-next.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json" "crates/suss-cli/tests/portable_record_graph_runtime.rs" "tests/oracle/record-graph-runtime-cases.json"]}
   "runtime:prim-seq:1751"
   {:source-sha256 "004e70e09f368c0022d8d272bab4b9d5abdf43ad78ffaffa8bf18967f5bcd5cc" :visibility :public
    :arities {:fixed [1 2] :variadic-min nil}
@@ -3375,7 +3542,7 @@
    :classification :adapted
    :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
    :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-get.json" :alternative nil
-   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs" "crates/suss-cli/tests/portable_string_char_at.rs (2 tests pass after GC; 74 pinned raw UTF16/effect observations match; 0 failed/ignored/filtered)" "tests/oracle/string-char-at-cases.json"]}
 
   "runtime:contains?:2451"
   {:source-sha256 "e768814bfd741d4012923480329f1d4c53bee058827f49d7ecae8f10f2b0f858" :visibility :public
@@ -4182,9 +4349,9 @@
   {:source-sha256 "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf"
    :visibility :private
    :arities {:fixed [0 1] :variadic-min 1}
-   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next and scalar predicates" "nominal toString methods"]
+   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next, scalar predicates and nil? nil-guard" "nominal toString methods"]
    :classification :adapted
-   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal and scalar-predicate dependencies to avoid adding mutable public helper dependencies. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects retain method dispatch; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
+   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal, scalar-predicate and nil-guard dependencies to avoid adding mutable public helper dependencies. The pinned core compiles the nil? macro guard at this definition site, so the capture preserves that immutable first check against public redefinition. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects retain method dispatch; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/expression-internal-str.json"
    :alternative nil
@@ -4245,4 +4412,24 @@
    :rationale "Retain the complete pinned queue declaration, every Object/protocol method, mutable field and FIFO front/rear transition. Existing bounded nominal/compiler adapters require executing validation; printing, iterator and sharing contracts remain unproven."
    :status :in-progress :adaptation-path nil :alternative nil
    :tests ["crates/suss-cli/tests/portable_queues.rs" "tests/oracle/queue-cases.json"]}
+  "runtime:not-empty:4194"
+  {:source-sha256 "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:seq:1282" "macro:defn" "macro:when"]
+   :classification :adapted
+   :rationale "Complete pinned form retained; bootstrap declaration or Error allocation adaptation only. The native record-iteration regression executes and passes at the integrated head; the complete record contract remains unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-iteration-not-empty.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"]}
+  "runtime:RecordIter:6607"
+  {:source-sha256 "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "runtime:nth" "runtime:inc:1505" "macro:inc:1192" "MapEntry/-lookup" "Object iterator methods"]
+   :classification :adapted
+   :rationale "Complete pinned form retained; bootstrap declaration or Error allocation adaptation only. The native record-iteration regression executes and passes at the integrated head; the complete record contract remains unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-iteration-RecordIter.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"]}
+
+  "runtime:str:3129" {:source-sha256 "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :alternative nil :classification :adapted :status :in-progress :adaptation-path "docs/compatibility/patches/record-public-str.json" :dependencies ["runtime:to-array:3819" "runtime:IndexedSeq:1653"] :tests ["crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"] :rationale "Complete source arities and live loop retained with licensed full StringBuffer adapter; the authored native regression executes and passes at the integrated head; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished."}
+
+  "macro:str_:852" {:source-sha256 "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
+
+  "macro:str:877" {:source-sha256 "b55c632681cd22fa6b2f13c9dac4b5f4b5d142d0aebb0cf9f5a92c590d266032" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
 }}

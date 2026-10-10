@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a",
+  "replacement": "(def gensym\n  \"Returns a new symbol with a unique name. If a prefix string is\n  supplied, the name is prefix# where # is some unique number. If\n  prefix is not supplied, the prefix is 'G__'.\"\n  (fn ([] (gensym \"G__\"))\n  ([prefix-string]\n     (when (suss.bootstrap/nil? gensym_counter)\n       (set! gensym_counter (atom 0)))\n     (symbol (str_ prefix-string (swap! gensym_counter inc))))))",
+  "rationale": "Complete pinned declaration, all docs/arities/branches retained. Expand only defn to def/fn; all public calls/recursive calls/callbacks remain live and source ordered. This is record compiler source graph dependency authoring, not reify or native completion. Immutable nil? macro guard is suss.bootstrap/nil?; counter, atom, swap!, inc macro and str_ path remain complete. Counter initializes nil once at source declaration evaluation, not per expansion; no invented defonce."
+}

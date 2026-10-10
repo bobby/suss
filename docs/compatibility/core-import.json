@@ -1673,12 +1673,127 @@
       "id": "runtime:type:347",
       "source-sha256": "e489b1c6c1c98957c2f71d370ed7fb9bd825c8bf6e94d676b0e7ba2e53304aa7",
       "patch": "docs/compatibility/patches/sorted-type.json"
+    },
+    {
+      "id": "runtime:not-empty:4194",
+      "source-sha256": "dee397bc7086e836cc03ba7c84bbafd34274cd380638083b2da5214daab7ebb7",
+      "patch": "docs/compatibility/patches/record-iteration-not-empty.json"
+    },
+    {
+      "id": "runtime:RecordIter:6607",
+      "source-sha256": "8b33856b0d64f795b67f2d545cdd49fcdc822dc38e5bc636a4184e922a89f494",
+      "patch": "docs/compatibility/patches/record-iteration-RecordIter.json"
+    },
+    {
+      "id": "runtime:vary-meta:4171",
+      "source-sha256": "8edad36ccd519c822a0f84bec13a9800b4006ae62c69d685298d600799c46aa9",
+      "patch": "docs/compatibility/patches/record-helper-vary-meta.json"
+    },
+    {
+      "id": "runtime:fnil:4526",
+      "source-sha256": "e6404742f0365e0e74ebf2956cc0a058d5c6da08fc0f30c6d3b3e943868f7453",
+      "patch": "docs/compatibility/patches/record-helper-fnil.json"
+    },
+    {
+      "id": "runtime:update-in:5530",
+      "source-sha256": "ab3dd984b2e2cbc71fd41fdc97140cee4505c5e6d491447eaed6e1cc5f2dea47",
+      "patch": "docs/compatibility/patches/record-helper-update-in.json"
+    },
+    {
+      "id": "runtime:group-by:11244",
+      "source-sha256": "b72cfca46a282d0079c3954e13f314f3d85b2da7fffaba507007efaf13395378",
+      "patch": "docs/compatibility/patches/record-helper-group-by.json"
+    },
+    {
+      "id": "runtime:comp:4468",
+      "source-sha256": "e90a81aaace8b2de220cd9f816a0359e6b0b0d003f375946c70f6bae29acdb71",
+      "patch": "docs/compatibility/patches/record-graph-comp.json"
+    },
+    {
+      "id": "runtime:partial:4497",
+      "source-sha256": "ab48b02fc09bc7c185d7daabfda6733efa50f202292ef3294bcd9c0a974cc0b7",
+      "patch": "docs/compatibility/patches/record-graph-partial.json"
+    },
+    {
+      "id": "runtime:juxt:10251",
+      "source-sha256": "512be1a1ca88483dc7b6626b8d41ff24001696c38478fea0e84d07e97206ee92",
+      "patch": "docs/compatibility/patches/record-graph-juxt.json"
+    },
+    {
+      "id": "runtime:merge:9265",
+      "source-sha256": "69bd6db6de3a2c8657b5267084b6c5d8303328738cd7be36b98ec60c263d72a4",
+      "patch": "docs/compatibility/patches/record-graph-merge.json"
+    },
+    {
+      "id": "runtime:merge-with:9273",
+      "source-sha256": "d3344bf57b4192d4a1fc5128ba58e52d6a54fdbd2d13b12b77960eaa09abccdc",
+      "patch": "docs/compatibility/patches/record-graph-merge-with.json"
+    },
+    {
+      "id": "runtime:update:5557",
+      "source-sha256": "33f80b5d1e5b92f15b4b85bff016d3238edd3decc12d3db6c8b9671a491a69ba",
+      "patch": "docs/compatibility/patches/record-graph-update.json"
+    },
+    {
+      "id": "runtime:select-keys:9289",
+      "source-sha256": "69a9eea1a2c747d38ae5619ebdf414285f88336c2496c1291099e23b0fda9790",
+      "patch": "docs/compatibility/patches/record-graph-select-keys.json"
+    },
+    {
+      "id": "runtime:zipmap:9690",
+      "source-sha256": "1e48695851a1b59d3024003e67841389efce480d9a8c56f65864b09d578b94be",
+      "patch": "docs/compatibility/patches/record-graph-zipmap.json"
+    },
+    {
+      "id": "runtime:gensym_counter:10903",
+      "source-sha256": "15ca1cf088979f917d2d828a181aea62e3d982d17d583b324ecb985161ff4be9",
+      "patch": "docs/compatibility/patches/record-graph-gensym_counter.json"
+    },
+    {
+      "id": "runtime:gensym:10907",
+      "source-sha256": "c1252086c51d1bf8277707aed6582d5fe41f2776df6d5b0765d8ec788f18be9a",
+      "patch": "docs/compatibility/patches/record-graph-gensym.json"
+    },
+    {
+      "id": "runtime:LITE_MODE:56",
+      "source-sha256": "3aa9752d7ee11c9d97bf8ecb35bb2504f9ef879aa1dbd4ee09b20200d2755fcb",
+      "patch": "docs/compatibility/patches/destructuring-LITE_MODE.json"
+    },
+    {
+      "id": "runtime:to-array:3819",
+      "source-sha256": "53e0f3d75b831ef2028703b8168977bb4c834d5dcb3d0d25a4c34e22473e22bb",
+      "patch": "docs/compatibility/patches/destructuring-to-array.json"
+    },
+    {
+      "id": "runtime:--destructure-map:4154",
+      "source-sha256": "d12f57bee88d8103d6b605125ffdf2f66336545ea5247cb686d054967b5e1973",
+      "patch": "docs/compatibility/patches/destructuring---destructure-map.json"
+    },
+    {
+      "id": "runtime:reverse:3367",
+      "source-sha256": "87142e78c06d83a690a9f0bd8ac6801bec92b0e999b5de6174ba2c1a17da7941",
+      "patch": "docs/compatibility/patches/destructuring-reverse.json"
+    },
+    {
+      "id": "runtime:vector:5959",
+      "source-sha256": "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c",
+      "patch": "docs/compatibility/patches/destructuring-vector.json"
+    },
+    {
+      "id": "runtime:some:4430",
+      "source-sha256": "034b8c7d5e1dd0f04c8e7d3dba7c38f106a5194bacac6b52e0b37d3c54ebffd0",
+      "patch": "docs/compatibility/patches/destructuring-some.json"
+    },
+    {
+      "id": "runtime:str:3129",
+      "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
+      "patch": "docs/compatibility/patches/record-public-str.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "4d938f880bed003f44c8aa8fe05464d4972279bede26d81c5960af9218a07aa3"
+      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -1686,7 +1801,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "a2e1e1323f36b7e332a3e136878ecdc92446da797391a834b57d9b2fb9fc81d7"
+      "sha256": "9a6eff337e8aed20e8f11272638112900f479ab1d74749e70c97f1fa424a3c5a"
     }
   }
 }

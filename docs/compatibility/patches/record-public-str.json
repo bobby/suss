@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
+  "replacement": "(def str\n  \"With no args, returns the empty string. With one arg x, returns\n  x.toString().  (str nil) returns the empty string. With more than\n  one arg, returns the concatenation of the str values of the args.\"\n  (fn\n  ([] \"\")\n  ([x] (if (suss.bootstrap/nil? x)\n         \"\"\n         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x)) (suss.bootstrap/coerce-string x) (.toString x))))\n  ([x & ys]\n   (loop [sb (bootstrap-string-buffer (str x)) more ys]\n     (if more\n       (recur (.append sb (str (first more))) (next more))\n       (.toString sb))))))",
+  "rationale": "Retain the complete pinned documentation, all three arities, live recursive str/first/next calls, loop and once-only ordered conversion. Expand defn into def/fn; macro nil? uses immutable bootstrap semantics. Native boxed scalar toString uses checked coercion; object toString retains actual method lookup and its raw return. Replace Closure constructor with the separately licensed complete StringBuffer method/constructor adapter; canonical dot spelling preserves receiver and argument order. No general Closure prototype compatibility is claimed."
+}

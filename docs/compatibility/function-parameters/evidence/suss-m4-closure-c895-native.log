@@ -1,0 +1,11 @@
+   Compiling suss-core v0.1.0 (/private/tmp/suss-m4-closure-diagnostic-fixture/crates/suss-core)
+   Compiling suss-compile v0.1.0 (/private/tmp/suss-m4-closure-diagnostic-fixture/crates/suss-compile)
+   Compiling suss-reader v0.1.0 (/private/tmp/suss-m4-closure-diagnostic-fixture/crates/suss-reader)
+    Finished `test` profile [unoptimized] target(s) in 6.37s
+     Running tests/portable_closures.rs (/private/tmp/suss-m4-mlir-toolchain/native-target-post226/debug/deps/portable_closures-5400704000090617)
+
+running 1 test
+test source_wrong_arity_and_missing_rest_class_are_located_diagnostics ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.01s
+

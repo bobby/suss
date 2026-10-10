@@ -1,0 +1,13 @@
+{
+  "head": "a4265e70f48f4ba5e4e640dcda4bf4dae87ebc37",
+  "command": "cargo test --workspace --locked -- --test-threads=2",
+  "status": "failed",
+  "passed": 544,
+  "failed": 1,
+  "ignored": 0,
+  "completed_groups": 116,
+  "failure": "portable_record_graph_runtime: unresolved Runtime str at59..62",
+  "log": "docs/compatibility/function-parameters/evidence/suss-m4-parameter-a426-full-baseline.log",
+  "sha256": "69c52825a434af4d025a420ca89025c1c5d8fcc909e3057632ca04952beabaf8",
+  "limitation": "Stopped at first failing test binary; remaining workspace tests not executed."
+}

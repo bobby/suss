@@ -1960,28 +1960,24 @@ fn test_map_destructuring_direct() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_fn_map_destructuring_keys() {
     let result = run_expr_i32("((fn [{:keys [a b]}] (+ a b)) {:a 10 :b 20})");
     assert_eq!(result, 30);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_defn_map_destructuring() {
     let result = run_expr_i32("(defn foo [{:keys [x y]}] (+ x y)) (foo {:x 3 :y 7})");
     assert_eq!(result, 10);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_fn_map_destructuring_as() {
     let result = run_expr_i32("((fn [{:keys [a] :as m}] (+ a (count m))) {:a 10 :b 20})");
     assert_eq!(result, 12);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Parameter destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_multi_arity_map_destructuring() {
     // Arity 0 returns constant, arity 1 uses map destructuring
     let result = run_expr_i32("(let [f (fn ([] 0) ([{:keys [a b]}] (+ a b)))] (f {:a 5 :b 15}))");
@@ -2138,7 +2134,6 @@ fn test_partial_debug_range_alength() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name comp; see prototype_cases_awaiting_compiled_support"]
 fn test_debug_comp_simple() {
     // comp without rest params: (f (g x)) where g is inc
     let result = run_expr_i32("(let [f (comp inc inc)] (f 10))");
@@ -2194,14 +2189,12 @@ fn test_partial_apply_concat() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name partial; see prototype_cases_awaiting_compiled_support"]
 fn test_partial() {
     let result = run_expr_i32("(let [add5 (partial + 5)] (add5 10))");
     assert_eq!(result, 15);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name comp; see prototype_cases_awaiting_compiled_support"]
 fn test_comp() {
     let result = run_expr_i32("(let [f (comp inc inc)] (f 10))");
     assert_eq!(result, 12);
@@ -2235,33 +2228,28 @@ fn test_when_first() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_multi_arg_literals() {
     // All-literal strings - compile-time optimization
     assert_eq!(run_expr_string(r#"(str "hello" " " "world")"#), "hello world");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_mixed_types() {
     // Mixed types - runtime via core.sus str function
     assert_eq!(run_expr_string(r#"(str "x=" 42)"#), "x=42");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_single_int() {
     assert_eq!(run_expr_string("(str 123)"), "123");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_with_nil() {
     assert_eq!(run_expr_string(r#"(str "a" nil "b")"#), "ab");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_empty() {
     assert_eq!(run_expr_string("(str)"), "");
 }
@@ -2588,19 +2576,12 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_atom_validator_accepts", "(let [a (atom 0)] (set-validator! a pos?) (reset! a 42) @a)", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_atom_validator_rejects", "(let [a (atom 1)] (set-validator! a pos?) (try (reset! a -1) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_atom_validator_swap_rejects", "(let [a (atom 5)] (set-validator! a pos?) (try (swap! a (fn [x] (- 0 x))) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
-    ("test_comp", "(let [f (comp inc inc)] (f 10))", "Unresolved Runtime name comp at bytes 9..13"),
     ("test_cond_thread_first", "(cond-> 1 true inc true inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_cond_thread_first_false", "(cond-> 1 true inc false inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
-    ("test_debug_comp_simple", "(let [f (comp inc inc)] (f 10))", "Unresolved Runtime name comp at bytes 9..13"),
     ("test_debug_lazy_seq_simple", "(first (lazy-seq (cons 42 nil)))", "Unresolved Runtime name lazy-seq at bytes 8..16"),
-    ("test_defn_map_destructuring", "(defn foo [{:keys [x y]}] (+ x y)) (foo {:x 3 :y 7})", "Parameter destructuring is not lowered yet at bytes 0..34"),
     ("test_doseq_basic", "(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)", "Unresolved Runtime name doseq at bytes 19..24"),
-    ("test_fn_map_destructuring_as", "((fn [{:keys [a] :as m}] (+ a (count m))) {:a 10 :b 20})", "Parameter destructuring is not lowered yet at bytes 6..23"),
-    ("test_fn_map_destructuring_keys", "((fn [{:keys [a b]}] (+ a b)) {:a 10 :b 20})", "Parameter destructuring is not lowered yet at bytes 6..19"),
     ("test_map_destructuring_direct", "(let [{x :a y :b} {:a 10 :b 20}] (+ x y))", "Binding destructuring is not lowered yet at bytes 6..17"),
     ("test_map_destructuring_keys", "(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..19"),
-    ("test_multi_arity_map_destructuring", "(let [f (fn ([] 0) ([{:keys [a b]}] (+ a b)))] (f {:a 5 :b 15}))", "Parameter destructuring is not lowered yet at bytes 21..34"),
-    ("test_partial", "(let [add5 (partial + 5)] (add5 10))", "Unresolved Runtime name partial at bytes 12..19"),
     ("test_partial_debug_lazy_seq", "(first (lazy-seq [1 2 3]))", "Unresolved Runtime name lazy-seq at bytes 8..16"),
     ("test_partial_debug_range_alength", "(first (range 5))", "Unresolved Runtime name range at bytes 8..13"),
     ("test_print_no_newline", "(print \"hello\")", "Unresolved Runtime name print at bytes 1..6"),
@@ -2610,11 +2591,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_println_number", "(println 42)", "Unresolved Runtime name println at bytes 1..8"),
     ("test_prn_basic", "(prn 42)", "Unresolved Runtime name prn at bytes 1..4"),
     ("test_some_thread_first", "(some-> 1 inc inc)", "Unresolved Runtime name some-> at bytes 1..7"),
-    ("test_str_empty", "(str)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_mixed_types", "(str \"x=\" 42)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_multi_arg_literals", "(str \"hello\" \" \" \"world\")", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_single_int", "(str 123)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_with_nil", "(str \"a\" nil \"b\")", "Unresolved Runtime name str at bytes 1..4"),
     ("test_variadic_closure_with_capture_multiple_args", "((constantly 99) 1 2 3)", "Unresolved Runtime name constantly at bytes 2..12"),
     ("test_variadic_closure_with_capture_zero_args", "((constantly 42))", "Unresolved Runtime name constantly at bytes 2..12"),
     ("test_vector_destructuring_let", "(let [[a b] [10 20]] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..11"),
@@ -2668,3 +2644,31 @@ fn known_function_wrong_arity_raises_runtime_exceptions() {
     }
 }
 
+
+#[test]
+fn reactivated_helpers_preserve_raw_values_effects_and_captures_after_gc() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/compiled-support-reactivation-cases.json"
+    )).unwrap();
+    let cases = corpus["cases"].as_array().unwrap();
+    let ids = ["test_comp", "test_debug_comp_simple", "test_partial", "test_fn_map_destructuring_keys", "test_defn_map_destructuring", "test_fn_map_destructuring_as", "test_multi_arity_map_destructuring", "comp-effect-order-and-capture", "partial-effect-order-and-capture", "parameter-eager-default-capture-once", "multi-arity-zero-and-map"];
+    assert_eq!(cases.len(), ids.len());
+    for (case, id) in cases.iter().zip(ids) {
+        assert_eq!(case["id"].as_str(), Some(id));
+        let expected = &case["expected"];
+        let actual = observe(case["source"].as_str().unwrap());
+        match expected["tag"].as_str().unwrap() {
+            "f64" => assert_eq!(actual, Observation::Number(
+                u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap()
+            ), "{id}"),
+            "vector" => {
+                let values = expected["items"].as_array().unwrap().iter().map(|item| {
+                    assert_eq!(item["tag"].as_str(), Some("f64"));
+                    Observation::Number(u64::from_str_radix(item["bits"].as_str().unwrap(), 16).unwrap())
+                }).collect();
+                assert_eq!(actual, Observation::Vector(values), "{id}");
+            }
+            tag => panic!("unreviewed expected tag {tag}"),
+        }
+    }
+}

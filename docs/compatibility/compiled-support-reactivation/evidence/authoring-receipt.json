@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "base": "677340c",
+  "scope": "seven original tests reactivated, unchanged assertions; eleven fresh pinned raw cases; native pending; stale bootstrap must regenerate",
+  "preserved": {
+    "original_test_bodies": [
+      "test_comp",
+      "test_debug_comp_simple",
+      "test_partial",
+      "test_fn_map_destructuring_keys",
+      "test_defn_map_destructuring",
+      "test_fn_map_destructuring_as",
+      "test_multi_arity_map_destructuring"
+    ],
+    "remaining_unsupported_rows": 30,
+    "core_source": "byte-identical",
+    "bootstrap": "four files byte-identical/stale"
+  },
+  "gates": {
+    "fresh_primary": {
+      "exit_code": 0,
+      "cases": 11
+    },
+    "python": {
+      "exit_code": 0,
+      "passed": 272,
+      "seconds": 22.486
+    },
+    "core_import": {
+      "exit_code": 0,
+      "files": 360
+    },
+    "native": "UNEXECUTED"
+  },
+  "files": {
+    "crates/suss-compile/tests/compile_expr.rs": "0f9839d13af3c82a271e0175e784c0e1b8029e19080b28a049b28f2016771feb",
+    "docs/compatibility/compiled-support-reactivation/README.md": "fc3449aa7a900b94f1fcadc65f052efa6a362b02910f90e84c3a411361eb1dcc",
+    "docs/compatibility/compiled-support-reactivation/evidence/failed-pr231-integration2.log": "4f65eac302811ffd250702c89f4b1b64b175accae6ad8bcd7e556115bfbe2473",
+    "docs/compatibility/compiled-support-reactivation/evidence/primary-observations.json": "15f64a6d23bbc23c609aea069c40175d468b765294481db44810b8654eec7f30",
+    "docs/compatibility/compiled-support-reactivation/evidence/primary.log": "baaaf16b80fdd4e6fe69b7ba0fcf6a3e400b76e704317583e40b789a1a63a233",
+    "docs/compatibility/compiled-support-reactivation/evidence/reactivation-core-final.log": "b45846d4ee41c1d2427bf52383bf96ab211b33c922f3073290277a9953dec31e",
+    "docs/compatibility/compiled-support-reactivation/evidence/reactivation-python.log": "350c7ebf9090ad74137bc7491d61bb294ff2e24fbb5698a8f1e6244d71e18635",
+    "docs/compatibility/reviews.edn": "812c4d875c407e32e43056e29dfec651bfdd727b0ff39f6a95c22e2783abc49c",
+    "docs/roadmap/handoff.md": "6b214b2276aa969f6df98ac7252601b4bc9f7e3e752f10f679719707adf03d1e",
+    "runtime/core-import/manifest.json": "306deeee4c34b051438ecc4baf8576a2324424e226a98c3ea95217c4b28a0e22",
+    "scripts/compiled_support_reactivation_oracle.py": "d848630c5f1c2a24d46541a38b9e6680e7aa787af9efa9ba6786c23289f98a21",
+    "scripts/test-compiled-support-reactivation-oracle.sh": "40c5bc319e07a79aaa395c022f71cec5c0a8cd4c4f9cd8dcbb87a702b2e19c40",
+    "scripts/test_compiled_support_reactivation_oracle.py": "980b463384c8897c8a56bf97f5288def7c0fa651871175a5495f4ebf4d092be5",
+    "tests/oracle/compiled-support-reactivation-cases.json": "c73769940fa56724c34ce0462b5282cfc62a0d2edf858286f5937597768198d8",
+    "tests/oracle/src/suss_oracle/compiled_support_reactivation.cljs": "0dc06fa69e3cfe00db515d4b35e1b93e8ce64713514c591cdccb9cf00ba62e91"
+  }
+}

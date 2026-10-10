@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "53e0f3d75b831ef2028703b8168977bb4c834d5dcb3d0d25a4c34e22473e22bb",
+  "replacement": "(def to-array\n  \"Returns an array containing the contents of coll.\"\n  (fn [coll]\n  (let [ary (array)]\n    (loop [s (seq coll)]\n      (if-not (suss.bootstrap/nil? s)\n        (do (.push ary (first s))\n            (recur (next s)))\n        ary)))))",
+  "rationale": "Complete pinned source form retained. Expand only declaration syntax; all operations remain live and source ordered. Whole map normalization retains both LITE_MODE branches, sequence/next/first, odd trailing map and createAsIfByAssoc behavior; no apply/hash-map substitute. ObjMap implementation remains a genuine pending dependency for LITE_MODE=true; default pinned mode is false. Native/bootstrap execution pending. Preserve immutable nil? macro with suss.bootstrap/nil?; all element reads and pushes remain live. Spell the exact canonical dot invocation (. ary push (first s)) as (.push ary (first s)); identical receiver, property and ordered arguments, no computed-name omission."
+}

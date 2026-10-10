@@ -1,0 +1,5 @@
+Unexpected error (ExceptionInfo) compiling at (REPL:1).
+No such namespace: suss-oracle.cases, could not locate suss_oracle/cases.cljs, suss_oracle/cases.cljc, or JavaScript source providing "suss-oracle.cases" (Please check that namespaces with dashes use underscores in the ClojureScript file name) in file /private/tmp/suss-m4-record-reify-implementation/tests/oracle/src/suss_oracle/main.cljs
+
+Full report at:
+/var/folders/21/ql1k9ch14nnct_95vswdjm2c0000gn/T/clojure-16506505370130842615.edn

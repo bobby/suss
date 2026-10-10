@@ -1,0 +1,11 @@
+{
+  "source_head": "af3561f",
+  "exit_code": 0,
+  "passed": 2,
+  "failed": 0,
+  "ignored": 0,
+  "seconds": 7.02,
+  "log": "docs/compatibility/publication-fixture/evidence/suss-m4-publication-af3561f-native.log",
+  "sha256": "164b3424930e970eaba22a168496a0a4c9d299f2283de2a55824fbad95932934",
+  "scope": "full publication cells tests both phases/GC, not whole reify or M4"
+}

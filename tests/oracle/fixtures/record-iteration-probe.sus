@@ -1,0 +1,12 @@
+(def record-iteration-trace [])
+(deftype EmptyRecordExtension [] Object
+ (hasNext [_] false)
+ (next [_] :empty-extension)
+ (remove [_] nil))
+(deftype TracedRecordExtension [] Object
+ (hasNext [_] (set! record-iteration-trace (conj record-iteration-trace :has-next)) :available)
+ (next [_] (set! record-iteration-trace (conj record-iteration-trace :next)) :extension-result)
+ (remove [_] nil))
+(deftype ThrowingRecordLookup [] ILookup
+ (-lookup [_ k] (set! record-iteration-trace (conj record-iteration-trace k)) (if (= k :a) (throw :lookup-failure) 19))
+ (-lookup [_ k not-found] (set! record-iteration-trace (conj record-iteration-trace k)) (if (= k :a) (throw :lookup-failure) 19)))

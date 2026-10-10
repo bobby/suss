@@ -22762,6 +22762,428 @@ At c203fee, original `compile_expr` passed278 tests with37existingignores and fu
 
 Unchanged persistent_session/core_import/object-coercion and collection/constructor sourceAST suites are now running, retaining original40M allowance (`/private/tmp/suss-m4-c203-session-source-ast-native.log`). After these gates, freeze reviewed finalhead, reproduce bootstrap withoutJava/Node and run unchanged fullworkspacebaseline/finalCI. #230 remains draft; full M4 open.
 
+
+## Historical record prerequisite lane, retained during Array integration
+
+The following notes retain their original snapshots; native execution is still pending.
+
+Record iteration staging (2026-10-08): isolated branch
+portable/m4-record-iteration at origin/main4e0f00d retains complete pinned
+not-empty4194–4196 and RecordIter6607–6617 using core_import.extract_forms,
+with declaration/file hashes and EPL notice in docs/compatibility/record-iteration.
+No source import, bootstrap regeneration or native execution has occurred.
+Full reify/nil-iter and defrecord helper graph remain required; iterator-only
+fixtures cannot establish record acceptance. Next: full-form adaptations,
+reviews and primary observations before native gates. Lazy final-head workspace
+baseline session99452 was confirmed live; no second Cargo graph started.
+
+Record iteration source import follow-up: initialized pinned submodule via local
+reference, selected both whole forms, adapted only defn/when expansion for
+not-empty and host Error construction for RecordIter. Import generation/check
+verify331 artifacts; review overlay validates428 reviewed/637 unassessed.
+Bootstrap remains unchanged, so no execution claim. Independent read-only
+source review dispatched. Next: primary corpus and both-phase native regressions.
+
+Record iterator validation: independent complete-form source review found no
+material semantic defect; corrected imported-source status and per-form
+dependencies (including macro inc1192). Pre-import retained queue binary
+exits1: Unresolved Runtime name RecordIter at bytes1..12; log
+/private/tmp/suss-record-iteration-before-import.log. Fresh pinned CLJS compilation
+68008 exits0, Node execution exits0, all10 exact ordered Boolean observations
+match record-iteration-cases.json, including lookup throw then next field,
+extension short-circuit/delegation, nil/false and returned remove Error.
+Reference result does not prove native execution; bootstrap unchanged.
+
+Record iterator reproducibility: added strict closed10-case reference driver
+and pinned CLJS/Node runner; comparison against fresh observations passes.
+Authored both-phase native regression independently decodes Boolean ABI after
+GC for all10 cases, with explicit host Error predicate to canonical portable
+Error predicate adaptation. Rustfmt and review-overlay validation pass.
+Native test is uncompiled/unexecuted while baseline99452 owns Cargo.
+Next: regenerate bootstrap and execute focused native test when slot is free;
+add sole-handle iterator retention and full record/reify dependencies.
+
+Record iterator retention regression authored: sole host handle retains fresh
+iterator and its map/fields/extension object across GC, separately compiled
+projection advances twice to17/23, then exhaustion is independently decoded.
+No native execution yet. Import check331 passes; existing full Python suite
+passes, and two newly added fail-closed oracle tests pass (missing/reordered/
+duplicate/unknown/mistyped/extra observations and duplicate JSON keys).
+Read-only review of tests/harness dispatched; baseline99452 confirmed live.
+
+Record iterator follow-up review reproduced10 primary/2 harness observations,
+found corpus identity closure gap: fixed oracle and native test to require exact
+ordered IDs; third focused harness test rejects substituted/reordered corpus.
+All3 focused tests pass. Retained primary/native-before-import/Python evidence
+with file SHA receipts under record-iteration/evidence. Native tests remain
+unexecuted; live dependencies and independent Error payload probes pending.
+
+Record iteration runner sh scripts/test-record-iteration-oracle.sh terminal0,
+fresh compile/Node/strict comparison10pass; retained primary-runner.log/hash.
+Third native regression now independently inspects returned Error descriptor7
+and UTF16 Unsupported operation after GC, successful evaluation proves intended
+return rather than throw once executed. Authored native tests remain uncompiled.
+Full Python rerun64715 and independent follow-up review pending at dispatch.
+Lazy baseline99452 still live, progressed to native_repl_async_io.
+
+Record iteration follow-up: full Python rerun64715 terminal0 (234tests pass),
+retained final-suite log/hash. Independent latest-delta review finds no material
+defect; reproduced3 harness/10primary and validated Error decoder authoredtest.
+Corrected stale README wording. Native execution remains pending.
+
+Record iterator live dependency progress: expanded closed corpus to13 with
+not-empty argument effect exactly once, rebound seq called once and actual
+rebound nth replacement observed by RecordIter. Fresh pinned runner78115
+terminal0/13matches; focused3 harness tests pass. Native test consumes same13
+ordered IDs, remains uncompiled. Retained new runner/result files with hashes;
+earlier10 evidence retained historical. Next: native bootstrap/focused execution
+and live lookup/solehandle/fullrecords continuation. Baseline99452 live.
+
+Independent13-case review reproduced all13+3harness/no material defect.
+Added14th live -lookup case with both arity entrypoints and finally restoration;
+fresh pinned runner22927 exits0/all14matches, focused3harness passes.
+Native exact IDs14 aligned, still uncompiled. Retained primary14files/hashes.
+
+Record iterator source checkpoint: final14th-case independent review finds no
+material finding and reproduces14 pinned observations. Complete forms,
+provenance, strict14-case harness, three authored native regressions and
+retained evidence are checkpointed for subsequent native validation.
+Bootstrap intentionally unchanged; no native test compile/execution yet.
+No PR/promotion or full record acceptance from this checkpoint.
+
+Record macro dependency evidence: retained12 complete pinned reify/exists?/
+deftype/defrecord and helper forms with source/file hashes and EPL notice in
+record-macro-foundations. No macro import or execution. Inspected reify capture,
+metadata/type guard and compiler munging/analyzer dependencies; full emit
+record fields/methods/factories remain required. Next after iterator validation:
+complete helper adaptation and generic nominal record storage, no stubs.
+
+Reify prerequisite execution: reproducible pinned runner5248 terminal0, five
+closed ordered Boolean observations match captures/metadata/same-site and
+different-site nominal type identity. Retained missing native reify failure
+(exit1 bytes14..19) and primary results/log with hashes. Initial wrong cwd
+failed namespace generation, corrected before actual compile/execution.
+Authored portable_reify both-phase/GC/independent Boolean ABI regression,
+uncompiled and expected to fail until full macro implementation. No skips or
+full record claim. Source macro prerequisites remain retention-only.
+
+Reify review finds12 source forms/hash/license and5 primary cases sound,
+records unproven GC/protocol/recur/unused-local/metadata-elision/munging and
+cross-fragment same-site contracts. Added sole-host-handle reified object
+retention test: captures vector, GC, separately compiled Object invocation
+projects23 with independent numeric decode afterGC. Uncompiled/no pass claim.
+Added macro-provenance verifier (12wholeforms pass) and3 new fail-closed reify
+oracle tests (allpass). FullPython24711 running; baseline99452 live.
+
+Reify follow-up: full Python237tests pass10.897s (24711exit0), retained log.
+Fresh pinned7case runner33744 terminal0 adds ICounted protocoldispatch and
+method-head recur behavior; strict3harness and12form provenance checks pass.
+Retained primary7result/log/hash. Native exactordered7IDs aligned and
+sole-hostcapture test authored; both uncompiled/fullmacro unimplemented.
+
+Reify latest independent review reproduces12wholeform verification,3harness
+and7primary observations; no material defect in GCretention authoredtest or
+protocol/recur additions. Namespace munging, unused-local capture and repeated
+fragment identity still pending. No native compilation or macro implementation.
+
+## Remaining M4 refresh after #227/#228 merges — 2026-10-08
+
+Record/reify prerequisites refreshed at 5d23601 onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus full not-empty/RecordIter. python3 scripts/core_import.py --check:337files verified; git diff --check passes. Both record/reify native test files and all 12 retained upstream macro forms are byte-identical to f26639d. Macro forms remain retained provenance, not implemented acceptance. Native tests remain uncompiled and bootstrap is still merged main. Next after constructor lane: regenerate affected bootstrap and execute record iteration prerequisites, then implement full reify/record macro contracts and nominal collection behavior. Sole Suss Cargo owner34020 continues unchanged.
+
+Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` terminal0, 241tests pass in 8.788s; log /private/tmp/suss-m4-record-post227-python.log, SHA256 7885ccf6e1fa20aca553d2e5fe282503c698d4e96ffa2475044c82860e3154de. Independent read-only exact-head review b0f615d31642f8b3ee3960f075e47f6f2dc750eb found no material refresh defects. This validates harness/provenance and retained observations, not fresh native execution. Bootstrap regeneration and native gates still pending; baseline34020 remains sole Cargo graph.
+
+### 2026-10-09 — record prerequisites integrated after Array conversion
+
+Copied the reviewed record/reify lane from00c1d7f onto current Array runtime c4c53f9 in an isolated integration worktree. Every current import selection remains ordered and unchanged; complete not-empty and RecordIter forms are appended with their original patches/reviews. Twelve macro forms and native regressions remain unchanged from that lane. Generated importer verification/Python checks are next. Bootstrap regeneration and native execution remain pending; reify/record macro implementation is still required, not implied by retained provenance. No Cargo graph was started while baseline99077 remains live.
+
+Integration validation: all current 334 selections remain identical/in order, plus exactly not-empty and RecordIter. Both native files and all twelve retained macro forms are byte-identical to00c1d7f. `python3 scripts/core_import.py --check` verified340 files; `python3 scripts/check_record_macro_provenance.py` verified12 complete pinned macro forms; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed244 tests in8.053s, log `/private/tmp/suss-m4-record-after-arrays-python.log`, SHA256 135e40d5429b2a876fd76ba7a39d165711993599d81ebc15fe99929608f588a9. No native execution/bootstrap regeneration, no full record acceptance or PR readiness implied. Next unblocked task is focused native record iterator execution after scheduled compiler validation, then complete reify/record macro contracts.
+
+### 2026-10-09 — record/reify typed caller interfaces and complete dependency retention
+
+Authoring worktree `/private/tmp/suss-m4-record-reify-implementation` starts at
+fb29ef98f22f0765b10c0a2859126eef43719900 (7f71 plus the reviewed record import
+checkpoint). The existing 336 recipe selections, 12 retained macro forms and
+7 reify/14 iterator cases remain unchanged. Added 44 complete pinned source
+dependencies/stanzas, exact ranges/reader contexts/hashes and EPL notice, with
+a closed ordered verifier and missing/reordered/duplicate/forged evidence tests.
+
+Typed compiler interfaces expose actual live resolution catalogs, all lexical
+bindings with declaration identity, declared protocol overloads and six-key
+reader metadata elision. Scalar name munging preserves pinned UTF16 behavior,
+reserved segments and the complete CHAR_MAP, including keys which cannot match
+one-unit charAt inputs. The macro analysis graph calls the same catalog interface.
+Four authored Rust tests cover these interfaces; they are UNCOMPILED/UNEXECUTED.
+
+Actual authoring checks: `python3 -B scripts/check_record_analyzer_provenance.py`
+verified44 whole forms/stanzas; focused Python verifier tests3 passed7.327s;
+`python3 -B scripts/check_record_macro_provenance.py` verified12 whole forms;
+`python3 -B scripts/core_import.py --check` verified340 files;
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` passed247 in14.058s.
+The full Python run's printed oracle messages validate retained fixture data,
+not a fresh upstream/native execution. Rustfmt and diff checks pass. No Cargo,
+bootstrap build/regeneration, push or shared ABI changes occurred.
+
+Separately, `sh scripts/test-reify-prerequisite-oracle.sh` freshly compiled the
+unchanged seven-case fixture against the pin and ran Node: terminal0, all7 exact
+matches. Upstream emitted its existing protocol-method-head recur warning; it
+was not suppressed. This is upstream reference evidence, not native evidence.
+Scalar munging exposes both the default reserved table and a custom-table
+non-nil lookup predicate (false-valued table entries remain reserved); no map
+name/shadow branch is claimed implemented.
+
+Required next authoring: complete analyzer fallback/extern/module/warning state
+adapters and map-valued munge scope/rename facts, wire the whole source helper
+graph to compiled macro execution, and implement transactional anonymous-class
+publication with captures, metadata and protocol masks while preserving ordinary
+deftype's no-outer-local restriction. Then import complete nil-iter through real
+reify and implement the full record factory graph. These are not implemented by
+the retention ledger or typed caller APIs. Native/bootstrap acceptance must wait
+for the exclusive Cargo lane; no original issue criterion is marked complete.
+
+### 2026-10-09 — record/reify immutable cross-namespace compiler catalog
+
+Follow-up authoring adds read-only phase-specific namespace-scope lookup and a
+compiler catalog capturing all actual declared namespaces without entering them.
+SourceNamespace capture now shares that lookup; current-scope behavior remains
+the same. Declaration-only namespaces retain None rather than fabricated scope
+or definitions. Existing cell identities and shared declaration revisions remain
+actual compiler facts, not runtime loaded/bound evidence. The full pinned
+get-first-ns-segment/find-ns-starts-with helpers are retained, bringing the closed
+dependency ledger to46; all previous44 entries remain unchanged.
+
+The fifth authored Rust regression checks alias/cell snapshots, missing scopes,
+phase separation, exact namespace-segment matching and subsequent namespace
+publication not mutating old snapshots. It is UNCOMPILED/UNEXECUTED. Focused
+Python verifier3 passes7.651s; no native execution/bootstrap/Cargo/push. This
+catalog is not yet materialized as compiler state in the Macro Store. Analyzer
+extern/module/warning/fallback adapters and full source-helper execution remain
+required before real reify/nil-iter or record factory acceptance.
+
+### 2026-10-09 — whole record macro runtime-helper dependency group
+
+Appended complete vary-meta4171/fnil4526/update-in5530/group-by11244 after all336
+existing import selections. All437 prior review entries retain their original
+values and order; four additive reviews remain in-progress. Whole original forms,
+EPL notices, source hashes and exact patches are packaged. Defn becomes def/fn;
+fnil's emitted nil? macro guards alone use immutable suss.bootstrap/nil?. Every
+fixed/variadic arity and algorithm branch remains, including group-by's transient
+map reduction/promotion and update-in's live recursive/apply paths. No existing
+generated core bytes are changed; new declarations precede the unchanged loader
+after-stanzas. Original12 macro forms,7 reify/14 iterator corpus and four bootstrap
+artifacts remain unchanged.
+
+`sh scripts/test-record-helper-oracle.sh` freshly compiled the exact33-case
+fixture against the pin, executed Node and strict-compared all33 ordered raw
+Boolean observations: terminal0. Raw fixture/observations and a hash receipt are
+retained under docs/compatibility/record-helper-foundations/evidence. Focused
+harness3 passed0.023s; full Python250 passed14.363s. Whole helper adaptation
+verification passes4; core-import check verifies344 files; overlay441 reviewed/
+624 unassessed passes; rustfmt and diff checks pass. The initial author script
+failed before changing selections because extract_forms has no sha256 field;
+corrected by hashing the exact whole form. An initial preservation assertion
+incorrectly expected generated core to have the entire old file as its prefix;
+the importer inserts declarations before after-stanzas. Corrected audit proves
+one additive insertion and all previous bytes retained, not a source change.
+
+Two native tests are authored UNCOMPILED/UNEXECUTED: shared33 both-phase postGC
+observations and fnil sole-host callable retaining captured vector/default across
+GC and repeated independent variadic invocations. No bootstrap regeneration,
+Cargo or push occurred; existing artifacts are stale for the new sources. These
+complete runtime helpers do not implement source analyzer adapters, exists?,
+anonymous reify class publication, full deftype helper execution, nil-iter or
+record factories. Continue the complete source macro/compiler graph next, then
+regenerate and execute unchanged7/14 plus new33/typed facts when exclusive Cargo
+is available. Full original record/reify acceptance remains open.
+
+
+### Record helper evidence repair (authoring only)
+
+Lagrange's 1c09308 review identified that the 33 guest Boolean assertions did not
+independently establish helper outputs. All original cases/evidence and all four
+whole source adaptations remain unchanged. A parallel closed 33-case corpus now
+returns raw values/projections and ordered effect/throw traces; independently
+specified tagged expectations use exact binary64 bits and nil/Boolean/keyword
+kinds. Promotion observes all 17 groups. A third authored native test decodes each
+result after GC through FormBridge in Runtime and Macro, without guest equality
+or printing. Native remains UNCOMPILED/UNEXECUTED; bootstrap unchanged/stale.
+
+`sh scripts/test-record-helper-raw-oracle.sh` exited 0: all 33 fresh pinned raw
+observations match. Initial compilation failed on a missing generated base fixture;
+the runner now generates the prerequisite, and the failed log is retained.
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` exited 0: 253 passes
+(13.832s), including closed-ID, malformed type/bits/trace, and scoped-path restoration
+checks. `core_import.py --check` verifies 344 files and helper whole-form provenance
+passes. Receipt and raw fixture/logs/observations live in record-helper-foundations/
+evidence/raw-primary-receipt.json. No Cargo/bootstrap/build/push was run.
+
+Next: finish the separate opt-in genuine compiler-catalog transport, consuming
+source macro tests and complete analyzer/nominal helper graph. exists?/reify,
+anonymous captured classes, nil-iter through actual reify and full record factories
+remain pending; original record/reify acceptance is not narrowed or complete.
+
+
+### Genuine record compiler catalog transport — authored, native pending
+
+An explicit qualified Boolean/nil macro metadata policy now controls materializing
+phase/current namespace, actual cross-namespace source revisions and actual
+protocol-signature arities into &env. Absent/false/nil keeps the ordinary graph.
+Malformed metadata fails before macro publication; macro transaction checkpoints
+include the policy and restore it with the original callable on failed script staging.
+Namespace reload retains definitions published before a later initializer failure.
+No runtime-value guessing, host source evaluator, new shared ABI types or graph
+budget changes were introduced. Canonical namespaces are unchanged, and missing
+source scopes remain nil. The graph still enforces its existing recipe/form/unit
+limits; full-catalog cost has not been measured or certified.
+
+Four new compiled_macro_compiler_catalog Rust regressions are authored only:
+actual two-phase cross-namespace docs/overloads and retained old results after GC,
+opt-in/invalid metadata preservation, failed script-staging policy rollback, and
+partial namespace publication followed by successful reload recovery.
+They are UNCOMPILED/UNEXECUTED. No Cargo/bootstrap/push. Whole 46 analyzer dependency
+stanzas and original 12 macro forms, 340 selections, all 33 Boolean/raw helper
+cases, seven reify and fourteen iterator cases remain unchanged. Next dependency
+group is the complete executing nominal macro helper graph and its required
+whole runtime functions; extern/module/warning/resolve fallback, scalar and map
+munge adapter consumption, anonymous publication/reify/nil-iter and full records
+remain pending rather than replaced with a subset.
+
+### Compiler catalog transaction-boundary correction — native pending
+
+Independent review of 2f4cd61 found the authored reload test incorrectly expected
+whole namespace rollback. Corrected it to retain the initialization failure,
+observe the already published nil-returning replacement after GC, and verify
+successful reload restores genuine runtime phase/current facts. A separate
+compiled-script preparation failure now exercises the actual binding checkpoint
+rollback, independently decoding the restored callable/catalog result after GC
+and then checking successful replacement. No production loader change, Cargo,
+bootstrap or native execution; all four consuming tests remain uncompiled.
+
+### Whole record runtime graph dependencies — authored, native pending
+
+Appended ten complete pinned forms: comp/partial/juxt/merge/merge-with/update/
+select-keys/zipmap/gensym_counter/gensym. Original 340 selections/extracted forms
+and 441 reviews are unchanged and ordered. Generated import now has 354 files;
+overlay 451 reviewed/614 unassessed. Complete docs/arities/branches, callback order,
+live public dispatch and pinned sentinel collision remain. Counter is upstream
+ordinary def, not defonce; no per-expansion reset. Immutable nil? macro guard only.
+
+Fresh pinned runner exited0: 84 raw tagged values/projections/effect traces match.
+Full Python exited0: 260 tests in17.405s. Whole ten-form and prior four-form
+provenance checks pass; prior verifier anchors original positions and rejects
+duplicates rather than assuming the group is the recipe tail. Native both-phase
+independent host decoding and sole-host captured function GC tests are authored,
+UNCOMPILED/UNEXECUTED. Bootstrap bytes unchanged/stale, no Cargo/build/push.
+Raw fixture/observations/log/Python log and content receipt retained under
+docs/compatibility/record-runtime-graph/evidence.
+
+Continue the complete compiler/source nominal helper graph, actual exists?/reify
+and nil-iter, then record factories/protocol bodies. Full #18/#19 remain open;
+this prerequisite evidence does not establish native record/reify execution.
+
+### Actual anonymous publication cell-state kernel — native pending
+
+Private suss.compiler/cell-defined? now emits a typed check of genuine source
+cells, guarded dynamic-frame lookup before root bound state, exact undefined
+comparison, and no eager unbound read/coercion. Fresh current-namespace names
+create real unbound cell identities without invented source facts. Bootstrap
+bindings/foreign missing namespaces/non-symbol operands remain rejected. No shared
+GC types/new roots or ordinary deftype restriction changes. Whole exists? source
+remains retained; complete resolution/dotted paths/non-symbol branch and actual
+source reify/nominal graph integration continue next, not replaced by this kernel.
+
+Fresh pinned publication_cells fixture compile+Node exited0; nine ordered raw
+observations match, including nil/false/undefined and no object conversion. First
+compile failed due duplicate relative fixture location; corrected and raw failure
+retained. Two native both-phase GC/cross-fragment/class/dynamic/recovery regressions
+are authored UNCOMPILED/UNEXECUTED. Rustfmt parsing and diff check pass. No Cargo,
+bootstrap/build/push; bootstrap unchanged/stale and runtime identity changed.
+Receipt/raw evidence: docs/compatibility/record-publication-cells/evidence.
+
+Independent frozen reviews inspected and retained: 4917033 complete ten-form runtime
+group and 808f7e catalog transaction repair both have no material findings. Their
+reports are copied under record-runtime-graph/evidence; native remains explicitly
+uncompiled, not inferred from provenance/reference success. Original seven reify
+and fourteen iterator tests, complete source parents and original acceptance
+remain unchanged. Next complete integration dependencies are source analyzer
+resolution/state and map/scalar munge consumption, complete exists? path handling,
+nominal helper protocol masks/annotations, source deftype*/defrecord* publication
+and physical method adapters, then actual reify/nil-iter and full record factories.
+No Cargo/bootstrap/push while the separate 96451 baseline remains live.
+
+### Publication hidden-cell boundary repair — native pending
+
+Sartre51533 P2 confirmed: resolution hides ReaderCell, and the fallback declaration
+could promote it before the old hidden check. Added canonical hidden-state rejection
+BEFORE declare_cell. Actual reader reservation both-phase compiler regression
+checks canonical/core alias rejection, no source identity publication, intentional
+explicit source declaration promotion, and internal reader/protocol-key rejection.
+Original kernel tests/assertions/runtime remain unchanged. New compiler regression
+authored/uncompiled; no Cargo/bootstrap run by author.
+
+Parent's51533 focused target compiled but0pass2fail at Session stale manifest
+construction, not semantic kernel execution. Isolated bootstrap thenexit1 at
+177827..177835: full update-in [k & ks] parameter destructuring. All raw logs and
+receipt retained in record-publication-cells/evidence, alongside independent P2
+report and bounded repair receipt. Historical51533 receipt records10 hashes, not
+13;13 is changed-file count. Full parameter lowering (vectors/maps/nesting/rest/
+:as/defaults/qualified shorthands/live call/effect order) continues separately;
+no helper subset or guard bypass. Parent coordinates next native lane.
+
+Bounded fd61 test correction: parent focused compiler regression compiled then
+failed only because clojure.core/sequence rejects as Unresolved Runtime name, not
+Compiler-owned cells. Keep that portable rejection/hidden state separately;
+suss.core and cljs.core still require the precise compiler-owned diagnostic.
+No JVM alias normalization, production/allowance changes or removed promotion/
+internal checks. Raw focused+diagnostic failures and receipt retained. Test name:
+publication_probe_cannot_promote_real_reader_or_internal_reservations. No Cargo
+by author; corrected candidate pending parent rerun, separate from destructuring.
+
+### Full portable function-parameter binding graph authoring
+
+After ca0, implement genuine bootstrap fn vector/map parameter lowering to raw
+arguments plus an inner primitive let* inside the method recurrence loop. Preserve
+named/multiple/rest signatures, nested bindings, :as, qualified shorthands, eager
+defaults, public extraction calls/effect order, genuine captures and source metadata.
+Primitive fn* remains strict. Syntax maps preserve small-map/HAMT promotion,
+collisions and removal order. No imported helper is truncated.
+
+Retain five complete macro parents with EPL notice/hash/context and append six
+whole source prerequisites after all350 existing forms: LITE_MODE, to-array,
+--destructure-map, reverse, vector, some. Exact canonical dot spelling and complete
+when-let expansion only; vector is not an intrinsic alias and some is not Booleanized.
+The full LITE_MODE=true ObjMap dependency remains pending. 356 selections generate
+360 files; four bootstrap artifacts unchanged/stale.
+
+Author gates: fresh pinned39 raw value/effect cases match; five macro and six
+runtime provenance checks pass; core_import --check360; Python269pass21.278s;
+new Rust parsed/formatted and diffcheck clean. Existing runtimegraph missing-entry
+mutation now removes index349 instead of the newly appended recipe tail; retain
+all missing/reorder/duplicate/hash/removed-branch rejection assertions.
+
+Parent isolated snapshots: compile-only0; bootstrap sequential genuine failures
+reverse/vector/some/dot/when-let retained, complete adapted bootstrap0; native30
+and39 gates each2pass (39in8.05s), bothphases/postGC/solehostcapture. These are
+snapshot diagnostics with exact source receipts, not final authoring certification.
+Compilerlib39snapshot91pass2fail, then published sparse-fixture corrections plus
+Keyword declaration92pass1fail missingPersistentVector. Final authored structural
+fixture declares canonical Keyword/PersistentVector/PersistentArrayMap cells and
+checks genuine Do->Let inside recurrence; no fake class body or skipped keyword
+coverage. Failed mixed copy consistency guard means no final-module test result.
+Oldbase sparsefixture unchanged here; integration must inherit reviewed06 fixes.
+
+Evidence/receipts: docs/compatibility/function-parameters/. No author Cargo/build/
+push; finalhead review/compiler/native/bootstrap reproduction/full unchanged
+baseline/CI pending. Full original record/reify graph remains open. Next genuine
+source/compiler group: actual reify and nil-iter for empty HAMT traversal, retaining
+whole source/protocol/meta/capture/factory contracts, not a stand-in iterator.
+
+Parameter d3de follow-up: coherent diagnostic bootstrap0/native2pass39cases8.13s;
+compilerlib92pass1fail at structural named-method assertion. Actual named function
+uses attach_callable_signatures Let publication; inspect its owner GeneralFunction,
+assert genuine self name again/sole method, retain rawarity2 and Do->Let inside
+recurrence Loop. Test-only shape repair, no production/allowance/assertion removal.
+Coherent raw logs/receipt retained; corrected assertion pending parent execution.
+
 ### 2026-10-09 — #230 linked corruption-fixture repair (native pending)
 
 Finalhead7f71aa0 foundation CI failed `portable_macro_data::identity_tests::macro_data_reads_sparse_array_abi_without_inventing_hole_syntax` at dense/sparse overlap assertion: small constructor now uses masked dense storage, so its forged linked head was nil and the observation instead rejected a hole sentinel. Foundation library suite86pass1fail; raw log `/private/tmp/suss-m4-7f71aa0-foundation-ci.log`.
@@ -22823,3 +23245,630 @@ Bootstrap reproducibility session15450 completed exit0: Java/Node absent, two ge
 Frozen3a50 full baseline session94535 terminated101:502passed/1failed/0ignored; `/private/tmp/suss-m4-full-baseline-late-ci.log`. Failure was `private_object_errors_are_atomic_or_runtime_and_recover` line52: obsolete negative `(suss.bootstrap/object-set (factory) (factory) 7)`. Isolated3a50 worktree `/private/tmp/suss-m4-native-object-key-repair` source-labelled diagnostic session77163 exited101,1passed/1failed (`/private/tmp/suss-m4-native-object-key-parent-diagnostic.log`). Fresh pinned c4295f CLJS compilation/Node execution both exited0: ordinary object key converts to `[object Object]`, assignment and property both7. Raw hook trace1234, thrown payload73, preserved property23 and recovery19 retained in `docs/compatibility/native-object-key/evidence`; reproduction command and hashes accompany them.
 
 Replace only obsolete negative with post-GC independently decoded Number bits; new regression covers both caller phases, source operand order before string-hint hooks, toString precedence, original thrown payload, preserved property and recovery. Retain original nil-get/self-cycle/mutual-cycle failures, compile atomicity, captured factory behavior and original source-order test. No production semantics or bootstrap changes. Authorized focused command `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-m4-mlir-toolchain/native-target-post226 cargo test -p suss-cli --test portable_native_objects --locked -- --test-threads=2` session83059 exited0:3passed/0failed/0ignored; log `/private/tmp/suss-m4-native-object-key-repair-focused.log`. No full baseline/bootstrap/push executed. Next: independent other-agent committed-head review, then coordinate full baseline and final-head CI; no milestone completion claimed.
+
+## Historical record prerequisite lane, retained during Array integration
+
+The following notes retain their original snapshots; native execution is still pending.
+
+Record iteration staging (2026-10-08): isolated branch
+portable/m4-record-iteration at origin/main4e0f00d retains complete pinned
+not-empty4194–4196 and RecordIter6607–6617 using core_import.extract_forms,
+with declaration/file hashes and EPL notice in docs/compatibility/record-iteration.
+No source import, bootstrap regeneration or native execution has occurred.
+Full reify/nil-iter and defrecord helper graph remain required; iterator-only
+fixtures cannot establish record acceptance. Next: full-form adaptations,
+reviews and primary observations before native gates. Lazy final-head workspace
+baseline session99452 was confirmed live; no second Cargo graph started.
+
+Record iteration source import follow-up: initialized pinned submodule via local
+reference, selected both whole forms, adapted only defn/when expansion for
+not-empty and host Error construction for RecordIter. Import generation/check
+verify331 artifacts; review overlay validates428 reviewed/637 unassessed.
+Bootstrap remains unchanged, so no execution claim. Independent read-only
+source review dispatched. Next: primary corpus and both-phase native regressions.
+
+Record iterator validation: independent complete-form source review found no
+material semantic defect; corrected imported-source status and per-form
+dependencies (including macro inc1192). Pre-import retained queue binary
+exits1: Unresolved Runtime name RecordIter at bytes1..12; log
+/private/tmp/suss-record-iteration-before-import.log. Fresh pinned CLJS compilation
+68008 exits0, Node execution exits0, all10 exact ordered Boolean observations
+match record-iteration-cases.json, including lookup throw then next field,
+extension short-circuit/delegation, nil/false and returned remove Error.
+Reference result does not prove native execution; bootstrap unchanged.
+
+Record iterator reproducibility: added strict closed10-case reference driver
+and pinned CLJS/Node runner; comparison against fresh observations passes.
+Authored both-phase native regression independently decodes Boolean ABI after
+GC for all10 cases, with explicit host Error predicate to canonical portable
+Error predicate adaptation. Rustfmt and review-overlay validation pass.
+Native test is uncompiled/unexecuted while baseline99452 owns Cargo.
+Next: regenerate bootstrap and execute focused native test when slot is free;
+add sole-handle iterator retention and full record/reify dependencies.
+
+Record iterator retention regression authored: sole host handle retains fresh
+iterator and its map/fields/extension object across GC, separately compiled
+projection advances twice to17/23, then exhaustion is independently decoded.
+No native execution yet. Import check331 passes; existing full Python suite
+passes, and two newly added fail-closed oracle tests pass (missing/reordered/
+duplicate/unknown/mistyped/extra observations and duplicate JSON keys).
+Read-only review of tests/harness dispatched; baseline99452 confirmed live.
+
+Record iterator follow-up review reproduced10 primary/2 harness observations,
+found corpus identity closure gap: fixed oracle and native test to require exact
+ordered IDs; third focused harness test rejects substituted/reordered corpus.
+All3 focused tests pass. Retained primary/native-before-import/Python evidence
+with file SHA receipts under record-iteration/evidence. Native tests remain
+unexecuted; live dependencies and independent Error payload probes pending.
+
+Record iteration runner sh scripts/test-record-iteration-oracle.sh terminal0,
+fresh compile/Node/strict comparison10pass; retained primary-runner.log/hash.
+Third native regression now independently inspects returned Error descriptor7
+and UTF16 Unsupported operation after GC, successful evaluation proves intended
+return rather than throw once executed. Authored native tests remain uncompiled.
+Full Python rerun64715 and independent follow-up review pending at dispatch.
+Lazy baseline99452 still live, progressed to native_repl_async_io.
+
+Record iteration follow-up: full Python rerun64715 terminal0 (234tests pass),
+retained final-suite log/hash. Independent latest-delta review finds no material
+defect; reproduced3 harness/10primary and validated Error decoder authoredtest.
+Corrected stale README wording. Native execution remains pending.
+
+Record iterator live dependency progress: expanded closed corpus to13 with
+not-empty argument effect exactly once, rebound seq called once and actual
+rebound nth replacement observed by RecordIter. Fresh pinned runner78115
+terminal0/13matches; focused3 harness tests pass. Native test consumes same13
+ordered IDs, remains uncompiled. Retained new runner/result files with hashes;
+earlier10 evidence retained historical. Next: native bootstrap/focused execution
+and live lookup/solehandle/fullrecords continuation. Baseline99452 live.
+
+Independent13-case review reproduced all13+3harness/no material defect.
+Added14th live -lookup case with both arity entrypoints and finally restoration;
+fresh pinned runner22927 exits0/all14matches, focused3harness passes.
+Native exact IDs14 aligned, still uncompiled. Retained primary14files/hashes.
+
+Record iterator source checkpoint: final14th-case independent review finds no
+material finding and reproduces14 pinned observations. Complete forms,
+provenance, strict14-case harness, three authored native regressions and
+retained evidence are checkpointed for subsequent native validation.
+Bootstrap intentionally unchanged; no native test compile/execution yet.
+No PR/promotion or full record acceptance from this checkpoint.
+
+Record macro dependency evidence: retained12 complete pinned reify/exists?/
+deftype/defrecord and helper forms with source/file hashes and EPL notice in
+record-macro-foundations. No macro import or execution. Inspected reify capture,
+metadata/type guard and compiler munging/analyzer dependencies; full emit
+record fields/methods/factories remain required. Next after iterator validation:
+complete helper adaptation and generic nominal record storage, no stubs.
+
+Reify prerequisite execution: reproducible pinned runner5248 terminal0, five
+closed ordered Boolean observations match captures/metadata/same-site and
+different-site nominal type identity. Retained missing native reify failure
+(exit1 bytes14..19) and primary results/log with hashes. Initial wrong cwd
+failed namespace generation, corrected before actual compile/execution.
+Authored portable_reify both-phase/GC/independent Boolean ABI regression,
+uncompiled and expected to fail until full macro implementation. No skips or
+full record claim. Source macro prerequisites remain retention-only.
+
+Reify review finds12 source forms/hash/license and5 primary cases sound,
+records unproven GC/protocol/recur/unused-local/metadata-elision/munging and
+cross-fragment same-site contracts. Added sole-host-handle reified object
+retention test: captures vector, GC, separately compiled Object invocation
+projects23 with independent numeric decode afterGC. Uncompiled/no pass claim.
+Added macro-provenance verifier (12wholeforms pass) and3 new fail-closed reify
+oracle tests (allpass). FullPython24711 running; baseline99452 live.
+
+Reify follow-up: full Python237tests pass10.897s (24711exit0), retained log.
+Fresh pinned7case runner33744 terminal0 adds ICounted protocoldispatch and
+method-head recur behavior; strict3harness and12form provenance checks pass.
+Retained primary7result/log/hash. Native exactordered7IDs aligned and
+sole-hostcapture test authored; both uncompiled/fullmacro unimplemented.
+
+Reify latest independent review reproduces12wholeform verification,3harness
+and7primary observations; no material defect in GCretention authoredtest or
+protocol/recur additions. Namespace munging, unused-local capture and repeated
+fragment identity still pending. No native compilation or macro implementation.
+
+## Remaining M4 refresh after #227/#228 merges — 2026-10-08
+
+Record/reify prerequisites refreshed at 5d23601 onto merged main f4b13f3. All 331 main recipe selections preserved in order, plus full not-empty/RecordIter. python3 scripts/core_import.py --check:337files verified; git diff --check passes. Both record/reify native test files and all 12 retained upstream macro forms are byte-identical to f26639d. Macro forms remain retained provenance, not implemented acceptance. Native tests remain uncompiled and bootstrap is still merged main. Next after constructor lane: regenerate affected bootstrap and execute record iteration prerequisites, then implement full reify/record macro contracts and nominal collection behavior. Sole Suss Cargo owner34020 continues unchanged.
+
+Refresh validation: `python3 -m unittest discover -s scripts -p 'test_*.py'` terminal0, 241tests pass in 8.788s; log /private/tmp/suss-m4-record-post227-python.log, SHA256 7885ccf6e1fa20aca553d2e5fe282503c698d4e96ffa2475044c82860e3154de. Independent read-only exact-head review b0f615d31642f8b3ee3960f075e47f6f2dc750eb found no material refresh defects. This validates harness/provenance and retained observations, not fresh native execution. Bootstrap regeneration and native gates still pending; baseline34020 remains sole Cargo graph.
+
+### 2026-10-09 — record prerequisites integrated after Array conversion
+
+Copied the reviewed record/reify lane from00c1d7f onto current Array runtime c4c53f9 in an isolated integration worktree. Every current import selection remains ordered and unchanged; complete not-empty and RecordIter forms are appended with their original patches/reviews. Twelve macro forms and native regressions remain unchanged from that lane. Generated importer verification/Python checks are next. Bootstrap regeneration and native execution remain pending; reify/record macro implementation is still required, not implied by retained provenance. No Cargo graph was started while baseline99077 remains live.
+
+Integration validation: all current 334 selections remain identical/in order, plus exactly not-empty and RecordIter. Both native files and all twelve retained macro forms are byte-identical to00c1d7f. `python3 scripts/core_import.py --check` verified340 files; `python3 scripts/check_record_macro_provenance.py` verified12 complete pinned macro forms; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed244 tests in8.053s, log `/private/tmp/suss-m4-record-after-arrays-python.log`, SHA256 135e40d5429b2a876fd76ba7a39d165711993599d81ebc15fe99929608f588a9. No native execution/bootstrap regeneration, no full record acceptance or PR readiness implied. Next unblocked task is focused native record iterator execution after scheduled compiler validation, then complete reify/record macro contracts.
+
+### 2026-10-09 — record/reify typed caller interfaces and complete dependency retention
+
+Authoring worktree `/private/tmp/suss-m4-record-reify-implementation` starts at
+fb29ef98f22f0765b10c0a2859126eef43719900 (7f71 plus the reviewed record import
+checkpoint). The existing 336 recipe selections, 12 retained macro forms and
+7 reify/14 iterator cases remain unchanged. Added 44 complete pinned source
+dependencies/stanzas, exact ranges/reader contexts/hashes and EPL notice, with
+a closed ordered verifier and missing/reordered/duplicate/forged evidence tests.
+
+Typed compiler interfaces expose actual live resolution catalogs, all lexical
+bindings with declaration identity, declared protocol overloads and six-key
+reader metadata elision. Scalar name munging preserves pinned UTF16 behavior,
+reserved segments and the complete CHAR_MAP, including keys which cannot match
+one-unit charAt inputs. The macro analysis graph calls the same catalog interface.
+Four authored Rust tests cover these interfaces; they are UNCOMPILED/UNEXECUTED.
+
+Actual authoring checks: `python3 -B scripts/check_record_analyzer_provenance.py`
+verified44 whole forms/stanzas; focused Python verifier tests3 passed7.327s;
+`python3 -B scripts/check_record_macro_provenance.py` verified12 whole forms;
+`python3 -B scripts/core_import.py --check` verified340 files;
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` passed247 in14.058s.
+The full Python run's printed oracle messages validate retained fixture data,
+not a fresh upstream/native execution. Rustfmt and diff checks pass. No Cargo,
+bootstrap build/regeneration, push or shared ABI changes occurred.
+
+Separately, `sh scripts/test-reify-prerequisite-oracle.sh` freshly compiled the
+unchanged seven-case fixture against the pin and ran Node: terminal0, all7 exact
+matches. Upstream emitted its existing protocol-method-head recur warning; it
+was not suppressed. This is upstream reference evidence, not native evidence.
+Scalar munging exposes both the default reserved table and a custom-table
+non-nil lookup predicate (false-valued table entries remain reserved); no map
+name/shadow branch is claimed implemented.
+
+Required next authoring: complete analyzer fallback/extern/module/warning state
+adapters and map-valued munge scope/rename facts, wire the whole source helper
+graph to compiled macro execution, and implement transactional anonymous-class
+publication with captures, metadata and protocol masks while preserving ordinary
+deftype's no-outer-local restriction. Then import complete nil-iter through real
+reify and implement the full record factory graph. These are not implemented by
+the retention ledger or typed caller APIs. Native/bootstrap acceptance must wait
+for the exclusive Cargo lane; no original issue criterion is marked complete.
+
+### 2026-10-09 — record/reify immutable cross-namespace compiler catalog
+
+Follow-up authoring adds read-only phase-specific namespace-scope lookup and a
+compiler catalog capturing all actual declared namespaces without entering them.
+SourceNamespace capture now shares that lookup; current-scope behavior remains
+the same. Declaration-only namespaces retain None rather than fabricated scope
+or definitions. Existing cell identities and shared declaration revisions remain
+actual compiler facts, not runtime loaded/bound evidence. The full pinned
+get-first-ns-segment/find-ns-starts-with helpers are retained, bringing the closed
+dependency ledger to46; all previous44 entries remain unchanged.
+
+The fifth authored Rust regression checks alias/cell snapshots, missing scopes,
+phase separation, exact namespace-segment matching and subsequent namespace
+publication not mutating old snapshots. It is UNCOMPILED/UNEXECUTED. Focused
+Python verifier3 passes7.651s; no native execution/bootstrap/Cargo/push. This
+catalog is not yet materialized as compiler state in the Macro Store. Analyzer
+extern/module/warning/fallback adapters and full source-helper execution remain
+required before real reify/nil-iter or record factory acceptance.
+
+### 2026-10-09 — whole record macro runtime-helper dependency group
+
+Appended complete vary-meta4171/fnil4526/update-in5530/group-by11244 after all336
+existing import selections. All437 prior review entries retain their original
+values and order; four additive reviews remain in-progress. Whole original forms,
+EPL notices, source hashes and exact patches are packaged. Defn becomes def/fn;
+fnil's emitted nil? macro guards alone use immutable suss.bootstrap/nil?. Every
+fixed/variadic arity and algorithm branch remains, including group-by's transient
+map reduction/promotion and update-in's live recursive/apply paths. No existing
+generated core bytes are changed; new declarations precede the unchanged loader
+after-stanzas. Original12 macro forms,7 reify/14 iterator corpus and four bootstrap
+artifacts remain unchanged.
+
+`sh scripts/test-record-helper-oracle.sh` freshly compiled the exact33-case
+fixture against the pin, executed Node and strict-compared all33 ordered raw
+Boolean observations: terminal0. Raw fixture/observations and a hash receipt are
+retained under docs/compatibility/record-helper-foundations/evidence. Focused
+harness3 passed0.023s; full Python250 passed14.363s. Whole helper adaptation
+verification passes4; core-import check verifies344 files; overlay441 reviewed/
+624 unassessed passes; rustfmt and diff checks pass. The initial author script
+failed before changing selections because extract_forms has no sha256 field;
+corrected by hashing the exact whole form. An initial preservation assertion
+incorrectly expected generated core to have the entire old file as its prefix;
+the importer inserts declarations before after-stanzas. Corrected audit proves
+one additive insertion and all previous bytes retained, not a source change.
+
+Two native tests are authored UNCOMPILED/UNEXECUTED: shared33 both-phase postGC
+observations and fnil sole-host callable retaining captured vector/default across
+GC and repeated independent variadic invocations. No bootstrap regeneration,
+Cargo or push occurred; existing artifacts are stale for the new sources. These
+complete runtime helpers do not implement source analyzer adapters, exists?,
+anonymous reify class publication, full deftype helper execution, nil-iter or
+record factories. Continue the complete source macro/compiler graph next, then
+regenerate and execute unchanged7/14 plus new33/typed facts when exclusive Cargo
+is available. Full original record/reify acceptance remains open.
+
+
+### Record helper evidence repair (authoring only)
+
+Lagrange's 1c09308 review identified that the 33 guest Boolean assertions did not
+independently establish helper outputs. All original cases/evidence and all four
+whole source adaptations remain unchanged. A parallel closed 33-case corpus now
+returns raw values/projections and ordered effect/throw traces; independently
+specified tagged expectations use exact binary64 bits and nil/Boolean/keyword
+kinds. Promotion observes all 17 groups. A third authored native test decodes each
+result after GC through FormBridge in Runtime and Macro, without guest equality
+or printing. Native remains UNCOMPILED/UNEXECUTED; bootstrap unchanged/stale.
+
+`sh scripts/test-record-helper-raw-oracle.sh` exited 0: all 33 fresh pinned raw
+observations match. Initial compilation failed on a missing generated base fixture;
+the runner now generates the prerequisite, and the failed log is retained.
+`python3 -B -m unittest discover -s scripts -p 'test_*.py'` exited 0: 253 passes
+(13.832s), including closed-ID, malformed type/bits/trace, and scoped-path restoration
+checks. `core_import.py --check` verifies 344 files and helper whole-form provenance
+passes. Receipt and raw fixture/logs/observations live in record-helper-foundations/
+evidence/raw-primary-receipt.json. No Cargo/bootstrap/build/push was run.
+
+Next: finish the separate opt-in genuine compiler-catalog transport, consuming
+source macro tests and complete analyzer/nominal helper graph. exists?/reify,
+anonymous captured classes, nil-iter through actual reify and full record factories
+remain pending; original record/reify acceptance is not narrowed or complete.
+
+
+### Genuine record compiler catalog transport — authored, native pending
+
+An explicit qualified Boolean/nil macro metadata policy now controls materializing
+phase/current namespace, actual cross-namespace source revisions and actual
+protocol-signature arities into &env. Absent/false/nil keeps the ordinary graph.
+Malformed metadata fails before macro publication; macro transaction checkpoints
+include the policy and restore it with the original callable on failed script staging.
+Namespace reload retains definitions published before a later initializer failure.
+No runtime-value guessing, host source evaluator, new shared ABI types or graph
+budget changes were introduced. Canonical namespaces are unchanged, and missing
+source scopes remain nil. The graph still enforces its existing recipe/form/unit
+limits; full-catalog cost has not been measured or certified.
+
+Four new compiled_macro_compiler_catalog Rust regressions are authored only:
+actual two-phase cross-namespace docs/overloads and retained old results after GC,
+opt-in/invalid metadata preservation, failed script-staging policy rollback, and
+partial namespace publication followed by successful reload recovery.
+They are UNCOMPILED/UNEXECUTED. No Cargo/bootstrap/push. Whole 46 analyzer dependency
+stanzas and original 12 macro forms, 340 selections, all 33 Boolean/raw helper
+cases, seven reify and fourteen iterator cases remain unchanged. Next dependency
+group is the complete executing nominal macro helper graph and its required
+whole runtime functions; extern/module/warning/resolve fallback, scalar and map
+munge adapter consumption, anonymous publication/reify/nil-iter and full records
+remain pending rather than replaced with a subset.
+
+### Compiler catalog transaction-boundary correction — native pending
+
+Independent review of 2f4cd61 found the authored reload test incorrectly expected
+whole namespace rollback. Corrected it to retain the initialization failure,
+observe the already published nil-returning replacement after GC, and verify
+successful reload restores genuine runtime phase/current facts. A separate
+compiled-script preparation failure now exercises the actual binding checkpoint
+rollback, independently decoding the restored callable/catalog result after GC
+and then checking successful replacement. No production loader change, Cargo,
+bootstrap or native execution; all four consuming tests remain uncompiled.
+
+### Whole record runtime graph dependencies — authored, native pending
+
+Appended ten complete pinned forms: comp/partial/juxt/merge/merge-with/update/
+select-keys/zipmap/gensym_counter/gensym. Original 340 selections/extracted forms
+and 441 reviews are unchanged and ordered. Generated import now has 354 files;
+overlay 451 reviewed/614 unassessed. Complete docs/arities/branches, callback order,
+live public dispatch and pinned sentinel collision remain. Counter is upstream
+ordinary def, not defonce; no per-expansion reset. Immutable nil? macro guard only.
+
+Fresh pinned runner exited0: 84 raw tagged values/projections/effect traces match.
+Full Python exited0: 260 tests in17.405s. Whole ten-form and prior four-form
+provenance checks pass; prior verifier anchors original positions and rejects
+duplicates rather than assuming the group is the recipe tail. Native both-phase
+independent host decoding and sole-host captured function GC tests are authored,
+UNCOMPILED/UNEXECUTED. Bootstrap bytes unchanged/stale, no Cargo/build/push.
+Raw fixture/observations/log/Python log and content receipt retained under
+docs/compatibility/record-runtime-graph/evidence.
+
+Continue the complete compiler/source nominal helper graph, actual exists?/reify
+and nil-iter, then record factories/protocol bodies. Full #18/#19 remain open;
+this prerequisite evidence does not establish native record/reify execution.
+
+### Actual anonymous publication cell-state kernel — native pending
+
+Private suss.compiler/cell-defined? now emits a typed check of genuine source
+cells, guarded dynamic-frame lookup before root bound state, exact undefined
+comparison, and no eager unbound read/coercion. Fresh current-namespace names
+create real unbound cell identities without invented source facts. Bootstrap
+bindings/foreign missing namespaces/non-symbol operands remain rejected. No shared
+GC types/new roots or ordinary deftype restriction changes. Whole exists? source
+remains retained; complete resolution/dotted paths/non-symbol branch and actual
+source reify/nominal graph integration continue next, not replaced by this kernel.
+
+Fresh pinned publication_cells fixture compile+Node exited0; nine ordered raw
+observations match, including nil/false/undefined and no object conversion. First
+compile failed due duplicate relative fixture location; corrected and raw failure
+retained. Two native both-phase GC/cross-fragment/class/dynamic/recovery regressions
+are authored UNCOMPILED/UNEXECUTED. Rustfmt parsing and diff check pass. No Cargo,
+bootstrap/build/push; bootstrap unchanged/stale and runtime identity changed.
+Receipt/raw evidence: docs/compatibility/record-publication-cells/evidence.
+
+Independent frozen reviews inspected and retained: 4917033 complete ten-form runtime
+group and 808f7e catalog transaction repair both have no material findings. Their
+reports are copied under record-runtime-graph/evidence; native remains explicitly
+uncompiled, not inferred from provenance/reference success. Original seven reify
+and fourteen iterator tests, complete source parents and original acceptance
+remain unchanged. Next complete integration dependencies are source analyzer
+resolution/state and map/scalar munge consumption, complete exists? path handling,
+nominal helper protocol masks/annotations, source deftype*/defrecord* publication
+and physical method adapters, then actual reify/nil-iter and full record factories.
+No Cargo/bootstrap/push while the separate 96451 baseline remains live.
+
+### Publication hidden-cell boundary repair — native pending
+
+Sartre51533 P2 confirmed: resolution hides ReaderCell, and the fallback declaration
+could promote it before the old hidden check. Added canonical hidden-state rejection
+BEFORE declare_cell. Actual reader reservation both-phase compiler regression
+checks canonical/core alias rejection, no source identity publication, intentional
+explicit source declaration promotion, and internal reader/protocol-key rejection.
+Original kernel tests/assertions/runtime remain unchanged. New compiler regression
+authored/uncompiled; no Cargo/bootstrap run by author.
+
+Parent's51533 focused target compiled but0pass2fail at Session stale manifest
+construction, not semantic kernel execution. Isolated bootstrap thenexit1 at
+177827..177835: full update-in [k & ks] parameter destructuring. All raw logs and
+receipt retained in record-publication-cells/evidence, alongside independent P2
+report and bounded repair receipt. Historical51533 receipt records10 hashes, not
+13;13 is changed-file count. Full parameter lowering (vectors/maps/nesting/rest/
+:as/defaults/qualified shorthands/live call/effect order) continues separately;
+no helper subset or guard bypass. Parent coordinates next native lane.
+
+Bounded fd61 test correction: parent focused compiler regression compiled then
+failed only because clojure.core/sequence rejects as Unresolved Runtime name, not
+Compiler-owned cells. Keep that portable rejection/hidden state separately;
+suss.core and cljs.core still require the precise compiler-owned diagnostic.
+No JVM alias normalization, production/allowance changes or removed promotion/
+internal checks. Raw focused+diagnostic failures and receipt retained. Test name:
+publication_probe_cannot_promote_real_reader_or_internal_reservations. No Cargo
+by author; corrected candidate pending parent rerun, separate from destructuring.
+
+### Full portable function-parameter binding graph authoring
+
+After ca0, implement genuine bootstrap fn vector/map parameter lowering to raw
+arguments plus an inner primitive let* inside the method recurrence loop. Preserve
+named/multiple/rest signatures, nested bindings, :as, qualified shorthands, eager
+defaults, public extraction calls/effect order, genuine captures and source metadata.
+Primitive fn* remains strict. Syntax maps preserve small-map/HAMT promotion,
+collisions and removal order. No imported helper is truncated.
+
+Retain five complete macro parents with EPL notice/hash/context and append six
+whole source prerequisites after all350 existing forms: LITE_MODE, to-array,
+--destructure-map, reverse, vector, some. Exact canonical dot spelling and complete
+when-let expansion only; vector is not an intrinsic alias and some is not Booleanized.
+The full LITE_MODE=true ObjMap dependency remains pending. 356 selections generate
+360 files; four bootstrap artifacts unchanged/stale.
+
+Author gates: fresh pinned39 raw value/effect cases match; five macro and six
+runtime provenance checks pass; core_import --check360; Python269pass21.278s;
+new Rust parsed/formatted and diffcheck clean. Existing runtimegraph missing-entry
+mutation now removes index349 instead of the newly appended recipe tail; retain
+all missing/reorder/duplicate/hash/removed-branch rejection assertions.
+
+Parent isolated snapshots: compile-only0; bootstrap sequential genuine failures
+reverse/vector/some/dot/when-let retained, complete adapted bootstrap0; native30
+and39 gates each2pass (39in8.05s), bothphases/postGC/solehostcapture. These are
+snapshot diagnostics with exact source receipts, not final authoring certification.
+Compilerlib39snapshot91pass2fail, then published sparse-fixture corrections plus
+Keyword declaration92pass1fail missingPersistentVector. Final authored structural
+fixture declares canonical Keyword/PersistentVector/PersistentArrayMap cells and
+checks genuine Do->Let inside recurrence; no fake class body or skipped keyword
+coverage. Failed mixed copy consistency guard means no final-module test result.
+Oldbase sparsefixture unchanged here; integration must inherit reviewed06 fixes.
+
+Evidence/receipts: docs/compatibility/function-parameters/. No author Cargo/build/
+push; finalhead review/compiler/native/bootstrap reproduction/full unchanged
+baseline/CI pending. Full original record/reify graph remains open. Next genuine
+source/compiler group: actual reify and nil-iter for empty HAMT traversal, retaining
+whole source/protocol/meta/capture/factory contracts, not a stand-in iterator.
+
+Parameter d3de follow-up: coherent diagnostic bootstrap0/native2pass39cases8.13s;
+compilerlib92pass1fail at structural named-method assertion. Actual named function
+uses attach_callable_signatures Let publication; inspect its owner GeneralFunction,
+assert genuine self name again/sole method, retain rawarity2 and Do->Let inside
+recurrence Loop. Test-only shape repair, no production/allowance/assertion removal.
+Coherent raw logs/receipt retained; corrected assertion pending parent execution.
+Parameter integration at22a16a9 includes reviewed06ac runtime/fixture repairs plus f593 whole binding prerequisite. Bootstrap regeneration/reproducibility passed (two generations; four compiled tests14.44s); compilerlib93pass0fail0ignore13.16s; parameter native2pass0fail0ignore9.07s covering39 rawcases bothphases/GC; pinned provenance9pass6.418s. Initial provenance attempt failed missing upstream checkout, retained before actual c4295f initialization. Evidence docs/compatibility/function-parameters/evidence/integration-validation.json. Merge review, full baseline and final-headCI pending. Full reify/nil-iter and original M4 collection gates remain required.
+
+PR231 abd58cb unchanged fullbaseline terminated101:17groups86pass1fail0ignore. Initial t/policy at catalog test143 unresolvedRuntime suss.core/Symbol before reload; minimal Session::with_options did not provision core. Test setup now uses existing new_repl_with_options, preserving all publication/reload/recovery assertions and fuel. Focused reload retry passed1/0/0 in48.88s. Logs/terminalreceipt retained in function-parameters/evidence. Independent correctionreview and renewed fullbaseline/finalCI pending; originalM4 remains open.
+
+### PR231 obsolete support diagnostics repair (base677340c)
+
+CI integration2 compiler test277pass1fail37ignore: obsolete comp unsupported
+row now compiles. In an isolated branch, reactivated seven original tests with
+all original sources/results unchanged; removed exactly their seven negative
+rows, preserving remaining30 unsupported rows. Added eleven-case closed raw
+pinned fixture and postGC host values/effects/capture regression. Fresh pinned
+compile/Node0 all11match; failure/raw observations retained under
+docs/compatibility/compiled-support-reactivation/. Comp/partial inventory refs
+updated, no runtime/bootstrap/sourceform changes or fuel changes. Nativepending
+parent lane. Catalog core-setup repair677 inherited, not duplicated.
+Staging work remains at authorb97; whole reify/nil-iter not implemented by this
+test repair. Original Refs18/19 scope/required unchanged baseline/CI remain open.
+
+Reactivation author freeze checks: Python272pass22.486s, core-import360check
+passes after semantic-test/review-hash manifest refresh; all source/extracted
+forms unchanged. Four bootstrap files unchanged/stale due manifest identity;
+parent must regenerate before exactnative. Rustfmt parse/diffcheckpass. Initial
+external-source symlink and stale-manifest checks failed truthfully, corrected
+local exactpinclone and metadataregeneration. Native not yet executed.
+
+Compiled-support c2cf native: entire compile_expr286pass0fail30existingunsupportedignores83.50s; seven original tests reactivated with unchanged assertions, new11raw values/effects/capture cases passed, remaining30 exact diagnostics retained. Bootstrap regeneration and two-generation Java/Nodefree reproducibility passed with4compiledbootstraptests14.43s. Evidence compiled-support-reactivation/evidence/native-validation.json. Publicationundefinedfixture, str sourceclosure, RecordIter/reify, upstreamsuitebaseline, finalfullbaseline/CI remain required; PR231 draft.
+### PR231 publication literal-nil/undefined fixture repair (base677340c)
+
+Focused publicationcells0pass2fail reached kernel; exact literalmake-array1
+input is present nil by whole pinmacro2644–2660, hence definedtrue. Retain that
+source as a positivenilcase and add genuine js/Arrayhole with originalfalse;
+dynamic undefined fixtures usejsArrayholes preservingfalse/restoration/GC and
+every other originalassertion. Freshpin4rawvectors matchundefined/own/nil/exists
+plusglobal/dynamicpublication. Fullmakearraywitness+failedlogs retained under
+docs/compatibility/publication-fixture/. No runtime/fuel/bootstrap change; native
+correctedtests pending parentlane, fullreify/niliter scope stillrequired.
+
+Publication followup:143e native2fail duejsArrayalias unavailable indefaultcore,
+notcellkernel. Retainedfailure. Usegenuinefirstclassmakearray lexicalalias (same
+runtimeconstructorbranch as pin), notliteralnil macro. Originalfalseundefined
+assertions/restoration unchanged; freshpin5rawmatch+3harnesspass. Parentconsistent
+authoringsnapshot publication2pass7.24s isdiagnostic only; frozen/integrated
+acceptancepending. No production/bootstrap/manifest/fuel edits.
+
+Publication fixture af3561f exact integrated native passed2/0/0 in7.02s. Genuine first-class make-array alias supplies undefined; literal make-array nil source retained and tested positive. Both phases, laterclasspublication/dynamicselectedvalue/unbound/restoration/GC assertions remain. Log+receipt publication-fixture/evidence/integrated-native-validation.json. Kernel/bootstrap/fuel unchanged. Independent finalfixture review and fullgoal sourceclosure/baseline/CI pending.
+
+Additional exact eaec prerequisite evidence: record_compiler_facts5pass0fail0ignore (phasealiases/catalogrevision/metaelision/munging/unusedlexicals); core_import17pass0fail0ignore20.74s. Logs/receipts retained in function-parameters/evidence. These are bounded prerequisite checks, not reify/full M4 completion. No production/bootstrap changes. Current CI37930190032 on eaec remains running; priorrequired fullbaseline86/1 failure retained. Nextunblocked tasks fullstr/ClosureStringBuffer, genuine Objectfield storage munging for RecordIter, source-driven reify bootstrap staging, strict missingprotocol Error/printer closure, complete original19matrix.
+
+Closure diagnostic fixture correction (pending native validation): final-head CI 37930190032 integration (2) passed all 286 compile_expr cases, then failed portable_closures because the old vector-parameter unsupported assertion expected the whole [x] span. Vector parameter lowering is now supported and executed by portable_function_parameters: 39 pinned raw value/effect cases in both phases and host-only capture retention. Remove only that obsolete unsupported row; retain both wrong-arity checks and the unprovisioned IndexedSeq diagnostic with exact span/message. No production, bootstrap, oracle expectation or ignore changes. Full baseline on a4265e7 is running; independent review and focused closure native validation remain pending before integration. Full reify, records, sorted collections and all original M4 acceptance gates remain required.
+
+Required full baseline a4265e7 completed with exit101: 544 passed,1 failed,0 ignored across116 completed groups; stops at portable_record_graph_runtime unresolved Runtime str59..62. Remaining workspace tests were not executed. Full log/receipt and final eaec CI logs are retained under function-parameters/evidence. Closure fixture c8957e3 passed independent review and focused native1/0/0 on evidence-only child4d973cb; retains wrong-arity and missing IndexedSeq checks, removes only obsolete vector rejection. Integrated locally; no green final-head CI/full-baseline claim. Next source prerequisites remain full str/StringBuffer/field storage and genuine reify staging; Error801 whole-graph generator separately fails unresolved reify192494..192499, so Error native acceptance remains unexecuted.
+
+### Full runtime str / StringBuffer and canonical Object fields (author base a4265e7)
+
+Whole str3129 imported (357 selections, 361 generated files); all356 prior
+selections and extracted bytes preserved. Closure StringBuffer complete source,
+Apache license, jar/pin/hashes and whole macro str/str_ plus immediate helper
+witnesses retained in docs/compatibility/string-buffer/. Native adapter preserves
+all constructor/method branches, string/default hint order and captured-left
+mutation semantics. Compiler retains variadic Object signatures/rest class and
+canonical storage munging; original field declarations/fact indices stay raw.
+Collisions use last-slot named/protocol reads/writes and private constructor
+normalization, preserving once-only argument effects. Stride2 table first policy
+unchanged; full schema checks remain. Existing unsupported extra-property and
+prototype assertions retained; supported named-property cases now execute exact
+post-GC observations. Added raw ABI alias/private-copy/stride-policy regression
+and two-phase29raw +sole-host captured buffer/vector tests, all nativeuncompiled.
+
+Author commands: sh scripts/test-string-field-oracle.sh terminal0 all29 fresh
+pinned rawmatches; sh scripts/test-string-direct-macro-oracle.sh terminal0 two
+fresh direct-call stringcontext matches; python3 -B -m unittest discover -s
+scripts terminal0 278pass (25.9/26.6seconds at earlier stages; final log retained);
+focused test_string_field_oracle3pass; python3 -B scripts/core_import.py --check
+terminal0 361verify; Rustfmt parse and git diff --check pass. No Cargo/bootstrap
+build, allowance changes, commit publication or native acceptance in authorwt.
+Four bootstrap files byteunchanged/stale; actual native cost/correctness pending.
+Both initial expectation mismatch and live single-arity replacement TypeError
+retained as failures, not passes. Runtime alias returns Number23/nil; direct macro
+emits stringcontext producing "23"/"null", with separate obligations/corpus.
+
+Macro str:877 and str_:852 inventory explicitlyunimplemented, whole compiled
+helper/analyzer/js* graph stillrequired; witnesses are not executable adaptation.
+Reify/nil-iter remains genuine source-driven acyclic seed/compiled-macro staging,
+including BOTH generate and restore fact reconstruction and phase-bound seed+
+macrograph identities/deterministicgensym. No milestone/issue closure claim.
+Parent next regenerates frozen artifacts through established Java/Nodefree path,
+then portable_string_fields, named_properties, RecordIter14 and entire runtime
+recordgraph84, constructoralias ABI test, affected compiler/ABI/lifecycle gates,
+reproduction, unchanged locked baseline and final-head CI. Continue complete
+staging/reify graph afterwards; don't drop existing reify or full source tests.
+
+### PR231 integrated head suite/CI completion (base02064b2+dd3a9ea+uncommitted integration)
+
+Upstream suite baseline rework at the integrated head. A local focused
+clojure_test_suite run (threads1, 148.61s) recorded four advancing differences
+against the reviewed baseline: clojure.core-test.fnil and .get now load so
+their entries are removed, group-by's missing dependency advances
+group-by->range, with-out-str's advances str->with-out-str. Ported
+scripts/suite_baseline_log.py validates each old value, rejects
+duplicate/stale/unknown identities, reconstructs all 5834 assertion
+classifications and matches the terminal counters exactly: pass150 fail20
+guest-judged0 namespaces-failed233 not-executed5684 skipped0. The suite's two
+string-get assertions test-get#13/#28 now pass with the genuine String.charAt
+member, so the assertions map stays empty (the prior c2cf3bf lane had recorded
+them kind:error). Known-failures.json was written from the validated
+projection; its diff is exactly the four entries. Evidence retained under
+docs/compatibility/upstream-suite-baseline/ (complete focused log, retained
+original baseline, classification projection, README); adapted
+scripts/test_suite_baseline_log.py 3pass; python discover 284pass 11.41s.
+Suite re-run green: clojure_test_suite 6pass0fail 138.75s (fixture, routing and
+adversarial decode included). Narrative updated (clojure-test-suite.md: 15
+loading namespaces, 150 passing assertions, 233 failed namespaces, 5684
+unexecuted, the 20 oracle skips the only failures, 48 namespace-stage; README.md
+checkpoint section added).
+
+compile_expr str re-enable: the retained str resolves, so the five
+prototype_cases_awaiting_compiled_support rows (test_str_empty/_mixed_types/
+_multi_arg_literals/_single_int/_with_nil) were removed and their five ignored
+tests re-enabled per the table's own guidance; 291pass0fail25unsupported
+ignores 87.96s (was 285pass1fail30ignore). No other test pins str unresolved;
+(str)->"" and mixed concatenation are pinned by the 29-case string-field
+corpus.
+
+Sequence nil-guard immunity: seq/first/next/rest patches spell their
+nil-guards suss.bootstrap/nil?, the established immunity precedent of
+some?/gensym/str_/fnil; public redefinition of the traversal functions
+remains live and the gensym-immutable-nil-guard regression now yields r10.
+Reify executes as a genuine compiler lowering (per-site anonymous class behind
+an internal cell, locals plus enclosing deftype fields with local shadowing,
+IWithMeta/IMeta prepended with metadata-reconstructing -with-meta); RecordIter
+language errors were resolved by the canonical Object field/rest-dispatch
+munging.
+
+Focused verification at the final head (threads2): portable_reify2,
+portable_record_iteration3, portable_record_graph_runtime2 (84 pins),
+portable_string_fields2, portable_string_char_at2 (74 pins),
+portable_named_properties4, portable_record_helpers3 (33 pins both corpora),
+compiled_macro_compiler_catalog4, compiled_macro_maps6 — all 0 fail;
+record_compiler_facts5; compile_expr291. Bootstrap regenerated for the final
+manifest identity and sh scripts/verify-bootstrap.sh passed end to end:
+two-generation byte reproduction, shipped-artifact equality, identity script
+and compiled_bootstrap4pass14.94s, all with Java/Node absent. The first full
+workspace baseline attempt died compiling tests/runtime_abi.rs: dd3a9ea had
+accidentally appended 22 stray lines after its final test (a foreign worktree
+path line plus a verbatim duplicate of tests/support/mod.rs). Removing the
+paste fixed the compile and a focused runtime_abi run passed 71/71; the full
+workspace baseline result is recorded below and final-head CI follows
+review+push.
+
+Reviews.edn stale UNCOMPILED/UNEXECUTED/native-pending annotations were
+replaced with concrete passing results (graph-runtime 10, record-helpers 4 and
+helper-cases 4, char-at 1, compile_expr 2); a final alignment pass also
+replaced the str:3129 "authored native execution pending", the record-iteration
+not-empty/RecordIter "native execution unproven" and the four record-helper
+vary-meta/fnil/update-in/group-by "Native/bootstrap execution is pending"
+rationale clauses with the verified battery results (portable_string_fields 2
+tests, portable_record_iteration 3 tests, 14 fresh pinned cases,
+portable_record_helpers 3 tests). core_import write+check 361 files, overlay
+460/605 unchanged; manifest and all four bootstrap artifacts were regenerated
+again for the final annotation identity. Docs aligned: record-iteration README records the
+verified bootstrap/native execution; new string-char-at README (evidence logs
+described honestly, CI job log cited at merge d09b45a); record-analyzer-context
+README updated for the reify lowering, the passing compiler-facts and catalog
+regressions and the regenerated bootstrap; char-at test header corrected.
+
+Limitations: 233 namespaces still fail (range/take/constantly/volatile!/letfn/
+when-let/printing blockers), 5684 assertions remain unexecuted and the 20
+oracle skips are the only suite failures; nil-iter remains unimported; exists?,
+the complete deftype helper graph and the record factories are not implemented;
+macro str:877/str_:852 direct-call obligations remain unimplemented; the five
+shared-collection gates and all 397 required operation rows remain required.
+PR231 stays a Refs #18/#19 draft; no milestone completion is claimed.
+
+Next unblocked: import range to execute group-by's 12 assertions; continue
+#18/#19 with the complete deftype helper graph and record factories through
+the executing reify path; then the nil-iter import with deftype capture
+restrictions and transactional publication intact.
+
+PR #231 clean-build follow-up (2026-10-10): after `cargo clean` removed 9.8 GiB
+of artifacts, the prescribed `CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2` completed successfully (exit 0; full output was captured
+outside the checkout). Three async integration fixtures had exhausted their
+2,000,000 aggregate Wasmtime fuel budgets during valid multi-step scenarios:
+`public_file_async_import_uses_macros_and_initializes_dependencies_once`,
+`parent_return_drains_cancelled_child_finally_before_retiring_invocation`, and
+`source_cancel_closes_polled_pending_io_before_component_return`. Their test
+budgets were raised to 20,000,000; focused reruns and the final full workspace
+run passed, with their behavioral assertions unchanged. This is evidence for a
+future audit of fixture fuel budgets, not a reason to replace Wasmtime fuel
+with manual accounting. Independent review found no remaining concrete issue.
+`git diff --check` passed. Final-head CI is still required after push; PR #231
+must remain unmerged.
+
+The first pushed head's foundation job exposed a clean-checkout dependency in
+the new String.charAt Python unit test: its default comparison path pointed at
+the ignored generated `tests/oracle/out/string-char-at-observations.json`.
+`compare` now accepts an observations path, and the unit test explicitly uses
+the committed `docs/compatibility/string-char-at/evidence/primary-observations.json`.
+The focused 3-test oracle module passes. Every other command in the foundation
+block also passed locally when rerun as one sequential block. The obsolete CI
+run was cancelled after diagnosis; push this correction and require a new
+final-head CI run before considering PR readiness.
+
+Correction is pushed as c8c7dd5. GitHub Actions run 38044038651 passed on that
+head: foundation and integration partitions 0 through 7 all succeeded. The
+handoff-only result update that follows requires its own final-head CI pass.
