@@ -23858,3 +23858,13 @@ future audit of fixture fuel budgets, not a reason to replace Wasmtime fuel
 with manual accounting. Independent review found no remaining concrete issue.
 `git diff --check` passed. Final-head CI is still required after push; PR #231
 must remain unmerged.
+
+The first pushed head's foundation job exposed a clean-checkout dependency in
+the new String.charAt Python unit test: its default comparison path pointed at
+the ignored generated `tests/oracle/out/string-char-at-observations.json`.
+`compare` now accepts an observations path, and the unit test explicitly uses
+the committed `docs/compatibility/string-char-at/evidence/primary-observations.json`.
+The focused 3-test oracle module passes. Every other command in the foundation
+block also passed locally when rerun as one sequential block. The obsolete CI
+run was cancelled after diagnosis; push this correction and require a new
+final-head CI run before considering PR readiness.

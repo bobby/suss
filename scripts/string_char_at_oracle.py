@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PIN='c4295f303100bbf5afac449242d30bca1126f1a1'
 CORPUS=ROOT/'tests/oracle/string-char-at-cases.json'
 RAW=ROOT/'tests/oracle/out/string-char-at-observations.json'
+EVIDENCE=ROOT/'docs/compatibility/string-char-at/evidence/primary-observations.json'
 
 def recipes():
  rows=[]
@@ -69,8 +70,8 @@ def record():
  for r,v in zip(rows,values):r['expected']=v['value']
  CORPUS.write_text(json.dumps({'schema':1,'upstream':PIN,'cases':rows},indent=2)+'\n');print(len(rows),'fresh raw pin cases recorded')
 
-def compare():
- values=observations();corpus=json.loads(CORPUS.read_text())
+def compare(path=RAW):
+ values=observations(path);corpus=json.loads(CORPUS.read_text())
  if corpus['upstream']!=PIN or len(corpus['cases'])!=len(values):raise ValueError('corpus identity')
  for r,v,expected in zip(recipes(),values,corpus['cases']):
   if expected!={**r,'expected':v['value']}:raise ValueError('source/raw mismatch '+r['id'])

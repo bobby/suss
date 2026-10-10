@@ -7,7 +7,7 @@ import string_char_at_oracle as gate
 
 class CharAtRawEvidenceTests(unittest.TestCase):
     def test_closed_complete_source_and_independent_raw_utf16(self):
-        gate.compare()
+        gate.compare(gate.EVIDENCE)
         raw={x['id']:x['value'] for x in gate.observations(gate.ROOT/'docs/compatibility/string-char-at/evidence/primary-observations.json')}
         self.assertEqual(len(raw),74)
         for key in ['get-suite-13','get-suite-28']:
