@@ -95,10 +95,23 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
 #[test]
 fn malformed_object_methods_fail_atomically_and_session_recovers() {
     let mut session = Session::new().unwrap();
+    // ClojureScript munges ordinary hyphens in Object method names; this is a
+    // valid method declaration, not a malformed-method rejection case.
+    session
+        .eval("(deftype ObjectNamedMethod [] Object (bad-name [this] 83)) (def object-named-method (ObjectNamedMethod.))")
+        .unwrap();
+    let named_method = session.eval("(.bad-name object-named-method)").unwrap();
+    session.collect().unwrap();
+    session
+        .inspect(&named_method, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            assert_eq!(object.fields(&mut store)?.next().unwrap().unwrap_f64(), 83.0);
+            Ok(())
+        })
+        .unwrap();
     for source in [
         "(do (def object-unpublished 3) (deftype ObjectInvalid [] Object (missing [] 1)))",
         "(deftype ObjectInvalid [] Object (missing [this] object-private-name))",
-        "(deftype ObjectInvalid [] Object (bad-name [this] 1))",
         "(do (def object-unpublished 3) (deftype ObjectInvalid [] Object (__proto__ [this] 1)))",
         "(do (def object-unpublished 3) (defprotocol ObjectProtoGuard (read-proto [this])) (deftype ObjectInvalid [__proto__] ObjectProtoGuard (read-proto [this] __proto__)))",
         "(deftype ObjectInvalid [] Object (missing [this & rest] 1))",

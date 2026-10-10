@@ -51,6 +51,7 @@ pub enum NominalForm {
     Instance,
     Satisfies,
     Implements,
+    Reify,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ControlForm {
@@ -470,6 +471,7 @@ impl Environment {
                 ("instance?", NominalForm::Instance),
                 ("satisfies?", NominalForm::Satisfies),
                 ("implements?", NominalForm::Implements),
+                ("reify", NominalForm::Reify),
             ] {
                 let global = Global {
                     phase,
@@ -723,6 +725,23 @@ impl Environment {
             self.source_changed();
         }
         (global, fallback, fresh)
+    }
+    /// Per-analysis anonymous reify site class publication cell. The pinned
+    /// macro gensyms one internal type per macro expansion and publishes it
+    /// behind an exists? guard; analysis identity takes the expansion's place.
+    /// A fresh registration advances the source generation so the same source
+    /// analyzed again publishes a distinct anonymous class, like a new gensym.
+    pub(crate) fn reify_class_key(&mut self, phase: Phase, generation: u64, site: usize) -> Global {
+        let global = Global {
+            phase,
+            namespace: "suss.internal.reify".into(),
+            name: format!("t-reify-{generation}-{site}"),
+        };
+        if !self.bindings.contains_key(&global) {
+            self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.source_changed();
+        }
+        global
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(

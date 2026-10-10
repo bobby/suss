@@ -41,7 +41,7 @@ fn raw_helper_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
     );
     match &form.kind {
         Kind::String(value) => {
-            json!({"tag":"string", "units":value.encode_utf16().collect::<Vec<_>>()})
+            json!({"tag":"string", "units":value})
         }
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(value) => json!({"tag":"bool", "value":value}),

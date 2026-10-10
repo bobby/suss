@@ -23756,3 +23756,105 @@ then portable_string_fields, named_properties, RecordIter14 and entire runtime
 recordgraph84, constructoralias ABI test, affected compiler/ABI/lifecycle gates,
 reproduction, unchanged locked baseline and final-head CI. Continue complete
 staging/reify graph afterwards; don't drop existing reify or full source tests.
+
+### PR231 integrated head suite/CI completion (base02064b2+dd3a9ea+uncommitted integration)
+
+Upstream suite baseline rework at the integrated head. A local focused
+clojure_test_suite run (threads1, 148.61s) recorded four advancing differences
+against the reviewed baseline: clojure.core-test.fnil and .get now load so
+their entries are removed, group-by's missing dependency advances
+group-by->range, with-out-str's advances str->with-out-str. Ported
+scripts/suite_baseline_log.py validates each old value, rejects
+duplicate/stale/unknown identities, reconstructs all 5834 assertion
+classifications and matches the terminal counters exactly: pass150 fail20
+guest-judged0 namespaces-failed233 not-executed5684 skipped0. The suite's two
+string-get assertions test-get#13/#28 now pass with the genuine String.charAt
+member, so the assertions map stays empty (the prior c2cf3bf lane had recorded
+them kind:error). Known-failures.json was written from the validated
+projection; its diff is exactly the four entries. Evidence retained under
+docs/compatibility/upstream-suite-baseline/ (complete focused log, retained
+original baseline, classification projection, README); adapted
+scripts/test_suite_baseline_log.py 3pass; python discover 284pass 11.41s.
+Suite re-run green: clojure_test_suite 6pass0fail 138.75s (fixture, routing and
+adversarial decode included). Narrative updated (clojure-test-suite.md: 15
+loading namespaces, 150 passing assertions, 233 failed namespaces, 5684
+unexecuted, the 20 oracle skips the only failures, 48 namespace-stage; README.md
+checkpoint section added).
+
+compile_expr str re-enable: the retained str resolves, so the five
+prototype_cases_awaiting_compiled_support rows (test_str_empty/_mixed_types/
+_multi_arg_literals/_single_int/_with_nil) were removed and their five ignored
+tests re-enabled per the table's own guidance; 291pass0fail25unsupported
+ignores 87.96s (was 285pass1fail30ignore). No other test pins str unresolved;
+(str)->"" and mixed concatenation are pinned by the 29-case string-field
+corpus.
+
+Sequence nil-guard immunity: seq/first/next/rest patches spell their
+nil-guards suss.bootstrap/nil?, the established immunity precedent of
+some?/gensym/str_/fnil; public redefinition of the traversal functions
+remains live and the gensym-immutable-nil-guard regression now yields r10.
+Reify executes as a genuine compiler lowering (per-site anonymous class behind
+an internal cell, locals plus enclosing deftype fields with local shadowing,
+IWithMeta/IMeta prepended with metadata-reconstructing -with-meta); RecordIter
+language errors were resolved by the canonical Object field/rest-dispatch
+munging.
+
+Focused verification at the final head (threads2): portable_reify2,
+portable_record_iteration3, portable_record_graph_runtime2 (84 pins),
+portable_string_fields2, portable_string_char_at2 (74 pins),
+portable_named_properties4, portable_record_helpers3 (33 pins both corpora),
+compiled_macro_compiler_catalog4, compiled_macro_maps6 — all 0 fail;
+record_compiler_facts5; compile_expr291. Bootstrap regenerated for the final
+manifest identity and sh scripts/verify-bootstrap.sh passed end to end:
+two-generation byte reproduction, shipped-artifact equality, identity script
+and compiled_bootstrap4pass14.94s, all with Java/Node absent. The first full
+workspace baseline attempt died compiling tests/runtime_abi.rs: dd3a9ea had
+accidentally appended 22 stray lines after its final test (a foreign worktree
+path line plus a verbatim duplicate of tests/support/mod.rs). Removing the
+paste fixed the compile and a focused runtime_abi run passed 71/71; the full
+workspace baseline result is recorded below and final-head CI follows
+review+push.
+
+Reviews.edn stale UNCOMPILED/UNEXECUTED/native-pending annotations were
+replaced with concrete passing results (graph-runtime 10, record-helpers 4 and
+helper-cases 4, char-at 1, compile_expr 2); a final alignment pass also
+replaced the str:3129 "authored native execution pending", the record-iteration
+not-empty/RecordIter "native execution unproven" and the four record-helper
+vary-meta/fnil/update-in/group-by "Native/bootstrap execution is pending"
+rationale clauses with the verified battery results (portable_string_fields 2
+tests, portable_record_iteration 3 tests, 14 fresh pinned cases,
+portable_record_helpers 3 tests). core_import write+check 361 files, overlay
+460/605 unchanged; manifest and all four bootstrap artifacts were regenerated
+again for the final annotation identity. Docs aligned: record-iteration README records the
+verified bootstrap/native execution; new string-char-at README (evidence logs
+described honestly, CI job log cited at merge d09b45a); record-analyzer-context
+README updated for the reify lowering, the passing compiler-facts and catalog
+regressions and the regenerated bootstrap; char-at test header corrected.
+
+Limitations: 233 namespaces still fail (range/take/constantly/volatile!/letfn/
+when-let/printing blockers), 5684 assertions remain unexecuted and the 20
+oracle skips are the only suite failures; nil-iter remains unimported; exists?,
+the complete deftype helper graph and the record factories are not implemented;
+macro str:877/str_:852 direct-call obligations remain unimplemented; the five
+shared-collection gates and all 397 required operation rows remain required.
+PR231 stays a Refs #18/#19 draft; no milestone completion is claimed.
+
+Next unblocked: import range to execute group-by's 12 assertions; continue
+#18/#19 with the complete deftype helper graph and record factories through
+the executing reify path; then the nil-iter import with deftype capture
+restrictions and transactional publication intact.
+
+PR #231 clean-build follow-up (2026-10-10): after `cargo clean` removed 9.8 GiB
+of artifacts, the prescribed `CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2` completed successfully (exit 0; full output was captured
+outside the checkout). Three async integration fixtures had exhausted their
+2,000,000 aggregate Wasmtime fuel budgets during valid multi-step scenarios:
+`public_file_async_import_uses_macros_and_initializes_dependencies_once`,
+`parent_return_drains_cancelled_child_finally_before_retiring_invocation`, and
+`source_cancel_closes_polled_pending_io_before_component_return`. Their test
+budgets were raised to 20,000,000; focused reruns and the final full workspace
+run passed, with their behavioral assertions unchanged. This is evidence for a
+future audit of fixture fuel budgets, not a reason to replace Wasmtime fuel
+with manual accounting. Independent review found no remaining concrete issue.
+`git diff --check` passed. Final-head CI is still required after push; PR #231
+must remain unmerged.

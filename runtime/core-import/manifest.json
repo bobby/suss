@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "7b384fa9c7562b09535f44985e7b9cffa8b35b19e1154d3cacda6086cddbd531",
-  "reviews-sha256": "b4bbf6d3504aced1164a1786cd16a91365ed32588669be8223d1f6ca10738499",
+  "reviews-sha256": "849144a752451bab22f0a806be0b34e4566be7546b62fa5f40ed6fe9755b73ee",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1719,8 +1719,8 @@
       "extracted": "extracted/0054.cljs",
       "extracted-sha256": "2f8ba40c57214e9a6f8b05afae8a26c643f89e7c22f1db6633d208a114b0e685",
       "patch": "docs/compatibility/patches/sequence-seq.json",
-      "patch-sha256": "580068c12a7b08cc13c450037f99dc15d4a16c6b9de25f824a012470ff90aacc",
-      "adapted-form-sha256": "ed209db86ac523a9be724f52bb1a9b7a5ac11ac30421c777748ceb65c19bc351",
+      "patch-sha256": "52d785491e18e91ed30ddfc8e6fb65d4dd6c3e8e05eb662cd675133209067c30",
+      "adapted-form-sha256": "7bdb69256034cc71dbf29db81e2b5338b1bc105c1541d5723853263afb9ac00c",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1733,12 +1733,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1757,8 +1760,8 @@
       "extracted": "extracted/0055.cljs",
       "extracted-sha256": "26a7c3d91558a4ce5f6bf6b67d2c9e078ae65e5f11343ecae2397059f0daa975",
       "patch": "docs/compatibility/patches/sequence-first.json",
-      "patch-sha256": "40ce689d27453d96ddfc8e0b2a51c1409b718eb71b485a968ce91721d392c637",
-      "adapted-form-sha256": "daf05db3d6989de38b1ced0dc883fddb540135db7428d4fc0d12f3bb4e9aed64",
+      "patch-sha256": "02e93e5fa4968906fade39b178dfecd1910550d30deaa0db901a7e86d90bb93c",
+      "adapted-form-sha256": "4e27483ed83abe4c4fc69c2f9a1c82d6167f5cac99061d3a3302ef2bf42368c8",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1771,12 +1774,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1795,8 +1801,8 @@
       "extracted": "extracted/0056.cljs",
       "extracted-sha256": "e69b12e0ec23a68df7b0a8a6182e039cae2ed78f8cd00ab63c7d43df616c43e6",
       "patch": "docs/compatibility/patches/sequence-rest.json",
-      "patch-sha256": "dca3fd1b0f394526b1f29942da830a9ada8d58cfe3b8f04a0276a688bf8405c6",
-      "adapted-form-sha256": "7bc78c9910256ec72d1696601d507a9411c1a8dc1aba5d3054daab6a97986a2f",
+      "patch-sha256": "c1b182bdb023de1854e2bce6f049a9ccbd831676392a533861e4a326edeab48e",
+      "adapted-form-sha256": "16991dc39d0941902edbcd5698426060aee041f56869d8749c77984346958537",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1809,12 +1815,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -1833,8 +1842,8 @@
       "extracted": "extracted/0057.cljs",
       "extracted-sha256": "d3980c181e57432de735c57e0976fc601fc0035ede78e12d2a90f94bdde81fa4",
       "patch": "docs/compatibility/patches/sequence-next.json",
-      "patch-sha256": "507b18c2c30ef7b537a774c8d4384d1f236b3ea2f808923452acf1c1a570ee45",
-      "adapted-form-sha256": "9de55442408b190049be956037d19a39720209ad8990ca89d0193d70adc215c5",
+      "patch-sha256": "9052f893231d7eb5a5f8686c7e12c4f010dcf5b1feb368a5fc5b237d9f5f1cc7",
+      "adapted-form-sha256": "178ea863c86828a07d08ec657fb36b26714e16891557dd15dd91f038378b248f",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1847,12 +1856,15 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "Canonical source nominal storage and List.EMPTY lookup",
-        "Explicit pending source dependencies in loader prelude; complete methods/core not certified"
+        "Explicit pending source dependencies in loader prelude; complete methods/core not certified",
+        "suss.bootstrap/nil? inline nil-guard replacing the pinned nil? macro expansion"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_sequences.rs",
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
-        "tests/oracle/sequence-cases.json"
+        "tests/oracle/sequence-cases.json",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+        "tests/oracle/record-graph-runtime-cases.json"
       ]
     },
     {
@@ -5204,7 +5216,9 @@
         "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/compiled_macro_maps.rs"
+        "crates/suss-cli/tests/compiled_macro_maps.rs",
+        "crates/suss-cli/tests/portable_string_char_at.rs (2 tests pass after GC; 74 pinned raw UTF16/effect observations match; 0 failed/ignored/filtered)",
+        "tests/oracle/string-char-at-cases.json"
       ]
     },
     {
@@ -8804,14 +8818,14 @@
       "extracted": "extracted/0283.cljs",
       "extracted-sha256": "4abe6482527e9bc9ba8a70c01886b4ec633ce0785917c5680f197763f3efd330",
       "patch": "docs/compatibility/patches/expression-internal-str.json",
-      "patch-sha256": "1f104e89191a9435ae6ce79af97f83b2c01f89cbcf7ed05d18aa10dc08307c76",
-      "adapted-form-sha256": "353ad533684f4834ca821d0fe2f8d42ab8b258b83b34a947b8d9bca6a84622ba",
+      "patch-sha256": "fd341429cd906cc1cff60cef9c2d52511d0a8d0eb2bae8166fabca2f91b8f8bb",
+      "adapted-form-sha256": "87404082740daa7f1d079fd13bd901bfc60fb8c73bfa9718e870bc972d6f2021",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
         "existing coerce-string/string-concat runtime exports",
-        "captured seq/first/next and scalar predicates",
+        "captured seq/first/next, scalar predicates and nil? nil-guard",
         "nominal toString methods"
       ],
       "semantic-tests": [
@@ -10359,8 +10373,8 @@
         "macro:when"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/portable_record_iteration.rs",
-        "tests/oracle/record-iteration-cases.json"
+        "crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"
       ]
     },
     {
@@ -10393,8 +10407,8 @@
         "Object iterator methods"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/portable_record_iteration.rs",
-        "tests/oracle/record-iteration-cases.json"
+        "crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"
       ]
     },
     {
@@ -10425,8 +10439,8 @@
         "runtime:apply"
       ],
       "semantic-tests": [
-        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)",
-        "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10457,8 +10471,8 @@
         "runtime:apply"
       ],
       "semantic-tests": [
-        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)",
-        "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10490,8 +10504,8 @@
         "compiler vector/rest destructuring"
       ],
       "semantic-tests": [
-        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)",
-        "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10527,8 +10541,8 @@
         "runtime:TransientHashMap:8202"
       ],
       "semantic-tests": [
-        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native pending)",
-        "crates/suss-cli/tests/portable_record_helpers.rs (authored UNCOMPILED/UNEXECUTED; bootstrap stale)"
+        "tests/oracle/record-helper-cases.json (33 fresh pinned matches; native matches verified)",
+        "crates/suss-cli/tests/portable_record_helpers.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10563,8 +10577,8 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)",
-        "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)",
         "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
       ]
     },
@@ -10596,8 +10610,8 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)",
-        "crates/suss-compile/tests/compile_expr.rs (reactivated originals/native pending)",
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)",
+        "crates/suss-compile/tests/compile_expr.rs (reactivated originals and re-enabled str cases pass; 291 pass/0 fail/25 unsupported ignores retained)",
         "tests/oracle/compiled-support-reactivation-cases.json (fresh pinned raw values/effects)"
       ]
     },
@@ -10632,7 +10646,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10667,7 +10681,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10707,7 +10721,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10739,7 +10753,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10776,7 +10790,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10812,7 +10826,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10839,7 +10853,7 @@
       "dependencies": [],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -10876,7 +10890,7 @@
       ],
       "semantic-tests": [
         "tests/oracle/record-graph-runtime-cases.json",
-        "crates/suss-cli/tests/portable_record_graph_runtime.rs (authored/uncompiled)"
+        "crates/suss-cli/tests/portable_record_graph_runtime.rs (2 tests pass in both phases after GC; 84 pinned raw values/traces match; 0 failed/ignored/filtered)"
       ]
     },
     {
@@ -11084,8 +11098,8 @@
         "runtime:IndexedSeq:1653"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/portable_string_fields.rs",
-        "tests/oracle/string-field-cases.json"
+        "crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)",
+        "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"
       ]
     }
   ],
@@ -11463,6 +11477,6 @@
     "extracted/0354.cljs": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
     "extracted/0355.cljs": "dd494b6a0a6c8737c99a6409bf4ed490819f0b1dc2a6c7415b3da4bb3adbcaf2",
     "extracted/0356.cljs": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
-    "suss/core.sus": "eb36f12a81ed34aa31fb63fa78d24fd71bd738291ea0e481122f12723a4dfc9a"
+    "suss/core.sus": "3ea758ec66db9dbe6ba2f1b409e0f5b1037cc5b764512e0c1e3628b341a9291c"
   }
 }

@@ -324,7 +324,7 @@ fn parent_return_drains_cancelled_child_finally_before_retiring_invocation() {
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(20_000_000).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     let run = instance
         .get_typed_func::<(u32,), (u32,)>(&mut store, "run")

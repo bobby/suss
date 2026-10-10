@@ -1,5 +1,5 @@
-//! Authoring regressions: uncompiled/unexecuted until the exclusive Cargo lane
-//! is released. These assert typed compiler facts, not full reify support.
+//! Typed compiler-fact regressions; all five execute and pass in the locked
+//! workspace baseline. These assert typed compiler facts, not full reify support.
 use std::{collections::HashMap, sync::Arc};
 use suss_compile::portable::{
     compiler_facts::{elide_reader_metadata, CompilerNamespaceCatalog},

@@ -647,7 +647,7 @@
   empty, returns nil.  (seq nil) returns nil. seq also works on
   Strings."
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (cond
       (implements? ISeqable coll)
       (-seq coll)
@@ -669,18 +669,18 @@
   "Returns the first item in the collection. Calls seq on its
   argument. If coll is nil, returns nil."
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (if (implements? ISeq coll)
       (-first coll)
       (let [s (seq coll)]
-        (when-not (nil? s)
+        (when-not (suss.bootstrap/nil? s)
           (-first s)))))))
 
 (def ^seq rest
   "Returns a possibly empty seq of the items after the first. Calls seq on its
   argument."
   (fn [coll]
-  (if-not (nil? coll)
+  (if-not (suss.bootstrap/nil? coll)
     (if (implements? ISeq coll)
       (-rest coll)
       (let [s (seq coll)]
@@ -693,7 +693,7 @@
   "Returns a seq of the items after the first. Calls seq on its
   argument.  If there are no more items, returns nil"
   (fn [coll]
-  (when-not (nil? coll)
+  (when-not (suss.bootstrap/nil? coll)
     (if (implements? INext coll)
       (-next coll)
       (seq (rest coll))))))
@@ -5018,7 +5018,7 @@
 "Implementation detail. Internal str without circularity on IndexedSeq.
   @param x
   @param {...*} var_args"
-  (let [seq seq first first next next number? number? string? string? identical? identical?]
+  (let [seq seq first first next next number? number? string? string? identical? identical? nil? nil?]
     (fn
       ([] "")
       ([x] (if (nil? x) ""

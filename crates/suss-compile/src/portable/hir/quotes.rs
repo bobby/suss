@@ -282,6 +282,11 @@ impl Analyzer<'_> {
 pub fn reader_metadata_pairs(form: &Form) -> Result<Vec<Form>, Diagnostic> {
     merged_metadata_pairs(form, true)
 }
+/// Analyzed metadata pairs, eliding reader-position keys the way the pinned
+/// analyzer's elide-reader-meta path does before using form metadata as data.
+pub fn analyzed_metadata_pairs(form: &Form) -> Result<Vec<Form>, Diagnostic> {
+    merged_metadata_pairs(form, false)
+}
 fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Diagnostic> {
     let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
     let mut comparisons = 1_048_576;

@@ -1110,3 +1110,18 @@ complete pinned public forms, preserving live dispatch, once-only traversal and
 macro nil-guard behavior. Bootstrap byte reproducibility and identity checks
 pass with Java/Node absent. Full baseline and final-head CI remain required. Queue imports remain in-progress evidence; this does not
 complete #18 or M4.
+
+## PR231 upstream suite classification checkpoint
+
+The [reviewed full-suite baseline delta](upstream-suite-baseline/README.md)
+records the executed comparator projection at PR231's integrated head: 150
+host-decided passes across 15 loading namespaces, 233 failed namespaces,
+5,684 unexecuted assertions and the 20 unchanged oracle skip mismatches as
+the only failures. `fnil` and `get` leave the failure map, the suite's two
+string-get assertions pass with the genuine `String.charAt` member, and the
+`group-by`/`with-out-str` missing dependencies advance to `range` and to
+`with-out-str` itself. No raw native operand fabrication, no
+unsupported-to-pass conversion and no milestone completion is claimed. The
+original five shared-collection gates, all 397 required operation rows,
+complete sorted/record integration and full source/printer/Error/ES6
+dependencies remain required.

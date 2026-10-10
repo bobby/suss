@@ -1,0 +1,2002 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "char-at-ascii-negative",
+      "source": "[(try [false (.charAt \"ab\" -1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-zero",
+      "source": "[(try [false (.charAt \"ab\" 0)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-fraction",
+      "source": "[(try [false (.charAt \"ab\" 1.5)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-one",
+      "source": "[(try [false (.charAt \"ab\" 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-two",
+      "source": "[(try [false (.charAt \"ab\" 2)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-three",
+      "source": "[(try [false (.charAt \"ab\" 3)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-past",
+      "source": "[(try [false (.charAt \"ab\" 4)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-huge",
+      "source": "[(try [false (.charAt \"ab\" 4294967297)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-nan",
+      "source": "[(try [false (.charAt \"ab\" ##NaN)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-infinity",
+      "source": "[(try [false (.charAt \"ab\" ##Inf)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-nil",
+      "source": "[(try [false (.charAt \"ab\" nil)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-false",
+      "source": "[(try [false (.charAt \"ab\" false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ascii-string",
+      "source": "[(try [false (.charAt \"ab\" \"1.2\")] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-negative",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" -1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-zero",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 0)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  65
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-fraction",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 1.5)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55357
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-one",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55357
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-two",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 2)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  56832
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-three",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 3)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  90
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-past",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 4)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-huge",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" 4294967297)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-nan",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" ##NaN)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  65
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-infinity",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" ##Inf)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-nil",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" nil)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  65
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-false",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  65
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-utf16-string",
+      "source": "[(try [false (.charAt \"A\\uD83D\\uDE00Z\" \"1.2\")] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55357
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-negative",
+      "source": "[(try [false (.charAt \"\" -1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-zero",
+      "source": "[(try [false (.charAt \"\" 0)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-fraction",
+      "source": "[(try [false (.charAt \"\" 1.5)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-one",
+      "source": "[(try [false (.charAt \"\" 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-two",
+      "source": "[(try [false (.charAt \"\" 2)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-three",
+      "source": "[(try [false (.charAt \"\" 3)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-past",
+      "source": "[(try [false (.charAt \"\" 4)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-huge",
+      "source": "[(try [false (.charAt \"\" 4294967297)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-nan",
+      "source": "[(try [false (.charAt \"\" ##NaN)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-infinity",
+      "source": "[(try [false (.charAt \"\" ##Inf)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-nil",
+      "source": "[(try [false (.charAt \"\" nil)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-false",
+      "source": "[(try [false (.charAt \"\" false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-empty-string",
+      "source": "[(try [false (.charAt \"\" \"1.2\")] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": []
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-negative",
+      "source": "[(try [false (get \"ab\" -1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-negative-half",
+      "source": "[(try [false (get \"ab\" -0.5)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-zero",
+      "source": "[(try [false (get \"ab\" 0)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-one",
+      "source": "[(try [false (get \"ab\" 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-past",
+      "source": "[(try [false (get \"ab\" 2)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-nil",
+      "source": "[(try [false (get \"ab\" nil)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-false",
+      "source": "[(try [false (get \"ab\" false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-string",
+      "source": "[(try [false (get \"ab\" \"1\")] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-huge",
+      "source": "[(try [false (get \"ab\" 4294967297)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-negative",
+      "source": "[(try [false (get \"ab\" -1 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-negative-half",
+      "source": "[(try [false (get \"ab\" -0.5 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-zero",
+      "source": "[(try [false (get \"ab\" 0 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-one",
+      "source": "[(try [false (get \"ab\" 1 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-past",
+      "source": "[(try [false (get \"ab\" 2 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-nil",
+      "source": "[(try [false (get \"ab\" nil false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-false",
+      "source": "[(try [false (get \"ab\" false false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-string",
+      "source": "[(try [false (get \"ab\" \"1\" false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-huge",
+      "source": "[(try [false (get \"ab\" 4294967297 false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": false
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-suite-13",
+      "source": "[(try [false (get \"ab\" 0)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-suite-28",
+      "source": "[(try [false (get \"ab\" 0 :not-found)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-object-index",
+      "source": "[(try [false (.charAt \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 1.5) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-throw-index",
+      "source": "[(try [false (.charAt \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) (throw 705)) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": true
+              },
+              {
+                "tag": "f64",
+                "bits": "4086080000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-object-index",
+      "source": "[(try [false (get \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 1.5) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "405bc00000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-two-throw-index",
+      "source": "[(try [false (get \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) (throw 705)) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": true
+              },
+              {
+                "tag": "f64",
+                "bits": "4086080000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-object-index",
+      "source": "[(try [false (get \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 1.5) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")) false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "405bc00000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-throw-index",
+      "source": "[(try [false (get \"ab\" (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) (throw 705)) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")) false)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": true
+              },
+              {
+                "tag": "f64",
+                "bits": "4086080000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-default-index",
+      "source": "[(try [false (.charAt \"ab\")] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-extra-argument",
+      "source": "[(try [false (.charAt \"ab\" 1 (do (set! char-effects (+ (* char-effects 10) 7)) 9))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "401c000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-ordered-receiver-index",
+      "source": "[(try [false (.charAt (do (set! char-effects (+ (* char-effects 10) 1)) \"ab\") (do (set! char-effects (+ (* char-effects 10) 2)) 1))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4028000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-three-default-eager",
+      "source": "[(try [false (get \"ab\" 0 (do (set! char-effects (+ (* char-effects 10) 3)) false))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-borrow-number",
+      "source": "[(try [false (.call (.-charAt \"ab\") 17 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-borrow-false",
+      "source": "[(try [false (.call (.-charAt \"ab\") false 1)] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-borrow-object-ordered",
+      "source": "[(try [false (.call (.-charAt \"ab\") (js-obj \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"ab\") \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 17)) (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 1.5) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4035000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-borrow-receiver-throw",
+      "source": "[(try [false (.call (.-charAt \"ab\") (js-obj \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) (throw 706))) (js-obj \"valueOf\" (fn [] (set! char-effects (+ (* char-effects 10) 1)) 1.5) \"toString\" (fn [] (set! char-effects (+ (* char-effects 10) 2)) \"0\")))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": true
+              },
+              {
+                "tag": "f64",
+                "bits": "4086100000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "char-at-method-identity",
+      "source": "[(try [false (identical? (.-charAt \"a\") (.-charAt \"b\"))] (catch :default e [true e])) char-effects]",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "bool",
+                "value": false
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

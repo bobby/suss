@@ -15,7 +15,8 @@ retention only. These forms have not been imported or executed by this change.
 (including unused locals), protocol signatures and reader-metadata elision.
 `portable/compiler_names.rs` adapts the complete scalar UTF-16 name-munging path
 and source tables. The macro analysis graph uses the same live resolution catalog.
-The authored Rust regressions have not been compiled or executed.
+Their five Rust regressions (`record_compiler_facts.rs`) execute and pass in the
+locked workspace baseline.
 
 Cross-namespace catalogs preserve actual phase-specific scopes and declaration
 revisions without switching namespaces. A declared namespace without a source
@@ -35,7 +36,8 @@ initializer failure remain published; a successful reload can replace them.
 Four authored consuming source-macro regressions check independently decoded
 namespace names/docs/overloads and retained results after GC, opt-in/malformed
 policy, failed-script staging rollback, and partial namespace publication followed
-by successful reload recovery. They are UNCOMPILED/UNEXECUTED. These
+by successful reload recovery. All four compile and pass in the locked workspace
+baseline. These
 transport keys are a Suss compiler interface, not an assertion of upstream
 analyzer-state schema equality. Canonical namespaces remain `suss.core`; no
 fabricated `cljs.core` revision or extern/module/warning state is inserted.
@@ -47,11 +49,16 @@ their source-faithful adapter. Map-valued compiler munging requires genuine
 shadow/function-scope/lexical-rename facts. Executing the complete helper graph
 also requires compiler-state updates, anonymous captured class publication,
 protocol-mask and annotation integration, and source macro staging. `exists?`,
-`reify`, the complete `deftype` helper graph and the record factories are not
-implemented by retaining their dependencies. `nil-iter` remains unimported until
-its genuine reify path can execute. Ordinary deftype capture restrictions and
-transactional publication must remain intact when that path is implemented.
+the complete `deftype` helper graph and the record factories are not
+implemented by retaining their dependencies. `reify` is no longer merely
+retained: it lowers at each site to one anonymous class published behind an
+internal cell, capturing all visible locals plus enclosing deftype fields
+(locals shadow same-named fields) and prepending `IWithMeta`/`IMeta` with a
+metadata-reconstructing `-with-meta`. `nil-iter` itself remains unimported even
+though its genuine reify path now executes; ordinary deftype capture
+restrictions and transactional publication remain intact for that import.
 
 The 336 existing recipe selections and the seven reify/fourteen iterator cases
-are unchanged. No bootstrap, shared runtime ABI or native acceptance result is
-updated here; full record/reify and original issue acceptance remain pending.
+are unchanged. At the integrated head the bootstrap is regenerated for this
+source identity and the reify/iterator native results are recorded in their
+own evidence; full record/reify and original issue acceptance remain pending.

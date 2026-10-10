@@ -40,6 +40,7 @@ mod identity_hash;
 mod object_methods;
 mod predicates;
 mod string_methods;
+mod string_char_at;
 
 pub const VERSION: u32 = 2;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
@@ -1002,6 +1003,7 @@ fn build_module() -> Vec<u8> {
     array_own_properties::append_globals(&mut globals);
     coercions::append_globals(&mut globals, coercion_types, coercion_functions);
     array_join::append_globals(&mut globals);
+    string_char_at::append_globals(&mut globals);
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

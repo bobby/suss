@@ -303,6 +303,7 @@ impl Analyzer<'_> {
             }
             NominalForm::Deftype => self.type_definition(form, args),
             NominalForm::Defprotocol => self.protocol_definition(form, args),
+            NominalForm::Reify => self.reify_definition(form, args),
             NominalForm::ExtendType => {
                 let Some(class) = args.first() else {
                     return Err(fail(form.span.clone(), "extend-type requires a type"));
@@ -589,6 +590,201 @@ impl Analyzer<'_> {
                 body: Box::new(body),
             },
         })
+    }
+    /// Pinned reify (core.cljc1355–1418) lowers to a per-site anonymous type:
+    /// every visible lexical binding and the site's own field-visible names
+    /// become instance fields with a trailing meta field, exactly the macro's
+    /// `~@locals ~meta-sym` field vector. The class publishes once behind the
+    /// exists?/defonce guard; each evaluation constructs a fresh instance from
+    /// the current binding values, so one site yields one class identity while
+    /// distinct sites yield distinct types.
+    fn reify_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+        // The macro's (keys (:locals &env)) covers every visible local plus the
+        // fields of an enclosing type method; locals shadow same-named fields.
+        let mut fields: Vec<(String, Hir)> = self
+            .fields
+            .iter()
+            .map(|(name, field)| {
+                (name.clone(), field.access.clone())
+            })
+            .collect::<Vec<_>>();
+        fields.sort_by_key(|(_, access)| match &access.kind {
+            Expression::Nominal {
+                operation: Nominal::Field(index),
+                ..
+            } => *index,
+            _ => usize::MAX,
+        });
+        let mut captures: Vec<(String, Hir)> = Vec::new();
+        let mut locals: Vec<(String, BindingId)> = self
+            .locals
+            .iter()
+            .map(|(name, binding)| (name.clone(), binding.id))
+            .collect();
+        locals.sort_by_key(|(_, id)| id.0);
+        for (name, id) in locals {
+            if fields.iter().any(|(captured, _)| captured == &name) {
+                fields.retain(|(captured, _)| captured != &name);
+            }
+            captures.push((name, self.local(form, id)));
+        }
+        let mut captured: Vec<(String, Hir)> = fields;
+        captured.append(&mut captures);
+        // Synthetic names cannot shadow a captured field, or the synthesized
+        // meta methods would read their own parameters instead of storage.
+        let mut synthetic = |stem: &str| -> String {
+            let mut name = stem.to_string();
+            while captured.iter().any(|(field, _)| field == &name) {
+                name.push('$');
+            }
+            name
+        };
+        let meta_name = synthetic("__reify_meta");
+        let this_name = synthetic("__reify_this");
+        let new_meta_name = synthetic("__reify_new_meta");
+        let symbol = |name: &str, namespace: Option<&str>| Form {
+            kind: Kind::Symbol(suss_reader::Symbol {
+                namespace: namespace.map(str::to_owned),
+                name: name.to_owned(),
+            }),
+            span: form.span.clone(),
+            metadata: Vec::new(),
+        };
+        let list = |items: Vec<Form>| Form {
+            kind: Kind::List(items),
+            span: form.span.clone(),
+            metadata: Vec::new(),
+        };
+        let vector = |items: Vec<Form>| Form {
+            kind: Kind::Vector(items),
+            span: form.span.clone(),
+            metadata: Vec::new(),
+        };
+        // Field vector: every captured binding plus the meta field, matching
+        // the pinned deftype field declarations for this anonymous site type.
+        let mut field_forms: Vec<Form> = captured
+            .iter()
+            .map(|(name, _)| symbol(name, None))
+            .collect();
+        field_forms.push(symbol(&meta_name, None));
+        let mut schema = Vec::new();
+        for field in &field_forms {
+            Self::field_mutable(field)?;
+            let Kind::Symbol(field_symbol) = &field.kind else {
+                unreachable!()
+            };
+            schema.push(self.literal_form(
+                field,
+                Literal::String(crate::portable::compiler_names::munge_name(
+                    &field_symbol.name.encode_utf16().collect::<Vec<_>>(),
+                )),
+            ));
+        }
+        // The macro prepends IWithMeta/IMeta methods before user implementations;
+        // -with-meta reconstructs through the receiver's own constructor so the
+        // anonymous class identity is preserved, reading this instance's fields.
+        let mut reconstruction = vec![
+            symbol("new", None),
+            list(vec![
+                symbol("value-constructor", Some("suss.bootstrap")),
+                symbol(&this_name, None),
+            ]),
+        ];
+        for (name, _) in &captured {
+            reconstruction.push(symbol(name, None));
+        }
+        reconstruction.push(symbol(&new_meta_name, None));
+        let mut impls = vec![
+            symbol("IWithMeta", Some("suss.core")),
+            list(vec![
+                symbol("-with-meta", None),
+                vector(vec![
+                    symbol(&this_name, None),
+                    symbol(&new_meta_name, None),
+                ]),
+                list(reconstruction),
+            ]),
+            symbol("IMeta", Some("suss.core")),
+            list(vec![
+                symbol("-meta", None),
+                vector(vec![symbol(&this_name, None)]),
+                symbol(&meta_name, None),
+            ]),
+        ];
+        impls.extend_from_slice(args);
+        // Analysis identity for this site: the analyzer binding counter at the
+        // form plus the current source generation. Both are deterministic for
+        // one compilation, and a fresh registration advances the generation so
+        // re-analyzing the same source publishes a distinct class.
+        let site = self.next;
+        let generation = self.environment.source_generation();
+        let cell = self
+            .environment
+            .reify_class_key(self.phase, generation, site);
+        let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
+        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let class = self.nominal(form, Nominal::Class, vec![descriptor]);
+        let binding = self.fresh_binding(form, class);
+        let class_value = self.local(form, binding.id);
+        // Pinned deftype* methods replace enclosing locals; captured bindings
+        // are fields here, so method bodies must resolve them as field reads.
+        let outer_locals = std::mem::take(&mut self.locals);
+        let outer_fields = std::mem::take(&mut self.fields);
+        let extensions =
+            self.protocol_extensions(form, &impls, class_value.clone(), &field_forms, true, &type_declaration);
+        self.locals = outer_locals;
+        self.fields = outer_fields;
+        let mut effects = extensions?;
+        // Publish once per analysis, then read the cell so every evaluation of
+        // this site constructs from the same anonymous class value.
+        effects.push(class_value);
+        let initialization = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![binding],
+                body: Box::new(self.do_hir(form, effects)),
+            },
+        };
+        let publication = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global: cell.clone(),
+                name_metadata: Vec::new(),
+                name_span: form.span.clone(),
+                docstring: None,
+                initializer: Some(Box::new(initialization)),
+                once: true,
+            },
+        };
+        // The macro transfers this form's own reader metadata to the created
+        // object, emitting nil when the elided metadata is empty.
+        let meta = match super::quotes::analyzed_metadata_pairs(form)? {
+            entries if entries.is_empty() => self.literal_form(form, Literal::Nil),
+            entries => self.form(&Form {
+                kind: Kind::Map(entries),
+                span: form.span.clone(),
+                metadata: Vec::new(),
+            })?,
+        };
+        let mut arguments = vec![Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Global(cell),
+        }];
+        for (_, read) in &captured {
+            arguments.push(read.clone());
+        }
+        arguments.push(meta);
+        let construction = self.nominal(form, Nominal::Construct, arguments);
+        Ok(self.do_hir(form, vec![publication, construction]))
     }
     fn protocol_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
         let Some(name) = args.first() else {
@@ -1262,7 +1458,7 @@ mod object_callback_tests {
         for phase in [Phase::Runtime, Phase::Macro] {
             let mut environment = Environment::default();
             environment.enter_namespace(phase, "cljs.core").unwrap();
-            let source = "(declare IndexedSeq) (deftype* Buffer [some-field] Object (append [this & values] values))";
+            let source = "(declare IndexedSeq) (deftype Buffer [some-field] Object (append [this & values] values))";
             let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
             let (hir, _) = prepare(&forms, 0..source.len(), &environment, phase).unwrap();
             fn callback(hir: &Hir) -> Option<&Hir> {

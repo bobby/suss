@@ -103,12 +103,11 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         "(.-cache)",
         "(.-cache named-owner 1)",
         "(.-cache nil)",
-        "(.-bad-name named-owner)",
         "(.-1cache named-owner)",
         "(set! (.-1cache named-owner) 3)",
         "(set! (.-cache) 3)",
         "(set! (.-cache nil) 3)",
-        "(do (def property-should-not-publish 17) (.-bad-name named-owner))",
+        "(do (def property-should-not-publish 17) (.-1cache named-owner))",
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Compile(_))),
@@ -120,6 +119,22 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         session.eval("property-should-not-publish"),
         Err(SessionError::Compile(_))
     ));
+    // Canonical munging makes hyphenated spellings legitimate host names;
+    // an absent closure property reads as canonical undefined, not an error.
+    let absent = session
+        .eval("(.-bad-name named-owner)")
+        .unwrap();
+    session.collect().unwrap();
+    session
+        .inspect(&absent, |store, value| {
+            assert_eq!(
+                value.unwrap_anyref().unwrap().as_i31(&store)?.expect("undefined ABI").get_u32(),
+                6,
+                "absent hyphenated property must be canonical undefined after GC"
+            );
+            Ok(())
+        })
+        .unwrap();
     for source in ["(set! (.-newField (new NamedUnsupported)) 1)"] {
         // An unresolved constructor is a compile error, not a nil/property fallback.
         assert!(matches!(

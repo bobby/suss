@@ -8395,25 +8395,3 @@ fn runtime_abi_munged_field_aliases_copy_last_constructor_value_and_use_last_nam
         assert!(matches!(result[0], Val::I32(actual) if actual == expected));
     }
 }
-/private/tmp/suss-m4-pr231-string-field-repair/crates/suss-compile/tests/support/mod.rs:
-
-//! Test infrastructure shared by semantic suites (not production runtime code).
-#![allow(dead_code)]
-use std::sync::OnceLock;
-use wasmtime::{Config, Engine};
-
-pub fn engine() -> Engine {
-    static ENGINE: OnceLock<Engine> = OnceLock::new();
-    ENGINE
-        .get_or_init(|| {
-            let mut config = Config::new();
-            config
-                .wasm_gc(true)
-                .wasm_function_references(true)
-                .wasm_tail_call(true)
-                .wasm_exceptions(true)
-                .cranelift_opt_level(wasmtime::OptLevel::None);
-            Engine::new(&config).expect("test engine")
-        })
-        .clone()
-}

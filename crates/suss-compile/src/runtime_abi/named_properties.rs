@@ -134,6 +134,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
 
     let mut callbacks = object_methods::functions(b, equal);
     callbacks.extend(string_methods::functions(b));
+    callbacks.extend(string_char_at::functions(b));
     callbacks.extend(array_methods::functions(b));
     callbacks.extend(array_push::functions(b));
     callbacks.extend(array_pop::functions(b));
@@ -667,6 +668,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(equal),
                 If(BlockType::Empty),
                 Call(b.names["string-char-code-at-method"]),
+                Return,
+                End,
+            ]);
+            body.push(LocalGet(1));
+            name(&mut body, "charAt");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["string-char-at-method"]),
                 Return,
                 End,
             ]);

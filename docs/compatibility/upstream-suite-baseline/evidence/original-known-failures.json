@@ -274,9 +274,17 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.fnext (Some(\"<root>/clojure/core_test/fnext.cljc\")): Splicing reader conditionals are not implemented at bytes 940..943"
   },
+  "clojure.core-test.fnil": {
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.fnil (Some(\"<root>/clojure/core_test/fnil.cljc\")): Unresolved Runtime name fnil at bytes 222..1452"
+  },
   "clojure.core-test.format": {
    "stage": "read",
    "diagnostic": "clojure.core-test.format (Some(\"<root>/clojure/core_test/format.cljc\")): Splicing reader conditionals are not implemented at bytes 887..890"
+  },
+  "clojure.core-test.get": {
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.get (Some(\"<root>/clojure/core_test/get.cljc\")): Unresolved Runtime name to-array at bytes 222..1377"
   },
   "clojure.core-test.get-in": {
    "stage": "namespace",
@@ -284,7 +292,7 @@
   },
   "clojure.core-test.group-by": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.group-by (Some(\"<root>/clojure/core_test/group_by.cljc\")): Unresolved Runtime name range at bytes 244..1876"
+   "diagnostic": "clojure.core-test.group-by (Some(\"<root>/clojure/core_test/group_by.cljc\")): Unresolved Runtime name group-by at bytes 244..1876"
   },
   "clojure.core-test.gt": {
    "stage": "read",
@@ -876,7 +884,7 @@
   },
   "clojure.core-test.with-out-str": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478"
+   "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name str at bytes 588..1478"
   },
   "clojure.core-test.with-precision": {
    "stage": "read",

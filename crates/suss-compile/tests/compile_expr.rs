@@ -2228,33 +2228,28 @@ fn test_when_first() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_multi_arg_literals() {
     // All-literal strings - compile-time optimization
     assert_eq!(run_expr_string(r#"(str "hello" " " "world")"#), "hello world");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_mixed_types() {
     // Mixed types - runtime via core.sus str function
     assert_eq!(run_expr_string(r#"(str "x=" 42)"#), "x=42");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_single_int() {
     assert_eq!(run_expr_string("(str 123)"), "123");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_with_nil() {
     assert_eq!(run_expr_string(r#"(str "a" nil "b")"#), "ab");
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name str; see prototype_cases_awaiting_compiled_support"]
 fn test_str_empty() {
     assert_eq!(run_expr_string("(str)"), "");
 }
@@ -2596,11 +2591,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_println_number", "(println 42)", "Unresolved Runtime name println at bytes 1..8"),
     ("test_prn_basic", "(prn 42)", "Unresolved Runtime name prn at bytes 1..4"),
     ("test_some_thread_first", "(some-> 1 inc inc)", "Unresolved Runtime name some-> at bytes 1..7"),
-    ("test_str_empty", "(str)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_mixed_types", "(str \"x=\" 42)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_multi_arg_literals", "(str \"hello\" \" \" \"world\")", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_single_int", "(str 123)", "Unresolved Runtime name str at bytes 1..4"),
-    ("test_str_with_nil", "(str \"a\" nil \"b\")", "Unresolved Runtime name str at bytes 1..4"),
     ("test_variadic_closure_with_capture_multiple_args", "((constantly 99) 1 2 3)", "Unresolved Runtime name constantly at bytes 2..12"),
     ("test_variadic_closure_with_capture_zero_args", "((constantly 42))", "Unresolved Runtime name constantly at bytes 2..12"),
     ("test_vector_destructuring_let", "(let [[a b] [10 20]] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..11"),

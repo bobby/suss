@@ -133,12 +133,21 @@ Python unit tests cover the remaining failure paths.
 
 ## Current suite result
 
-At this printing-profile commit 13 suite namespaces load and run (`bit-clear`, `bit-flip`,
-`bit-not`, `bit-shift-left`, `bit-shift-right`, `bit-test`, `disj!`, `dissoc!`,
-`hash-set`, `identical?`, `name`, `namespace`, `pr-str`). Their **101 assertions all pass**
-host-side against the oracle. The other 235 namespaces fail before their tests
-run, so 5,733 assertions are not executed; the 20 failures are the oracle's 20
-skips, which Suss does not make. Namespace failures by stage:
+PR231 at the integrated working head loads 15 suite namespaces: the original
+13 (`bit-clear`, `bit-flip`, `bit-not`, `bit-shift-left`, `bit-shift-right`,
+`bit-test`, `disj!`, `dissoc!`, `hash-set`, `identical?`, `name`, `namespace`,
+`pr-str`) plus `fnil` and `get`. Their **150 assertions all pass** host-side
+against the oracle, including the suite's two string-get assertions
+(`test-get#13`, `#28`), which pass now that the genuine `String.charAt`
+member implements the retained `get`'s string branch. The other **233
+namespaces fail before their tests run, leaving 5,684 assertions not
+executed**; the 20 failures are the oracle's 20 skips, which Suss does not
+make. `group-by` remains blocked, with the missing dependency now `range`
+rather than `group-by` itself, and `with-out-str` remains blocked on
+`with-out-str` itself now that `str` resolves. There are no guest-judged
+results and zero matching skips. The exact reviewed failure map is updated by
+the [logged comparator projection](upstream-suite-baseline/README.md); this
+does not make the failing namespaces pass. Namespace failures by stage:
 
 | Namespaces | Stage | Blocker |
 | --- | --- | --- |
@@ -146,7 +155,7 @@ skips, which Suss does not make. Namespace failures by stage:
 | 58 | read | ratio or precision-suffix literals (`1/2`, `1N`, `1.0M`), including in unselected branches |
 | 28 | read | reader dispatch: `#(...)` and `#"..."` |
 | 9 | read | auto-resolved keywords (`::k`) |
-| 50 | namespace | missing `cljs.core` vars or macros (`range`, `str`, `take`, `constantly`, `volatile!`, `letfn`, `when-let`, printing, ...) and `clojure.string`/`clojure.core` namespaces |
+| 48 | namespace | missing `cljs.core` vars or macros (`range`, `take`, `constantly`, `volatile!`, `letfn`, `when-let`, `with-out-str`, printing, ...) and `clojure.string`/`clojure.core` namespaces |
 | 4 | macro | compiled macro data limits and invalid macro data |
 
 When the corpus was first adopted, the harness measured compiled-macro costs
