@@ -1,12 +1,14 @@
 # Architecture decision proposals
 
 Proposals do not change the [accepted design](../design/suss-0.3.1.md) or certify
-implementation. Acceptance requires a dated design decision and aligned roadmap,
-compatibility contracts, and executing evidence.
+implementation. Accepted ADRs record scoped decisions and their evidence;
+changes to the language contract require a dated design decision and aligned
+roadmap, compatibility contracts, and executing evidence.
 
 | ID | Proposal | Status |
 | --- | --- | --- |
 | ADR-0001 | [Nominal results and options, explicit absence, and panic](0001-result-option-and-panic.md) | Proposed |
+| ADR-0002 | [Defer MLIR compiler adoption after the bounded evaluation](0002-defer-mlir-adoption.md) | Accepted — defer adoption |
 
 ## ADR-0001 work tracking
 

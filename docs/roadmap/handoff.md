@@ -23870,5 +23870,19 @@ run was cancelled after diagnosis; push this correction and require a new
 final-head CI run before considering PR readiness.
 
 Correction is pushed as c8c7dd5. GitHub Actions run 38044038651 passed on that
-head: foundation and integration partitions 0 through 7 all succeeded. The
-handoff-only result update that follows requires its own final-head CI pass.
+head: foundation and integration partitions 0 through 7 all succeeded. Final-head
+CI on `d25c31944d8caeadee10dbc10c549955d3949abf` completed successfully in run
+38046932360: foundation, all eight integration partitions and the test job
+passed. PR #231 was promoted for review and merged as `5431f8a`.
+
+MLIR evaluation closeout (2026-10-10): ADR-0002 records the decision to defer
+compiler adoption, backed by merged PR #229's post-#228 audit and its bounded
+execution evidence. The nine execution gates, full baseline (1,550 passed, zero
+failed, 41 existing ignores) and ten final-head CI checks are recorded there.
+Issue #188 is complete; this does not close M4 collection issues #16–#19 or
+authorize compiler adoption. No runtime tests are affected by this documentation
+decision. Next unblocked M4 work remains the tracked collection work on #16–#19:
+complete provenance-backed core loading (#16), persistent sequences/vectors
+(#17), associative and sorted collections (#18), and metadata/transient/reduction
+contracts (#19). The current concrete prerequisite is in the preceding #231
+handoff entry.
