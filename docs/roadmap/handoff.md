@@ -24206,3 +24206,11 @@ only the portable sequence/collection gaps as M4 follow-up; host interop remains
 out of the M4 source-compatibility promise. This range implementation is
 uncommitted and needs a fresh independent review and final-head CI. M4 #16–#19
 remain open pending full criterion audit and required remote gates.
+
+M4 range PR state (2026-10-11): range/repeat implementation is committed and
+pushed as `b5c8f6701dad94f34df13d67732c4d28484c992c` on draft PR #234. Harvey
+independently reviewed that code head and reported no actionable findings.
+GitHub showed foundation and integration CI jobs running on that SHA; completion
+is still pending. The PR body was refreshed to describe the new range coverage
+and the exact corpus mismatch. Next: verify CI on the eventual latest head, then
+continue the #16–#19 acceptance audit; PR and milestone remain open/draft.
