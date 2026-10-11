@@ -24164,3 +24164,14 @@ API changes), and no baseline was refreshed. Next: obtain final-head CI/review
 status and complete a criterion-by-criterion evidence audit for #16–#19; keep
 #234 draft and M4 open until every original acceptance criterion and required
 review/CI gate has authoritative passing evidence.
+
+M4 provenance edge-case follow-up (2026-10-11): in addition to the core-import
+acceptance script, `python3 -m unittest discover -s scripts -p
+'test_core_import.py'` passed 15 tests, `... -p 'test_cljs_reviews.py'` passed
+10 tests, and `... -p 'test_sequence_provenance.py'` passed 8 tests. These
+exercise stale source/patch hashes, stale review rejection, notice/license
+retention, and sequence adaptation provenance. Independent reviewer Harvey
+re-reviewed PR #234 at `73cd10b` and reported no findings. This review does not
+cover a later code change; only this handoff update follows it. Fresh CI for the
+new final head is still required; the branch remains draft pending that result
+and the full M4 closeout audit.
