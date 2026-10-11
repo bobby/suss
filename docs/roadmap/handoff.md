@@ -24175,3 +24175,34 @@ re-reviewed PR #234 at `73cd10b` and reported no findings. This review does not
 cover a later code change; only this handoff update follows it. Fresh CI for the
 new final head is still required; the branch remains draft pending that result
 and the full M4 closeout audit.
+
+M4 range sequence implementation (2026-10-11): corpus evidence showed that
+`range` is an M4 sequence dependency, so added the complete pinned `Repeat`,
+`IntegerRangeChunk`, `RangeIterator`, `range-count`, `IntegerRange`, `Range`,
+`repeat`, and `range` forms at upstream commit
+`c4295f303100bbf5afac449242d30bca1126f1a1`. Eight declarations now have
+individual source hashes/reviews and generated extractions; explicit patches
+adapt defn expansion, typed errors, portable `f64-ceil`, the bounded chunk
+minimum, and `Number.MAX_VALUE` to its exact binary64 literal. The imported
+forms retain EPL notices/license packaging. `portable_ranges` executes both
+runtime and macro phases and covers all four `range` arities, integer/floating
+and ascending/descending/empty/zero-step behavior, finite/infinite repeat,
+metadata, iteration, reduction stop effects, default endpoint, and the pinned
+CLJS-2113/3270/3271 cases. It passes 1/1. `python3 scripts/core_import.py
+--check` verifies 423 files; review validation reports 522 reviewed / 543
+unassessed. Two independently built bootstrap outputs matched, regenerated
+phase artifacts passed `verify_bootstrap_identity.py`, and `compiled_bootstrap`
+passed 4/4.
+
+The required full workspace command was rerun after this source change with the
+isolated target. All suites before `clojure_test_suite` passed, including all
+M4 HAMT collision/deletion, sorted-map/set, vector, lazy/chunked, queue, record,
+hash, transient, reduction and new range tests. The reviewed corpus comparison
+still fails (fail=22, 246 pass, 0 skipped); range is now resolved and the new
+mismatches reveal downstream missing `drop`/`take-nth`, a host-specific
+`int-array` path, and two undecodable outputs (`js/undefined` and the sorted-map
+second result). Do not refresh the baseline or claim the workspace green. Treat
+only the portable sequence/collection gaps as M4 follow-up; host interop remains
+out of the M4 source-compatibility promise. This range implementation is
+uncommitted and needs a fresh independent review and final-head CI. M4 #16–#19
+remain open pending full criterion audit and required remote gates.

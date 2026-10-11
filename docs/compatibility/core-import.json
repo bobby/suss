@@ -2058,6 +2058,46 @@
       "id": "runtime:type->str:362",
       "source-sha256": "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9",
       "patch": "docs/compatibility/patches/type-to-str.json"
+    },
+    {
+      "id": "runtime:Repeat:5118",
+      "source-sha256": "95cd7293814ed735d7793ba020128f60913f8d5d661ddc6b64cc8f5d7c83f921",
+      "patch": null
+    },
+    {
+      "id": "runtime:repeat:5223",
+      "source-sha256": "91b90fdf4dedb0db9265b5914c7aa042872da1d9d7df9ff2ed5241633ce9d637",
+      "patch": "docs/compatibility/patches/range-repeat.json"
+    },
+    {
+      "id": "runtime:IntegerRangeChunk:9858",
+      "source-sha256": "97fb1fd2001cc2c5aaa426aa5bfe7896ecef91e3ccb031768882fac2fc2a0b3f",
+      "patch": "docs/compatibility/patches/range-IntegerRangeChunk.json"
+    },
+    {
+      "id": "runtime:RangeIterator:9879",
+      "source-sha256": "1340d3a765676685f48bc3267627b9a24f2ed59ec83fb58fb34777ef5a182f4a",
+      "patch": null
+    },
+    {
+      "id": "runtime:range-count:9890",
+      "source-sha256": "dd4edda4c271cc1df6ac275122b3e890f798b7c482a98cecdab86a69390fcd4f",
+      "patch": "docs/compatibility/patches/range-count.json"
+    },
+    {
+      "id": "runtime:IntegerRange:9895",
+      "source-sha256": "2b5f2b78778f238c980020857d8c3f5ed85d46572c2e0e1592dd44872dd80276",
+      "patch": "docs/compatibility/patches/range-IntegerRange.json"
+    },
+    {
+      "id": "runtime:Range:10024",
+      "source-sha256": "d300586e1128e421670d8dd795b92125ea4529ab99d9296734c7be5504cb9fdb",
+      "patch": null
+    },
+    {
+      "id": "runtime:range:10131",
+      "source-sha256": "33ca3abb88722f0bb131fd1c312ddad62cbd0761db16fb5652528da6c7840d50",
+      "patch": "docs/compatibility/patches/range.json"
     }
   ],
   "loader": {

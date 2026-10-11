@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "dd4edda4c271cc1df6ac275122b3e890f798b7c482a98cecdab86a69390fcd4f",
+  "replacement": "(def ^{:private true :doc \"Returns exact size of remaining items in an IntegerRange.\"} range-count\n  (fn [start end step]\n    (suss.bootstrap/f64-ceil (/ (- end start) step))))",
+  "rationale": "Retain the pinned exact cardinality calculation, replacing host Math.ceil with the equivalent portable binary64 ceil intrinsic."
+}
