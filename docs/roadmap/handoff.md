@@ -24137,3 +24137,30 @@ deeper outcomes. Do not refresh the baseline or call this green; investigate
 and implement the pinned `range` contract with provenance and executable tests,
 then rerun the corpus and full workspace command. M4 issues #16–#19 and final
 acceptance audit remain open.
+
+M4 acceptance evidence refresh (2026-10-11): on current pushed head
+`00b3701ffa0631d73d47bb89c15f344d13a45cce`, `scripts/verify-core-import.sh`
+passed inventory validation (1,065 declarations), review overlay validation
+(514 reviewed / 551 unassessed), 27 licensed sequence setup forms, 415 imported
+files, and all 17 executing core-import tests. This verifies the bounded #16
+import gate but does not complete the broad inventory/review backlog.
+
+The M4-focused locked CLI runs used
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target`
+and passed 18 test binaries / 71 tests: caching hash 4, chunk effects 2,
+collection hash 5, lazy sequences 4, queues 3, record helpers 3, record
+iteration 3, reductions 3, sequences 6, sorted-tree collections 6, sorted-tree
+nodes 7, subvectors 3, transient errors 1, vector trie 5, collection literals
+6, iteration 2, map mutation helpers 6, and record graph runtime 2. These
+exercise the M4 issue criteria for sequence effects and metadata, 31/32/33 and
+deeper vector trie behavior, structural sharing, sorted iteration/comparator
+contracts, collision/deletion and map/set construction, records, hashing,
+transient invalidation, and Reduced short-circuiting. `git status` is clean after
+validation. GitHub API requests for PR #234 checks repeatedly failed to connect,
+so final-head CI status is currently unverified. The required whole-workspace
+command still has the previously documented pinned corpus mismatch at unresolved
+`range`; this is outside the M4 issue scope (which prohibits unrelated runtime
+API changes), and no baseline was refreshed. Next: obtain final-head CI/review
+status and complete a criterion-by-criterion evidence audit for #16–#19; keep
+#234 draft and M4 open until every original acceptance criterion and required
+review/CI gate has authoritative passing evidence.
