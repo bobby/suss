@@ -565,6 +565,37 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
 }
 
 #[test]
+fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throws() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut s = setup(phase);
+        s.eval(
+            "(deftype ThisReceiverProbe [tag] Object
+               (is-self [this] (this-as receiver (identical? receiver this)))
+               (nested [this other]
+                 (let [inner (.is-self other)]
+                   (and inner (this-as receiver (identical? receiver this)))))
+               (throws [this] (throw 73))
+               (catches-inner [this other]
+                 (try (.throws other)
+                   (catch :default error
+                     (this-as receiver (identical? receiver this))))))",
+        )
+        .unwrap();
+        for expression in [
+            "(.is-self (ThisReceiverProbe. 1))",
+            "(.nested (ThisReceiverProbe. 1) (ThisReceiverProbe. 2))",
+            "(.catches-inner (ThisReceiverProbe. 1) (ThisReceiverProbe. 2))",
+        ] {
+            let result = s
+                .eval(&format!("(if {expression} 1 0)"))
+                .unwrap();
+            s.collect().unwrap();
+            assert_eq!(number_bits(&mut s, &result), 1.0_f64.to_bits(), "{expression}");
+        }
+    }
+}
+
+#[test]
 fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);

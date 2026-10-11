@@ -24120,3 +24120,20 @@ execute the Error suite, then commit/push and open a draft PR with `Refs #16`
 through `Refs #19` once GitHub authentication is repaired. Preserve the
 remaining `this-as` and full workspace limitations explicitly; M4 remains
 incomplete.
+
+M4 verification follow-up (2026-10-11): fixed the stale TypeError descriptor
+expectation (the public TypeError descriptor is ID 12), restored strict
+reference identity checking for canonical Error descriptors in the sorted-tree
+corpus, and expanded `this-as` regression coverage for nested receiver restore
+and language-throw paths. The focused Error suite passed 6/6, sorted-tree
+collection suite 6/6, sorted-tree node suite 7/7, and named-property suite 4/4
+after correcting its expectation for stable constructor prototypes and inherited
+instance `constructor`. `git diff --check` and `python3
+scripts/core_import.py --check` (415 files) pass. The required full workspace
+run progressed through the focused collection and Error gates but stopped at
+the pinned Clojure corpus comparison: `clojure.core-test.nil-qmark` and
+`clojure.core-test.not` now reach unresolved `range` instead of their recorded
+deeper outcomes. Do not refresh the baseline or call this green; investigate
+and implement the pinned `range` contract with provenance and executable tests,
+then rerun the corpus and full workspace command. M4 issues #16–#19 and final
+acceptance audit remain open.
