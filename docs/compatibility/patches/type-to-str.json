@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9",
+  "replacement": "(def type->str\n  (fn [ty]\n    (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]\n      (if __suss_if_let_type_to_str_0\n        __suss_if_let_type_to_str_0\n        (if (identical? ty (type 0))\n          \"function Number() { [native code] }\"\n          (if (identical? ty (type \"\"))\n            \"function String() { [native code] }\"\n            (if (identical? ty (type true))\n              \"function Boolean() { [native code] }\"\n              (if (identical? ty (type []))\n                \"function Array() { [native code] }\"\n                (str_ ty)))))))))",
+  "rationale": "Retain the pinned ctorStr-first behavior and fallback order. Expand defn/if-let with a once-only temporary. Portable builtin constructor values are owned Suss closures, so their host Function#toString representation cannot be delegated to JS; map the canonical Number/String/Boolean/Array constructors to the pinned native-function spelling before using the original str_ fallback for other classes. This adapts only the host builtin boundary and preserves the ClojureScript-facing error text for primitive values. Native observations remain required."
+}

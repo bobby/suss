@@ -317,6 +317,23 @@ fn quote_discard_collections_and_terminating_character_literals() {
 }
 
 #[test]
+fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
+    let forms = read_forms("#js {:get 1 \"configurable\" true answer 42}").unwrap();
+    let Kind::List(items) = &forms[0].kind else {
+        panic!()
+    };
+    assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "js-obj"));
+    assert_eq!(items[1].kind, Kind::String("get".encode_utf16().collect()));
+    assert_eq!(items[2].kind, Kind::Number(1.0));
+    assert_eq!(items[3].kind, Kind::String("configurable".encode_utf16().collect()));
+    assert_eq!(items[4].kind, Kind::Bool(true));
+    assert_eq!(items[5].kind, Kind::String("answer".encode_utf16().collect()));
+    assert_eq!(items[6].kind, Kind::Number(42.0));
+    assert!(read_forms("#js {:odd}").is_err());
+    assert!(read_forms("#js {1 :value}").is_err());
+}
+
+#[test]
 fn malformed_forms_fail_with_located_diagnostics_and_bounded_nesting() {
     for source in [
         "(",

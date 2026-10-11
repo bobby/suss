@@ -117,6 +117,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                         Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
+                        Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
@@ -131,6 +132,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
+                        Nominal::CurrentThis => { names.insert("current-this"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
                         Nominal::NativeObjectStrictSet => { names.insert("native-object-property-set-strict"); }
@@ -283,8 +285,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-array-make-literal"
             | "source-array-length-args"
             | "source-array-get-indices"
-            | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
-            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
+            | "source-array-set-indices"
+            | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
+            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -302,7 +305,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "language-error-new" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -1150,6 +1153,8 @@ fn emit_function(
                         | Nominal::SourceFunctionName
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
+                        | Nominal::CurrentThis
+                        | Nominal::ObjectCoerceString
                         | Nominal::NativeObjectGet
                         | Nominal::NativeObjectSet
                         | Nominal::NativeObjectStrictSet
@@ -1170,6 +1175,7 @@ fn emit_function(
                                 Nominal::Class => "class-value-new",
                                 Nominal::BindingDefined => "binding-defined",
                                 Nominal::CoerceString => "coerce-string",
+                                Nominal::ObjectCoerceString => "object-coerce-string",
                                 Nominal::ConcatString => "string-concat",
                                 Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
@@ -1182,6 +1188,7 @@ fn emit_function(
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
+                                Nominal::CurrentThis => "current-this",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",

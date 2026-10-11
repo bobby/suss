@@ -384,19 +384,29 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
         s.collect().unwrap();
         s.inspect(&rotated, |mut store, value| {
             let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let owner_descriptor = owner
+                .field(&mut store, 0)?
+                .unwrap_anyref()
+                .unwrap()
+                .to_owned_rooted(&mut store)?;
             assert!(wasmtime::Rooted::ref_eq(
                 &store,
                 &red_descriptor,
-                owner.field(&mut store, 0)?.unwrap_anyref().unwrap()
+                &owner_descriptor
             )?);
             let left_node = source_field!(store, value, NODE_FIELDS, "left");
             let right_node = source_field!(store, value, NODE_FIELDS, "right");
             for child in [&left_node, &right_node] {
                 let object = child.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let object_descriptor = object
+                    .field(&mut store, 0)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .to_owned_rooted(&mut store)?;
                 assert!(wasmtime::Rooted::ref_eq(
                     &store,
                     &black_descriptor,
-                    object.field(&mut store, 0)?.unwrap_anyref().unwrap()
+                    &object_descriptor
                 )?);
                 let cache = source_field!(store, child, NODE_FIELDS, "__hash");
                 assert_eq!(
@@ -526,8 +536,18 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
         let result = s.eval("(.read-value (TreeMethodProbe. 7))").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &result), 7.0_f64.to_bits());
-        // Raw names still require an explicit supported property spelling.
-        assert!(s.eval("(.-bad-name (TreeMethodProbe. 7))").is_err());
+        // ClojureScript munges the source property spelling consistently; an
+        // absent field reads nil rather than becoming a compile-time error.
+        let missing = s
+            .eval("(nil? (.-bad-name (TreeMethodProbe. 7)))")
+            .unwrap();
+        assert_eq!(
+            s.inspect(&missing, |store, value| {
+                Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())
+            })
+            .unwrap(),
+            4
+        );
         s.eval("(set! method-effects 0)").unwrap();
         let Err(SessionError::Language(payload)) = s.eval(
             "(.read-value

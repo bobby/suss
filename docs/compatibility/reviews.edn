@@ -1467,23 +1467,23 @@
   "runtime:=:1342"
   {:source-sha256 "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
-   :dependencies ["runtime:-equiv" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
+   :dependencies ["runtime:-equiv" "compiler-owned cljs.core/== strict identity" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
    :classification :adapted
-   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation; identity fast path uses compiler-owned cljs.core/== so rebinding identical? cannot change equality. The comparator predicate-rebinding corpus and source equality execution pass in both phases; other collection types, complete macros and metadata remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-equality.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/portable_comparators.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:equiv-sequential:3151"
   {:source-sha256 "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d" :visibility :private
    :arities {:fixed [2] :variadic-min nil}
    :dependencies ["runtime:=:1342" "runtime:sequential?:2246" "runtime:counted?:1602" "runtime:count:1906" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:boolean:2357" "runtime:==:3064"]
    :classification :adapted
-   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation; identity fast path uses compiler-owned cljs.core/== so rebinding identical? cannot change equality. The comparator predicate-rebinding corpus and source equality execution pass in both phases; other collection types, complete macros and metadata remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-equiv-sequential.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/portable_comparators.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:<:2755"
   {:source-sha256 "8e6815b3743ce86c57184635707893f159446faaa3811979fb1fedee40576b53" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
@@ -4349,9 +4349,9 @@
   {:source-sha256 "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf"
    :visibility :private
    :arities {:fixed [0 1] :variadic-min 1}
-   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next, scalar predicates and nil? nil-guard" "nominal toString methods"]
+   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next, scalar predicates and nil? nil-guard" "OrdinaryToPrimitive string-hint adapter"]
    :classification :adapted
-   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal, scalar-predicate and nil-guard dependencies to avoid adding mutable public helper dependencies. The pinned core compiles the nil? macro guard at this definition site, so the capture preserves that immutable first check against public redefinition. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects retain method dispatch; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
+   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal, scalar-predicate and nil-guard dependencies to avoid adding mutable public helper dependencies. The pinned core compiles the nil? macro guard at this definition site, so the capture preserves that immutable first check against public redefinition. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects use the ordered OrdinaryToPrimitive string-hint adapter, including valueOf fallback after a non-primitive toString result; broader host-object property/accessor semantics and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/expression-internal-str.json"
    :alternative nil
@@ -4716,8 +4716,8 @@
   "runtime:vals:9254"
   {:source-sha256 "8798efa7b4b5afca2f207bc0fd67ed712b1ee6e9c3efad598ec99db0e37dc682" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
-   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "pinned when-let macro expansion"]
+   :classification :adapted :rationale "Retain complete public vals behavior. Expand its sole pinned when-let to the exact once-only temporary, truthy guard and inner binding; temporary is collision-free against the entire declaration. Macro namespace does not yet provide when-let. Pinned observations, bootstrap and native collection tests remain required."
    :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-vals.json" :alternative nil
    :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
   "runtime:PersistentTreeMap:8898"
@@ -4790,4 +4790,58 @@
    :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
    :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-rsubseq.json" :alternative nil
    :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:mapv:5450"
+  {:source-sha256 "de1de186702d507044c2dc414487799299e242528da15396d231704a13a67d98"
+   :visibility :public
+   :arities {:fixed [2 3] :variadic-min 4}
+   :dependencies ["macro:defn:3364" "runtime:reduce:2628" "runtime:transient:3987" "runtime:conj!:3999" "runtime:persistent!:3992" "runtime:into:5430" "runtime:map:4902" "runtime:apply:4100"]
+   :classification :adapted
+   :rationale "Retain all four pinned arities, docstring and arglists. Expand defn to def/fn and thread-first exactly to persistent!(reduce(...)); retain multi-collection map/into/apply paths and their shortest-input behavior. Pinned source hash and licensed extraction are recorded by the importer. Native execution is still in progress; importing the form alone does not prove persistent-vector semantics."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/mapv.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:type->str:362"
+  {:source-sha256 "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9"
+   :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:str_:3106" "live portable property lookup"]
+   :classification :adapted
+   :rationale "Retain the pinned ctorStr-first behavior. Expand defn/if-let once-only; map owned portable Number/String/Boolean/Array constructors to their pinned native function spelling, then preserve str_ for other constructors. Native execution is pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/type-to-str.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:associative?:2238"
+  {:source-sha256 "265eb7820ec1f194494f1affc4d75b36fbded8db522b5eaa2751235b31d6bfb9"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:satisfies?:2253" "IAssociative"]
+   :classification :adapted
+   :rationale "Retain the complete pinned predicate and docstring; expand defn to def/fn. The original satisfies? protocol check remains live. Native checks and full core-protocol validation remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/associative-predicate.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:ifind?:2242"
+  {:source-sha256 "6dda7e42ffc00ee14bb8ba9c81cc9f0311d5b11e295c6f198994cca105a002cc"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:satisfies?:2253" "IFind"]
+   :classification :adapted
+   :rationale "Retain the complete pinned predicate and docstring; expand defn to def/fn. The original satisfies? protocol check remains live. Native checks and full core-protocol validation remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/ifind-predicate.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:find:2471"
+  {:source-sha256 "00529eaa753954f87e61a05f2f9fc105353e15d6067eb8ccc4fac0f8f68650db"
+   :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:ifind?:2242" "IFind/-find" "runtime:associative?:2238" "runtime:contains?:2451" "runtime:MapEntry:6722" "runtime:get:2031"]
+   :classification :adapted
+   :rationale "Retain the complete pinned IFind fast path and associative fallback with its original nil/contains behavior and MapEntry result. Expand only defn to def/fn. Native map lookup and missing-key behavior must be checked against pinned observations."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/find.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:seqable?:2347"
+  {:source-sha256 "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["ISeqable/satisfies?" "runtime:nil?" "runtime:array?" "runtime:string?" "js-iterable? (host-specific branch omitted)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned public declaration and exact documentation. Expand defn to def/fn; preserve nil, ISeqable, array and string cases in original order. Omit only js-iterable?, whose JavaScript Symbol.iterator branch is outside the accepted portable source-compatibility profile (suss-0.3.1 design §1); callers must wrap foreign JavaScript iterables with a portable ISeqable/IIterable value. No JS iterable support is claimed."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/seqable.json"
+   :alternative "Implement ISeqable/IIterable on a portable Suss wrapper for foreign values"
+   :tests ["crates/suss-cli/tests/portable_seqable.rs"]}
 }}

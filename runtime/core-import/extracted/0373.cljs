@@ -6,5 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-iter [x]
-  (ArrayIter. x 0))
+(deftype ArrayIter [arr ^:mutable i]
+  Object
+  (hasNext [_] (< i (alength arr)))
+  (next [_]
+    (let [ret (aget arr i)]
+      (set! i (inc i))
+      ret))
+  (remove [_] (js/Error. "Unsupported operation")))

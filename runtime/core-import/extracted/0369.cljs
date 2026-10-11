@@ -6,71 +6,32 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype RedNode [key val left right ^:mutable __hash]
+(deftype BlackNode [key val left right ^:mutable __hash]
   Object
   (add-left [node ins]
-    (RedNode. key val ins right nil))
+    (.balance-left ins node))
 
   (add-right [node ins]
-    (RedNode. key val left ins nil))
+    (.balance-right ins node))
 
   (remove-left [node del]
-    (RedNode. key val del right nil))
+    (balance-left-del key val del right))
 
   (remove-right [node del]
-    (RedNode. key val left del nil))
+    (balance-right-del key val left del))
 
-  (blacken [node]
-    (BlackNode. key val left right nil))
+  (blacken [node] node)
 
-  (redden [node]
-    (throw (js/Error. "red-black tree invariant violation")))
+  (redden [node] (RedNode. key val left right nil))
 
   (balance-left [node parent]
-    (cond
-      (instance? RedNode left)
-      (RedNode. key val
-                (.blacken left)
-                (BlackNode. (.-key parent) (.-val parent) right (.-right parent) nil)
-                nil)
-
-      (instance? RedNode right)
-      (RedNode. (.-key right) (.-val right)
-                (BlackNode. key val left (.-left right) nil)
-                (BlackNode. (.-key parent) (.-val parent)
-                            (.-right right)
-                            (.-right parent)
-                            nil)
-                nil)
-
-      :else
-      (BlackNode. (.-key parent) (.-val parent) node (.-right parent) nil)))
+    (BlackNode. (.-key parent) (.-val parent) node (.-right parent) nil))
 
   (balance-right [node parent]
-    (cond
-      (instance? RedNode right)
-      (RedNode. key val
-                (BlackNode. (.-key parent) (.-val parent)
-                            (.-left parent)
-                            left
-                            nil)
-                (.blacken right)
-                nil)
-
-      (instance? RedNode left)
-      (RedNode. (.-key left) (.-val left)
-                (BlackNode. (.-key parent) (.-val parent)
-                            (.-left parent)
-                            (.-left left)
-                            nil)
-                (BlackNode. key val (.-right left) right nil)
-                nil)
-
-      :else
-      (BlackNode. (.-key parent) (.-val parent) (.-left parent) node nil)))
+    (BlackNode. (.-key parent) (.-val parent) (.-left parent) node nil))
 
   (replace [node key val left right]
-    (RedNode. key val left right nil))
+    (BlackNode. key val left right nil))
 
   (kv-reduce [node f init]
     (tree-map-kv-reduce node f init))

@@ -6,26 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ci-reduce
-  "Accepts any collection which satisfies the ICount and IIndexed protocols and
-reduces them without incurring seq initialization"
-  ([^not-native cicoll f]
-     (let [cnt (-count cicoll)]
-       (if (zero? cnt)
-         (f)
-         (loop [val (-nth cicoll 0), n 1]
-           (if (< n cnt)
-             (let [nval (f val (-nth cicoll n))]
-               (if (reduced? nval)
-                 @nval
-                 (recur nval (inc n))))
-             val)))))
-  ([^not-native cicoll f val]
-     (let [cnt (-count cicoll)]
-       (loop [val val, n 0]
-         (if (< n cnt)
-           (let [nval (f val (-nth cicoll n))]
-             (if (reduced? nval)
-               @nval
-               (recur nval (inc n))))
-           val)))))
+(defn ^:private fn->comparator
+  "Given a fn that might be boolean valued or a comparator,
+   return a fn that is a comparator."
+  [f]
+  (if (= f compare)
+    compare
+    (fn [x y]
+      (let [r (f x y)]
+        (if (number? r)
+          r
+          (if r
+            -1
+            (if (f y x) 1 0)))))))

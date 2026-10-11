@@ -1,0 +1,11 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "sha256": {
+    "tests/oracle/src/suss_oracle/seqable.cljs": "ec0191bdc9e6a14f4627fab21cf9c34704c2bf8d3f26bbe15231f25623fcf526",
+    "docs/compatibility/seqability/evidence/cases.json": "3f2a15c7de1e2ba951639e1a8eae3490d9cfa50894e672e8d9d213ba7b97b81b",
+    "docs/compatibility/seqability/evidence/observations.json": "69ea38eefba6501bd74bde20523315ca45d0c8e823782539fb3053c56affc0da",
+    "docs/compatibility/patches/seqable.json": "220bcd4beca7d993bf84057f7590ae9bad6e7c89e0ffe83a3cc6dd46e117b74f",
+    "runtime/core-import/extracted/0405.cljs": "17429c4fa4b77e7ab3be3e367b1593826966ad4a2cbe9221e8b864cead002d6c",
+    "docs/compatibility/bootstrap/sequence-forward-declarations.sus": "522b9e1c885166ea099d86a206ed9513e84b6d3e3d7a6a3a5be532cfc06817f0"
+  }
+}

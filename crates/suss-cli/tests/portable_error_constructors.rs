@@ -218,7 +218,7 @@ fn error_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClass
         assert!(wasmtime::StructType::eq(&owner.ty(&store)?, &class.owner_type));
         let schema = descriptor.as_struct(&store)?.unwrap();
         assert_eq!(schema.fields(&mut store)?.count(), 5);
-        assert_eq!(schema.field(&mut store, 0)?.unwrap_i64(), match class.name { "Error" => 7, "RangeError" => 10, "TypeError" => 11, _ => unreachable!() });
+        assert_eq!(schema.field(&mut store, 0)?.unwrap_i64(), match class.name { "Error" => 7, "RangeError" => 10, "TypeError" => 11, _ => unreachable!() }, "{} descriptor identity", class.name);
         let message = owner.field(&mut store, 1)?;
         let Observation::String(units) = Decoder::new(4097).decode(&mut store, &message)? else { panic!("raw UTF16 message") };
         let carrier = owner.field(&mut store, 2)?.unwrap_anyref().unwrap().as_array(&store)?.expect("owned mutable Error carrier");

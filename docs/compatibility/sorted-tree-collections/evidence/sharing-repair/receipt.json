@@ -20,7 +20,7 @@
     "tests/oracle/out/sorted-tree-sharing-cljs/cljs/core.js": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205",
     "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/python.log": "d2b6691f11d428adf475447ff14c8e31b66dbf58df1630d09536b93c39ebfb56",
     "docs/compatibility/sorted-tree-collections/evidence/sharing-repair/provenance.log": "7829c8343d1d9abbb18d6a0e9d31fa9975c9548d730552338ac63b2ee045dc67",
-    "scripts/check_sorted_tree_provenance.py": "c58d014badf552af37b82de5e99fffd03270e6ff01c5da68c537033f796c875e"
+    "scripts/check_sorted_tree_provenance.py": "fda075f55ae0d72a0a80b5a4b0bc7163fce6268a7c1fe1ec157f2f1eb7006d4f"
   },
   "python": {
     "command": "python3 -B -m unittest discover -s scripts",

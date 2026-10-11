@@ -307,8 +307,9 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
         number(&mut session, &value, 1.0);
         boolean(&mut session,
             "(let [ctor (retained-type (array 1)) a (ctor 3)] (and (identical? ctor (retained-type a)) (= (alength a) 3) (undefined? (aget a 0))))", true);
+        // Array constructor lookup is a supported positive case above; only
+        // values whose constructor boundary is still unsupported remain here.
         for source in [
-            "(retained-type (array 1))",
             "(retained-type (js-obj))",
             "(retained-type (fn [x] x))",
         ] {

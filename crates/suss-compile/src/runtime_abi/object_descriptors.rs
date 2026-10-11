@@ -786,7 +786,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     code = vec![
         LocalGet(0),
         I32Const(9),
-        Call(b.names["closure-property-get"]),
+        Call(b.names["closure-internal-property-get"]),
         I32Const(4),
         RefI31,
         RefEq,
@@ -798,7 +798,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(9),
         I32Const(4),
         RefI31,
-        Call(b.names["closure-property-set"]),
+        Call(b.names["closure-internal-property-set"]),
         Drop,
     ];
     for (name, function, _arity) in [

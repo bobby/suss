@@ -23886,3 +23886,237 @@ complete provenance-backed core loading (#16), persistent sequences/vectors
 (#17), associative and sorted collections (#18), and metadata/transient/reduction
 contracts (#19). The current concrete prerequisite is in the preceding #231
 handoff entry.
+
+## M4 rebase onto current main (2026-10-11)
+
+Rebased the sorted M4 branch onto `7cbcb06` (main includes #231 and #233).
+The core import is the union of current main and M4: 405 reviewed forms; importer
+outputs were regenerated after assigning the M4 additions fresh indexes. Main's
+newer Array, coercion, record, Error, and bootstrap implementations were retained
+where they superseded earlier M4 patches. The M4 comparator, sorted prerequisite,
+tree-node, and sorted-tree collection sources/tests/evidence were preserved.
+
+Rebase is complete, but generated bootstrap artifacts have not yet been
+regenerated for this merged compiler/import identity. Native M4 tests, exact-head
+bootstrap reproduction, the required full locked workspace baseline, independent
+review, and final-head CI remain outstanding. Do not promote a draft PR until
+those gates pass. Next: run source/import/provenance checks, then perform the
+prescribed isolated bootstrap/native validation without changing the validation
+approach; record commands, results, limitations, and the next unblocked M4 task.
+
+
+Post-rebase source checks (2026-10-11): `python3 -B scripts/core_import.py --check`
+verified 409 files; sorted-tree provenance passed 35 forms and 370 unchanged
+selections; tree-node provenance passed seven declarations and 363 unchanged
+selections; the full Python script suite passed 314 tests; and `git diff --check`
+passed. The provenance baselines/receipts now bind to the rebased import history.
+These checks do not compile or execute the Rust/native regressions. The focused
+Cargo suite, bootstrap regeneration/reproduction, required `cargo test --workspace
+--locked -- --test-threads=2`, independent review, and final-head CI are still
+required before commit/push/PR readiness.
+
+Bootstrap integration attempt (2026-10-11): the prescribed clean exact-head
+validation checkout was created at `/private/tmp/suss-error-validation-checkout`
+(`dbf8644`), with a fresh two-job Cargo target. The documented bootstrap command
+compiled the workspace successfully, then exited 1 while loading core:
+`Unresolved Runtime name seqable?` at generated `runtime/core-import/suss/core.sus`
+byte span 205151..205159, inside the imported sorted-tree `iter` form. The pinned
+source is available locally at
+`/private/tmp/suss-m4-subvector/clojurescript` (commit
+`c4295f303100bbf5afac449242d30bca1126f1a1`): `seqable?` is the whole eight-line
+form at `core.cljs:2347–2355`; it depends on `js-iterable?` at `1264–1268`, whose
+body reads `ITER_SYMBOL`. Neither `seqable?` nor `js-iterable?` is selected in the
+current 405-form core import, and `ITER_SYMBOL` also needs an owned portable
+binding. This confirms a real sorted-iterator dependency gap; native focused and
+full workspace tests were not started, and no bootstrap artifacts were installed.
+Next: retain the complete pinned dependency source and its license/provenance,
+then implement the supported ClojureScript seqability/JS-iterator contract and
+focused both-phase regressions without replacing the missing predicate with an
+always-true/always-false shortcut. Re-run bootstrap before native gates.
+
+Seqability and runtime-startup follow-up (2026-10-11): imported the complete
+pinned `seqable?` form with the portable `ISeqable`/array/string/nil behavior,
+recorded the intentional exclusion of foreign JS iterator interop, and added a
+both-phase execution regression. The bootstrap now compiles after adapting the
+sorted-tree macro expansions (`when-let`, `doseq`, `lazy-seq`, and MapEntry
+destructuring) to the current compiler. The regression still fails during
+`Session::with_options_in`. A direct runtime-ABI regression exposed a malformed
+Error descriptor whose schema/protocol-table fields were nil; those fields now
+initialize as empty arrays and `runtime_abi_error_constructor_can_initialize_its_protocol_cache`
+passes. With that error-reporting mask removed, the remaining startup trace is
+`property-find -> fixed-named-property-set -> object-static-initialize` while
+initializing the Object constructor. This is still an actual runtime failure,
+not a passing `seqable?` result. The focused test command
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-cli --test portable_seqable --locked -- --nocapture` fails
+at session creation; sorted collection native tests, bootstrap reproduction,
+full locked workspace tests, independent review, and final-head CI have not
+passed. Next: trace the `closure-property-fields` table passed to the failing
+`property-find` call during Object static initialization, fix its ABI/storage
+shape, then rerun the focused regression before broader gates. Do not commit,
+push, or promote a PR until those gates pass.
+
+M4 execution and ABI follow-up (2026-10-11): imported `mapv`, `find`,
+`associative?`, `ifind?`, and `type->str` with pinned source/provenance so the
+sorted collection suite can execute; both `portable_sorted_tree_collections`
+(6/6) and `portable_sorted_tree_nodes` (6/6) now pass in the isolated
+validation checkout with regenerated bootstrap artifacts. The node regression
+was corrected to match pinned ClojureScript behavior for absent hyphenated
+properties (nil). The focused runtime ABI suite currently has 72/73 passing;
+`runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc`
+still throws while checking a forged descriptor. The latest internal closure
+property split fixes the public reserved-slot regression but has not resolved
+that failure. `git diff --check` passes. The full prescribed workspace baseline,
+deterministic bootstrap reproduction, independent review, and final-head CI have
+not passed. This branch is not ready to commit/push or open as a draft PR yet.
+Next: trace the forged-descriptor path through `object-instance` and the native
+protocol/descriptor property calls, then rerun the complete focused suites and
+all required gates.
+
+ABI root-layout trace (2026-10-11): the nominal cross-fragment failure persists
+with the corrected owned-prototype global roots. `ROOT` begins after the
+String.charAt mutable global; the five typed function roots therefore occupy
+`ROOT+1..ROOT+5`, descriptor identities are at `ROOT+6..ROOT+7`, the Object
+constructor root at `ROOT+8`, and the Object/TypeError callbacks at `ROOT+9` and
+`ROOT+10`. The runtime source now uses those offsets consistently. In the
+failing test, the class descriptor's protocol table is a valid empty array after
+GC; `object-instance` still throws through `protocol-method-get` at the forged
+descriptor assertion. Reproduce with the isolated bootstrap command followed by
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-compile --test runtime_abi
+runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc
+--locked -- --test-threads=2`; this still fails. Next: instrument or isolate the
+protocol-table lookup on that assertion to find why its valid empty table path
+throws, then rerun the 74-test ABI suite and the required full baseline.
+
+Compiler-catalog graph budget follow-up (2026-10-11): the workspace baseline
+exposed a regression in four `compiled_macro_compiler_catalog` tests: the
+analysis DAG validation pass exceeded its default 1,048,576 work budget while
+materializing catalog snapshots with the expanded M4 core. Raising only the
+validation budget to 4,194,304 still failed, showing the independent logical
+materialization budget also needs to accommodate this accepted snapshot. A
+finite 4,194,304 limit for both passes makes all four tests pass (184.02s total
+with two test threads). This remains bounded and leaves the separate 131,072
+recipe cap, 1,048,576 UTF-16-unit cap, and 32 MiB reader-key cap unchanged. The
+source and regenerated bootstrap artifacts now use the larger graph-work
+bounds. The full required workspace baseline must be rerun at this final source
+state; prior run stopped at these four failures. Next: verify two-pass bootstrap
+reproducibility and rerun the full locked workspace suite.
+
+Comparator regression investigation (2026-10-11): the full locked workspace
+baseline progressed through the complete runtime/core and portable collection
+suites, then stopped in `portable_comparators` with two failures. The Error ABI
+is descriptor/message/data/cause/identity (five fields), so the test's old
+`fields.len() == 2` expectation was stale; after correcting it, the focused
+`comparator_numeric_return_bits_errors_and_retained_capture_after_gc` test
+passes, including Error descriptor/message checks, recovery, numeric return
+bits and retained capture across GC. The remaining
+`public-primitive-predicate-rebind` mismatch needs semantic resolution: isolated
+execution shows the comparator itself returns the expected -1, +1, -1, -1
+values under the predicate rebindings, while the candidate case's checks use
+`=` at the same time that it rebinds `identical?`, causing the assertion result
+to be false in this prototype. Do not weaken the pinned corpus or treat this as
+a comparator pass; verify the upstream behavior and fix the equality/call
+semantics or the regression's measurement without diverging from the accepted
+contract. `portable_comparators` is not green, and the full workspace command
+must be rerun after resolving this. No commit, push, PR, independent review or
+final-head CI has occurred. Next: audit `=`/`identical?` against the pinned
+ClojureScript behavior and build a test that verifies the comparator outputs
+without masking a separate equality regression; then resume the full baseline.
+
+Comparator and full-baseline follow-up (2026-10-11): reconciled the pinned
+`public-primitive-predicate-rebind` observation with the executable runtime.
+The imported `=` fast path now uses compiler-owned `cljs.core/==`, so a live
+redefinition of public `identical?` cannot alter equality; internal `str_` now
+uses the checked string-hint OrdinaryToPrimitive adapter, preserving the
+pinned `toString` then `valueOf` fallback when the first result is an object.
+Both changes have explicit provenance patches and review inventory entries; the
+portable compiler exposes the string-hint adapter as a typed bootstrap
+operation. `portable_comparators` passes 2/2 in both phases after GC, including
+the entire 49-case candidate corpus, policy cases, Error layout/message,
+numeric bits, recovery and retained capture. `core_import.py` regenerates and
+checks 415 imported files, and `git diff --check` passes. Bootstrap two-pass
+reproduction and `compiled_bootstrap` 4/4 passed after these source/compiler
+changes.
+
+The prescribed full locked workspace run at this state advanced through the
+comparator and collection suites but stopped at
+`raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_after_gc`
+on `inherited-cause`. The case executes `(aset o "__proto__" p)` on a
+`js-obj`; current `aset` accepts only the portable array carrier and throws
+`Invalid or unsupported array operation`, while pinned ClojureScript performs
+a native-object prototype write and then reads inherited `cause`. This is an
+unimplemented dynamic object-property write/prototype behavior, not a passing
+Error observation. The attempted direct setter insertion had a dependency/type
+cycle and was fully reverted; no runtime-array experiment remains. Next: design
+a properly ordered shared `aset` dispatcher (or an equally contract-faithful
+lowering) that preserves array bounds/evaluation behavior and routes native
+object keys through the descriptor-aware property/prototype setter, add focused
+native-object and `__proto__` regressions, then rerun Error and Array tests,
+bootstrap reproduction and the full workspace baseline. M4 issues #16-#19
+remain open; the full acceptance audit and independent review are still
+required.
+
+M4 validation continuation (2026-10-11): corrected the stale bootstrap artifacts
+against the current compiler/runtime tree by regenerating both phase images.
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+sh scripts/verify-bootstrap.sh` passed two independent compilations, artifact
+comparison, identity verification and `compiled_bootstrap` (4 passed). The
+first run before regeneration failed only because the committed runtime image
+differed from the source-built image; this was repaired, not skipped. With the
+matching images, `cargo test -p suss-cli --test
+portable_sorted_tree_collections --locked -- --test-threads=2` passed 6/6
+(including all three adversarial decoder regressions that had previously failed
+at bootstrap identity), and the new `portable_seqable` suite passed 1/1 in both
+phases after GC. The ordered `aset` dispatcher now gets the Error corpus past
+`inherited-cause`; its next case, `prototype-source-getter-receiver`, still
+fails compilation because `this-as` is unresolved. The added `#js` reader path
+is reached, but ClojureScript `this-as` receiver semantics have not been
+implemented; keep this corpus failing and do not claim the full baseline green.
+Next: implement and execute source `this-as`/getter receiver semantics (or
+separate the unrelated Error gate only if the test's intended M4 scope is
+reassessed from evidence), then rerun Error, array, sorted-map/set, sequence,
+bootstrap and the full locked workspace baseline. The M4 issues #16-#19 and
+independent acceptance audit remain open.
+
+M4 focused and full-baseline evidence update (2026-10-11): after bootstrap
+regeneration and identity verification, the focused sorted/M4 execution gates
+passed on the final implementation tree: sorted-tree collections 6/6,
+seqability 1/1, map mutation 6/6, queues 3/3, record graph/helpers/iteration
+8/8, reductions 3/3, sequences 6/6, sorted-tree nodes 6/6, vector trie 5/5,
+comparator foundations/corpus/sorted prerequisites 7/7. Each command used the
+isolated `/private/tmp/suss-error-validation-target` and `--locked`; no filters
+or new ignores were added. `python3 scripts/core_import.py --check` verified 415
+files, `git diff --check` passed, and `scripts/verify-bootstrap.sh` passed two
+rebuild comparisons, identity validation and compiled_bootstrap 4/4 after
+regenerating the checked-in phase images.
+
+The required `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2` progressed through the
+compiler/macro and collection runtime gates, including HAMT map/set growth,
+collisions/deletion, vector trie boundaries, sequence/reduction behavior,
+sorted comparators/ranges, Error ancestry setup and all decoder adversarial
+cases. It stopped in `portable_error_constructors`: 5 passed, 1 failed. The
+remaining pinned case `prototype-source-getter-receiver` fails at compile time
+with `Unresolved Runtime name this-as`; its source uses a zero-argument getter
+and source-level JavaScript `this` binding. This is a genuine unsupported
+receiver semantic, not an M4 collection mismatch. Do not skip or edit the
+pinned case to claim a green workspace. The earlier inherited-cause failure is
+resolved by the late ABI `aset` dispatcher. Next: implement the pinned
+`this-as`/getter receiver behavior with source-level regression coverage, rerun
+the Error suite and required full baseline, then perform the issues #16–#19
+acceptance audit. No PR has been created and M4 remains incomplete.
+
+M4 PR preparation update (2026-10-11): the current `this-as` receiver
+experiment compiles and the core-import check verifies all 415 files, but the
+Error constructor corpus now fails earlier on TypeError descriptor identity
+(actual descriptor ID 12, expected 11). Treat this as a regression in the
+experiment; it has not passed semantic validation. `gh auth status` reports
+the configured GitHub token is invalid, so remote push and draft-PR creation
+cannot currently be completed. The local worktree contains the accumulated
+M4 collection, comparator, seqability, runtime ABI and evidence changes; no
+commit has yet been made. Next: restore TypeError descriptor identity and
+execute the Error suite, then commit/push and open a draft PR with `Refs #16`
+through `Refs #19` once GitHub authentication is repaired. Preserve the
+remaining `this-as` and full workspace limitations explicitly; M4 remains
+incomplete.

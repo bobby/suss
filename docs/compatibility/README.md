@@ -1146,3 +1146,8 @@ native tests remain uncompiled/unexecuted and bootstrap is stale. Reify, typed
 Error ancestry/binding, full ES6/printer integration and original #18/#19/M4 gates
 remain explicit. The prior 86 tree assertions remain supplementary alongside the
 52 independently decoded tree-node observations.
+
+
+## Portable sequence capability predicate
+
+The [`seqable?` adaptation](seqability/README.md) retains the pinned portable nil, ISeqable, array, and string behavior. Its JavaScript Symbol.iterator branch is an explicit host-interoperability boundary; foreign JS iterables require a portable protocol wrapper.

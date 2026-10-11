@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6dda7e42ffc00ee14bb8ba9c81cc9f0311d5b11e295c6f198994cca105a002cc",
+  "replacement": "(def ifind? (fn [x] (satisfies? IFind x)))",
+  "rationale": "Retain the complete pinned public predicate and docstring; expand only defn to def/fn. The protocol check remains live through the pinned satisfies? contract."
+}

@@ -2,7 +2,7 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
-  "base": "0c98b4f7523aaf369fce6813c63ea8c13b2a2205",
+  "base": "d06b7a2",
   "status": "full source authoring; bootstrap/native pending",
   "forms": [
     {
@@ -159,7 +159,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/ES6EntriesIterator.cljs",
       "retained-file-sha256": "1f9cd928450b190c3f85abd73c4e1ce840c4a5b9ba2d8bf23aef153caa85114c",
       "patch": "docs/compatibility/patches/sorted-tree-ES6EntriesIterator.json",
-      "adapted-form-sha256": "d7e56362860ca7155b4931201e9bd38127de1c77c08015e7935afe410eef3678"
+      "adapted-form-sha256": "adcd76ed4ac17a5c7cf6dce854bee6e9c2ee2f4363b9611101192084ff938d12"
     },
     {
       "id": "runtime:es6-entries-iterator:6628",
@@ -303,7 +303,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/vals.cljs",
       "retained-file-sha256": "b80a930bb09e80b8433d3cc5150642b02216d84395f173e8bc5cde538cdec6fc",
       "patch": "docs/compatibility/patches/sorted-tree-vals.json",
-      "adapted-form-sha256": "e6264afaa0257211681c9e7f230a729b212ef47c1a9c39c78d28686ab1e6071f"
+      "adapted-form-sha256": "b7d5fbd92e99730d776c783a0340157c5b0bd1b190b24185ba5f74d3a68afcd5"
     },
     {
       "id": "runtime:PersistentTreeMap:8898",
@@ -315,7 +315,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/PersistentTreeMap.cljs",
       "retained-file-sha256": "a7b2a7710b5b44140e398c5e6be94f9318c58dd07f2c6083125ff5bac7f50540",
       "patch": "docs/compatibility/patches/sorted-tree-PersistentTreeMap.json",
-      "adapted-form-sha256": "39ef35bf67634b059ad6ab94f1a462216182956bac4129a1845eb3b50c2161a8"
+      "adapted-form-sha256": "e27a7406da382d35bfdcef13145be5f3cdc28b41170e0eba6354e845239dfadf"
     },
     {
       "id": "runtime:PersistentTreeSet:9482",
@@ -327,7 +327,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/PersistentTreeSet.cljs",
       "retained-file-sha256": "c4b2b9bb1f0bd0d4cfcc0e7c9484dac38beb5fe47d883d86dc1c0ca929431389",
       "patch": "docs/compatibility/patches/sorted-tree-PersistentTreeSet.json",
-      "adapted-form-sha256": "50781f95ad045243ef43b870f1e7ad7c6641784df7ad9d94ee28f842b7783794"
+      "adapted-form-sha256": "89267bc2fb7155c06592bbb233809788aba94a238816c352afae6db1f1e9e71b"
     },
     {
       "id": "runtime:sorted-map:9088",
@@ -387,7 +387,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/take-while.cljs",
       "retained-file-sha256": "c17b8c9137bbbc3e2e76ddb0d69b5d11cb097dd0794a19e92c8e7c083d940d1b",
       "patch": "docs/compatibility/patches/sorted-tree-take-while.json",
-      "adapted-form-sha256": "2ceb1e2b6d20799e4ebceb66719ceb0cd54c43170d387c0a64e8109fe0270073"
+      "adapted-form-sha256": "d6048f440377049497f1b58d7fa56e920d73d0ab42ad39f57ddf2b008a77e9f2"
     },
     {
       "id": "runtime:mk-bound-fn:9822",
@@ -411,7 +411,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/subseq.cljs",
       "retained-file-sha256": "a8ebcceb0816fa420a8122b034f9c29639eae4a79d87de0aad9473e131fe24f6",
       "patch": "docs/compatibility/patches/sorted-tree-subseq.json",
-      "adapted-form-sha256": "fc46d2e90a497da933c31a42156a394d29aa50422381484d7076d4eb8cb50359"
+      "adapted-form-sha256": "02f2f81c48e7d56c35855a87ae7ead40e912f8bc0f582d9914792376eb61ed64"
     },
     {
       "id": "runtime:rsubseq:9843",
@@ -423,7 +423,7 @@
       "retained": "docs/compatibility/sorted-tree-collections/rsubseq.cljs",
       "retained-file-sha256": "a5d425d501f1bef552db0f349bf0b0ef354e64bdcbd28242a3e0f33f735eea97",
       "patch": "docs/compatibility/patches/sorted-tree-rsubseq.json",
-      "adapted-form-sha256": "758cfa985e4ab712908c5a5fa58acf888465bdf22c98a7fcdd9c5dde61914a2e"
+      "adapted-form-sha256": "e0fe304251b80dc41e4ee01a23f6c31f156d1eb9f61a76df32ab9ece62f300e9"
     }
   ],
   "anonymous-parents": [

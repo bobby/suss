@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from core_import import PIN, Scanner, digest, extract_forms, pinned_file, repository_file, adapt_form
 ROOT = Path(__file__).resolve().parents[1]
-BASE = '5e29a17ee67e6a713c19f080677e2192d2706618'
+BASE = '59a0e4a'
 IDS = ['runtime:balance-left:8404', 'runtime:balance-right:8429',
        'runtime:balance-left-del:8451', 'runtime:balance-right-del:8470',
        'runtime:tree-map-kv-reduce:8489', 'runtime:BlackNode:8502', 'runtime:RedNode:8627']
@@ -98,9 +98,9 @@ def verify():
     if (ROOT / 'runtime/core-import/epl-v10.html').read_bytes() != pinned_file(ROOT, 'epl-v10.html'): raise ValueError('EPL')
     recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())
     previous = json.loads(subprocess.check_output(['git', 'show', BASE + ':docs/compatibility/core-import.json']))
-    if len(previous['forms']) != 340 or recipe['forms'][:340] != previous['forms'] or [e['id'] for e in recipe['forms'][340:347]] != IDS:
+    if len(previous['forms']) != 363 or recipe['forms'][:363] != previous['forms'] or [e['id'] for e in recipe['forms'][363:370]] != IDS:
         raise ValueError('old selections changed/order or appended group mismatch')
-    for i in range(340):
+    for i in range(363):
         path = f'runtime/core-import/extracted/{i:04d}.cljs'
         if (ROOT / path).read_bytes() != subprocess.check_output(['git', 'show', BASE + ':' + path]): raise ValueError('old extract changed')
     # Retained evidence bytes are bound to the exact current authoring inputs.
@@ -126,6 +126,6 @@ def verify():
         raw_check(); raw_compare(raw_folder / 'observations.json')
     from tree_node_oracle import compare
     compare(FOLDER / 'evidence/observations.json')
-    print('Verified 7 whole declarations, every node method/arity, 4 full anonymous parents, complete seven-target registration, 8 macro originals, EPL, 340 unchanged selections/extracts and reference receipts; native pending')
+    print('Verified 7 whole declarations, every node method/arity, 4 full anonymous parents, complete seven-target registration, 8 macro originals, EPL, 363 unchanged selections/extracts and reference receipts; native pending')
 
 if __name__ == '__main__': verify()

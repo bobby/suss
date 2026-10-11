@@ -1660,6 +1660,11 @@
       "patch": "docs/compatibility/patches/lazy-filter.json"
     },
     {
+      "id": "runtime:mapv:5450",
+      "source-sha256": "de1de186702d507044c2dc414487799299e242528da15396d231704a13a67d98",
+      "patch": "docs/compatibility/patches/mapv.json"
+    },
+    {
       "id": "runtime:ISorted:782",
       "source-sha256": "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1",
       "patch": null
@@ -2028,12 +2033,37 @@
       "id": "runtime:rsubseq:9843",
       "source-sha256": "8e172e7ea79a024453f553a9f3e6d266c318a06313eede31645293adb0dd5955",
       "patch": "docs/compatibility/patches/sorted-tree-rsubseq.json"
+    },
+    {
+      "id": "runtime:seqable?:2347",
+      "source-sha256": "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda",
+      "patch": "docs/compatibility/patches/seqable.json"
+    },
+    {
+      "id": "runtime:associative?:2238",
+      "source-sha256": "265eb7820ec1f194494f1affc4d75b36fbded8db522b5eaa2751235b31d6bfb9",
+      "patch": "docs/compatibility/patches/associative-predicate.json"
+    },
+    {
+      "id": "runtime:ifind?:2242",
+      "source-sha256": "6dda7e42ffc00ee14bb8ba9c81cc9f0311d5b11e295c6f198994cca105a002cc",
+      "patch": "docs/compatibility/patches/ifind-predicate.json"
+    },
+    {
+      "id": "runtime:find:2471",
+      "source-sha256": "00529eaa753954f87e61a05f2f9fc105353e15d6067eb8ccc4fac0f8f68650db",
+      "patch": "docs/compatibility/patches/find.json"
+    },
+    {
+      "id": "runtime:type->str:362",
+      "source-sha256": "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9",
+      "patch": "docs/compatibility/patches/type-to-str.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "32d2a268bd00b3778c48558e2c822406ae6f92b3e22c2f497386250d621d612f"
+      "sha256": "522b9e1c885166ea099d86a206ed9513e84b6d3e3d7a6a3a5be532cfc06817f0"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

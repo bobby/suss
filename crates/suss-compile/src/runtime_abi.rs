@@ -747,6 +747,7 @@ fn build_module() -> Vec<u8> {
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);
+    arrays::set_or_property(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
@@ -822,9 +823,9 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended([
             I64Const(i64::from(numeric::ERROR_GLOBALS) + 1),
             I32Const(0),
-            RefI31,
+            ArrayNewDefault(ARGS),
             I32Const(0),
-            RefI31,
+            ArrayNewDefault(ARGS),
             I32Const(0),
             RefI31,
             I32Const(0),
@@ -1086,6 +1087,16 @@ fn build_module() -> Vec<u8> {
         prototype_functions,
         object_initialize,
         b.names["owned-type-error-implementation"],
+    );
+    assert_eq!(globals.len(), object_methods::CURRENT_THIS);
+    // Append without relocating any existing runtime global or descriptor ID.
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([GlobalGet(object_methods::DEFAULT_THIS)]),
     );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports

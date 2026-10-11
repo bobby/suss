@@ -974,3 +974,37 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     ));
     declared
 }
+
+pub(super) fn set_or_property(b: &mut Builder) {
+    use Instruction::*;
+    let mut body = vec![
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalSet(1),
+        LocalGet(1),
+        Call(b.names["native-object?"]),
+        If(BlockType::Result(VALUE)),
+        LocalGet(1),
+    ];
+    array(&mut body, 0);
+    body.extend([I32Const(1), ArrayGet(ARGS)]);
+    array(&mut body, 0);
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        Call(b.names["native-object-property-set"]),
+        Else,
+        LocalGet(0),
+        Call(b.names["source-array-set-indices"]),
+        End,
+    ]);
+    b.function_with_locals(
+        "source-array-set-or-property",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &body,
+    );
+}

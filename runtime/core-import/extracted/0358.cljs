@@ -6,18 +6,28 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^:private compare-indexed
-  "Compare indexed collection."
-  ([xs ys]
-     (let [xl (count xs)
-           yl (count ys)]
-       (cond
-        (< xl yl) -1
-        (> xl yl) 1
-        (== xl 0) 0
-        :else (compare-indexed xs ys xl 0))))
-  ([xs ys len n]
-     (let [d (compare (nth xs n) (nth ys n))]
-       (if (and (zero? d) (< (+ n 1) len))
-         (recur xs ys len (inc n))
-         d))))
+(defn ^number compare
+  "Comparator. Returns a negative number, zero, or a positive number
+  when x is logically 'less than', 'equal to', or 'greater than'
+  y. Uses IComparable if available and google.array.defaultCompare for objects
+ of the same type and special-cases nil to be less than any other object."
+  [x y]
+  (cond
+   (identical? x y) 0
+
+   (nil? x) -1
+
+   (nil? y) 1
+
+   (number? x) (if (number? y)
+                 (garray/defaultCompare x y)
+                 (throw (js/Error. (str_ "Cannot compare " x " to " y))))
+
+   (satisfies? IComparable x)
+   (-compare x y)
+
+   :else
+   (if (and (or (string? x) (array? x) (true? x) (false? x))
+            (identical? (type x) (type y)))
+     (garray/defaultCompare x y)
+     (throw (js/Error. (str_ "Cannot compare " x " to " y))))))

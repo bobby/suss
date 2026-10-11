@@ -1,0 +1,1 @@
+[{"id":"nil","value":true},{"id":"vector","value":true},{"id":"list","value":true},{"id":"sorted-map","value":true},{"id":"sorted-set","value":true},{"id":"array","value":true},{"id":"string","value":true},{"id":"custom-ISeqable","value":true},{"id":"number","value":false},{"id":"false","value":false},{"id":"keyword","value":false},{"id":"plain-js-object","value":false}]

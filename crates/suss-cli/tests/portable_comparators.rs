@@ -172,7 +172,7 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
                 .inspect(&payload, |mut store, value| {
                     let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
                     let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                    assert_eq!(fields.len(), 2, "Exception layout");
+                    assert_eq!(fields.len(), 5, "Exception layout");
                     let descriptor = fields[0]
                         .unwrap_anyref()
                         .unwrap()

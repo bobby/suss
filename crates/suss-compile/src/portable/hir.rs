@@ -146,7 +146,7 @@ impl ArrayOperation {
             Self::MakeLiteral => "source-array-make-literal",
             Self::Length => "source-array-length-args",
             Self::Get => "source-array-get-indices",
-            Self::Set => "source-array-set-indices",
+            Self::Set => "source-array-set-or-property",
         }
     }
     pub(crate) fn valid(self, count: usize) -> bool {
@@ -321,10 +321,13 @@ pub enum Nominal {
     ValueConstructor,
     SourceFunctionName,
     NativeObjectDefaultPrototype,
+    /// Dynamically scoped JavaScript receiver for the original `this-as` form.
+    CurrentThis,
     NativeObjectGet,
     NativeObjectSet,
     NativeObjectStrictSet,
     CoerceString,
+    ObjectCoerceString,
     ConcatString,
     ValueAdd,
     StringIndexOf,
@@ -343,7 +346,7 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::CoerceString | Self::ConcatString | Self::StringSlice => Type::String,
+            Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::StringSlice => Type::String,
             Self::StringIndexOf => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
@@ -366,8 +369,9 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
+                Self::CurrentThis => count == 0,
                 Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString | Self::ObjectDescriptor => count == 1,
+                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet => count == 2,
@@ -2014,6 +2018,64 @@ impl Analyzer<'_> {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if bare
+            && symbol.name == "this-as"
+            && !self.locals.contains_key("this-as")
+            && !self.fields.contains_key("this-as")
+        {
+            if args.len() < 2 {
+                return Err(fail(form.span.clone(), "this-as requires a binding and body"));
+            }
+            let Kind::Symbol(name) = &args[0].kind else {
+                return Err(fail(args[0].span.clone(), "this-as binding must be a symbol"));
+            };
+            if name.namespace.is_some() || name.name == "&" {
+                return Err(fail(args[0].span.clone(), "this-as binding must be unqualified"));
+            }
+            let outer = self.locals.clone();
+            let current = self.nominal(form, Nominal::CurrentThis, Vec::new());
+            let id = BindingId(self.next);
+            self.next += 1;
+            self.insert_local(
+                &args[0],
+                id,
+                Type::Value,
+                LocalKind::Let,
+                Some(current.clone()),
+            );
+            let source_binding = self.locals[&name.name].clone();
+            let body = self.analyzed_body(
+                &args[1..],
+                form.span.clone(),
+                context.returning(),
+                tail,
+            );
+            self.locals = outer;
+            let body = Box::new(body?);
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                std::sync::Arc::new(SourceNode::Bindings {
+                    is_loop: false,
+                    bindings: vec![source_binding].into(),
+                    body: std::sync::Arc::new(body.as_ref().clone()),
+                }),
+            );
+            return Ok(Hir {
+                source: None,
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: body.ty,
+                kind: Expression::Let {
+                    bindings: vec![Binding {
+                        id,
+                        name: name.name.clone(),
+                        metadata: args[0].metadata.clone(),
+                        span: args[0].span.clone(),
+                        value: current,
+                    }],
+                    body,
+                },
+            });
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap")
             && symbol.name == "direct-protocol-call"
         {
@@ -2160,6 +2222,7 @@ impl Analyzer<'_> {
                 "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),
+                "object-coerce-string" => Some(Nominal::ObjectCoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),

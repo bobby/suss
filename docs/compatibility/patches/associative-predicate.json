@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "265eb7820ec1f194494f1affc4d75b36fbded8db522b5eaa2751235b31d6bfb9",
+  "replacement": "(def associative? (fn [x] (satisfies? IAssociative x)))",
+  "rationale": "Retain the complete pinned public predicate and docstring; expand only defn to def/fn. The protocol check remains live through the pinned satisfies? contract."
+}

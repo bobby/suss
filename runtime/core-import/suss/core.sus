@@ -12,7 +12,7 @@
 ;; Original loader declarations for retained source's mutual references.
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
-  counted? list? sequential? accumulating-seq-count empty-ordered-hash
+  counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
   array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta Symbol Keyword hash-symbol hash-keyword get -write)
@@ -799,7 +799,7 @@
   ([x y]
     (if (nil? x)
       (nil? y)
-      (or (identical? x y)
+      (or (cljs.core/== x y)
         ^boolean (-equiv x y))))
   ([x y & more]
      (if (= x y)
@@ -5033,7 +5033,7 @@
       ([x] (if (nil? x) ""
              (if (or (string? x) (number? x) (or (identical? x true) (identical? x false)))
                (suss.bootstrap/coerce-string x)
-               (.toString x))))
+               (suss.bootstrap/object-coerce-string x))))
       ([x & more]
        (if (nil? x) ""
          (loop [result (str_ x) remaining (seq more)]
@@ -5779,6 +5779,20 @@
           (if (pred f)
             (cons f (filter pred r))
             (filter pred r))))) nil))) nil nil))))
+
+(def ^{:doc "Returns a vector consisting of the result of applying f to the
+  set of first items of each coll, followed by applying f to the set
+  of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments."
+       :arglists '([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])}
+  mapv
+  (fn
+    ([f coll]
+     (persistent! (reduce (fn [v o] (conj! v (f o))) (transient []) coll)))
+    ([f c1 c2] (into [] (map f c1 c2)))
+    ([f c1 c2 c3] (into [] (map f c1 c2 c3)))
+    ([f c1 c2 c3 & colls] (into [] (apply map f c1 c2 c3 colls)))))
 
 (defprotocol ISorted
   "Protocol for a collection which can represent their items
@@ -6756,7 +6770,9 @@ reduces them without incurring seq initialization"
   Object
   (next [_]
     (if-not (suss.bootstrap/nil? s)
-      (let [[k v] (first s)]
+      (let [entry (first s)
+            k (nth entry 0 nil)
+            v (nth entry 1 nil)]
         (set! s (next s))
         (cljs.core/js-obj "value" (cljs.core/array k v) "done" false))
       (cljs.core/js-obj "value" nil "done" true))))
@@ -7041,8 +7057,10 @@ reduces them without incurring seq initialization"
 
 (def ^{:doc "Returns a sequence of the map's values, in the same order as (seq map)." :arglists '([map])} vals
   (fn [map]
-  (when-let [mseq (seq map)]
-    (ValSeq. mseq nil))))
+  (let [__suss_when_let_vals_0 (seq map)]
+    (when __suss_when_let_vals_0
+      (let [mseq __suss_when_let_vals_0]
+        (ValSeq. mseq nil))))))
 
 (deftype PersistentTreeMap [comp tree cnt meta ^:mutable __hash]
   Object
@@ -7067,14 +7085,16 @@ reduces them without incurring seq initialization"
               k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
           (f v k)
           (recur sorted-seq__ sorted-chunk__ sorted-count__ (cljs.core/inc sorted-i__)))
-        (when-let [sorted-seq__ (seq sorted-seq__)]
-          (if (chunked-seq? sorted-seq__)
-            (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
-              (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
-            (let [sorted-entry__ (first sorted-seq__)
-                  k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
-              (f v k)
-              (recur (next sorted-seq__) nil 0 0)))))))
+        (let [__suss_m4_doseq_when_let_0 (seq sorted-seq__)]
+          (when __suss_m4_doseq_when_let_0
+            (let [sorted-seq__ __suss_m4_doseq_when_let_0]
+              (if (chunked-seq? sorted-seq__)
+                (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
+                  (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
+                (let [sorted-entry__ (first sorted-seq__)
+                      k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+                  (f v k)
+                  (recur (next sorted-seq__) nil 0 0)))))))))
 
   (entry-at [coll k]
     (loop [t tree]
@@ -7233,14 +7253,16 @@ reduces them without incurring seq initialization"
               k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
           (f v k)
           (recur sorted-seq__ sorted-chunk__ sorted-count__ (cljs.core/inc sorted-i__)))
-        (when-let [sorted-seq__ (seq sorted-seq__)]
-          (if (chunked-seq? sorted-seq__)
-            (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
-              (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
-            (let [sorted-entry__ (first sorted-seq__)
-                  k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
-              (f v k)
-              (recur (next sorted-seq__) nil 0 0)))))))
+        (let [__suss_m4_doseq_when_let_0 (seq sorted-seq__)]
+          (when __suss_m4_doseq_when_let_0
+            (let [sorted-seq__ __suss_m4_doseq_when_let_0]
+              (if (chunked-seq? sorted-seq__)
+                (let [sorted-chunk-next__ (chunk-first sorted-seq__)]
+                  (recur (chunk-rest sorted-seq__) sorted-chunk-next__ (count sorted-chunk-next__) 0))
+                (let [sorted-entry__ (first sorted-seq__)
+                      k (nth sorted-entry__ 0 nil) v (nth sorted-entry__ 1 nil)]
+                  (f v k)
+                  (recur (next sorted-seq__) nil 0 0)))))))))
 
   ICloneable
   (-clone [_] (PersistentTreeSet. meta tree-map __hash))
@@ -7369,10 +7391,16 @@ reduces them without incurring seq initialization"
               (rf result input)
               (reduced result))))))
   ([pred coll]
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (when (pred (first s))
-           (cons (first s) (take-while pred (rest s)))))))))
+     (new LazySeq nil
+       (fn* []
+         (let [__suss_take_while_seq_0 (seq coll)]
+           (if __suss_take_while_seq_0
+             (let [s __suss_take_while_seq_0]
+               (if (pred (first s))
+                 (cons (first s) (take-while pred (rest s)))
+                 nil))
+             nil)))
+       nil nil))))
 
 (def ^{:arglists '([sc test key])} mk-bound-fn
   (fn [sc test key]
@@ -7386,13 +7414,19 @@ reduces them without incurring seq initialization"
   (fn ([sc test key]
      (let [include (mk-bound-fn sc test key)]
        (if (#{> >=} test)
-         (when-let [[e :as s] (-sorted-seq-from sc key true)]
-           (if (include e) s (next s)))
+         (let [__suss_subseq_when_let_0 (-sorted-seq-from sc key true)]
+           (when __suss_subseq_when_let_0
+             (let [e (nth __suss_subseq_when_let_0 0 nil)
+                   s __suss_subseq_when_let_0]
+               (if (include e) s (next s)))))
          (take-while include (-sorted-seq sc true)))))
   ([sc start-test start-key end-test end-key]
-     (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
-       (take-while (mk-bound-fn sc end-test end-key)
-                   (if ((mk-bound-fn sc start-test start-key) e) s (next s)))))))
+     (let [__suss_subseq_when_let_1 (-sorted-seq-from sc start-key true)]
+       (when __suss_subseq_when_let_1
+         (let [e (nth __suss_subseq_when_let_1 0 nil)
+               s __suss_subseq_when_let_1]
+           (take-while (mk-bound-fn sc end-test end-key)
+                       (if ((mk-bound-fn sc start-test start-key) e) s (next s)))))))))
 
 (def ^{:doc "sc must be a sorted collection, test(s) one of <, <=, > or
   >=. Returns a reverse seq of those entries with keys ek for
@@ -7400,13 +7434,57 @@ reduces them without incurring seq initialization"
   (fn ([sc test key]
      (let [include (mk-bound-fn sc test key)]
        (if (#{< <=} test)
-         (when-let [[e :as s] (-sorted-seq-from sc key false)]
-           (if (include e) s (next s)))
+         (let [__suss_rsubseq_when_let_0 (-sorted-seq-from sc key false)]
+           (when __suss_rsubseq_when_let_0
+             (let [e (nth __suss_rsubseq_when_let_0 0 nil)
+                   s __suss_rsubseq_when_let_0]
+               (if (include e) s (next s)))))
          (take-while include (-sorted-seq sc false)))))
   ([sc start-test start-key end-test end-key]
-     (when-let [[e :as s] (-sorted-seq-from sc end-key false)]
-       (take-while (mk-bound-fn sc start-test start-key)
-                   (if ((mk-bound-fn sc end-test end-key) e) s (next s)))))))
+     (let [__suss_rsubseq_when_let_1 (-sorted-seq-from sc end-key false)]
+       (when __suss_rsubseq_when_let_1
+         (let [e (nth __suss_rsubseq_when_let_1 0 nil)
+               s __suss_rsubseq_when_let_1]
+           (take-while (mk-bound-fn sc start-test start-key)
+                       (if ((mk-bound-fn sc end-test end-key) e) s (next s)))))))))
+
+(def ^{:doc "Return true if the seq function is supported for s"
+       :arglists '([s])}
+  seqable?
+  (fn [s]
+    (or
+      (nil? s)
+      (satisfies? ISeqable s)
+      (array? s)
+      (string? s))))
+
+(def associative? (fn [x] (satisfies? IAssociative x)))
+
+(def ifind? (fn [x] (satisfies? IFind x)))
+
+(def find
+  (fn [coll k]
+    (if (ifind? coll)
+      (-find coll k)
+      (when (and (not (nil? coll))
+                 (associative? coll)
+                 (contains? coll k))
+        (MapEntry. k (get coll k) nil)))))
+
+(def type->str
+  (fn [ty]
+    (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]
+      (if __suss_if_let_type_to_str_0
+        __suss_if_let_type_to_str_0
+        (if (identical? ty (type 0))
+          "function Number() { [native code] }"
+          (if (identical? ty (type ""))
+            "function String() { [native code] }"
+            (if (identical? ty (type true))
+              "function Boolean() { [native code] }"
+              (if (identical? ty (type []))
+                "function Array() { [native code] }"
+                (str_ ty)))))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

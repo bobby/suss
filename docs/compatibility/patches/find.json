@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "00529eaa753954f87e61a05f2f9fc105353e15d6067eb8ccc4fac0f8f68650db",
+  "replacement": "(def find\n  (fn [coll k]\n    (if (ifind? coll)\n      (-find coll k)\n      (when (and (not (nil? coll))\n                 (associative? coll)\n                 (contains? coll k))\n        (MapEntry. k (get coll k) nil)))))",
+  "rationale": "Retain both pinned branches and their source order: prefer IFind/-find, otherwise require a nonnil associative value containing the key before constructing MapEntry from get. Expand only defn to def/fn; no fallback or absence behavior is changed."
+}

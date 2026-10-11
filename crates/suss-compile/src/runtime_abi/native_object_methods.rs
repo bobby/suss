@@ -497,7 +497,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         GlobalGet(type_values::KEY_GLOBAL),
         GlobalGet(owned_prototypes::OBJECT_CONSTRUCTOR),
         Call(b.names["protocol-method-set"]),
-        Drop,
         LocalGet(0),
         GlobalSet(ROOT),
         End,

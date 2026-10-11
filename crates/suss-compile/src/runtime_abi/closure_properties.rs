@@ -137,7 +137,12 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
         &[(1, VALUE)],
         &body,
     );
-    for writing in [false, true] {
+    for (writing, max_kind, name) in [
+        (false, 7, "closure-property-get"),
+        (true, 7, "closure-property-set"),
+        (false, 9, "closure-internal-property-get"),
+        (true, 9, "closure-internal-property-set"),
+    ] {
         // Params: function, native kind, optional assigned value. Locals follow.
         let owner = if writing { 3 } else { 2 };
         let table = owner + 1;
@@ -145,7 +150,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
         let fresh = owner + 3;
         // Kind keys0..7 and the private constructor prototype carrier at8 and static initializer at9.
         // Source string properties cannot address this integer-keyed carrier.
-        let mut body = vec![LocalGet(1), I32Const(9), I32GtU, If(BlockType::Empty)];
+        let mut body = vec![LocalGet(1), I32Const(max_kind), I32GtU, If(BlockType::Empty)];
         nominal::error(&mut body);
         body.extend([
             End,
@@ -256,11 +261,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             vec![(2, VALUE), (1, ValType::I32)]
         };
         b.function_with_locals(
-            if writing {
-                "closure-property-set"
-            } else {
-                "closure-property-get"
-            },
+            name,
             if writing {
                 &[VALUE, ValType::I32, VALUE]
             } else {

@@ -5,8 +5,8 @@ following `/private/tmp/suss-m4-full-sorted-plan.md`. This retains complete pinn
 balance-left/right/left-del/right-del, tree-map-kv-reduce, BlackNode and RedNode
 from CLJS `c4295f303100bbf5afac449242d30bca1126f1a1`. Every original field,
 Object/protocol method, arity, branch and invariant rejection remains. Exactly
-seven declarations are appended to the unchanged ordered 340 recipe selections;
-347 selections produce 351 importer files. All seven reviews remain in-progress.
+seven declarations are appended to the unchanged ordered 363 recipe selections;
+370 selections produce 374 importer files on its original base. On the rebased M4 branch, the shared base has 363 selections before the seven node forms. All seven reviews remain in-progress.
 
 `provenance.json` binds complete original ranges/bytes and adapted hashes. The
 shared EPL license is `runtime/core-import/epl-v10.html`; NOTICE and original

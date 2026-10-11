@@ -6,12 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sorted-map-by
+(defn sorted-map
   "keyval => key val
-  Returns a new sorted map with supplied mappings, using the supplied comparator."
-  ([comparator & keyvals]
-     (loop [in (seq keyvals)
-            out (PersistentTreeMap. (fn->comparator comparator) nil 0 nil 0)]
+  Returns a new sorted map with supplied mappings."
+  ([& keyvals]
+     (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
        (if in
          (recur (nnext in) (assoc out (first in) (second in)))
          out))))

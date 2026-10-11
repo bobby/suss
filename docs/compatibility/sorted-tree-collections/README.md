@@ -1,6 +1,6 @@
 # Complete sorted tree collections — authoring checkpoint
 
-This group retains 35 complete pinned ClojureScript declarations at `c4295f303100bbf5afac449242d30bca1126f1a1`. It appends to the previous 347 selections without changing their order or extracted bytes, producing 382 selections and 386 importer files. All new reviews remain in progress. Source authoring is not native acceptance or completion of #18/#19/M4.
+This group retains 35 complete pinned ClojureScript declarations at `c4295f303100bbf5afac449242d30bca1126f1a1`. It appends after the rebased 370-form portable import base without changing those forms or extracted bytes. The tree group remains exactly 35 forms; the combined M4 import now has 406 selected forms and 410 generated importer files, including the separately reviewed portable `seqable?` dependency. All new reviews remain in progress. Source authoring is not native acceptance or completion of #18/#19/M4.
 
 Whole forms include tree-map-add/append/remove/replace, TreeMapSeq/cursor construction, ValSeq/vals, TreeMap/TreeSet with every field/protocol/method/arity, all four public factories, take-while with its transducer arity, mk-bound-fn, and both arities of subseq/rsubseq. The public iterator graph includes complete StringIter/ArrayIter/SeqIter, independent INIT/START sentinels, nil-iter's genuine reify, iter dispatch and all three ES6 iterator types/helpers. Existing complete BlackNode/RedNode, balancing/reduction, comparator prerequisites and seven-target IComparable registration remain unchanged.
 
@@ -22,9 +22,9 @@ Commands and retained logs:
 
 - `sh scripts/test-sorted-tree-oracle.sh`: 142 fresh pinned raw observations passed.
 - `python3 -B -m unittest discover -s scripts`: 258 passed in 11.822s; malformed kind/bits/shape/order/mode/count/message/UTF16/depth controls included.
-- `python3 -B scripts/check_sorted_tree_provenance.py`: 35 forms, every field/marker/method/arity, seven anonymous parents, fifteen macros, loader, EPL and all 347 prior selections/extracts verified.
-- `python3 -B scripts/check_tree_node_provenance.py`: previous source/receipts and new raw receipts verified; node append check now scopes the seven entries at offsets 340–346 so subsequent complete groups can follow.
-- `python3 -B scripts/core_import.py --check`: 386 files verified.
+- `python3 -B scripts/check_sorted_tree_provenance.py`: 35 forms, every field/marker/method/arity, seven anonymous parents, fifteen macros, loader, EPL and all 370 rebased-base selections/extracts verified.
+- `python3 -B scripts/check_tree_node_provenance.py`: previous source/receipts and new raw receipts verified; node append check scopes the seven entries at offsets 363–369 so subsequent complete groups can follow.
+- `python3 -B scripts/core_import.py --check`: 410 files verified.
 - `python3 -B scripts/cljs_reviews.py`: 483 reviewed / 582 unassessed; group still in progress.
 - Rustfmt parse/check of the authored test and `git diff --check`: passed, not compilation.
 

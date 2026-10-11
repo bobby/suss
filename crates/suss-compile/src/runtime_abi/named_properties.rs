@@ -385,7 +385,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(1),
         RefCastNonNull(HeapType::I31),
         I31GetU,
-        I32Const(7),
+        // Closure tables also carry the private `prototype` and static-init
+        // slots (8 and 9); source property names cannot address those keys.
+        I32Const(9),
         I32GtU,
         If(BlockType::Empty),
     ]);
@@ -455,7 +457,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(4),
         RefCastNonNull(HeapType::I31),
         I31GetU,
-        I32Const(7),
+        I32Const(9),
         I32GtU,
         If(BlockType::Empty),
     ]);

@@ -5,9 +5,10 @@ use super::*;
 use Instruction::*;
 
 const ROOT: u32 = array_join::ACTIVE + 4;
-pub(super) const TYPE_ERROR_GLOBAL: u32 = ROOT + 5;
+pub(super) const TYPE_ERROR_GLOBAL: u32 = ROOT + 7;
 pub(super) const OBJECT_DESCRIPTOR: u32 = ROOT + 6;
-pub(super) const OBJECT_CONSTRUCTOR: u32 = ROOT + 7;
+pub(super) const OBJECT_CONSTRUCTOR: u32 = ROOT + 8;
+pub(super) const LAST_GLOBAL: u32 = ROOT + 10;
 const PROTOTYPE_KEY: i32 = 8;
 
 #[derive(Clone, Copy)]
@@ -35,8 +36,8 @@ pub(super) fn declare(b: &mut Builder) -> Types {
     b.types.ty().function([VALUE, VALUE], [VALUE]);
     b.next_type += 5;
     for (name, ty, root) in [
-        ("owned-constructor-prototype", types.getter, ROOT),
-        ("owned-descriptor-prototype", types.descriptor, ROOT + 1),
+        ("owned-constructor-prototype", types.getter, ROOT + 1),
+        ("owned-descriptor-prototype", types.descriptor, ROOT + 2),
     ] {
         b.function(
             name,
@@ -49,7 +50,7 @@ pub(super) fn declare(b: &mut Builder) -> Types {
         "owned-error-ancestry",
         &[VALUE],
         &[ValType::I32],
-        &[LocalGet(0), GlobalGet(ROOT + 2), CallRef(types.ancestry)],
+        &[LocalGet(0), GlobalGet(ROOT + 3), CallRef(types.ancestry)],
     );
     b.function(
         "owned-prototype-instance",
@@ -58,7 +59,7 @@ pub(super) fn declare(b: &mut Builder) -> Types {
         &[
             LocalGet(0),
             LocalGet(1),
-            GlobalGet(ROOT + 3),
+            GlobalGet(ROOT + 4),
             CallRef(types.instance),
         ],
     );
@@ -69,7 +70,7 @@ pub(super) fn declare(b: &mut Builder) -> Types {
         &[
             LocalGet(0),
             LocalGet(1),
-            GlobalGet(ROOT + 4),
+            GlobalGet(ROOT + 5),
             CallRef(types.inherited),
         ],
     );
@@ -77,13 +78,13 @@ pub(super) fn declare(b: &mut Builder) -> Types {
         "object-static-initialize",
         &[VALUE],
         &[VALUE],
-        &[LocalGet(0), GlobalGet(ROOT + 8), CallRef(types.getter)],
+        &[LocalGet(0), GlobalGet(ROOT + 9), CallRef(types.getter)],
     );
     b.function(
         "owned-type-error",
         &[VALUE],
         &[VALUE],
-        &[LocalGet(0), GlobalGet(ROOT + 9), CallRef(types.getter)],
+        &[LocalGet(0), GlobalGet(ROOT + 10), CallRef(types.getter)],
     );
     types
 }
@@ -111,7 +112,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         End,
         LocalGet(0),
         I32Const(PROTOTYPE_KEY),
-        Call(b.names["closure-property-get"]),
+        Call(b.names["closure-internal-property-get"]),
         LocalSet(2),
         LocalGet(2),
         RefTestNonNull(HeapType::Concrete(ARGS)),
@@ -210,7 +211,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
             array_type_index: ARGS,
             array_size: 1,
         },
-        Call(b.names["closure-property-set"]),
+        Call(b.names["closure-internal-property-set"]),
         Drop,
         LocalGet(2),
     ]);
@@ -230,6 +231,34 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         If(BlockType::Empty),
         Call(b.names["range-error-constructor"]),
         Call(getter),
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet {
+            struct_type_index: DESCRIPTOR,
+            field_index: 2,
+        },
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet {
+            struct_type_index: DESCRIPTOR,
+            field_index: 2,
+        },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(1),
+        I32And,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
         Return,
         End,
         LocalGet(0),

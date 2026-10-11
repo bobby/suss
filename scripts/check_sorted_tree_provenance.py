@@ -7,7 +7,7 @@ from core_import import PIN, Scanner, digest, extract_forms, pinned_file, reposi
 from sorted_tree_adaptations import NAMES, CLASSES, adapt
 from check_tree_node_provenance import methods, node_structure
 ROOT = Path(__file__).resolve().parents[1]
-BASE = '0c98b4f7523aaf369fce6813c63ea8c13b2a2205'
+BASE = 'd06b7a2'
 FOLDER = ROOT / 'docs/compatibility/sorted-tree-collections'
 
 def structure(raw):
@@ -25,9 +25,10 @@ def verify():
     if [e['name'] for e in receipt['forms']]!=NAMES:raise ValueError('whole ordered group')
     recipe=json.loads((ROOT/'docs/compatibility/core-import.json').read_text())
     previous=json.loads(subprocess.check_output(['git','show',BASE+':docs/compatibility/core-import.json']))
-    if len(previous['forms'])!=347 or recipe['forms'][:347]!=previous['forms'] or [e['id'] for e in recipe['forms'][347:]]!=[e['id'] for e in receipt['forms']]:
-        raise ValueError('347 selections/order changed or group mismatch')
-    for i in range(347):
+    tree_end = 370 + len(receipt['forms'])
+    if len(previous['forms']) != 370 or len(receipt['forms']) != 35 or recipe['forms'][:370] != previous['forms'] or [e['id'] for e in recipe['forms'][370:tree_end]] != [e['id'] for e in receipt['forms']]:
+        raise ValueError('370 selections/order changed or sorted-tree group mismatch')
+    for i in range(370):
         path=f'runtime/core-import/extracted/{i:04}.cljs'
         if (ROOT/path).read_bytes()!=subprocess.check_output(['git','show',BASE+':'+path]):raise ValueError('previous extracted bytes')
     for e in receipt['forms']+receipt['macros']:
@@ -81,5 +82,5 @@ def verify():
                 raise ValueError('sharing receipt hash')
         from sorted_tree_sharing_oracle import check as sharing_check
         sharing_check(FOLDER / 'evidence/sharing-repair/observations.json')
-    print('Verified 35 complete forms, every field/protocol/method/arity, 7 anonymous parents, 15 macros, loader, EPL and 347 unchanged selections/extracts; native pending')
+    print('Verified 35 complete forms, every field/protocol/method/arity, 7 anonymous parents, 15 macros, loader, EPL and 370 unchanged selections/extracts; native pending')
 if __name__=='__main__':verify()

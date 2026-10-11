@@ -344,7 +344,7 @@ impl<'a> AnalysisGraph<'a> {
         Ok(id)
     }
     fn materialize(&mut self, root: Value) -> Result<SessionValue> {
-        self.materialize_with_work(root, 1_048_576, 1_048_576)
+        self.materialize_with_work(root, 4_194_304, 4_194_304)
     }
     fn materialize_with_work(
         &mut self,

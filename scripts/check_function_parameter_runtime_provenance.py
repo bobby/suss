@@ -8,6 +8,12 @@ IDS = ('runtime:LITE_MODE:56', 'runtime:to-array:3819',
        'runtime:--destructure-map:4154', 'runtime:reverse:3367',
        'runtime:vector:5959', 'runtime:some:4430')
 
+def group_start(recipe):
+    starts = [i for i, entry in enumerate(recipe['forms']) if entry['id'] == IDS[0]]
+    if len(starts) != 1 or tuple(entry['id'] for entry in recipe['forms'][starts[0]:starts[0] + len(IDS)]) != IDS:
+        raise ValueError('whole ordered parameter dependency group')
+    return starts[0]
+
 def adapt(raw, name):
     tree = Scanner(raw).all()[0]
     nodes = tree.children
@@ -29,10 +35,11 @@ def adapt(raw, name):
 
 def verify(recipe=None, patches=None):
     if recipe is None: recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())
-    if recipe['upstream-commit'] != PIN or tuple(entry['id'] for entry in recipe['forms'][350:356]) != IDS:
+    if recipe['upstream-commit'] != PIN:
         raise ValueError('whole ordered parameter dependency group')
+    start = group_start(recipe)
     source = extract_forms(pinned_file(ROOT, 'src/main/cljs/cljs/core.cljs').decode(), 'runtime', 'clojurescript/src/main/cljs/cljs/core.cljs')
-    for entry in recipe['forms'][350:356]:
+    for entry in recipe['forms'][start:start + len(IDS)]:
         if sum(item['id'] == entry['id'] for item in recipe['forms']) != 1: raise ValueError('duplicate selection')
         form = source[entry['id']]
         digest = hashlib.sha256(form['form'].encode()).hexdigest()
