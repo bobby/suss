@@ -24648,3 +24648,82 @@ corrections. A reported condp-order concern was withdrawn after checking pinned
 core.cljc: it captures predicate/expression once and calls(pred test-expr expr),
 matching the candidate. Its declared protocol resolver and public wrapper remain
 missing; it has only syntax/static evidence and is outside the PR.
+
+M4 baseline result and semantic repair (2026-10-12): required workspace run
+execution35364 finished with exit101 at clojure_test_suite (6 passed,1 failed).
+Report: fail21, guest-judged9, namespaces-failed223, not-executed5532, pass292,
+skipped0. Newly imported take permits repeat to load and advances take to its
+missing realized? dependency. Repeat assertion#15 `(= [] (repeat :a :a))`
+raises a language error instead of producing the pinned empty sequence. Do not
+refresh the accepted failure map to hide this semantic failure. The run stopped
+before generated_async_import_bridge, so earlier fuel failures are not yet a
+current passing/failing result. Complete log is retained at
+/private/tmp/suss-m4-validation-20261012-baseline.log.
+
+Current-head eb7cf4c foundation CI passed, but integration1 reproduced the
+suite mismatch. Integration2 failed because the old compile_expr ledger still
+expected test_apply_large_vector_builtin to fail on missing take despite
+compilation now succeeding. Re-enabled that existing execution regression and
+removed its stale ledger row; native execution remains required before claiming
+an advance. Independent full PR review of eb7cf4c found no semantic blockers,
+which does not substitute for these executed failures.
+
+Added default-fuel two-phase portable_repeat_coercion regression: first run
+failed on the exact keyword case. General nominal inherited property lookup and
+Object.prototype.valueOf receiver handling were repaired, preserving captured
+prototype carriers, own-field/method precedence and ordered conversion hooks.
+Named-property4/4, object-coercion2/2 and repeat-coercion1/1 passed after the
+initial repair. Independent review found the fallback must reject malformed
+non-array carriers; an explicit absent0 guard now does so and its finding is
+closed by static rereview. Bootstrap was regenerated; affected focused tests
+are running again for the guard fix. No fuel, test profiles, RUSTFLAGS or
+validation concurrency setting changed. No acceptance-baseline change occurred.
+
+M4 coercion fix evidence (2026-10-12): after the malformed-carrier guard,
+named-properties4/4, object-coercion2/2 and repeat-coercion1/1 passed again.
+The reactivated test_apply_large_vector_builtin executed and passed1/1 with
+315 other cases filtered; its stale ledger row/ignore are removed. The focused
+upstream run then reported fail20, guest-judged9, namespaces-failed223,
+not-executed5532, pass293, skipped0; repeat#15's semantic error is gone. Its ONLY
+comparison deltas were repeat namespace loading and take's dependency diagnostic
+advancing to realized?. Applied exactly these two logged namespace records with
+old-value assertions, leaving all assertion/test/skip records unchanged. Cicero
+independently reviewed that exact diff and the complete comparator log.
+Reference suite identity remains95d4a9112cfc5fe6629be3d14bb99080ea00af2f and
+ClojureScript upstream remainsc4295f303100bbf5afac449242d30bca1126f1a1. The
+rerun against the updated reviewed map PASSED1/1 (6 filtered) in179.13s, log
+/private/tmp/suss-m4-reviewed-suite-20261012.log. Pre-update complete delta log
+/private/tmp/suss-m4-coercion-suite-20261012.log is retained as independent
+advance evidence. The 19 skip-mismatch entries contribute20 existing failures;
+they are not compatibility successes. Bootstrap reproduction is running now;
+next run generated_async_import_bridge with its unchanged budget, then the full
+required baseline. No final-head CI result or M4 completion claim is made.
+
+M4 current async blocker (2026-10-12): latest verify-bootstrap.sh passed two
+independent builds, byte/identity checks and compiled_bootstrap4/4. Complete
+Python regression discovery passed323/323 (88.342s). Current focused
+generated_async_import_bridge executed8 cases:4 passed,4 failed in49.12s, log
+/private/tmp/suss-m4-async-bridge-20261012.log. All four failures are verified
+out-of-fuel at instantiate_async before source invocation: lines152,224,520,574
+in generated_async_import_bridge.rs. The fixed2,000,000-fuel instantiation
+budget and every test setting remain unchanged. This establishes the startup
+location, not its expensive operation; optimize actual initializer work before
+rerunning the full required baseline. Do not call these unrelated or raise fuel.
+
+Package the independently reviewed, executing repeat coercion repair, builtin
+apply reactivation, exact two namespace advances and regenerated bootstrap as
+the next draft checkpoint. It fixes integration1/2's observed issues but does
+not resolve these async startup failures or complete public records. The source
+record-emitter/protocol-facts and native-interface projection candidates remain
+outside the PR, unintegrated and unexecuted; a serialized projection regression
+is being authored to fill the remaining typed-facts validation gap.
+
+M4 pause checkpoint (2026-10-12): user requested a pause at a natural stopping
+point. Current focused validation is terminal; no additional baseline or
+candidate integration is started. Commit/push the reviewed coercion repair and
+evidence to draft PR234, then pause the goal. Keep PR234 draft: four executed
+async tests still exhaust fuel during instantiation, and public defrecord
+integration remains unfinished. On resume, investigate and optimize actual
+initializer work with the existing budget, execute affected focused tests, then
+run the required full baseline and require final-head review/green CI before
+promotion. Scratch candidates under /private/tmp remain outside this checkpoint.

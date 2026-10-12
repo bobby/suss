@@ -474,9 +474,28 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         ArrayGet(ARGS),
         LocalSet(2),
         Else,
-        I32Const(6),
+        LocalGet(2),
+        I32Const(0),
         RefI31,
-        Return,
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut inherited_code);
+    inherited_code.extend([
+        End,
+        // Without a per-instance carrier, inherit from the descriptor's
+        // constructor prototype. An explicit carrier (including [null]) above
+        // remains authoritative; kernel-only descriptors still resolve to
+        // the absent-prototype sentinel.
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet {
+            struct_type_index: 7,
+            field_index: 0,
+        },
+        Call(b.names["owned-descriptor-prototype"]),
+        LocalSet(2),
         End,
         End,
         LocalGet(2),

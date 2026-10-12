@@ -622,10 +622,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name volatile! at bytes 238..8527"
   },
-  "clojure.core-test.repeat": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.repeat (Some(\"<root>/clojure/core_test/repeat.cljc\")): Unresolved Runtime name take at bytes 236..1770"
-  },
   "clojure.core-test.repeatedly": {
    "stage": "read",
    "diagnostic": "clojure.core-test.repeatedly (Some(\"<root>/clojure/core_test/repeatedly.cljc\")): Unsupported reader dispatch at bytes 377..379"
@@ -760,7 +756,7 @@
   },
   "clojure.core-test.take": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.take (Some(\"<root>/clojure/core_test/take.cljc\")): Unresolved Runtime name take at bytes 236..1788"
+   "diagnostic": "clojure.core-test.take (Some(\"<root>/clojure/core_test/take.cljc\")): Unresolved Runtime name realized? at bytes 236..1788"
   },
   "clojure.core-test.take-last": {
    "stage": "namespace",

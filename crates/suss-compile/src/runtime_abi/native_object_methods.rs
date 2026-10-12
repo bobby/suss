@@ -88,7 +88,28 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             code.extend([Return, End]);
             code.extend(text("[object Object]"));
         } else {
-            if name != "isPrototypeOf" {
+            if name == "valueOf" {
+                // Object.prototype.valueOf returns its receiver for ordinary
+                // source objects as well as native objects. Keep the native
+                // layout validation for every other receiver domain.
+                code.extend([
+                    LocalGet(2),
+                    Call(b.names["native-object?"]),
+                    I32Eqz,
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(2),
+                    RefTestNonNull(HeapType::Concrete(7)),
+                    Else,
+                    I32Const(0),
+                    End,
+                    I32Eqz,
+                    If(BlockType::Empty),
+                    LocalGet(2),
+                    Call(fields),
+                    Drop,
+                    End,
+                ]);
+            } else if name != "isPrototypeOf" {
                 code.extend([LocalGet(2), Call(fields), Drop]);
             }
             match name {
