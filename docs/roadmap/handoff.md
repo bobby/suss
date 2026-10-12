@@ -24627,3 +24627,24 @@ those checks predate the current checkpoint. Prepare a checkpoint commit and
 push to this existing draft PR with truthful current validation and remaining
 public-record limitations. Promotion still requires independent review and
 final-head CI. No M4 completion or issue-closure claim is justified.
+
+M4 CI fixture repair (2026-10-12): checkpoint9519ddb was committed and pushed
+to draftPR234; current-head foundation failed because test_suite_baseline_log
+compared a frozen PR231 report with the newer live known-failure map. Retained
+evidence/projected-known-failures.json byte-identical to77b9040 only after
+checking its entire projection against the retained PR231 log and every row in
+classification-projection.json. The regression now checks both frozen artifacts.
+The current acceptance baseline, observed failure classifications and skips are
+unchanged. Hegel independently verified the byte identity and reviewed this fix
+without execution, reporting no blocker. Focused test_suite_baseline_log passed
+3/3; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed323/323
+(log /private/tmp/suss-m4-ci9519ddb-python-fix.log). Push this focused CI repair
+and require CI on its resulting head.
+
+Rust baseline execution35364 remains live; no final result is claimed. Full
+checkpoint /review report remains pending from Hegel; the separate record-emitter
+candidate received a static review without actionable findings after source
+corrections. A reported condp-order concern was withdrawn after checking pinned
+core.cljc: it captures predicate/expression once and calls(pred test-expr expr),
+matching the candidate. Its declared protocol resolver and public wrapper remain
+missing; it has only syntax/static evidence and is outside the PR.

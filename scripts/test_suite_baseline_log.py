@@ -16,7 +16,10 @@ class SuiteLogProjectionTests(unittest.TestCase):
 
     def test_exact_baseline_and_all_assertion_classifications(self):
         baseline, receipt = project(self.original, self.reference, self.log)
-        self.assertEqual(baseline, json.loads((ROOT / 'tests/oracle/clojure-test-suite-known-failures.json').read_text()))
+        # This log records PR231, not the current compiler. Keep its expected
+        # map frozen as later implementations advance the live acceptance gate.
+        self.assertEqual(baseline, json.loads((EVIDENCE / 'projected-known-failures.json').read_text()))
+        self.assertEqual(receipt, json.loads((EVIDENCE / 'classification-projection.json').read_text()))
         self.assertEqual(len(receipt['assertions']), 5834)
         self.assertEqual(receipt['counts']['not-executed'], 5684)
         self.assertEqual(receipt['counts']['pass'], 150)
