@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "source": "crates/suss-compile/src/portable_record_factories.rs",
+  "source-file-sha256": "e95a4bbdc78f4a081d7bf3cc82bc96e2696b838105202c371c3ecc153d498aba",
+  "compiled-source-sha256": "1d65c725b26070e5103432135b738accf0da666ed08354daa55ac265a8f954f9",
+  "forms": [
+    {
+      "id": "macro:build-positional-factory:1760",
+      "original-sha256": "fad1f2e6fed6882ad744d70464383de431b5e5a297fd0152513440a815c83527",
+      "original": "docs/compatibility/record-macro-foundations/build-positional-factory.cljc",
+      "adapted-declaration-sha256": "393a2d06784a88ce2176302bd16c38b5b73942028c563c4cd314c8c9534a2d9d"
+    },
+    {
+      "id": "macro:build-map-factory:1960",
+      "original-sha256": "6406d90207c872c9eee82e38054bffa08d7d6a3092dec6ef56a22e6296b541cb",
+      "original": "docs/compatibility/record-macro-foundations/build-map-factory.cljc",
+      "adapted-declaration-sha256": "be62104e32081dcca8b27dcb0f36872190721b894f84cd1fb9ea695c3fc45565"
+    }
+  ],
+  "adaptations": [
+    "Compile private helper functions under suss.internal.record-factories; expand defn- to def/fn without a host form evaluator.",
+    "Retain generated factory names, docs, metadata, fields and constructor arguments; preserve the positional internal-ctor branch and all map-factory branches.",
+    "Expand the generated cond->> explicitly: evaluate dissoc once before testing record? on the original input, then convert the extension map with into only for record input.",
+    "Include the complete helper source identity in every compiled-macro artifact dependency key."
+  ],
+  "tests": [
+    "crates/suss-cli/tests/compiled_record_factories.rs"
+  ],
+  "status": "authored and installed in macro bootstrap source; no compilation/native/oracle execution; public defrecord emitter and full record protocols remain missing"
+}

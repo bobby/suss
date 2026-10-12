@@ -94,6 +94,24 @@ class Decide(unittest.TestCase):
         self.assertEqual(suite.decide(self.expected, suss_predicate(operands=(NUMBER_ONE, NUMBER_TWO))),
                          ('observation:value', False))
 
+    def test_unordered_set_drop_checks_only_the_asserted_truthy_result(self):
+        expected = dict(self.expected,
+                        id='clojure.core-test.drop/test-drop#12',
+                        form='(doall (drop 1 #{:a :b :c}))',
+                        operands=[NUMBER_ONE])
+        self.assertEqual(suite.decide(expected, suss_predicate(operands=(NUMBER_TWO,), head='doall')),
+                         (None, True))
+        self.assertEqual(suite.decide(dict(expected, id='another/test#1'),
+                                      suss_predicate(operands=(NUMBER_TWO,), head='doall')),
+                         ('observation:value', False))
+
+    def test_host_specific_undefined_case_checks_verdict_without_decoding_value(self):
+        expected = dict(self.expected,
+                        id='clojure.core-test.nil-qmark/test-nil?#13',
+                        form='(nil? js/undefined)', operands=[OPAQUE])
+        self.assertEqual(suite.decide(expected, suss_predicate(operands=(OPAQUE,), head='nil?')),
+                         (None, True))
+
     def test_guest_failure_is_a_failure(self):
         self.assertEqual(suite.decide(self.expected, suss_predicate(verdict='fail')), ('verdict:fail', False))
 

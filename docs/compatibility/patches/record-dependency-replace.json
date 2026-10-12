@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bf1a9863d51d7d8e945710b95093256d960354b733fe7c02d63527c9fe89db4c",
+  "replacement": "(def ^{:doc \"Given a map of replacement pairs and a vector/collection, returns a\n  vector/seq with any elements = a key in smap replaced with the\n  corresponding val in smap. Returns a transducer when no collection\n  is provided.\" :arglists '([smap] [smap coll])} replace\n  (fn\n    ([smap]\n     (map (fn [x] (if-let [e (find smap x)] (val e) x))))\n    ([smap coll]\n     (if (vector? coll)\n       (let [n (count coll)]\n         (reduce (fn [v i]\n                   (if-let [e (find smap (nth v i))]\n                     (assoc v i (second e))\n                     v))\n           coll (take n (iterate inc 0))))\n       (map (fn [x] (if-let [e (find smap x)] (second e) x)) coll)))))",
+  "rationale": "Retain every pinned replace branch and both arities: eager vector updates retaining unchanged owner/metadata, lazy sequence replacement, and the map transducer. Expand defn and shorthand functions only; keep find/val/second, assoc, reduce, take and iterate as live source dependencies. This is a dependency of emit-defrecord field substitutions, not evidence that records are implemented."
+}

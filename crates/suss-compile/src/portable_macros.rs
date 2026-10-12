@@ -119,6 +119,8 @@ impl CompiledMacros {
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
+        macros.session.eval(crate::portable_record_factories::SOURCE)?;
+        macros.session.eval(crate::portable_record_label::SOURCE)?;
         macros.enter_namespace("user")?;
         // Bootstrap code is already rooted in the Store. User source cache
         // accounting starts empty, including after an explicit session reset.
@@ -428,6 +430,8 @@ impl ExpansionHost for CompiledMacros {
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         if !self.incomplete_sources.is_empty() { return None; }
         let mut dependencies = vec![("bootstrap".into(), crate::portable::bootstrap::sha256(crate::portable::bootstrap::SOURCE.as_bytes()))];
+        dependencies.push(("record-factory-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_factories::SOURCE.as_bytes())));
+        dependencies.push(("record-label-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes())));
         dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
         dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
         Some(dependencies)

@@ -296,7 +296,8 @@ impl Harness {
         })
         .unwrap();
         session.set_operation_fuel(OPERATION_FUEL);
-        let decoder = Decoder::capture(&mut session, DECODE_BUDGET).unwrap();
+        let mut decoder = Decoder::capture(&mut session, DECODE_BUDGET).unwrap();
+        decoder.capture_sequences(&mut session).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(OPERATION_FUEL);
         session
@@ -567,6 +568,42 @@ fn clojure_test_suite_routes_suite_namespace_requires_to_the_harness() {
 #[test]
 fn clojure_test_suite_fixture_matches_reviewed_baseline() {
     check("fixture");
+}
+
+#[test]
+fn observation_capture_and_host_decoding_do_not_force_pending_guest_values() {
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(root().join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "fixture", "--output"])
+        .arg(&source_root)
+        .output()
+        .unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let mut harness = Harness::new(&source_root);
+    harness.eval(r#"
+      (ns user)
+      (def capture-effects 0)
+      (def capture-pending
+        (new suss.core/LazySeq nil
+          (fn [] (set! capture-effects (+ capture-effects 1))
+                 (throw (suss.bootstrap/error "observation forced pending code")))
+          nil nil))
+      (suss.harness.test/register! 'pending
+        (fn [] (suss.harness.test/record! :predicate :pass [true capture-pending] 'lazy-seq?)))
+      (suss.harness.test/register! 'later
+        (fn [] (if (= capture-effects 0) nil
+                   (throw (suss.bootstrap/error "later assertion saw observation effects")))))
+      (suss.harness.test/run-group! [0 1] 0)
+    "#).unwrap();
+    assert_eq!(harness.query("(suss.harness.test/group-field 0)"), Observation::Bool(false));
+    for position in 0..2 {
+        assert_eq!(harness.query(&format!("(suss.harness.test/result-field {position} 0)")), Observation::Bool(false));
+    }
+    let captured = harness.opaque_or_tagged("(suss.harness.test/operand 0 0 1)");
+    assert_eq!(captured["tag"], "opaque");
+    assert_eq!(harness.query("capture-effects"), Observation::Number(0.0_f64.to_bits()));
 }
 
 #[test]

@@ -2098,6 +2098,86 @@
       "id": "runtime:range:10131",
       "source-sha256": "33ca3abb88722f0bb131fd1c312ddad62cbd0761db16fb5652528da6c7840d50",
       "patch": "docs/compatibility/patches/range.json"
+    },
+    {
+      "id": "runtime:drop:4976",
+      "source-sha256": "b1d8bbc4d336d3a52f059cde10decdb0d198bdcc0ad1cc11313f83733d576fc9",
+      "patch": "docs/compatibility/patches/sequence-drop.json"
+    },
+    {
+      "id": "runtime:dorun:10287",
+      "source-sha256": "a937da2e4cb6e2d900565f03f9f4832a62ed6bb6d65edd80a99de74287568003",
+      "patch": "docs/compatibility/patches/sequence-dorun.json"
+    },
+    {
+      "id": "runtime:doall:10300",
+      "source-sha256": "af3b0f111a8d8c9a617d55b8c7c28e210b2aa04b21e4ff02dd7c2dbcd61195a2",
+      "patch": "docs/compatibility/patches/sequence-doall.json"
+    },
+    {
+      "id": "runtime:rem:2987",
+      "source-sha256": "0d2ecbb308a71cdf6807f46f7ced7208e05edb9fa4932820a77dabaf4f7b7c56",
+      "patch": "docs/compatibility/patches/sequence-rem.json"
+    },
+    {
+      "id": "runtime:take-nth:10159",
+      "source-sha256": "09dec2d9a7a12429ef887be7688a1b9c8b5cc91b030caf5ba3b083a0fd594ad4",
+      "patch": "docs/compatibility/patches/sequence-take-nth.json"
+    },
+    {
+      "id": "runtime:take:4949",
+      "source-sha256": "b3108b498b0d165295d9b442ec38e7cfa6d1fec46ba20769347690e8be7b704f",
+      "patch": "docs/compatibility/patches/record-dependency-take.json"
+    },
+    {
+      "id": "runtime:UNREALIZED-SEED:5242",
+      "source-sha256": "c9b9f41d167451c36583ae83e03160d65d444239e6b532b64e085413513c0fef",
+      "patch": "docs/compatibility/patches/record-dependency-unrealized-seed.json"
+    },
+    {
+      "id": "runtime:Iterate:5244",
+      "source-sha256": "0d66568f7d23604456f6f136715471edcf53a92487b0fdf702a60a47183fc22f",
+      "patch": null
+    },
+    {
+      "id": "runtime:iterate:5303",
+      "source-sha256": "f37249f344dd10022a20f5cbef1cd88be4839737d1d9f034ae6be97a4fb1d4b1",
+      "patch": "docs/compatibility/patches/record-dependency-iterate.json"
+    },
+    {
+      "id": "runtime:replace:9630",
+      "source-sha256": "bf1a9863d51d7d8e945710b95093256d960354b733fe7c02d63527c9fe89db4c",
+      "patch": "docs/compatibility/patches/record-dependency-replace.json"
+    },
+    {
+      "id": "runtime:complement:4454",
+      "source-sha256": "77df12ea943440f852dba2228c0dbe261602f0baefca19818df2c6530805d3bf",
+      "patch": "docs/compatibility/patches/record-emitter-complement.json"
+    },
+    {
+      "id": "runtime:remove:5399",
+      "source-sha256": "8fee20ffd7385be06339da051343bdeeb57f2809a55719ad3193adb1043e2e8c",
+      "patch": "docs/compatibility/patches/record-emitter-remove.json"
+    },
+    {
+      "id": "runtime:preserving-reduced:10953",
+      "source-sha256": "d78f114de8ea0ff64e2cc69ac60ba432f085501a9c8ceaf6ecc2ab72b33ccd3b",
+      "patch": "docs/compatibility/patches/record-emitter-preserving-reduced.json"
+    },
+    {
+      "id": "runtime:cat:10960",
+      "source-sha256": "8a773318923c8e580f238ebdd2d37f026dcad62a3ec05c543bfd3329f08a3904",
+      "patch": "docs/compatibility/patches/record-emitter-cat.json"
+    },
+    {
+      "id": "runtime:mapcat:5360",
+      "source-sha256": "5e24000c22fb437cda50a47a358acd93eb0badba8138462f35fd756c3dcb9a17",
+      "patch": "docs/compatibility/patches/record-emitter-mapcat.json"
+    },
+    {
+      "id": "runtime:drop-while:5021",
+      "source-sha256": "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0",
+      "patch": "docs/compatibility/patches/record-emitter-drop-while.json"
     }
   ],
   "loader": {

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "source": "crates/suss-compile/src/portable_record_label.rs",
+  "source-file-sha256": "48901949be22045578190ddcc532c50f75be5fc9de523f1655867399b52a3647",
+  "compiled-source-sha256": "edd96e3da8c18470aa9575186bc73bbe25489ab6597b8cc8a792107ab2805631",
+  "originals": [
+    {
+      "path": "docs/compatibility/record-analyzer-context/core-CHAR_MAP-377.cljs",
+      "sha256": "84d2e6f15deb4e9fad1033424236974573ec7418b8841a20f2b5fa896573862e"
+    },
+    {
+      "path": "docs/compatibility/record-analyzer-context/analyzer-js-reserved-190.cljc",
+      "sha256": "79d6f5638f198bcc9369b54c9040d84f57e09ed9363aee4334f9bb427bb839bd"
+    },
+    {
+      "path": "docs/compatibility/record-analyzer-context/compiler-munge-reserved-108.cljc",
+      "sha256": "dfe5b8a1fd1ffb431d80e000e81338425f24d1653451f4fd2548bbd09e069122"
+    },
+    {
+      "path": "docs/compatibility/record-analyzer-context/compiler-munge-114.cljc",
+      "sha256": "b101a8b73a89075990ffee5e037641bfb85666ecd51da9329f2a5d1706dbb673"
+    }
+  ],
+  "adaptations": [
+    "Compile the complete scalar-name munge path as Suss source for resolved record type labels; analyzer-map lexical munging remains a separate interface.",
+    "Retain the entire character and reserved-name tables, using an array map and a vector with value membership scans to avoid eager persistent hash-table construction in the compiled Macro Store.",
+    "Use UTF-16 native character reads/slices and explicit scans for non-overlapping .. replacement, division-before-non-line-terminator replacement, per-segment reserved suffixes, and per-code-unit character mapping. Compare the four line-terminator code units directly rather than rebuilding a hash set inside the scan.",
+    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys."
+  ],
+  "tests": [
+    "crates/suss-cli/tests/compiled_record_labels.rs"
+  ],
+  "status": "Focused validation in progress; public record emitter remains missing."
+}

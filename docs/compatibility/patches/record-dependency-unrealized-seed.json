@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c9b9f41d167451c36583ae83e03160d65d444239e6b532b64e085413513c0fef",
+  "replacement": "(def ^:private UNREALIZED-SEED (js-obj))",
+  "rationale": "Retain the private unique identity sentinel used by the complete pinned Iterate type. Replace the empty #js object literal with the existing portable owned js-obj carrier; no host JavaScript dependency is introduced."
+}

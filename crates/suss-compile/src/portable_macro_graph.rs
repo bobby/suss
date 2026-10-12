@@ -1159,7 +1159,7 @@ impl<'a> AnalysisGraph<'a> {
                 fields.extend([
                     ("type", self.flag(true)?),
                     ("num-fields", self.number(count)?),
-                    ("record", self.flag(false)?),
+                    ("record", self.flag(info.type_is_record)?),
                 ]);
             }
             // Namespace declaration records do not have the :ns field of a

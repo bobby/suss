@@ -4910,4 +4910,132 @@
    :rationale "Retain every pinned public arity and direction/step branch, including exact integer-range specialization, floating chunked ranges, zero-step repeat behavior, and the finite Number.MAX_VALUE zero-arity endpoint. Adapt defn expansion and express the same MAX_VALUE as its exact binary64 literal, without changing the public contract."
    :status :in-progress :adaptation-path "docs/compatibility/patches/range.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+  "runtime:drop:4976"
+  {:source-sha256 "b1d8bbc4d336d3a52f059cde10decdb0d198bdcc0ad1cc11313f83733d576fc9" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["IDrop/-drop" "runtime:seq" "runtime:pos?" "runtime:rest" "runtime:volatile!" "runtime:vswap!" "runtime:dec" "runtime:lazy-seq"]
+   :classification :adapted
+   :rationale "Retain both pinned public arities, the IDrop fast path and lazy sequence fallback, and the stateful transducer arity. Adapt only defn expansion; execution regressions must verify numeric boundaries, laziness, and transducer state."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-drop.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:dorun:10287"
+  {:source-sha256 "a937da2e4cb6e2d900565f03f9f4832a62ed6bb6d65edd80a99de74287568003" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:seq" "runtime:next" "runtime:pos?" "runtime:dec"]
+   :classification :adapted
+   :rationale "Retain both pinned arities and exact traversal demand; the two-argument form stops at either exhausted input or non-positive count."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-dorun.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:doall:10300"
+  {:source-sha256 "af3b0f111a8d8c9a617d55b8c7c28e210b2aa04b21e4ff02dd7c2dbcd61195a2" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:dorun"]
+   :classification :adapted
+   :rationale "Retain both pinned arities, force the requested traversal, and return the original collection unchanged."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-doall.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:take-nth:10159"
+  {:source-sha256 "09dec2d9a7a12429ef887be7688a1b9c8b5cc91b030caf5ba3b083a0fd594ad4" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["drop" "runtime:seq" "runtime:cons" "runtime:volatile!" "runtime:vswap!" "runtime:rem" "runtime:zero?"]
+   :classification :adapted
+   :rationale "Retain both pinned arities and their sequence/transducer behavior; adapt only the state cell, lazy sequence constructor, defn expansion and typed precondition error. Preserve CLJS modulo-zero behavior for the transducer and the documented non-positive arity-2 limitation."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-take-nth.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_take_nth.rs"]}
+  "runtime:rem:2987"
+  {:source-sha256 "0d2ecbb308a71cdf6807f46f7ced7208e05edb9fa4932820a77dabaf4f7b7c56" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:quot" "runtime:fix" "runtime:js-mod"]
+   :classification :adapted
+   :rationale "Retain the pinned remainder definition and arithmetic; adapt only defn expansion."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-rem.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_take_nth.rs"]}
+
+  "runtime:take:4949"
+  {:source-sha256 "b3108b498b0d165295d9b442ec38e7cfa6d1fec46ba20769347690e8be7b704f" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["number?" "pos?" "dec" "atom/swap!/deref" "ensure-reduced" "LazySeq" "seq/first/rest/cons"]
+   :classification :adapted
+   :rationale "Retain both complete pinned take arities, numeric preconditions, lazy demand, transducer initialization/completion and ensure-reduced behavior. Expand defn and when-let, use an explicit memoized LazySeq constructor, replace the private volatile cell with portable atom/swap!, and use the existing portable typed precondition error."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-take.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:UNREALIZED-SEED:5242"
+  {:source-sha256 "c9b9f41d167451c36583ae83e03160d65d444239e6b532b64e085413513c0fef" :visibility :private :arities nil
+   :dependencies ["portable owned js-obj carrier"]
+   :classification :adapted
+   :rationale "Retain the private unique identity sentinel used by the complete pinned Iterate type. Replace the empty #js object literal with the existing portable owned js-obj carrier; no host JavaScript dependency is introduced."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-unrealized-seed.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:Iterate:5244"
+  {:source-sha256 "0d66568f7d23604456f6f136715471edcf53a92487b0fdf702a60a47183fc22f" :visibility :private :arities nil
+   :dependencies ["UNREALIZED-SEED" "IPending/IWithMeta/IMeta/ISeq/INext/ICollection/IEmptyableCollection/ISequential/ISeqable/IReduce" "List/cons/reduced?/deref/pr-str*"]
+   :classification :portable
+   :rationale "Retain the entire pinned Iterate type, every field/protocol/method and both reduction arities. The private seed and cached next identity preserve lazy demand, metadata and Reduced stop behavior; source retention alone does not establish execution."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:iterate:5303"
+  {:source-sha256 "f37249f344dd10022a20f5cbef1cd88be4839737d1d9f034ae6be97a4fb1d4b1" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["Iterate"]
+   :classification :adapted
+   :rationale "Retain the complete pinned iterate factory and seeded first value; expand only defn to def/fn with its docs, added metadata and arglist."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-iterate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:replace:9630"
+  {:source-sha256 "bf1a9863d51d7d8e945710b95093256d960354b733fe7c02d63527c9fe89db4c" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["find/val/second" "map" "vector?/count/nth/assoc/reduce" "take/iterate/inc"]
+   :classification :adapted
+   :rationale "Retain every pinned replace branch and both arities: eager vector updates retaining unchanged owner/metadata, lazy sequence replacement, and the map transducer. Expand defn and shorthand functions only; keep find/val/second, assoc, reduce, take and iterate as live source dependencies. This is a dependency of emit-defrecord field substitutions, not evidence that records are implemented."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-replace.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:complement:4454"
+  {:source-sha256 "77df12ea943440f852dba2228c0dbe261602f0baefca19818df2c6530805d3bf" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["not/apply"]
+   :classification :adapted
+   :rationale "Retain the complete pinned complement function and every returned arity/effect. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-complement.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:remove:5399"
+  {:source-sha256 "8fee20ffd7385be06339da051343bdeeb57f2809a55719ad3193adb1043e2e8c" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["filter/complement"]
+   :classification :adapted
+   :rationale "Retain both pinned remove arities with their complete filter/complement dependencies; expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-remove.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:preserving-reduced:10953"
+  {:source-sha256 "d78f114de8ea0ff64e2cc69ac60ba432f085501a9c8ceaf6ecc2ab72b33ccd3b" :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["reduced?/reduced"]
+   :classification :adapted
+   :rationale "Retain the complete pinned reducer wrapper, including double wrapping a downstream Reduced before nested reduction unwraps it. Expand defn-/shorthand fn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-preserving-reduced.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:cat:10960"
+  {:source-sha256 "8a773318923c8e580f238ebdd2d37f026dcad62a3ec05c543bfd3329f08a3904" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["preserving-reduced/reduce"]
+   :classification :adapted
+   :rationale "Retain the complete pinned cat transducer, initialization/completion and nested reduction stop propagation. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-cat.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:mapcat:5360"
+  {:source-sha256 "5e24000c22fb437cda50a47a358acd93eb0badba8138462f35fd756c3dcb9a17" :visibility :public :arities {:fixed [1] :variadic-min 1}
+   :dependencies ["comp/map/cat/apply/concat"]
+   :classification :adapted
+   :rationale "Retain both complete pinned mapcat clauses and all collection arguments, rather than substituting the single-collection use in the record emitter. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-mapcat.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:drop-while:5021"
+  {:source-sha256 "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["atom/deref/reset!" "seq/first/rest/LazySeq"]
+   :classification :adapted
+   :rationale "Retain both pinned drop-while clauses, including short-circuited predicate state and initialization/completion. Expand defn/lazy-seq and replace the private volatile state with portable atom/reset! storage."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-drop-while.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
 }}

@@ -65,6 +65,15 @@ RANDOMIZED = {
     'clojure.core-test.constantly/test-constantly#30': 'constant chosen by rand-int',
     'clojure.core-test.uuid-qmark/test-uuid?#4': 'value from random-uuid',
 }
+# These source assertions intentionally test only truthiness/absence of a throw.
+# The portable contract does not promise hash-set traversal order, so comparing
+# the concrete sequence produced by `drop` would overstate what they assert.
+VERDICT_ONLY = {
+    'clojure.core-test.drop/test-drop#12':
+        'upstream comment says map/set order is unknown; assertion checks doall truthiness only',
+    'clojure.core-test.nil-qmark/test-nil?#13':
+        'host-interop inventory classifies js/undefined as host-specific with no portable counterpart',
+}
 
 
 def sha256(data):
@@ -367,6 +376,8 @@ def decide(expected, actual):
         return f"head:{actual.get('head')}", False
     if actual['verdict'] != expected['verdict']:
         return f"verdict:{actual['verdict']}", False
+    if expected['id'] in VERDICT_ONLY:
+        return None, True
     if not expected['deterministic']:
         return None, True
     if expected['kind'] == 'thrown':

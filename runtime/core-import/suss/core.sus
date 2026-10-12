@@ -7892,6 +7892,239 @@ reduces them without incurring seq initialization"
        (if (== end start)
          ()
          (repeat start))))))
+
+(def ^{:doc "Returns a laziness-preserving sequence of all but the first n items in coll.
+  Returns a stateful transducer when no collection is provided." :arglists '([n] [n coll])} drop
+  (fn ([n]
+   (when-not (number? n) (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (fn [rf]
+       (let [na (atom n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [n @na]
+                (swap! na dec)
+                (if (pos? n)
+                  result
+                  (rf result input))))))))
+  ([n coll]
+   (when-not (number? n) (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (if (implements? IDrop coll)
+       (or
+         (if (pos? n)
+           (-drop coll (suss.bootstrap/f64-ceil n))
+           (seq coll))
+         ())
+       (let [step (fn [n coll]
+                    (let [s (seq coll)]
+                      (if (and (pos? n) s)
+                        (recur (dec n) (rest s))
+                        s)))]
+         (new LazySeq nil (fn* [] (step n coll)) nil nil))))))
+
+(def ^{:doc "When lazy sequences are produced via functions that have side
+  effects, any effects other than those needed to produce the first
+  element in the seq do not occur until the seq is consumed. dorun can
+  be used to force any effects. Walks through the successive nexts of
+  the seq, does not retain the head and returns nil." :arglists '([coll] [n coll])} dorun
+  (fn ([coll]
+   (let [__suss_dorun_seq_0 (seq coll)]
+     (when __suss_dorun_seq_0
+       (let [s __suss_dorun_seq_0]
+         (recur (next s))))))
+  ([n coll]
+   (when (and (seq coll) (pos? n))
+     (recur (dec n) (next coll))))))
+
+(def ^{:doc "When lazy sequences are produced via functions that have side
+  effects, any effects other than those needed to produce the first
+  element in the seq do not occur until the seq is consumed. doall can
+  be used to force any effects. Walks through the successive nexts of
+  the seq, retains the head and returns it, thus causing the entire
+  seq to reside in memory at one time." :arglists '([coll] [n coll])} doall
+  (fn ([coll]
+   (dorun coll)
+   coll)
+  ([n coll]
+   (dorun n coll)
+   coll)))
+
+(def ^{:doc "remainder of dividing numerator by denominator." :arglists '([n d])} rem
+  (fn [n d]
+  (let [q (quot n d)]
+    (- n (* d q)))))
+
+(def ^{:doc "Returns a lazy seq of every nth item in coll.  Returns a stateful
+  transducer when no collection is provided." :arglists '([n] [n coll])} take-nth
+  (fn ([n]
+   (when-not (number? n) (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (fn [rf]
+       (let [ia (atom -1)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [i (swap! ia inc)]
+                (if (zero? (rem i n))
+                  (rf result input)
+                  result)))))))
+  ([n coll]
+   (when-not (number? n) (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (new LazySeq nil
+       (fn* []
+         (let [__suss_take_nth_seq_0 (seq coll)]
+           (if __suss_take_nth_seq_0
+             (let [s __suss_take_nth_seq_0]
+               (cons (first s) (take-nth n (drop n s))))
+             nil)))
+       nil nil))))
+
+(def ^{:doc "Returns a lazy sequence of the first n items in coll, or all items if
+  there are fewer than n. Returns a stateful transducer when
+  no collection is provided." :arglists '([n] [n coll])} take
+  (fn
+    ([n]
+     (when-not (number? n)
+       (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (fn [rf]
+       (let [na (atom n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+            (let [n @na
+                  nn (swap! na dec)
+                  result (if (pos? n) (rf result input) result)]
+              (if (not (pos? nn)) (ensure-reduced result) result)))))))
+    ([n coll]
+     (when-not (number? n)
+       (throw (suss.bootstrap/error "Assert failed: (number? n)")))
+     (new LazySeq nil
+       (fn* []
+         (when (pos? n)
+           (let [s (seq coll)]
+             (when s (cons (first s) (take (dec n) (rest s)))))))
+       nil nil))))
+
+(def ^:private UNREALIZED-SEED (js-obj))
+
+(deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+
+  IPending
+  (-realized? [coll]
+    (not (identical? seed UNREALIZED-SEED)))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (Iterate. new-meta f prev-seed seed next)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll]
+    (when (identical? UNREALIZED-SEED seed)
+      (set! seed (f prev-seed)))
+    seed)
+  (-rest [coll]
+    (when (nil? next)
+      (set! next (Iterate. nil f (-first coll) UNREALIZED-SEED nil)))
+    next)
+
+  INext
+  (-next [coll]
+    (-rest coll))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  ISequential
+  ISeqable
+  (-seq [coll] coll)
+
+  IReduce
+  (-reduce [coll rf]
+    (let [first (-first coll)
+          v     (f first)]
+      (loop [ret (rf first v) v v]
+        (if (reduced? ret)
+          @ret
+          (let [v (f v)]
+            (recur (rf ret v) v))))))
+  (-reduce [coll rf start]
+    (let [v (-first coll)]
+      (loop [ret (rf start v) v v]
+        (if (reduced? ret)
+          @ret
+          (let [v (f v)]
+            (recur (rf ret v) v)))))))
+
+(def ^{:doc "Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects"
+       :added "1.0" :arglists '([f x])} iterate
+  (fn [f x] (Iterate. nil f nil x nil)))
+
+(def ^{:doc "Given a map of replacement pairs and a vector/collection, returns a
+  vector/seq with any elements = a key in smap replaced with the
+  corresponding val in smap. Returns a transducer when no collection
+  is provided." :arglists '([smap] [smap coll])} replace
+  (fn
+    ([smap]
+     (map (fn [x] (if-let [e (find smap x)] (val e) x))))
+    ([smap coll]
+     (if (vector? coll)
+       (let [n (count coll)]
+         (reduce (fn [v i]
+                   (if-let [e (find smap (nth v i))]
+                     (assoc v i (second e))
+                     v))
+           coll (take n (iterate inc 0))))
+       (map (fn [x] (if-let [e (find smap x)] (second e) x)) coll)))))
+
+(def ^{:doc "Takes a fn f and returns a fn that takes the same arguments as f,
+  has the same effects, if any, and returns the opposite truth value." :arglists '([f])} complement
+  (fn [f] (fn ([] (not (f))) ([x] (not (f x))) ([x y] (not (f x y)))
+              ([x y & zs] (not (apply f x y zs))))))
+
+(def ^{:doc "Returns a lazy sequence of the items in coll for which
+  (pred item) returns logical false. pred must be free of side-effects.
+  Returns a transducer when no collection is provided." :arglists '([pred] [pred coll])} remove
+  (fn ([pred] (filter (complement pred))) ([pred coll] (filter (complement pred) coll))))
+
+(def ^{:private true :arglists '([rf])} preserving-reduced
+  (fn [rf] (fn [result input] (let [ret (rf result input)]
+                              (if (reduced? ret) (reduced ret) ret)))))
+
+(def ^{:doc "A transducer which concatenates the contents of each input, which must be a
+  collection, into the reduction." :added "1.7" :arglists '([rf])} cat
+  (fn [rf] (let [rf1 (preserving-reduced rf)]
+             (fn ([] (rf)) ([result] (rf result)) ([result input] (reduce rf1 result input))))))
+
+(def ^{:doc "Returns the result of applying concat to the result of applying map
+  to f and colls. Thus function f should return a collection. Returns
+  a transducer when no collections are provided" :added "1.0" :static true :arglists '([f] [f & colls])} mapcat
+  (fn ([f] (comp (map f) cat)) ([f & colls] (apply concat (apply map f colls)))))
+
+(def ^{:doc "Returns a lazy sequence of the items in coll starting from the
+  first item for which (pred item) returns logical false. Returns a
+  stateful transducer when no collection is provided." :arglists '([pred] [pred coll])} drop-while
+  (fn
+    ([pred] (fn [rf] (let [da (atom true)]
+                      (fn ([] (rf)) ([result] (rf result))
+                        ([result input] (let [drop? @da]
+                          (if (and drop? (pred input)) result
+                            (do (reset! da nil) (rf result input)))))))))
+    ([pred coll] (let [step (fn [pred coll] (let [s (seq coll)]
+                            (if (and s (pred (first s))) (recur pred (rest s)) s)))]
+                   (new LazySeq nil (fn* [] (step pred coll)) nil nil)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

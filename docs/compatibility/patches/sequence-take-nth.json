@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "09dec2d9a7a12429ef887be7688a1b9c8b5cc91b030caf5ba3b083a0fd594ad4",
+  "replacement": "(def ^{:doc \"Returns a lazy seq of every nth item in coll.  Returns a stateful\n  transducer when no collection is provided.\" :arglists '([n] [n coll])} take-nth\n  (fn ([n]\n   (when-not (number? n) (throw (suss.bootstrap/error \"Assert failed: (number? n)\")))\n     (fn [rf]\n       (let [ia (atom -1)]\n         (fn\n           ([] (rf))\n           ([result] (rf result))\n           ([result input]\n              (let [i (swap! ia inc)]\n                (if (zero? (rem i n))\n                  (rf result input)\n                  result)))))))\n  ([n coll]\n   (when-not (number? n) (throw (suss.bootstrap/error \"Assert failed: (number? n)\")))\n     (new LazySeq nil\n       (fn* []\n         (let [__suss_take_nth_seq_0 (seq coll)]\n           (if __suss_take_nth_seq_0\n             (let [s __suss_take_nth_seq_0]\n               (cons (first s) (take-nth n (drop n s))))\n             nil)))\n       nil nil))))",
+  "rationale": "Retain both pinned take-nth arities and number? preconditions; expand defn, adapt the stateful transducer from volatile!/vswap! to portable atom/swap!, and express the lazy branch as a memoized LazySeq with single-evaluation seq binding."
+}

@@ -747,6 +747,8 @@ struct Analyzer<'a> {
     phase: Phase,
     locals: HashMap<String, LocalBinding>,
     fields: HashMap<String, FieldBinding>,
+    /// Field declarations in an intrinsic type body, before methods bind a receiver.
+    type_body_fields: Vec<(Global, Form, Vec<Form>)>,
     function_scopes: Vec<std::sync::Arc<FunctionScope>>,
     next: usize,
     next_loop: usize,
@@ -1383,6 +1385,7 @@ impl Analyzer<'_> {
             initializer_form: init.cloned(),
             initializer: None,
             type_fields: None,
+            type_is_record: false,
             once,
         };
         if !preserve_declaration {
@@ -2963,6 +2966,7 @@ pub(crate) fn prepare_with_origin(
         phase,
         locals: HashMap::new(),
         fields: HashMap::new(),
+        type_body_fields: Vec::new(),
         function_scopes: Vec::new(),
         next: 0,
         next_loop: 0,

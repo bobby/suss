@@ -46,6 +46,8 @@ impl Global {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NominalForm {
     Deftype,
+    DeftypeInternal,
+    DefrecordInternal,
     Defprotocol,
     ExtendType,
     Instance,
@@ -212,6 +214,8 @@ pub struct DefinitionInfo {
     /// Genuine deftype declaration facts, captured before method analysis.
     /// None is an ordinary def, not a zero-field source type.
     pub type_fields: Option<usize>,
+    /// The intrinsic declaration kind, independent of user metadata overrides.
+    pub type_is_record: bool,
     pub once: bool,
 }
 impl DefinitionInfo {
@@ -512,6 +516,8 @@ impl Environment {
             }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
+                ("deftype*", NominalForm::DeftypeInternal),
+                ("defrecord*", NominalForm::DefrecordInternal),
                 ("defprotocol", NominalForm::Defprotocol),
                 ("extend-type", NominalForm::ExtendType),
                 ("instance?", NominalForm::Instance),
@@ -1136,6 +1142,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1195,6 +1203,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1254,6 +1264,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1313,6 +1325,8 @@ impl Environment {
                     | "binding"
                     | "with-redefs"
                     | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                     | "defprotocol"
                     | "extend-type"
                     | "instance?"
@@ -1461,6 +1475,8 @@ impl Environment {
                 global,
                 form: match name {
                     "deftype" => NominalForm::Deftype,
+                    "deftype*" => NominalForm::DeftypeInternal,
+                    "defrecord*" => NominalForm::DefrecordInternal,
                     "defprotocol" => NominalForm::Defprotocol,
                     "instance?" => NominalForm::Instance,
                     "satisfies?" => NominalForm::Satisfies,
