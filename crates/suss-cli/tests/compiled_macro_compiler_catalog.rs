@@ -212,3 +212,50 @@ fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
     assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
 }
+
+const NATIVE_OBJECT_FACTS: &str = r#"(defmacro ^{:suss/compiler-catalog true} native-object-facts []
+  (let [catalog (:suss/compiler-catalog &env)
+        interfaces (:native-interfaces catalog)
+        native (get interfaces 'js/Object)
+        namespaces (:namespaces catalog)
+        protocols (:protocol-signatures catalog)
+        js-namespace (get namespaces 'js)]
+    (list 'quote [(:global native) (:phase native) (:binding-kind native)
+                  (:export native) (:extension-kind native)
+                  (contains? namespaces 'js)
+                  (some? (get (:defs js-namespace) 'Object))
+                  (contains? protocols 'js/Object)])))"#;
+
+#[test]
+fn compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phases() {
+    for (mut caller, phase) in [
+        (Session::new_repl().unwrap(), "runtime"),
+        (Session::new_macro().unwrap(), "macro"),
+    ] {
+        let mut macros = CompiledMacros::new().unwrap();
+        caller.enter_namespace("record.caller").unwrap();
+        macros.enter_namespace("record.caller").unwrap();
+        macros.define(NATIVE_OBJECT_FACTS).unwrap();
+        let value = caller
+            .eval_with_macros("(native-object-facts)", &mut macros)
+            .unwrap();
+        let form = decode(&mut caller, &value);
+        let Kind::Vector(items) = form.kind else {
+            panic!("compiled wrapper returns native interface projection")
+        };
+        assert_eq!(items.len(), 8);
+        assert!(matches!(&items[0].kind, Kind::Symbol(symbol)
+            if symbol.namespace.as_deref() == Some("js") && symbol.name == "Object"));
+        assert!(matches!(&items[1].kind, Kind::Keyword(keyword)
+            if keyword.namespace.is_none() && keyword.name == phase));
+        assert!(matches!(&items[2].kind, Kind::Keyword(keyword)
+            if keyword.namespace.is_none() && keyword.name == "environment-core"));
+        assert!(matches!(&items[3].kind, Kind::String(units)
+            if *units == "object-constructor".encode_utf16().collect::<Vec<_>>()));
+        assert!(matches!(&items[4].kind, Kind::Keyword(keyword)
+            if keyword.namespace.is_none() && keyword.name == "native-object"));
+        assert_eq!(items[5].kind, Kind::Bool(false), "no fabricated js namespace");
+        assert_eq!(items[6].kind, Kind::Bool(false), "no fabricated js/Object var definition");
+        assert_eq!(items[7].kind, Kind::Bool(false), "no fabricated protocol signature");
+    }
+}

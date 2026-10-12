@@ -908,6 +908,28 @@ impl<'a> AnalysisGraph<'a> {
                 ));
             }
             let protocols = self.map_values(protocols)?;
+            let mut native_interfaces = Vec::new();
+            for fact in &compiler.native_interfaces {
+                let global = self.symbol(&format!("{}/{}", fact.global.namespace(), fact.global.name()))?;
+                let phase = self.keyword(match fact.global.phase() {
+                    portable::resolve::Phase::Runtime => "runtime",
+                    portable::resolve::Phase::Macro => "macro",
+                })?;
+                let binding_kind = self.keyword("environment-core")?;
+                let export = self.text(fact.export)?;
+                let extension_kind = self.keyword(match fact.kind {
+                    portable::compiler_facts::NativeInterfaceKind::NativeObject => "native-object",
+                })?;
+                let value = self.map(vec![
+                    ("global", global),
+                    ("phase", phase),
+                    ("binding-kind", binding_kind),
+                    ("export", export),
+                    ("extension-kind", extension_kind),
+                ])?;
+                native_interfaces.push((global, value));
+            }
+            let native_interfaces = self.map_values(native_interfaces)?;
             let phase = self.keyword(match compiler.phase {
                 portable::resolve::Phase::Runtime => "runtime",
                 portable::resolve::Phase::Macro => "macro",
@@ -918,6 +940,7 @@ impl<'a> AnalysisGraph<'a> {
                 ("current", current),
                 ("namespaces", namespaces),
                 ("protocol-signatures", protocols),
+                ("native-interfaces", native_interfaces),
             ])?;
             let key = self.keyword("suss/compiler-catalog")?;
             let mut entries = match self.recipes[root].as_ref().expect("environment map recipe") {

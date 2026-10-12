@@ -174,3 +174,25 @@ Do not treat dependency imports or a hash-label helper as record acceptance.
 The prior test hold remains in force pending clarification after Cargo cleanup
 and goal reactivation. Bootstrap source/dependency/compiler identities remain
 stale; validation must begin with regeneration and focused checks once permitted.
+
+## Executed helper evidence — 2026-10-12
+
+The dated source-only notes above describe their authored snapshots. The test
+hold was lifted before the recorded focused and full-baseline attempts. Factory,
+label and intrinsic record-boundary execution results, regenerated bootstrap
+identities and remaining limitations are recorded in the latest
+[handoff evidence](../../roadmap/handoff.md). Those helper results establish
+those interfaces; the public record emitter, wrapper and complete generated
+protocol graph remain separate implementation and acceptance work.
+
+The genuine opt-in compiler catalog now includes `:native-interfaces`, keyed by
+`js/Object` only when the actual caller-phase binding is the exact Core
+`object-constructor` export. Its value records `:global`, `:phase`,
+`:binding-kind :environment-core`, `:export`, and
+`:extension-kind :native-object`. No namespace, definition metadata or protocol
+signature is synthesized. Producer tests execute positive and replacement-cell
+omission cases in both phases; the compiled-wrapper test consumes the actual
+serialized catalog in both caller phases after GC with default budgets.
+See [producer tests](../../../crates/suss-compile/src/portable/compiler_facts.rs)
+and [transport execution](../../../crates/suss-cli/tests/compiled_macro_compiler_catalog.rs).
+This transport alone is not public `defrecord` acceptance.

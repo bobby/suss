@@ -269,6 +269,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let index = if writing { 3 } else { 2 };
         let table = index + 1;
         let fresh = index + 2;
+        let length = table + if writing { 2 } else { 1 };
         let mut body = vec![];
         guard(&mut body, 0, DESCRIPTOR);
         guard(&mut body, 1, DESCRIPTOR);
@@ -299,7 +300,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         guard(&mut body, table, ARGS);
         // Reject malformed odd-length tables before pair indexing.
         array(&mut body, table);
-        body.extend([ArrayLen, I32Const(1), I32And, If(BlockType::Empty)]);
+        body.extend([ArrayLen, LocalTee(length), I32Const(1), I32And, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
         body.extend([
@@ -309,8 +310,9 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             Loop(BlockType::Empty),
             LocalGet(index),
         ]);
-        array(&mut body, table);
-        body.extend([ArrayLen, I32GeU, BrIf(1)]);
+        // No callback occurs during this table walk. Its GC array length is
+        // immutable even when an existing slot is replaced, so read it once.
+        body.extend([LocalGet(length), I32GeU, BrIf(1)]);
         array(&mut body, table);
         body.extend([
             LocalGet(index),
@@ -337,18 +339,16 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             End,
         ]);
         if writing {
-            array(&mut body, table);
             body.extend([
-                ArrayLen,
+                LocalGet(length),
                 I32Const(i32::MAX - 2),
                 I32GtU,
                 If(BlockType::Empty),
             ]);
             error(&mut body);
             body.push(End);
-            array(&mut body, table);
             body.extend([
-                ArrayLen,
+                LocalGet(length),
                 I32Const(2),
                 I32Add,
                 ArrayNewDefault(ARGS),
@@ -358,9 +358,8 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             body.push(I32Const(0));
             array(&mut body, table);
             body.push(I32Const(0));
-            array(&mut body, table);
             body.extend([
-                ArrayLen,
+                LocalGet(length),
                 ArrayCopy {
                     array_type_index_dst: ARGS,
                     array_type_index_src: ARGS,
@@ -398,7 +397,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                 &[VALUE, VALUE]
             },
             if writing { &[] } else { &[VALUE] },
-            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE)],
+            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE), (1, ValType::I32)],
             &body,
         );
         if !writing {

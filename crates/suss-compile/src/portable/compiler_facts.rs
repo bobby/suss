@@ -15,6 +15,39 @@ pub struct CompilerNamespaceCatalog {
     pub phase: resolve::Phase,
     pub current: String,
     pub namespaces: BTreeMap<String, Option<Arc<hir::SourceNamespace>>>,
+    pub native_interfaces: Vec<NativeInterfaceFact>,
+}
+
+/// A typed host interface proven by an actual phase-specific compiler binding.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NativeInterfaceFact {
+    pub global: resolve::Global,
+    pub kind: NativeInterfaceKind,
+    pub export: &'static str,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NativeInterfaceKind {
+    NativeObject,
+}
+
+fn native_interface_facts(
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Vec<NativeInterfaceFact> {
+    let symbol = Symbol { namespace: Some("js".into()), name: "Object".into() };
+    match environment.resolve(phase, &symbol, 0..0) {
+        Ok(resolve::Binding::Core { global, export: "object-constructor" })
+            if global.phase() == phase && global.namespace() == "js" && global.name() == "Object" =>
+        {
+            vec![NativeInterfaceFact {
+                global,
+                kind: NativeInterfaceKind::NativeObject,
+                export: "object-constructor",
+            }]
+        }
+        _ => Vec::new(),
+    }
 }
 
 impl CompilerNamespaceCatalog {
@@ -32,6 +65,7 @@ impl CompilerNamespaceCatalog {
                     )
                 })
                 .collect(),
+            native_interfaces: native_interface_facts(environment, phase),
         }
     }
 
@@ -136,4 +170,40 @@ pub fn elide_reader_metadata(form: &Form) -> Result<Vec<Form>, Diagnostic> {
         !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none()
             && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
     }).flat_map(|pair| pair.iter().cloned()).collect())
+}
+
+#[cfg(test)]
+mod native_interface_tests {
+    use super::*;
+
+    #[test]
+    fn native_object_fact_requires_exact_core_export_in_each_phase() {
+        for phase in [resolve::Phase::Runtime, resolve::Phase::Macro] {
+            let env = resolve::Environment::new("user").unwrap();
+            let facts = native_interface_facts(&env, phase);
+            assert_eq!(facts.len(), 1);
+            assert_eq!(facts[0].kind, NativeInterfaceKind::NativeObject);
+            assert_eq!(facts[0].export, "object-constructor");
+            assert_eq!(facts[0].global.phase(), phase);
+            assert_eq!(facts[0].global.namespace(), "js");
+            assert_eq!(facts[0].global.name(), "Object");
+        }
+    }
+
+    #[test]
+    fn replaced_object_binding_emits_no_native_fact_in_either_phase() {
+        for phase in [resolve::Phase::Runtime, resolve::Phase::Macro] {
+            let mut env = resolve::Environment::new("user").unwrap();
+            env.declare_cell(phase, "js", "Object").unwrap();
+            let symbol = Symbol {
+                namespace: Some("js".into()),
+                name: "Object".into(),
+            };
+            assert!(matches!(
+                env.resolve(phase, &symbol, 0..0),
+                Ok(resolve::Binding::Cell(_))
+            ));
+            assert!(native_interface_facts(&env, phase).is_empty());
+        }
+    }
 }

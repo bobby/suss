@@ -24727,3 +24727,67 @@ integration remains unfinished. On resume, investigate and optimize actual
 initializer work with the existing budget, execute affected focused tests, then
 run the required full baseline and require final-head review/green CI before
 promotion. Scratch candidates under /private/tmp remain outside this checkpoint.
+
+M4 resumed validation (2026-10-12): resumed at clean5339cdd; foreground
+validation was terminal at pause. The latest fix executes the entire same core
+initializer, preserving fresh eager UTF16 literals/source names, and lets
+verified non-async forward edges continue through later dispatcher guards.
+Backedges and every resumable transfer retain their loop transfer. Single-block
+Return/Throw bodies omit an unnecessary dispatcher. Protocol get/set caches the
+immutable table length only within its callback-free scan; guards, reference
+identity, replacements and live lookup remain intact. No fuel limit, RUSTFLAGS,
+test profile, concurrency setting, library definition or initializer was removed.
+
+The original async8-case binary failed4/8 before these changes. After bootstrap
+regeneration, the unchanged focused command:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-compile --locked --test generated_async_import_bridge
+--test portable_literal_allocation --test portable_definitions
+--test portable_async_execution -- --test-threads=2` passed respectively
+8/8,5/5,13/13,13/13 (log /private/tmp/suss-m4-startup-focused-20261012.log).
+Literal regressions execute both phases, exact64/65-unit allocation boundaries,
+astral/lone-surrogate/empty/4096-unit strings, fixed and multi-arity closure names,
+fresh arrays and GC retention. Three adversarial decoder cases are included.
+
+A temporary diagnostic used the existing default Session allowance separately
+from these unchanged component acceptance tests. Its first source-input path
+omitted the bootstrap source-name path and is not component startup evidence.
+The corrected actual bootstrap diagnostic measured core2114907 fuel initially,
+2049590 after table-length caching, and1670713 after forward dispatch; the final
+runtime/bindings/core total was1734853. This diagnosis is not a test-budget
+change or an acceptance gate. Its owned temporary example is removed; logs
+remain /private/tmp/suss-m4-startup-{actual,table,forward}-profile-20261012.log.
+
+Typed native interface facts are now integrated: only actual caller-phase
+js/Object resolving to exact Core export object-constructor is projected into
+the opt-in compiler catalog. No namespace, var or protocol signature is invented.
+Producer regressions passed2/2, including replacement-cell absence in both
+phases. The new compiled wrapper has executed successfully in both phases with
+default budgets; remaining catalog binary checks and live-protocol focus are
+still running. The complete Python regression discovery passed323/323 in29.930s
+(log /private/tmp/suss-m4-startup-python-20261012.log). Cicero independently
+reviewed the final dirty emitter, callback-free length cache, typed producer and
+transport test without actionable blockers. Further full-baseline/bootstrap
+reproduction evidence and final-head CI remain required.
+
+The complete public record emitter/protocol-facts candidates remain scratch-only.
+A public wrapper candidate is now saved at
+/private/tmp/suss-m4-public-defrecord-wrapper-candidate.sus; it is uninstalled,
+uncompiled and unexecuted, with retained EPL notice and explicit caller namespace
+declaration. It does not establish the public record contract. Next after the
+current validation checkpoint: integrate and execute the complete public graph
+with original-source hashes, scope-resolution/factory/nominal/persistence/metadata/
+reduction cases, then reconcile each original #16–#19 criterion.
+
+Resumed focus completed: compiler_catalog binary passed5/5 in234.87s with
+existing settings, including the new native-interface wrapper. The live
+nominal/protocol cross-fragment and GC regression passed1/1 (73 filtered).
+The next dependency-ordered validation is now live as execution12431:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+sh scripts/verify-bootstrap.sh` then
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2`. Logs are
+/private/tmp/suss-m4-startup-reproduction-20261012.log and
+/private/tmp/suss-m4-resumed-full-baseline-20261012.log. Observe this exact
+execution handle and terminal results; do not restart on an observation timeout.
+No complete baseline or final-head CI success is claimed while it runs.
