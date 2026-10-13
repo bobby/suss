@@ -1,0 +1,12 @@
+{
+  "base": "3720837c1cf74b4aff2f06a769ff49399feee6af",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "command": [
+    "sh",
+    "scripts/test-sorted-prerequisite-oracle.sh"
+  ],
+  "terminal_exit": 0,
+  "ordered_observations": 47,
+  "native": "uncompiled/unexecuted",
+  "bootstrap": "unchanged and stale"
+}

@@ -1467,23 +1467,23 @@
   "runtime:=:1342"
   {:source-sha256 "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
-   :dependencies ["runtime:-equiv" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
+   :dependencies ["runtime:-equiv" "compiler-owned cljs.core/== strict identity" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
    :classification :adapted
-   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation; identity fast path uses compiler-owned cljs.core/== so rebinding identical? cannot change equality. The comparator predicate-rebinding corpus and source equality execution pass in both phases; other collection types, complete macros and metadata remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-equality.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/portable_comparators.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:equiv-sequential:3151"
   {:source-sha256 "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d" :visibility :private
    :arities {:fixed [2] :variadic-min nil}
    :dependencies ["runtime:=:1342" "runtime:sequential?:2246" "runtime:counted?:1602" "runtime:count:1906" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:boolean:2357" "runtime:==:3064"]
    :classification :adapted
-   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation; identity fast path uses compiler-owned cljs.core/== so rebinding identical? cannot change equality. The comparator predicate-rebinding corpus and source equality execution pass in both phases; other collection types, complete macros and metadata remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-equiv-sequential.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/portable_comparators.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:<:2755"
   {:source-sha256 "8e6815b3743ce86c57184635707893f159446faaa3811979fb1fedee40576b53" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
@@ -4349,9 +4349,9 @@
   {:source-sha256 "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf"
    :visibility :private
    :arities {:fixed [0 1] :variadic-min 1}
-   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next, scalar predicates and nil? nil-guard" "nominal toString methods"]
+   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next, scalar predicates and nil? nil-guard" "OrdinaryToPrimitive string-hint adapter"]
    :classification :adapted
-   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal, scalar-predicate and nil-guard dependencies to avoid adding mutable public helper dependencies. The pinned core compiles the nil? macro guard at this definition site, so the capture preserves that immutable first check against public redefinition. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects retain method dispatch; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
+   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal, scalar-predicate and nil-guard dependencies to avoid adding mutable public helper dependencies. The pinned core compiles the nil? macro guard at this definition site, so the capture preserves that immutable first check against public redefinition. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects use the ordered OrdinaryToPrimitive string-hint adapter, including valueOf fallback after a non-primitive toString result; broader host-object property/accessor semantics and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/expression-internal-str.json"
    :alternative nil
@@ -4432,4 +4432,610 @@
   "macro:str_:852" {:source-sha256 "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
 
   "macro:str:877" {:source-sha256 "b55c632681cd22fa6b2f13c9dac4b5f4b5d142d0aebb0cf9f5a92c590d266032" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
+  "runtime:compare:2499"
+  {:source-sha256 "9f7d9f48983e13389705d5883db9910a21146c05b3d16c530cbef44dcd05b7f6"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, metadata, every arity and branch. Explicit def/fn expands defn; primitive macro tests and arithmetic use immutable bootstrap/qualified macro paths. All source-level callable dependencies remain live, including type, array?, -compare, =, compare, count, nth and str_. Closure defaultCompare is re-expressed as an original private binary > then < helper with repeated ordered conversions, never a scalar gate or subtraction. Error macro expansion calls live single-argument str_ for x then y, then joins the four original macro pieces with an empty separator using canonical Array literal storage, preserving later conversion of arbitrary values returned by a rebound str_. No branch is omitted. Runtime dependency gaps (constructor overrides, string conversion defaults/prototypes, inherited Array indices, exotic hooks and exact TypeError) remain explicit; generated source is not executed acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-compare.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-indexed:2525"
+  {:source-sha256 "9eaf284492de47c9f9e999847036bacf8a6cf5f04410636c47c01fe2a140ea78"
+   :visibility :private
+   :arities {:fixed [2 4] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, private metadata and every arity/branch. Expand defn explicitly to def/fn; preserve all live callable reads and ordered operands. Immutable number? and qualified comparison/zero?/+/inc macro paths reproduce call-site macro semantics. compare-indexed retains length-first ordering, ordered count/nth calls and four-argument recurrence; fn->comparator retains two live compare reads around live =, unchanged numeric return and reverse callback truthiness without a second number classification. Dependency gaps and native execution remain pending; no subset algorithm or acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-compare-indexed.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:fn->comparator:2541"
+  {:source-sha256 "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0"
+   :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn" "macro:cond/and/or/number?/string?/nil?/identical?/true?/false?" "IComparable/satisfies?/-compare" "live type/array?/str_/count/nth/=/compare" "ordered runtime relations and Array join/ToPrimitive" "complete constructor/property and coercion contracts (pending)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned declaration, exact documentation, private metadata and every arity/branch. Expand defn explicitly to def/fn; preserve all live callable reads and ordered operands. Immutable number? and qualified comparison/zero?/+/inc macro paths reproduce call-site macro semantics. compare-indexed retains length-first ordering, ordered count/nth calls and four-argument recurrence; fn->comparator retains two live compare reads around live =, unchanged numeric return and reverse callback truthiness without a second number classification. Dependency gaps and native execution remain pending; no subset algorithm or acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/comparator-fn-comparator.json"
+   :alternative nil
+   :tests ["tests/oracle/comparator-cases.json" "crates/suss-cli/tests/portable_comparators.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ci-reduce:1545"
+  {:source-sha256 "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["macro:defn-" "macro:zero?/< /inc" "ICounted/-count canonical dispatcher; pinned not-native call" "IIndexed/-nth canonical dispatcher; pinned not-native call" "live reduced?/deref" "reducer callback"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration, exact docstring, both arities, not-native argument metadata and every branch. Expand defn- to private def/fn; qualify immutable zero?/</inc call-site macro lowering. Retain dynamic protocol method dispatch through definition-time canonical -count/-nth dispatchers, matching the pinned not-native direct-method lowering and preventing added mutable public dispatcher dependencies; keep live reduced? and deref, empty zero-argument reducer call, first-element seed and ordered reducer invocation, early reduced dereference and recurrence. No seq substitute, reduction normalization, mutable public arithmetic/comparison dependency or omitted branch. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-symbols:1115"
+  {:source-sha256 "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn-/cond/and/if-not/identical?/==" "live not" "stored identifier fields" "Closure defaultCompare algorithm (original re-expression)" "immutable >/< lowering"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration and every identity/namespace/name branch with original field-read and conversion order. Expand defn- to private def/let/fn; strict identity and numeric == use qualified immutable lowering. Re-express Closure defaultCompare with an original private lexical > then < helper using immutable qualified comparison lowering and repeated ordered conversion. Never call public compare or capture mutable >/< cells. Namespace presence, live not call, if-not branch and namespace tie/name fallback are preserved. No IComparable registrations are substituted; all seven targets remain deferred until BlackNode/RedNode exist. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:compare-keywords:3462"
+  {:source-sha256 "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn-/cond/and/if-not/identical?/==" "live not" "stored identifier fields" "Closure defaultCompare algorithm (original re-expression)" "immutable >/< lowering"]
+   :classification :adapted
+   :rationale "Retain the entire pinned private declaration and every identity/namespace/name branch with original field-read and conversion order. Expand defn- to private def/let/fn; strict identity and numeric == use qualified immutable lowering. Re-express Closure defaultCompare with an original private lexical > then < helper using immutable qualified comparison lowering and repeated ordered conversion. Never call public compare or capture mutable >/< cells. Namespace presence, live not call, if-not branch and namespace tie/name fallback are preserved. No IComparable registrations are substituted; all seven targets remain deferred until BlackNode/RedNode exist. Native/bootstrap validation remains pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json" :alternative nil
+   :tests ["tests/oracle/sorted-prerequisite-cases.json" "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:balance-left:8404"
+  {:source-sha256 "b002411fcd55b2bff744528f61339a7594267111905e8fb75fc7705462cb9d9b" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-balance-left.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:balance-right:8429"
+  {:source-sha256 "1cc3c1758816e8eecccd7c1625f33aa48e1ab1964ba0c55cab008212671a4df3" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-balance-right.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:balance-left-del:8451"
+  {:source-sha256 "c3372e9c8b3022572e6b498949ba4845304ab693a04071ef89385ef7b890a74e" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-balance-left-del.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:balance-right-del:8470"
+  {:source-sha256 "16fa44adceae5ed06816b136d8cb41f45784caceefbc6eddab05968dae3c3412" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-balance-right-del.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-kv-reduce:8489"
+  {:source-sha256 "db9c3033b656cf931be05b9ede68affe9d43b82f4cb774a645feda344f995e6c" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-tree-map-kv-reduce.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:BlackNode:8502"
+  {:source-sha256 "f2038658d1eb89987ac08378c0f83723fc699823831f3d883f9d39226c8dbab8" :visibility :public
+   :arities nil
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-BlackNode.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:RedNode:8627"
+  {:source-sha256 "f6d8df1d1582177aa1303e86784d8e408f620d0e5b131beba87cce37fbe80554" :visibility :public
+   :arities nil
+   :dependencies ["BlackNode/RedNode complete mutually recursive source" "instance?/cond/and/if-not/../==/nil? macro paths" "live balancing and tree-map-kv-reduce cells" "all original protocol dispatch and vector entry dependencies" "caching-hash whole macro expansion" "ES6/IComparable/printer anonymous parents (pending integration)"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration, all fields, mutable hash, methods/protocols, arities and algorithm branches. Expand private defn to private def/fn; expand each .. chain into ordered nested property reads; replace only host Error allocation with canonical portable Error construction. Qualified strict == and immutable nil tests reproduce macro paths. #js key/value literal arrays lower through qualified canonical array construction. Expand whole caching-hash algorithm: read cache once, return any nonnil value including zero/false, call live hash-ordered-coll once only on nil, cache only after successful return. Preserve branch priority, child sharing, fresh/recolored nodes, invalid invariant throws, all entry/vector/sequence/lookup/reduction behavior and live callable dependencies. No method is removed for compiler/iterator/printing/prototype limitations; native/bootstrap validation remains pending. Full anonymous ES6/IComparable/printer parents are retained separately with explicit pending dependency ledgers."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-node-RedNode.json" :alternative nil
+   :tests ["tests/oracle/tree-node-cases.json" "crates/suss-cli/tests/portable_sorted_tree_nodes.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:StringIter:4205"
+  {:source-sha256 "9adfe7e716f9e37f54150f0ce25edd5f3e770803eec6d561bf868cc526574985" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-StringIter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:string-iter:4214"
+  {:source-sha256 "16d3246ef24f9d656d991053345ffa43d5f12551feb8f095babb664a1cf0625d" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-string-iter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ArrayIter:4217"
+  {:source-sha256 "89bd2f7927678ad847644398f903cbbb23306a39aba81e15c1edf45fed7328b5" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-ArrayIter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:array-iter:4226"
+  {:source-sha256 "a35dc51344170101cdc3c1ab77918c0cc92deb7d115155ab6c31a299922974c0" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-array-iter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:INIT:4229"
+  {:source-sha256 "658a45715383770465173a54f0d3a14cdd938c7a3c707622096f2a5218dde1ae" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-INIT.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:START:4230"
+  {:source-sha256 "493080f508f3c186a4b03719bd412f3d845fc538b54c44da3227a04ab9d4a3ba" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-START.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:SeqIter:4232"
+  {:source-sha256 "f59841c3a1ebc8425491773edaa4bbf541e4a4f9b354aa9560181515a926dc01" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-SeqIter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:seq-iter:4250"
+  {:source-sha256 "2799d337b5bbbc6b4db2e2cd59daaa250d42721dfc35d344c03e0e704fc2aa38" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-seq-iter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:nil-iter:4198"
+  {:source-sha256 "11bfb46904ec4fbe51e8034872d61d823aa35e4e1a80490714198520ec0d845c" :visibility :public
+   :arities {:fixed [0] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-nil-iter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:iter:4253"
+  {:source-sha256 "2359829a7d7f7759bd5d89429ce3dbfec0e148dabc9e8c08b1ebdafc56815dfe" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-iter.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ES6Iterator:1360"
+  {:source-sha256 "4d20afa24a707931cbd61c1289e293d2d36f678862c5b0e10976727e621c09df" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-ES6Iterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:es6-iterator:1369"
+  {:source-sha256 "b5da1e07931742823382f8b398ca4b81d22f038f2e178e7236b7251dd7bb4d0c" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-es6-iterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ES6EntriesIterator:6619"
+  {:source-sha256 "d31d302040bd9ac48393130e9a4e04b048ad2e2d812007d8d06a03e6fff8fc7e" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-ES6EntriesIterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:es6-entries-iterator:6628"
+  {:source-sha256 "35dca42673ce03a7bfa7edb768ad846e5a9098acb405aaca3fcdd54021d17b71" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-es6-entries-iterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ES6SetEntriesIterator:6631"
+  {:source-sha256 "cf749f0668b679a3e76069e0ec29cbbd2cba303bbd950a329986b82dbed902f0" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-ES6SetEntriesIterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:es6-set-entries-iterator:6640"
+  {:source-sha256 "9a14d8e31168c8d923ec456050f9dcd7e03ccf2c1aef6237f3af3474dbdc1fd8" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-es6-set-entries-iterator.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-seq-push:8321"
+  {:source-sha256 "c5b5922a5ce02544a702234bf40521334791af1008403431010757f69d846235" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-tree-map-seq-push.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:PersistentTreeMapSeq:8328"
+  {:source-sha256 "3f6db4d04904e46b30a2b4306d63f3960cc3362651c64565c65d1e7b18ebb479" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-PersistentTreeMapSeq.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:create-tree-map-seq:8399"
+  {:source-sha256 "d70c6ff821e3d4bd2f2fcf49b800095830dca570848804403a561f53089f9acf" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-create-tree-map-seq.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-add:8791"
+  {:source-sha256 "e6190a89019bf8d3e1bc21391ea30f602ed0592ee39bf744fd1eac435124ef7b" :visibility :private
+   :arities {:fixed [5] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-tree-map-add.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-append:8810"
+  {:source-sha256 "dc697a2ea23cab4e03e96de207a2559c43ee7d61b65ea08f1da56d6aea7c78d1" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-tree-map-append.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-remove:8867"
+  {:source-sha256 "8a8aada37bb1e0cccdab00cc8b086643cf0aff0897a866203e64b679088e9b30" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-tree-map-remove.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:tree-map-replace:8889"
+  {:source-sha256 "def2d4a43f42705412ab779a03ec360d7b204a30e9993d7cd2b589b930a7e2d7" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-tree-map-replace.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:ValSeq:9186"
+  {:source-sha256 "30b18ae7c3811d932296510fa140dc7ca7bc53fbef492ad4eebb6d0fb26f9df0" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-ValSeq.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:vals:9254"
+  {:source-sha256 "8798efa7b4b5afca2f207bc0fd67ed712b1ee6e9c3efad598ec99db0e37dc682" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "pinned when-let macro expansion"]
+   :classification :adapted :rationale "Retain complete public vals behavior. Expand its sole pinned when-let to the exact once-only temporary, truthy guard and inner binding; temporary is collision-free against the entire declaration. Macro namespace does not yet provide when-let. Pinned observations, bootstrap and native collection tests remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-vals.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:PersistentTreeMap:8898"
+  {:source-sha256 "32aa9efe4de44109a884a3a1db55946951440a45050ac48f5a104f165f642e41" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-PersistentTreeMap.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:PersistentTreeSet:9482"
+  {:source-sha256 "1b34f2ea2007a00692a2dc7b3bc355bd2049ec855f75a4738810d0606548d125" :visibility :public
+   :arities nil
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-PersistentTreeSet.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:sorted-map:9088"
+  {:source-sha256 "b7b96c95467b457faf314fd571c5d2389a22ece95af13586d2d95dc5f4d77909" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-sorted-map.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:sorted-map-by:9097"
+  {:source-sha256 "33de20939236eed237ae13c40c25788ead716d9abc07894adc8f939481ba8960" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-sorted-map-by.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:sorted-set:9618"
+  {:source-sha256 "dd6093a138588c8b283cb4604f31ab4bb93f2bf56637cc68a7986f713d2fbb81" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-sorted-set.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:sorted-set-by:9623"
+  {:source-sha256 "c8c8652d29fe51fe545c27ba3bd8e3a22c31cc1f8e10b81448cf9ffe6e24c8f9" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-sorted-set-by.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:take-while:9803"
+  {:source-sha256 "9fc84ecc46ecf2b0936a24dc2039a6497532ca925a29057479c20886fac478cb" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-take-while.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:mk-bound-fn:9822"
+  {:source-sha256 "b8b81ddf600390a36d5c75fb4256d78ec08a768ad371d52f44246c642ed8aabd" :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-mk-bound-fn.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:subseq:9828"
+  {:source-sha256 "329d3ca9e84edcded6d218cb105ff773f51dbcf7ad9af16cf1872b6e5d148100" :visibility :public
+   :arities {:fixed [3 5] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-subseq.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:rsubseq:9843"
+  {:source-sha256 "8e172e7ea79a024453f553a9f3e6d266c318a06313eede31645293adb0dd5955" :visibility :public
+   :arities {:fixed [3 5] :variadic-min nil}
+   :dependencies ["complete sorted tree nodes/comparators" "whole cursors/iterators and protocol dispatch" "full macro, typed catch, reify, ES6/printer parent ledger"]
+   :classification :adapted :rationale "Retain the entire pinned declaration, all documentation/arities/fields/metadata/protocol markers/methods/branches and original ordering. Enumerated expansions only: private defn, canonical owned #js storage and Error construction, immutable call-site predicate/arithmetic/array macros, complete caching hash and complete single-binding doseq chunk/nonchunk paths/destructuring/discard result. Match statically nominal calls with canonical direct method capture before argument effects, preserving untyped public calls as live. Set forEach retains original pair destructuring even for scalar members; set kv reducer retains its real three callback arguments with unused accumulator/value. Keep typed js/Error catch and nil iterator reify verbatim as explicit unresolved prerequisites; never replace catch with an unsupported subset or remove branches. Range operator membership retains actual function identities, lazy demand and both arities. Native/bootstrap validation pending; complete source selection is not support."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sorted-tree-rsubseq.json" :alternative nil
+   :tests ["tests/oracle/sorted-tree-cases.json" "crates/suss-cli/tests/portable_sorted_tree_collections.rs (authored, uncompiled/unexecuted)"]}
+  "runtime:mapv:5450"
+  {:source-sha256 "de1de186702d507044c2dc414487799299e242528da15396d231704a13a67d98"
+   :visibility :public
+   :arities {:fixed [2 3] :variadic-min 4}
+   :dependencies ["macro:defn:3364" "runtime:reduce:2628" "runtime:transient:3987" "runtime:conj!:3999" "runtime:persistent!:3992" "runtime:into:5430" "runtime:map:4902" "runtime:apply:4100"]
+   :classification :adapted
+   :rationale "Retain all four pinned arities, docstring and arglists. Expand defn to def/fn and thread-first exactly to persistent!(reduce(...)); retain multi-collection map/into/apply paths and their shortest-input behavior. Pinned source hash and licensed extraction are recorded by the importer. Native execution is still in progress; importing the form alone does not prove persistent-vector semantics."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/mapv.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:type->str:362"
+  {:source-sha256 "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9"
+   :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:str_:3106" "live portable property lookup"]
+   :classification :adapted
+   :rationale "Retain the pinned ctorStr-first behavior. Expand defn/if-let once-only; map owned portable Number/String/Boolean/Array constructors to their pinned native function spelling, then preserve str_ for other constructors. Native execution is pending."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/type-to-str.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:associative?:2238"
+  {:source-sha256 "265eb7820ec1f194494f1affc4d75b36fbded8db522b5eaa2751235b31d6bfb9"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:satisfies?:2253" "IAssociative"]
+   :classification :adapted
+   :rationale "Retain the complete pinned predicate and docstring; expand defn to def/fn. The original satisfies? protocol check remains live. Native checks and full core-protocol validation remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/associative-predicate.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:ifind?:2242"
+  {:source-sha256 "6dda7e42ffc00ee14bb8ba9c81cc9f0311d5b11e295c6f198994cca105a002cc"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:satisfies?:2253" "IFind"]
+   :classification :adapted
+   :rationale "Retain the complete pinned predicate and docstring; expand defn to def/fn. The original satisfies? protocol check remains live. Native checks and full core-protocol validation remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/ifind-predicate.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:find:2471"
+  {:source-sha256 "00529eaa753954f87e61a05f2f9fc105353e15d6067eb8ccc4fac0f8f68650db"
+   :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "runtime:ifind?:2242" "IFind/-find" "runtime:associative?:2238" "runtime:contains?:2451" "runtime:MapEntry:6722" "runtime:get:2031"]
+   :classification :adapted
+   :rationale "Retain the complete pinned IFind fast path and associative fallback with its original nil/contains behavior and MapEntry result. Expand only defn to def/fn. Native map lookup and missing-key behavior must be checked against pinned observations."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/find.json"
+   :alternative nil :tests ["crates/suss-cli/tests/portable_sorted_tree_collections.rs"]}
+  "runtime:seqable?:2347"
+  {:source-sha256 "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["ISeqable/satisfies?" "runtime:nil?" "runtime:array?" "runtime:string?" "js-iterable? (host-specific branch omitted)"]
+   :classification :adapted
+   :rationale "Retain the complete pinned public declaration and exact documentation. Expand defn to def/fn; preserve nil, ISeqable, array and string cases in original order. Omit only js-iterable?, whose JavaScript Symbol.iterator branch is outside the accepted portable source-compatibility profile (suss-0.3.1 design §1); callers must wrap foreign JavaScript iterables with a portable ISeqable/IIterable value. No JS iterable support is claimed."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/seqable.json"
+   :alternative "Implement ISeqable/IIterable on a portable Suss wrapper for foreign values"
+   :tests ["crates/suss-cli/tests/portable_seqable.rs"]}
+  "runtime:Repeat:5118"
+  {:source-sha256 "95cd7293814ed735d7793ba020128f60913f8d5d661ddc6b64cc8f5d7c83f921" :visibility :private :arities nil
+   :dependencies ["IPending" "ISeq/INext/ICollection/IEmptyableCollection" "IHash/ISequential/ISeqable/IEquiv/IReduce" "List/cons/caching-hash/hash-ordered-coll/reduced?"]
+   :classification :portable
+   :rationale "Retain the complete pinned repeated-value sequence type, including finite/infinite rest caching, metadata, equality/hash and both reduction arities. Native execution is tracked by the range and repeat sequence regression; no host iterator behavior is inferred."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:repeat:5223"
+  {:source-sha256 "91b90fdf4dedb0db9265b5914c7aa042872da1d9d7df9ff2ed5241633ce9d637" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:Repeat:5118" "runtime:pos?:298" "runtime:List:434"]
+   :classification :adapted
+   :rationale "Retain both pinned public arities and exact finite/infinite behavior; adapt only defn expansion to def/fn and retain source documentation/arity metadata."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/range-repeat.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:IntegerRangeChunk:9858"
+  {:source-sha256 "97fb1fd2001cc2c5aaa426aa5bfe7896ecef91e3ccb031768882fac2fc2a0b3f" :visibility :private :arities nil
+   :dependencies ["ICounted/ISeq/IIndexed/IChunk" "suss.bootstrap/error"]
+   :classification :adapted
+   :rationale "Retain the complete pinned integer range chunk and replace only the JS Error construction with the typed portable error."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/range-IntegerRangeChunk.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:RangeIterator:9879"
+  {:source-sha256 "1340d3a765676685f48bc3267627b9a24f2ed59ec83fb58fb34777ef5a182f4a" :visibility :private :arities nil
+   :dependencies ["Object.hasNext/next" "runtime:pos?:298"]
+   :classification :portable
+   :rationale "Retain the complete pinned internal range iterator. JavaScript Symbol.iterator adaptation is not included; this internal object is exercised only through the portable IIterable protocol."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:range-count:9890"
+  {:source-sha256 "dd4edda4c271cc1df6ac275122b3e890f798b7c482a98cecdab86a69390fcd4f" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["suss.bootstrap/f64-ceil" "binary64 division/subtraction"]
+   :classification :adapted
+   :rationale "Retain exact pinned integer range cardinality using the identical portable f64-ceil intrinsic instead of host Math.ceil."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/range-count.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:IntegerRange:9895"
+  {:source-sha256 "2b5f2b78778f238c980020857d8c3f5ed85d46572c2e0e1592dd44872dd80276" :visibility :private :arities nil
+   :dependencies ["ICloneable/IWithMeta/IMeta/ISeqable/ISeq/INext/IDrop/IChunkedSeq/IChunkedNext" "ICollection/IEmptyableCollection/ISequential/IEquiv/IHash/ICounted/IIndexed/IReduce" "IntegerRangeChunk/RangeIterator/range-count/repeat/List/cons" "caching-hash/hash-ordered-coll/equiv-sequential/ci-reduce/reduced?" "suss.bootstrap/error"]
+   :classification :adapted
+   :rationale "Retain every pinned integer-range sequence operation, including chunk boundaries, metadata, iterator, indexing, reductions and sharing; adapt JS Error construction and bounded chunk-size selection to the typed portable operations."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/range-IntegerRange.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:Range:10024"
+  {:source-sha256 "d300586e1128e421670d8dd795b92125ea4529ab99d9296734c7be5504cb9fdb" :visibility :private :arities nil
+   :dependencies ["ICloneable/IWithMeta/IMeta/ISeqable/ISeq/INext/IChunkedSeq/IChunkedNext" "ICollection/IEmptyableCollection/ISequential/IEquiv/IHash/IReduce" "RangeIterator/ArrayChunk/array-chunk/Range/cons/List/seq" "caching-hash/hash-ordered-coll/equiv-sequential/seq-reduce/reduced?"]
+   :classification :portable
+   :rationale "Retain the complete pinned floating range with lazy 32-value chunk realization, memoized chunk tail, metadata, iteration and reduction. Exclude only the separate es6-iterable host extension, outside the accepted portable interop profile."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+
+  "runtime:range:10131"
+  {:source-sha256 "33ca3abb88722f0bb131fd1c312ddad62cbd0761db16fb5652528da6c7840d50" :visibility :public
+   :arities {:fixed [0 1 2 3] :variadic-min nil}
+   :dependencies ["runtime:Repeat:5118/runtime:repeat:5223" "runtime:IntegerRangeChunk:9858/runtime:RangeIterator:9879/runtime:range-count:9890/runtime:IntegerRange:9895/runtime:Range:10024" "integer?/pos?/neg?/f64-ceil" "suss.bootstrap/f64-max-constant"]
+   :classification :adapted
+   :rationale "Retain every pinned public arity and direction/step branch, including exact integer-range specialization, floating chunked ranges, zero-step repeat behavior, and the finite Number.MAX_VALUE zero-arity endpoint. Adapt defn expansion and express the same MAX_VALUE as its exact binary64 literal, without changing the public contract."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/range.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_ranges.rs"]}
+  "runtime:drop:4976"
+  {:source-sha256 "b1d8bbc4d336d3a52f059cde10decdb0d198bdcc0ad1cc11313f83733d576fc9" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["IDrop/-drop" "runtime:seq" "runtime:pos?" "runtime:rest" "runtime:volatile!" "runtime:vswap!" "runtime:dec" "runtime:lazy-seq"]
+   :classification :adapted
+   :rationale "Retain both pinned public arities, the IDrop fast path and lazy sequence fallback, and the stateful transducer arity. Adapt only defn expansion; execution regressions must verify numeric boundaries, laziness, and transducer state."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-drop.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:dorun:10287"
+  {:source-sha256 "a937da2e4cb6e2d900565f03f9f4832a62ed6bb6d65edd80a99de74287568003" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:seq" "runtime:next" "runtime:pos?" "runtime:dec"]
+   :classification :adapted
+   :rationale "Retain both pinned arities and exact traversal demand; the two-argument form stops at either exhausted input or non-positive count."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-dorun.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:doall:10300"
+  {:source-sha256 "af3b0f111a8d8c9a617d55b8c7c28e210b2aa04b21e4ff02dd7c2dbcd61195a2" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:dorun"]
+   :classification :adapted
+   :rationale "Retain both pinned arities, force the requested traversal, and return the original collection unchanged."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-doall.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_drop.rs"]}
+  "runtime:take-nth:10159"
+  {:source-sha256 "09dec2d9a7a12429ef887be7688a1b9c8b5cc91b030caf5ba3b083a0fd594ad4" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["drop" "runtime:seq" "runtime:cons" "runtime:volatile!" "runtime:vswap!" "runtime:rem" "runtime:zero?"]
+   :classification :adapted
+   :rationale "Retain both pinned arities and their sequence/transducer behavior; adapt only the state cell, lazy sequence constructor, defn expansion and typed precondition error. Preserve CLJS modulo-zero behavior for the transducer and the documented non-positive arity-2 limitation."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-take-nth.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_take_nth.rs"]}
+  "runtime:rem:2987"
+  {:source-sha256 "0d2ecbb308a71cdf6807f46f7ced7208e05edb9fa4932820a77dabaf4f7b7c56" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:quot" "runtime:fix" "runtime:js-mod"]
+   :classification :adapted
+   :rationale "Retain the pinned remainder definition and arithmetic; adapt only defn expansion."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/sequence-rem.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_take_nth.rs"]}
+
+  "runtime:take:4949"
+  {:source-sha256 "b3108b498b0d165295d9b442ec38e7cfa6d1fec46ba20769347690e8be7b704f" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["number?" "pos?" "dec" "atom/swap!/deref" "ensure-reduced" "LazySeq" "seq/first/rest/cons"]
+   :classification :adapted
+   :rationale "Retain both complete pinned take arities, numeric preconditions, lazy demand, transducer initialization/completion and ensure-reduced behavior. Expand defn and when-let, use an explicit memoized LazySeq constructor, replace the private volatile cell with portable atom/swap!, and use the existing portable typed precondition error."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-take.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:UNREALIZED-SEED:5242"
+  {:source-sha256 "c9b9f41d167451c36583ae83e03160d65d444239e6b532b64e085413513c0fef" :visibility :private :arities nil
+   :dependencies ["portable owned js-obj carrier"]
+   :classification :adapted
+   :rationale "Retain the private unique identity sentinel used by the complete pinned Iterate type. Replace the empty #js object literal with the existing portable owned js-obj carrier; no host JavaScript dependency is introduced."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-unrealized-seed.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:Iterate:5244"
+  {:source-sha256 "0d66568f7d23604456f6f136715471edcf53a92487b0fdf702a60a47183fc22f" :visibility :private :arities nil
+   :dependencies ["UNREALIZED-SEED" "IPending/IWithMeta/IMeta/ISeq/INext/ICollection/IEmptyableCollection/ISequential/ISeqable/IReduce" "List/cons/reduced?/deref/pr-str*"]
+   :classification :portable
+   :rationale "Retain the entire pinned Iterate type, every field/protocol/method and both reduction arities. The private seed and cached next identity preserve lazy demand, metadata and Reduced stop behavior; source retention alone does not establish execution."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:iterate:5303"
+  {:source-sha256 "f37249f344dd10022a20f5cbef1cd88be4839737d1d9f034ae6be97a4fb1d4b1" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["Iterate"]
+   :classification :adapted
+   :rationale "Retain the complete pinned iterate factory and seeded first value; expand only defn to def/fn with its docs, added metadata and arglist."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-iterate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:replace:9630"
+  {:source-sha256 "bf1a9863d51d7d8e945710b95093256d960354b733fe7c02d63527c9fe89db4c" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["find/val/second" "map" "vector?/count/nth/assoc/reduce" "take/iterate/inc"]
+   :classification :adapted
+   :rationale "Retain every pinned replace branch and both arities: eager vector updates retaining unchanged owner/metadata, lazy sequence replacement, and the map transducer. Expand defn and shorthand functions only; keep find/val/second, assoc, reduce, take and iterate as live source dependencies. This is a dependency of emit-defrecord field substitutions, not evidence that records are implemented."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-dependency-replace.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_sequence_dependencies.rs"]}
+
+  "runtime:complement:4454"
+  {:source-sha256 "77df12ea943440f852dba2228c0dbe261602f0baefca19818df2c6530805d3bf" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["not/apply"]
+   :classification :adapted
+   :rationale "Retain the complete pinned complement function and every returned arity/effect. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-complement.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:remove:5399"
+  {:source-sha256 "8fee20ffd7385be06339da051343bdeeb57f2809a55719ad3193adb1043e2e8c" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["filter/complement"]
+   :classification :adapted
+   :rationale "Retain both pinned remove arities with their complete filter/complement dependencies; expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-remove.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:preserving-reduced:10953"
+  {:source-sha256 "d78f114de8ea0ff64e2cc69ac60ba432f085501a9c8ceaf6ecc2ab72b33ccd3b" :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["reduced?/reduced"]
+   :classification :adapted
+   :rationale "Retain the complete pinned reducer wrapper, including double wrapping a downstream Reduced before nested reduction unwraps it. Expand defn-/shorthand fn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-preserving-reduced.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:cat:10960"
+  {:source-sha256 "8a773318923c8e580f238ebdd2d37f026dcad62a3ec05c543bfd3329f08a3904" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["preserving-reduced/reduce"]
+   :classification :adapted
+   :rationale "Retain the complete pinned cat transducer, initialization/completion and nested reduction stop propagation. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-cat.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:mapcat:5360"
+  {:source-sha256 "5e24000c22fb437cda50a47a358acd93eb0badba8138462f35fd756c3dcb9a17" :visibility :public :arities {:fixed [1] :variadic-min 1}
+   :dependencies ["comp/map/cat/apply/concat"]
+   :classification :adapted
+   :rationale "Retain both complete pinned mapcat clauses and all collection arguments, rather than substituting the single-collection use in the record emitter. Expand defn only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-mapcat.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+  "runtime:drop-while:5021"
+  {:source-sha256 "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0" :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["atom/deref/reset!" "seq/first/rest/LazySeq"]
+   :classification :adapted
+   :rationale "Retain both pinned drop-while clauses, including short-circuited predicate state and initialization/completion. Expand defn/lazy-seq and replace the private volatile state with portable atom/reset! storage."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-drop-while.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
 }}

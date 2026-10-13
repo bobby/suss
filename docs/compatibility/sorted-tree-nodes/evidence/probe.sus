@@ -1,0 +1,8 @@
+(def tree-node-shape
+  (fn tree-node-shape [node]
+    (if (nil? node)
+      nil
+      [(if (instance? BlackNode node) :black :red)
+       (.-key node) (.-val node)
+       (tree-node-shape (.-left node))
+       (tree-node-shape (.-right node))])))

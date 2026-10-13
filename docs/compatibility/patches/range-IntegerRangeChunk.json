@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "97fb1fd2001cc2c5aaa426aa5bfe7896ecef91e3ccb031768882fac2fc2a0b3f",
+  "replacement": "(deftype IntegerRangeChunk [start step count]\n  ICounted\n  (-count [coll] count)\n\n  ISeq\n  (-first [coll] start)\n\n  IIndexed\n  (-nth [coll i]\n    (+ start (* i step)))\n  (-nth [coll i not-found]\n    (if (and (>= i 0) (< i count))\n      (+ start (* i step))\n      not-found))\n\n  IChunk\n  (-drop-first [coll]\n    (if (<= count 1)\n      (throw (suss.bootstrap/error \"-drop-first of empty chunk\"))\n      (IntegerRangeChunk. (+ start step) step (dec count)))))",
+  "rationale": "Retain the complete pinned chunk implementation and adapt its out-of-range throw from JavaScript Error construction to the typed portable runtime error."
+}

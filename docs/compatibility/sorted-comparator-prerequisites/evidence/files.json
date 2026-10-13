@@ -1,0 +1,62 @@
+{
+  "README.md": {
+    "sha256": "2d8cba6fc0dc472aeddd3bb367f378b5ae2d8392e66c909dbc78d215044751e3",
+    "bytes": 1601
+  },
+  "current-primary/cases.json": {
+    "sha256": "51aee28cbf1013ab3d5645f6fbe0ed87f5d3fbb70e8f8e5a7568cf199511ddbe",
+    "bytes": 13554
+  },
+  "current-primary/command.json": {
+    "sha256": "4966404eb3b409917721a8d5401dd2f17a40eca44e7dc5a2ba8b9da67f0f8945",
+    "bytes": 321
+  },
+  "current-primary/driver.cljs": {
+    "sha256": "6bf8483858497f0986a04e37c04ccbeb685138b148cb4ded0ed9222d447b8d89",
+    "bytes": 9033
+  },
+  "current-primary/observations.json": {
+    "sha256": "716cd03a2c1f1d0c6f28ddb62273c79bfa7105616a46839a91635986e61cca67",
+    "bytes": 2255
+  },
+  "current-primary/probe.sus": {
+    "sha256": "5b9ea03e4d8ff2ffccf367536c7959986dafc9ce4436a2bb29cd9d76620ebe72",
+    "bytes": 422
+  },
+  "current-primary/runner.log": {
+    "sha256": "913c011d1dac10c6686ebc8171596640ee9cc8e36c69875f7436f9079db7f812",
+    "bytes": 636
+  },
+  "initial-authoring/cases.json": {
+    "sha256": "b2133da5df23657bfa70819de61ee111d544a4596a1f57af69733e0b22344bd4",
+    "bytes": 10851
+  },
+  "initial-authoring/driver.cljs": {
+    "sha256": "c4a2985beb5c20a50c4bf7b1f2b52736abdee8d3f94c4437c512e9154899721e",
+    "bytes": 7137
+  },
+  "initial-authoring/observations.json": {
+    "sha256": "e7b68f3f5e7c6d3dada86ed743fd33a9a15f792e220b1cbb1c86677a802286a8",
+    "bytes": 1837
+  },
+  "initial-authoring/runner.log": {
+    "sha256": "d944afa1c5e8c551282927452abf8b37b1900ff3e130a0298a29cf2dde1aff81",
+    "bytes": 1047
+  },
+  "python-suite.log": {
+    "sha256": "20a29d0e712796a24fdd46960abf6c2fcf746d838f95fefe2009e1cce22c3617",
+    "bytes": 570
+  },
+  "second-authoring/cases.json": {
+    "sha256": "e25b854e8b90a59f59fe94ab2cf34fedcd206fe52a0820510461bdc0421d8561",
+    "bytes": 11520
+  },
+  "second-authoring/driver.cljs": {
+    "sha256": "b483ba7e7e0babae1d3ab309eaed35da51286b4e9a8098e6d5e4fb92bd861fe1",
+    "bytes": 7604
+  },
+  "second-authoring/runner.log": {
+    "sha256": "8e76883ce386e344d4488f44836626d10f1a41a93c6ee36b5d32353c96dc8f51",
+    "bytes": 834
+  }
+}

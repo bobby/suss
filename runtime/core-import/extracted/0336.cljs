@@ -6,18 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vary-meta
- "Returns an object of the same type and value as obj, with
-  (apply f (meta obj) args) as its metadata."
-  ([obj f]
-   (with-meta obj (f (meta obj))))
-  ([obj f a]
-   (with-meta obj (f (meta obj) a)))
-  ([obj f a b]
-   (with-meta obj (f (meta obj) a b)))
-  ([obj f a b c]
-   (with-meta obj (f (meta obj) a b c)))
-  ([obj f a b c d]
-   (with-meta obj (f (meta obj) a b c d)))
-  ([obj f a b c d & args]
-   (with-meta obj (apply f (meta obj) a b c d args))))
+(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]
+  Object
+  (hasNext [_]
+    (or (< i base-count) (.hasNext ext-map-iter)))
+  (next [_]
+    (if (< i base-count)
+      (let [k (nth fields i)]
+        (set! i (inc i))
+        (MapEntry. k (-lookup record k) nil))
+      (.next ext-map-iter)))
+  (remove [_] (js/Error. "Unsupported operation")))

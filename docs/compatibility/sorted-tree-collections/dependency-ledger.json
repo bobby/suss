@@ -1,0 +1,704 @@
+{
+  "native-status": "uncompiled/unexecuted; bootstrap stale",
+  "base": "0c98b4f7523aaf369fce6813c63ea8c13b2a2205",
+  "class-structure": {
+    "StringIter": {
+      "fields": "[s ^:mutable i]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "hasNext",
+          "arguments": "[_]"
+        },
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[_]"
+        },
+        {
+          "section": "Object",
+          "name": "remove",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "ArrayIter": {
+      "fields": "[arr ^:mutable i]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "hasNext",
+          "arguments": "[_]"
+        },
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[_]"
+        },
+        {
+          "section": "Object",
+          "name": "remove",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "SeqIter": {
+      "fields": "[^:mutable _seq ^:mutable _next]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "hasNext",
+          "arguments": "[_]"
+        },
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[this]"
+        },
+        {
+          "section": "Object",
+          "name": "remove",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "ES6Iterator": {
+      "fields": "[^:mutable s]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "ES6EntriesIterator": {
+      "fields": "[^:mutable s]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "ES6SetEntriesIterator": {
+      "fields": "[^:mutable s]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "next",
+          "arguments": "[_]"
+        }
+      ],
+      "protocol-markers": [
+        "Object"
+      ]
+    },
+    "PersistentTreeMapSeq": {
+      "fields": "[meta stack ^boolean ascending? cnt ^:mutable __hash]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "toString",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "equiv",
+          "arguments": "[this other]"
+        },
+        {
+          "section": "Object",
+          "name": "indexOf",
+          "arguments": "[coll x]"
+        },
+        {
+          "section": "Object",
+          "name": "indexOf",
+          "arguments": "[coll x start]"
+        },
+        {
+          "section": "Object",
+          "name": "lastIndexOf",
+          "arguments": "[coll x]"
+        },
+        {
+          "section": "Object",
+          "name": "lastIndexOf",
+          "arguments": "[coll x start]"
+        },
+        {
+          "section": "ISeqable",
+          "name": "-seq",
+          "arguments": "[this]"
+        },
+        {
+          "section": "ISeq",
+          "name": "-first",
+          "arguments": "[this]"
+        },
+        {
+          "section": "ISeq",
+          "name": "-rest",
+          "arguments": "[this]"
+        },
+        {
+          "section": "INext",
+          "name": "-next",
+          "arguments": "[this]"
+        },
+        {
+          "section": "ICounted",
+          "name": "-count",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IEquiv",
+          "name": "-equiv",
+          "arguments": "[coll other]"
+        },
+        {
+          "section": "ICollection",
+          "name": "-conj",
+          "arguments": "[coll o]"
+        },
+        {
+          "section": "IEmptyableCollection",
+          "name": "-empty",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IHash",
+          "name": "-hash",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IMeta",
+          "name": "-meta",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IWithMeta",
+          "name": "-with-meta",
+          "arguments": "[coll new-meta]"
+        },
+        {
+          "section": "IReduce",
+          "name": "-reduce",
+          "arguments": "[coll f]"
+        },
+        {
+          "section": "IReduce",
+          "name": "-reduce",
+          "arguments": "[coll f start]"
+        }
+      ],
+      "protocol-markers": [
+        "Object",
+        "ISeqable",
+        "ISequential",
+        "ISeq",
+        "INext",
+        "ICounted",
+        "IEquiv",
+        "ICollection",
+        "IEmptyableCollection",
+        "IHash",
+        "IMeta",
+        "IWithMeta",
+        "IReduce"
+      ]
+    },
+    "ValSeq": {
+      "fields": "[^not-native mseq _meta]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "toString",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "equiv",
+          "arguments": "[this other]"
+        },
+        {
+          "section": "Object",
+          "name": "indexOf",
+          "arguments": "[coll x]"
+        },
+        {
+          "section": "Object",
+          "name": "indexOf",
+          "arguments": "[coll x start]"
+        },
+        {
+          "section": "Object",
+          "name": "lastIndexOf",
+          "arguments": "[coll x]"
+        },
+        {
+          "section": "Object",
+          "name": "lastIndexOf",
+          "arguments": "[coll x start]"
+        },
+        {
+          "section": "IMeta",
+          "name": "-meta",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IWithMeta",
+          "name": "-with-meta",
+          "arguments": "[coll new-meta]"
+        },
+        {
+          "section": "ISeqable",
+          "name": "-seq",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IEquiv",
+          "name": "-equiv",
+          "arguments": "[coll other]"
+        },
+        {
+          "section": "ICollection",
+          "name": "-conj",
+          "arguments": "[coll o]"
+        },
+        {
+          "section": "IEmptyableCollection",
+          "name": "-empty",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IHash",
+          "name": "-hash",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ISeq",
+          "name": "-first",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ISeq",
+          "name": "-rest",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "INext",
+          "name": "-next",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IReduce",
+          "name": "-reduce",
+          "arguments": "[coll f]"
+        },
+        {
+          "section": "IReduce",
+          "name": "-reduce",
+          "arguments": "[coll f start]"
+        }
+      ],
+      "protocol-markers": [
+        "Object",
+        "IMeta",
+        "IWithMeta",
+        "ISeqable",
+        "ISequential",
+        "IEquiv",
+        "ICollection",
+        "IEmptyableCollection",
+        "IHash",
+        "ISeq",
+        "INext",
+        "IReduce"
+      ]
+    },
+    "PersistentTreeMap": {
+      "fields": "[comp tree cnt meta ^:mutable __hash]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "toString",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "equiv",
+          "arguments": "[this other]"
+        },
+        {
+          "section": "Object",
+          "name": "keys",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "entries",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "values",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "has",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "Object",
+          "name": "get",
+          "arguments": "[coll k not-found]"
+        },
+        {
+          "section": "Object",
+          "name": "forEach",
+          "arguments": "[coll f]"
+        },
+        {
+          "section": "Object",
+          "name": "entry-at",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "ICloneable",
+          "name": "-clone",
+          "arguments": "[_]"
+        },
+        {
+          "section": "IWithMeta",
+          "name": "-with-meta",
+          "arguments": "[coll new-meta]"
+        },
+        {
+          "section": "IMeta",
+          "name": "-meta",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ICollection",
+          "name": "-conj",
+          "arguments": "[coll entry]"
+        },
+        {
+          "section": "IEmptyableCollection",
+          "name": "-empty",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IEquiv",
+          "name": "-equiv",
+          "arguments": "[coll other]"
+        },
+        {
+          "section": "IHash",
+          "name": "-hash",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ICounted",
+          "name": "-count",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IKVReduce",
+          "name": "-kv-reduce",
+          "arguments": "[coll f init]"
+        },
+        {
+          "section": "IFn",
+          "name": "-invoke",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "IFn",
+          "name": "-invoke",
+          "arguments": "[coll k not-found]"
+        },
+        {
+          "section": "ISeqable",
+          "name": "-seq",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IReversible",
+          "name": "-rseq",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ILookup",
+          "name": "-lookup",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "ILookup",
+          "name": "-lookup",
+          "arguments": "[coll k not-found]"
+        },
+        {
+          "section": "IAssociative",
+          "name": "-assoc",
+          "arguments": "[coll k v]"
+        },
+        {
+          "section": "IAssociative",
+          "name": "-contains-key?",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "IFind",
+          "name": "-find",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "IMap",
+          "name": "-dissoc",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-sorted-seq",
+          "arguments": "[coll ascending?]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-sorted-seq-from",
+          "arguments": "[coll k ascending?]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-entry-key",
+          "arguments": "[coll entry]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-comparator",
+          "arguments": "[coll]"
+        }
+      ],
+      "protocol-markers": [
+        "Object",
+        "ICloneable",
+        "IWithMeta",
+        "IMeta",
+        "ICollection",
+        "IEmptyableCollection",
+        "IEquiv",
+        "IHash",
+        "ICounted",
+        "IKVReduce",
+        "IFn",
+        "ISeqable",
+        "IReversible",
+        "ILookup",
+        "IAssociative",
+        "IFind",
+        "IMap",
+        "ISorted"
+      ]
+    },
+    "PersistentTreeSet": {
+      "fields": "[meta tree-map ^:mutable __hash]",
+      "methods": [
+        {
+          "section": "Object",
+          "name": "toString",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "equiv",
+          "arguments": "[this other]"
+        },
+        {
+          "section": "Object",
+          "name": "keys",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "entries",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "values",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "Object",
+          "name": "has",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "Object",
+          "name": "forEach",
+          "arguments": "[coll f]"
+        },
+        {
+          "section": "ICloneable",
+          "name": "-clone",
+          "arguments": "[_]"
+        },
+        {
+          "section": "IWithMeta",
+          "name": "-with-meta",
+          "arguments": "[coll new-meta]"
+        },
+        {
+          "section": "IMeta",
+          "name": "-meta",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ICollection",
+          "name": "-conj",
+          "arguments": "[coll o]"
+        },
+        {
+          "section": "IEmptyableCollection",
+          "name": "-empty",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IEquiv",
+          "name": "-equiv",
+          "arguments": "[coll other]"
+        },
+        {
+          "section": "IHash",
+          "name": "-hash",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ISeqable",
+          "name": "-seq",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-sorted-seq",
+          "arguments": "[coll ascending?]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-sorted-seq-from",
+          "arguments": "[coll k ascending?]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-entry-key",
+          "arguments": "[coll entry]"
+        },
+        {
+          "section": "ISorted",
+          "name": "-comparator",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "IReversible",
+          "name": "-rseq",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ICounted",
+          "name": "-count",
+          "arguments": "[coll]"
+        },
+        {
+          "section": "ILookup",
+          "name": "-lookup",
+          "arguments": "[coll v]"
+        },
+        {
+          "section": "ILookup",
+          "name": "-lookup",
+          "arguments": "[coll v not-found]"
+        },
+        {
+          "section": "ISet",
+          "name": "-disjoin",
+          "arguments": "[coll v]"
+        },
+        {
+          "section": "IFn",
+          "name": "-invoke",
+          "arguments": "[coll k]"
+        },
+        {
+          "section": "IFn",
+          "name": "-invoke",
+          "arguments": "[coll k not-found]"
+        }
+      ],
+      "protocol-markers": [
+        "Object",
+        "ICloneable",
+        "IWithMeta",
+        "IMeta",
+        "ICollection",
+        "IEmptyableCollection",
+        "IEquiv",
+        "IHash",
+        "ISeqable",
+        "ISorted",
+        "IReversible",
+        "ICounted",
+        "ILookup",
+        "ISet",
+        "IFn"
+      ]
+    }
+  },
+  "complete-source": {
+    "algorithms": "add/append/remove/replace, recursive balance dispatch and original found-array writes retained",
+    "classes": "TreeMap/TreeSet/TreeMapSeq/ValSeq and all iterator helpers retain all protocols and arities",
+    "ranges": "both subseq/rsubseq arities; actual function-object membership, comparator/entry-key per element and lazy take-while retained"
+  },
+  "typed-live-boundary": {
+    "direct-canonical-methods": [
+      "IIndexed/-nth",
+      "IVector/-assoc-n",
+      "IEquiv/-equiv",
+      "ILookup/-lookup",
+      "IAssociative/-assoc",
+      "ISeq/-first",
+      "INext/-next",
+      "IMapEntry/-val"
+    ],
+    "retained-live": "untyped ret/e, tree-map field, public nth/destructuring, sequence/chunk helpers, comparator and bound predicates remain live",
+    "evaluation-order": "receiver once; canonical actual method captured before argument expressions; original source order retained"
+  },
+  "prerequisites": {
+    "reify": "nil-iter whole reify retained; compiler/runtime support pending, no replacement named type",
+    "typed-catch": "TreeSet catches js/Error only, not arbitrary thrown value; genuine ancestry lowering pending; no blanket false or unsupported subset substitute",
+    "ES6": "whole iterable parents retained, native prototype Symbol.iterator installation pending",
+    "printing": "whole IPrintWithWriter parent retained, full target dependencies/registration pending",
+    "hash": "caching-hash nil-only cache test, read once, live function once and write after success; false/zero caches retained",
+    "doseq": "whole chunk/nonchunk single binding expansion retained; TreeSet pair destructuring is upstream behavior, not corrected to Set callback convention",
+    "macros": "15 complete original parents retained; bounded expansions are not general macro acceptance"
+  },
+  "original-acceptance": "#18/#19/M4 full sorted persistent collections, records, host/prototype/equality/hash/transient and final native gates remain open"
+}

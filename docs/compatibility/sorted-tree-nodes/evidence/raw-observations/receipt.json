@@ -1,0 +1,17 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "command": "sh scripts/test-tree-node-raw-oracle.sh",
+  "result": "52 independent pinned observations matched prewritten host expected values; native uncompiled/unexecuted; bootstrap stale",
+  "sha256": {
+    "tests/oracle/tree-node-raw-cases.json": "229d736fdc1ab762ba7b975355ecd2a2f832d888d3d249980e0151c1cdd5d911",
+    "tests/oracle/src/suss_oracle/tree_node_raw.cljs": "256d577875f7ce614288a39de85ccc8f8b24e87b7bfa58ba6ade75af176d5c6e",
+    "scripts/tree_node_raw_oracle.py": "59241751063db25f52b77d4057ba02f544854881a06cac03137f17ff01ab2847",
+    "scripts/test-tree-node-raw-oracle.sh": "0a0a6cfe25b34f739f63e96d3d7322c70e8b306dee5f43c0a8c7a9964dc5dce3",
+    "docs/compatibility/sorted-tree-nodes/evidence/raw-observations/observations.json": "889aa5b2985af6f99769d1b2e34f15fc9b2526fc725486b1357e41b167c7bf89",
+    "docs/compatibility/sorted-tree-nodes/evidence/raw-observations/reference.log": "84d77b858cc42621fd721e93efba5893a72488f228ae496d942b433292a53857",
+    "tests/oracle/out/tree-node-raw.js": "be8ed2ddecee14be0609cebcd0b52d7c473ab87a33e324a87d01837cafb2bf87",
+    "tests/oracle/out/tree-node-raw-cljs/cljs/core.js": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205",
+    "scripts/test_tree_node_raw_oracle.py": "72734703b535fd524aab441b9343135df0735c25003b5c5e379a21568aed9d51",
+    "docs/compatibility/sorted-tree-nodes/evidence/raw-observations/python.log": "0c15d193804190798ae2b03f7774f92755b648f19b8cee9ba0dad2eb97d2f95a"
+  }
+}

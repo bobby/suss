@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0",
+  "replacement": "(def ^{:doc \"Returns a lazy sequence of the items in coll starting from the\n  first item for which (pred item) returns logical false. Returns a\n  stateful transducer when no collection is provided.\" :arglists '([pred] [pred coll])} drop-while\n  (fn\n    ([pred] (fn [rf] (let [da (atom true)]\n                      (fn ([] (rf)) ([result] (rf result))\n                        ([result input] (let [drop? @da]\n                          (if (and drop? (pred input)) result\n                            (do (reset! da nil) (rf result input)))))))))\n    ([pred coll] (let [step (fn [pred coll] (let [s (seq coll)]\n                            (if (and s (pred (first s))) (recur pred (rest s)) s)))]\n                   (new LazySeq nil (fn* [] (step pred coll)) nil nil)))))",
+  "rationale": "Retain both pinned drop-while clauses, including short-circuited predicate state and initialization/completion. Expand defn/lazy-seq and replace the private volatile state with portable atom/reset! storage."
+}

@@ -6,31 +6,31 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn partial
-  "Takes a function f and fewer than the normal arguments to f, and
-  returns a fn that takes a variable number of additional args. When
-  called, the returned function calls f with args + additional args."
+(defn comp
+  "Takes a set of functions and returns a fn that is the composition
+  of those fns.  The returned fn takes a variable number of args,
+  applies the rightmost of fns to the args, the next
+  fn (right-to-left) to the result, etc."
+  ([] identity)
   ([f] f)
-  ([f arg1]
-   (fn
-     ([] (f arg1))
-     ([x] (f arg1 x))
-     ([x y] (f arg1 x y))
-     ([x y z] (f arg1 x y z))
-     ([x y z & args] (apply f arg1 x y z args))))
-  ([f arg1 arg2]
-   (fn
-     ([] (f arg1 arg2))
-     ([x] (f arg1 arg2 x))
-     ([x y] (f arg1 arg2 x y))
-     ([x y z] (f arg1 arg2 x y z))
-     ([x y z & args] (apply f arg1 arg2 x y z args))))
-  ([f arg1 arg2 arg3]
-   (fn
-     ([] (f arg1 arg2 arg3))
-     ([x] (f arg1 arg2 arg3 x))
-     ([x y] (f arg1 arg2 arg3 x y))
-     ([x y z] (f arg1 arg2 arg3 x y z))
-     ([x y z & args] (apply f arg1 arg2 arg3 x y z args))))
-  ([f arg1 arg2 arg3 & more]
-   (fn [& args] (apply f arg1 arg2 arg3 (concat more args)))))
+  ([f g]
+     (fn
+       ([] (f (g)))
+       ([x] (f (g x)))
+       ([x y] (f (g x y)))
+       ([x y z] (f (g x y z)))
+       ([x y z & args] (f (apply g x y z args)))))
+  ([f g h]
+     (fn
+       ([] (f (g (h))))
+       ([x] (f (g (h x))))
+       ([x y] (f (g (h x y))))
+       ([x y z] (f (g (h x y z))))
+       ([x y z & args] (f (g (apply h x y z args))))))
+  ([f1 f2 f3 & fs]
+    (let [fs (reverse (list* f1 f2 f3 fs))]
+      (fn [& args]
+        (loop [ret (apply (first fs) args) fs (next fs)]
+          (if fs
+            (recur ((first fs) ret) (next fs))
+            ret))))))

@@ -1,0 +1,5 @@
+PASS closed sorted prerequisite corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/ci-reduce is not public at line 2 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-symbols is not public at line 3 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+WARNING: var: cljs.core/compare-keywords is not public at line 4 /private/tmp/suss-m4-sorted-comparator-prerequisites/tests/oracle/src/suss_oracle/sorted_prerequisites.cljs
+PASS 47 pinned sorted prerequisite candidates

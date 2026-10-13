@@ -49,6 +49,10 @@ mod portable_module_cache;
 #[cfg(not(target_family = "wasm"))]
 mod portable_defn;
 #[cfg(not(target_family = "wasm"))]
+mod portable_record_factories;
+#[cfg(not(target_family = "wasm"))]
+mod portable_record_label;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_data;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_graph;

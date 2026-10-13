@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda",
+  "replacement": "(def ^{:doc \"Return true if the seq function is supported for s\"\n       :arglists '([s])}\n  seqable?\n  (fn [s]\n    (or\n      (nil? s)\n      (satisfies? ISeqable s)\n      (array? s)\n      (string? s))))",
+  "rationale": "Retain the complete pinned public declaration, docstring and arity. Expand defn to def/fn and preserve the original nil, ISeqable, array and string tests in source order. Omit only the js-iterable? branch: the accepted Suss 0.3.1 contract explicitly excludes JavaScript/npm/Closure interop from portable source compatibility. Foreign JS iterables must be wrapped by a portable Suss ISeqable/IIterable implementation; no JS-iterable behavior is claimed. The original complete form remains retained by the importer with EPL provenance."
+}

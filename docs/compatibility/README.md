@@ -1125,3 +1125,29 @@ unsupported-to-pass conversion and no milestone completion is claimed. The
 original five shared-collection gates, all 397 required operation rows,
 complete sorted/record integration and full source/printer/Error/ES6
 dependencies remain required.
+
+## Complete sorted node authoring checkpoint
+
+[Sorted tree node provenance](sorted-tree-nodes/README.md) retains seven complete
+pinned declarations and all original node methods, with 340 prior selections
+unchanged. The entire seven-target IComparable parent is authored in the loader;
+full ES6/printer parents and macro dependencies remain retained with explicit
+ledgers. Fresh pinned CLJS/Node passes 86 ordered cases. Five native regressions
+and two compiler prerequisites are authored but uncompiled/unexecuted; bootstrap
+artifacts remain unchanged and stale. Reference/source checks are not native
+acceptance. Full tree algorithms, constructors, iteration, ranges and remaining
+host/protocol/macro boundaries continue in the full sorted lane.
+
+The [complete sorted tree collections authoring group](sorted-tree-collections/README.md)
+retains all constructors, algorithms, cursor/value sequences, iterator dependencies
+and both range arities, with complete macro/anonymous-parent provenance. Its 142
+fresh pinned raw observations and Python/source checks are authoring evidence;
+native tests remain uncompiled/unexecuted and bootstrap is stale. Reify, typed
+Error ancestry/binding, full ES6/printer integration and original #18/#19/M4 gates
+remain explicit. The prior 86 tree assertions remain supplementary alongside the
+52 independently decoded tree-node observations.
+
+
+## Portable sequence capability predicate
+
+The [`seqable?` adaptation](seqability/README.md) retains the pinned portable nil, ISeqable, array, and string behavior. Its JavaScript Symbol.iterator branch is an explicit host-interoperability boundary; foreign JS iterables require a portable protocol wrapper.

@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "compare-wrong-arity",
+      "source": "(try (let [f compare] (f 1)) false (catch :default e (= (.-message e) \"Wrong arity\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-wrong-arity",
+      "source": "(try (let [f (fn->comparator (fn [_ _] 0))] (f 1)) false (catch :default e (= (.-message e) \"Wrong arity\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

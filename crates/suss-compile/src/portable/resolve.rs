@@ -46,6 +46,8 @@ impl Global {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NominalForm {
     Deftype,
+    DeftypeInternal,
+    DefrecordInternal,
     Defprotocol,
     ExtendType,
     Instance,
@@ -212,6 +214,8 @@ pub struct DefinitionInfo {
     /// Genuine deftype declaration facts, captured before method analysis.
     /// None is an ordinary def, not a zero-field source type.
     pub type_fields: Option<usize>,
+    /// The intrinsic declaration kind, independent of user metadata overrides.
+    pub type_is_record: bool,
     pub once: bool,
 }
 impl DefinitionInfo {
@@ -408,6 +412,7 @@ impl Environment {
                 ("aclone", "array-clone-function"),
                 ("aget", "array-get-function"),
                 ("aset", "array-set-function"),
+                ("js-delete", "js-delete-function"),
                 ("alength", "array-length-function"),
                 ("native-satisfies?", "native-satisfies-function"),
                 ("nil?", "predicate-nil"),
@@ -432,6 +437,23 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Core { global, export });
             }
+            // Explicit owned host bindings, not declarations of a loaded JS namespace.
+            for (name, export) in [
+                ("Error", "error-constructor"),
+                ("RangeError", "range-error-constructor"),
+                ("undefined", "undefined-value"),
+                ("TypeError", "type-error-constructor"),
+                ("Object", "object-constructor"),
+                ("NaN", "nan-value"),
+            ] {
+                let global = Global {
+                    phase,
+                    namespace: "js".into(),
+                    name: name.into(),
+                };
+                env.bindings
+                    .insert(global.clone(), Binding::Core { global, export });
+            }
             // Private callable adapters used by the bundled compiled async library.
             for (name, export) in [
                 ("pending", "async-source-pending-function"),
@@ -441,17 +463,44 @@ impl Environment {
                 ("status", "async-source-status-function"),
                 ("result", "async-source-result-function"),
                 ("stream-pair", "async-source-stream-pair-function"),
-                ("stream-pair-reader", "async-source-stream-pair-reader-function"),
-                ("stream-pair-writer", "async-source-stream-pair-writer-function"),
-                ("stream-read-limit", "async-source-stream-read-limit-function"),
-                ("stream-write-limit", "async-source-stream-write-limit-function"),
-                ("stream-begin-read", "async-source-stream-begin-read-function"),
-                ("stream-begin-write", "async-source-stream-begin-write-function"),
-                ("stream-operation-future", "async-source-stream-operation-future-function"),
-                ("stream-operation-retire", "async-source-stream-operation-retire-function"),
+                (
+                    "stream-pair-reader",
+                    "async-source-stream-pair-reader-function",
+                ),
+                (
+                    "stream-pair-writer",
+                    "async-source-stream-pair-writer-function",
+                ),
+                (
+                    "stream-read-limit",
+                    "async-source-stream-read-limit-function",
+                ),
+                (
+                    "stream-write-limit",
+                    "async-source-stream-write-limit-function",
+                ),
+                (
+                    "stream-begin-read",
+                    "async-source-stream-begin-read-function",
+                ),
+                (
+                    "stream-begin-write",
+                    "async-source-stream-begin-write-function",
+                ),
+                (
+                    "stream-operation-future",
+                    "async-source-stream-operation-future-function",
+                ),
+                (
+                    "stream-operation-retire",
+                    "async-source-stream-operation-retire-function",
+                ),
                 ("stream-chunk-new", "async-source-stream-chunk-new-function"),
                 ("stream-chunk-set", "async-source-stream-chunk-set-function"),
-                ("stream-chunk-count", "async-source-stream-chunk-count-function"),
+                (
+                    "stream-chunk-count",
+                    "async-source-stream-chunk-count-function",
+                ),
                 ("stream-chunk-nth", "async-source-stream-chunk-nth-function"),
                 ("stream-eof?", "async-source-stream-eof?-function"),
                 ("stream-close!", "async-source-stream-close!-function"),
@@ -462,10 +511,13 @@ impl Environment {
                     namespace: "suss.internal.async".into(),
                     name: name.into(),
                 };
-                env.bindings.insert(global.clone(), Binding::Core { global, export });
+                env.bindings
+                    .insert(global.clone(), Binding::Core { global, export });
             }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
+                ("deftype*", NominalForm::DeftypeInternal),
+                ("defrecord*", NominalForm::DefrecordInternal),
                 ("defprotocol", NominalForm::Defprotocol),
                 ("extend-type", NominalForm::ExtendType),
                 ("instance?", NominalForm::Instance),
@@ -534,9 +586,14 @@ impl Environment {
         &self.scopes[&(phase, self.current[&phase].clone())]
     }
     fn source_changed(&mut self) {
-        self.source_generation = self.source_generation.checked_add(1).expect("compiler source generation exhausted");
+        self.source_generation = self
+            .source_generation
+            .checked_add(1)
+            .expect("compiler source generation exhausted");
     }
-    pub(crate) fn source_generation(&self) -> u64 { self.source_generation }
+    pub(crate) fn source_generation(&self) -> u64 {
+        self.source_generation
+    }
     fn scope_mut(&mut self, phase: Phase) -> &mut Scope {
         self.source_changed();
         let namespace = self.current[&phase].clone();
@@ -547,13 +604,32 @@ impl Environment {
     /// Undo staged declaration publication without reverting unrelated macro effects/dependencies.
     pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
         for global in globals {
-            match before.bindings.get(global) { Some(value) => { self.bindings.insert(global.clone(), value.clone()); }, None => { self.bindings.remove(global); } }
-            match before.definitions.get(global) { Some(value) => { self.definitions.insert(global.clone(), value.clone()); }, None => { self.definitions.remove(global); } }
+            match before.bindings.get(global) {
+                Some(value) => {
+                    self.bindings.insert(global.clone(), value.clone());
+                }
+                None => {
+                    self.bindings.remove(global);
+                }
+            }
+            match before.definitions.get(global) {
+                Some(value) => {
+                    self.definitions.insert(global.clone(), value.clone());
+                }
+                None => {
+                    self.definitions.remove(global);
+                }
+            }
             let export = (phase, global.namespace.clone(), global.name.clone());
-            if before.macro_exports.contains(&export) { self.macro_exports.insert(export); }
-            else { self.macro_exports.remove(&export); }
+            if before.macro_exports.contains(&export) {
+                self.macro_exports.insert(export);
+            } else {
+                self.macro_exports.remove(&export);
+            }
         }
-        if let Some(namespace) = before.current.get(&phase) { self.current.insert(phase, namespace.clone()); }
+        if let Some(namespace) = before.current.get(&phase) {
+            self.current.insert(phase, namespace.clone());
+        }
         self.source_changed();
     }
     pub fn current_namespace(&self, phase: Phase) -> &str {
@@ -588,7 +664,10 @@ impl Environment {
     }
     /// Immutable declaration revisions retain identity through Environment clones
     /// and source snapshots. Reanalysis installs a fresh revision instead.
-    pub(crate) fn shared_definition_info(&self, global: &Global) -> Option<&std::sync::Arc<DefinitionInfo>> {
+    pub(crate) fn shared_definition_info(
+        &self,
+        global: &Global,
+    ) -> Option<&std::sync::Arc<DefinitionInfo>> {
         self.definitions.get(global)
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
@@ -604,7 +683,9 @@ impl Environment {
         self.bindings
             .values()
             .filter_map(|binding| match binding {
-                Binding::Cell(global) | Binding::InternalCell(global) | Binding::ReaderCell(global) => Some(global.clone()),
+                Binding::Cell(global)
+                | Binding::InternalCell(global)
+                | Binding::ReaderCell(global) => Some(global.clone()),
                 _ => None,
             })
             .chain(self.materialized_bootstrap.iter().cloned())
@@ -613,7 +694,9 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
-        if self.materialized_bootstrap.insert(global) { self.source_changed(); }
+        if self.materialized_bootstrap.insert(global) {
+            self.source_changed();
+        }
     }
     /// Bootstrap cell initializers for native hosts; source values share these
     /// canonical identities and later declarations may replace their contents.
@@ -712,16 +795,34 @@ impl Environment {
         Ok(global)
     }
     pub(crate) fn is_hidden_cell(&self, phase: Phase, namespace: &str, name: &str) -> bool {
-        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
-        matches!(self.bindings.get(&global), Some(Binding::ReaderCell(_) | Binding::InternalCell(_)))
+        let global = Global {
+            phase,
+            namespace: canonical(namespace).into(),
+            name: name.into(),
+        };
+        matches!(
+            self.bindings.get(&global),
+            Some(Binding::ReaderCell(_) | Binding::InternalCell(_))
+        )
     }
     pub(crate) fn reader_sequence_cells(&mut self, phase: Phase) -> (Global, Global, bool) {
-        let global = Global { phase, namespace: "suss.core".into(), name: "sequence".into() };
-        let fallback = Global { phase, namespace: "suss.internal.reader".into(), name: "sequence".into() };
-        self.bindings.entry(global.clone()).or_insert_with(|| Binding::ReaderCell(global.clone()));
+        let global = Global {
+            phase,
+            namespace: "suss.core".into(),
+            name: "sequence".into(),
+        };
+        let fallback = Global {
+            phase,
+            namespace: "suss.internal.reader".into(),
+            name: "sequence".into(),
+        };
+        self.bindings
+            .entry(global.clone())
+            .or_insert_with(|| Binding::ReaderCell(global.clone()));
         let fresh = !self.bindings.contains_key(&fallback);
         if fresh {
-            self.bindings.insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
+            self.bindings
+                .insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
             self.source_changed();
         }
         (global, fallback, fresh)
@@ -772,14 +873,26 @@ impl Environment {
     ) -> Result<(), Diagnostic> {
         valid_namespace(namespace)?;
         let target = canonical(namespace);
-        let catalog = if macros { &self.macro_namespaces } else { &self.namespaces };
+        let catalog = if macros {
+            &self.macro_namespaces
+        } else {
+            &self.namespaces
+        };
         if !catalog.contains(&(phase, target.into())) {
-            return Err(error(format!("Unknown {phase:?} required namespace {namespace}")));
+            return Err(error(format!(
+                "Unknown {phase:?} required namespace {namespace}"
+            )));
         }
         let scope = self.scope_mut(phase);
-        let aliases = if macros { &mut scope.macro_aliases } else { &mut scope.aliases };
+        let aliases = if macros {
+            &mut scope.macro_aliases
+        } else {
+            &mut scope.aliases
+        };
         if aliases.get(namespace).is_some_and(|old| old != target) {
-            return Err(error(format!("Ambiguous required namespace alias {namespace}")));
+            return Err(error(format!(
+                "Ambiguous required namespace alias {namespace}"
+            )));
         }
         aliases.insert(namespace.into(), target.into());
         Ok(())
@@ -855,7 +968,12 @@ impl Environment {
         }
         let scope = self.scope_mut(phase);
         scope.refers.insert(local.into(), global);
-        if renamed { &mut scope.renamed_refers } else { &mut scope.used_refers }.insert(local.into());
+        if renamed {
+            &mut scope.renamed_refers
+        } else {
+            &mut scope.used_refers
+        }
+        .insert(local.into());
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
@@ -949,7 +1067,12 @@ impl Environment {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
         scope.macro_refers.insert(local.into(), target);
-        if renamed { &mut scope.renamed_macro_refers } else { &mut scope.used_macro_refers }.insert(local.into());
+        if renamed {
+            &mut scope.renamed_macro_refers
+        } else {
+            &mut scope.used_macro_refers
+        }
+        .insert(local.into());
         Ok(())
     }
     pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {
@@ -1019,6 +1142,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1078,6 +1203,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1137,6 +1264,8 @@ impl Environment {
                         | "binding"
                         | "with-redefs"
                         | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                         | "defprotocol"
                         | "extend-type"
                         | "instance?"
@@ -1196,6 +1325,8 @@ impl Environment {
                     | "binding"
                     | "with-redefs"
                     | "deftype"
+                    | "deftype*"
+                    | "defrecord*"
                     | "defprotocol"
                     | "extend-type"
                     | "instance?"
@@ -1344,6 +1475,8 @@ impl Environment {
                 global,
                 form: match name {
                     "deftype" => NominalForm::Deftype,
+                    "deftype*" => NominalForm::DeftypeInternal,
+                    "defrecord*" => NominalForm::DefrecordInternal,
                     "defprotocol" => NominalForm::Defprotocol,
                     "instance?" => NominalForm::Instance,
                     "satisfies?" => NominalForm::Satisfies,
@@ -1361,7 +1494,9 @@ impl Environment {
     ) -> Result<Binding, Diagnostic> {
         let scope = self.scope(phase);
         let global = if let Some(namespace) = &symbol.namespace {
-            let namespace = if matches!(namespace.as_str(), "suss.core" | "cljs.core") {
+            let namespace = if namespace == "js" {
+                "js"
+            } else if matches!(namespace.as_str(), "suss.core" | "cljs.core") {
                 canonical(namespace)
             } else {
                 symbol_namespace(scope.aliases.get(namespace), namespace)
@@ -1453,17 +1588,21 @@ pub(crate) fn locate_source_if_present(
                                         if let Err(error) = ancestor.canonicalize() {
                                             return Err(Diagnostic {
                                                 span,
-                                                message: format!("Cannot resolve namespace source: {error}"),
+                                                message: format!(
+                                                    "Cannot resolve namespace source: {error}"
+                                                ),
                                             });
                                         }
                                     }
                                 }
                             }
                         }
-                        _ => return Err(Diagnostic {
-                            span,
-                            message: format!("Cannot resolve namespace source: {error}"),
-                        }),
+                        _ => {
+                            return Err(Diagnostic {
+                                span,
+                                message: format!("Cannot resolve namespace source: {error}"),
+                            });
+                        }
                     }
                 }
                 Err(error) => {

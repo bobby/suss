@@ -1660,6 +1660,11 @@
       "patch": "docs/compatibility/patches/lazy-filter.json"
     },
     {
+      "id": "runtime:mapv:5450",
+      "source-sha256": "de1de186702d507044c2dc414487799299e242528da15396d231704a13a67d98",
+      "patch": "docs/compatibility/patches/mapv.json"
+    },
+    {
       "id": "runtime:ISorted:782",
       "source-sha256": "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1",
       "patch": null
@@ -1788,16 +1793,401 @@
       "id": "runtime:str:3129",
       "source-sha256": "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208",
       "patch": "docs/compatibility/patches/record-public-str.json"
+    },
+    {
+      "id": "runtime:compare:2499",
+      "source-sha256": "9f7d9f48983e13389705d5883db9910a21146c05b3d16c530cbef44dcd05b7f6",
+      "patch": "docs/compatibility/patches/comparator-compare.json"
+    },
+    {
+      "id": "runtime:compare-indexed:2525",
+      "source-sha256": "9eaf284492de47c9f9e999847036bacf8a6cf5f04410636c47c01fe2a140ea78",
+      "patch": "docs/compatibility/patches/comparator-compare-indexed.json"
+    },
+    {
+      "id": "runtime:fn->comparator:2541",
+      "source-sha256": "3bc1fda05898403e1fe2972211079120b80fc4fde61dadb06804e6862012f9e0",
+      "patch": "docs/compatibility/patches/comparator-fn-comparator.json"
+    },
+    {
+      "id": "runtime:ci-reduce:1545",
+      "source-sha256": "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json"
+    },
+    {
+      "id": "runtime:compare-symbols:1115",
+      "source-sha256": "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json"
+    },
+    {
+      "id": "runtime:compare-keywords:3462",
+      "source-sha256": "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json"
+    },
+    {
+      "id": "runtime:balance-left:8404",
+      "source-sha256": "b002411fcd55b2bff744528f61339a7594267111905e8fb75fc7705462cb9d9b",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left.json"
+    },
+    {
+      "id": "runtime:balance-right:8429",
+      "source-sha256": "1cc3c1758816e8eecccd7c1625f33aa48e1ab1964ba0c55cab008212671a4df3",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right.json"
+    },
+    {
+      "id": "runtime:balance-left-del:8451",
+      "source-sha256": "c3372e9c8b3022572e6b498949ba4845304ab693a04071ef89385ef7b890a74e",
+      "patch": "docs/compatibility/patches/sorted-node-balance-left-del.json"
+    },
+    {
+      "id": "runtime:balance-right-del:8470",
+      "source-sha256": "16fa44adceae5ed06816b136d8cb41f45784caceefbc6eddab05968dae3c3412",
+      "patch": "docs/compatibility/patches/sorted-node-balance-right-del.json"
+    },
+    {
+      "id": "runtime:tree-map-kv-reduce:8489",
+      "source-sha256": "db9c3033b656cf931be05b9ede68affe9d43b82f4cb774a645feda344f995e6c",
+      "patch": "docs/compatibility/patches/sorted-node-tree-map-kv-reduce.json"
+    },
+    {
+      "id": "runtime:BlackNode:8502",
+      "source-sha256": "f2038658d1eb89987ac08378c0f83723fc699823831f3d883f9d39226c8dbab8",
+      "patch": "docs/compatibility/patches/sorted-node-BlackNode.json"
+    },
+    {
+      "id": "runtime:RedNode:8627",
+      "source-sha256": "f6d8df1d1582177aa1303e86784d8e408f620d0e5b131beba87cce37fbe80554",
+      "patch": "docs/compatibility/patches/sorted-node-RedNode.json"
+    },
+    {
+      "id": "runtime:StringIter:4205",
+      "source-sha256": "9adfe7e716f9e37f54150f0ce25edd5f3e770803eec6d561bf868cc526574985",
+      "patch": "docs/compatibility/patches/sorted-tree-StringIter.json"
+    },
+    {
+      "id": "runtime:string-iter:4214",
+      "source-sha256": "16d3246ef24f9d656d991053345ffa43d5f12551feb8f095babb664a1cf0625d",
+      "patch": "docs/compatibility/patches/sorted-tree-string-iter.json"
+    },
+    {
+      "id": "runtime:ArrayIter:4217",
+      "source-sha256": "89bd2f7927678ad847644398f903cbbb23306a39aba81e15c1edf45fed7328b5",
+      "patch": "docs/compatibility/patches/sorted-tree-ArrayIter.json"
+    },
+    {
+      "id": "runtime:array-iter:4226",
+      "source-sha256": "a35dc51344170101cdc3c1ab77918c0cc92deb7d115155ab6c31a299922974c0",
+      "patch": "docs/compatibility/patches/sorted-tree-array-iter.json"
+    },
+    {
+      "id": "runtime:INIT:4229",
+      "source-sha256": "658a45715383770465173a54f0d3a14cdd938c7a3c707622096f2a5218dde1ae",
+      "patch": "docs/compatibility/patches/sorted-tree-INIT.json"
+    },
+    {
+      "id": "runtime:START:4230",
+      "source-sha256": "493080f508f3c186a4b03719bd412f3d845fc538b54c44da3227a04ab9d4a3ba",
+      "patch": "docs/compatibility/patches/sorted-tree-START.json"
+    },
+    {
+      "id": "runtime:SeqIter:4232",
+      "source-sha256": "f59841c3a1ebc8425491773edaa4bbf541e4a4f9b354aa9560181515a926dc01",
+      "patch": "docs/compatibility/patches/sorted-tree-SeqIter.json"
+    },
+    {
+      "id": "runtime:seq-iter:4250",
+      "source-sha256": "2799d337b5bbbc6b4db2e2cd59daaa250d42721dfc35d344c03e0e704fc2aa38",
+      "patch": "docs/compatibility/patches/sorted-tree-seq-iter.json"
+    },
+    {
+      "id": "runtime:nil-iter:4198",
+      "source-sha256": "11bfb46904ec4fbe51e8034872d61d823aa35e4e1a80490714198520ec0d845c",
+      "patch": "docs/compatibility/patches/sorted-tree-nil-iter.json"
+    },
+    {
+      "id": "runtime:iter:4253",
+      "source-sha256": "2359829a7d7f7759bd5d89429ce3dbfec0e148dabc9e8c08b1ebdafc56815dfe",
+      "patch": "docs/compatibility/patches/sorted-tree-iter.json"
+    },
+    {
+      "id": "runtime:ES6Iterator:1360",
+      "source-sha256": "4d20afa24a707931cbd61c1289e293d2d36f678862c5b0e10976727e621c09df",
+      "patch": "docs/compatibility/patches/sorted-tree-ES6Iterator.json"
+    },
+    {
+      "id": "runtime:es6-iterator:1369",
+      "source-sha256": "b5da1e07931742823382f8b398ca4b81d22f038f2e178e7236b7251dd7bb4d0c",
+      "patch": "docs/compatibility/patches/sorted-tree-es6-iterator.json"
+    },
+    {
+      "id": "runtime:ES6EntriesIterator:6619",
+      "source-sha256": "d31d302040bd9ac48393130e9a4e04b048ad2e2d812007d8d06a03e6fff8fc7e",
+      "patch": "docs/compatibility/patches/sorted-tree-ES6EntriesIterator.json"
+    },
+    {
+      "id": "runtime:es6-entries-iterator:6628",
+      "source-sha256": "35dca42673ce03a7bfa7edb768ad846e5a9098acb405aaca3fcdd54021d17b71",
+      "patch": "docs/compatibility/patches/sorted-tree-es6-entries-iterator.json"
+    },
+    {
+      "id": "runtime:ES6SetEntriesIterator:6631",
+      "source-sha256": "cf749f0668b679a3e76069e0ec29cbbd2cba303bbd950a329986b82dbed902f0",
+      "patch": "docs/compatibility/patches/sorted-tree-ES6SetEntriesIterator.json"
+    },
+    {
+      "id": "runtime:es6-set-entries-iterator:6640",
+      "source-sha256": "9a14d8e31168c8d923ec456050f9dcd7e03ccf2c1aef6237f3af3474dbdc1fd8",
+      "patch": "docs/compatibility/patches/sorted-tree-es6-set-entries-iterator.json"
+    },
+    {
+      "id": "runtime:tree-map-seq-push:8321",
+      "source-sha256": "c5b5922a5ce02544a702234bf40521334791af1008403431010757f69d846235",
+      "patch": "docs/compatibility/patches/sorted-tree-tree-map-seq-push.json"
+    },
+    {
+      "id": "runtime:PersistentTreeMapSeq:8328",
+      "source-sha256": "3f6db4d04904e46b30a2b4306d63f3960cc3362651c64565c65d1e7b18ebb479",
+      "patch": "docs/compatibility/patches/sorted-tree-PersistentTreeMapSeq.json"
+    },
+    {
+      "id": "runtime:create-tree-map-seq:8399",
+      "source-sha256": "d70c6ff821e3d4bd2f2fcf49b800095830dca570848804403a561f53089f9acf",
+      "patch": "docs/compatibility/patches/sorted-tree-create-tree-map-seq.json"
+    },
+    {
+      "id": "runtime:tree-map-add:8791",
+      "source-sha256": "e6190a89019bf8d3e1bc21391ea30f602ed0592ee39bf744fd1eac435124ef7b",
+      "patch": "docs/compatibility/patches/sorted-tree-tree-map-add.json"
+    },
+    {
+      "id": "runtime:tree-map-append:8810",
+      "source-sha256": "dc697a2ea23cab4e03e96de207a2559c43ee7d61b65ea08f1da56d6aea7c78d1",
+      "patch": "docs/compatibility/patches/sorted-tree-tree-map-append.json"
+    },
+    {
+      "id": "runtime:tree-map-remove:8867",
+      "source-sha256": "8a8aada37bb1e0cccdab00cc8b086643cf0aff0897a866203e64b679088e9b30",
+      "patch": "docs/compatibility/patches/sorted-tree-tree-map-remove.json"
+    },
+    {
+      "id": "runtime:tree-map-replace:8889",
+      "source-sha256": "def2d4a43f42705412ab779a03ec360d7b204a30e9993d7cd2b589b930a7e2d7",
+      "patch": "docs/compatibility/patches/sorted-tree-tree-map-replace.json"
+    },
+    {
+      "id": "runtime:ValSeq:9186",
+      "source-sha256": "30b18ae7c3811d932296510fa140dc7ca7bc53fbef492ad4eebb6d0fb26f9df0",
+      "patch": "docs/compatibility/patches/sorted-tree-ValSeq.json"
+    },
+    {
+      "id": "runtime:vals:9254",
+      "source-sha256": "8798efa7b4b5afca2f207bc0fd67ed712b1ee6e9c3efad598ec99db0e37dc682",
+      "patch": "docs/compatibility/patches/sorted-tree-vals.json"
+    },
+    {
+      "id": "runtime:PersistentTreeMap:8898",
+      "source-sha256": "32aa9efe4de44109a884a3a1db55946951440a45050ac48f5a104f165f642e41",
+      "patch": "docs/compatibility/patches/sorted-tree-PersistentTreeMap.json"
+    },
+    {
+      "id": "runtime:PersistentTreeSet:9482",
+      "source-sha256": "1b34f2ea2007a00692a2dc7b3bc355bd2049ec855f75a4738810d0606548d125",
+      "patch": "docs/compatibility/patches/sorted-tree-PersistentTreeSet.json"
+    },
+    {
+      "id": "runtime:sorted-map:9088",
+      "source-sha256": "b7b96c95467b457faf314fd571c5d2389a22ece95af13586d2d95dc5f4d77909",
+      "patch": "docs/compatibility/patches/sorted-tree-sorted-map.json"
+    },
+    {
+      "id": "runtime:sorted-map-by:9097",
+      "source-sha256": "33de20939236eed237ae13c40c25788ead716d9abc07894adc8f939481ba8960",
+      "patch": "docs/compatibility/patches/sorted-tree-sorted-map-by.json"
+    },
+    {
+      "id": "runtime:sorted-set:9618",
+      "source-sha256": "dd6093a138588c8b283cb4604f31ab4bb93f2bf56637cc68a7986f713d2fbb81",
+      "patch": "docs/compatibility/patches/sorted-tree-sorted-set.json"
+    },
+    {
+      "id": "runtime:sorted-set-by:9623",
+      "source-sha256": "c8c8652d29fe51fe545c27ba3bd8e3a22c31cc1f8e10b81448cf9ffe6e24c8f9",
+      "patch": "docs/compatibility/patches/sorted-tree-sorted-set-by.json"
+    },
+    {
+      "id": "runtime:take-while:9803",
+      "source-sha256": "9fc84ecc46ecf2b0936a24dc2039a6497532ca925a29057479c20886fac478cb",
+      "patch": "docs/compatibility/patches/sorted-tree-take-while.json"
+    },
+    {
+      "id": "runtime:mk-bound-fn:9822",
+      "source-sha256": "b8b81ddf600390a36d5c75fb4256d78ec08a768ad371d52f44246c642ed8aabd",
+      "patch": "docs/compatibility/patches/sorted-tree-mk-bound-fn.json"
+    },
+    {
+      "id": "runtime:subseq:9828",
+      "source-sha256": "329d3ca9e84edcded6d218cb105ff773f51dbcf7ad9af16cf1872b6e5d148100",
+      "patch": "docs/compatibility/patches/sorted-tree-subseq.json"
+    },
+    {
+      "id": "runtime:rsubseq:9843",
+      "source-sha256": "8e172e7ea79a024453f553a9f3e6d266c318a06313eede31645293adb0dd5955",
+      "patch": "docs/compatibility/patches/sorted-tree-rsubseq.json"
+    },
+    {
+      "id": "runtime:seqable?:2347",
+      "source-sha256": "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda",
+      "patch": "docs/compatibility/patches/seqable.json"
+    },
+    {
+      "id": "runtime:associative?:2238",
+      "source-sha256": "265eb7820ec1f194494f1affc4d75b36fbded8db522b5eaa2751235b31d6bfb9",
+      "patch": "docs/compatibility/patches/associative-predicate.json"
+    },
+    {
+      "id": "runtime:ifind?:2242",
+      "source-sha256": "6dda7e42ffc00ee14bb8ba9c81cc9f0311d5b11e295c6f198994cca105a002cc",
+      "patch": "docs/compatibility/patches/ifind-predicate.json"
+    },
+    {
+      "id": "runtime:find:2471",
+      "source-sha256": "00529eaa753954f87e61a05f2f9fc105353e15d6067eb8ccc4fac0f8f68650db",
+      "patch": "docs/compatibility/patches/find.json"
+    },
+    {
+      "id": "runtime:type->str:362",
+      "source-sha256": "1c24d089a0bb32d8f86f5b5b1031fe2e6b3ff9e5782a8d7b09b63d77fae4eff9",
+      "patch": "docs/compatibility/patches/type-to-str.json"
+    },
+    {
+      "id": "runtime:Repeat:5118",
+      "source-sha256": "95cd7293814ed735d7793ba020128f60913f8d5d661ddc6b64cc8f5d7c83f921",
+      "patch": null
+    },
+    {
+      "id": "runtime:repeat:5223",
+      "source-sha256": "91b90fdf4dedb0db9265b5914c7aa042872da1d9d7df9ff2ed5241633ce9d637",
+      "patch": "docs/compatibility/patches/range-repeat.json"
+    },
+    {
+      "id": "runtime:IntegerRangeChunk:9858",
+      "source-sha256": "97fb1fd2001cc2c5aaa426aa5bfe7896ecef91e3ccb031768882fac2fc2a0b3f",
+      "patch": "docs/compatibility/patches/range-IntegerRangeChunk.json"
+    },
+    {
+      "id": "runtime:RangeIterator:9879",
+      "source-sha256": "1340d3a765676685f48bc3267627b9a24f2ed59ec83fb58fb34777ef5a182f4a",
+      "patch": null
+    },
+    {
+      "id": "runtime:range-count:9890",
+      "source-sha256": "dd4edda4c271cc1df6ac275122b3e890f798b7c482a98cecdab86a69390fcd4f",
+      "patch": "docs/compatibility/patches/range-count.json"
+    },
+    {
+      "id": "runtime:IntegerRange:9895",
+      "source-sha256": "2b5f2b78778f238c980020857d8c3f5ed85d46572c2e0e1592dd44872dd80276",
+      "patch": "docs/compatibility/patches/range-IntegerRange.json"
+    },
+    {
+      "id": "runtime:Range:10024",
+      "source-sha256": "d300586e1128e421670d8dd795b92125ea4529ab99d9296734c7be5504cb9fdb",
+      "patch": null
+    },
+    {
+      "id": "runtime:range:10131",
+      "source-sha256": "33ca3abb88722f0bb131fd1c312ddad62cbd0761db16fb5652528da6c7840d50",
+      "patch": "docs/compatibility/patches/range.json"
+    },
+    {
+      "id": "runtime:drop:4976",
+      "source-sha256": "b1d8bbc4d336d3a52f059cde10decdb0d198bdcc0ad1cc11313f83733d576fc9",
+      "patch": "docs/compatibility/patches/sequence-drop.json"
+    },
+    {
+      "id": "runtime:dorun:10287",
+      "source-sha256": "a937da2e4cb6e2d900565f03f9f4832a62ed6bb6d65edd80a99de74287568003",
+      "patch": "docs/compatibility/patches/sequence-dorun.json"
+    },
+    {
+      "id": "runtime:doall:10300",
+      "source-sha256": "af3b0f111a8d8c9a617d55b8c7c28e210b2aa04b21e4ff02dd7c2dbcd61195a2",
+      "patch": "docs/compatibility/patches/sequence-doall.json"
+    },
+    {
+      "id": "runtime:rem:2987",
+      "source-sha256": "0d2ecbb308a71cdf6807f46f7ced7208e05edb9fa4932820a77dabaf4f7b7c56",
+      "patch": "docs/compatibility/patches/sequence-rem.json"
+    },
+    {
+      "id": "runtime:take-nth:10159",
+      "source-sha256": "09dec2d9a7a12429ef887be7688a1b9c8b5cc91b030caf5ba3b083a0fd594ad4",
+      "patch": "docs/compatibility/patches/sequence-take-nth.json"
+    },
+    {
+      "id": "runtime:take:4949",
+      "source-sha256": "b3108b498b0d165295d9b442ec38e7cfa6d1fec46ba20769347690e8be7b704f",
+      "patch": "docs/compatibility/patches/record-dependency-take.json"
+    },
+    {
+      "id": "runtime:UNREALIZED-SEED:5242",
+      "source-sha256": "c9b9f41d167451c36583ae83e03160d65d444239e6b532b64e085413513c0fef",
+      "patch": "docs/compatibility/patches/record-dependency-unrealized-seed.json"
+    },
+    {
+      "id": "runtime:Iterate:5244",
+      "source-sha256": "0d66568f7d23604456f6f136715471edcf53a92487b0fdf702a60a47183fc22f",
+      "patch": null
+    },
+    {
+      "id": "runtime:iterate:5303",
+      "source-sha256": "f37249f344dd10022a20f5cbef1cd88be4839737d1d9f034ae6be97a4fb1d4b1",
+      "patch": "docs/compatibility/patches/record-dependency-iterate.json"
+    },
+    {
+      "id": "runtime:replace:9630",
+      "source-sha256": "bf1a9863d51d7d8e945710b95093256d960354b733fe7c02d63527c9fe89db4c",
+      "patch": "docs/compatibility/patches/record-dependency-replace.json"
+    },
+    {
+      "id": "runtime:complement:4454",
+      "source-sha256": "77df12ea943440f852dba2228c0dbe261602f0baefca19818df2c6530805d3bf",
+      "patch": "docs/compatibility/patches/record-emitter-complement.json"
+    },
+    {
+      "id": "runtime:remove:5399",
+      "source-sha256": "8fee20ffd7385be06339da051343bdeeb57f2809a55719ad3193adb1043e2e8c",
+      "patch": "docs/compatibility/patches/record-emitter-remove.json"
+    },
+    {
+      "id": "runtime:preserving-reduced:10953",
+      "source-sha256": "d78f114de8ea0ff64e2cc69ac60ba432f085501a9c8ceaf6ecc2ab72b33ccd3b",
+      "patch": "docs/compatibility/patches/record-emitter-preserving-reduced.json"
+    },
+    {
+      "id": "runtime:cat:10960",
+      "source-sha256": "8a773318923c8e580f238ebdd2d37f026dcad62a3ec05c543bfd3329f08a3904",
+      "patch": "docs/compatibility/patches/record-emitter-cat.json"
+    },
+    {
+      "id": "runtime:mapcat:5360",
+      "source-sha256": "5e24000c22fb437cda50a47a358acd93eb0badba8138462f35fd756c3dcb9a17",
+      "patch": "docs/compatibility/patches/record-emitter-mapcat.json"
+    },
+    {
+      "id": "runtime:drop-while:5021",
+      "source-sha256": "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0",
+      "patch": "docs/compatibility/patches/record-emitter-drop-while.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "54010a9c5c2de9aba04c492cabac834869670152a73cbc574b40ea66f1f902ce"
+      "sha256": "522b9e1c885166ea099d86a206ed9513e84b6d3e3d7a6a3a5be532cfc06817f0"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "689f03b602fb06f6eda89e9e4163c7930770db2980b206b41c4e42afd4f26fc4"
+      "sha256": "03f25acf05e6471fbfa6f896acf9571fc9cd6e43c571d27999696bd2978bf1d1"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",

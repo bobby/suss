@@ -1,0 +1,382 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "symbol-identity",
+      "source": "(= (compare-symbols (symbol \"n\" \"a\") (symbol \"n\" \"a\")) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-no-namespace",
+      "source": "(= (compare-symbols (symbol \"a\") (symbol \"b\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-left-namespace-absent",
+      "source": "(= (compare-symbols (symbol \"z\") (symbol \"n\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-right-namespace-absent",
+      "source": "(= (compare-symbols (symbol \"n\" \"a\") (symbol \"z\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-namespace-before-name",
+      "source": "(= (compare-symbols (symbol \"a\" \"z\") (symbol \"b\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-namespace-greater",
+      "source": "(= (compare-symbols (symbol \"z\" \"a\") (symbol \"b\" \"z\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-namespace-tie-name",
+      "source": "(= (compare-symbols (symbol \"n\" \"z\") (symbol \"n\" \"a\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-empty-name",
+      "source": "(= (compare-symbols (symbol \"n\" \"\") (symbol \"n\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-utf16",
+      "source": "(= (compare-symbols (symbol \"n\" \"\\ud83d\\ude00\") (symbol \"n\" \"\\ue000\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-no-public-comparator",
+      "source": "(let [c compare gt > lt <] (try (set! compare (fn [_ _] (throw 71))) (set! > (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (set! < (fn ([x] (throw 73)) ([x y] (throw 73)) ([x y & more] (throw 73)))) (= (compare-symbols (symbol \"n\" \"a\") (symbol \"n\" \"b\")) -1) (finally (set! compare c) (set! > gt) (set! < lt))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-identity-skips-fields",
+      "source": "(= (compare-symbols (js-obj \"str\" \"same\") (js-obj \"str\" \"same\")) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-repeated-conversion-order",
+      "source": "(let [trace (atom []) a (js-obj \"str\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) \"a\"))) b (js-obj \"str\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-conversion-throw-stops-right",
+      "source": "(let [trace (atom []) a (js-obj \"str\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj \"str\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (try (compare-symbols a b) false (catch :default e (and (= e 73) (= @trace [1])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-identity",
+      "source": "(= (compare-keywords (keyword \"n\" \"a\") (keyword \"n\" \"a\")) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-no-namespace",
+      "source": "(= (compare-keywords (keyword \"a\") (keyword \"b\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-left-namespace-absent",
+      "source": "(= (compare-keywords (keyword \"z\") (keyword \"n\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-right-namespace-absent",
+      "source": "(= (compare-keywords (keyword \"n\" \"a\") (keyword \"z\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-namespace-before-name",
+      "source": "(= (compare-keywords (keyword \"a\" \"z\") (keyword \"b\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-namespace-greater",
+      "source": "(= (compare-keywords (keyword \"z\" \"a\") (keyword \"b\" \"z\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-namespace-tie-name",
+      "source": "(= (compare-keywords (keyword \"n\" \"z\") (keyword \"n\" \"a\")) 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-empty-name",
+      "source": "(= (compare-keywords (keyword \"n\" \"\") (keyword \"n\" \"a\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-utf16",
+      "source": "(= (compare-keywords (keyword \"n\" \"\\ud83d\\ude00\") (keyword \"n\" \"\\ue000\")) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-no-public-comparator",
+      "source": "(let [c compare gt > lt <] (try (set! compare (fn [_ _] (throw 71))) (set! > (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (set! < (fn ([x] (throw 73)) ([x y] (throw 73)) ([x y & more] (throw 73)))) (= (compare-keywords (keyword \"n\" \"a\") (keyword \"n\" \"b\")) -1) (finally (set! compare c) (set! > gt) (set! < lt))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-identity-skips-fields",
+      "source": "(= (compare-keywords (js-obj \"fqn\" \"same\") (js-obj \"fqn\" \"same\")) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-repeated-conversion-order",
+      "source": "(let [trace (atom []) a (js-obj \"fqn\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) \"a\"))) b (js-obj \"fqn\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-conversion-throw-stops-right",
+      "source": "(let [trace (atom []) a (js-obj \"fqn\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj \"fqn\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (try (compare-keywords a b) false (catch :default e (and (= e 73) (= @trace [1])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-empty-no-init",
+      "source": "(let [calls (atom 0)] (and (= (ci-reduce [] (fn [] (swap! calls inc) 17)) 17) (= @calls 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-single-seed-no-call",
+      "source": "(= (ci-reduce [17] (fn [_ _] (throw 73))) 17)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-no-init-ordered",
+      "source": "(let [trace (atom []) p (SortedIndexedProbe. [1 2 3] trace)] (and (= (ci-reduce p (fn [a b] (swap! trace conj :reduce) (+ a b))) 6) (= @trace [:count 0 1 :reduce 2 :reduce])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-empty-init-identity",
+      "source": "(let [x (js-obj)] (identical? (ci-reduce [] (fn [_ _] (throw 73)) x) x))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-init-ordered",
+      "source": "(let [trace (atom []) p (SortedIndexedProbe. [2 3] trace)] (and (= (ci-reduce p (fn [a b] (swap! trace conj :reduce) (+ a b)) 10) 15) (= @trace [:count 0 :reduce 1 :reduce])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-reduced-no-init",
+      "source": "(let [trace (atom []) p (SortedIndexedProbe. [1 2 3] trace)] (and (= (ci-reduce p (fn [_ _] (swap! trace conj :reduce) (reduced 17))) 17) (= @trace [:count 0 1 :reduce])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-reduced-init-false",
+      "source": "(let [trace (atom []) p (SortedIndexedProbe. [1 2] trace)] (and (false? (ci-reduce p (fn [_ _] (swap! trace conj :reduce) (reduced false)) 10)) (= @trace [:count 0 :reduce])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-reduced-init-nil",
+      "source": "(nil? (ci-reduce [1 2] (fn [_ _] (reduced nil)) 10))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-original-reducer-throw",
+      "source": "(let [trace (atom []) p (SortedIndexedProbe. [1 2 3] trace)] (try (ci-reduce p (fn [_ _] (swap! trace conj :reduce) (throw 73)) 10) false (catch :default e (and (= e 73) (= @trace [:count 0 :reduce])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-live-reduced-predicate",
+      "source": "(let [saved reduced? calls (atom 0)] (try (set! reduced? (fn [x] (swap! calls inc) false)) (and (= (ci-reduce [1 2 3] + 0) 6) (= @calls 3)) (finally (set! reduced? saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-count-before-nth-throw",
+      "source": "(let [trace (atom []) p (SortedThrowingCount. trace)] (try (ci-reduce p +) false (catch :default e (and (= e 73) (= @trace [:count])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-live-deref",
+      "source": "(let [saved deref calls (atom 0)] (try (set! deref (fn [_] (swap! calls inc) 23)) (and (= (ci-reduce [1 2] (fn [_ _] (reduced 17))) 23) (= (saved calls) 1)) (finally (set! deref saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-seed-false",
+      "source": "(false? (ci-reduce [false] (fn [_ _] (throw 73))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-seed-nil",
+      "source": "(nil? (ci-reduce [nil] (fn [_ _] (throw 73))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-typed-count-ignores-public-rebind",
+      "source": "(let [saved -count calls (atom 0)] (try (set! -count (fn [_] (swap! calls inc) 1)) (and (= (ci-reduce [17 23] +) 40) (= @calls 0)) (finally (set! -count saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-typed-nth-ignores-public-rebind",
+      "source": "(let [saved -nth calls (atom 0)] (try (set! -nth (fn ([xs n] (swap! calls inc) 17) ([xs n nf] (swap! calls inc) nf))) (and (= (ci-reduce [23] (fn [_ _] (throw 73))) 23) (= @calls 0)) (finally (set! -nth saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-namespace-difference-skips-name",
+      "source": "(= (compare-symbols (js-obj \"str\" \"a\" \"ns\" \"a\" \"name\" (js-obj \"valueOf\" (fn [] (throw 73)))) (js-obj \"str\" \"b\" \"ns\" \"b\" \"name\" (js-obj \"valueOf\" (fn [] (throw 74))))) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-namespace-tie-conversion-before-name",
+      "source": "(let [trace (atom []) mk (fn [n s] (js-obj \"valueOf\" (fn [] (swap! trace conj n) s))) a (js-obj \"str\" \"a\" \"ns\" (mk 1 \"n\") \"name\" (mk 3 \"a\")) b (js-obj \"str\" \"b\" \"ns\" (mk 2 \"n\") \"name\" (mk 4 \"b\"))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2 3 4 3 4])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-namespace-difference-skips-name",
+      "source": "(= (compare-keywords (js-obj \"fqn\" \"a\" \"ns\" \"a\" \"name\" (js-obj \"valueOf\" (fn [] (throw 73)))) (js-obj \"fqn\" \"b\" \"ns\" \"b\" \"name\" (js-obj \"valueOf\" (fn [] (throw 74))))) -1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-namespace-tie-conversion-before-name",
+      "source": "(let [trace (atom []) mk (fn [n s] (js-obj \"valueOf\" (fn [] (swap! trace conj n) s))) a (js-obj \"fqn\" \"a\" \"ns\" (mk 1 \"n\") \"name\" (mk 3 \"a\")) b (js-obj \"fqn\" \"b\" \"ns\" (mk 2 \"n\") \"name\" (mk 4 \"b\"))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2 3 4 3 4])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ci-immutable-macro-paths",
+      "source": "(let [i inc z zero? lt <] (try (set! inc (fn [_] (throw 71))) (set! zero? (fn [_] true)) (set! < (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (= (ci-reduce [1 2 3] + 0) 6) (finally (set! inc i) (set! zero? z) (set! < lt))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

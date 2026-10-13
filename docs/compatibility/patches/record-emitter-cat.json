@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8a773318923c8e580f238ebdd2d37f026dcad62a3ec05c543bfd3329f08a3904",
+  "replacement": "(def ^{:doc \"A transducer which concatenates the contents of each input, which must be a\n  collection, into the reduction.\" :added \"1.7\" :arglists '([rf])} cat\n  (fn [rf] (let [rf1 (preserving-reduced rf)]\n             (fn ([] (rf)) ([result] (rf result)) ([result input] (reduce rf1 result input))))))",
+  "rationale": "Retain the complete pinned cat transducer, initialization/completion and nested reduction stop propagation. Expand defn only."
+}

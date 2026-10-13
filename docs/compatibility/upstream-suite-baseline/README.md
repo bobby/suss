@@ -12,6 +12,14 @@ match the terminal summary. This is executed comparator evidence from the
 actual integrated head, **not reconstructed raw Suss values**: raw operands
 and thrown payloads exist only in the run's ephemeral observations file.
 
+The projection regression compares this historical log with the frozen
+`evidence/projected-known-failures.json` and the complete retained classification
+receipt. The frozen map is byte-preserved from commit `77b9040` and was checked
+against the log projection and receipt before retention. It does not follow the
+live `tests/oracle/clojure-test-suite-known-failures.json` acceptance baseline as
+later implementations advance. The live suite comparator still checks that
+current baseline; this fixture correction changes no accepted failures or skips.
+
 All four changes are advances. `clojure.core-test.fnil` and
 `clojure.core-test.get` now load, so their namespace entries leave the map.
 `clojure.core-test.group-by`'s missing dependency advances from `group-by`

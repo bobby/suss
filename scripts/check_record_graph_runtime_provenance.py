@@ -11,6 +11,12 @@ IDS = ('runtime:comp:4468', 'runtime:partial:4497', 'runtime:juxt:10251',
        'runtime:select-keys:9289', 'runtime:zipmap:9690',
        'runtime:gensym_counter:10903', 'runtime:gensym:10907')
 
+def group_start(recipe):
+    starts = [i for i, entry in enumerate(recipe['forms']) if entry['id'] == IDS[0]]
+    if len(starts) != 1 or tuple(entry['id'] for entry in recipe['forms'][starts[0]:starts[0] + len(IDS)]) != IDS:
+        raise ValueError('complete ordered runtime graph group')
+    return starts[0]
+
 def adapt(raw, name):
     if name == 'gensym_counter':
         return raw
@@ -38,13 +44,14 @@ def adapt(raw, name):
 
 def verify(recipe=None, patches=None):
     if recipe is None: recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())
-    if recipe['upstream-commit'] != PIN or tuple(entry['id'] for entry in recipe['forms'][340:350]) != IDS:
+    if recipe['upstream-commit'] != PIN:
         raise ValueError('complete ordered runtime graph group')
+    start = group_start(recipe)
     if any(sum(entry['id'] == identity for entry in recipe['forms']) != 1 for identity in IDS):
         raise ValueError('duplicate runtime graph selection')
     source = extract_forms(pinned_file(ROOT, 'src/main/cljs/cljs/core.cljs').decode(),
                            'runtime', 'clojurescript/src/main/cljs/cljs/core.cljs')
-    for entry in recipe['forms'][340:350]:
+    for entry in recipe['forms'][start:start + len(IDS)]:
         form = source[entry['id']]
         digest = hashlib.sha256(form['form'].encode()).hexdigest()
         patch = patches[entry['id']] if patches is not None else json.loads((ROOT / entry['patch']).read_text())

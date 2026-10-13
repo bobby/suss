@@ -1,0 +1,9 @@
+;; Original portable probes for the complete comparator forms; not upstream code.
+(deftype ComparatorProbe [value]
+  Object
+  (toString [_] (str_ value))
+  IComparable
+  (-compare [_ other] (- value other)))
+(deftype ThrowingComparatorProbe []
+  IComparable
+  (-compare [_ other] (throw false)))

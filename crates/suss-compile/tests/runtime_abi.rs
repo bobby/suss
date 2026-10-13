@@ -4,6 +4,47 @@ use suss_compile::runtime_abi;
 use wasmtime::{Instance, Module, Store, Val};
 
 #[test]
+fn runtime_abi_owned_prototype_call_refs_use_typed_globals() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module())
+        .expect("owned prototype wrappers must call typed function-reference globals");
+    Instance::new(&mut Store::new(&engine, ()), &module, &[])
+        .expect("owned prototype globals must initialize");
+}
+
+#[test]
+fn runtime_abi_error_constructor_can_initialize_its_protocol_cache() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let constructor = runtime.get_func(&mut store, "error-constructor").unwrap();
+    let mut output = [Val::null_any_ref()];
+    constructor
+        .call(&mut store, &[], &mut output)
+        .expect("the Error descriptor must have an initialized protocol table");
+    output[0]
+        .unwrap_anyref()
+        .expect("Error constructor result must be a reference");
+}
+
+#[test]
+fn runtime_abi_object_constructor_accepts_reserved_closure_property_slots() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let constructor = runtime.get_func(&mut store, "object-constructor").unwrap();
+    let mut output = [Val::null_any_ref()];
+    constructor
+        .call(&mut store, &[], &mut output)
+        .expect("Object static initialization must preserve private closure keys 8 and 9");
+    output[0]
+        .unwrap_anyref()
+        .expect("Object constructor result must be a reference");
+}
+
+#[test]
 fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/numeric-cases.json")).unwrap();

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "de1de186702d507044c2dc414487799299e242528da15396d231704a13a67d98",
+  "replacement": "(def ^{:doc \"Returns a vector consisting of the result of applying f to the\n  set of first items of each coll, followed by applying f to the set\n  of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments.\"\n       :arglists '([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])}\n  mapv\n  (fn\n    ([f coll]\n     (persistent! (reduce (fn [v o] (conj! v (f o))) (transient []) coll)))\n    ([f c1 c2] (into [] (map f c1 c2)))\n    ([f c1 c2 c3] (into [] (map f c1 c2 c3)))\n    ([f c1 c2 c3 & colls] (into [] (apply map f c1 c2 c3 colls)))))",
+  "rationale": "Retain the complete pinned public declaration, docstring, arglists and all four arities. Expand defn to def/fn and the single-collection thread-first form exactly to persistent!(reduce(...)); this preserves the original left-to-right evaluation and transient vector accumulation. Keep all multi-collection map/into/apply paths intact, including shortest-input termination; these remain dependencies whose behavior must be validated by execution. No arity or branch is omitted."
+}

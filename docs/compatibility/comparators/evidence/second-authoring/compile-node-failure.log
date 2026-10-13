@@ -1,0 +1,23 @@
+PASS closed comparator corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/fn->comparator is not public at line 2 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 3 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 4 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 60 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 64 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:8416
+if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(f,cljs.core.compare)){
+                  ^
+
+TypeError: cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2 is not a function
+    at cljs$core$fn__GT_comparator (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:8416:19)
+    at /private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/suss_oracle/comparators.js:324:51
+    at suss_oracle$comparators$_main (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/suss_oracle/comparators.js:330:4)
+    at cljs$core$apply_to_simple.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:13713:10)
+    at cljs$core$apply.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:13998:34)
+    at cljs$core$apply (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:13951:24)
+    at Object.<anonymous> (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/nodejscli.js:14:17)
+    at Module._compile (node:internal/modules/cjs/loader:1738:14)
+    at Object..js (node:internal/modules/cjs/loader:1871:10)
+    at Module.load (node:internal/modules/cjs/loader:1470:32)
+
+Node.js v24.5.0

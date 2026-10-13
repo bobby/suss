@@ -2126,7 +2126,6 @@ fn test_partial_debug_lazy_seq() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support"]
 fn test_partial_debug_range_alength() {
     // Test that range still works (uses alength on rest param)
     let result = run_expr_i32("(first (range 5))");
@@ -2372,7 +2371,6 @@ fn test_multi_arity_variadic_zero_fixed() {
 // ========================================================================
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name range; see prototype_cases_awaiting_compiled_support"]
 fn test_apply_large_vector_variadic_capture() {
     // apply a user-defined variadic closure to a vector > 32 elements
     // This tests the VARIADIC_CAPTURE path with vec-to-array fallback
@@ -2385,7 +2383,6 @@ fn test_apply_large_vector_variadic_capture() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name take; see prototype_cases_awaiting_compiled_support"]
 fn test_apply_large_vector_builtin() {
     // apply a builtin variadic (+) to a large vector (>32 elements)
     // Tests the VARIADIC_CLOSURE dispatch path with pre-normalized array
@@ -2571,8 +2568,6 @@ fn legacy_hash_inspects_each_evaluated_operand_once() {
 /// diagnostic. When a feature lands the diagnostic changes and this test fails:
 /// re-enable the named test and remove its row. Rows never count as passes.
 const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
-    ("test_apply_large_vector_builtin", "(apply + (vec (take 4 (repeat 10))))", "Unresolved Runtime name take at bytes 15..19"),
-    ("test_apply_large_vector_variadic_capture", "(let [f (fn [& args] (count args))                v (vec (range 50))]            (apply f v))", "Unresolved Runtime name range at bytes 58..63"),
     ("test_atom_validator_accepts", "(let [a (atom 0)] (set-validator! a pos?) (reset! a 42) @a)", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_atom_validator_rejects", "(let [a (atom 1)] (set-validator! a pos?) (try (reset! a -1) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_atom_validator_swap_rejects", "(let [a (atom 5)] (set-validator! a pos?) (try (swap! a (fn [x] (- 0 x))) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
@@ -2583,7 +2578,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_map_destructuring_direct", "(let [{x :a y :b} {:a 10 :b 20}] (+ x y))", "Binding destructuring is not lowered yet at bytes 6..17"),
     ("test_map_destructuring_keys", "(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..19"),
     ("test_partial_debug_lazy_seq", "(first (lazy-seq [1 2 3]))", "Unresolved Runtime name lazy-seq at bytes 8..16"),
-    ("test_partial_debug_range_alength", "(first (range 5))", "Unresolved Runtime name range at bytes 8..13"),
     ("test_print_no_newline", "(print \"hello\")", "Unresolved Runtime name print at bytes 1..6"),
     ("test_println_basic", "(println \"hello\")", "Unresolved Runtime name println at bytes 1..8"),
     ("test_println_multiple_args", "(println \"hello\" \"world\")", "Unresolved Runtime name println at bytes 1..8"),

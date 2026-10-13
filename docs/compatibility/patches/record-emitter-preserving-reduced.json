@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d78f114de8ea0ff64e2cc69ac60ba432f085501a9c8ceaf6ecc2ab72b33ccd3b",
+  "replacement": "(def ^{:private true :arglists '([rf])} preserving-reduced\n  (fn [rf] (fn [result input] (let [ret (rf result input)]\n                              (if (reduced? ret) (reduced ret) ret)))))",
+  "rationale": "Retain the complete pinned reducer wrapper, including double wrapping a downstream Reduced before nested reduction unwraps it. Expand defn-/shorthand fn only."
+}

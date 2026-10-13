@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f37249f344dd10022a20f5cbef1cd88be4839737d1d9f034ae6be97a4fb1d4b1",
+  "replacement": "(def ^{:doc \"Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects\"\n       :added \"1.0\" :arglists '([f x])} iterate\n  (fn [f x] (Iterate. nil f nil x nil)))",
+  "rationale": "Retain the complete pinned iterate factory and seeded first value; expand only defn to def/fn with its docs, added metadata and arglist."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "77df12ea943440f852dba2228c0dbe261602f0baefca19818df2c6530805d3bf",
+  "replacement": "(def ^{:doc \"Takes a fn f and returns a fn that takes the same arguments as f,\n  has the same effects, if any, and returns the opposite truth value.\" :arglists '([f])} complement\n  (fn [f] (fn ([] (not (f))) ([x] (not (f x))) ([x y] (not (f x y)))\n              ([x y & zs] (not (apply f x y zs))))))",
+  "rationale": "Retain the complete pinned complement function and every returned arity/effect. Expand defn only."
+}

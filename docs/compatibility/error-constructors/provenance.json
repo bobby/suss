@@ -1,0 +1,80 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "base": "36d27750c041e707c0fd08c38b2b8725161d997c",
+  "whole-original-parents": [
+    {
+      "id": "runtime:instance?:1099",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1099,
+      "end-line": 1103,
+      "sha256": "642c9759cda46d205dc3971ef8854021e268743fe36e0a45de75df4d5ccc1a7f",
+      "retained": "docs/compatibility/error-constructors/original/runtime-instance?-1099.cljs",
+      "retained-sha256": "a6f005ae5b9ced2444b2198af0f9b459acba916ed8e98e03bebdfbf1ca2d0304"
+    },
+    {
+      "id": "runtime:ExceptionInfo:11767",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11767,
+      "end-line": 11783,
+      "sha256": "1294e4580b608d483d6f51be8f1c0491fa1e2b47b768b69b720113034a5d7213",
+      "retained": "docs/compatibility/error-constructors/original/runtime-ExceptionInfo-11767.cljs",
+      "retained-sha256": "55ae0a3c26d2960b51d3d6da1390ea21eea9827dfa0b5cd7109eb5fbcc0a02d1"
+    },
+    {
+      "id": "runtime:ex-info:11796",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11796,
+      "end-line": 11801,
+      "sha256": "6adac249468e989f760ef2e59abfe32b972a8f88c4190a0266b93b244704d79a",
+      "retained": "docs/compatibility/error-constructors/original/runtime-ex-info-11796.cljs",
+      "retained-sha256": "645d9cc17747d6803fed260e41e2b01c922c7a6a50b4e5a14eae171bd11304a9"
+    },
+    {
+      "id": "runtime:ex-message:11810",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11810,
+      "end-line": 11815,
+      "sha256": "6810570d21bf19912c121528242dc82b028384a1b1c8a16952b31c81a58abd76",
+      "retained": "docs/compatibility/error-constructors/original/runtime-ex-message-11810.cljs",
+      "retained-sha256": "817a0e053c975c3b70af6e807d8ddab4f87304e3054777e5d439753117bef950"
+    },
+    {
+      "id": "runtime:ex-cause:11817",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11817,
+      "end-line": 11823,
+      "sha256": "6a4fb9f70c839b6c8c136aad2d0e7a1ed53216b614b1c546d898188867e4d5e3",
+      "retained": "docs/compatibility/error-constructors/original/runtime-ex-cause-11817.cljs",
+      "retained-sha256": "d68694783bdf5418a8aedd52f35659f83f562396f5c1cf8dd5627506754908ef"
+    },
+    {
+      "id": "anonymous:ExceptionInfo-prototype",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11785,
+      "end-line": 11785,
+      "sha256": "e2c5d91f66be4adca898e0b078c9a29a4b9cfb612a94cf6a59a611ec412f6939",
+      "retained": "docs/compatibility/error-constructors/original/ExceptionInfo-prototype.cljs",
+      "retained-sha256": "ac998c8fda921391ce4a15e2bc7d1637d3e7a741f06eee5400374d9792f6311f"
+    },
+    {
+      "id": "macro:instance?:1025",
+      "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+      "line": 1025,
+      "end-line": 1032,
+      "sha256": "e0051e45b26efab4a466ed227ace1013999f57a80826061177c305fbf74d4f81",
+      "retained": "docs/compatibility/error-constructors/original/macro-instance?-1025.cljs",
+      "retained-sha256": "47231918de917998b8c694babbeafc43407baa35ff26935a1ae081625c86fced"
+    },
+    {
+      "id": "macro:resolve-var:1320",
+      "source": "clojurescript/src/main/clojure/cljs/analyzer.cljc",
+      "line": 1320,
+      "end-line": 1444,
+      "sha256": "824f9da569ce7eb0a1a13f89904d6f3ce890ef562095f5ccf7e50028213e86eb",
+      "retained": "docs/compatibility/error-constructors/original/macro-resolve-var-1320.cljs",
+      "retained-sha256": "e6fbb336d7663c47074ca85f0a2a31f1f5acbf6bedf81bee5019b5569ef50cc0"
+    }
+  ],
+  "native": "uncompiled/unexecuted",
+  "scope": "Owned Error/RangeError/TypeError constructors, live prototype ancestry, mutation, toString and source definition adaptation; full sorted/ES6/printer acceptance remains open"
+}

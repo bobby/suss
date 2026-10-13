@@ -1,0 +1,51 @@
+{
+  "source-base": "0c98b4f7523aaf369fce6813c63ea8c13b2a2205",
+  "review-repair": "883ef0e53bc8db5ea27c9935180681fcf81b9ac3",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference": {
+    "command": "sh scripts/test-sorted-tree-oracle.sh",
+    "exit": 0,
+    "cases": 142
+  },
+  "python": {
+    "command": "python3 -B -m unittest discover -s scripts",
+    "exit": 0,
+    "passed": 258,
+    "seconds": 11.822
+  },
+  "native": "authored/uncompiled/unexecuted",
+  "bootstrap": "four artifacts unchanged/stale",
+  "initial-reference": "failed wrong authored scalar forEach expected message; retained first cases/observations/log",
+  "sha256": {
+    "tests/oracle/sorted-tree-cases.json": "34cab18abfc6c6aae0a8afba133ef1a71f8dcbb08e03d955b88e54cf9fa06ea7",
+    "tests/oracle/src/suss_oracle/sorted_tree.cljs": "d6902b6fd5b067b5d37e5fb72295c555e9cbe1daec6ba38b85972cc068451753",
+    "scripts/sorted_tree_oracle.py": "b57b0e40c5f61fee0c8394d49182dcae9e6832745a9d5ee546bbea03e6b4d70e",
+    "scripts/test-sorted-tree-oracle.sh": "d36d5956f08c58d5768ff27b588859476dc672ba5e37157223564a60df31c938",
+    "scripts/test_sorted_tree_oracle.py": "13415258acb24bcf094ec8ec0e3e3ca9e481b5e4494612becd2d828598737f8b",
+    "scripts/sorted_tree_adaptations.py": "858a0488e9bf7ff2fe676d777838ab5f14cb82725e60ab7276c57d5cc99466a3",
+    "docs/compatibility/sorted-tree-collections/provenance.json": "01c27be4b12effde4c3b1ecc9f133dce0a35a4fe0c22bf347e5e9f96cd268dd4",
+    "docs/compatibility/sorted-tree-collections/dependency-ledger.json": "76216f481b2c2f881a1a4619f6445841d3a370d696d381579858890d70e788ef",
+    "crates/suss-cli/tests/portable_sorted_tree_collections.rs": "82544fbe4506db43f650900b7bb73191bbb0d39fad7a2408b7ab08f58bc6b2b3",
+    "crates/suss-compile/src/portable/hir/nominal.rs": "309ad95575af877e971184fd30f222ebf1459375ff8bd001d66e7d57d956260c",
+    "docs/compatibility/sorted-tree-collections/evidence/first-cases.json": "4afd747deeab22fedffabf0e5db3b453550c7b90fc9ec1bb69eff52d803e1a9d",
+    "docs/compatibility/sorted-tree-collections/evidence/first-observations.json": "fdb72b72a4adb089916a274e4286495fef2d9b503ceeed4ef557855dca8efbe7",
+    "docs/compatibility/sorted-tree-collections/evidence/first-reference-failed.log": "29bf57e2d0aeec5ce67957b72d644eb829cc09ddf113a4109868392f54eee313",
+    "docs/compatibility/sorted-tree-collections/evidence/import-check.log": "760a276ce9515b1504b260b0cea377fc04436c6a090dcb823b10063e008d3d93",
+    "docs/compatibility/sorted-tree-collections/evidence/node-provenance.log": "c4134fb20a525399340287d24d2743de7566f7569d87dac331bf32590a0ddc84",
+    "docs/compatibility/sorted-tree-collections/evidence/observations.json": "13502009ddc779208837964fde71899c3819a9a39862495df04abd6016dde7ec",
+    "docs/compatibility/sorted-tree-collections/evidence/provenance.log": "89797381a80004fd40c854dd6ce39a165cc7460f27bec7f1e5de0c6ddcdc3866",
+    "docs/compatibility/sorted-tree-collections/evidence/python.log": "fb013222869291fafb12f9e21b246fa39a6d8aa1cb522d3b1b11bf6b805b0c20",
+    "docs/compatibility/sorted-tree-collections/evidence/reference.log": "6fd5503d1183759da439166002cbf1b33e57433c66d244ec13d2514d42ea9047",
+    "docs/compatibility/sorted-tree-collections/evidence/reviews.log": "fb3809460ae2c2ea23e642433712b9cb49747f12924dec990e4cb49118a8847b",
+    "tests/oracle/out/sorted-tree.js": "60f749c527b11610ef3d3d4b4da8e59965049b79b18fcf2582ced433549fe60f",
+    "tests/oracle/out/sorted-tree-cljs/cljs/core.js": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205"
+  },
+  "sharing-repair": "Correct nested reference path and exact raw shapes; original receipt retained in sharing-repair/original-main-receipt.json; native remains uncompiled.",
+  "definition-lowering": {
+    "base": "36d27750c041e707c0fd08c38b2b8725161d997c",
+    "definitions": 23,
+    "original-receipt": "docs/compatibility/sorted-tree-collections/evidence/receipt-before-definition-lowering.json",
+    "original-receipt-sha256": "59df237b1fb6c3397da9a121d6bdbad33c58f437db0b5de6971ddbccad1acdfe",
+    "scope": "whole retained definitions, metadata and signatures; no native/bootstrap execution"
+  }
+}

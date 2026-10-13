@@ -19,9 +19,16 @@ fn boolean(code: &mut Vec<Instruction<'static>>) {
 }
 fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
     use Instruction::*;
-    code.extend([LocalGet(local), RefTestNonNull(HeapType::Concrete(NUMBER)),
-        LocalGet(local), RefTestNonNull(HeapType::Concrete(STRING)), I32Or]);
-    for sentinel in [0,2,4,UNDEFINED] { code.extend([LocalGet(local),I32Const(sentinel),RefI31,RefEq,I32Or]); }
+    code.extend([
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(STRING)),
+        I32Or,
+    ]);
+    for sentinel in [0, 2, 4, UNDEFINED] {
+        code.extend([LocalGet(local), I32Const(sentinel), RefI31, RefEq, I32Or]);
+    }
 }
 fn callback(b: &mut Builder, locals: &[(u32, ValType)], code: &[Instruction<'static>]) -> u32 {
     let index = b.count;
@@ -72,9 +79,37 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 code.extend([Return, End]);
             }
             code.extend([LocalGet(2), Call(fields), Drop]);
+            code.extend([
+                LocalGet(2),
+                Call(b.names["language-error-canonical?"]),
+                If(BlockType::Empty),
+            ]);
+            code.extend(text("[object Error]"));
+            code.extend([Return, End]);
             code.extend(text("[object Object]"));
         } else {
-            if name != "isPrototypeOf" {
+            if name == "valueOf" {
+                // Object.prototype.valueOf returns its receiver for ordinary
+                // source objects as well as native objects. Keep the native
+                // layout validation for every other receiver domain.
+                code.extend([
+                    LocalGet(2),
+                    Call(b.names["native-object?"]),
+                    I32Eqz,
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(2),
+                    RefTestNonNull(HeapType::Concrete(7)),
+                    Else,
+                    I32Const(0),
+                    End,
+                    I32Eqz,
+                    If(BlockType::Empty),
+                    LocalGet(2),
+                    Call(fields),
+                    Drop,
+                    End,
+                ]);
+            } else if name != "isPrototypeOf" {
                 code.extend([LocalGet(2), Call(fields), Drop]);
             }
             match name {
@@ -419,7 +454,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             },
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(7),
+            I32Const(0),
+            RefI31,
+            StructNew(7),
             RefFunc(detached),
             I32Const(0),
             I32Const(-1),
@@ -446,7 +483,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             },
             I32Const(0),
             RefI31,
-            I32Const(0), RefI31, StructNew(7),
+            I32Const(0),
+            RefI31,
+            StructNew(7),
             RefFunc(detached),
             I32Const(0),
             I32Const(-1),
@@ -465,15 +504,20 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     code.push(LocalGet(0));
     code.extend(text("constructor"));
     code.extend([
-        I32Const(0),
-        RefI31,
+        GlobalGet(owned_prototypes::OBJECT_DESCRIPTOR),
         RefFunc(constructor),
         I32Const(0),
         I32Const(-1),
         Call(b.names["closure-new"]),
+        GlobalSet(owned_prototypes::OBJECT_CONSTRUCTOR),
+        GlobalGet(owned_prototypes::OBJECT_CONSTRUCTOR),
         I32Const(5),
         Call(set),
         Drop,
+        GlobalGet(owned_prototypes::OBJECT_DESCRIPTOR),
+        GlobalGet(type_values::KEY_GLOBAL),
+        GlobalGet(owned_prototypes::OBJECT_CONSTRUCTOR),
+        Call(b.names["protocol-method-set"]),
         LocalGet(0),
         GlobalSet(ROOT),
         End,
@@ -485,6 +529,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[(1, VALUE)],
         &code,
+    );
+    b.function(
+        "object-constructor",
+        &[],
+        &[VALUE],
+        &[
+            Call(root),
+            Drop,
+            GlobalGet(owned_prototypes::OBJECT_CONSTRUCTOR),
+            Call(b.names["object-static-initialize"]),
+        ],
     );
     b.function_with_locals(
         "native-object-default-new",

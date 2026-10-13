@@ -3,6 +3,7 @@
 use super::*;
 pub(super) const TAG_GLOBAL: u32 = arrays::TAG_GLOBAL + 1;
 pub(super) const DEFAULT_THIS: u32 = TAG_GLOBAL + 1;
+pub(super) const CURRENT_THIS: u32 = owned_prototypes::LAST_GLOBAL + 1;
 fn guard(body: &mut Vec<Instruction<'static>>, local: u32, ty: u32) {
     use Instruction::*;
     body.extend([
@@ -43,6 +44,7 @@ fn callback(b: &mut Builder, instructions: &[Instruction<'static>]) -> u32 {
 }
 pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     use Instruction::*;
+    b.function("current-this", &[], &[VALUE], &[GlobalGet(CURRENT_THIS)]);
     // Validate the entire descriptor table even when an early name matches.
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
@@ -173,11 +175,51 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         LocalGet(2),
         Call(b.names["protocol-native-invoke"]),
     ]);
+    let dispatch = b.function_with_locals(
+        "object-method-invoke-dispatch",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE), (1, ValType::I32), (1, VALUE)],
+        &body,
+    );
+    // Source accessors and object methods run with their actual JavaScript
+    // receiver. Save and restore it through the language-exception path too,
+    // so a throwing callback cannot leak a stale receiver into a later call.
+    let body = vec![
+        GlobalGet(CURRENT_THIS),
+        LocalSet(3),
+        LocalGet(1),
+        GlobalSet(CURRENT_THIS),
+        Block(BlockType::Empty),
+        Block(BlockType::Result(VALUE)),
+        TryTable(
+            BlockType::Empty,
+            Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }]),
+        ),
+        LocalGet(0),
+        LocalGet(1),
+        LocalGet(2),
+        Call(dispatch),
+        LocalSet(4),
+        Br(2),
+        End,
+        Unreachable,
+        End,
+        LocalSet(5),
+        LocalGet(3),
+        GlobalSet(CURRENT_THIS),
+        LocalGet(5),
+        Throw(0),
+        End,
+        LocalGet(3),
+        GlobalSet(CURRENT_THIS),
+        LocalGet(4),
+    ];
     let invoke = b.function_with_locals(
         "object-method-invoke",
         &[VALUE, VALUE, VALUE],
         &[VALUE],
-        &[(1, VALUE), (1, ValType::I32), (1, VALUE)],
+        &[(3, VALUE)],
         &body,
     );
     // A plain detached call uses the non-strict portable realm's implicit this.

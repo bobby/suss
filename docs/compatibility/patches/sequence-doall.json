@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "af3b0f111a8d8c9a617d55b8c7c28e210b2aa04b21e4ff02dd7c2dbcd61195a2",
+  "replacement": "(def ^{:doc \"When lazy sequences are produced via functions that have side\n  effects, any effects other than those needed to produce the first\n  element in the seq do not occur until the seq is consumed. doall can\n  be used to force any effects. Walks through the successive nexts of\n  the seq, retains the head and returns it, thus causing the entire\n  seq to reside in memory at one time.\" :arglists '([coll] [n coll])} doall\n  (fn ([coll]\n   (dorun coll)\n   coll)\n  ([n coll]\n   (dorun n coll)\n   coll)))",
+  "rationale": "Retain both pinned doall arities, return the original collection after forcing through dorun, and expand only defn to def/fn."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "91b90fdf4dedb0db9265b5914c7aa042872da1d9d7df9ff2ed5241633ce9d637",
+  "replacement": "(def ^{:doc \"Returns a lazy (infinite!, or length n if supplied) sequence of xs.\" :arglists '([x] [n x])} repeat\n  (fn ([x] (Repeat. nil -1 x nil nil))\n    ([n x] (if (pos? n)\n             (Repeat. nil n x nil nil)\n             (.-EMPTY List)))))",
+  "rationale": "Retain both pinned public arities and source behavior; adapt only defn expansion to the native def/fn loader while preserving documentation and arity metadata."
+}

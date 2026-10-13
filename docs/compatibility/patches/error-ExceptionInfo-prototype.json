@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e2c5d91f66be4adca898e0b078c9a29a4b9cfb612a94cf6a59a611ec412f6939",
+  "replacement": "(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))",
+  "rationale": "Whole pinned anonymous ancestry parent, preserving LHS constructor/prototype/receiver reads before RHS Error prototype read and actual prototype assignment. Only property-chain and qualified JS property spellings mechanically expanded; no hardcoded source class membership."
+}

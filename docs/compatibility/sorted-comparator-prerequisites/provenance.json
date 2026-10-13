@@ -1,0 +1,41 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+  "license": "EPL-1.0",
+  "status": "complete source adaptation; bootstrap/native execution pending",
+  "forms": [
+    {
+      "id": "runtime:ci-reduce:1545",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1545,
+      "end-line": 1567,
+      "sha256": "f16f81fd0a88676f220b1ed993dff5f9566aaa755ceee908f326c24868404454",
+      "retained": "docs/compatibility/sorted-comparator-prerequisites/ci-reduce.cljs",
+      "retained-file-sha256": "c008a06e5d0e8a22ee0c33d336be17c9195a1d598c4d465542d500bff12725d5",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-ci-reduce.json",
+      "adapted-form-sha256": "2356c6037509deaf5db5cc0d41adb4c0dc66f4399d53ba457d989f57b34217c6"
+    },
+    {
+      "id": "runtime:compare-symbols:1115",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1115,
+      "end-line": 1125,
+      "sha256": "1ceea0a6c83a8e80c7ae74eb757acc11105fb71b36d39bd81489ac1292f5666f",
+      "retained": "docs/compatibility/sorted-comparator-prerequisites/compare-symbols.cljs",
+      "retained-file-sha256": "6eeb844fd669a6f52c9ce353c08db9a36f515c3cf2ff73bdb49a772d3eff7770",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-symbols.json",
+      "adapted-form-sha256": "04b57dd9f4c9717e79c8e14518fed2e05896be1d6785e2b1411ed4d22e1a1dc1"
+    },
+    {
+      "id": "runtime:compare-keywords:3462",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3462,
+      "end-line": 3472,
+      "sha256": "5d54576135cf94e63e0e0184ca60dd6c879b0592bca7d1a20fcf4c8d38dbc42b",
+      "retained": "docs/compatibility/sorted-comparator-prerequisites/compare-keywords.cljs",
+      "retained-file-sha256": "a9dd7925a65befd8bd9e0070475d3726b24fd2e56329b860cdf3a4f905b50a6a",
+      "patch": "docs/compatibility/patches/sorted-prerequisite-compare-keywords.json",
+      "adapted-form-sha256": "cea916358d1e182f7046c664eb18532227a33e543cbd94cee3e9b28d2858d4f0"
+    }
+  ]
+}

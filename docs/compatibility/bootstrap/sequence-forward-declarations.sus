@@ -1,7 +1,7 @@
 ;; Original loader declarations for retained source's mutual references.
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
-  counted? list? sequential? accumulating-seq-count empty-ordered-hash
+  counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
   array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta Symbol Keyword hash-symbol hash-keyword get -write)
@@ -80,3 +80,12 @@
 (declare vector some)
 
 (declare str bootstrap-string-buffer BootstrapStringBuffer)
+
+;; Comparator forms are loaded after their mutually referenced bindings.
+(declare compare compare-indexed fn->comparator)
+
+;; Whole sorted node/balancing mutually recursive source identities.
+(declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
+
+;; Whole sorted collection/iteration/range mutual dependencies.
+(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)

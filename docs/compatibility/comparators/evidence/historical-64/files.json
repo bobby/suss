@@ -1,0 +1,26 @@
+{
+  "node-isolated.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "run-isolated.log": {
+    "sha256": "f6322097c308a43f3d0b05ad9996fef286ad55432e617e19784034e749a21fb0",
+    "bytes": 53
+  },
+  "observations.json": {
+    "sha256": "c4b4babf8c35f8934256dbb8b5d67e3e66478286a4a48168fffe032e272cc02a",
+    "bytes": 6361
+  },
+  "cases.json": {
+    "sha256": "3a1317bf29122a29beaad19de8b9eb57b4ad47470be95548cce3ea8e6efbe238",
+    "bytes": 18994
+  },
+  "compile-isolated.log": {
+    "sha256": "2b8270aead6276b69fc52066ba9659bcf8c1509e363328b1bbedb571ab51bd31",
+    "bytes": 290
+  },
+  "probe.cljs": {
+    "sha256": "1bcfb127ee853e6a7a56026dd9c776da8744918e1a73700fe8a808e1f2847693",
+    "bytes": 7889
+  }
+}

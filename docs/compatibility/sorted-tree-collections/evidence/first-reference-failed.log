@@ -1,0 +1,21 @@
+PASS 126 closed sorted tree cases/driver; not executed
+WARNING: BlackNode already refers to: cljs.core/BlackNode being replaced by: suss-oracle.sorted-tree/BlackNode at line 2 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: RedNode already refers to: cljs.core/RedNode being replaced by: suss-oracle.sorted-tree/RedNode at line 3 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: MapEntry already refers to: cljs.core/MapEntry being replaced by: suss-oracle.sorted-tree/MapEntry at line 4 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: var: cljs.core/balance-left is not public at line 5 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: var: cljs.core/balance-right is not public at line 6 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: var: cljs.core/balance-left-del is not public at line 7 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: var: cljs.core/balance-right-del is not public at line 8 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: var: cljs.core/tree-map-kv-reduce is not public at line 9 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: nil-iter already refers to: cljs.core/nil-iter being replaced by: suss-oracle.sorted-tree/nil-iter at line 10 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: seq-iter already refers to: cljs.core/seq-iter being replaced by: suss-oracle.sorted-tree/seq-iter at line 11 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: iter already refers to: cljs.core/iter being replaced by: suss-oracle.sorted-tree/iter at line 12 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: es6-iterator already refers to: cljs.core/es6-iterator being replaced by: suss-oracle.sorted-tree/es6-iterator at line 13 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: es6-entries-iterator already refers to: cljs.core/es6-entries-iterator being replaced by: suss-oracle.sorted-tree/es6-entries-iterator at line 14 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+WARNING: es6-set-entries-iterator already refers to: cljs.core/es6-set-entries-iterator being replaced by: suss-oracle.sorted-tree/es6-set-entries-iterator at line 15 /private/tmp/suss-m4-sorted-tree-collections/tests/oracle/src/suss_oracle/sorted_tree.cljs
+Traceback (most recent call last):
+  File "/private/tmp/suss-m4-sorted-tree-collections/scripts/sorted_tree_oracle.py", line 116, in <module>
+    {'generate': generate, 'check': check, 'compare': compare}[sys.argv[1]]()
+  File "/private/tmp/suss-m4-sorted-tree-collections/scripts/sorted_tree_oracle.py", line 112, in compare
+    raise ValueError('raw mismatch '+e['id']+': '+json.dumps(a))
+ValueError: raw mismatch set-forEach-scalar-error: {"id": "set-forEach-scalar-error", "mode": "throw", "value": {"tag": "error", "class": "Error", "message": [110, 116, 104, 32, 110, 111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100, 32, 111, 110, 32, 116, 104, 105, 115, 32, 116, 121, 112, 101, 32, 102, 117, 110, 99, 116, 105, 111, 110, 32, 78, 117, 109, 98, 101, 114, 40, 41, 32, 123, 32, 91, 110, 97, 116, 105, 118, 101, 32, 99, 111, 100, 101, 93, 32, 125]}, "trace": {"tag": "number", "bits": "0000000000000000"}}

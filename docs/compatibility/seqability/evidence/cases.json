@@ -1,0 +1,104 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+  "source-range": "2347-2355",
+  "source-sha256": "5cf89eee47207122a0cbc458d88e3dae313a359d5df29c31dc69d3262e83ddda",
+  "cases": [
+    {
+      "id": "nil",
+      "source": "(seqable? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "vector",
+      "source": "(seqable? [1])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list",
+      "source": "(seqable? (list 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "sorted-map",
+      "source": "(seqable? (sorted-map 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "sorted-set",
+      "source": "(seqable? (sorted-set 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array",
+      "source": "(seqable? (js/Array. 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string",
+      "source": "(seqable? \"x\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "custom-ISeqable",
+      "source": "(seqable? (SeqableProbe.))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "number",
+      "source": "(seqable? 1)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "false",
+      "source": "(seqable? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "keyword",
+      "source": "(seqable? :k)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "plain-js-object",
+      "source": "(seqable? (js-obj))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    }
+  ]
+}

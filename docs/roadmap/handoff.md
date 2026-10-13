@@ -23886,3 +23886,908 @@ complete provenance-backed core loading (#16), persistent sequences/vectors
 (#17), associative and sorted collections (#18), and metadata/transient/reduction
 contracts (#19). The current concrete prerequisite is in the preceding #231
 handoff entry.
+
+## M4 rebase onto current main (2026-10-11)
+
+Rebased the sorted M4 branch onto `7cbcb06` (main includes #231 and #233).
+The core import is the union of current main and M4: 405 reviewed forms; importer
+outputs were regenerated after assigning the M4 additions fresh indexes. Main's
+newer Array, coercion, record, Error, and bootstrap implementations were retained
+where they superseded earlier M4 patches. The M4 comparator, sorted prerequisite,
+tree-node, and sorted-tree collection sources/tests/evidence were preserved.
+
+Rebase is complete, but generated bootstrap artifacts have not yet been
+regenerated for this merged compiler/import identity. Native M4 tests, exact-head
+bootstrap reproduction, the required full locked workspace baseline, independent
+review, and final-head CI remain outstanding. Do not promote a draft PR until
+those gates pass. Next: run source/import/provenance checks, then perform the
+prescribed isolated bootstrap/native validation without changing the validation
+approach; record commands, results, limitations, and the next unblocked M4 task.
+
+
+Post-rebase source checks (2026-10-11): `python3 -B scripts/core_import.py --check`
+verified 409 files; sorted-tree provenance passed 35 forms and 370 unchanged
+selections; tree-node provenance passed seven declarations and 363 unchanged
+selections; the full Python script suite passed 314 tests; and `git diff --check`
+passed. The provenance baselines/receipts now bind to the rebased import history.
+These checks do not compile or execute the Rust/native regressions. The focused
+Cargo suite, bootstrap regeneration/reproduction, required `cargo test --workspace
+--locked -- --test-threads=2`, independent review, and final-head CI are still
+required before commit/push/PR readiness.
+
+Bootstrap integration attempt (2026-10-11): the prescribed clean exact-head
+validation checkout was created at `/private/tmp/suss-error-validation-checkout`
+(`dbf8644`), with a fresh two-job Cargo target. The documented bootstrap command
+compiled the workspace successfully, then exited 1 while loading core:
+`Unresolved Runtime name seqable?` at generated `runtime/core-import/suss/core.sus`
+byte span 205151..205159, inside the imported sorted-tree `iter` form. The pinned
+source is available locally at
+`/private/tmp/suss-m4-subvector/clojurescript` (commit
+`c4295f303100bbf5afac449242d30bca1126f1a1`): `seqable?` is the whole eight-line
+form at `core.cljs:2347–2355`; it depends on `js-iterable?` at `1264–1268`, whose
+body reads `ITER_SYMBOL`. Neither `seqable?` nor `js-iterable?` is selected in the
+current 405-form core import, and `ITER_SYMBOL` also needs an owned portable
+binding. This confirms a real sorted-iterator dependency gap; native focused and
+full workspace tests were not started, and no bootstrap artifacts were installed.
+Next: retain the complete pinned dependency source and its license/provenance,
+then implement the supported ClojureScript seqability/JS-iterator contract and
+focused both-phase regressions without replacing the missing predicate with an
+always-true/always-false shortcut. Re-run bootstrap before native gates.
+
+Seqability and runtime-startup follow-up (2026-10-11): imported the complete
+pinned `seqable?` form with the portable `ISeqable`/array/string/nil behavior,
+recorded the intentional exclusion of foreign JS iterator interop, and added a
+both-phase execution regression. The bootstrap now compiles after adapting the
+sorted-tree macro expansions (`when-let`, `doseq`, `lazy-seq`, and MapEntry
+destructuring) to the current compiler. The regression still fails during
+`Session::with_options_in`. A direct runtime-ABI regression exposed a malformed
+Error descriptor whose schema/protocol-table fields were nil; those fields now
+initialize as empty arrays and `runtime_abi_error_constructor_can_initialize_its_protocol_cache`
+passes. With that error-reporting mask removed, the remaining startup trace is
+`property-find -> fixed-named-property-set -> object-static-initialize` while
+initializing the Object constructor. This is still an actual runtime failure,
+not a passing `seqable?` result. The focused test command
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-cli --test portable_seqable --locked -- --nocapture` fails
+at session creation; sorted collection native tests, bootstrap reproduction,
+full locked workspace tests, independent review, and final-head CI have not
+passed. Next: trace the `closure-property-fields` table passed to the failing
+`property-find` call during Object static initialization, fix its ABI/storage
+shape, then rerun the focused regression before broader gates. Do not commit,
+push, or promote a PR until those gates pass.
+
+M4 execution and ABI follow-up (2026-10-11): imported `mapv`, `find`,
+`associative?`, `ifind?`, and `type->str` with pinned source/provenance so the
+sorted collection suite can execute; both `portable_sorted_tree_collections`
+(6/6) and `portable_sorted_tree_nodes` (6/6) now pass in the isolated
+validation checkout with regenerated bootstrap artifacts. The node regression
+was corrected to match pinned ClojureScript behavior for absent hyphenated
+properties (nil). The focused runtime ABI suite currently has 72/73 passing;
+`runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc`
+still throws while checking a forged descriptor. The latest internal closure
+property split fixes the public reserved-slot regression but has not resolved
+that failure. `git diff --check` passes. The full prescribed workspace baseline,
+deterministic bootstrap reproduction, independent review, and final-head CI have
+not passed. This branch is not ready to commit/push or open as a draft PR yet.
+Next: trace the forged-descriptor path through `object-instance` and the native
+protocol/descriptor property calls, then rerun the complete focused suites and
+all required gates.
+
+ABI root-layout trace (2026-10-11): the nominal cross-fragment failure persists
+with the corrected owned-prototype global roots. `ROOT` begins after the
+String.charAt mutable global; the five typed function roots therefore occupy
+`ROOT+1..ROOT+5`, descriptor identities are at `ROOT+6..ROOT+7`, the Object
+constructor root at `ROOT+8`, and the Object/TypeError callbacks at `ROOT+9` and
+`ROOT+10`. The runtime source now uses those offsets consistently. In the
+failing test, the class descriptor's protocol table is a valid empty array after
+GC; `object-instance` still throws through `protocol-method-get` at the forged
+descriptor assertion. Reproduce with the isolated bootstrap command followed by
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-compile --test runtime_abi
+runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc
+--locked -- --test-threads=2`; this still fails. Next: instrument or isolate the
+protocol-table lookup on that assertion to find why its valid empty table path
+throws, then rerun the 74-test ABI suite and the required full baseline.
+
+Compiler-catalog graph budget follow-up (2026-10-11): the workspace baseline
+exposed a regression in four `compiled_macro_compiler_catalog` tests: the
+analysis DAG validation pass exceeded its default 1,048,576 work budget while
+materializing catalog snapshots with the expanded M4 core. Raising only the
+validation budget to 4,194,304 still failed, showing the independent logical
+materialization budget also needs to accommodate this accepted snapshot. A
+finite 4,194,304 limit for both passes makes all four tests pass (184.02s total
+with two test threads). This remains bounded and leaves the separate 131,072
+recipe cap, 1,048,576 UTF-16-unit cap, and 32 MiB reader-key cap unchanged. The
+source and regenerated bootstrap artifacts now use the larger graph-work
+bounds. The full required workspace baseline must be rerun at this final source
+state; prior run stopped at these four failures. Next: verify two-pass bootstrap
+reproducibility and rerun the full locked workspace suite.
+
+Comparator regression investigation (2026-10-11): the full locked workspace
+baseline progressed through the complete runtime/core and portable collection
+suites, then stopped in `portable_comparators` with two failures. The Error ABI
+is descriptor/message/data/cause/identity (five fields), so the test's old
+`fields.len() == 2` expectation was stale; after correcting it, the focused
+`comparator_numeric_return_bits_errors_and_retained_capture_after_gc` test
+passes, including Error descriptor/message checks, recovery, numeric return
+bits and retained capture across GC. The remaining
+`public-primitive-predicate-rebind` mismatch needs semantic resolution: isolated
+execution shows the comparator itself returns the expected -1, +1, -1, -1
+values under the predicate rebindings, while the candidate case's checks use
+`=` at the same time that it rebinds `identical?`, causing the assertion result
+to be false in this prototype. Do not weaken the pinned corpus or treat this as
+a comparator pass; verify the upstream behavior and fix the equality/call
+semantics or the regression's measurement without diverging from the accepted
+contract. `portable_comparators` is not green, and the full workspace command
+must be rerun after resolving this. No commit, push, PR, independent review or
+final-head CI has occurred. Next: audit `=`/`identical?` against the pinned
+ClojureScript behavior and build a test that verifies the comparator outputs
+without masking a separate equality regression; then resume the full baseline.
+
+Comparator and full-baseline follow-up (2026-10-11): reconciled the pinned
+`public-primitive-predicate-rebind` observation with the executable runtime.
+The imported `=` fast path now uses compiler-owned `cljs.core/==`, so a live
+redefinition of public `identical?` cannot alter equality; internal `str_` now
+uses the checked string-hint OrdinaryToPrimitive adapter, preserving the
+pinned `toString` then `valueOf` fallback when the first result is an object.
+Both changes have explicit provenance patches and review inventory entries; the
+portable compiler exposes the string-hint adapter as a typed bootstrap
+operation. `portable_comparators` passes 2/2 in both phases after GC, including
+the entire 49-case candidate corpus, policy cases, Error layout/message,
+numeric bits, recovery and retained capture. `core_import.py` regenerates and
+checks 415 imported files, and `git diff --check` passes. Bootstrap two-pass
+reproduction and `compiled_bootstrap` 4/4 passed after these source/compiler
+changes.
+
+The prescribed full locked workspace run at this state advanced through the
+comparator and collection suites but stopped at
+`raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_after_gc`
+on `inherited-cause`. The case executes `(aset o "__proto__" p)` on a
+`js-obj`; current `aset` accepts only the portable array carrier and throws
+`Invalid or unsupported array operation`, while pinned ClojureScript performs
+a native-object prototype write and then reads inherited `cause`. This is an
+unimplemented dynamic object-property write/prototype behavior, not a passing
+Error observation. The attempted direct setter insertion had a dependency/type
+cycle and was fully reverted; no runtime-array experiment remains. Next: design
+a properly ordered shared `aset` dispatcher (or an equally contract-faithful
+lowering) that preserves array bounds/evaluation behavior and routes native
+object keys through the descriptor-aware property/prototype setter, add focused
+native-object and `__proto__` regressions, then rerun Error and Array tests,
+bootstrap reproduction and the full workspace baseline. M4 issues #16-#19
+remain open; the full acceptance audit and independent review are still
+required.
+
+M4 validation continuation (2026-10-11): corrected the stale bootstrap artifacts
+against the current compiler/runtime tree by regenerating both phase images.
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+sh scripts/verify-bootstrap.sh` passed two independent compilations, artifact
+comparison, identity verification and `compiled_bootstrap` (4 passed). The
+first run before regeneration failed only because the committed runtime image
+differed from the source-built image; this was repaired, not skipped. With the
+matching images, `cargo test -p suss-cli --test
+portable_sorted_tree_collections --locked -- --test-threads=2` passed 6/6
+(including all three adversarial decoder regressions that had previously failed
+at bootstrap identity), and the new `portable_seqable` suite passed 1/1 in both
+phases after GC. The ordered `aset` dispatcher now gets the Error corpus past
+`inherited-cause`; its next case, `prototype-source-getter-receiver`, still
+fails compilation because `this-as` is unresolved. The added `#js` reader path
+is reached, but ClojureScript `this-as` receiver semantics have not been
+implemented; keep this corpus failing and do not claim the full baseline green.
+Next: implement and execute source `this-as`/getter receiver semantics (or
+separate the unrelated Error gate only if the test's intended M4 scope is
+reassessed from evidence), then rerun Error, array, sorted-map/set, sequence,
+bootstrap and the full locked workspace baseline. The M4 issues #16-#19 and
+independent acceptance audit remain open.
+
+M4 focused and full-baseline evidence update (2026-10-11): after bootstrap
+regeneration and identity verification, the focused sorted/M4 execution gates
+passed on the final implementation tree: sorted-tree collections 6/6,
+seqability 1/1, map mutation 6/6, queues 3/3, record graph/helpers/iteration
+8/8, reductions 3/3, sequences 6/6, sorted-tree nodes 6/6, vector trie 5/5,
+comparator foundations/corpus/sorted prerequisites 7/7. Each command used the
+isolated `/private/tmp/suss-error-validation-target` and `--locked`; no filters
+or new ignores were added. `python3 scripts/core_import.py --check` verified 415
+files, `git diff --check` passed, and `scripts/verify-bootstrap.sh` passed two
+rebuild comparisons, identity validation and compiled_bootstrap 4/4 after
+regenerating the checked-in phase images.
+
+The required `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2` progressed through the
+compiler/macro and collection runtime gates, including HAMT map/set growth,
+collisions/deletion, vector trie boundaries, sequence/reduction behavior,
+sorted comparators/ranges, Error ancestry setup and all decoder adversarial
+cases. It stopped in `portable_error_constructors`: 5 passed, 1 failed. The
+remaining pinned case `prototype-source-getter-receiver` fails at compile time
+with `Unresolved Runtime name this-as`; its source uses a zero-argument getter
+and source-level JavaScript `this` binding. This is a genuine unsupported
+receiver semantic, not an M4 collection mismatch. Do not skip or edit the
+pinned case to claim a green workspace. The earlier inherited-cause failure is
+resolved by the late ABI `aset` dispatcher. Next: implement the pinned
+`this-as`/getter receiver behavior with source-level regression coverage, rerun
+the Error suite and required full baseline, then perform the issues #16–#19
+acceptance audit. No PR has been created and M4 remains incomplete.
+
+M4 PR preparation update (2026-10-11): the current `this-as` receiver
+experiment compiles and the core-import check verifies all 415 files, but the
+Error constructor corpus now fails earlier on TypeError descriptor identity
+(actual descriptor ID 12, expected 11). Treat this as a regression in the
+experiment; it has not passed semantic validation. `gh auth status` reports
+the configured GitHub token is invalid, so remote push and draft-PR creation
+cannot currently be completed. The local worktree contains the accumulated
+M4 collection, comparator, seqability, runtime ABI and evidence changes; no
+commit has yet been made. Next: restore TypeError descriptor identity and
+execute the Error suite, then commit/push and open a draft PR with `Refs #16`
+through `Refs #19` once GitHub authentication is repaired. Preserve the
+remaining `this-as` and full workspace limitations explicitly; M4 remains
+incomplete.
+
+M4 verification follow-up (2026-10-11): fixed the stale TypeError descriptor
+expectation (the public TypeError descriptor is ID 12), restored strict
+reference identity checking for canonical Error descriptors in the sorted-tree
+corpus, and expanded `this-as` regression coverage for nested receiver restore
+and language-throw paths. The focused Error suite passed 6/6, sorted-tree
+collection suite 6/6, sorted-tree node suite 7/7, and named-property suite 4/4
+after correcting its expectation for stable constructor prototypes and inherited
+instance `constructor`. `git diff --check` and `python3
+scripts/core_import.py --check` (415 files) pass. The required full workspace
+run progressed through the focused collection and Error gates but stopped at
+the pinned Clojure corpus comparison: `clojure.core-test.nil-qmark` and
+`clojure.core-test.not` now reach unresolved `range` instead of their recorded
+deeper outcomes. Do not refresh the baseline or call this green; investigate
+and implement the pinned `range` contract with provenance and executable tests,
+then rerun the corpus and full workspace command. M4 issues #16–#19 and final
+acceptance audit remain open.
+
+M4 acceptance evidence refresh (2026-10-11): on current pushed head
+`00b3701ffa0631d73d47bb89c15f344d13a45cce`, `scripts/verify-core-import.sh`
+passed inventory validation (1,065 declarations), review overlay validation
+(514 reviewed / 551 unassessed), 27 licensed sequence setup forms, 415 imported
+files, and all 17 executing core-import tests. This verifies the bounded #16
+import gate but does not complete the broad inventory/review backlog.
+
+The M4-focused locked CLI runs used
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target`
+and passed 18 test binaries / 71 tests: caching hash 4, chunk effects 2,
+collection hash 5, lazy sequences 4, queues 3, record helpers 3, record
+iteration 3, reductions 3, sequences 6, sorted-tree collections 6, sorted-tree
+nodes 7, subvectors 3, transient errors 1, vector trie 5, collection literals
+6, iteration 2, map mutation helpers 6, and record graph runtime 2. These
+exercise the M4 issue criteria for sequence effects and metadata, 31/32/33 and
+deeper vector trie behavior, structural sharing, sorted iteration/comparator
+contracts, collision/deletion and map/set construction, records, hashing,
+transient invalidation, and Reduced short-circuiting. `git status` is clean after
+validation. GitHub API requests for PR #234 checks repeatedly failed to connect,
+so final-head CI status is currently unverified. The required whole-workspace
+command still has the previously documented pinned corpus mismatch at unresolved
+`range`; this is outside the M4 issue scope (which prohibits unrelated runtime
+API changes), and no baseline was refreshed. Next: obtain final-head CI/review
+status and complete a criterion-by-criterion evidence audit for #16–#19; keep
+#234 draft and M4 open until every original acceptance criterion and required
+review/CI gate has authoritative passing evidence.
+
+M4 provenance edge-case follow-up (2026-10-11): in addition to the core-import
+acceptance script, `python3 -m unittest discover -s scripts -p
+'test_core_import.py'` passed 15 tests, `... -p 'test_cljs_reviews.py'` passed
+10 tests, and `... -p 'test_sequence_provenance.py'` passed 8 tests. These
+exercise stale source/patch hashes, stale review rejection, notice/license
+retention, and sequence adaptation provenance. Independent reviewer Harvey
+re-reviewed PR #234 at `73cd10b` and reported no findings. This review does not
+cover a later code change; only this handoff update follows it. Fresh CI for the
+new final head is still required; the branch remains draft pending that result
+and the full M4 closeout audit.
+
+M4 range sequence implementation (2026-10-11): corpus evidence showed that
+`range` is an M4 sequence dependency, so added the complete pinned `Repeat`,
+`IntegerRangeChunk`, `RangeIterator`, `range-count`, `IntegerRange`, `Range`,
+`repeat`, and `range` forms at upstream commit
+`c4295f303100bbf5afac449242d30bca1126f1a1`. Eight declarations now have
+individual source hashes/reviews and generated extractions; explicit patches
+adapt defn expansion, typed errors, portable `f64-ceil`, the bounded chunk
+minimum, and `Number.MAX_VALUE` to its exact binary64 literal. The imported
+forms retain EPL notices/license packaging. `portable_ranges` executes both
+runtime and macro phases and covers all four `range` arities, integer/floating
+and ascending/descending/empty/zero-step behavior, finite/infinite repeat,
+metadata, iteration, reduction stop effects, default endpoint, and the pinned
+CLJS-2113/3270/3271 cases. It passes 1/1. `python3 scripts/core_import.py
+--check` verifies 423 files; review validation reports 522 reviewed / 543
+unassessed. Two independently built bootstrap outputs matched, regenerated
+phase artifacts passed `verify_bootstrap_identity.py`, and `compiled_bootstrap`
+passed 4/4.
+
+The required full workspace command was rerun after this source change with the
+isolated target. All suites before `clojure_test_suite` passed, including all
+M4 HAMT collision/deletion, sorted-map/set, vector, lazy/chunked, queue, record,
+hash, transient, reduction and new range tests. The reviewed corpus comparison
+still fails (fail=22, 246 pass, 0 skipped); range is now resolved and the new
+mismatches reveal downstream missing `drop`/`take-nth`, a host-specific
+`int-array` path, and two undecodable outputs (`js/undefined` and the sorted-map
+second result). Do not refresh the baseline or claim the workspace green. Treat
+only the portable sequence/collection gaps as M4 follow-up; host interop remains
+out of the M4 source-compatibility promise. This range implementation is
+uncommitted and needs a fresh independent review and final-head CI. M4 #16–#19
+remain open pending full criterion audit and required remote gates.
+
+M4 range PR state (2026-10-11): range/repeat implementation is committed and
+pushed as `b5c8f6701dad94f34df13d67732c4d28484c992c` on draft PR #234. Harvey
+independently reviewed that code head and reported no actionable findings.
+GitHub showed foundation and integration CI jobs running on that SHA; completion
+is still pending. The PR body was refreshed to describe the new range coverage
+and the exact corpus mismatch. Next: verify CI on the eventual latest head, then
+continue the #16–#19 acceptance audit; PR and milestone remain open/draft.
+
+M4 `drop` portability follow-up (2026-10-11): added pinned `cljs.core/drop`
+(source `runtime:drop:4976`, SHA-256
+`b1d8bbc4d336d3a52f059cde10decdb0d198bdcc0ad1cc11313f83733d576fc9`) to the
+reviewed core import. The explicit adaptation retains both arities and adapts
+`volatile!`/`vswap!` state to the existing portable atom operations, host
+`Math/ceil` to `suss.bootstrap/f64-ceil`, and `lazy-seq` to the equivalent
+memoized `LazySeq` constructor. New `portable_drop` executes `IDrop` and lazy
+fallback paths, negative/fractional/oversized counts, range integration, and the
+stateful transducer in runtime and macro phases; passed 1/1. `bash
+scripts/verify-bootstrap.sh` passed reproducibility/identity and compiled
+bootstrap 4/4. `bash scripts/verify-core-import.sh` passed: 1,065 declarations,
+523 reviewed / 542 unassessed, 27 licensed sequence setup forms, 424 imported
+files, and 17 executable core-import tests. The pinned corpus was rerun without
+baseline changes: `fail=22`, `pass=246`, `skipped=0`; `clojure.core-test.drop`
+now advances from unresolved `range` to unresolved `doall`, and
+`clojure.core-test.take-nth` still stops at unresolved `take-nth`. Other corpus
+deltas include host-specific `int-array`, `js/undefined` and sorted-map second
+observation decoding, and a `not` reader mismatch. Next M4 sequence task: assess
+and implement pinned `doall`/`take-nth` as needed, then rerun the corpus. The
+workspace baseline, issue acceptance audit, PR review and final-head CI remain
+open; do not refresh the reviewed baseline or close M4 on these focused passes.
+
+M4 `doall`/`dorun` and `drop` precondition follow-up (2026-10-11): imported
+pinned `dorun` and `doall` declarations with individual extracted hashes and
+explicit `when-let` adaptation for the portable subset. Expanded `drop`'s
+adaptation to preserve both upstream `number?` preconditions as typed portable
+errors; `portable_drop` now covers rejection in both collection and transducer
+arities, lazy and `IDrop` paths, and `doall` full/bounded realization and return
+identity. Focused `portable_drop` passed 1/1. After this change, the pinned
+corpus moved to 32 failures, 258 passes, 0 skipped (from 34/256/0): the two
+`drop nil` throw assertions now pass. Drop observations remain undecodable
+because the test decoder does not yet materialize LazySeq values; the `take-nth`
+namespace still stops at unresolved `take-nth`. No known-failure baseline was
+changed. Latest `verify-core-import.sh` passed: 1,065 declarations, 525 reviewed
+/ 540 unassessed, 27 licensed sequence setup forms, 426 imported files, and
+17/17 executable import tests. Latest `verify-bootstrap.sh` passed identity,
+reproducibility, and compiled bootstrap 4/4. Full M4 completion still requires
+sequence decoder/source-suite alignment, remaining portable sequence gaps,
+full workspace evidence, issue #16–#19 acceptance audit, independent review and
+final-head CI.
+
+M4 `take-nth` implementation follow-up (2026-10-11): added pinned
+`cljs.core/rem` and `cljs.core/take-nth` imports with source hashes and explicit
+adaptations; moved these after `drop`/`doall` in dependency order. The
+transducer retains CLJS remainder semantics (including zero behavior), uses
+portable atom/swap! state, and preserves numeric preconditions; the lazy arity
+uses a memoized LazySeq constructor. New `portable_take_nth` exercises both
+phases, strides, negative transducer stride, CLJS zero transducer result, and
+both invalid-numeric paths; passed 1/1. Together `portable_drop` passed 1/1.
+`verify-core-import.sh` passed with 1,065 declarations, 527 reviewed / 538
+unassessed, 27 licensed sequence setup forms, 428 imported files, and 17/17
+core-import tests. `verify-bootstrap.sh` passed reproducibility/identity and
+compiled bootstrap 4/4. The fresh pinned corpus now reports fail=37,
+pass=268, skipped=0; `take-nth` namespace loads, and its five sequence-valued
+assertion observations are undecodable. Existing drop observations are also
+undecodable because the host decoder lacks a canonical materialization path for
+LazySeq/Range values. Other unresolved corpus classes remain `int-array`,
+`js/undefined`, sorted-map observation decoding, and reader dispatch. Baseline
+is unchanged. Next: reconcile portable sequence observations with an independent
+bounded decoder path, then rerun the corpus and full workspace gate. M4 review,
+CI, and #16–#19 acceptance audit remain incomplete.
+
+M4 corpus observation materialization (2026-10-11): the accepted design and
+compatibility inventory were reread before changing the conformance harness.
+`suss.harness.test/record!` now snapshots only known lazy/range/hash-map/sorted
+sequence implementation types into bounded (100,000 item) portable lists after
+the assertion has executed; sorted red/black tree nodes and map entries become
+portable two-element vectors. This is observation encoding, not pass/fail logic.
+The corpus moved from 37/268 to 23 failures / 282 passes / 0 skipped; all five
+`take-nth` observations and the sorted-map `second` observation now decode. The
+snapshot cap throws explicitly, and the reviewed baseline remains unchanged.
+One `drop` map-sequence observation is still unsupported by the independent ABI2
+decoder despite map-entry projection; the `nil?` JS-undefined case remains
+outside portable collection scope. Known namespace baseline deltas remain for
+newly implemented sequences plus host-specific `int-array` and reader dispatch.
+Do not mark green or refresh the baseline until these observations are resolved
+and each changed oracle result is reviewed. `portable_drop` still passes 1/1
+including a direct map-entry probe; `portable_take_nth` passes 1/1. Next: isolate
+the unknown ABI2 layout in the `drop` map observation, then rerun the corpus and
+full workspace gate. Independent code review, final-head CI, and the original
+#16–#19 acceptance audit still remain.
+
+Decoder follow-up observation: protocol-based `map-entry?` projection did not
+resolve the remaining `clojure.core-test.drop/test-drop#11` ABI2 decode error;
+corpus remains 23 failures / 282 passes / 0 skipped. The direct `portable_drop`
+map probe confirms the first dropped map value is a valid map entry with key
+`:b`, so collection behavior is executable and correct there. Next investigation
+must locate the specific nested unsupported object layout in the observation
+snapshot rather than weakening decoder errors or changing the reviewed baseline.
+
+Required full workspace validation on the current uncommitted M4 worktree
+(2026-10-11): `CARGO_BUILD_JOBS=2
+CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test
+--workspace --locked -- --test-threads=2` passed all completed binaries through
+all M4-focused collection suites, both new `portable_drop` and
+`portable_take_nth` tests, and all 95 `suss-compile` unit tests. It failed at
+`clojure_test_suite_matches_reviewed_baseline`: fail=23, pass=282, skipped=0;
+remaining mismatches are newly executable namespace outcomes from `range`,
+`drop`, and `take-nth`, one unsupported dropped-map observation, an unexpected
+value observation for dropped sets, and the existing `js/undefined` observation.
+The review baseline was not refreshed. The full workspace is therefore not
+passing; do not claim M4 complete. The enclosing Cargo session ended after the
+reported failing executable, before a full later-binary summary was available.
+
+M4 corpus contract and validation follow-up (2026-10-12): the corpus in use is
+Jank's vendored Clojure test suite, executed by Suss and compared against the
+pinned ClojureScript 1.12.134 oracle; it is not JVM Clojure conformance. The
+vendored `drop` test explicitly says map/set iteration order is not known and
+asserts only that realizing `drop` returns a truthy value without throwing.
+The comparator had overfit the pinned JS hash-set order. Added a narrowly scoped
+verdict-only classification for that assertion, with a unit regression; kept
+ordered comparisons for sequential inputs. The `nil? js/undefined` assertion is
+also verdict-only because the host-interop inventory explicitly classifies
+`js/undefined` as host-specific with no portable counterpart. Neither changes
+guest pass/fail semantics. Independently compared every assertion in the nine
+newly loadable namespaces before removing their stale namespace failures from
+the reviewed baseline; all assertions matched. Updated `first`'s recorded
+remaining diagnostic from `range` to the observed `int-array`. Corpus gate now
+passes with 20 established failures and 2 explicitly guest-judged assertions;
+baseline includes no unobserved success.
+
+The `range` import also made two `compile_expr` cases executable. Re-enabled
+`test_apply_large_vector_variadic_capture` and `test_partial_debug_range_alength`
+and removed their obsolete expected-failure ledger rows. Both execute and pass;
+`prototype_cases_awaiting_compiled_support` passes and the full `compile_expr`
+binary passes 293, fails 0, ignores 23. `scripts/verify-core-import.sh` passes
+with 1,065 declarations, 527 reviewed / 538 unassessed, 27 licensed sequence
+setup forms, 428 imported files and 17/17 executable core-import tests.
+`scripts/verify-bootstrap.sh` passes reproducibility/identity and compiled
+bootstrap 4/4. M4-focused full-workspace binaries passed, including HAMT,
+vectors, sequences, sorted collections, queues, records, hashing, transients,
+reductions, plus `portable_drop` and `portable_take_nth`.
+
+The required full workspace command still does not pass. It repeatedly fails in
+the unrelated `generated_async_import_bridge` binary with four Wasmtime
+out-of-fuel traps (4/8 pass); an isolated run reproduces the same four failures.
+Do not alter fuel or test settings to hide this. The full M4 issue audit remains
+incomplete: #16 provenance gate is evidenced; #17/#18/#19 criterion mapping
+against every original acceptance item still needs a written audit. PR #234
+remains draft; its remote head predates these uncommitted fixes, its last
+reported CI had failing shards, and independent review/final-head CI remain
+required. Next: complete the #17–#19 evidence matrix, address any uncovered
+acceptance gaps, obtain independent review, then publish and require final-head
+CI before considering M4 complete.
+
+M4 observation review repair and original-criterion audit (2026-10-12): the user
+requested code fixes while holding test-suite execution. No tests, builds,
+bootstrap regeneration or oracle runs were launched for these latest fixes.
+The earlier guest observation snapshots were removed entirely, including the
+deferred snapshot/marker attempt: realizing values after a namespace would still
+execute guest code, and normal marker values would obscure capture failures.
+`suss.harness.test/record!` again stores raw payloads. The conformance Harness now
+opts into canonical stored sequence layouts in the independent ABI2 host decoder.
+It reads realized LazySeq/ChunkedCons, bounded ranges and map/hash/key/tree views
+without calling lazy thunks, seq/protocol methods, equality or printing. Pending
+tails, unknown layouts, corrupt cursors and exceeded bounds remain explicit
+decoder errors through the existing opaque/failure path. No known-failure results
+were recomputed or changed for this repair. The prior 20-failure/2-guest-judged
+corpus report is historical evidence, not a result for the new decoder.
+
+`portable_drop` no longer fixes map/set traversal order: it checks map-entry
+value/count and compares dropped-set membership with removal of the actual first
+encountered element. Authored regressions in `portable_sequence_observations`
+cover pending-effect preservation, realized values across GC, unbounded range
+refusal, map/sorted view decoding and corrupt cursors. An additional conformance
+harness regression checks that a pending thunk is untouched both before a later
+test and after host decoding. These are uncompiled/unexecuted. Rustfmt parsed the
+new decoder/regression source, and `git diff --check` passed; neither is execution
+evidence. Popper independently reviewed the non-forcing decoder and order repair
+without running tests/builds and found no actionable issues in the main repair.
+Follow-up review of added cursor/harness regressions raised a negative TreeSeq
+count question: pinned/runtime rest and next decrement the unknown count, so
+values below -1 are valid. Source comment and a sorted-seq-from tail regression
+retain that behavior. Popper reread both runtime and pinned source and withdrew
+the finding; the reviewed repair has no remaining actionable findings. This is
+static independent review, not a passing execution result.
+
+The original #16–#19 bodies were fetched from GitHub, and the current source
+criterion mapping is now at the top of `docs/roadmap/acceptance-m4.md`. All issues
+remain open. Public defrecord construction/factories and record collection behavior
+remain an actual implementation gap in #18/#19; iterator/helper prerequisites do
+not prove them. Removed the unexecuted hand-written IRecord/IEquiv fixture, which
+would have tested its own custom equality rather than public record semantics.
+The last full-workspace fuel failures remain unresolved; do not assume they are
+unrelated to import/bootstrap costs or alter validation settings to hide them.
+GitHub confirms PR234 still draft at77b9040 with integration1/2/4 and aggregate
+test failures; no commit/push/promotion occurred for these latest changes.
+Next unblocked implementation task is the complete pinned record macro/helper
+graph and public factories, with source provenance and real nominal record
+equality/hash/metadata/persistence evidence. Keep the user's test hold until
+lifted; later validation uses focused checks first and the unchanged full baseline.
+
+M4 public record dependency implementation (2026-10-12): after inspecting the
+complete pinned defrecord/emit-defrecord/factory forms and existing compiler
+boundary, found that generated clone/metadata/assoc field substitutions depend
+on missing public replace. Its vector branch needs take and the full Iterate
+type. Appended five whole pinned forms to the reviewed import in dependency order:
+take, unique UNREALIZED-SEED, unchanged Iterate, iterate, replace. Kept both take
+arities, preconditions, lazy demand and Reduced identity; all Iterate fields,
+IPending/metadata/next caching and both reduction arities; all replace vector,
+lazy-sequence and transducer branches, retaining live take/iterate/find/assoc
+dependencies. Four explicit record-dependency patches and five in-progress review
+entries retain source hashes and EPL provenance; no record-specific replacement
+loop or handwritten nominal-equality substitute was introduced.
+
+Command `python3 scripts/core_import.py` exited0 and wrote433 source/provenance
+files, including new originals0424–0428. No test suites, builds, bootstrap
+regeneration or development oracle execution were run, respecting the user's
+hold. Rustfmt parsed the new `portable_record_sequence_dependencies` regression
+file, and `git diff --check` passed. Its three two-phase tests are authored only:
+replace values/owner/metadata/lazy effects, Iterate cache/metadata/reduction
+demand, and take arities/numeric preconditions/pending-demand/Reduced identity.
+Popper independently reviewed these source/provenance/test additions read-only
+with the same test/build hold and reported no actionable findings. That is static
+review only; it does not establish compilation or execution.
+
+Both shipped bootstrap artifacts are now stale for the generated source and
+manifest; do not run or claim results with them. Prior validation counts remain
+historical. Public defrecord still needs source macro/helper installation and
+low-level type support: three hidden physical fields must not inflate analyzer
+num-fields, declaration record flags must be genuine, and generated methods
+must see their fields while preserving constructor/nominal identity. Factories,
+every generated protocol branch, custom implementations, record/map inequalities,
+hash/metadata/persistent operations and GC still require execution. The updated
+record-macro foundations note and original-criterion audit retain these gaps.
+Next unblocked code work is the actual record type/compiler-fact boundary and
+complete compiled macro adapters. After the test hold is lifted, regenerate and
+reproduce bootstrap, run focused regressions first, then the unchanged import,
+full baseline and final-head CI gates. No issue closure, commit, push or promotion
+occurred in this source-authoring step.
+
+M4 intrinsic record/type boundary authoring (2026-10-12): added native
+NominalForm lowering for canonical deftype*/defrecord* name/fields/masks/body
+forms in every bootstrap lookup path. Factored the existing type schema and
+declaration metadata logic without changing ordinary deftype's generated factory
+path. DefinitionInfo now records the intrinsic record kind; compiled macro
+catalogs project it rather than hard-coding false. Record physical storage appends
+__meta/__extmap/mutable__hash, while num-fields retains the user field count.
+The class binding publishes before body execution. Source body analysis removes
+enclosing locals, supplies owning physical field declarations to inline grouped
+extend-type method bodies, then restores caller locals/fields/type contexts even
+on failure. Existing stable descriptor ABI and generic constructor storage are
+unchanged; no Java/JS dependency or fuel/validation-setting change was added.
+
+Two tests in compiled_record_type_boundary are authored for both phases:
+storage/field/hash/body-effect/capture-rejection checks and actual compiled macro
+catalog field-count/record-kind projection before body and after type redefinition.
+They use a probe protocol only for the intrinsic boundary, not an artificial
+IRecord/equality implementation. No tests, builds, bootstrap regeneration or
+oracle execution ran. Rustfmt parsed the changed production sources/new test,
+and git diff --check passed; type checking/native execution remain unknown.
+Popper independently reviewed the new production lowering/projection and test
+source under the same hold and reported no actionable findings. The review noted
+missing grouped-overload test coverage; the boundary regression now includes both
+arities and parameter/field shadowing. Popper reviewed that addition and reported
+no findings. The embedded source parses as four complete forms using the static
+scanner. It remains uncompiled/unexecuted; this is not a passing regression.
+
+The complete compiled defrecord helper/macro and public factories still need
+installation/adaptation, including every generated method, proper constructor
+optional-field behavior, extension-map/metadata/persistent update semantics,
+nominal equality/hash and GC evidence. The complete helper graph must also audit
+type-body source/analyzer facts beyond method field binding. Bootstrap source,
+dependency and compiler identities are stale; regenerate/reproduce only when
+validation resumes, then run focused gates before the unchanged workspace baseline
+and final-head CI. M4/#16–#19 remain open; no commit/push/promotion occurred.
+
+M4 complete compiled factory helper authoring (2026-10-12): added licensed
+portable_record_factories SOURCE with full build-positional-factory and
+build-map-factory adaptations. Their complete originals and source hashes remain
+retained in record-macro-foundations; factory-adaptations.json binds adapted
+declaration, Rust-file and compiled-source identities. The macro bootstrap now
+evaluates those compiled functions under suss.internal.record-factories after
+defn initialization, then returns to user namespace. Reset uses the same bootstrap
+path. Macro artifact dependency lists include the entire helper source hash.
+This is a compiled source helper graph, not a Rust factory form evaluator.
+
+Preserved both positional constructor branches, generated names/docs/name
+metadata, keyword getters, every map-factory branch, nil metadata/hash and
+not-empty extension normalization. Expanded generated cond->> explicitly while
+keeping dissoc evaluation before the record? test of the original input and
+conversion of only record input's extension map. Two compiled_record_factories
+tests use actual compiled helpers through wrapper macros and intrinsic types for
+both phases, checking arity/storage/factory attrs/docs and ordinary map inputs
+including nil/false/missing/extra/zero-field cases. These do not fabricate IRecord
+or equality implementations; full genuine record-input behavior awaits the public
+emitter and generated protocol graph.
+
+Extended the existing macro provenance checker to validate closed helper
+identities/order, hashes/whole originals/EPL notice, bootstrap installation and
+cache-source dependencies. The existing verify-core-import.sh gate now invokes
+that checker for the newly imported compiled helper forms. Four new Python
+regression methods cover stale identities and missing loader/cache wiring. No
+checker execution, tests, builds, bootstrap generation or oracle commands ran;
+only Rustfmt parsing, source extraction/provenance record generation, Python
+AST parsing and git diff --check. Popper reviewed helper/loader/native test source
+without execution and reported no actionable findings. Follow-up independent
+review of the provenance/gate regression source also found no actionable issues;
+the reviewer invoked no checker, tests, builds or oracles.
+
+Bootstrap is stale for source/dependency/compiler identities. Keep the test hold
+until lifted. Next code task is the full compiled defrecord/emit-defrecord helper
+adapters and protocol/factory wiring, including accurate type-name hashing,
+nominal equality, metadata/extmap persistence, iterator/printing/reduction paths
+and custom implementations. After the hold lifts, regenerate/reproduce bootstrap,
+execute focused factory/intrinsic/observation and macro/cache/reset checks, then
+the unchanged locked workspace baseline and final-head CI. The last async fuel
+failures still need diagnosis; do not alter fuel/test settings or mark original
+M4 criteria achieved. No commit/push/promotion/issue closure occurred.
+
+M4 emitter dependency/type-label source authoring (2026-10-12): reused the
+existing full list* import and added six complete pinned forms in dependency
+order: complement, remove, preserving-reduced, cat, mapcat, drop-while. All source
+arities/branches remain, including multi-coll mapcat, nested Reduced preservation,
+and lazy/transducer drop state. Six record-emitter patches/review entries retain
+source hashes and EPL provenance. Initial append refused duplicate list* before
+any recipe/review mutation; corrected by reusing the existing imported form.
+`python3 scripts/core_import.py` then exited0 and wrote439 generated files. Two
+authored two-phase native tests cover values/modes/arity and ordered stop/state
+effects; neither was run.
+
+Added complete compiled scalar type-label helper SOURCE and retained whole
+CHAR_MAP/reserved tables under suss.internal.record-label. It follows the pinned
+scalar compiler munge pipeline, including UTF-16/dots/division/reserved-segment
+rules. The record emitter will use this for its observable hash seed; analyzer
+map munging is explicitly a separate interface. The helper is wired into macro
+bootstrap and artifact source dependencies. label-adaptations.json records whole
+retained inputs/source identities. New compiled_record_labels source covers
+punctuation/reserved/empty segments/newline/astral/lone surrogate cases; the
+existing macro provenance gate now checks label identities/loader/cache wiring,
+with three authored Python regression methods. No tests/checker/build/bootstrap
+generation/oracle commands ran. Rust raw string delimiter was corrected to
+r### after the CHAR_MAP sharp key ended the shorter literal; Rustfmt then parsed
+the source. Static Scanner parsed7 forms; Python AST parsing and git diff --check
+passed. These are source/syntax checks, not semantic or native success.
+
+Popper is reviewing the new source/adaptation/provenance/test additions without
+execution; result pending. Source/dependency/compiler bootstrap identities remain
+stale and public defrecord/emit-defrecord plus generated protocols remain missing.
+The earlier user test hold has not been lifted. An asynchronous clarification
+asks whether Cargo cleanup and goal reactivation mean validation should resume;
+do not infer permission from timeout/no reply. Continue independent code work
+under the hold until resolved. After permission, regenerate/reproduce bootstrap,
+run focused checks, diagnose remaining async fuel failures without changing fuel
+settings, then the required locked workspace baseline and final-head CI. Original
+M4/#16–#19 remain open; no publication or closure occurred.
+
+M4 validation resumed (2026-10-12): the user explicitly lifted the test hold:
+"Resume focused validation, then the required full baseline". All commands use
+the existing CARGO_BUILD_JOBS=2 and
+CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target; no RUSTFLAGS, fuel,
+test profiles or concurrency settings changed. Bootstrap generation with
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`
+passed. Initial factory/label/catalog focused execution found a new default-fuel
+trap in CompiledMacros::new. Temporary startup error context localized this to
+the label SOURCE evaluation, after the factory SOURCE succeeded; that diagnostic
+instrumentation was removed after localization. Complete label character/reserved
+tables now use an array map and vector/value-membership scan instead of eager
+hash collections, and four line terminators use direct comparisons. Updated
+adaptation hashes/rationale retain provenance. Popper independently reviewed the
+fix and found no actionable findings; this did not change the fuel budget.
+
+Executed focused results after the relevant changes: portable_drop 1/1,
+portable_take_nth 1/1, portable_record_sequence_dependencies 6/6,
+portable_record_emitter_dependencies 5/5, portable_sequence_observations 5/5,
+compiled_record_factories 5/5, compiled_record_labels 4/4 and
+compiled_record_type_boundary 5/5. Shared adversarial decoder checks are included
+in these binary totals. The focused clojure_test_suite
+observation_capture_and_host_decoding_do_not_force_pending_guest_values test
+passed 1/1 (6 filtered). Python provenance/comparison regressions passed 37/37
+with `python3 -m unittest test_record_factory_provenance test_record_label_provenance test_clojure_test_suite`
+from scripts/; an initial repository-root invocation failed import discovery
+before execution and was corrected to the established scripts directory.
+
+`sh scripts/verify-bootstrap.sh` passed both independent generations, byte
+comparisons, identity verification and compiled_bootstrap 4/4.
+`sh scripts/verify-core-import.sh` passed provenance, inventory, review validation,
+439 generated files and core_import 17/17. The unchanged required
+`cargo test --workspace --locked -- --test-threads=2` is running; full output is
+`/private/tmp/suss-m4-validation-20261012-baseline.log`. No full-baseline result
+or fresh upstream differential corpus result is claimed yet. The earlier async
+fuel failures still require actual current execution and diagnosis; a static
+review suggests core initialization cost but does not prove the cause. Public
+defrecord/emitter implementation and full acceptance remain unfinished. Next:
+inspect baseline result, fix any semantic/runtime failures without changing
+validation settings, and retain final-head CI before review promotion.
+
+M4 draft checkpoint preparation (2026-10-12): additional review-overlay
+regressions passed 10/10 with `python3 -m unittest test_cljs_reviews` from
+scripts/. The original full workspace baseline remains live (execution session
+35364), with no failures reported through the CLI compiled-macro/source-position
+and REPL checks observed so far. Its complete log remains
+/private/tmp/suss-m4-validation-20261012-baseline.log; this is not a final result.
+
+Prepared /private/tmp/suss-m4-record-emitter-candidate.sus and its companion notes
+while keeping production source unchanged during baseline execution. It retains
+all generated protocols/methods and has explicit source adaptations for predicate
+capture/order, core-qualified generated references, native constructor identity,
+complete physical field positions and direct field reads. Static Scanner parsed
+11 complete forms; no native compilation/execution is claimed. The genuine
+protocol resolver/masks, public macro wrapper and installation remain absent.
+Cicero has an independent read-only candidate review pending. The candidate is
+outside the PR and is not staged as implementation.
+
+Hegel was dispatched for independent /review of the complete current PR diff,
+including all newly authored source and regression files; no duplicate Cargo or
+oracle run is allowed while this baseline is live. Existing PR #234 is still
+draft at remote77b9040 with failed integration shards1/2/4 and aggregate test;
+those checks predate the current checkpoint. Prepare a checkpoint commit and
+push to this existing draft PR with truthful current validation and remaining
+public-record limitations. Promotion still requires independent review and
+final-head CI. No M4 completion or issue-closure claim is justified.
+
+M4 CI fixture repair (2026-10-12): checkpoint9519ddb was committed and pushed
+to draftPR234; current-head foundation failed because test_suite_baseline_log
+compared a frozen PR231 report with the newer live known-failure map. Retained
+evidence/projected-known-failures.json byte-identical to77b9040 only after
+checking its entire projection against the retained PR231 log and every row in
+classification-projection.json. The regression now checks both frozen artifacts.
+The current acceptance baseline, observed failure classifications and skips are
+unchanged. Hegel independently verified the byte identity and reviewed this fix
+without execution, reporting no blocker. Focused test_suite_baseline_log passed
+3/3; `python3 -m unittest discover -s scripts -p 'test_*.py'` passed323/323
+(log /private/tmp/suss-m4-ci9519ddb-python-fix.log). Push this focused CI repair
+and require CI on its resulting head.
+
+Rust baseline execution35364 remains live; no final result is claimed. Full
+checkpoint /review report remains pending from Hegel; the separate record-emitter
+candidate received a static review without actionable findings after source
+corrections. A reported condp-order concern was withdrawn after checking pinned
+core.cljc: it captures predicate/expression once and calls(pred test-expr expr),
+matching the candidate. Its declared protocol resolver and public wrapper remain
+missing; it has only syntax/static evidence and is outside the PR.
+
+M4 baseline result and semantic repair (2026-10-12): required workspace run
+execution35364 finished with exit101 at clojure_test_suite (6 passed,1 failed).
+Report: fail21, guest-judged9, namespaces-failed223, not-executed5532, pass292,
+skipped0. Newly imported take permits repeat to load and advances take to its
+missing realized? dependency. Repeat assertion#15 `(= [] (repeat :a :a))`
+raises a language error instead of producing the pinned empty sequence. Do not
+refresh the accepted failure map to hide this semantic failure. The run stopped
+before generated_async_import_bridge, so earlier fuel failures are not yet a
+current passing/failing result. Complete log is retained at
+/private/tmp/suss-m4-validation-20261012-baseline.log.
+
+Current-head eb7cf4c foundation CI passed, but integration1 reproduced the
+suite mismatch. Integration2 failed because the old compile_expr ledger still
+expected test_apply_large_vector_builtin to fail on missing take despite
+compilation now succeeding. Re-enabled that existing execution regression and
+removed its stale ledger row; native execution remains required before claiming
+an advance. Independent full PR review of eb7cf4c found no semantic blockers,
+which does not substitute for these executed failures.
+
+Added default-fuel two-phase portable_repeat_coercion regression: first run
+failed on the exact keyword case. General nominal inherited property lookup and
+Object.prototype.valueOf receiver handling were repaired, preserving captured
+prototype carriers, own-field/method precedence and ordered conversion hooks.
+Named-property4/4, object-coercion2/2 and repeat-coercion1/1 passed after the
+initial repair. Independent review found the fallback must reject malformed
+non-array carriers; an explicit absent0 guard now does so and its finding is
+closed by static rereview. Bootstrap was regenerated; affected focused tests
+are running again for the guard fix. No fuel, test profiles, RUSTFLAGS or
+validation concurrency setting changed. No acceptance-baseline change occurred.
+
+M4 coercion fix evidence (2026-10-12): after the malformed-carrier guard,
+named-properties4/4, object-coercion2/2 and repeat-coercion1/1 passed again.
+The reactivated test_apply_large_vector_builtin executed and passed1/1 with
+315 other cases filtered; its stale ledger row/ignore are removed. The focused
+upstream run then reported fail20, guest-judged9, namespaces-failed223,
+not-executed5532, pass293, skipped0; repeat#15's semantic error is gone. Its ONLY
+comparison deltas were repeat namespace loading and take's dependency diagnostic
+advancing to realized?. Applied exactly these two logged namespace records with
+old-value assertions, leaving all assertion/test/skip records unchanged. Cicero
+independently reviewed that exact diff and the complete comparator log.
+Reference suite identity remains95d4a9112cfc5fe6629be3d14bb99080ea00af2f and
+ClojureScript upstream remainsc4295f303100bbf5afac449242d30bca1126f1a1. The
+rerun against the updated reviewed map PASSED1/1 (6 filtered) in179.13s, log
+/private/tmp/suss-m4-reviewed-suite-20261012.log. Pre-update complete delta log
+/private/tmp/suss-m4-coercion-suite-20261012.log is retained as independent
+advance evidence. The 19 skip-mismatch entries contribute20 existing failures;
+they are not compatibility successes. Bootstrap reproduction is running now;
+next run generated_async_import_bridge with its unchanged budget, then the full
+required baseline. No final-head CI result or M4 completion claim is made.
+
+M4 current async blocker (2026-10-12): latest verify-bootstrap.sh passed two
+independent builds, byte/identity checks and compiled_bootstrap4/4. Complete
+Python regression discovery passed323/323 (88.342s). Current focused
+generated_async_import_bridge executed8 cases:4 passed,4 failed in49.12s, log
+/private/tmp/suss-m4-async-bridge-20261012.log. All four failures are verified
+out-of-fuel at instantiate_async before source invocation: lines152,224,520,574
+in generated_async_import_bridge.rs. The fixed2,000,000-fuel instantiation
+budget and every test setting remain unchanged. This establishes the startup
+location, not its expensive operation; optimize actual initializer work before
+rerunning the full required baseline. Do not call these unrelated or raise fuel.
+
+Package the independently reviewed, executing repeat coercion repair, builtin
+apply reactivation, exact two namespace advances and regenerated bootstrap as
+the next draft checkpoint. It fixes integration1/2's observed issues but does
+not resolve these async startup failures or complete public records. The source
+record-emitter/protocol-facts and native-interface projection candidates remain
+outside the PR, unintegrated and unexecuted; a serialized projection regression
+is being authored to fill the remaining typed-facts validation gap.
+
+M4 pause checkpoint (2026-10-12): user requested a pause at a natural stopping
+point. Current focused validation is terminal; no additional baseline or
+candidate integration is started. Commit/push the reviewed coercion repair and
+evidence to draft PR234, then pause the goal. Keep PR234 draft: four executed
+async tests still exhaust fuel during instantiation, and public defrecord
+integration remains unfinished. On resume, investigate and optimize actual
+initializer work with the existing budget, execute affected focused tests, then
+run the required full baseline and require final-head review/green CI before
+promotion. Scratch candidates under /private/tmp remain outside this checkpoint.
+
+M4 resumed validation (2026-10-12): resumed at clean5339cdd; foreground
+validation was terminal at pause. The latest fix executes the entire same core
+initializer, preserving fresh eager UTF16 literals/source names, and lets
+verified non-async forward edges continue through later dispatcher guards.
+Backedges and every resumable transfer retain their loop transfer. Single-block
+Return/Throw bodies omit an unnecessary dispatcher. Protocol get/set caches the
+immutable table length only within its callback-free scan; guards, reference
+identity, replacements and live lookup remain intact. No fuel limit, RUSTFLAGS,
+test profile, concurrency setting, library definition or initializer was removed.
+
+The original async8-case binary failed4/8 before these changes. After bootstrap
+regeneration, the unchanged focused command:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test -p suss-compile --locked --test generated_async_import_bridge
+--test portable_literal_allocation --test portable_definitions
+--test portable_async_execution -- --test-threads=2` passed respectively
+8/8,5/5,13/13,13/13 (log /private/tmp/suss-m4-startup-focused-20261012.log).
+Literal regressions execute both phases, exact64/65-unit allocation boundaries,
+astral/lone-surrogate/empty/4096-unit strings, fixed and multi-arity closure names,
+fresh arrays and GC retention. Three adversarial decoder cases are included.
+
+A temporary diagnostic used the existing default Session allowance separately
+from these unchanged component acceptance tests. Its first source-input path
+omitted the bootstrap source-name path and is not component startup evidence.
+The corrected actual bootstrap diagnostic measured core2114907 fuel initially,
+2049590 after table-length caching, and1670713 after forward dispatch; the final
+runtime/bindings/core total was1734853. This diagnosis is not a test-budget
+change or an acceptance gate. Its owned temporary example is removed; logs
+remain /private/tmp/suss-m4-startup-{actual,table,forward}-profile-20261012.log.
+
+Typed native interface facts are now integrated: only actual caller-phase
+js/Object resolving to exact Core export object-constructor is projected into
+the opt-in compiler catalog. No namespace, var or protocol signature is invented.
+Producer regressions passed2/2, including replacement-cell absence in both
+phases. The new compiled wrapper has executed successfully in both phases with
+default budgets; remaining catalog binary checks and live-protocol focus are
+still running. The complete Python regression discovery passed323/323 in29.930s
+(log /private/tmp/suss-m4-startup-python-20261012.log). Cicero independently
+reviewed the final dirty emitter, callback-free length cache, typed producer and
+transport test without actionable blockers. Further full-baseline/bootstrap
+reproduction evidence and final-head CI remain required.
+
+The complete public record emitter/protocol-facts candidates remain scratch-only.
+A public wrapper candidate is now saved at
+/private/tmp/suss-m4-public-defrecord-wrapper-candidate.sus; it is uninstalled,
+uncompiled and unexecuted, with retained EPL notice and explicit caller namespace
+declaration. It does not establish the public record contract. Next after the
+current validation checkpoint: integrate and execute the complete public graph
+with original-source hashes, scope-resolution/factory/nominal/persistence/metadata/
+reduction cases, then reconcile each original #16–#19 criterion.
+
+Resumed focus completed: compiler_catalog binary passed5/5 in234.87s with
+existing settings, including the new native-interface wrapper. The live
+nominal/protocol cross-fragment and GC regression passed1/1 (73 filtered).
+The next dependency-ordered validation is now live as execution12431:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+sh scripts/verify-bootstrap.sh` then
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2`. Logs are
+/private/tmp/suss-m4-startup-reproduction-20261012.log and
+/private/tmp/suss-m4-resumed-full-baseline-20261012.log. Observe this exact
+execution handle and terminal results; do not restart on an observation timeout.
+No complete baseline or final-head CI success is claimed while it runs.

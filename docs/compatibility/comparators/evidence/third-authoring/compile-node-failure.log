@@ -1,0 +1,23 @@
+PASS closed comparator corpus/driver; not executed reference evidence
+WARNING: var: cljs.core/fn->comparator is not public at line 2 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/compare-indexed is not public at line 3 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 4 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 60 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+WARNING: var: cljs.core/str_ is not public at line 64 /private/tmp/suss-m4-compare-after-arrays/tests/oracle/src/suss_oracle/comparators.cljs
+/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:21056
+(cljs.core.PersistentVector.prototype.cljs$core$ICollection$_conj$arity$2 = (function (coll,o){
+                                                                                      ^
+
+RangeError: Maximum call stack size exceeded
+    at Object.cljs$core$ICollection$_conj$arity$2 (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:21056:87)
+    at Object.cljs$core$_conj [as _conj] (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:1843:13)
+    at cljs$core$conj.cljs$core$IFn$_invoke$arity$2 (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:6486:18)
+    at /private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:16555:45
+    at cljs$core$swap_BANG_.cljs$core$IFn$_invoke$arity$3 (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:16556:3)
+    at cljs$core$swap_BANG_ (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:16512:29)
+    at G__12932.G__12932__2 [as cljs$core$IFn$_invoke$arity$2] (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/suss_oracle/comparators.js:390:22)
+    at cljs$core$nth (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:6679:22)
+    at G__12932.G__12932__2 [as cljs$core$IFn$_invoke$arity$2] (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/suss_oracle/comparators.js:392:14)
+    at cljs$core$nth (/private/tmp/suss-m4-compare-after-arrays/tests/oracle/out/comparators-cljs/cljs/core.js:6679:22)
+
+Node.js v24.5.0

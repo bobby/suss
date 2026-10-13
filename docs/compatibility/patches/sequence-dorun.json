@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a937da2e4cb6e2d900565f03f9f4832a62ed6bb6d65edd80a99de74287568003",
+  "replacement": "(def ^{:doc \"When lazy sequences are produced via functions that have side\n  effects, any effects other than those needed to produce the first\n  element in the seq do not occur until the seq is consumed. dorun can\n  be used to force any effects. Walks through the successive nexts of\n  the seq, does not retain the head and returns nil.\" :arglists '([coll] [n coll])} dorun\n  (fn ([coll]\n   (let [__suss_dorun_seq_0 (seq coll)]\n     (when __suss_dorun_seq_0\n       (let [s __suss_dorun_seq_0]\n         (recur (next s))))))\n  ([n coll]\n   (when (and (seq coll) (pos? n))\n     (recur (dec n) (next coll))))))",
+  "rationale": "Retain both pinned traversal arities and their exact next/seq demand; expand defn and rewrite when-let as a single-evaluation portable let/when. The bounded arity keeps the original positive-count condition and order."
+}

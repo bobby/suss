@@ -1,0 +1,15 @@
+.....................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 261 tests in 13.267s
+
+OK
+PASS 22 pinned Array constructor observations
+41 pinned portable source observations match exactly
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 142 closed sorted tree cases/driver; not executed
+PASS 142 independent pinned sorted tree observations
+PASS 142 independent pinned sorted tree observations
+45 pinned portable source observations match exactly
+PASS 52 closed raw tree cases/driver; not executed
+PASS 52 independent pinned raw tree observations
+PASS 52 independent pinned raw tree observations

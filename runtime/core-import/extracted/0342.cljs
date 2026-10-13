@@ -6,38 +6,31 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn juxt
-  "Takes a set of functions and returns a fn that is the juxtaposition
-  of those fns.  The returned fn takes a variable number of args, and
-  returns a vector containing the result of applying each fn to the
-  args (left-to-right).
-  ((juxt a b c) x) => [(a x) (b x) (c x)]"
-  ([f]
-     (fn
-       ([] (vector (f)))
-       ([x] (vector (f x)))
-       ([x y] (vector (f x y)))
-       ([x y z] (vector (f x y z)))
-       ([x y z & args] (vector (apply f x y z args)))))
-  ([f g]
-     (fn
-       ([] (vector (f) (g)))
-       ([x] (vector (f x) (g x)))
-       ([x y] (vector (f x y) (g x y)))
-       ([x y z] (vector (f x y z) (g x y z)))
-       ([x y z & args] (vector (apply f x y z args) (apply g x y z args)))))
-  ([f g h]
-     (fn
-       ([] (vector (f) (g) (h)))
-       ([x] (vector (f x) (g x) (h x)))
-       ([x y] (vector (f x y) (g x y) (h x y)))
-       ([x y z] (vector (f x y z) (g x y z) (h x y z)))
-       ([x y z & args] (vector (apply f x y z args) (apply g x y z args) (apply h x y z args)))))
-  ([f g h & fs]
-     (let [fs (list* f g h fs)]
-       (fn
-         ([] (reduce #(conj %1 (%2)) [] fs))
-         ([x] (reduce #(conj %1 (%2 x)) [] fs))
-         ([x y] (reduce #(conj %1 (%2 x y)) [] fs))
-         ([x y z] (reduce #(conj %1 (%2 x y z)) [] fs))
-         ([x y z & args] (reduce #(conj %1 (apply %2 x y z args)) [] fs))))))
+(defn partial
+  "Takes a function f and fewer than the normal arguments to f, and
+  returns a fn that takes a variable number of additional args. When
+  called, the returned function calls f with args + additional args."
+  ([f] f)
+  ([f arg1]
+   (fn
+     ([] (f arg1))
+     ([x] (f arg1 x))
+     ([x y] (f arg1 x y))
+     ([x y z] (f arg1 x y z))
+     ([x y z & args] (apply f arg1 x y z args))))
+  ([f arg1 arg2]
+   (fn
+     ([] (f arg1 arg2))
+     ([x] (f arg1 arg2 x))
+     ([x y] (f arg1 arg2 x y))
+     ([x y z] (f arg1 arg2 x y z))
+     ([x y z & args] (apply f arg1 arg2 x y z args))))
+  ([f arg1 arg2 arg3]
+   (fn
+     ([] (f arg1 arg2 arg3))
+     ([x] (f arg1 arg2 arg3 x))
+     ([x y] (f arg1 arg2 arg3 x y))
+     ([x y z] (f arg1 arg2 arg3 x y z))
+     ([x y z & args] (apply f arg1 arg2 arg3 x y z args))))
+  ([f arg1 arg2 arg3 & more]
+   (fn [& args] (apply f arg1 arg2 arg3 (concat more args)))))

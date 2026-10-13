@@ -42,6 +42,18 @@ enum Class {
     ArrayNode,
     CollisionNode,
     ExceptionInfo,
+    LazySeq,
+    ChunkedCons,
+    ArrayChunk,
+    IntegerRange,
+    Range,
+    ArrayMapSeq,
+    KeySeq,
+    NodeSeq,
+    ArrayNodeSeq,
+    TreeSeq,
+    BlackNode,
+    RedNode,
 }
 
 struct Canonical {
@@ -130,33 +142,93 @@ impl Decoder {
                 Class::ExceptionInfo,
             ),
         ] {
-            let anchor = session.eval(source)?;
-            let (descriptor, owner_type) = session.inspect(&anchor, |mut store, value| {
-                let owner_type = non_null_ref(&value)?
-                    .as_struct(&store)?
-                    .ok_or_else(|| wasmtime::Error::msg("Invalid canonical object storage"))?
-                    .ty(&store)?;
-                let object = fields(&mut store, &value, 4)?;
-                let descriptor = &object[0];
-                let storage = fields(&mut store, descriptor, 5)?;
-                if !matches!(storage[0], Val::I64(_)) {
-                    return Err(wasmtime::Error::msg(
-                        "Invalid canonical descriptor identity",
-                    ));
-                }
-                Ok((
-                    non_null_ref(descriptor)?.to_owned_rooted(&mut store)?,
-                    owner_type,
-                ))
-            })?;
-            decoder.canonical.push(Canonical {
-                anchor,
-                descriptor,
-                owner_type,
-                class,
-            });
+            decoder.capture_class(session, source, class)?;
         }
         Ok(decoder)
+    }
+
+    /// Optional conformance sequence layouts. Reading their stored state must
+    /// never call a lazy thunk, a protocol method, or the guest's seq/equality.
+    #[allow(dead_code)]
+    pub fn capture_sequences(&mut self, session: &mut Session) -> Result<(), SessionError> {
+        for (source, class) in [
+            ("(new suss.core/LazySeq nil nil nil nil)", Class::LazySeq),
+            (
+                "(new suss.core/ChunkedCons nil nil nil nil)",
+                Class::ChunkedCons,
+            ),
+            (
+                "(new suss.core/ArrayChunk (suss.core/array) 0 0)",
+                Class::ArrayChunk,
+            ),
+            (
+                "(new suss.core/IntegerRange nil 0 1 1 1 nil)",
+                Class::IntegerRange,
+            ),
+            ("(new suss.core/Range nil 0 1 1 nil nil nil)", Class::Range),
+            (
+                "(new suss.core/PersistentArrayMapSeq (suss.core/array) 0 nil)",
+                Class::ArrayMapSeq,
+            ),
+            ("(new suss.core/KeySeq nil nil)", Class::KeySeq),
+            (
+                "(new suss.core/NodeSeq nil (suss.core/array) 0 nil nil)",
+                Class::NodeSeq,
+            ),
+            (
+                "(new suss.core/ArrayNodeSeq nil (suss.core/array) 0 nil nil)",
+                Class::ArrayNodeSeq,
+            ),
+            (
+                "(new suss.core/PersistentTreeMapSeq nil nil true 0 nil)",
+                Class::TreeSeq,
+            ),
+            (
+                "(new suss.core/BlackNode nil nil nil nil nil)",
+                Class::BlackNode,
+            ),
+            (
+                "(new suss.core/RedNode nil nil nil nil nil)",
+                Class::RedNode,
+            ),
+        ] {
+            self.capture_class(session, source, class)?;
+        }
+        Ok(())
+    }
+
+    fn capture_class(
+        &mut self,
+        session: &mut Session,
+        source: &str,
+        class: Class,
+    ) -> Result<(), SessionError> {
+        let anchor = session.eval(source)?;
+        let (descriptor, owner_type) = session.inspect(&anchor, |mut store, value| {
+            let owner_type = non_null_ref(&value)?
+                .as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Invalid canonical object storage"))?
+                .ty(&store)?;
+            let object = fields(&mut store, &value, 4)?;
+            let descriptor = &object[0];
+            let storage = fields(&mut store, descriptor, 5)?;
+            if !matches!(storage[0], Val::I64(_)) {
+                return Err(wasmtime::Error::msg(
+                    "Invalid canonical descriptor identity",
+                ));
+            }
+            Ok((
+                non_null_ref(descriptor)?.to_owned_rooted(&mut store)?,
+                owner_type,
+            ))
+        })?;
+        self.canonical.push(Canonical {
+            anchor,
+            descriptor,
+            owner_type,
+            class,
+        });
+        Ok(())
     }
 
     pub fn decode_session(
@@ -287,14 +359,45 @@ impl Decoder {
                     Class::Vector => return self.vector(store, &args, depth),
                     Class::IndexedSeq => return self.indexed(store, &args, depth),
                     Class::ChunkedSeq => return self.chunked(store, &args, depth),
-                    Class::MapEntry => {
+                    Class::MapEntry | Class::BlackNode | Class::RedNode => {
                         return Ok(Observation::Vector(vec![
                             self.value(store, &args[0], depth + 1)?,
                             self.value(store, &args[1], depth + 1)?,
                         ]));
                     }
-                    Class::List | Class::EmptyList | Class::Cons => {
+                    Class::List
+                    | Class::EmptyList
+                    | Class::Cons
+                    | Class::LazySeq
+                    | Class::ChunkedCons => {
                         return self.list(store, value, depth);
+                    }
+                    Class::IntegerRange | Class::Range => return self.range(store, class, &args),
+                    Class::ArrayMapSeq => return self.array_map_seq(store, &args, depth),
+                    Class::NodeSeq | Class::ArrayNodeSeq => {
+                        return self.hash_seq(store, class, &args, depth);
+                    }
+                    Class::TreeSeq => return self.tree_seq(store, &args, depth),
+                    Class::KeySeq => {
+                        let Observation::List(entries) = self.value(store, &args[0], depth + 1)?
+                        else {
+                            return Err(wasmtime::Error::msg(
+                                "Key sequence needs stored map-entry sequence",
+                            ));
+                        };
+                        let mut keys = Vec::with_capacity(entries.len());
+                        for entry in entries {
+                            let Observation::Vector(mut pair) = entry else {
+                                return Err(wasmtime::Error::msg("Malformed key sequence entry"));
+                            };
+                            if pair.len() != 2 {
+                                return Err(wasmtime::Error::msg(
+                                    "Malformed key sequence entry width",
+                                ));
+                            }
+                            keys.push(pair.remove(0));
+                        }
+                        return Ok(Observation::List(keys));
                     }
                     _ => (),
                 }
@@ -324,16 +427,30 @@ impl Decoder {
                     .as_array(&*store)?
                     .ok_or_else(|| wasmtime::Error::msg("Malformed nominal field storage"))?;
                 let expected = match canonical.class {
-                    Class::Keyword | Class::Cons | Class::ArrayMap | Class::CollisionNode => 4,
-                    Class::Symbol | Class::List => 5,
-                    Class::Vector | Class::HashMap | Class::ChunkedSeq => 6,
-                    Class::Node => 2,
+                    Class::Keyword
+                    | Class::Cons
+                    | Class::ArrayMap
+                    | Class::CollisionNode
+                    | Class::LazySeq
+                    | Class::ChunkedCons => 4,
+                    Class::Symbol
+                    | Class::List
+                    | Class::NodeSeq
+                    | Class::ArrayNodeSeq
+                    | Class::TreeSeq
+                    | Class::BlackNode
+                    | Class::RedNode => 5,
+                    Class::Vector | Class::HashMap | Class::ChunkedSeq | Class::IntegerRange => 6,
+                    Class::Range => 7,
+                    Class::Node | Class::KeySeq => 2,
                     Class::IndexedSeq
                     | Class::MapEntry
                     | Class::HashSet
                     | Class::BitmapNode
                     | Class::ArrayNode
-                    | Class::ExceptionInfo => 3,
+                    | Class::ExceptionInfo
+                    | Class::ArrayChunk
+                    | Class::ArrayMapSeq => 3,
                     Class::SourceArray => 2,
                     Class::EmptyList => 1,
                 };
@@ -749,6 +866,223 @@ impl Decoder {
         Ok(Observation::List(result))
     }
 
+    fn range(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        class: Class,
+        data: &[Val],
+    ) -> wasmtime::Result<Observation> {
+        let mut current = f64::from_bits(number_bits(store, &data[1])?);
+        let end = f64::from_bits(number_bits(store, &data[2])?);
+        let step = f64::from_bits(number_bits(store, &data[3])?);
+        let estimated = ((end - current) / step).ceil();
+        if !current.is_finite()
+            || !end.is_finite()
+            || !step.is_finite()
+            || step == 0.0
+            || !estimated.is_finite()
+            || estimated <= 0.0
+            || estimated > 100_000.0
+            || estimated > self.remaining as f64
+        {
+            return Err(wasmtime::Error::msg(
+                "ABI2 decoder range bounds/traversal limit",
+            ));
+        }
+        let declared = if class == Class::IntegerRange {
+            Some(count_field(store, &data[4])?)
+        } else {
+            None
+        };
+        let mut result = Vec::new();
+        while if step > 0.0 {
+            current < end
+        } else {
+            current > end
+        } {
+            if result.len() >= 100_000 {
+                return Err(wasmtime::Error::msg("ABI2 decoder range traversal limit"));
+            }
+            self.spend(1)?;
+            result.push(Observation::Number(current.to_bits()));
+            let next = current + step;
+            if next == current {
+                return Err(wasmtime::Error::msg("ABI2 decoder range does not advance"));
+            }
+            current = next;
+        }
+        if declared.is_some_and(|count| count != result.len()) {
+            return Err(wasmtime::Error::msg(
+                "Integer range count disagrees with storage",
+            ));
+        }
+        Ok(Observation::List(result))
+    }
+
+    fn array_map_seq(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        data: &[Val],
+        depth: usize,
+    ) -> wasmtime::Result<Observation> {
+        let array = self.raw_array(store, &data[0])?;
+        let index = count_field(store, &data[1])?;
+        if index >= array.len() || index % 2 != 0 || array.len() % 2 != 0 {
+            return Err(wasmtime::Error::msg("Malformed array-map sequence bounds"));
+        }
+        let mut result = Vec::new();
+        for pair in array[index..].chunks_exact(2) {
+            result.push(Observation::Vector(vec![
+                self.value(store, &pair[0], depth + 1)?,
+                self.value(store, &pair[1], depth + 1)?,
+            ]));
+        }
+        Ok(Observation::List(result))
+    }
+
+    fn hash_seq(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        class: Class,
+        data: &[Val],
+        depth: usize,
+    ) -> wasmtime::Result<Observation> {
+        let nodes = self.raw_array(store, &data[1])?;
+        let index = count_field(store, &data[2])?;
+        let array_node = class == Class::ArrayNodeSeq;
+        if index > nodes.len() || (!array_node && (index % 2 != 0 || nodes.len() % 2 != 0)) {
+            return Err(wasmtime::Error::msg("Malformed hash sequence bounds"));
+        }
+        let has_tail = sentinel(store, &data[3])? != Some(0);
+        if array_node {
+            if nodes.len() != 32 || index == 0 || !has_tail {
+                return Err(wasmtime::Error::msg("Malformed array-node sequence cursor"));
+            }
+        } else if !has_tail && (index == nodes.len() || internal_absent(store, &nodes[index])?) {
+            return Err(wasmtime::Error::msg(
+                "Malformed node sequence current entry",
+            ));
+        }
+        let mut result = Vec::new();
+        if has_tail {
+            let Observation::List(tail) = self.value(store, &data[3], depth + 1)? else {
+                return Err(wasmtime::Error::msg("Malformed hash sequence current tail"));
+            };
+            result.extend(tail);
+        }
+        let mut pairs = Vec::new();
+        let bound = self.remaining / 2;
+        if array_node {
+            for child in &nodes[index..] {
+                if !internal_absent(store, child)? {
+                    self.hash_node(store, child, 0, depth, bound, &mut pairs)?;
+                }
+            }
+        } else {
+            for pair in nodes[index..].chunks_exact(2) {
+                if internal_absent(store, &pair[0])? {
+                    if !internal_absent(store, &pair[1])? {
+                        self.hash_node(store, &pair[1], 0, depth, bound, &mut pairs)?;
+                    }
+                } else {
+                    pairs.push((
+                        self.value(store, &pair[0], depth + 1)?,
+                        self.value(store, &pair[1], depth + 1)?,
+                    ));
+                }
+            }
+        }
+        result.extend(
+            pairs
+                .into_iter()
+                .map(|(key, value)| Observation::Vector(vec![key, value])),
+        );
+        Ok(Observation::List(result))
+    }
+
+    fn tree_seq(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        data: &[Val],
+        depth: usize,
+    ) -> wasmtime::Result<Observation> {
+        let ascending = match sentinel(store, &data[2])? {
+            Some(4) => true,
+            Some(2) => false,
+            _ => return Err(wasmtime::Error::msg("Malformed tree sequence direction")),
+        };
+        let count = f64::from_bits(number_bits(store, &data[3])?);
+        // sorted-seq-from starts at -1; rest/next decrement even an unknown
+        // count. Every negative integer is therefore a valid unknown count.
+        if !count.is_finite() || count.fract() != 0.0 || count > self.remaining as f64 {
+            return Err(wasmtime::Error::msg("Malformed tree sequence count"));
+        }
+        let mut stack = Vec::new();
+        let mut current = data[1].clone();
+        let mut counts = Vec::new();
+        while sentinel(store, &current)? != Some(0) {
+            self.spend(1)?;
+            let (class, fields) = self.object(store, &current)?;
+            match class {
+                Class::EmptyList => break,
+                Class::List | Class::Cons => {
+                    if class == Class::List {
+                        counts.push((stack.len(), count_field(store, &fields[3])?));
+                    }
+                    stack.push(fields[1].clone());
+                    current = fields[2].clone();
+                }
+                _ => return Err(wasmtime::Error::msg("Malformed tree sequence stack")),
+            }
+        }
+        for (start, declared) in counts {
+            if stack.len() - start != declared {
+                return Err(wasmtime::Error::msg(
+                    "Tree stack count disagrees with storage",
+                ));
+            }
+        }
+        if stack.is_empty() {
+            return Err(wasmtime::Error::msg(
+                "Tree sequence needs nonempty node stack",
+            ));
+        }
+        stack.reverse();
+        let mut result = Vec::new();
+        while let Some(node) = stack.pop() {
+            self.spend(1)?;
+            let (class, fields) = self.object(store, &node)?;
+            if !matches!(class, Class::BlackNode | Class::RedNode) {
+                return Err(wasmtime::Error::msg("Tree stack needs canonical tree node"));
+            }
+            result.push(Observation::Vector(vec![
+                self.value(store, &fields[0], depth + 1)?,
+                self.value(store, &fields[1], depth + 1)?,
+            ]));
+            let mut child = fields[if ascending { 3 } else { 2 }].clone();
+            let mut path = 0;
+            while sentinel(store, &child)? != Some(0) {
+                self.spend(1)?;
+                path += 1;
+                if path >= 128 {
+                    return Err(wasmtime::Error::msg("ABI2 decoder tree path limit"));
+                }
+                let (class, fields) = self.object(store, &child)?;
+                if !matches!(class, Class::BlackNode | Class::RedNode) {
+                    return Err(wasmtime::Error::msg("Malformed tree sequence child"));
+                }
+                stack.push(child);
+                child = fields[if ascending { 2 } else { 3 }].clone();
+            }
+        }
+        if count >= 0.0 && count as usize != result.len() {
+            return Err(wasmtime::Error::msg(
+                "Tree sequence count disagrees with storage",
+            ));
+        }
+        Ok(Observation::List(result))
+    }
+
     fn list(
         &mut self,
         store: &mut StoreContextMut<'_, ()>,
@@ -769,6 +1103,32 @@ impl Decoder {
             let (class, data) = self.object(store, &current)?;
             match class {
                 Class::EmptyList => break,
+                Class::LazySeq => {
+                    if sentinel(store, &data[1])? != Some(0) {
+                        return Err(wasmtime::Error::msg(
+                            "ABI2 decoder cannot force unrealized lazy sequence",
+                        ));
+                    }
+                    current = data[2].clone();
+                }
+                Class::ChunkedCons => {
+                    let (class, chunk) = self.object(store, &data[0])?;
+                    if class != Class::ArrayChunk {
+                        return Err(wasmtime::Error::msg(
+                            "Chunked cons needs canonical array chunk",
+                        ));
+                    }
+                    let array = self.raw_array(store, &chunk[0])?;
+                    let start = count_field(store, &chunk[1])?;
+                    let end = count_field(store, &chunk[2])?;
+                    if start >= end || end > array.len() {
+                        return Err(wasmtime::Error::msg("Malformed chunked cons bounds"));
+                    }
+                    for item in &array[start..end] {
+                        result.push(self.value(store, item, depth + 1)?);
+                    }
+                    current = data[1].clone();
+                }
                 Class::Vector => {
                     let Observation::Vector(tail) = self.vector(store, &data, depth)? else {
                         unreachable!()
@@ -802,6 +1162,19 @@ impl Decoder {
                     }
                     result.push(self.value(store, &data[1], depth + 1)?);
                     current = data[2].clone();
+                }
+                Class::IntegerRange
+                | Class::Range
+                | Class::ArrayMapSeq
+                | Class::KeySeq
+                | Class::NodeSeq
+                | Class::ArrayNodeSeq
+                | Class::TreeSeq => {
+                    let Observation::List(tail) = self.value(store, &current, depth + 1)? else {
+                        return Err(wasmtime::Error::msg("Invalid list sequence tail"));
+                    };
+                    result.extend(tail);
+                    break;
                 }
                 _ => return Err(wasmtime::Error::msg("Invalid list tail")),
             }

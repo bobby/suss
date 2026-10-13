@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8fee20ffd7385be06339da051343bdeeb57f2809a55719ad3193adb1043e2e8c",
+  "replacement": "(def ^{:doc \"Returns a lazy sequence of the items in coll for which\n  (pred item) returns logical false. pred must be free of side-effects.\n  Returns a transducer when no collection is provided.\" :arglists '([pred] [pred coll])} remove\n  (fn ([pred] (filter (complement pred))) ([pred coll] (filter (complement pred) coll))))",
+  "rationale": "Retain both pinned remove arities with their complete filter/complement dependencies; expand defn only."
+}

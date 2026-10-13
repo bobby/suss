@@ -1,0 +1,13 @@
+{
+  "worktree": "/private/tmp/suss-m4-compare-after-arrays",
+  "base": "95fe332092b2e62daecb577d38d8200d375ad6b7",
+  "command": [
+    "sh",
+    "scripts/test-comparator-oracle.sh"
+  ],
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "terminal_exit": 0,
+  "ordered_observations": 49,
+  "native_status": "uncompiled/unexecuted",
+  "scope": "fresh pinned reference for the authored candidates; not Suss compatibility"
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "33ca3abb88722f0bb131fd1c312ddad62cbd0761db16fb5652528da6c7840d50",
+  "replacement": "(def ^{:doc \"Returns a lazy seq of nums from start (inclusive) to end\n   (exclusive), by step, where start defaults to 0, step to 1,\n   and end to infinity.\" :arglists '([] [end] [start end] [start end step])} range\n  (fn\n    ([] (range 0 1.7976931348623157E308 1))\n    ([end] (range 0 end 1))\n    ([start end] (range start end 1))\n    ([start end step]\n     (cond\n       (pos? step)\n       (if (<= end start)\n         ()\n         (if (and (integer? start) (integer? end) (integer? step))\n           (IntegerRange. nil start end step (range-count start end step) nil)\n           (Range. nil start end step nil nil nil)))\n\n       (neg? step)\n       (if (>= end start)\n         ()\n         (if (and (integer? start) (integer? end) (integer? step))\n           (IntegerRange. nil start end step (range-count start end step) nil)\n           (Range. nil start end step nil nil nil)))\n\n       :else\n       (if (== end start)\n         ()\n         (repeat start))))))",
+  "rationale": "Retain all pinned range arities and branches, expand defn to def/fn, and replace Number.MAX_VALUE with its exact binary64 literal so zero-arity range has the same finite upper bound without host interop."
+}

@@ -1,0 +1,14 @@
+{
+  "status": "actual fresh pinned compile consumed by successful Node run; generated JS stays untracked",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "artifacts": {
+    "tests/oracle/out/tree-nodes.js": {
+      "sha256": "4f7b0bd93749c709537846227ce1ebb9efbbbb31466719984b4e3136cbc6a3de",
+      "bytes": 889
+    },
+    "tests/oracle/out/tree-nodes-cljs/cljs/core.js": {
+      "sha256": "938c1fc1b3335444ec24639d35b46cd72f0fd99b5adc2ae76f27e9e21485f205",
+      "bytes": 1331569
+    }
+  }
+}

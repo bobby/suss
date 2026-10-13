@@ -261,15 +261,27 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
 }
 
 #[test]
-fn unfinished_prototype_and_callable_attributes_are_explicit_errors() {
+fn constructor_prototype_is_stable_and_callable_attributes_remain_explicit_errors() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session.eval("(deftype NamedHostBoundary [value]) (def named-host-object (NamedHostBoundary. 7)) (def named-host-function (fn [x] x))").unwrap();
+    let stable_prototype = session
+        .eval("(identical? (.-prototype NamedHostBoundary) (.-prototype NamedHostBoundary))")
+        .unwrap();
+    session.inspect(&stable_prototype, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+        Ok(())
+    }).unwrap();
+    let constructor = session
+        .eval("(identical? (.-constructor named-host-object) NamedHostBoundary)")
+        .unwrap();
+    session.inspect(&constructor, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+        Ok(())
+    }).unwrap();
     for source in [
-        "(.-prototype NamedHostBoundary)",
         "(.-length named-host-function)",
         "(.-name named-host-function)",
-        "(.-constructor named-host-object)",
         "(.-__proto__ named-host-object)",
         "(.-bind named-host-function)",
         "(set! (.-length named-host-function) 3)",

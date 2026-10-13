@@ -6,9 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reverse
-  "Returns a seq of the items in coll in reverse order. Not lazy."
-  [coll]
-  (if (reversible? coll)
-    (or (rseq coll) ())
-    (reduce conj () coll)))
+(defn --destructure-map [gmap]
+  (if ^boolean LITE_MODE
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc ObjMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY ObjMap)))
+      gmap)
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY PersistentArrayMap)))
+      gmap)))

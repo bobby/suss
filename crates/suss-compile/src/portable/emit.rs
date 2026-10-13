@@ -30,6 +30,42 @@ fn arithmetic_name(
         (Arithmetic::Negate, false) => "value-negate",
     }
 }
+// Literal units and indices are compiler-checked, unlike public mutable string
+// storage calls. Keep small literals on a bounded operand stack; larger values
+// use one fresh array and local writes. Each evaluation allocates its own array.
+fn emit_utf16_literal(
+    function: &mut Function,
+    units: &[u16],
+    local: u32,
+    span: &std::ops::Range<usize>,
+) -> Result<(), Diagnostic> {
+    use Instruction::*;
+    let length = i32::try_from(units.len()).map_err(|_| Diagnostic {
+        span: span.clone(),
+        message: "UTF16 literal exceeds signed runtime length".into(),
+    })?;
+    if units.len() <= 64 {
+        for unit in units {
+            function.instruction(&I32Const(i32::from(*unit)));
+        }
+        function.instruction(&ArrayNewFixed {
+            array_type_index: runtime_abi::STRING,
+            array_size: length as u32,
+        }).instruction(&LocalSet(local));
+    } else {
+        function.instruction(&I32Const(length))
+            .instruction(&ArrayNewDefault(runtime_abi::STRING))
+            .instruction(&LocalSet(local));
+        for (index, unit) in units.iter().enumerate() {
+            function.instruction(&LocalGet(local))
+                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                .instruction(&I32Const(index as i32))
+                .instruction(&I32Const(i32::from(*unit)))
+                .instruction(&ArraySet(runtime_abi::STRING));
+        }
+    }
+    Ok(())
+}
 pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(ir)?;
     let fail = |message: &str| Diagnostic {
@@ -65,12 +101,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Literal(Literal::Number(_)) => {
                         names.insert("number-box");
                     }
-                    Operation::Literal(Literal::String(units)) => {
-                        names.insert("string-new");
-                        if !units.is_empty() {
-                            names.insert("string-set-unit");
-                        }
-                    }
+                    Operation::Literal(Literal::String(_)) => {}
                     Operation::GlobalCell(global) => {
                         globals.insert(global.clone());
                     }
@@ -88,7 +119,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("binding-set");
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
-                        names.extend(["closure-new", "closure-source-name-initialize", "string-new", "string-set-unit"]);
+                        names.extend(["closure-new", "closure-source-name-initialize"]);
                         names.insert("arity-error");
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
@@ -96,7 +127,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                     }
                     Operation::MakeClosure { .. } => {
-                        names.extend(["closure-new", "closure-source-name-initialize", "string-new", "string-set-unit"]);
+                        names.extend(["closure-new", "closure-source-name-initialize"]);
                     }
                     Operation::Call { .. } => {
                         names.insert("invoke");
@@ -117,6 +148,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                         Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
+                        Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
@@ -131,6 +163,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
+                        Nominal::CurrentThis => { names.insert("current-this"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
                         Nominal::NativeObjectStrictSet => { names.insert("native-object-property-set-strict"); }
@@ -189,6 +222,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                         Nominal::Key(_) => {
                             names.insert("protocol-key");
+                        }
+                        Nominal::ObjectDescriptor => {
+                            names.insert("object-descriptor");
+                        }
+                        Nominal::MethodGet => {
+                            names.insert("protocol-method-get");
                         }
                         Nominal::Dispatcher => {
                             names.insert("protocol-dispatcher-new");
@@ -261,7 +300,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-marker-set" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "descriptor-new"
             | "class-value-new"
@@ -270,14 +309,16 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-constructor-new"
             | "value-constructor"
             | "constructor-descriptor"
+            | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "source-array-new"
             | "source-array-make"
             | "source-array-make-literal"
             | "source-array-length-args"
             | "source-array-get-indices"
-            | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
-            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
+            | "source-array-set-indices"
+            | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
+            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -295,7 +336,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "language-error-new" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -616,6 +657,10 @@ fn emit_function(
             .expect("collected import") as u32
     };
     // Every SSA value has one GC local. The last local is the block dispatcher.
+    // A verified single return/throw block has no control-flow dispatch. Keep
+    // resumable states and all branch/backedge functions on the dispatcher.
+    let straight_line = continuation.is_none() && ir.blocks.len() == 1
+        && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
     let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
     use Instruction::*;
     if continuation.is_none() {
@@ -644,7 +689,7 @@ fn emit_function(
         outcome: scratch + 12, auxiliary: scratch + 13 };
     if let Some(plan) = continuation {
         r#async::initialize(&mut function, plan, &slots, &index);
-    } else {
+    } else if !straight_line {
         function.instruction(&I32Const(0)).instruction(&LocalSet(pc));
     }
     if continuation.is_some() {
@@ -652,7 +697,7 @@ fn emit_function(
             .instruction(&Block(BlockType::Result(VALUE)))
             .instruction(&TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])));
     }
-    function.instruction(&Loop(BlockType::Empty));
+    if !straight_line { function.instruction(&Loop(BlockType::Empty)); }
     let state_count = continuation.map_or(ir.blocks.len(), |plan| plan.states.len());
     for state_id in 0..state_count {
         let state = continuation.map(|plan| &plan.states[state_id]);
@@ -660,11 +705,13 @@ fn emit_function(
         let block = &ir.blocks[block_id];
         let instructions = state.map_or(block.instructions.as_slice(), |state| &block.instructions[state.instructions.clone()]);
         let state_number = i32::try_from(state_id).map_err(|_| fail("Too many IR blocks"))?;
-        function
-            .instruction(&LocalGet(pc))
-            .instruction(&I32Const(state_number))
-            .instruction(&I32Eq)
-            .instruction(&If(BlockType::Empty));
+        if !straight_line {
+            function
+                .instruction(&LocalGet(pc))
+                .instruction(&I32Const(state_number))
+                .instruction(&I32Eq)
+                .instruction(&If(BlockType::Empty));
+        }
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
         for inst in instructions {
             match &inst.operation {
@@ -752,20 +799,7 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
-                    let length = i32::try_from(units.len())
-                        .map_err(|_| fail("String literal exceeds signed runtime length"))?;
-                    function
-                        .instruction(&I32Const(length))
-                        .instruction(&Call(index("string-new")))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
-                    for (unit_index, unit) in units.iter().enumerate() {
-                        function
-                            .instruction(&LocalGet(inst.result.0 as u32 + offset))
-                            .instruction(&I32Const(unit_index as i32))
-                            .instruction(&I32Const(i32::from(*unit)))
-                            .instruction(&Call(index("string-set-unit")))
-                            .instruction(&Drop);
-                    }
+                    emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
                 Operation::GlobalCell(global) => {
                     let index_global = globals
@@ -857,18 +891,7 @@ fn emit_function(
                         .instruction(&Call(index("closure-new")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
-                        // Use the existing bounded UTF16 literal allocation path;
-                        // large source names must not require a large operand stack.
-                        function.instruction(&I32Const(name.len() as i32))
-                            .instruction(&Call(index("string-new")))
-                            .instruction(&LocalSet(scratch));
-                        for (unit_index, unit) in name.iter().enumerate() {
-                            function.instruction(&LocalGet(scratch))
-                                .instruction(&I32Const(unit_index as i32))
-                                .instruction(&I32Const(i32::from(*unit)))
-                                .instruction(&Call(index("string-set-unit")))
-                                .instruction(&Drop);
-                        }
+                        emit_utf16_literal(&mut function, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));
@@ -917,18 +940,7 @@ fn emit_function(
                             .instruction(&ArraySet(runtime_abi::ARGS));
                     }
                     if let Some(name) = &body.display_name {
-                        // Use the existing bounded UTF16 literal allocation path;
-                        // large source names must not require a large operand stack.
-                        function.instruction(&I32Const(name.len() as i32))
-                            .instruction(&Call(index("string-new")))
-                            .instruction(&LocalSet(scratch));
-                        for (unit_index, unit) in name.iter().enumerate() {
-                            function.instruction(&LocalGet(scratch))
-                                .instruction(&I32Const(unit_index as i32))
-                                .instruction(&I32Const(i32::from(*unit)))
-                                .instruction(&Call(index("string-set-unit")))
-                                .instruction(&Drop);
-                        }
+                        emit_utf16_literal(&mut function, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));
@@ -1143,6 +1155,8 @@ fn emit_function(
                         | Nominal::SourceFunctionName
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
+                        | Nominal::CurrentThis
+                        | Nominal::ObjectCoerceString
                         | Nominal::NativeObjectGet
                         | Nominal::NativeObjectSet
                         | Nominal::NativeObjectStrictSet
@@ -1152,6 +1166,8 @@ fn emit_function(
                         | Nominal::NamedSet
                         | Nominal::Protocol
                         | Nominal::Dispatcher
+                        | Nominal::ObjectDescriptor
+                        | Nominal::MethodGet
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
                             for argument in arguments {
@@ -1161,6 +1177,7 @@ fn emit_function(
                                 Nominal::Class => "class-value-new",
                                 Nominal::BindingDefined => "binding-defined",
                                 Nominal::CoerceString => "coerce-string",
+                                Nominal::ObjectCoerceString => "object-coerce-string",
                                 Nominal::ConcatString => "string-concat",
                                 Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
@@ -1173,6 +1190,7 @@ fn emit_function(
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
+                                Nominal::CurrentThis => "current-this",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
@@ -1182,6 +1200,8 @@ fn emit_function(
                                 Nominal::NamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
+                                Nominal::ObjectDescriptor => "object-descriptor",
+                                Nominal::MethodGet => "protocol-method-get",
                                 Nominal::NativeSatisfies => "protocol-native-satisfies",
                                 _ => "protocol-marker-satisfies",
                             })));
@@ -1247,7 +1267,13 @@ fn emit_function(
                     r#async::yield_turn(&mut function, plan.block_entries[*target], &slots, ir.values.len(), &index);
                 } else {
                     function.instruction(&I32Const(target_state(*target) as i32))
-                        .instruction(&LocalSet(pc)).instruction(&Br(1));
+                        .instruction(&LocalSet(pc));
+                    // Forward blocks occur later in this dispatch pass. Continue
+                    // directly instead of rescanning every earlier block guard.
+                    // Backedges and resumable states retain the loop transfer.
+                    if continuation.is_some() || *target <= block_id {
+                        function.instruction(&Br(1));
+                    }
                 }
             }
             Terminator::Branch {
@@ -1291,10 +1317,12 @@ fn emit_function(
                         }
                     }
                 }
-                function.instruction(&Br(1));
+                if continuation.is_some() || *consequent <= block_id || *alternative <= block_id {
+                    function.instruction(&Br(1));
+                }
             }
         }
-        function.instruction(&End);
+        if !straight_line { function.instruction(&End); }
     }
     if let Some(plan) = continuation {
         function.instruction(&LocalGet(pc)).instruction(&I32Const(plan.states.len() as i32))
@@ -1302,7 +1330,7 @@ fn emit_function(
         r#async::unwind(&mut function, &slots, ir.values.len(), &index);
         function.instruction(&Br(1)).instruction(&End);
     }
-    function.instruction(&Unreachable).instruction(&End);
+    if !straight_line { function.instruction(&Unreachable).instruction(&End); }
     if let Some(plan) = continuation {
         // Language exceptions thrown by any compiled operation become an
         // explicit unwind event. Wasm traps remain runtime/host recovery work.

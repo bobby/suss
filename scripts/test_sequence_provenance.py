@@ -29,6 +29,28 @@ class SequenceProvenance(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'ordered exact source stanzas'):
                     provenance.verify_payload(self.record, self.source, self.loader)
 
+    def test_full_comparable_rejects_missing_reordered_changed_and_duplicate_targets(self):
+        statement = next(s for s in self.record['statements']
+                         if s.get('patch') == 'docs/compatibility/patches/sorted-node-full-IComparable.json')
+        original = provenance.json_data(provenance.repository_file(provenance.ROOT, statement['patch']).read_bytes())
+        forms = provenance.Scanner(original['replacement']).all()[0].children[1:]
+        stanzas = [original['replacement'][f.start:f.end] for f in forms]
+        mutations = ['(do ' + ' '.join(stanzas[:i] + stanzas[i + 1:]) + ')' for i in range(7)]
+        mutations += ['(do ' + ' '.join(reversed(stanzas)) + ')',
+                      '(do ' + ' '.join(stanzas + [stanzas[-1]]) + ')',
+                      original['replacement'].replace('compare-indexed x y', 'compare-indexed y x', 1),
+                      original['replacement'].replace('" to "', '" against "', 1),
+                      original['replacement'].replace('RedNode', 'InventedNode', 1)]
+        decode = provenance.json_data
+        for replacement in mutations:
+            changed = copy.deepcopy(original); changed['replacement'] = replacement
+            def changed_patch(raw):
+                value = decode(raw)
+                return changed if value == original else value
+            with patch.object(provenance, 'json_data', side_effect=changed_patch):
+                with self.assertRaisesRegex(ValueError, 'all seven ordered complete adapted stanzas'):
+                    provenance.verify_payload(self.record, self.source, self.loader)
+
     def setUp(self):
         self.record = provenance.json_data((provenance.ROOT / provenance.PROVENANCE).read_bytes())
         self.source = (provenance.ROOT / 'clojurescript/src/main/cljs/cljs/core.cljs').read_text()

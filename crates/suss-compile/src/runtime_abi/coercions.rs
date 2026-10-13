@@ -103,6 +103,9 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(CLOSURE)),
         I32Or,
+        LocalGet(0),
+        Call(b.names["language-error-canonical?"]),
+        I32Or,
         I32Eqz,
         If(BlockType::Empty),
     ]);

@@ -1,0 +1,398 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "identity-object",
+      "source": "(let [x (js-obj \"toString\" (fn [] (throw 17)))] (= (compare x x) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-order",
+      "source": "(and (= (compare nil false) -1) (= (compare false nil) 1) (= (compare nil nil) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "distinct-nil-undefined",
+      "source": "(let [u (aget (array) 0)] (and (= (compare nil u) -1) (= (compare u nil) -1) (= (compare u u) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "number-nan",
+      "source": "(and (= (compare ##NaN ##NaN) 0) (= (compare ##NaN 2) 0) (= (compare 2 ##NaN) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "number-infinity",
+      "source": "(and (= (compare ##Inf ##-Inf) 1) (= (compare -0.0 0.0) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "numeric-order",
+      "source": "(and (= (compare 2 10) -1) (= (compare 10 2) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "utf16-order",
+      "source": "(and (= (compare \"\\ud83d\\ude00\" \"\\ue000\") -1) (= (compare \"\\ud800\" \"\\ud801\") -1) (= (compare \"a\" \"aa\") -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-order",
+      "source": "(and (= (compare false true) -1) (= (compare true false) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "arrays-lexical",
+      "source": "(and (= (compare (array 2) (array 10)) 1) (= (compare (array 1 2) (array 1 10)) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-holes-nil-undefined",
+      "source": "(let [u (aget (array) 0)] (and (= (compare (make-array 1) (array nil)) 0) (= (compare (array nil) (array u)) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-nested-cycle",
+      "source": "(let [a (array)] (aset a 0 a) (and (= (compare a (array)) 0) (= (compare (array (array 2 3)) (array 2 3)) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "comparable-return-not-normalized",
+      "source": "(let [p (ComparatorProbe. 17)] (= (compare p 5) 12))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "comparable-identity-no-call",
+      "source": "(let [p (ThrowingComparatorProbe.)] (= (compare p p) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "comparable-original-false",
+      "source": "(try (compare (ThrowingComparatorProbe.) 5) false (catch :default e (false? e)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "numeric-before-comparable",
+      "source": "(try (compare 5 (ComparatorProbe. 17)) false (catch :default e (= (.-message e) \"Cannot compare 5 to 17\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-reconvert-both-relations",
+      "source": "(let [trace (atom []) a (array (js-obj \"toString\" (fn [] (swap! trace conj 1) \"1\"))) b (array (js-obj \"toString\" (fn [] (swap! trace conj 2) \"2\")))] (and (= (compare a b) -1) (= @trace [1 2 1 2])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-first-relation-only",
+      "source": "(let [trace (atom []) a (array (js-obj \"toString\" (fn [] (swap! trace conj 1) \"2\"))) b (array (js-obj \"toString\" (fn [] (swap! trace conj 2) \"1\")))] (and (= (compare a b) 1) (= @trace [1 2])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-conversion-changes-between-tests",
+      "source": "(let [calls (atom 0) a (array (js-obj \"toString\" (fn [] (if (= (swap! calls inc) 1) \"0\" \"9\"))))] (and (= (compare a (array 1)) 0) (= @calls 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-override-valueOf",
+      "source": "(let [a (array 9) b (array 1)] (aset a \"valueOf\" (fn [] 0)) (= (compare a b) -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-type-constructor-nil",
+      "source": "(let [a (array 2) b (array 10)] (aset a \"constructor\" nil) (aset b \"constructor\" nil) (and (nil? (type a)) (= (compare a b) 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-type-constructor-false",
+      "source": "(let [a (array)] (aset a \"constructor\" false) (false? (type a)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-type-constructor-mismatch",
+      "source": "(let [a (array 2) b (array 10)] (aset a \"constructor\" false) (try (compare a b) false (catch :default e (= (.-message e) \"Cannot compare 2 to 10\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "live-type-mixed",
+      "source": "(let [saved type] (try (set! type (fn [_] nil)) (= (compare \"2\" 10) -1) (finally (set! type saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "live-array-predicate",
+      "source": "(let [saved array?] (try (set! array? (fn [_] false)) (try (compare (array 2) (array 10)) false (catch :default e (= (.-message e) \"Cannot compare 2 to 10\"))) (finally (set! array? saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "public-primitive-predicate-rebind",
+      "source": "(let [n number? s string? z nil? t true? f false? i identical?] (try (set! number? (fn [_] false)) (set! string? (fn [_] false)) (set! nil? (fn [_] false)) (set! true? (fn [_] false)) (set! false? (fn [_] false)) (set! identical? (fn [_ _] false)) (and (= (compare 2 10) -1) (= (compare \"2\" \"10\") 1) (= (compare nil 2) -1) (= (compare false true) -1)) (finally (set! number? n) (set! string? s) (set! nil? z) (set! true? t) (set! false? f) (set! identical? i))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-number-unchanged",
+      "source": "(= ((fn->comparator (fn [_ _] -7)) 2 3) -7)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-truthy-empty",
+      "source": "(and (= ((fn->comparator (fn [_ _] \"\")) 2 3) -1) (= ((fn->comparator (fn [_ _] (array))) 2 3) -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-false-nil-undefined",
+      "source": "(and (= ((fn->comparator (fn [_ _] false)) 2 3) 0) (= ((fn->comparator (fn [_ _] nil)) 2 3) 0) (= ((fn->comparator (fn [_ _] (aget (array) 0))) 2 3) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-reverse-zero-truthy",
+      "source": "(let [n (atom 0)] (and (= ((fn->comparator (fn [_ _] (if (= (swap! n inc) 1) false 0))) 2 3) 1) (= @n 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-reverse-nan-truthy",
+      "source": "(let [n (atom 0)] (= ((fn->comparator (fn [_ _] (if (= (swap! n inc) 1) nil ##NaN))) 2 3) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-reverse-effects",
+      "source": "(let [trace (atom []) f (fn [x y] (swap! trace conj x y) (< x y))] (and (= ((fn->comparator f) 3 2) 1) (= @trace [3 2 2 3])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-number-once",
+      "source": "(let [n (atom 0)] (and (= ((fn->comparator (fn [_ _] (swap! n inc) 0))) 2 3) 0) (= @n 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-first-throw-no-reverse",
+      "source": "(let [n (atom 0)] (try ((fn->comparator (fn [_ _] (swap! n inc) (throw nil))) 2 3) false (catch :default e (and (nil? e) (= @n 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-reverse-throw",
+      "source": "(let [n (atom 0)] (try ((fn->comparator (fn [_ _] (if (= (swap! n inc) 1) false (throw 17)))) 2 3) false (catch :default e (and (= e 17) (= @n 2)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-live-compare",
+      "source": "(let [saved compare f (fn [_ _] 17)] (try (set! compare f) (identical? (fn->comparator f) f) (finally (set! compare saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "wrapper-equality-changes-compare",
+      "source": "(let [saved-eq = saved-cmp compare replacement (fn [_ _] 17)] (try (set! = (fn [_ _] (set! compare replacement) true)) (identical? (fn->comparator (fn [_ _] 0)) replacement) (finally (set! = saved-eq) (set! compare saved-cmp))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "indexed-length-first",
+      "source": "(and (= (compare-indexed [100] [0 0]) -1) (= (compare-indexed [] []) 0) (= (compare-indexed [0 0] [100]) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "indexed-four-arity",
+      "source": "(and (= (compare-indexed [99 2 3] [0 2 10] 3 1) -1) (= (compare-indexed [2 3] [2 10]) -1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "indexed-stops-first-difference",
+      "source": "(let [trace (atom []) saved nth] (try (set! nth (fn ([xs n] (swap! trace conj n) (saved xs n)) ([xs n nf] (saved xs n nf)))) (and (= (compare-indexed [1 9] [2 0]) -1) (= @trace [0 0])) (finally (set! nth saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "indexed-live-compare",
+      "source": "(let [saved compare trace (atom [])] (try (set! compare (fn [x y] (swap! trace conj x y) 17)) (and (= (compare-indexed [1] [2]) 17) (= @trace [1 2])) (finally (set! compare saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-toString-object-fallback",
+      "source": "(let [trace (atom []) x (js-obj \"toString\" (fn [] (swap! trace conj :string) (js-obj)) \"valueOf\" (fn [] (swap! trace conj :value) \"left\"))] (try (compare x \"right\") false (catch :default e (and (= (.-message e) \"Cannot compare left to right\") (= @trace [:string :value])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-noncallable-toString",
+      "source": "(let [x (js-obj \"toString\" 17 \"valueOf\" (fn [] \"left\"))] (try (compare x \"right\") false (catch :default e (= (.-message e) \"Cannot compare left to right\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-order",
+      "source": "(let [trace (atom []) x (js-obj \"toString\" (fn [] (swap! trace conj 1) \"left\")) y (js-obj \"toString\" (fn [] (swap! trace conj 2) \"right\"))] (try (compare x y) false (catch :default e (and (= (.-message e) \"Cannot compare left to right\") (= @trace [1 2])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-throw-stops-second",
+      "source": "(let [trace (atom []) x (js-obj \"toString\" (fn [] (swap! trace conj 1) (throw 73))) y (js-obj \"toString\" (fn [] (swap! trace conj 2) \"right\"))] (try (compare x y) false (catch :default e (and (= e 73) (= @trace [1])))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-live-str",
+      "source": "(let [saved str_ trace (atom [])] (try (set! str_ (fn [x] (swap! trace conj x) \"z\")) (try (compare 1 \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [1 \"x\"])))) (finally (set! str_ saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "str-nil-single-variadic-rebind",
+      "source": "(let [saved nil?] (try (set! nil? (fn [_] false)) (and (= (str_ nil) \"\") (= (str_ nil \"ignored\") \"\") (= (str_ \"x\" nil \"y\") \"xy\")) (finally (set! nil? saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "str-second-lookup-after-first",
+      "source": "(let [trace (atom []) x (js-obj)] (set! (.-toString x) (fn [] (swap! trace conj 1) (set! (.-valueOf x) (fn [] (swap! trace conj 2) \"ok\")) (js-obj))) (and (= (str_ x) \"ok\") (= @trace [1 2])))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "str-nonprimitive-both-throw",
+      "source": "(let [trace (atom []) x (js-obj \"toString\" (fn [] (swap! trace conj 1) (js-obj)) \"valueOf\" (fn [] (swap! trace conj 2) (js-obj)))] (try (str_ x) false (catch :default e (= @trace [1 2]))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "format-live-str-results-convert-after-calls",
+      "source": "(let [saved str_ trace (atom [])] (try (set! str_ (fn [x] (swap! trace conj x) (js-obj \"toString\" (fn [] (swap! trace conj 17) \"z\")))) (try (compare 1 \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [1 \"x\" 17 17])))) (finally (set! str_ saved))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

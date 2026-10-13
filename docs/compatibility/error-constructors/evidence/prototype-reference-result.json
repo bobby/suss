@@ -1,0 +1,19 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "command": "sh scripts/test-error-constructor-oracle.sh",
+  "exit": 0,
+  "cases": 87,
+  "original58": "unchanged exact observation prefix",
+  "new13": "prototype/derived/catch/detachment/independent-class observations",
+  "native": "UNCOMPILED/UNEXECUTED",
+  "warning": "js/Error is shadowed by a local, retained original qualification-shadow test",
+  "new20": "actual prototype ancestry, intermediate source catch, live RangeError detachment, callable own and source inherited cause options",
+  "warnings": [
+    "qualified js/Error local shadow",
+    "two source ancestor/descendant class factory redefinitions"
+  ],
+  "new26": "actual ancestry/options plus source inherited name/false/nil/undefined, accessor physical receiver, original thrown payload and exact trace",
+  "original78": "unchanged exact observation prefix",
+  "new29": "actual ancestry/options, inherited property presence/getter receiver/original throw, live source/Error constructor property type reads",
+  "original84": "unchanged exact observation prefix"
+}

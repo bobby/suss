@@ -61,21 +61,54 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(0),
         Call(b.names["source-array?"]),
         If(BlockType::Empty),
+    ]);
+    // The pinned type form reads the live constructor property. An owned Array
+    // can shadow the canonical constructor with any value, even nil/false.
+    // Do not replace that property read with an immutable kind comparison.
+    fn constructor_name(body: &mut Vec<Instruction<'static>>) {
+        for unit in "constructor".encode_utf16() {
+            body.push(Instruction::I32Const(i32::from(unit)));
+        }
+        body.push(Instruction::ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: 11,
+        });
+    }
+    body.push(LocalGet(0));
+    constructor_name(&mut body);
+    body.extend([
+        Call(b.names["source-array-property-has"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+    ]);
+    constructor_name(&mut body);
+    body.extend([
+        Call(b.names["source-array-property-get"]),
+        Return,
+        End,
         Call(b.names["array-constructor"]),
         Return,
         End,
         LocalGet(0),
-        Call(b.names["range-error?"]),
+        RefTestNonNull(HeapType::Concrete(8)),
         If(BlockType::Empty),
-        Call(b.names["range-error-constructor"]),
+        LocalGet(0),
+        Call(b.names["language-error-canonical?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+    ]);
+    constructor_name(&mut body);
+    body.extend([
+        Call(b.names["named-property-get"]),
         Return,
+        End,
         End,
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(7)),
         I32Eqz,
         If(BlockType::Empty),
     ]);
-    // Function constructors and native-object constructor properties
+    // Function and native-object constructor properties
     // remain an explicit unsupported boundary, never kind markers.
     nominal::error(&mut body);
     body.extend([
@@ -95,7 +128,9 @@ pub(super) fn functions(b: &mut Builder) {
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
-    body.extend([End, LocalGet(1)]);
+    body.extend([End, LocalGet(0)]);
+    constructor_name(&mut body);
+    body.push(Call(b.names["named-property-get"]));
     b.function_with_locals(
         "value-constructor",
         &[VALUE],

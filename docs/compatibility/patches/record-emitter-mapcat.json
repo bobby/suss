@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5e24000c22fb437cda50a47a358acd93eb0badba8138462f35fd756c3dcb9a17",
+  "replacement": "(def ^{:doc \"Returns the result of applying concat to the result of applying map\n  to f and colls. Thus function f should return a collection. Returns\n  a transducer when no collections are provided\" :added \"1.0\" :static true :arglists '([f] [f & colls])} mapcat\n  (fn ([f] (comp (map f) cat)) ([f & colls] (apply concat (apply map f colls)))))",
+  "rationale": "Retain both complete pinned mapcat clauses and all collection arguments, rather than substituting the single-collection use in the record emitter. Expand defn only."
+}

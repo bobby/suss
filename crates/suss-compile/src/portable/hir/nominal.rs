@@ -302,6 +302,8 @@ impl Analyzer<'_> {
                 })
             }
             NominalForm::Deftype => self.type_definition(form, args),
+            NominalForm::DeftypeInternal => self.source_type_definition(form, args, false),
+            NominalForm::DefrecordInternal => self.source_type_definition(form, args, true),
             NominalForm::Defprotocol => self.protocol_definition(form, args),
             NominalForm::Reify => self.reify_definition(form, args),
             NominalForm::ExtendType => {
@@ -325,8 +327,18 @@ impl Analyzer<'_> {
                 let value = self.form(class)?;
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
-                let mut effects =
-                    self.protocol_extensions(form, &args[1..], class_value, &[], false, class)?;
+                let inline_fields = match &class.kind {
+                    Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name) => {
+                        let target = self.named_global(class)?;
+                        self.type_body_fields.iter().rev()
+                            .find(|(global, _, _)| *global == target)
+                            .map(|(_, declaration, fields)| (declaration.clone(), fields.clone()))
+                    }
+                    _ => None,
+                };
+                let (type_declaration, fields) = inline_fields.unwrap_or_else(|| (class.clone(), Vec::new()));
+                let mut effects = self.protocol_extensions(form, &args[1..], class_value,
+                    &fields, false, &type_declaration)?;
                 if effects.is_empty() {
                     effects.push(self.literal_form(form, Literal::Nil));
                 }
@@ -400,19 +412,7 @@ impl Analyzer<'_> {
         }
         Ok(flags.into_iter().any(|flag| flag))
     }
-    fn type_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
-        if args.len() < 2 {
-            return Err(fail(
-                form.span.clone(),
-                "deftype requires a name and field vector",
-            ));
-        }
-        let Kind::Vector(fields) = &args[1].kind else {
-            return Err(fail(
-                args[1].span.clone(),
-                "deftype requires a field vector",
-            ));
-        };
+    fn type_schema(&self, fields: &[Form]) -> Result<Vec<Hir>, Diagnostic> {
         let mut seen = BTreeSet::new();
         let mut schema = Vec::new();
         for field in fields {
@@ -443,16 +443,19 @@ impl Analyzer<'_> {
                 self.literal_form(field, Literal::String(crate::portable::compiler_names::munge_name(&symbol.name.encode_utf16().collect::<Vec<_>>()))),
             );
         }
+        Ok(schema)
+    }
+    fn type_declaration(&mut self, form: &Form, name: &Form, declared_fields: usize, record: bool) -> Result<(Hir, Global), Diagnostic> {
         // parse-type preserves prior declaration fields independently of the
         // ordinary def/:declared rule. Capture that revision before def can
         // replace it, selecting only this namespace's actual declaration.
-        let previous_type_info = if let Kind::Symbol(name) = &args[0].kind {
+        let previous_type_info = if let Kind::Symbol(name) = &name.kind {
             self.environment.namespace_scope(self.phase).declarations.into_iter()
                 .find(|(global, _)| global.name() == name.name)
                 .map(|(_, info)| info.clone())
         } else { None };
         // Declare the source identity before method analysis, for self type references.
-        let declaration = self.definition(form, &[args[0].clone()], false)?;
+        let declaration = self.definition(form, &[name.clone()], false)?;
         let Expression::Definition {
             global: class_global,
             ..
@@ -478,7 +481,7 @@ impl Analyzer<'_> {
             !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none()
                 && matches!(key.name.as_str(), "tag" | "type" | "num-fields" | "record"))
         }).flat_map(|pair| pair.iter().cloned()).collect::<Vec<_>>();
-        for pair in reader_metadata_pairs(&args[0])?.chunks_exact(2) {
+        for pair in reader_metadata_pairs(name)?.chunks_exact(2) {
             let mut retained = Vec::new();
             for old in metadata.chunks_exact(2) {
                 if old[0].kind != pair[0].kind { retained.extend_from_slice(old); }
@@ -486,15 +489,82 @@ impl Analyzer<'_> {
             retained.extend_from_slice(pair);
             metadata = retained;
         }
-        type_info.declaration = args[0].clone();
+        type_info.declaration = name.clone();
         type_info.declaration.metadata = if metadata.is_empty() { vec![] } else {
             vec![Form { kind: Kind::Map(metadata), span: 0..0, metadata: vec![] }]
         };
         type_info.definition_form = form.clone();
         type_info.origin = self.origin.clone();
-        type_info.type_fields = Some(fields.len());
+        type_info.type_fields = Some(declared_fields);
+        type_info.type_is_record = record;
         type_info.analysis_completed = true;
         self.environment.record_definition(class_global.clone(), type_info);
+        Ok((declaration, class_global))
+    }
+    /// Pinned analyzer parse-type and compiler :defrecord/:deftype retain the
+    /// declared fields separately from physical record storage. Protocol-mask
+    /// data stays in the source form; native protocol descriptors implement the
+    /// complete method/marker table instead of JavaScript mask properties.
+    fn source_type_definition(&mut self, form: &Form, args: &[Form], record: bool) -> Result<Hir, Diagnostic> {
+        if args.len() != 4 {
+            return Err(fail(form.span.clone(), "Intrinsic type declaration requires name, fields, masks and body"));
+        }
+        let Kind::Vector(declared) = &args[1].kind else {
+            return Err(fail(args[1].span.clone(), "Intrinsic type declaration requires a field vector"));
+        };
+        let mut fields = declared.clone();
+        if record {
+            for name in ["__meta", "__extmap", "__hash"] {
+                fields.push(Form {
+                    span: 0..0,
+                    kind: Kind::Symbol(suss_reader::Symbol::new(name)),
+                    metadata: if name == "__hash" {
+                        vec![Form { span: 0..0, metadata: Vec::new(),
+                            kind: Kind::Keyword(suss_reader::Keyword::new("mutable")) }]
+                    } else { Vec::new() },
+                });
+            }
+        }
+        let schema = self.type_schema(&fields)?;
+        let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
+        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let class = self.nominal(form, Nominal::Class, vec![descriptor]);
+        let class = self.fresh_binding(form, class);
+        let class_value = self.local(form, class.id);
+        let mut definition = declaration;
+        let Expression::Definition { initializer, .. } = &mut definition.kind else { unreachable!() };
+        *initializer = Some(Box::new(class_value.clone()));
+
+        // The constructor is published before the body executes. Analysis
+        // replaces enclosing locals, then restores them even when body analysis
+        // fails. Nested intrinsic declarations keep their own field contexts.
+        let outer_locals = std::mem::take(&mut self.locals);
+        let outer_fields = std::mem::take(&mut self.fields);
+        self.type_body_fields.push((global, args[0].clone(), fields));
+        let body = self.form_in(&args[3], super::super::AnalysisContext::Statement, false);
+        self.type_body_fields.pop();
+        self.locals = outer_locals;
+        self.fields = outer_fields;
+        let body = self.do_hir(form, vec![definition, body?, class_value]);
+        Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+            ty: Type::Value, kind: Expression::Let { bindings: vec![class], body: Box::new(body) } })
+    }
+
+    fn type_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+        if args.len() < 2 {
+            return Err(fail(
+                form.span.clone(),
+                "deftype requires a name and field vector",
+            ));
+        }
+        let Kind::Vector(fields) = &args[1].kind else {
+            return Err(fail(
+                args[1].span.clone(),
+                "deftype requires a field vector",
+            ));
+        };
+        let schema = self.type_schema(fields)?;
+        let (declaration, class_global) = self.type_declaration(form, &args[0], fields.len(), false)?;
         let Kind::Symbol(symbol) = &args[0].kind else {
             unreachable!()
         };
@@ -785,6 +855,111 @@ impl Analyzer<'_> {
         arguments.push(meta);
         let construction = self.nominal(form, Nominal::Construct, arguments);
         Ok(self.do_hir(form, vec![publication, construction]))
+    }
+    // Private source adaptation for pinned statically nominal protocol calls.
+    // Resolve a canonical method key, read the actual owner's live method before
+    // argument effects, and invoke with the explicit portable receiver formal.
+    // This is not general hint inference or native protocol fallback dispatch.
+    pub(super) fn direct_protocol_call(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+    ) -> Result<Hir, Diagnostic> {
+        let [protocol_name, method_name, owner, rest @ ..] = args else {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol call requires protocol, method and receiver",
+            ));
+        };
+        let (Kind::Symbol(protocol_symbol), Kind::Symbol(method_symbol)) =
+            (&protocol_name.kind, &method_name.kind)
+        else {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol call requires static protocol/method names",
+            ));
+        };
+        if protocol_symbol.namespace.is_some() || method_symbol.namespace.is_some() {
+            return Err(fail(
+                form.span.clone(),
+                "Direct protocol names must be unqualified canonical core names",
+            ));
+        }
+        if !matches!(
+            (protocol_symbol.name.as_str(), method_symbol.name.as_str()),
+            ("IIndexed", "-nth")
+                | ("IVector", "-assoc-n")
+                | ("IEquiv", "-equiv")
+                | ("ILookup", "-lookup")
+                | ("IAssociative", "-assoc")
+                | ("ISeq", "-first")
+                | ("INext", "-next")
+                | ("IMapEntry", "-val")
+        ) {
+            return Err(fail(
+                method_name.span.clone(),
+                "Direct protocol adapter supports only enumerated canonical typed core methods",
+            ));
+        }
+        let protocol = self
+            .environment
+            .protocols
+            .keys()
+            .find(|global| {
+                global.phase() == self.phase
+                    && global.namespace() == "suss.core"
+                    && global.name() == protocol_symbol.name
+            })
+            .cloned()
+            .ok_or_else(|| {
+                fail(
+                    protocol_name.span.clone(),
+                    "Direct protocol call requires a declared canonical core protocol",
+                )
+            })?;
+        let arity = rest.len() + 1;
+        if !self.environment.protocols[&protocol].iter().any(|method| {
+            method.name == method_symbol.name && method.signatures.iter().any(|(n, _)| *n == arity)
+        }) {
+            return Err(fail(
+                method_name.span.clone(),
+                "Direct protocol method/arity is not declared",
+            ));
+        }
+        let schema = (0..arity)
+            .map(|_| self.literal_form(form, Literal::String(vec![])))
+            .collect();
+        let key = self.stable_key(form, &protocol, &method_symbol.name, arity, schema);
+        let value = self.form(owner)?;
+        let owner_binding = self.fresh_binding(owner, value);
+        let owner_read = self.local(owner, owner_binding.id);
+        let descriptor = self.nominal(owner, Nominal::ObjectDescriptor, vec![owner_read.clone()]);
+        let lookup = self.nominal(form, Nominal::MethodGet, vec![descriptor, key]);
+        let method = self.fresh_binding(method_name, lookup);
+        let mut arguments = vec![owner_read];
+        for argument in rest {
+            arguments.push(self.form(argument)?);
+        }
+        let body = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Call {
+                callee: Box::new(self.local(method_name, method.id)),
+                arguments,
+            },
+        };
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![owner_binding, method],
+                body: Box::new(body),
+            },
+        })
     }
     fn protocol_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
         let Some(name) = args.first() else {
@@ -1199,7 +1374,7 @@ impl Analyzer<'_> {
                             "Object method requires an unqualified name",
                         ));
                     }
-                    let name = Self::property_name(method_name, &format!(".-{}", symbol.name))?;
+                    let name = Self::object_method_name(method_name, &symbol.name)?;
                     // Pinned add-obj-methods assigns prototype.__proto__; its
                     // inherited setter changes the prototype instead of storing
                     // an ordinary method. The prototype adapter is unfinished.
