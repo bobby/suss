@@ -1,0 +1,35 @@
+;; Boundary cases for private descriptor identity, not public record acceptance.
+(ns nominal.probe)
+(deftype Before [x] Object (constructor [this] :overridden))
+(def a (new Before 17))
+(def b (new Before 23))
+(def constructor-override-result (.constructor a))
+(def retained-type Before)
+(def effects (atom []))
+(def before-redefinition
+  [(suss.bootstrap/same-nominal-type? a b)
+   (suss.bootstrap/same-nominal-type? a (fn [] 17))
+   (suss.bootstrap/same-nominal-type? a (js-obj))
+   (suss.bootstrap/same-nominal-type? a nil)
+   (suss.bootstrap/same-nominal-type? a false)
+   (suss.bootstrap/same-nominal-type? a 17)
+   (suss.bootstrap/same-nominal-type? a "x")
+   (suss.bootstrap/same-nominal-type? a [])])
+(deftype Before [x])
+(def c (new Before 17))
+(def after-redefinition
+  [(suss.bootstrap/same-nominal-type? a b)
+   (suss.bootstrap/same-nominal-type? a c)
+   (suss.bootstrap/same-nominal-type? a (new retained-type 31))])
+(def order-result
+  (suss.bootstrap/same-nominal-type?
+    (do (swap! effects conj :left) a)
+    (do (swap! effects conj :right) b)))
+(def throw-result
+  (try
+    (suss.bootstrap/same-nominal-type?
+      (do (swap! effects conj :throw) (throw 41))
+      (do (swap! effects conj :unreachable) b))
+    false
+    (catch :default e (= e 41))))
+[before-redefinition after-redefinition order-result throw-result @effects]

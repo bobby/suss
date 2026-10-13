@@ -30,19 +30,51 @@ pub(crate) const SOURCE: &str = r###"
        "/"    "_SLASH_"
        "\\\\" "_BSLASH_"
        "?"    "_QMARK_"))
-(def ^:private reserved ["arguments" "abstract" "await" "boolean" "break" "byte" "case"
-    "catch" "char" "class" "const" "continue"
-    "debugger" "default" "delete" "do" "double"
-    "else" "enum" "export" "extends" "final"
-    "finally" "float" "for" "function" "goto" "if"
-    "implements" "import" "in" "instanceof" "int"
-    "interface" "let" "long" "native" "new"
-    "package" "private" "protected" "public"
-    "return" "short" "static" "super" "switch"
-    "synchronized" "this" "throw" "throws"
-    "transient" "try" "typeof" "var" "void"
-    "volatile" "while" "with" "yield" "methods"
-    "null" "constructor"])
+(def ^:private reserved ["abstract" "arguments" "await" "boolean" "break" "byte" "case" "catch" "char" "class" "const" "constructor" "continue" "debugger" "default" "delete" "do" "double" "else" "enum" "export" "extends" "final" "finally" "float" "for" "function" "goto" "if" "implements" "import" "in" "instanceof" "int" "interface" "let" "long" "methods" "native" "new" "null" "package" "private" "protected" "public" "return" "short" "static" "super" "switch" "synchronized" "this" "throw" "throws" "transient" "try" "typeof" "var" "void" "volatile" "while" "with" "yield"])
+
+(def ^:private reserved-word?
+  (fn [part]
+    ;; The complete immutable reserved table is sorted above. Binary search
+    ;; preserves exact string membership without eager hash-table construction.
+    (loop [lo 0 hi (count reserved)]
+      (if (< lo hi)
+        (let [mid (quot (+ lo hi) 2)
+              order (compare part (nth reserved mid))]
+          (if (zero? order)
+            true
+            (if (< order 0)
+              (recur lo mid)
+              (recur (inc mid) hi))))
+        false))))
+(def ^:private munge-unit
+  (fn [unit]
+    ;; Complete constant character table, compiled into literal comparisons.
+    (case unit
+      "-" "_"
+      ":" "_COLON_"
+      "+" "_PLUS_"
+      ">" "_GT_"
+      "<" "_LT_"
+      "=" "_EQ_"
+      "~" "_TILDE_"
+      "!" "_BANG_"
+      "@" "_CIRCA_"
+      "#" "_SHARP_"
+      "'" "_SINGLEQUOTE_"
+      "\\\"" "_DOUBLEQUOTE_"
+      "%" "_PERCENT_"
+      "^" "_CARET_"
+      "&" "_AMPERSAND_"
+      "*" "_STAR_"
+      "|" "_BAR_"
+      "{" "_LBRACE_"
+      "}" "_RBRACE_"
+      "[" "_LBRACK_"
+      "]" "_RBRACK_"
+      "/" "_SLASH_"
+      "\\\\" "_BSLASH_"
+      "?" "_QMARK_"
+      unit)))
 (def ^:private replace-dots
   (fn [text]
     (loop [i 0 result ""]
@@ -67,10 +99,10 @@ pub(crate) const SOURCE: &str = r###"
       (if (< i (count text))
         (if (= (.charAt text i) ".")
           (let [part (suss.bootstrap/string-slice text start i)]
-            (recur (+ i 1) (+ i 1) (str result part (if (some (fn [word] (= word part)) reserved) "$" "") ".")))
+            (recur (+ i 1) (+ i 1) (str result part (if (reserved-word? part) "$" "") ".")))
           (recur (+ i 1) start result))
         (let [part (suss.bootstrap/string-slice text start i)]
-          (str result part (if (some (fn [word] (= word part)) reserved) "$" "")))))))
+          (str result part (if (reserved-word? part) "$" "")))))))
 (def type-label
   (fn [value]
     (when-not (or (symbol? value) (string? value))
@@ -79,6 +111,6 @@ pub(crate) const SOURCE: &str = r###"
       (loop [i 0 result ""]
         (if (< i (count text))
           (let [unit (.charAt text i)]
-            (recur (+ i 1) (str result (get char-map unit unit))))
+            (recur (+ i 1) (str result (munge-unit unit))))
           result)))))
 "###;

@@ -228,6 +228,19 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     get(&mut body, 0, OBJECT, 0);
     let object_descriptor = b.function("object-descriptor", &[VALUE], &[VALUE], &body);
 
+    // Genuine nominal identity: compare the immutable, rooted descriptors,
+    // never a type spelling, numeric identity, structural layout or mutable
+    // constructor property. Other value families cannot share this descriptor.
+    let mut body = vec![
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(OBJECT)),
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)),
+        I32And, If(BlockType::Result(ValType::I32)),
+    ];
+    get(&mut body, 0, OBJECT, 0);
+    get(&mut body, 1, OBJECT, 0);
+    body.extend([RefEq, Else, I32Const(0), End]);
+    b.function("object-same-descriptor", &[VALUE, VALUE], &[ValType::I32], &body);
+
     for writing in [false, true] {
         let mut body = vec![];
         guard(&mut body, 0, OBJECT);
@@ -303,8 +316,20 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         body.extend([ArrayLen, LocalTee(length), I32Const(1), I32And, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
+        if !writing {
+            // Check the first four pairs in order without loop transfers. This
+            // preserves first-match semantics, including duplicate-key tables.
+            for offset in [0, 2, 4, 6] {
+                body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
+                    I32Const(0), RefI31, Return, End]);
+                array(&mut body, table);
+                body.extend([I32Const(offset), ArrayGet(ARGS), LocalGet(1), RefEq, If(BlockType::Empty)]);
+                array(&mut body, table);
+                body.extend([I32Const(offset + 1), ArrayGet(ARGS), Return, End]);
+            }
+        }
         body.extend([
-            I32Const(0),
+            I32Const(if writing { 0 } else { 8 }),
             LocalSet(index),
             Block(BlockType::Empty),
             Loop(BlockType::Empty),

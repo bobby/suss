@@ -310,6 +310,7 @@ pub enum Nominal {
     Protocol,
     Construct,
     Instance,
+    SameNominalType,
     Field(usize),
     FieldSet(usize),
     NamedGet,
@@ -357,6 +358,7 @@ impl Nominal {
             | Self::IsTypeConstructor
             | Self::IsLanguageError
             | Self::Instance
+            | Self::SameNominalType
             | Self::Satisfies
             | Self::NativeSatisfies
             | Self::NativeMarker(_) => Type::Bool,
@@ -386,7 +388,7 @@ impl Nominal {
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
-                Self::Instance | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
+                Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
                 }
                 Self::Set => count == 3,
@@ -2220,6 +2222,7 @@ impl Analyzer<'_> {
                 "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
+                "same-nominal-type?" => Some(Nominal::SameNominalType),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),
                 "function-name" => Some(Nominal::SourceFunctionName),

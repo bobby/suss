@@ -1,5 +1,5 @@
 //! Compiled type-label helper used by the pinned record hash seed.
-//! Authored source-only regressions; not an execution/record acceptance claim.
+//! Executing helper regressions; public record acceptance is separate.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
@@ -28,6 +28,29 @@ fn compiled_record_type_labels_follow_complete_scalar_utf16_munging_rules() {
                 Observation::String(expected.encode_utf16().collect()),
                 "{source}"
             );
+        }
+        // Derive the complete reserved-name corpus from the retained pinned
+        // analyzer source, independently of the optimized implementation table.
+        let original = suss_reader::forms::read_forms(include_str!(
+            "../../../docs/compatibility/record-analyzer-context/analyzer-js-reserved-190.cljc"
+        )).unwrap();
+        let suss_reader::forms::Kind::List(declaration) = &original[0].kind else { panic!("reserved declaration") };
+        let suss_reader::forms::Kind::Set(words) = &declaration[2].kind else { panic!("reserved set") };
+        assert_eq!(words.len(), 63);
+        for word in words {
+            let suss_reader::forms::Kind::String(units) = &word.kind else { panic!("reserved string") };
+            let word = String::from_utf16(units).unwrap();
+            for (input, expected) in [
+                (format!("prefix.{word}.suffix"), format!("prefix.{word}$.suffix")),
+                (format!("x_{word}_x"), format!("x_{word}_x")),
+            ] {
+                decoder.refill(4096);
+                let source = format!("(record-label {input:?})");
+                let value = session.eval_with_macros(&source, &mut macros).unwrap();
+                session.collect().unwrap();
+                assert_eq!(decoder.decode_session(&mut session, &value).unwrap(),
+                    Observation::String(expected.encode_utf16().collect()), "{source}");
+            }
         }
         let value = session
             .eval_with_macros("(record-label \"\\uD800\")", &mut macros)

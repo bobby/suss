@@ -3,8 +3,8 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source": "crates/suss-compile/src/portable_record_label.rs",
-  "source-file-sha256": "48901949be22045578190ddcc532c50f75be5fc9de523f1655867399b52a3647",
-  "compiled-source-sha256": "edd96e3da8c18470aa9575186bc73bbe25489ab6597b8cc8a792107ab2805631",
+  "source-file-sha256": "d68d21fab4d0a04764790399889300a20f043c66a6cb0ac7ee3715580b2992a4",
+  "compiled-source-sha256": "ac6281fabf5c697292976aa70bc778c526b574d99a2290b97482eb914bd89d06",
   "originals": [
     {
       "path": "docs/compatibility/record-analyzer-context/core-CHAR_MAP-377.cljs",
@@ -27,7 +27,8 @@
     "Compile the complete scalar-name munge path as Suss source for resolved record type labels; analyzer-map lexical munging remains a separate interface.",
     "Retain the entire character and reserved-name tables, using an array map and a vector with value membership scans to avoid eager persistent hash-table construction in the compiled Macro Store.",
     "Use UTF-16 native character reads/slices and explicit scans for non-overlapping .. replacement, division-before-non-line-terminator replacement, per-segment reserved suffixes, and per-code-unit character mapping. Compare the four line-terminator code units directly rather than rebuilding a hash set inside the scan.",
-    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys."
+    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys.",
+    "Sort the complete reserved-name vector and use exact string binary search; compile all character-table pairs into literal case comparisons. Preserve every table entry and fallback, avoiding repeated linear scans and eager hash-table construction."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_record_labels.rs"
