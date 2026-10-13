@@ -1,0 +1,22 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "docs/compatibility/record-macro-foundations/public-custom-probe.cljs",
+  "source-sha256": "cf852d6d40a775b7699fe9684f08c6acdf851c2b86abc4bfc6c7ef349872e189",
+  "observation": [
+    2,
+    false,
+    true,
+    null,
+    null,
+    "old",
+    null,
+    73
+  ],
+  "status": "pinned ClojureScript compile and Node execution pass; matching independent native ABI decoding passes in Runtime and Macro after GC",
+  "warning": "Pinned compiler warns that ICounted is implemented multiple times; generated method wins.",
+  "commands": [
+    "CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M -m cljs.main -co '{:target :nodejs :output-to \"out/record-custom-probe.js\" :output-dir \"out/record-custom-probe-cljs\" :optimizations :none :source-map false :cache-analysis false}' -c suss-oracle.record-custom-probe",
+    "node out/record-custom-probe.js"
+  ],
+  "native-test": "public_record_custom_protocols_and_record_input_factory_decode_after_gc"
+}

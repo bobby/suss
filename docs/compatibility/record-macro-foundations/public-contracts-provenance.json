@@ -1,0 +1,29 @@
+{
+  "status": "actual CLI component compiled and all9 numeric contracts executed successfully; broader milestone acceptance remains pending",
+  "source_inventory": [
+    {
+      "path": "vendor/clojure-test-suite/upstream/test/clojure/core_test/dissoc.cljc",
+      "sha256": "7957bc305f34b3d6646419a259439caad73bcc72826a50b2aa27128e8b7fc094"
+    },
+    {
+      "path": "vendor/clojure-test-suite/upstream/test/clojure/core_test/empty.cljc",
+      "sha256": "dfe966f062b3c64a0bfa9407c3dfa89eecec91612502f0163afa864bf4b644d8"
+    }
+  ],
+  "license_path": "vendor/clojure-test-suite/upstream/LICENSE",
+  "adaptation": "retain four Jank record dissoc cases and portable cljs empty->nil expectation; plain functions and WIT numeric checks replace clojure.test wrappers, no wholesale namespace completion claim; original TestDissocRecord. constructor is replaced by the public positional ->TestDissocRecord factory with the same declared values",
+  "authored_checks": [
+    "nominal equality and equal hashes",
+    "metadata and persistence of assoc/dissoc",
+    "factory missing/nil/false/extension values",
+    "Reduced stops before later effects",
+    "extension dissoc removes key, restores count and preserves metadata",
+    "Reduced receives original accumulator and first declared key/value exactly once",
+    "warm record hashes before field assoc and declared/extension dissoc; compare independently constructed equal values",
+    "positional constructor operands evaluate once left-to-right and first-operand throw prevents later operands"
+  ],
+  "fixture": "tests/oracle/fixtures/public-record-contracts.sus",
+  "world": "tests/oracle/fixtures/public-record-contracts.wit",
+  "upstream": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "license": "MPL-2.0"
+}

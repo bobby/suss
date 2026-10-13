@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "sources": [
+    {
+      "path": "crates/suss-compile/src/portable_record_protocol_facts.rs",
+      "sha256": "1e85ab50ca2ceec586673a833a59f77297245baf364ef7737b3cfa9c96f8d372",
+      "compiled-sources": {
+        "SOURCE": "db2693f548ac65689c9adabd389fb5fbd0f51ecf8716228bf4b25eb9a66dd62e"
+      }
+    },
+    {
+      "path": "crates/suss-compile/src/portable_record_emitter.rs",
+      "sha256": "e47a6ed74f039e54227111a83e7625ffc06fe17abdb4e830418f6114d6c03f4f",
+      "compiled-sources": {
+        "SOURCE": "c377cedb2777f79f6019dd50aa8ab7374be7db66409eb30465eb8b2f77e02ce9"
+      }
+    },
+    {
+      "path": "crates/suss-compile/src/portable_record_public.rs",
+      "sha256": "de84daaaa9e418f305d79739ff892e05f2d9995a360731d2731f82e8ec17df8e",
+      "compiled-sources": {
+        "SOURCE": "3b4caf5c162ea15ac9a8c76dc39fd398e5e19e5280f27f9152e1c8fc5ee267c8",
+        "MACRO_SOURCE": "0a9163f09996c826000c89b9c00b1f57a6bbd4a465490c4f168231cdde737088"
+      }
+    }
+  ],
+  "retained-inputs": [
+    {
+      "path": "docs/compatibility/record-macro-foundations/collect-protocols.cljc",
+      "sha256": "c634a4f94462c22dd6d2a6a73e0deb532a6c6e2d74dbac05675d80aaf61f07a4"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/prepare-protocol-masks.cljc",
+      "sha256": "a5956a8285686fa95a101b0b33499ffcbf16c36282395c6ea046165162229460"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/annotate-specs.cljc",
+      "sha256": "74c1dc5c4ad1cfc47703e1768551fa429ccea6be45e29a60b201d8ef4c034485"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/dt-to-et.cljc",
+      "sha256": "bc7939d660d363cc22ba35e150913874b71bf28dbe7b15a30a704ceb5595d1fa"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/emit-defrecord.cljc",
+      "sha256": "5c28f4bfd281341f9e4b13ec0c6fb0feca2e35494aca6f6394f2b545bcf66447"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/validate-fields.cljc",
+      "sha256": "52c46921e4a86193630fe772a4d6ce53e76c7d1ea2cec70688a5dbf5dc0a1be8"
+    },
+    {
+      "path": "docs/compatibility/record-macro-foundations/defrecord.cljc",
+      "sha256": "d7d9b7f589c39fe8388389c702b4dd48b33cc2192fae2e48aeb9e789aa1f34f2"
+    }
+  ],
+  "adaptations": [
+    "Compiled Suss helpers replace analyzer host access with genuine phase-specific caller resolution, protocol signatures, namespace membership and native Object binding facts.",
+    "Retain all generated protocols, methods, user implementation precedence, field metadata, factories and static type properties; nominal equality uses immutable descriptor identity.",
+    "Private syntax quote construction uses Cons and vector templates; immutable constants, direct generated annotations and field substitution preserve complete output and source order.",
+    "Complete protocol mask table is retained, including duplicate last-wins behavior; local transient collection is persisted once without escaping.",
+    "Public macro opts into explicit record-bindings compiler catalog transport; ordinary macros retain their existing graph shape and policy restoration.",
+    "Keyword case support implements grouped generated membership without repeated selector evaluation or live equality for all-keyword cases.",
+    "After all symbols resolve in original order, reuse pure default mask data only when the entire resolved default suffix matches; generically process every user protocol, including duplicates. Changed defaults retain full generic preparation."
+  ],
+  "tests": [
+    "crates/suss-cli/tests/compiled_public_records.rs",
+    "crates/suss-cli/tests/compiled_record_protocol_projection.rs",
+    "crates/suss-cli/tests/portable_case.rs"
+  ],
+  "status": "Bounded native execution passes; integration baseline and full original M4 acceptance remain required."
+}

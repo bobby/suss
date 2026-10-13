@@ -94,7 +94,6 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
         "(case 1 1 17)",
         "(case 1 1 17 1 19 23)",
         "(case 1 (1 1) 17 19)",
-        "(case 1 :a 17 19)",
         "(case 1 x 17 19)",
         "case",
     ] {
@@ -174,4 +173,43 @@ fn generic_case_throw_restores_equality_and_bounds_are_located() {
     session.collect().unwrap();
     let value = session.invoke(&closure, &[]).unwrap();
     assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+}
+
+#[test]
+fn keyword_case_groups_follow_pinned_dispatch_and_preserve_selector_effects() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def keyword-case-effects 0)").unwrap();
+        let value = session.eval("(case (do (set! keyword-case-effects (inc keyword-case-effects)) :ns/b) (:a :ns/b) 17 :b 19 23)").unwrap();
+        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+        session.collect().unwrap();
+        let value = session.eval("keyword-case-effects").unwrap();
+        assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+        for selector in ["nil", "false", "17", "\"ns/b\"", "'ns/b"] {
+            let value = session
+                .eval(&format!("(case {selector} (:a :ns/b) 17 :b 19 23)"))
+                .unwrap();
+            assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+        }
+        let value = session
+            .eval(
+                "(with-redefs [suss.core/= (fn [a b] (throw :bad))] (case :ns/b (:a :ns/b) 17 23))",
+            )
+            .unwrap();
+        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+        let value = session
+            .eval("(with-redefs [suss.core/keyword? (fn [x] false)] (case :ns/b (:a :ns/b) 17 23))")
+            .unwrap();
+        assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+        let value = session.eval("(with-redefs [suss.core/keyword? (fn [x] (throw :bad))] (case (do (set! keyword-case-effects 7) :a) 23))").unwrap();
+        assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+        assert!(session.eval("(case :a (:a :b) 17 :a 19 23)").is_err());
+        let values = (0..9)
+            .map(|i| format!(":k{i}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let value = session
+            .eval(&format!("(case :k8 ({values}) 17 23)"))
+            .unwrap();
+        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    }
 }

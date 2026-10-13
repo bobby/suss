@@ -26,8 +26,19 @@ def verify_factory_adaptations(provenance=None, host_source=None):
     adapted = extract_forms(match.group(1), 'macro', provenance['source'])
     expected = ['macro:build-positional-factory:1760', 'macro:build-map-factory:1960']
     entries = provenance['forms']
-    if [entry['id'] for entry in entries] != expected or len(adapted) != 2:
+    if [entry['id'] for entry in entries] != expected:
         raise ValueError('closed factory adaptation identities/order mismatch')
+    helpers = provenance.get('helper-declarations', [])
+    helper_names = ['factory-join3', 'template-sequence', 'template-constant-0', 'template-constant-1', 'template-constant-2']
+    if [entry['name'] for entry in helpers] != helper_names:
+        raise ValueError('closed factory helper identities/order mismatch')
+    actual_helpers = [form for form in adapted.values()
+                      if form['name'] not in ['build-positional-factory', 'build-map-factory']]
+    if len(adapted) != 7 or [form['name'] for form in actual_helpers] != helper_names:
+        raise ValueError('closed factory declaration set mismatch')
+    for entry, form in zip(helpers, actual_helpers):
+        if entry['sha256'] != digest(form['form'].encode()):
+            raise ValueError('stale factory helper declaration hash')
     originals = extract_forms(pinned_file(ROOT, 'src/main/clojure/cljs/core.cljc').decode(), 'macro', 'src/main/clojure/cljs/core.cljc')
     for entry in entries:
         original = originals[entry['id']]
@@ -41,6 +52,7 @@ def verify_factory_adaptations(provenance=None, host_source=None):
             raise ValueError('stale adapted factory declaration hash')
     if host_source is None:
         host_source = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
+    host_source = re.sub(r'\s+', '', host_source)
     if not re.search(r'macros\.session\.eval\(crate::portable_record_factories::SOURCE\)\?', host_source):
         raise ValueError('compiled factory bootstrap installation missing')
     if not re.search(r'"record-factory-source".*?sha256\(crate::portable_record_factories::SOURCE\.as_bytes\(\)\)', host_source, re.S):
@@ -72,11 +84,45 @@ def verify_label_adaptations(provenance=None, host_source=None):
             raise ValueError('stale retained record label input hash')
     if host_source is None:
         host_source = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
+    host_source = re.sub(r'\s+', '', host_source)
     if 'macros.session.eval(crate::portable_record_label::SOURCE)?;' not in host_source:
         raise ValueError('record label bootstrap installation missing')
     if not re.search(r'"record-label-source".*?sha256\(crate::portable_record_label::SOURCE\.as_bytes\(\)\)', host_source, re.S):
         raise ValueError('record label artifact dependency missing')
     return 4
+
+
+def verify_public_adaptations(provenance=None):
+    """Bind integrated helper bytes to retained licensed originals."""
+    if provenance is None:
+        provenance = json.loads((ROOT / 'docs/compatibility/record-macro-foundations/public-adaptations.json').read_text())
+    if (provenance['schema'], provenance['upstream'], provenance['license']) != (1, PIN, 'EPL-1.0'):
+        raise ValueError('public adaptation pin/license/schema mismatch')
+    expected = ['crates/suss-compile/src/portable_record_' + name + '.rs'
+                for name in ['protocol_facts', 'emitter', 'public']]
+    if [entry['path'] for entry in provenance['sources']] != expected:
+        raise ValueError('closed public helper source identities/order mismatch')
+    for entry in provenance['sources']:
+        raw = repository_file(ROOT, entry['path']).read_bytes()
+        if digest(raw) != entry['sha256']:
+            raise ValueError('stale public helper source hash')
+        text = raw.decode()
+        if 'Copyright (c) Rich Hickey' not in text or 'SPDX-License-Identifier: EPL-1.0' not in text:
+            raise ValueError('public helper notice/license missing')
+        constants = {match.group(1): digest(match.group(3).encode())
+                     for match in re.finditer(r'pub\(crate\) const (\w+): &str = r(#+)"(.*?)"\2;', text, re.S)}
+        names = {'SOURCE', 'MACRO_SOURCE'} if entry['path'].endswith('_public.rs') else {'SOURCE'}
+        if set(constants) != names or constants != entry['compiled-sources']:
+            raise ValueError('stale or missing public compiled source identity')
+    expected_inputs = ['docs/compatibility/record-macro-foundations/' + name + '.cljc'
+                       for name in ['collect-protocols', 'prepare-protocol-masks', 'annotate-specs',
+                                    'dt-to-et', 'emit-defrecord', 'validate-fields', 'defrecord']]
+    if [entry['path'] for entry in provenance['retained-inputs']] != expected_inputs:
+        raise ValueError('closed public retained input identities/order mismatch')
+    for entry in provenance['retained-inputs']:
+        if digest(repository_file(ROOT, entry['path']).read_bytes()) != entry['sha256']:
+            raise ValueError('stale public retained input hash')
+    return 3
 
 def verify():
     provenance = json.loads((ROOT / 'docs/compatibility/record-macro-foundations/provenance.json').read_text())
@@ -98,7 +144,8 @@ def verify():
             raise ValueError('whole source retention/hash mismatch')
     verify_factory_adaptations()
     verify_label_adaptations()
-    print('Verified 12 complete pinned macro forms, 2 compiled factory adaptations and record label identities; execution remains unverified')
+    verify_public_adaptations()
+    print('Verified 12 complete pinned macro forms, 2 compiled factory adaptations and label/public helper identities; provenance alone does not certify execution')
 
 if __name__ == '__main__':
     verify()

@@ -1,4 +1,5 @@
 import copy
+import re
 import json
 import unittest
 from check_record_macro_provenance import ROOT, verify_label_adaptations
@@ -8,7 +9,7 @@ class RecordLabelProvenance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.provenance = json.loads((ROOT / 'docs/compatibility/record-macro-foundations/label-adaptations.json').read_text())
-        cls.host = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
+        cls.host = re.sub(r',(?=\))', '', re.sub(r'\s+', '', (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()))
 
     def test_complete_retained_inputs_and_source_identities(self):
         self.assertEqual(verify_label_adaptations(self.provenance), 4)
@@ -34,6 +35,7 @@ class RecordLabelProvenance(unittest.TestCase):
         for old in ['macros.session.eval(crate::portable_record_label::SOURCE)?;',
                     'dependencies.push(("record-label-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes())));']:
             with self.subTest(old=old):
+                old = re.sub(r'\s+', '', old)
                 self.assertIn(old, self.host)
                 with self.assertRaises(ValueError):
                     verify_label_adaptations(self.provenance, self.host.replace(old, ''))

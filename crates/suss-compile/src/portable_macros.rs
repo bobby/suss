@@ -1,12 +1,17 @@
 //! Source macro functions execute in a separate compiled phase Store.
+use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use crate::{
     portable_macro_data::FormBridge,
     portable_macro_graph::{AnalysisGraph, DeclarationValues},
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::{BTreeMap, BTreeSet};
-use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use suss_reader::forms::{Form, Kind, read_forms};
+#[derive(Clone, Copy)]
+pub(crate) enum CompilerCatalogMode {
+    Full,
+    RecordBindings,
+}
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
@@ -16,7 +21,7 @@ pub struct CompiledMacros {
     environment_free: BTreeSet<(String, String)>,
     // Explicit source compiler helpers need cross-namespace/protocol revisions.
     // This transport policy is rolled back with the corresponding macro binding.
-    compiler_catalog_macros: BTreeSet<(String, String)>,
+    compiler_catalog_macros: BTreeMap<(String, String), CompilerCatalogMode>,
     environment_materializations: u64,
     // Source macro expansions performed by this host, in any context.
     source_expansions: u64,
@@ -46,7 +51,7 @@ pub(crate) type MacroCheckpoint = (
     BTreeMap<(String, String), SessionValue>,
     BTreeMap<(String, String), String>,
     BTreeSet<(String, String)>,
-    BTreeSet<(String, String)>,
+    BTreeMap<(String, String), CompilerCatalogMode>,
 );
 
 /// Whether a definition contains a symbol named &env anywhere, including in
@@ -109,7 +114,7 @@ impl CompiledMacros {
             declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             environment_free: BTreeSet::new(),
-            compiler_catalog_macros: BTreeSet::new(),
+            compiler_catalog_macros: BTreeMap::new(),
             environment_materializations: 0,
             source_expansions: 0,
             declaration_sources: BTreeMap::new(),
@@ -119,8 +124,19 @@ impl CompiledMacros {
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
-        macros.session.eval(crate::portable_record_factories::SOURCE)?;
+        macros
+            .session
+            .eval(crate::portable_record_factories::SOURCE)?;
         macros.session.eval(crate::portable_record_label::SOURCE)?;
+        macros
+            .session
+            .eval(crate::portable_record_protocol_facts::SOURCE)?;
+        macros
+            .session
+            .eval(crate::portable_record_emitter::SOURCE)?;
+        macros.session.eval(crate::portable_record_public::SOURCE)?;
+        macros.enter_namespace("suss.core")?;
+        macros.define(crate::portable_record_public::MACRO_SOURCE)?;
         macros.enter_namespace("user")?;
         // Bootstrap code is already rooted in the Store. User source cache
         // accounting starts empty, including after an explicit session reset.
@@ -128,20 +144,42 @@ impl CompiledMacros {
         Ok(macros)
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<MacroCheckpoint, SessionError> {
-        Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone(), self.environment_free.clone(), self.compiler_catalog_macros.clone()))
+        Ok((
+            self.session.binding_checkpoint()?,
+            self.definitions.clone(),
+            self.declaration_sources.clone(),
+            self.environment_free.clone(),
+            self.compiler_catalog_macros.clone(),
+        ))
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: MacroCheckpoint, globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(
+        &mut self,
+        checkpoint: MacroCheckpoint,
+        globals: &[crate::portable::resolve::Global],
+    ) -> Result<(), SessionError> {
         self.session.restore_bindings(checkpoint.0, globals)?;
         for global in globals {
             let key = (global.namespace().to_owned(), global.name().to_owned());
-            if let Some(value) = checkpoint.1.get(&key) { self.definitions.insert(key.clone(), value.clone()); }
-            else { self.definitions.remove(&key); }
-            if checkpoint.3.contains(&key) { self.environment_free.insert(key.clone()); }
-            else { self.environment_free.remove(&key); }
-            if checkpoint.4.contains(&key) { self.compiler_catalog_macros.insert(key.clone()); }
-            else { self.compiler_catalog_macros.remove(&key); }
-            if let Some(source) = checkpoint.2.get(&key) { self.declaration_sources.insert(key, source.clone()); }
-            else { self.declaration_sources.remove(&key); }
+            if let Some(value) = checkpoint.1.get(&key) {
+                self.definitions.insert(key.clone(), value.clone());
+            } else {
+                self.definitions.remove(&key);
+            }
+            if checkpoint.3.contains(&key) {
+                self.environment_free.insert(key.clone());
+            } else {
+                self.environment_free.remove(&key);
+            }
+            if let Some(mode) = checkpoint.4.get(&key) {
+                self.compiler_catalog_macros.insert(key.clone(), *mode);
+            } else {
+                self.compiler_catalog_macros.remove(&key);
+            }
+            if let Some(source) = checkpoint.2.get(&key) {
+                self.declaration_sources.insert(key, source.clone());
+            } else {
+                self.declaration_sources.remove(&key);
+            }
         }
         Ok(())
     }
@@ -164,8 +202,12 @@ impl CompiledMacros {
                 message: "Expected exactly one source defmacro".into(),
             }));
         }
-        self.define_form_with_origin(forms.into_iter().next().unwrap(), 0..source.len(), Some(&crate::portable::SourceOrigin::new(source, None)))
-            .map(|_| ())
+        self.define_form_with_origin(
+            forms.into_iter().next().unwrap(),
+            0..source.len(),
+            Some(&crate::portable::SourceOrigin::new(source, None)),
+        )
+        .map(|_| ())
     }
     fn load_source_namespace(
         &mut self,
@@ -209,7 +251,11 @@ impl CompiledMacros {
         // A selected unit may publish cells before its initializer fails. Its old
         // immutable identity no longer establishes the complete live graph, so
         // emission reuse stays disabled until all selected units finish loading.
-        self.incomplete_sources.extend(graph.iter().map(|unit| unit.identity.namespace().to_owned()));
+        self.incomplete_sources.extend(
+            graph
+                .iter()
+                .map(|unit| unit.identity.namespace().to_owned()),
+        );
         self.session.invalidate_source_modules(
             &graph
                 .iter()
@@ -220,8 +266,12 @@ impl CompiledMacros {
         let result = (|| {
             for unit in graph {
                 let source_identity = crate::portable::bootstrap::sha256(
-                    format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes());
-                let origin = crate::portable::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
+                    format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes(),
+                );
+                let origin = crate::portable::SourceOrigin::new(
+                    unit.source.as_str(),
+                    Some(unit.path.clone()),
+                );
                 // Source snapshots are already selected and dependency-first. Each
                 // form executes once in Macro phase; definitions compile to the
                 // same native function pipeline and become available to later forms.
@@ -240,16 +290,19 @@ impl CompiledMacros {
                         self.define_form_with_origin(form, span, Some(&origin))?;
                     } else {
                         let span = form.span.clone();
-                        let prepared =
-                            self.session
-                                .compilation_snapshot()
-                                .prepare_with_origin(vec![form], span, self, Some(&origin))?;
+                        let prepared = self.session.compilation_snapshot().prepare_with_origin(
+                            vec![form],
+                            span,
+                            self,
+                            Some(&origin),
+                        )?;
                         self.session.eval_prepared(prepared)?;
                     }
                 }
                 self.session
                     .initialized_source_namespace(unit.identity.namespace())?;
-                self.loaded_sources.insert(unit.identity.namespace().to_owned(), source_identity);
+                self.loaded_sources
+                    .insert(unit.identity.namespace().to_owned(), source_identity);
                 self.incomplete_sources.remove(unit.identity.namespace());
             }
             Ok(self
@@ -288,7 +341,9 @@ impl CompiledMacros {
         crate::portable_repl::display(&mut self.session, &value)
     }
     pub(crate) fn define_form_with_origin(
-        &mut self, form: Form, span: std::ops::Range<usize>,
+        &mut self,
+        form: Form,
+        span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
         let form = &form;
@@ -351,14 +406,28 @@ impl CompiledMacros {
                 });
             }
         }
-        let metadata = crate::portable::hir::reader_metadata_pairs(&name_form).map_err(SessionError::Compile)?;
-        let mut compiler_catalog = false;
+        let metadata = crate::portable::hir::reader_metadata_pairs(&name_form)
+            .map_err(SessionError::Compile)?;
+        let mut compiler_catalog = None;
         for pair in metadata.chunks_exact(2) {
-            if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.as_deref() == Some("suss") && key.name == "compiler-catalog") {
+            if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.as_deref() == Some("suss") && key.name == "compiler-catalog")
+            {
                 match &pair[1].kind {
-                    Kind::Bool(enabled) => compiler_catalog = *enabled,
-                    Kind::Nil => compiler_catalog = false,
-                    _ => return Err(failure(&pair[1], "Compiler catalog transport metadata must be Boolean or nil")),
+                    Kind::Bool(enabled) => {
+                        compiler_catalog = enabled.then_some(CompilerCatalogMode::Full)
+                    }
+                    Kind::Nil => compiler_catalog = None,
+                    Kind::Keyword(key)
+                        if key.namespace.is_none() && key.name == "record-bindings" =>
+                    {
+                        compiler_catalog = Some(CompilerCatalogMode::RecordBindings)
+                    }
+                    _ => {
+                        return Err(failure(
+                            &pair[1],
+                            "Compiler catalog transport metadata must be Boolean or nil",
+                        ));
+                    }
                 }
             }
         }
@@ -384,21 +453,30 @@ impl CompiledMacros {
         let expansions = self.source_expansions;
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
-        let reads_environment =
-            mentions_environment(form) || self.source_expansions != expansions;
+        let reads_environment = mentions_environment(form) || self.source_expansions != expansions;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
-        if reads_environment || compiler_catalog {
+        if reads_environment || compiler_catalog.is_some() {
             self.environment_free.remove(&key);
         } else {
             self.environment_free.insert(key.clone());
         }
-        if compiler_catalog { self.compiler_catalog_macros.insert(key.clone()); }
-        else { self.compiler_catalog_macros.remove(&key); }
+        if let Some(mode) = compiler_catalog {
+            self.compiler_catalog_macros.insert(key.clone(), mode);
+        } else {
+            self.compiler_catalog_macros.remove(&key);
+        }
         self.definitions.insert(key, value.clone());
-        let provenance = format!("{form:?}:{}:{:?}", origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
-        self.declaration_sources.insert((namespace.clone(), name.name.clone()), crate::portable::bootstrap::sha256(provenance.as_bytes()));
+        let provenance = format!(
+            "{form:?}:{}:{:?}",
+            origin.map_or("", |origin| origin.text()),
+            origin.and_then(|origin| origin.path())
+        );
+        self.declaration_sources.insert(
+            (namespace.clone(), name.name.clone()),
+            crate::portable::bootstrap::sha256(provenance.as_bytes()),
+        );
         let exports = self
             .definitions
             .keys()
@@ -420,20 +498,58 @@ impl CompiledMacros {
 }
 impl ExpansionHost for CompiledMacros {
     fn emit_fragment(
-        &mut self, function: &crate::portable::ir::Function,
-        phase: crate::portable::resolve::Phase, forms: &[Form],
+        &mut self,
+        function: &crate::portable::ir::Function,
+        phase: crate::portable::resolve::Phase,
+        forms: &[Form],
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
         let dependencies = self.artifact_dependencies();
-        self.artifact_cache.emit(function, phase, forms, origin, dependencies.as_deref())
+        self.artifact_cache
+            .emit(function, phase, forms, origin, dependencies.as_deref())
     }
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
-        if !self.incomplete_sources.is_empty() { return None; }
-        let mut dependencies = vec![("bootstrap".into(), crate::portable::bootstrap::sha256(crate::portable::bootstrap::SOURCE.as_bytes()))];
-        dependencies.push(("record-factory-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_factories::SOURCE.as_bytes())));
-        dependencies.push(("record-label-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes())));
-        dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
-        dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
+        if !self.incomplete_sources.is_empty() {
+            return None;
+        }
+        let mut dependencies = vec![(
+            "bootstrap".into(),
+            crate::portable::bootstrap::sha256(crate::portable::bootstrap::SOURCE.as_bytes()),
+        )];
+        dependencies.push((
+            "record-factory-source".into(),
+            crate::portable::bootstrap::sha256(crate::portable_record_factories::SOURCE.as_bytes()),
+        ));
+        dependencies.push((
+            "record-label-source".into(),
+            crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes()),
+        ));
+        dependencies.push((
+            "record-protocol-facts-source".into(),
+            crate::portable::bootstrap::sha256(
+                crate::portable_record_protocol_facts::SOURCE.as_bytes(),
+            ),
+        ));
+        dependencies.push((
+            "record-emitter-source".into(),
+            crate::portable::bootstrap::sha256(crate::portable_record_emitter::SOURCE.as_bytes()),
+        ));
+        dependencies.push((
+            "record-public-source".into(),
+            crate::portable::bootstrap::sha256(crate::portable_record_public::SOURCE.as_bytes()),
+        ));
+        dependencies.extend(
+            self.loaded_sources
+                .iter()
+                .map(|(name, source)| (format!("module:{name}"), source.clone())),
+        );
+        dependencies.extend(
+            self.declaration_sources
+                .iter()
+                .map(|((namespace, name), source)| {
+                    (format!("macro:{namespace}/{name}"), source.clone())
+                }),
+        );
         Some(dependencies)
     }
 
@@ -513,15 +629,21 @@ impl ExpansionHost for CompiledMacros {
                 // Standalone source definitions are registered in the host
                 // before the Runtime snapshot has a macro-export entry.
                 let own = (
-                    context.environment.current_namespace(context.phase).to_owned(),
+                    context
+                        .environment
+                        .current_namespace(context.phase)
+                        .to_owned(),
                     name.name.clone(),
                 );
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                context.environment
-                    .resolves_bootstrap_name(context.phase, name, "defn")
-                    .then(|| ("suss.core".into(), "defn".into()))
+                ["defn", "defrecord"].into_iter().find_map(|core_name| {
+                    context
+                        .environment
+                        .resolves_bootstrap_name(context.phase, name, core_name)
+                        .then(|| ("suss.core".into(), core_name.into()))
+                })
             })
             .unwrap_or_else(|| {
                 (
@@ -537,26 +659,43 @@ impl ExpansionHost for CompiledMacros {
         };
         self.source_expansions += 1;
         let result = (|| -> Result<Form, SessionError> {
-            let caller_data = context.origin.map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
+            let caller_data = context
+                .origin
+                .map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
                 .map_err(SessionError::Compile)?;
             let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
             // A macro that cannot read &env receives nil instead of a
             // materialized analysis graph; nothing else can observe it.
             let caller_environment = if self.environment_free.contains(&target) {
-                self.bridge.quote(&mut self.session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
+                self.bridge.quote(
+                    &mut self.session,
+                    Form {
+                        span: form.span.clone(),
+                        metadata: vec![],
+                        kind: Kind::Nil,
+                    },
+                )?
             } else {
                 self.environment_materializations += 1;
                 let mut graph = AnalysisGraph::with_declaration_values(
-                    &self.bridge, &mut self.session, &mut self.declaration_values,
+                    &self.bridge,
+                    &mut self.session,
+                    &mut self.declaration_values,
                 );
-                if self.compiler_catalog_macros.contains(&target) {
-                    graph.expansion_with_compiler_catalog(context)?
-                } else {
-                    graph.expansion(context)?
+                match self.compiler_catalog_macros.get(&target) {
+                    Some(CompilerCatalogMode::Full) => {
+                        graph.expansion_with_compiler_catalog(context)?
+                    }
+                    Some(CompilerCatalogMode::RecordBindings) => {
+                        graph.expansion_with_record_catalog(context)?
+                    }
+                    None => graph.expansion(context)?,
                 }
             };
             let mut arguments = vec![caller_form, caller_environment];
-            let Kind::List(caller_items) = &caller_data.kind else { unreachable!("matched macro call") };
+            let Kind::List(caller_items) = &caller_data.kind else {
+                unreachable!("matched macro call")
+            };
             for argument in &caller_items[1..] {
                 arguments.push(self.bridge.quote(&mut self.session, argument.clone())?);
             }

@@ -3,30 +3,54 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source": "crates/suss-compile/src/portable_record_factories.rs",
-  "source-file-sha256": "e95a4bbdc78f4a081d7bf3cc82bc96e2696b838105202c371c3ecc153d498aba",
-  "compiled-source-sha256": "1d65c725b26070e5103432135b738accf0da666ed08354daa55ac265a8f954f9",
+  "source-file-sha256": "b8917bda74562ad8738594c7108bf848e5903de4ceba277c8188bffb5565f66b",
+  "compiled-source-sha256": "782d9fa0f5e1a6db533ce53b3d3a7cf30b8696180eb064ee5ef5578ee75d044e",
   "forms": [
     {
       "id": "macro:build-positional-factory:1760",
       "original-sha256": "fad1f2e6fed6882ad744d70464383de431b5e5a297fd0152513440a815c83527",
       "original": "docs/compatibility/record-macro-foundations/build-positional-factory.cljc",
-      "adapted-declaration-sha256": "393a2d06784a88ce2176302bd16c38b5b73942028c563c4cd314c8c9534a2d9d"
+      "adapted-declaration-sha256": "a6eb28baa4b367bc3a641f8ef3eb83aedc722feba53d7a007719c7fbcfaa3850"
     },
     {
       "id": "macro:build-map-factory:1960",
       "original-sha256": "6406d90207c872c9eee82e38054bffa08d7d6a3092dec6ef56a22e6296b541cb",
       "original": "docs/compatibility/record-macro-foundations/build-map-factory.cljc",
-      "adapted-declaration-sha256": "be62104e32081dcca8b27dcb0f36872190721b894f84cd1fb9ea695c3fc45565"
+      "adapted-declaration-sha256": "80fdfda86f37fab3b4996f413377f6333d4a45baea48778dc23b63f810364783"
     }
   ],
   "adaptations": [
     "Compile private helper functions under suss.internal.record-factories; expand defn- to def/fn without a host form evaluator.",
     "Retain generated factory names, docs, metadata, fields and constructor arguments; preserve the positional internal-ctor branch and all map-factory branches.",
     "Expand the generated cond->> explicitly: evaluate dissoc once before testing record? on the original input, then convert the extension map with into only for record input.",
-    "Include the complete helper source identity in every compiled-macro artifact dependency key."
+    "Include the complete helper source identity in every compiled-macro artifact dependency key.",
+    "Private static template construction retains the complete factory output, field order, hints, docstrings and map branches; all added helper declarations are closed and hash-verified.",
+    "Retain once-per-factory symbol str conversions; use exact UTF-16 joins for fixed name prefixes and known docstring operands. Original/candidate complete output and metadata match at zero/3 hinted/33 fields with both constructor modes."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_record_factories.rs"
   ],
-  "status": "authored and installed in macro bootstrap source; no compilation/native/oracle execution; public defrecord emitter and full record protocols remain missing"
+  "status": "Integrated public record macro passes bounded CLI and independent ABI decoding checks; full workspace baseline and original M4 acceptance remain pending.",
+  "helper-declarations": [
+    {
+      "name": "factory-join3",
+      "sha256": "9d092260324bbaced09142b588de6af473c2a9f50c669930bb4fb3084e8809aa"
+    },
+    {
+      "name": "template-sequence",
+      "sha256": "2fdd9ded75f172e7fe9807e331a6d52f4b74844a19a704111841002216442f26"
+    },
+    {
+      "name": "template-constant-0",
+      "sha256": "d525782dcc851ee2cbed2f3a40e871efd17cd5d08dc05ab4d701971f0a6cd389"
+    },
+    {
+      "name": "template-constant-1",
+      "sha256": "e5ceac42ed9f73de973b85feaf560cacc3cca43827e3b8f6c58c9411a20eeee6"
+    },
+    {
+      "name": "template-constant-2",
+      "sha256": "0c3cad5b23d22eaafa0532ec6f2fcaaffe056b0a10befd67ec5663edf74e1b3d"
+    }
+  ]
 }

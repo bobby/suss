@@ -1,0 +1,80 @@
+;; SPDX-License-Identifier: MPL-2.0
+;; Adapted test inputs from jank-lang/clojure-test-suite at
+;; 95d4a9112cfc5fe6629be3d14bb99080ea00af2f; see vendor/clojure-test-suite/upstream/LICENSE in the repository.
+;; Portable excerpts guided by retained Jank dissoc/empty record cases.
+;; Jank empty.cljs branch expects nil; no JVM record-empty exception contract.
+;; Additional authored nominal/hash/meta/factory/Reduced checks are separate.
+(ns app-records)
+(defrecord TestDissocRecord [a b c])
+(defrecord OtherRecord [a b c])
+(def value (fn [] (:a (->TestDissocRecord 17 2 nil))))
+(def jank-dissoc (fn []
+  (let [r (->TestDissocRecord 1 2 nil)]
+    (if (and (= {:b 2 :c nil} (dissoc r :a))
+             (= {:b 2 :c nil} (dissoc r :a :d))
+             (= {} (dissoc r :a :b :c))
+             (= r (dissoc r :d))) 1 0))))
+(def jank-empty (fn [] (if (nil? (empty (->TestDissocRecord 1 2 nil))) 1 0)))
+(def nominal-hash (fn []
+  (let [r (->TestDissocRecord 1 2 nil)
+        same (->TestDissocRecord 1 2 nil)
+        other (->OtherRecord 1 2 nil)
+        plain {:a 1 :b 2 :c nil}]
+    (if (and (= r same) (= (hash r) (hash same))
+             (not= r other) (not= r plain) (not= plain r)) 1 0))))
+(def metadata-ops (fn []
+  (let [r (with-meta (->TestDissocRecord 1 2 nil) {:tag :record})
+        changed (assoc r :a 7)
+        extended (assoc r :extra false)
+        declared-removed (dissoc r :a)
+        extension-removed (dissoc extended :extra)]
+    (if (and (= {:tag :record} (meta changed))
+             (= {:tag :record} (meta extended))
+             (= {:tag :record} (meta declared-removed))
+             (record? changed) (= 7 (:a changed))
+             (record? extension-removed)
+             (not (contains? extension-removed :extra))
+             (= 3 (count extension-removed))
+             (= {:tag :record} (meta extension-removed))
+             (not (record? declared-removed))
+             (= false (:extra extended)) (= 1 (:a r))) 1 0))))
+(def factory-values (fn []
+  (let [r (map->TestDissocRecord {:a nil :b false :extra nil})]
+    (if (and (nil? (:a r)) (= false (:b r)) (nil? (:c r))
+             (contains? r :extra) (nil? (:extra r))
+             (= 4 (count r))) 1 0))))
+(def reduced-effects (fn []
+  (let [seen (atom [])
+        r (->TestDissocRecord 1 2 3)
+        result (reduce-kv (fn [acc k v] (swap! seen conj [acc k v]) (reduced :stopped)) :initial r)]
+    (if (and (= :stopped result) (= [[:initial :a 1]] @seen)) 1 0))))
+
+(def hash-invalidation (fn []
+  (let [r (->TestDissocRecord 1 2 nil)
+        warmed (hash r)
+        changed (assoc r :a 7)
+        extended (assoc r :extra false)
+        extended-warmed (hash extended)
+        removed (dissoc extended :extra)
+        plain (dissoc r :a)]
+    (if (and (= changed (->TestDissocRecord 7 2 nil))
+             (= (hash changed) (hash (->TestDissocRecord 7 2 nil)))
+             (= removed (->TestDissocRecord 1 2 nil))
+             (= (hash removed) (hash (->TestDissocRecord 1 2 nil)))
+             (= (hash plain) (hash {:b 2 :c nil}))
+             (= extended-warmed (hash extended))
+             (= warmed (hash r))) 1 0))))
+
+(def constructor-effects (fn []
+  (let [seen (atom [])
+        r (->TestDissocRecord (do (swap! seen conj :a) 1)
+                             (do (swap! seen conj :b) 2)
+                             (do (swap! seen conj :c) nil))
+        trace @seen
+        stopped (try
+                  (->TestDissocRecord (do (swap! seen conj :first) (throw :stop))
+                                     (do (swap! seen conj :later) 2) nil)
+                  (catch :default e e))]
+    (if (and (= [:a :b :c] trace)
+             (= [:a :b :c :first] @seen)
+             (= :stop stopped) (= 1 (:a r)) (= 2 (:b r)) (nil? (:c r))) 1 0))))

@@ -1,0 +1,6 @@
+(ns suss-oracle.record-custom-probe)
+(defprotocol ValueProbe (-probe [this]))
+(defrecord Custom [value] ValueProbe (-probe [this] 73) ICounted (-count [this] 99))
+(def original (with-meta (assoc (->Custom false) :extra nil) {:tag :old}))
+(def copied (map->Custom original))
+(js/console.log (js/JSON.stringify (clj->js [(count copied) (:value copied) (contains? copied :extra) (:extra copied) (meta copied) (:tag (meta original)) (.-__hash copied) (-probe copied)])))

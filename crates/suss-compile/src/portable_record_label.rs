@@ -5,7 +5,13 @@
 // resolved type-name symbol; analyzer-map munging is a separate interface.
 // Executes compiled Suss with UTF-16 storage, not a host form evaluator.
 pub(crate) const SOURCE: &str = r###"
+
 (ns suss.internal.record-label)
+;; Private joins receive only known strings. Evaluate all operands left-to-right
+;; before concatenation; preserve exact UTF-16 units without source coercion.
+(def ^:private label-join3 (fn [a b c] (suss.bootstrap/concat-string (suss.bootstrap/concat-string a b) c)))
+(def ^:private label-join4 (fn [a b c d] (suss.bootstrap/concat-string (suss.bootstrap/concat-string (suss.bootstrap/concat-string a b) c) d)))
+
 (def ^:private char-map (array-map "-"    "_"
        ":"    "_COLON_"
        "+"    "_PLUS_"
@@ -77,40 +83,42 @@ pub(crate) const SOURCE: &str = r###"
       unit)))
 (def ^:private replace-dots
   (fn [text]
-    (loop [i 0 result ""]
-      (if (< i (count text))
-        (if (and (= (.charAt text i) ".") (< (+ i 1) (count text)) (= (.charAt text (+ i 1)) "."))
-          (recur (+ i 2) (str result "_DOT__DOT_"))
-          (recur (+ i 1) (str result (.charAt text i))))
-        result))))
+    (let [length (count text)] (if (< (suss.bootstrap/string-index-of text "..") 0) text (loop [i 0 result ""]
+      (if (< i length)
+        (if (and (= (.charAt text i) ".") (< (+ i 1) length) (= (.charAt text (+ i 1)) "."))
+          (recur (+ i 2) (suss.bootstrap/concat-string result "_DOT__DOT_"))
+          (recur (+ i 1) (suss.bootstrap/concat-string result (.charAt text i))))
+        result))))))
 (def ^:private replace-division
   (fn [text]
-    (loop [i 0 result ""]
-      (if (< i (count text))
-        (if (and (= (.charAt text i) "/") (< (+ i 1) (count text))
+    (let [length (count text)] (loop [i 0 result ""]
+      (if (< i length)
+        (if (and (= (.charAt text i) "/") (< (+ i 1) length)
                  (let [unit (.charCodeAt text (+ i 1))]
                    (not (or (= unit 10) (= unit 13) (= unit 8232) (= unit 8233)))))
-          (recur (+ i 2) (str result "." (.charAt text (+ i 1))))
-          (recur (+ i 1) (str result (.charAt text i))))
-        result))))
+          (recur (+ i 2) (label-join3 result "." (.charAt text (+ i 1))))
+          (recur (+ i 1) (suss.bootstrap/concat-string result (.charAt text i))))
+        result)))))
 (def ^:private mark-reserved
   (fn [text]
-    (loop [i 0 start 0 result ""]
-      (if (< i (count text))
+    (let [length (count text)] (loop [i 0 start 0 result ""]
+      (if (< i length)
         (if (= (.charAt text i) ".")
           (let [part (suss.bootstrap/string-slice text start i)]
-            (recur (+ i 1) (+ i 1) (str result part (if (reserved-word? part) "$" "") ".")))
+            (recur (+ i 1) (+ i 1) (label-join4 result part (if (reserved-word? part) "$" "") ".")))
           (recur (+ i 1) start result))
         (let [part (suss.bootstrap/string-slice text start i)]
-          (str result part (if (reserved-word? part) "$" "")))))))
+          (label-join3 result part (if (reserved-word? part) "$" ""))))))))
 (def type-label
   (fn [value]
     (when-not (or (symbol? value) (string? value))
       (throw (suss.bootstrap/error "Record type label requires a symbol or string")))
-    (let [text (mark-reserved (replace-division (replace-dots (str value))))]
+    (let [text (mark-reserved (replace-division (replace-dots (str value))))
+          length (count text)]
       (loop [i 0 result ""]
-        (if (< i (count text))
+        (if (< i length)
           (let [unit (.charAt text i)]
-            (recur (+ i 1) (str result (munge-unit unit))))
+            (recur (+ i 1) (suss.bootstrap/concat-string result (munge-unit unit))))
           result)))))
+
 "###;

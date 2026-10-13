@@ -1,0 +1,12 @@
+package test:records;
+world contracts {
+ export value: func() -> u32;
+ export jank-dissoc: func() -> u32;
+ export jank-empty: func() -> u32;
+ export nominal-hash: func() -> u32;
+ export metadata-ops: func() -> u32;
+ export factory-values: func() -> u32;
+ export hash-invalidation: func() -> u32;
+ export constructor-effects: func() -> u32;
+ export reduced-effects: func() -> u32;
+}

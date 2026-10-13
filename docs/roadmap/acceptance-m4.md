@@ -1,5 +1,61 @@
 # M4 acceptance work record
 
+
+## Resumed current-state audit — 2026-10-13
+
+This checkpoint supersedes historical missing-emitter, active test-hold, PR234
+status and failed-baseline descriptions below. PR234 is merged; foundation
+commit `87857fb` has a successful full baseline. Its uncommitted public-record
+integration has not yet passed a full baseline. Original issues #16–#19 remain open.
+
+* #16: executable import verification passes 17/17; record provenance regressions
+  pass 17/17 and review invalidation passes 10/10. Whole source/notice/hash lists
+  validate. Bootstrap byte reproduction, identity and execution pass 4/4 after
+  the final source and review-manifest refresh. Publication gates remain pending.
+* #17: existing boundary, sharing, metadata and lazy/chunk corpora remain required;
+  no new whole-criterion pass is inferred from record integration.
+* #18: the public macro now compiles two ordinary three-field records and all nine
+  CLI checks pass, including adapted Jank dissoc/portable empty, nominal equality,
+  factories and persistence. Existing HAMT, sorted comparator/iteration and queue
+  tests still require current integration baseline evidence.
+* #19: bounded public record tests cover equal hashes, metadata, warmed hash
+  invalidation, Reduced stopping and persistent updates. Independent ABI decoding
+  after GC passes in both phases. All shared collection reduction/transducer
+  arities, transient invalidation and structural sharing remain audit requirements.
+
+Independent static review reports no remaining blocker. The unchanged Jank
+known-failure comparison passes 7/7; this preserves blocked assertions as failures,
+not successes. Combined public record/transport/case integration passes 14/14.
+The full workspace baseline is running; commit, independent committed-head review,
+publication and final-head CI remain pending. No milestone completion is established.
+
+### Concrete remaining shared reduction paths
+
+Current CLI execution fails `(count (sequence (map inc) [1 2 3]))` with
+`Unresolved Runtime name sequence`, and `(reduce + 0 (eduction (map inc) [1 2 3]))`
+with `Unresolved Runtime name eduction`. The pinned source defines sequence's
+one/two/variadic clauses, TransformerIterator buffering/completion, and Eduction's
+repeatable seq/iterator and both reduction clauses. Their absence leaves the
+accepted all-reduction/transducer-path requirement unproven beyond records.
+
+Complete source for these paths is retained for authoring under
+`/private/tmp/suss-m4-sequence-authoring`: 12 complete declarations, four complete
+setup/registration parents, original source ranges/hashes and EPL notice/license.
+These are neither imported nor executed. Existing iter/to-array/completing,
+chunking, Error, Object method, array buffer and ES6 dependencies need explicit
+reuse/adaptation review before implementation. Preserve all clauses and test
+demand, shortest-input termination, completion, Reduced and repeated effects.
+
+The primary Jank corpus also has real reader prerequisites: map currently fails
+on splicing reader conditionals; mapcat, remove and drop-while fail on unsupported
+reader dispatch. Existing authored CLJS corpora do not replace those primary
+namespace gates. Original source/license and expectation bytes remain unchanged.
+
+Older evidence notes mention “397 required operation rows” and five shared gates
+without linking a recoverable matrix. Those rows cannot be credited from this
+reference alone. Reconcile the count with original #16–#19 acceptance and actual
+source/test identities before closure; do not substitute a passing smaller corpus.
+
 ## Original-criterion source audit — 2026-10-12
 
 This section supersedes the older implementation-gap descriptions below, but

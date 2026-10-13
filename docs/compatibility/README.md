@@ -6,6 +6,14 @@ notes below describe their inspected snapshots; older absence/pending statements
 are superseded by that current record. M3 session acceptance does not reclassify
 unassessed core declarations or establish full upstream compatibility.
 
+
+For current M4 criteria and remaining gates, see the
+[M4 acceptance record](../roadmap/acceptance-m4.md). The
+[public record integration](record-macro-foundations/README.md#executed-public-record-integration--2026-10-13)
+now executes ordinary public macros with bounded nominal equality/hash,
+metadata, factory, persistence and effect checks, plus independent decoding after
+GC in both phases. This does not certify every collection contract or close M4.
+
 The native command REPL now uses one persistent portable Session and displays
 already-rooted scalar results without source reexecution. Eight process-level
 regressions establish bounded frontend persistence/recovery/reset/reader evidence.

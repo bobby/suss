@@ -848,7 +848,7 @@ impl<'a> AnalysisGraph<'a> {
         })
     }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
-        self.expansion_catalog(context, false)
+        self.expansion_catalog(context, false, false)
     }
     /// Explicit compiler-helper transport; ordinary macros keep the existing
     /// graph schema/work. Full catalogs use the same guarded recipe builder.
@@ -856,23 +856,43 @@ impl<'a> AnalysisGraph<'a> {
         &mut self,
         context: portable::ExpansionContext<'_>,
     ) -> Result<SessionValue> {
-        self.expansion_catalog(context, true)
+        self.expansion_catalog(context, true, false)
+    }
+    /// Explicit record-helper resolution projection; excludes ASTs and var
+    /// records while retaining genuine namespace membership and scope facts.
+    pub fn expansion_with_record_catalog(
+        &mut self,
+        context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
+        self.expansion_catalog(context, true, true)
     }
     fn expansion_catalog(
         &mut self,
         context: portable::ExpansionContext<'_>,
         include_compiler: bool,
+        record_bindings: bool,
     ) -> Result<SessionValue> {
         let catalog = context.resolution_catalog();
-        let mut root = self.environment(
-            context.namespace_snapshot,
-            &catalog,
-            context.locals,
-            context.fields,
-            context.function_scopes,
-            context.context,
-            0,
-        )?;
+        let mut root = if record_bindings {
+            let snapshot = self.namespace_membership(context.namespace_snapshot)?;
+            let live = self.namespace_membership(&catalog)?;
+            let projection = self.keyword("record-bindings")?;
+            self.map(vec![
+                ("ns", snapshot),
+                ("suss/catalog", live),
+                ("suss/projection", projection),
+            ])?
+        } else {
+            self.environment(
+                context.namespace_snapshot,
+                &catalog,
+                context.locals,
+                context.fields,
+                context.function_scopes,
+                context.context,
+                0,
+            )?
+        };
         if include_compiler {
             let compiler = portable::compiler_facts::CompilerNamespaceCatalog::capture(
                 context.environment,
@@ -881,6 +901,7 @@ impl<'a> AnalysisGraph<'a> {
             let mut namespaces = Vec::new();
             for (name, revision) in &compiler.namespaces {
                 let value = match revision {
+                    Some(revision) if record_bindings => self.namespace_membership(revision)?,
                     Some(revision) => self.namespace(revision, 1)?,
                     None => self.scalar(Literal::Nil)?,
                 };
@@ -888,6 +909,12 @@ impl<'a> AnalysisGraph<'a> {
             }
             let namespaces = self.map_values(namespaces)?;
             let mut protocols = Vec::new();
+            // Faithful lookup projection of the same phase-filtered protocol
+            // identities. Helpers use local keys without rebuilding an index
+            // inside each macro invocation. Metadata never supplies identity.
+            let mut protocol_globals_by_namespace =
+                std::collections::BTreeMap::<String, Vec<(Value, Value)>>::new();
+            let mut protocol_names = std::collections::BTreeSet::new();
             for (global, methods) in &context.environment.protocols {
                 if global.phase() != context.phase {
                     continue;
@@ -902,15 +929,46 @@ impl<'a> AnalysisGraph<'a> {
                     signatures.push((self.symbol(&method.name)?, self.vector(&arities)?));
                 }
                 let signatures = self.map_values(signatures)?;
-                protocols.push((
-                    self.symbol(&format!("{}/{}", global.namespace(), global.name()))?,
-                    signatures,
-                ));
+                let identity = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
+                let local = self.symbol(global.name())?;
+                protocol_names.insert(global.name().to_owned());
+                protocol_globals_by_namespace
+                    .entry(global.namespace().to_owned())
+                    .or_default()
+                    .push((local, identity));
+                protocols.push((identity, signatures));
             }
             let protocols = self.map_values(protocols)?;
+            let mut protocol_namespaces = Vec::new();
+            for (namespace, globals) in protocol_globals_by_namespace {
+                let namespace = self.text(&namespace)?;
+                let globals = self.map_values(globals)?;
+                protocol_namespaces.push((namespace, globals));
+            }
+            let protocol_globals_by_namespace = self.map_values(protocol_namespaces)?;
+            // Resolve candidate names using the actual compiler scope. Preserve
+            // refers/own/exclusions/core precedence; no metadata or signature
+            // entry is treated as a resolved binding.
+            let mut unqualified_protocol_bindings = Vec::new();
+            for name in protocol_names {
+                let local = suss_reader::Symbol::new(&name);
+                if let Ok(portable::resolve::Binding::Cell(global)) =
+                    context.environment.resolve(context.phase, &local, 0..0)
+                {
+                    let local = self.symbol(&name)?;
+                    let identity =
+                        self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
+                    unqualified_protocol_bindings.push((local, identity));
+                }
+            }
+            let unqualified_protocol_bindings = self.map_values(unqualified_protocol_bindings)?;
             let mut native_interfaces = Vec::new();
             for fact in &compiler.native_interfaces {
-                let global = self.symbol(&format!("{}/{}", fact.global.namespace(), fact.global.name()))?;
+                let global = self.symbol(&format!(
+                    "{}/{}",
+                    fact.global.namespace(),
+                    fact.global.name()
+                ))?;
                 let phase = self.keyword(match fact.global.phase() {
                     portable::resolve::Phase::Runtime => "runtime",
                     portable::resolve::Phase::Macro => "macro",
@@ -940,6 +998,14 @@ impl<'a> AnalysisGraph<'a> {
                 ("current", current),
                 ("namespaces", namespaces),
                 ("protocol-signatures", protocols),
+                (
+                    "protocol-globals-by-namespace",
+                    protocol_globals_by_namespace,
+                ),
+                (
+                    "unqualified-protocol-bindings",
+                    unqualified_protocol_bindings,
+                ),
                 ("native-interfaces", native_interfaces),
             ])?;
             let key = self.keyword("suss/compiler-catalog")?;
@@ -1001,6 +1067,41 @@ impl<'a> AnalysisGraph<'a> {
             ("suss/catalog", catalog),
             ("locals", locals),
             ("fn-scope", scopes),
+        ])
+    }
+    fn namespace_membership(&mut self, namespace: &SourceNamespace) -> Result<Value> {
+        let name = self.symbol(&namespace.namespace)?;
+        let mut aliases = Vec::new();
+        for (alias, target) in &namespace.aliases {
+            aliases.push((self.symbol(alias)?, self.symbol(target)?));
+        }
+        let aliases = self.nullable_map(aliases)?;
+        let mut refers = Vec::new();
+        for (local, global) in &namespace.refers {
+            refers.push((
+                self.symbol(local)?,
+                self.symbol(&format!("{}/{}", global.namespace(), global.name()))?,
+            ));
+        }
+        let refers = self.map_values(refers)?;
+        let exclusions = namespace
+            .excluded_core
+            .iter()
+            .map(|name| self.symbol(name))
+            .collect::<Result<Vec<_>>>()?;
+        let exclusions = self.recipe(Recipe::Set(exclusions))?;
+        let names = namespace
+            .identities
+            .iter()
+            .map(|global| self.symbol(global.name()))
+            .collect::<Result<Vec<_>>>()?;
+        let names = self.recipe(Recipe::Set(names))?;
+        self.map(vec![
+            ("name", name),
+            ("requires", aliases),
+            ("suss/refers", refers),
+            ("excludes", exclusions),
+            ("suss/binding-names", names),
         ])
     }
     fn namespace(&mut self, namespace: &Arc<SourceNamespace>, depth: usize) -> Result<Value> {

@@ -5038,4 +5038,86 @@
    :rationale "Retain both pinned drop-while clauses, including short-circuited predicate state and initialization/completion. Expand defn/lazy-seq and replace the private volatile state with portable atom/reset! storage."
    :status :in-progress :adaptation-path "docs/compatibility/patches/record-emitter-drop-while.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_record_emitter_dependencies.rs"]}
+
+
+  "macro:collect-protocols:1754"
+  {:source-sha256 "f1813953ce29694f22cd26fff5a3823003396ea476bbdf34c5a82e92a8a872f3" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["caller namespace/protocol resolution"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:prepare-protocol-masks:1710"
+  {:source-sha256 "d172ca8907ff60eff042fd5b2772ac2299fda0d776670cb3f975587db9b1fd3b" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["collect-protocols" "fast-path-protocols" "fast-path-protocol-partitions-count"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:annotate-specs:1732"
+  {:source-sha256 "586c800446617850ca3f8f73e3c2a4a997ab340b1d5c3221f470ac96188d6737" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["with-meta" "method grouping"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:dt->et:1737"
+  {:source-sha256 "ec28e27e949dee8a39b90df8118de82625f9fee597935c3ef89f8acd2d06dfa4" :visibility :public
+   :arities {:fixed [3 4] :variadic-min nil}
+   :dependencies ["annotate-specs" "protocol method grouping"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:emit-defrecord:1853"
+  {:source-sha256 "4b6bb63cee300f674968585a62cbb4938d26e3ce22d0ec875f0fd27624fe9616" :visibility :private
+   :arities {:fixed [5] :variadic-min nil}
+   :dependencies ["dt->et" "collect-protocols" "prepare-protocol-masks" "nominal descriptor identity" "collection protocols"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:validate-fields:1771"
+  {:source-sha256 "fd9dd18485ae4c6c69ab4f98d23b116f82173a88747677a151e5171748e4b266" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["vector?" "portable Error"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:defrecord:1972"
+  {:source-sha256 "3d9985e703105f6f66a3d56e9a3158684fd6b65c06aa1263034175b69d39b948" :visibility :public
+   :arities {:fixed [] :variadic-min 2}
+   :dependencies ["validate-fields" "emit-defrecord" "build-positional-factory" "build-map-factory"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/public-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:build-positional-factory:1760"
+  {:source-sha256 "fad1f2e6fed6882ad744d70464383de431b5e5a297fd0152513440a815c83527" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["compiled form construction" "internal constructor fields"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/factory-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "macro:build-map-factory:1960"
+  {:source-sha256 "6406d90207c872c9eee82e38054bffa08d7d6a3092dec6ef56a22e6296b541cb" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["get" "dissoc" "record?" "into" "not-empty"]
+   :classification :adapted
+   :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
+   :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/factory-adaptations.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
 }}
