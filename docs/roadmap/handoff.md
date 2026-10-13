@@ -24791,3 +24791,1204 @@ cargo test --workspace --locked -- --test-threads=2`. Logs are
 /private/tmp/suss-m4-resumed-full-baseline-20261012.log. Observe this exact
 execution handle and terminal results; do not restart on an observation timeout.
 No complete baseline or final-head CI success is claimed while it runs.
+
+Validation receipt (2026-10-12): execution12431 completed with exit0. Both
+independent bootstrap reproduction/identity and compiled execution4/4 passed;
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2` completed all test binaries
+and doctests successfully (one pre-existing ignored doctest). Logs remain
+/private/tmp/suss-m4-startup-reproduction-20261012.log and
+/private/tmp/suss-m4-resumed-full-baseline-20261012.log. All GitHub CI checks
+passed on897aa85, matching the independently reviewed source checkpoint.
+PR234 was promoted for user review under standing authorization; no merge.
+
+Follow-up work uses portable/m4-public-record-identity in the existing worktree.
+The resumed goal names Jank conformance as primary and ClojureScript oracle as
+second reference; portable semantics and the original issue criteria remain
+required. Public record expansion is still unfinished. A private immutable
+descriptor-reference identity operator is being validated to avoid consulting
+an overridable constructor property. Authored tests cover both compiled phases,
+GC, redefinition, heterogeneous values, ordered effects/throw and forged equal-ID
+descriptors. Record graph scratch source/evidence remains outside shipped code:
+/private/tmp/suss-m4-public-record-probe/src and
+/private/tmp/suss-m4-record-candidate-evidence-20261012.md.
+
+Descriptor identity focus (2026-10-12): new source regression first failed on
+unresolved suss.bootstrap/same-nominal-type? in the previous implementation
+(log /private/tmp/suss-m4-record-identity-red-20261012.log). After the operator
+and bootstrap regeneration, portable_record_identity passes4/4 (one authored
+two-phase case plus three shared decoder cases). The constructor override is
+actually called and observed as :overridden. Raw equal-ID descriptor-copy test
+passes1/1 (74 filtered). Logs: /private/tmp/suss-m4-record-identity-{bootstrap,
+focused,runtime}-20261012.log. Independent review found no operator blocker;
+its override-observability coverage request was incorporated. Public record
+emitter scratch now uses this descriptor predicate; complete expansion and
+public record acceptance still require execution.
+
+Final descriptor focus: after the final emitter-source formatting change,
+bootstrap identity correctly required regeneration again. Fresh regeneration
+then portable_nominal5/5 and portable_record_identity4/4 passed. Bootstrap
+independent byte reproduction, identity and compiled_bootstrap4/4 passed with
+Java/Node absent; execution94724 terminal exit0. Logs:
+/private/tmp/suss-m4-record-identity-bootstrap-final-20261012.log,
+/private/tmp/suss-m4-record-identity-shapes-20261012.log and
+/private/tmp/suss-m4-record-identity-reproduction-20261012.log.
+
+Component-cost diagnostic remains live as execution37083 (confirmed by polling).
+Program /private/tmp/suss_m4_record_cost.rs links current existing test libraries,
+uses genuine ExpansionContext compiler catalogs, unchanged default budgets and
+separate invocation observations. Added symbol construction, own/core binding
+lookup, protocol-set insertion and mask-update measurements; output
+/private/tmp/suss-m4-record-component-cost-20261012.log. It is diagnostic, not
+public record acceptance. Observe this exact handle; do not restart on timeout.
+No full baseline is claimed for the uncommitted follow-up. Next use the measured
+costs to optimize the complete graph and execute public records before final
+criterion audit, full baseline and PR publication.
+
+Execution37083 subsequently completed exit0. Measured symbol construction
+15,434 fuel; own binding lookup216,245; core binding lookup136,939; singleton
+protocol-set insertion42,324; mask update10,525. Complete15-protocol facts still
+use9,921,757 in this genuine diagnostic context. Binding resolution dominates
+these isolated operations; next cache actual captured namespace definition maps
+while retaining signature membership, own/refers/exclusion precedence and full
+error semantics. Complete public macro expansion remains unverified/over budget.
+
+Record resolution diagnostics (2026-10-12): caching actual own/core definition
+maps while preserving signature/refers/exclusion precedence reduced complete
+15-protocol facts from9,921,757 to9,216,977 fuel. Sharing the identical persistent
+protocol/skip set until a non-fast protocol appears reduced that to7,371,005.
+Both diagnostic processes completed exit0; independent static review found no
+semantic blocker. Five real-catalog helper boundary results passed: empty,
+only-native Object, fast-before-native, native-before-fast, and ignored method
+forms with duplicates. These are helper checks, not public record conformance.
+Logs /private/tmp/suss-m4-record-{cached-definitions-cost,shared-set-cost,
+set-boundaries}-20261012.log. Full source-project record expansion still failed
+with unchanged fuel (shared-set-public log). Public compile remains unaccepted.
+
+Emitter-stage diagnostic execution84494 is live; it loads the actual complete
+helper sources and retained private label/factory source into a Macro Session,
+using the real caller compiler graph. For direct Session loading only, the
+require clause is removed after its dependency was explicitly loaded; normal
+public project loading remains unchanged. A diagnostic copy returns the entire
+generated impls before facts/annotation to isolate cost; no generated stanza is
+removed from production or the public candidate. Log
+/private/tmp/suss-m4-record-emitter-component-cost-20261012.log.
+
+Reread original #16,#17,#19 bodies from GitHub. Prior897 baseline includes all
+vector7/7, core_import17/17 and collection-focused binaries. Fresh original #16
+command scripts/verify-core-import.sh is now running (same settings), log
+/private/tmp/suss-m4-import-acceptance-20261012.log. Full original acceptance
+audits remain required; none of these helper checks closes an issue.
+
+Import acceptance execution95665 completed exit0: scripts/verify-core-import.sh
+verified inventory/reviews, retained provenance,439 import files and core_import
+17/17 under unchanged settings. This is the original #16 gate, not a full
+portable collection compatibility claim. Log suss-m4-import-acceptance-20261012.log.
+
+Emitter diagnostic84494 completed exit0 with explicit observed failure results:
+short app/Pair type-label costs2,566,932; complete generated implementations
+already exhaust10m before facts; complete emitter also exhausts10m. A terminal
+diagnostic program is not success for its failed measured operations. This
+identifies a second bottleneck beyond protocol resolution.
+
+The integrated label helper now retains all63 reserved words in sorted order
+and uses exact string binary search. All24 character-table pairs are compiled
+into literal comparisons; the complete original table and fallback remain.
+Adaptation/source hashes updated, retained originals and licenses unchanged.
+compiled_record_labels passed4/4, then the expanded complete reserved-word
+regression passed1/1 (three decoder cases filtered): all63 pinned-source names
+and their nonreserved neighbors execute in both phases afterGC. Independent
+static review found no semantic/table/hash blocker. Provenance checker passes.
+Logs suss-m4-record-label-search-{bootstrap,focused}-20261012.log and
+suss-m4-record-label-full-reserved-20261012.log. A fresh emitter-cost diagnostic
+is live as execution98964, log suss-m4-record-emitter-label-search-cost-20261012.log;
+observe its exact handle and terminal results. Full public graph, final baseline
+and final-head CI are still required for this uncommitted follow-up.
+
+Execution98964 completed exit0 with measured failed operations retained:
+optimized short label now costs1,660,141 fuel (previous2,566,932). Complete
+generated impls and complete emitter still exceed10m. The optimization improves
+actual work but does not establish public record success. Independent final
+review of the expanded pinned-table test found no blocker.
+
+Per-entry emitter diagnostic is live as execution35508, log
+/private/tmp/suss-m4-record-emitter-method-cost-20261012.log. Scanner extracts
+all31 top-level generated entries intact into diagnostic closures capturing
+the same actual fields/type context. Each invocation retains the default budget;
+this separates measurement of individual generated method construction and is
+not a production budget change or acceptance substitute. Source/labels:
+/private/tmp/suss-m4-record-emitter-thunks.sus,
+/private/tmp/suss-m4-record-emitter-thunk-labels.json; Rust launcher
+/private/tmp/suss_m4_record_thunk_cost.rs. Production candidate still constructs
+all entries in original order in one expansion. Next act on this measurement
+and execute the complete public graph with original Jank/pinned expectations.
+
+Per-entry diagnostic35508 completed exit0: all31 retained generated entries
+were measured independently under default budgets. Largest construction costs
+are IHash2,316,451, assoc2,051,200 and printer1,451,550. Sum of construction
+exceeds10m before facts; no stanza is dropped. Logs and label map remain as above.
+
+Private-builder scratch adaptation now expands the retained templates using
+the real Suss reader and actual provisional source declarations, then replaces
+only all-singleton reader collection builders with direct source list/vector
+constructors. General syntax quote remains unchanged. Remaining sequence calls
+use an explicit private implementation of the pinned one-argument coercion,
+rather than claiming a public sequence var or authenticated reader origin.
+The adaptation uses authentic new source locations, not copied upstream ranges.
+Independent review accepts this compiler-private construction adaptation; public
+record behavior, user evaluation order, hygiene and semantic metadata remain
+required. No unrestricted equivalence of core-hook call counts is claimed.
+
+Direct construction diagnostics passed generated impls7,522,678, complete facts
+for those impls7,563,817 and original dt->et7,392,180; whole emitter stilltraps10m.
+An all-constant quote-folding experiment worsened cost and was discarded.
+A one-pass method-group scan preserving the same map insertion order, plus direct
+complete annotations on a freshly created metadata-nil cons, reduced dt->et to
+3,746,794 (49%). Independent review found no missing marker protocols, method
+signatures, annotations or nested user metadata. Whole emitter stilltraps10m.
+Logs /private/tmp/suss-m4-record-direct-{coercion-emitter-cost,folded-emitter-cost,
+one-pass-cost}-20261012.log; no public record success or milestone closure.
+
+Latest complete source-project run is live, log
+/private/tmp/suss-m4-record-direct-one-pass-public-20261012.log. The complete
+candidate remains scratch-only at /private/tmp/suss-m4-public-record-probe/src;
+original template backup /private/tmp/suss-m4-record-emitter-original-template-20261012.sus;
+one-pass input /private/tmp/suss-m4-record-emitter-one-pass-input.sus; static
+adaptation generator /private/tmp/suss_m4_optimize_record_templates.rs. Generator
+contains dead experimental folding helpers, but no folding call remains and
+none will ship. Source/declaration hashes, whole output/metadata boundary tests,
+full public Jank/pinned record execution and final validation still required.
+
+Complete one-pass public compile46838 finished exit1 on unchanged fuel.
+Bulk-set construction experiment35481 passed its helper boundary checks but
+worsened15-protocol cost to7,806,641 from7,371,005; it is discarded. Direct
+Cons/vector-literal private builders measured generated impls6,602,439 (down
+from7,522,678), facts7,563,817 and annotation3,746,794; complete emitter still
+traps10m. Independent review verified authentic Cons schema, ordering, all31
+entries, vector metadata and candidate nesting30<64. These remain scratch
+adaptations; public record behavior and metadata transport remain unaccepted.
+
+Runtime numeric lookup-hint experiment passed the old live/GC test but an
+independent review identified duplicate-key first-match failure. New regression
+reproduced that exact failure (91648 exit101). Entire hint type/global/cache
+was removed, including every runtime_abi.rs modification; no root retention or
+numeric identity shortcut ships. Ordered first-four-pair lookup now performs
+fresh bounds/RefEq/live-value checks in original order, then unchanged scan
+fromslot8. Setter and all original guards remain unchanged. Expanded regression
+passes1/1 afterGC, equal-ID keys, table replacement, in-place update, odd-table
+rejection/recovery, duplicate first-match and slot8/following duplicate boundary.
+Independent final review found no blocker. Logs:
+/private/tmp/suss-m4-method-{hint-duplicates-red,prefix-regression}-20261012.log.
+
+Bootstrap regenerated for the ordered prefix. Complete runtime_abi binary
+passed76/76 in10.72s. Execution17032 continues source-focused
+portable_record_identity and generated_async_import_bridge under unchanged
+budgets/settings; log suss-m4-method-prefix-source-focused-20261012.log. Fresh
+complete-cost diagnostic97361 and public-source compile22606 are live, logs
+suss-m4-record-method-prefix-cost-20261012.log and
+suss-m4-record-prefix-public-20261012.log. Inspect those exact handles; do not
+restart on observation timeout. No final full baseline/CI or public record
+acceptance is claimed for this uncommitted follow-up.
+
+Latest executions are terminal:17032 exit0 (runtime76/76, async8/8, record
+identity4/4);97361 diagnostic exit0 with retained complete-emitter failure;
+22606 public compile exit1 on fuel. Ordered-prefix costs: label1,645,980,
+impls6,558,617, facts7,532,152, annotation3,729,279. These are modest gains,
+not public-record acceptance. All validation settings remain unchanged.
+
+Read-only Wasm source-name recovery tool completed26912 exit0, mapping actual
+embedded labels to hot anonymous stack frames without instrumenting execution:
+128=m3_mix_K1,135=m3_hash_unencoded_chars,383=hash,437=symbol?,
+551=array_index_of_symbol?. Tool /private/tmp/suss_m4_wasm_source_names.rs.
+This identifies hashing and symbol lookup as next targets. The suspected
+large-array-map catalog issue was checked against FormBridge::map_values:
+it already constructs canonical HAMTs above eight entries, so do not implement
+a duplicate map-threshold fix or assume the producer has that bug. Next measure
+actual hashing suboperations/current catalog map cardinalities, then optimize
+only proven work while preserving public core semantics, original full record
+graph and unchanged budgets. Full original acceptance and final-head gates
+remain required before follow-up publication or any closure.
+
+Hash/lookup diagnosis12786 completed exit0 under default allowances. Actual
+catalog storage is signatureHAMT49entries and coredefsHAMT612entries. Bridge
+quoted identifiers already cache hash: each cold/warm invocation1,612fuel.
+For IHash / IPrintWithWriter / suss.core UTF16text, m3 char hashing costs
+15,454 /40,864 /24,786; polynomial stringhash7,312 /21,194 /12,360. Cached
+namespace stringhash is cheaper. Whole string/symbol hashing alone does not
+account for all expansion cost; avoid replacing correct public hashing from
+this narrow evidence. Log suss-m4-hash-lookup-cost-20261012.log.
+
+Declaration-reuse diagnostic17435 completed exit0: sourcecore symbolcreation
+15,182, ownbinding215,287, corebinding136,341; reading global from core
+declaration metadata164,690 is slower and unsafe as identity. Do not adopt it.
+Log suss-m4-declaration-reuse-cost-20261012.log.
+
+Scratch caller-signature indexing42788 passes existing helper boundaries and
+reduces15protocolfacts slightly to7,172,512, with higher one/small-case overhead.
+Three realcaller checks with a local IHash protocol, an ordinary ownbinding,
+qualifiedcore+duplicates passed18188. Independentreview then identified raw
+:name metadata identity bug: truecaller(def ^{:name wrong/ns} ordinary17)
+reproduced false result12278(exit101). Fixedscratch resolver usesgenuine
+indexed signatureglobal, otherwise constructs canonicalcallernamespace/name
+onlywhen an ownbinding exists. Rawmetadata is neverbindingidentity.
+Currentfixed execution is live, log suss-m4-record-own-meta-fixed-20261012.log;
+source /private/tmp/suss-m4-record-own-signature-index-candidate.sus, launcher
+/private/tmp/suss_m4_record_own_meta_check.rs. This remainsoutsidepublic graph
+until complete scope/provenance/performance evidence; no milestoneclosure.
+
+Fixed caller-identity execution40219 completed exit0. All three realcompiler
+scope checks pass with locally shadowing IHash protocol and ordinary binding
+carrying misleading :name wrong/ns metadata. Qualified core resolution and
+duplicates still return the expected protocols/masks. Log
+suss-m4-record-own-meta-fixed-20261012.log. This proves the scratch identity
+repair at that boundary; public record acceptance remains missing.
+
+GitHub refresh: PR234 remainsOPEN/ready-for-review at897aa85; M4 remainsOPEN
+with four open issues and one closed issue. No merge/closure made. The caller
+signature index has only a modest full15 gain and higher small-case cost; keep
+it isolated until full-graph evidence justifies inclusion. The original resolver
+remains the source-project input, so no unverified optimization is silently
+substituted into acceptance. Next address the remaining combined operation
+cost and complete public construction/metadata/equality/hash/reduction tests.
+
+Constant syntax-data lifting experiment20738 completed with initialization
+within the unchanged default allowance:20 immutable Cons/vector subtrees
+initialized once, then generated-impls cost6,279,267 vs6,558,617. Complete
+facts7,532,152 and annotations3,729,279 remain; wholeemitter stilltraps10m.
+No public success is implied by the terminal diagnostic process. Source-sharing
+changes private-builder allocation identity/timing, not contents; independent
+review permits this private adaptation while requiring hygiene, user evaluation
+order, emitted metadata and public record behavior checks.
+
+Generator robustness fixes now mark all constants private and preserve fn/
+multiarity parameter vectors plus let/loop binding syntax, lifting only RHS
+initializers and expression data. No public reader optimization is introduced.
+Latest default-budget remeasurement is live as29401, log
+/private/tmp/suss-m4-record-safe-lift-cost-20261012.log. This is still scratch
+and source-project inputs have not silently changed to it.
+
+Tracked follow-up validation is frozen while execution66070 runs dependency
+ordered independentbootstrapreproduction then requiredfullworkspacebaseline.
+Reproduction/identity and compiled_bootstrap4/4 passed18.05s with Java/Node
+absent. Full command:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target
+cargo test --workspace --locked -- --test-threads=2`. Logs
+/private/tmp/suss-m4-followup-bootstrap-reproduction-20261012.log and
+/private/tmp/suss-m4-followup-full-baseline-20261012.log. Last observedfullrun
+CLIunit tests progressing; do not claim terminalsuccess or restart on timeout.
+Scratch diagnostics remain outside the tracked input and neither establish
+public record compatibility nor reduce the original M4 acceptance scope.
+
+Emitter output-boundary execution1875 completed exit0: all31 retained generated
+entries were independently constructed with original templates underdefault
+budgets, transported usingFormBridge.read and compared to completeoptimized
+impls. Exact source structure/metadata agrees afterspan+generatedname
+normalization. Complete old/new annotation graph alsoagrees (old7,346,229
+fuel,new3,729,279). Stronger80646 comparisonuses onegeneratedname map across
+all31entries and passes, verifyingcross-entry name consistency too. Logs:
+/private/tmp/suss-m4-record-output-{compare,global-compare}-20261012.log;
+launchers /private/tmp/suss_m4_record_output{,_global}_compare.rs. This validates
+private adapted construction output, not complete publicrecord execution.
+
+Checked-default cache experiments remainunintegrated:11362(precomputepure
+maskaccumulator),85855(literaldata fromall51retainedrows/50uniquekeys with
+lastwinsduplicate),57339(sharedsingleprotocolset) allfailed Sourceinitialization
+underunchangeddefaultfuel. No budgets/sourceinputs altered to hidefailures.
+Derived default masks {-2064251126,139264} are scratchdata recomputed fromthe
+complete table, not guessedbindingfacts. Independentreview confirms eachcall
+resolves everyoccurrence againstgenuinecaller state beforecache equality, but
+noneofthese cachingvariants has initialization/publicexecution acceptance.
+Logs /private/tmp/suss-m4-record-{checked-cache,checked-literal,single-set-cache}
+-cost-20261012.log. Next optimize actual initialconstruction cost orchoose a
+legitimate compiler-private data strategy, thenrequirefull source-project
+execution andoriginalJank/pinned publicrecord criteria.
+
+Requiredfullbaseline66070 remainslive; latestobserved constructor-source AST
+checks progressingaftercompiler-catalog tests. Observe exacthandle/log, do not
+restart ontimeout. No tracked implementation edits occurred duringvalidation.
+
+Full-table sorted lookup experiment56585 completed exit0. Startup succeeds
+underunchangeddefaultbudget with complete literal51rows (includingduplicate)
+and sorted50-name index pointingto lastrow. Unique-count50 and partitions2
+computedfromactualindex. Independentreview confirms all51rows/bitvalues,
+lastwinsIPrintWithWriter2^31, IPendingpartition1bit1, canonicalnamespaceguards
+anddefaultderivedmasks. Source /private/tmp/suss-m4-record-indexed-fastpath-cache.sus.
+
+Checkeddefaultdata still resolvesEVERY actualcaller occurrence beforematching
+canonical15vector; no binding is inferredfromliteraldata. Existingempty/native/
+duplicate/ignoredmethod/order checks pass. Complete15 facts cost5,138,396
+(previous7,371,005); fallbackbinarylookup is slowerperentry, so preserve scope
+results andmeasurecompletepublicgraph beforeinclusion. Log
+/private/tmp/suss-m4-record-indexed-fastpath-cost-20261012.log. Newcomplete
+emitter diagnostic live with indexeddata; log
+/private/tmp/suss-m4-record-indexed-full-cost-20261012.log, launcher
+/private/tmp/suss_m4_record_indexed_full_cost.rs. Scratch remainsseparatefrom
+trackedfullbaseline66070, whosecompiler AST/lifecycle binariesadvance with
+noobservedfailure. No milestone/issueclosure orpublicrecordsuccess claimed.
+
+
+## User-requested pause — 2026-10-12
+
+Goal paused at the validation checkpoint. Branch `portable/m4-public-record-identity`
+in `/private/tmp/suss-m4-sorted-tree-collections` retains uncommitted identity,
+ordered getter-prefix, label, regression, provenance and regenerated bootstrap changes.
+No new commit, push, PR, or promotion was performed at this pause.
+
+Bootstrap reproduction passed. Required follow-up full baseline session 66070
+was interrupted cleanly (exit 130) at the user's pause request, while running
+`compiled_macro_sets`; preceding observed binaries passed. This is an INCOMPLETE
+baseline, not a pass. Log: `/private/tmp/suss-m4-followup-full-baseline-20261012.log`.
+On resumption run `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test --workspace --locked -- --test-threads=2`
+with existing validation settings. Focused identity/getter/label checks passed;
+PR #234's published head 897aa85 has its separate completed green baseline and
+review. Do not conflate that published receipt with this uncommitted follow-up.
+
+Public defrecord is still unfinished: complete source-project expansion exceeds
+unchanged macro fuel. No public record acceptance or M4 completion is claimed.
+Scratch direct annotation compares all 31 generated entries and complete annotation
+structure/metadata successfully with consistent generated-name normalization
+(log `/private/tmp/suss-m4-record-direct-annotation-compare-20261012.log`).
+The private generator `/private/tmp/suss_m4_optimize_record_templates.rs` reads
+`/private/tmp/suss-m4-record-emitter-direct-annotation-input.sus` and writes
+`/private/tmp/suss-m4-record-emitter-direct-candidate.sus`. Indexed facts scratch
+is `/private/tmp/suss-m4-record-indexed-fastpath-cache.sus`. These remain unintegrated;
+nonempty user implementations and hinted-field comparison matrix remain required.
+Latest guarded direct UTF-16 label slice experiment failed with fuel exhaustion
+(log `/private/tmp/suss-m4-record-label-direct-slice-cost-20261012.log`); no success
+or integration is claimed. Public probe project: `/private/tmp/suss-m4-public-record-probe`.
+
+Next unblocked implementation task after validation: reduce complete record macro
+expansion cost without raising budgets or dropping protocols, then compile and execute
+the public probe and original Jank/pinned record acceptance cases. Issues #16–#19
+remain open. Resume only when the user requests it.
+
+
+## M4 resumed — 2026-10-12
+
+Goal is active again. Required baseline restarted only after the prior exit-130
+interruption was confirmed. Live session: 9033. Unchanged command/settings:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test --workspace --locked -- --test-threads=2`.
+Log: `/private/tmp/suss-m4-followup-full-baseline-resumed-20261012.log`.
+Tracked implementation remains frozen during this run; no completed result yet.
+
+Scratch comparison session 25825 finished exit 0: all 31 emitted entries and
+complete annotation output match the retained original after consistent gensym
+normalization, now with `[^long left ^:mutable right]`. A nonempty user IHash
+implementation with user method metadata and a hinted parameter also matches
+in the complete user-first annotation graph. Log:
+`/private/tmp/suss-m4-record-user-hint-compare-20261012.log`; launcher:
+`/private/tmp/suss_m4_record_user_hint_compare.rs`. This is construction evidence,
+not public record execution or complete field-count boundary acceptance.
+
+Scratch resolver reuse experiment 27675 finished exit 0; facts cost drops from
+5,348,416 to 4,709,270 fuel using actual own-signature indexing, reusing the
+unqualified local symbol and checking actual core definitions before fallback
+signature membership. Complete emitter still exhausts unchanged default fuel.
+No integration or public success claimed. Source:
+`/private/tmp/suss-m4-record-resolver-reuse-candidate.sus`; log:
+`/private/tmp/suss-m4-record-resolver-reuse-cost-20261012.log`.
+Per-protocol/setup breakdown session 31901 remains live; log:
+`/private/tmp/suss-m4-record-resolver-breakdown-20261012.log`.
+Next action: inspect that exact diagnostic's terminal result to target measured
+cost rather than guessing, while preserving actual caller binding checks.
+
+
+Resumed diagnostics: setup/per-symbol breakdown session31901 completed exit0.
+Actual resolver setup costs1,314,246; each default protocol resolves in about
+138k–151k fuel. Log `/private/tmp/suss-m4-record-resolver-breakdown-20261012.log`.
+Numeric character-case label experiment22290 completed exit0 but REGRESSED
+label cost1,646,042->1,662,826 and complete emitter still exhausts fuel; rejected.
+Log `/private/tmp/suss-m4-record-label-numeric-case-cost-20261012.log`.
+
+A new unintegrated diagnostic simulates a faithful compiler projection
+`:protocol-globals-by-namespace`, grouped solely from the actual transported,
+phase-filtered `:protocol-signatures` keys, never definition metadata. The real
+producer would build this in AnalysisGraph recipes from Environment.protocols.
+Source `/private/tmp/suss-m4-record-projected-signature-guarded-candidate.sus`
+requires the index instead of silently treating an absent index as no protocols.
+Launcher `/private/tmp/suss_m4_record_projected_signature_cost.rs` preprocesses
+catalog data OUTSIDE the measured macro invocation; it is a prototype cost
+measurement, not public compilation/acceptance or an integrated producer.
+Initial40258 diagnostic failed on unavailable `get-in`; replaced with existing
+nested `get`/`assoc` and restarted only after terminal exit101. Current diagnostic
+session82728; log `/private/tmp/suss-m4-record-projected-signature-guarded-cost-20261012.log`.
+Independent reviewer Cicero is checking scope preservation. Tracked implementation
+continues frozen while baseline9033 runs.
+
+GitHub refresh now confirms PR#234 was MERGED at2026-10-13T02:05:27Z, head897aa85.
+No merge was performed by this agent. Follow-up must use current origin/main
+before publishing, after the current baseline terminates. Issues16–19 remainOPEN
+with original acceptance unchanged. `git diff --check` passes.
+
+
+Projected signature diagnostic82728 completed exit0, but complete emitter still
+exhausts unchanged fuel. Actual facts cost3,562,148 (downfrom4,709,270); generated
+impls6,278,267 and label1,646,042. Guarded log:
+`/private/tmp/suss-m4-record-projected-signature-guarded-cost-20261012.log`.
+Reviewer confirms grouping actual phase-filtered keys preserves scope; missing
+index must be rejected or fallback retained. Guarded candidate rejects non-map
+index; review originally inspected the unguarded draft. This remains a scratch
+cost hypothesis, not integrated typed producer or public record acceptance.
+
+Private label ASCII pass-through experiment34606 is live:
+`/private/tmp/suss-m4-record-label-ascii-candidate.sus` retains complete original
+mapping fallback and passes through only one-unit ASCII digits/upper/lower letters
+(absent from every retained character-map key). Launcher:
+`/private/tmp/suss_m4_record_label_ascii_cost.rs`; log:
+`/private/tmp/suss-m4-record-label-ascii-cost-20261012.log`.
+No correctness/Unicode/reserved-word acceptance or improvement yet claimed.
+Next: poll34606 exact handle, inspect cost and all pinned label cases before any
+integration. Full baseline9033 remains live, now compiler-catalog tests; no observed
+failure. Keep tracked implementation frozen. No new commit/push/PR yet.
+
+
+ASCII label diagnostic34606 completed exit0: label1,634,927 (only11,115 fuel
+saved), generated impls6,267,152; facts3,562,148 unchanged; complete emitter STILL
+exhausts default fuel. This small saving does not justify integration yet; no
+label correctness acceptance claimed. Full public compilation/execution remains
+unproven. Next substantive investigation should target measured whole-template
+construction cost; avoid accumulating minor label variants as apparent progress.
+Baseline9033 remains live; compiler-catalog staged rollback/reload tests observed
+passing. Poll same handle, do not restart a live run.
+
+
+## Record expansion cost progress — 2026-10-13
+
+Baseline9033 remains live with unchanged tracked implementation/settings. Log:
+`/private/tmp/suss-m4-followup-full-baseline-resumed-20261012.log`. No full-pass
+claim yet. All experiments below are outside the tracked worktree.
+
+Construction profile90417 completed exit0: shared setup487400; generated IHash
+1694707 (mostly label); with-meta531674; assoc1203960; remaining individual
+entries at most385012. Profiling uses independent thunks only to locate cost,
+not to reset a public macro's budget or establish public acceptance. Log:
+`/private/tmp/suss-m4-record-construction-profile-20261013.log`.
+
+Private string joins24914 completed exit0. Retains initial str(value), all tables
+and guards; known String joins use existing UTF-16 concat-string intrinsic.
+Separately compiled original comparison passed all63 reserved names, dotted/name
+segments and nonreserved neighbors, ASCII0..127, dots, line terminators and lone
+surrogates. Label466109 vs1646042 fuel. Complete emitter9542091 under unchanged
+10m budget with actual-signature-index prototype. Source/log:
+`/private/tmp/suss-m4-record-label-string-join-candidate.sus`;
+`/private/tmp/suss-m4-record-label-string-join-cost-20261013.log`.
+
+Schema substitution52449 completed exit0: private vector field substitution
+preserves metadata and last-wins __hash clearing; complete emitter9836566 with
+old label. Combined label/schema emitter8660229. Output comparison29485 passed
+all31 entries, consistent gensyms, hinted fields and complete user-first method
+annotations. Source `/private/tmp/suss-m4-record-emitter-schema-candidate.sus`;
+log `/private/tmp/suss-m4-record-schema-output-compare-20261013.log`.
+Initial96889 defined replacements AFTER emitter and measured unchanged snapshots;
+discard that ineffective experiment as implementation evidence.
+
+Projection/resolver candidate additionally reuses actual unqualified bindings
+resolved by Environment::resolve in the actual caller phase, for local names
+from the phase-filtered protocol catalog. No metadata supplies identities; only
+Binding::Cell is projected; native Object handling precedes this lookup and
+qualified/missing-name cases retain original fallback. Independent Cicero review
+found no static blocker after requiring both projection maps. Real producer is
+NOT applied, compiled, or tested: proposed whole file
+`/private/tmp/suss-m4-portable-macro-graph-index-candidate.rs` and patch
+`/private/tmp/suss-m4-protocol-index-producer.patch`. Resolver:
+`/private/tmp/suss-m4-record-resolved-binding-candidate.sus`.
+
+Resolved-binding diagnostic46532 completed exit0: facts2758913, emitter7856994,
+but raw/initial optimized public wrappers still exceeded10m. Optimized private
+factory templates89631 then enabled complete wrapper expansion9011208 under
+UNCHANGED10m; source-form decoding succeeds. Log:
+`/private/tmp/suss-m4-record-full-optimized-cost-20261013.log`.
+This simulates actual catalog queries outside the measured macro invocation,
+not an integrated producer or full public record compilation/execution.
+
+Factory generator setup initially lacked the actual core defn declaration,
+producing a wrongly qualified emitted head. Corrected47164 against retained
+portable_defn SOURCE, which CompiledMacros::with_bootstrap actually defines
+before factory helpers; regenerated source uses cljs.core/defn. Generator:
+`/private/tmp/suss_m4_optimize_record_factories.rs`; source:
+`/private/tmp/suss-m4-record-factories-optimized-candidate.sus`.
+Do not use the old uncorrected full-wrapper receipt as final public-source proof.
+Wrapper generator/source: `/private/tmp/suss_m4_optimize_public_record_wrapper.rs`,
+`/private/tmp/suss-m4-record-public-wrapper-optimized-probe.sus`.
+
+Actual CLI optimized-factory artifact62289 compiled exit0 using corrected
+source under independent namespace probe.optimized-factories in the EXISTING
+public probe project. Command:
+`/private/tmp/suss-error-validation-target/debug/suss compile -n app-factories --src src -w api.wit --wit-world api --export value=app-factories/value -o app_factories.wasm`.
+Log `/private/tmp/suss-m4-optimized-factories-artifact-20261013.log`.
+Source `src/app_factories.sus` uses defrecord* plus generated positional/map
+factories; expected exported value40. Actual execution pending at this receipt.
+This validates factory helpers only; public defrecord protocols are not present.
+
+Next: execute factory artifact, then finish baseline9033. After terminal baseline,
+refresh origin/main (PR234merged), integrate genuine typed projection and reviewed
+source adaptations with provenance, run focused real-caller/both-phase regressions,
+compile and EXECUTE full public defrecord probe, then original Jank/pinned records
+and complete remaining16–19 acceptance before full baseline/review/final-head CI.
+No issue closure or goal completion claimed; no new commit/push/PR.
+
+
+Optimized factory component49740 executed exit0 and returned EXACT expected40:
+`/private/tmp/suss-error-validation-target/debug/suss run app_factories.wasm --invoke value`.
+This is real component execution of corrected positional/map factory source,
+using primitive defrecord*; full public defrecord protocols remain pending.
+Fresh full-wrapper diagnostic with corrected factory namespace was started from
+existing `/private/tmp/suss_m4_record_full_optimized_cost`; log
+`/private/tmp/suss-m4-record-full-optimized-corrected-cost-20261013.log`.
+Poll the returned live session, do not infer terminal state from timeout.
+Fresh corrected full-wrapper diagnostic live session19455.
+Baseline live session9033 is unchanged; observed CLI factory tests now running.
+Neither run is restarted or reported successful until terminal evidence.
+
+
+## Integration staging — 2026-10-13
+
+Corrected full-wrapper diagnostic19455 finished exit0: complete emitter7857049,
+complete public wrapper9011124 under unchanged10m budget, with regenerated
+factory heads correctly qualified cljs.core/defn. Log:
+`/private/tmp/suss-m4-record-full-optimized-corrected-cost-20261013.log`.
+Still simulated projection preprocessing; no integrated public record acceptance.
+
+Prepared UNAPPLIED Rust source helpers and init/cache changes in
+`/private/tmp/suss-m4-record-integration-candidates/`: portable_record_protocol_facts,
+portable_record_emitter, portable_record_public, optimized record_factories and
+record_label, plus portable_macros.rs/lib.rs and initialization.patch.
+Public source macro is registered in actual suss.core with compiler-catalog opt-in
+and delegates its original variadic args to compiled private emit-public-record.
+Source helper initialization order: existing defn -> factories/label -> facts ->
+emitter -> public helper -> core macro. Emitter :require removed for embedded
+explicit dependency initialization; fully qualified calls remain. All helper body
+hashes are emission dependencies; actual macro declaration source remains hashed.
+Candidate adaptation/provenance manifest retains original source hashes and lists
+pending real producer/both-phase/public artifact/whole-acceptance gates.
+
+Independent reviewer found a P2: core fallback previously only exposed defn.
+Unapplied candidate now uses scope-aware resolves_bootstrap_name for defn AND
+ defrecord, after explicit/own source macro lookup. Reviewer confirms fixed;
+refers, qualifiedaliases, ownbindings, exclusions keep precedence. Proposed typed
+producer patch remains `/private/tmp/suss-m4-protocol-index-producer.patch`.
+
+Real caller-phase regression84158 completed: compiled source macro queries actual
+catalog in Runtime and Macro after defining own IHash with forged :name metadata.
+Both observe [nil nil nil] instead of [suss.core/IHash record.projection/IHash
+suss.core/IMeta], and assertions FAIL as expected before producer integration.
+Log `/private/tmp/suss-m4-actual-protocol-index-red-20261013.log`;
+standalone `/private/tmp/suss_m4_actual_protocol_index_regression.rs`;
+prepared cargo regression `compiled_record_protocol_projection.rs` in candidate
+folder. Wrapper Python exited0 but INNER REGRESSION failed; do not call this green.
+No new fuel settings or validation concurrency/profile changes.
+
+Baseline9033 remains live, now persistent-session tests; no observedfailure.
+Tracked implementation remains frozen, no new commit/push/PR. On terminal green,
+refresh origin/main after merged234, apply reviewed producer/init/sources and
+regression, compile focused checks and full actual public probe before provenance/
+inventory updates and next required full baseline. Original16–19 scope unchanged.
+
+
+## Additional pre-integration gates — 2026-10-13
+
+Expanded actual caller-scope regression28320 is terminal: CHILD exit101 as
+expected before typed producer integration. Both Runtime and Macro observed
+[nil nil nil] for own IHash with forged :name metadata, core IMeta exclusion,
+and core rename IMeta->IHash. All6 expected projections fail while source namespace
+forms themselves execute. Log `/private/tmp/suss-m4-actual-protocol-scope-red-20261013.log`;
+standalone `/private/tmp/suss_m4_actual_protocol_scope_regression.rs`; prepared
+cargo test candidate `compiled_record_protocol_projection.rs` updated accordingly.
+No green claim; this is red-before-implementation evidence.
+
+Prepared actual public component behavior source in existing probe project:
+`/private/tmp/suss-m4-public-record-probe/src/app_records.sus` and `records.wit`.
+Exports value(expected17), jank-dissoc/jank-empty/nominal-hash/metadata-ops/
+factory-values/reduced-effects(each expected1). Uses unqualified public defrecord,
+two nominal classes, original four Jank dissoc record cases, portable cljs
+empty->nil, authored metadata/persistence/equalhash/missingnilfalse/Reduced effects.
+UNCOMPILED/UNEXECUTED pending actual compiler integration; do not count as acceptance.
+MPL-2.0 pin95d4a9112cfc5fe6629be3d14bb99080ea00af2f source SHA inventory in
+records-provenance-pending.json and license copy MPL-2.0.txt, no vendor edits.
+No wholesale Jank namespace completion claimed; broader original gates remain.
+
+Candidate factory/label Rust outer notices and original raw-string delimiter
+r# / r### were preserved for existing provenance extraction checks. Pending
+candidate manifest hashes refreshed. Baseline9033 remains live; latest observed
+record iteration binary, no failures. Implementation remains frozen; no new
+commit/push/PR. Next poll9033; on terminal green apply prepared actual integration
+and regression, run focused actual tests and public component, then full gates.
+
+
+## Provenance staging and current base — 2026-10-13
+
+Fetched origin/main without changing the validation worktree: ea5273e is merged
+PR234, preceding7cbcb06/5431f8a. Rebase/update branch only after baseline9033
+terminates; current tracked implementation remains frozen.
+
+Prepared factory-adaptations.json and check_record_macro_provenance.py in
+`/private/tmp/suss-m4-record-integration-candidates`. Existing checker closes2
+factory declarations; new templates add EXACT4 private helpers. Candidate checker
+retains both original declaration IDs/order/source retention/hash checks and
+closes6 total adapted declarations, requiring helper names template-sequence,
+template-constant-0/1/2 in order with exact declaration hashes. Against actual
+retained pinned originals and candidate source/wiring: PASS. Mutated stale hash,
+missing/reordered/duplicate helpers rejected. Prepared corresponding Python
+regression candidate test_record_factory_provenance.py. This strengthens source
+update invalidation, not a blanket acceptance of extra declarations.
+
+Candidate label-adaptations.json source/compiled hashes updated; exact UTF-16
+join rationale appended. Existing candidate checker validates all4 retained label
+inputs and actual initialization/cache wiring: PASS. These provenance candidates
+remain UNAPPLIED, no shipped/public-record execution claim. Need incorporate
+helpers/init/typed producer/test/provenance together after9033 terminal.
+
+Baseline9033 live; latest typed tree-node protocol/callback/shared-child checks
+passing, no FAILED result in log. No new commit/push/PR; goal remains active.
+
+
+Baseline9033 verified live again: CLI public-command binary completed5/5; now
+repl_interrupt. No source changes/restarts. Independent Cicero review requested
+for prepared actual public record fixture and expectations (no tests/edits).
+Current unblocked path after baseline terminal remains actual compiler integration,
+real projection regression, full public artifact, then original milestone audit.
+
+
+Independent public fixture review found no wrong portable expectations but three
+false-positive gaps. Prepared app_records.sus now verifies extension removal
+actually deletes :extra/restores count3/preserves meta; Reduced receives exactly
+[:initial :a1] once; warm hashes before assoc AND extension/declared dissoc and
+compare independently constructed equal results, retaining original old values.
+Added WIT hash-invalidation export(expected1). Constructor->positional-factory
+adaptation recorded in provenance. Fixture remains UNCOMPILED/UNEXECUTED.
+
+Baseline9033 live: compiler library97/97 passed; Jank harness fixture/router/nonforcing
+and adversarial decoder checks passed. Remaining live Jank suite run is still
+pending, not complete. Implementation frozen, no new commit/push/PR. Next exact
+baseline poll then actual integration/record artifact; do not weaken startup or
+source budgets to fit two ordinary public record declarations.
+
+
+Baseline9033 verified live and advanced: complete Jank harness7/7 passed,
+116.91s. This is the exact reviewed known-failure baseline, NOT full Jank
+namespace/portable collection completion. Current live compiler conformance tests
+continue passing. No baseline restart/source changes or completedfullpass claim.
+
+Prepared public fixture adds constructor-effects export(expected1): all three
+positional operands evaluated once left-to-right; first-operand throw records
+:first and prevents :later. WIT/provenance authored checks updated. Still uncompiled/
+unexecuted until actual integration. Next exact baseline poll -> integrate sources,
+producer and checks against refreshedmain -> execute public record component.
+
+
+Baseline9033 remains live: compiler conformance294 passed/0 failed/22 EXISTING
+ignored,162.70s; now compiled_async_import_file. Ignored prototype-support cases
+are NOT compatibility or milestone successes. No skips added/changed by this work.
+`git diff --check` passes. Next exact9033 poll, then prepared actual integration
+only after terminal baseline; no full-pass or public-record acceptance claim.
+
+
+## Follow-up foundation baseline complete — 2026-10-13
+
+Session9033 TERMINAL exit0: full `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test --workspace --locked -- --test-threads=2`
+completed including doctests. Log `/private/tmp/suss-m4-followup-full-baseline-resumed-20261012.log`.
+Existing ignored/manual tests remain ignored, never counted as compatibility success.
+Implementation was frozen throughout this complete run. This proves the current
+identity/getter-prefix/label foundations, NOT the unapplied public record pipeline.
+Next commit this validated checkpoint, rebase only the new commit onto fetched
+ea5273e(origin/main), then apply prepared public record integration and regressions.
+
+
+## Real public integration applied — 2026-10-13
+
+Validated foundation checkpoint committed87857fb (rebased bf0c84d) onto refreshed
+origin/main ea5273e. No push/PR yet. Applied real protocol namespace and unqualified
+binding projections, source helpers/init/core macro lookup/cachedeps, projection
+regression and closed source provenance checks. No simulated projection in these
+actual compiler tests. First focused attempt21761 failed at stale bootstrap manifest
+identity, before semantic testing; regenerated versioned runtime/macro artifacts
+via suss-bootstrap (generation88470 exit0) and copied all4 generated files.
+
+Real focused projection test46653 TERMINAL exit0: 1 test PASS,236.32s, containing
+6 actual Runtime/Macro caller-scope checks for forged-name ownshadow, exclusion
+and renamedrefer. Command settings unchanged. Log:
+`/private/tmp/suss-m4-integrated-protocol-projection-focused-20261013.log`.
+Source/provenance checker PASS; Python factory5/5 and label3/3 PASS.
+
+Building actual CLI with same CARGO_BUILD_JOBS2/CARGO_TARGET_DIR and locked test
+profile; log `/private/tmp/suss-m4-public-record-cli-build-20261013.log`. Next compile
+standard unqualified public `(defrecord Pair [left right])` in existing project
+src/app_public_record.sus (no custom probe macro or simulated index); exported
+value expected17. Then execute full records.wit fixture(all authored/Jank excerpts),
+fix actual failures, audit original16–19 and required next fullbaseline/review/CI.
+New integration has NO full baseline or public artifact acceptance yet.
+
+
+## Public artifact prerequisites — 2026-10-13
+
+Actual standard CLI public record compile54637 terminal exit1: grouped keyword
+case constants in generated contains-key? rejected. Existing bootstrap already
+supports grouping; missing keyword literal support was the gap (initial commentary
+said grouping, corrected). Extended native cases.rs to pinned all-keyword branch:
+live keyword? after one selector evaluation, true-branch fqn read, strict UTF-16
+string comparisons, nonkeyword->nil; mixed/scalar modes retain old guards. Reject
+duplicateFQNs acrossgroups; support up to256keyword constants. Empty cases avoid
+keyword predicate. Pinned complete source docs/compatibility/sorted-tree-nodes/case.cljc.
+
+Focused portable_case91017 terminal exit0:6/6 PASS,10.86s, both-phase keywordgroups/
+namespace/nonkeyword/livereboundequality/duplicate/9constants and retained scalar
+corpus40. Added live keyword? false and emptycase predicate-throw bypass regressions.
+Independent review no blocker. Log `/private/tmp/suss-m4-keyword-case-focused-20261013.log`.
+Bootstrap40591 generated/copy4 files; CLI rebuilt. Retry53353 terminalexit1 now
+reached Unresolved Runtime suss.core/if. Private adapted assoc-branch incorrectly
+qualified special if/new. Corrected actual emitter quote data to unqualified if/new,
+matching reader special-form semantics. An initial patch looked for printed(quote)
+in readable helper and made NO change; pre-fix generation98368 is not fixed evidence.
+Correct regeneration22413 terminalexit0 from fixedsource; copied4 artifacts and
+CLIbuild9737 terminalexit0 (26.02s). Current actual publiccompile retry log:
+`/private/tmp/suss-m4-public-record-special-form-retry-20261013.log`; observe its
+returned live handle before any subsequent retry. No public component execution
+or new fullbaseline claimed. Original16–19 objective remains incomplete.
+
+
+## First real public record execution — 2026-10-13
+
+Actual standard public compile30868 TERMINAL exit0 after emitter special if/new
+correction: app-public-record ->app_public_record.wasm2318211 bytes. Source uses
+unqualified public defrecord with no custom macro or simulated compiler data.
+Run94158 TERMINAL exit0 returned EXACT17:
+`/private/tmp/suss-error-validation-target/debug/suss run app_public_record.wasm --invoke value`.
+This proves genuine public macro->source compilation->component execution and
+positional factory/ILookup for the one record; not all record/M4 acceptance.
+
+Broader actual compile LIVE session8924. Command compiles app-records fromexisting
+project src with records.wit/contracts and explicit mappings for9 exports:
+value17; jank-dissoc/jank-empty/nominal-hash/metadata-ops/factory-values/
+reduced-effects/hash-invalidation/constructor-effects each1. Log:
+`/private/tmp/suss-m4-public-record-contracts-compile-20261013.log`.
+Next poll8924; ifcompiled execute EACH actual exported check and fix failures,
+then audit original16–19, source inventory/provenance/helper snapshots, focused
+regressions, bootstrap reproducibility and required nextfullbaseline/review/CI.
+No new goal/issue completion; no push/PR yet. Validated foundation87857fb remains
+committed; public integration still uncommitted. Current bootstrap is generation
+22413 from fixed special-form source. Full baseline9033 exit0 is earlierfoundation
+only, not current public integration. Nextsource changes requirefresh validation.
+
+
+Broader public compile8924 TERMINAL exit1: default macro fuel exhausted at bytes
+407..443 (first ordinary three-field TestDissocRecord declaration). Log
+`/private/tmp/suss-m4-public-record-contracts-compile-20261013.log`. No component
+or9check success. Preserve full fixture/two ordinary classes/long names; do NOT
+shrink names/fields or raise budgets to hide gap. Next measure actual installed
+public emitter/fact/label/factory costs for app-records/TestDissocRecord [a b c]
+and fix remaining template/hash/scope cost, then retry realCLI andexecuteallchecks.
+Minimal2-field public17 result remainsvalid bounded evidence only. Goal active,
+original16–19 and broader acceptance incomplete. New integration uncommitted;
+foundation87857fb committed, no newpush/PR. Current source/boot actualspecialforms
+fixed asabove; portable_case6/6 passed, actualscope6subcases passed beforecasefix.
+
+
+## Three-field cost and next real boundary — 2026-10-13
+
+Installed actualSource diagnostic45523 terminalexit0: label911811, labelhash55692,
+impls5453543,facts2746437,emitter9102250; publicwrapper10mtrap. Diagnostics use
+normal invocation allowances per-stage solelyto locatecost, notpublicacceptance.
+Protocol-input15 candidate60407 terminalexit0 saves137995 emitterfuel; resolver
+stillgenuinelyresolvesalloriginal15symbolentries inoriginalorder afteralluserforms,
+all31generatedprotocol/method output intact. Independentreviewno blocker.
+
+Length/no-double-dot labelcandidate72742 terminalexit0: label653500, emitter8705944,
+privatepublicwrapper9887058. Independently compiledoriginal321case comparison65339
+terminalexit0 (reserved63/segments/neighbors,ASCII128,dots,line,lonesurrogate cases).
+Applied bothchanges; sourcehashprovenance PASS; actual label suite16927 terminal
+4/4 PASS,21.08s. RealCLIretry12066 STILL failed macrofuel atfirst3fieldrecord;
+privateunderbudgetdiagnosticwasnotacceptance. Do notclaimotherwise.
+
+Transient privatefactscollector21434 terminalexit0 saves80965, completeswrapper
+9806093; keepsallactualresolvercalls ordered, localtransient cannotescape and
+persistent! once. Factory knownStringjoin candidate33692 terminalexit0 then
+wrapper9583830:retain str(rsym)/str(rname) once, fixedprefixes/docstrings exactUTF16.
+Original/candidate completefactoryoutput+metadata10628 terminalexit0 for BOTH
+factories atzero/3hinted/33fields withinternalctorfalse/true (12comparisons).
+Independentstaticreviewno blocker. Applied transientcollector+factoryjoins;
+closedprovenance now2originalfactories+5exacthashedprivatehelpers (7adapteddeclarations).
+Checker+Python5/5 PASS. Regeneratedbootstrap73565 terminalexit0, copied4files,
+CLIbuild85621 terminalexit0.
+
+Latest realfullfixturecompile9032 TERMINAL exit1 PROGRESSED pastfirst3fieldrecord:
+secondordinaryrecordatbytes444..475 failsactual AnalysisGraph nodebound131072
+(131074recipes,18053forms,40519maps,19021vectors,1109declarations,620namespaces,
+10721ASTs). Log `/private/tmp/suss-m4-public-record-contracts-factory-join-retry-20261013.log`.
+No component produced/fullrecordchecksuccess. Preservebothrecords/allfields/names,
+do NOTraisegraph/fuel limitsorweakenfixture. Nextfix actual &env transport blowup
+forprivatepublicrecordhelper. Helpers only consumeactualnamespace/scope membership,
+protocol signatures/indexes/nativeObject typedfacts and caller ns name, not every
+namespace AST/definitionbody. Consider a separate explicit typed compact record
+catalog projection while ordinary macros retain completegraphs; never fabricate
+namespace/var/signature records or losecallerphase/shadows/refers/exclusions.
+Inspect portable_macro_graph.rs environment/namespace builders (~991/~1042),
+portable_macros policy (~362/~562), compiler_facts::CompilerNamespaceCatalog
+capture (genuineSourceNamespace revisions). Notimplementedyet; no plan treatedasproof.
+
+No new fullbaseline since9033 foundationexit0; no public fullfixture execution.
+Foundation87857fb committed atop ea5273e; publicintegration/unblockedfixes uncommitted,
+no push/PR. Minimalactualpublic2field component stillreturns17 (boundedproof).
+Goalactive/original16–19 criteria unchanged. `git diff --check` PASS.
+
+
+## Explicit compact record catalog — 2026-10-13
+
+Observed real2record artifact9032 failure was transport131072 bound, not resolved
+by privatecostonly. Implemented explicit `:suss/compiler-catalog :record-bindings`
+mode; true continues Full. Policy map enum checkpoint/rollback restores mode with
+macro binding. Public defrecord optscompact. Namespace views haveactualname,
+aliases/refers/exclusions and :suss/binding-names fromactualphase/nonhidden identities;
+nofake :defs/AST/varrecords. Fullcallergraph retained forordinarymacros. Complete
+actualprotocolsignatures/indexes/resolvedbindings/nativeObject facts unchanged.
+Source resolver supportsmembership sets with full definitionmap fallback; own
+membershipcontains? correctly ignores forgedmetadata. Documented newprojection in
+record-macro-foundations/README. No graph/fuel limits altered.
+
+Initialno-run75403 exit101 (Optionpolicy bool site), corrected.is_some before
+bootstrap53146 terminalexit0; copied4versioned files. Focused actual modecomparison
+11549 TERMINAL exit0:1test containing12scopecases Full/Compact x Runtime/Macro
+x forged-name-ownshadow/exclusion/renamedrefer;221.41s. Log
+`/private/tmp/suss-m4-record-compact-projection-focused-20261013.log`.
+Independentreviewno staticblocker; identified remainingcompactmembershipfallback,
+mode restoration andfull2recordartifact execution evidence gates. CurrentCLIbuild
+log `/private/tmp/suss-m4-record-compact-cli-build-20261013.log`; next actualfixture
+retry, thenexecuteall9exports andfixrealbehavior. Nofull2record/publicacceptanceyet.
+No newfullbaseline sincefoundation9033. Foundation87857fb committed; integration
+uncommitted/no push/PR. Alloriginal16–19 criteria remainrequired.
+
+
+## Full public record fixture executes — 2026-10-13
+
+Actual compact-catalog CLIcompile29131 TERMINAL exit0: app_records.wasm2441821 bytes,
+bothordinarypublicrecorddeclarations unchanged. Actual execution25895 TERMINALexit0:
+ALL9 exported checks pass (lookup17, Jankdissoc/cljs-empty, nominal/equalhash,
+metadata/persistence, mapfactorymissingnilfalse, Reduced firstcallback/stop,
+warmedhashinvalidation, positionalconstructorLtoR/throwstop all1). Log
+`/private/tmp/suss-m4-public-record-contracts-execution-20261013.log`.
+No fakecompilerdata/no graph/fuel/profile changes. Numeric expectedchecks arebounded
+publicrecord evidence, not wholeJank namespace orallmilestonecriterion completion.
+
+Persisted separate MPL2.0 fixture andWIT at tests/oracle/fixtures/public-record-contracts.*,
+retainedJank pin/sourcehash/provenance public-contracts-provenance.json (no vendored
+byte edits). Formal actualCLI compile/run regression compiled_public_records.rs,
+64057 TERMINALexit0:1test(all9checks) PASS27.41s usingnormalCLIlimits. Log
+`/private/tmp/suss-m4-public-records-repository-regression-20261013.log`.
+Runtime/Macro Full/Compact scopecomparison11549passed12subcases above.
+
+Current focused catalog-policy suite compiling/running, log
+`/private/tmp/suss-m4-record-catalog-policy-regressions-20261013.log`; check returned
+live handle. Next verifycompactmembershipfallback andmode restoration, ordinary
+fullgraph source metadata semantics, source/inventory/provenance/review hashes,
+original16–19 audit, requiredbootstrapreproduction/fullbaseline/independentreview/
+finalheadCI. Earlier9033fullbaseline remainsfoundation-only. No newcompletion,
+newcommit/push/PR; publicintegrationuncommitted atopfoundation87857fb/main ea5273e.
+
+Current catalog-policy verification LIVE session97709; log above. Formal public
+regression64057 isterminalPASS; do notrerununlessnewchangesrequireit. Next inspect
+97709 and addcompactmembership/mode-restoration coverage before finalsource gates.
+
+
+## Goal paused at a validation boundary — 2026-10-13
+
+Paused at the user's request; no further implementation or validation is running
+on behalf of this goal. Latest independent ABI decoding regression passed:
+`public_record_field_and_metadata_values_decode_independently_after_gc` — 1 passed,
+0 failed, 20.65s. Receipt:
+`/private/tmp/suss-m4-public-records-independent-decoder-20261013.log`.
+Catalog policy regressions also finished successfully (5/5), and compact membership
+and failed-staging mode restoration passed in both phases. Earlier LIVE notes above
+are superseded by these terminal results.
+
+Resume from the existing worktree `/private/tmp/suss-m4-sorted-tree-collections`,
+branch `portable/m4-public-record-identity`. Foundation commit `87857fb` is committed;
+the public record integration remains uncommitted. No new push or PR exists.
+The successful full baseline covers the foundation only, not this integration.
+
+No external input or design decision is currently required to resume. Next:
+audit original #16–#19 acceptance and Jank known-failure changes against actual
+execution; finish formatting, provenance, inventory and bootstrap reproduction;
+run appropriate focused checks, then
+`cargo test --workspace --locked -- --test-threads=2` with the established environment;
+commit, push and create a draft PR; obtain independent final review and final-head CI
+before promotion. Preserve current validation settings and existing user files.
+Do not close issues or claim M4 completion without all original acceptance evidence.
+
+
+## Resumed record integration verification — 2026-10-13
+
+Import gate passed 17/17; record provenance 14/14 and review invalidation 10/10.
+Jank harness passed 7/7 against the unchanged reviewed failure baseline (106.52s).
+This is regression stability, not complete upstream conformance. Final emitter,
+facts and wrapper now have an explicit hash-bound public-adaptations ledger with
+three passing mutation regressions. Historical uninstalled comments are corrected.
+
+New custom-protocol regression exposed default macro fuel exhaustion. Fixed pure
+mask preparation by reusing the complete default seed only after all actual symbols
+resolve in original order and their complete default suffix matches. Every user
+protocol, including duplicates, is still processed generically; changed defaults
+retain the generic path. Independent static review found equivalence. No limits,
+fuel, RUSTFLAGS or concurrency settings changed.
+
+Fresh pinned CLJS/Node execution observes [2,false,true,null,null,"old",null,73]:
+generated duplicate ICounted wins (with upstream warning), unique user method
+survives, and record-input factory keeps values/extmap but resets meta/hash.
+Matching independent native decoding passes in both phases after GC (10.97s).
+Source/receipt are retained under record-macro-foundations/public-custom-*.
+Earlier failed expectation73 for count was an authoring error disproved by the
+fresh oracle; no certified expectation or known-failure baseline was changed.
+
+Latest bootstrap reproduction and execution passed 4/4 (19.06s) after the mask fix.
+Combined affected focused run LIVE session94378:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test -p suss-cli --locked --test compiled_public_records --test compiled_record_protocol_projection --test portable_case -- --test-threads=2`
+Log `/private/tmp/suss-m4-public-record-final-focused-20261013.log`.
+Next inspect this exact handle, then run the required full workspace baseline;
+final independent review, commit/push/draft PR and final-head CI remain required.
+Foundation87857fb remains committed; public integration is uncommitted/unpublished.
+Original #16–#19 remain open and complete milestone acceptance is unproven.
+
+
+## Frozen integration full baseline started — 2026-10-13
+
+Combined focused session94378 TERMINAL exit0: public records6/6, caller-phase
+projection/restoration2/2 (310.61s), keyword/scalar case6/6. All14 pass; no ignores
+or filtered tests in this run. Final record provenance17/17 and overlay547/518
+validate. Updated overlay correctly invalidated the core manifest review hash;
+regeneration changes only that manifest hash, not imported source bytes. Final
+bootstrap byte/identity reproduction and execution4/4 pass (21.98s).
+Independent static review of the full integration, mask fix, public observation
+and nine in-progress inventory entries reports no remaining blocker.
+
+Required full baseline LIVE session74355, source frozen:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test --workspace --locked -- --test-threads=2`
+Log `/private/tmp/suss-m4-public-record-full-baseline-20261013.log`.
+Poll this exact session; do not restart based on an observation timeout. This is
+not a passing baseline until terminal exit0. After validation, commit/push/draft
+PR with Refs16–19, obtain independent committed-head review and final-head CI.
+No merge is authorized. Goal remains active; complete M4 acceptance remains unproven.
+
+
+## Shared-path audit while baseline is frozen — 2026-10-13
+
+Full baseline74355 is confirmed LIVE; do not restart it. Current source remains
+frozen. Read-only CLI probes30659/22706 TERMINAL exit1 establish actual unresolved
+Runtime `sequence` and `eduction` names (not inferred solely from import recipes).
+These leave all shared reduction/transducer paths unproven. Pinned source retains
+sequence's1/2/variadic clauses and Eduction's repeatable seq/iterator/reduce paths.
+Prepared source-only authoring group `/private/tmp/suss-m4-sequence-authoring`
+contains12 whole declarations and4 whole setup/ES6 parents, exact source/hash
+manifest and EPL notice/license. It is not a checkout, is not imported, and is
+not passing implementation evidence. Keep it separate until the current snapshot
+passes publication gates; then review/reuse dependencies and port complete paths.
+
+Primary Jank map/mapcat/remove/drop-while namespaces still have real read failures
+(splicing conditionals or shorthand dispatch). No known-failure entry was changed.
+The acceptance record now distinguishes these gaps and the untraceable historical
+397-row reference from actual passing corpora. Original criteria remain intact.
+
+
+Prepared reviewable PR description at `/private/tmp/suss-m4-record-pr-body.md`.
+It uses Refs16–19 and distinguishes passed focused/provenance/bootstrap gates
+from the running full baseline, final-head review/CI and remaining M4 scope.
+Update its baseline result only from terminal receipt before creating the draft.
+No commit, push or new PR has been made during this baseline wait.
+
+
+## Complete transducer oracle inputs prepared — 2026-10-13
+
+Baseline74355 remains confirmed LIVE; production source is unchanged. Read-only
+CLIprobe89821 TERMINALexit1 also establishes unresolved `completing`. Staged source
+group now retains13 complete declarations after adding this whole helper.
+`completing-patch.json` expands only defn to def/fn; standalone ephemeral native
+namespace probe93789 TERMINALexit0 returns9 for actual transduce/map/inc. This is
+one executing uninstalled candidate, not public API or full-arities acceptance.
+
+Fresh pinned CLJS/Node oracle68306 TERMINALexit0 executes26 raw observations:
+25 values and1 expected thrown-number case. Initial23017 compile failed because
+cleanup had removed generated `suss-oracle.cases`; restored it using the existing
+oracle_cases.py generator before the successful compile. Complete fixture,
+observations, source/license/patch hashes and dependency audit live under
+`/private/tmp/suss-m4-sequence-authoring`. Jank's two retained drop-while xform-reuse
+assertions are bundled into one raw vector; original namespace and MPL license
+are retained. No primary namespace completion or native26-case pass is claimed.
+
+Pinned31/32/33 demand observations show first realization invokes31/32/33 mapping
+callbacks, respectively: hasNext runs before the chunk-size guard and therefore
+looks ahead to33. Preserve that order rather than imposing a32-callback model.
+The complete graph also needs array shift storage support/adaptation, full setup/
+ES6 parents, printer/Object methods and existing iter/chunking dependencies.
+Next remains terminal full-baseline receipt, commit/push/draft PR, committed-head
+review and final-head CI, then complete shared paths and primary reader gates.
+
+
+## Next complete transducer graph staged — 2026-10-13
+
+Full baseline74355 confirmed LIVE, no source under validation changed. Its HAMT
+suite passed8/8; this is a partial terminal suite receipt, not a full-baseline pass.
+Staging at `/private/tmp/suss-m4-sequence-authoring` now contains14 whole declarations
+(including completing and butlast),4 whole setup/ES6 parents, and complete explicit
+candidate patches/graph. Preserved eduction's original arglists attribute as def
+symbol metadata; converted only the fixed Single owned-array literal and complete
+MultiIterator dotimes loop. No protocol/Object/printer/setup branch is excised.
+Graph remains uninstalled/unexecuted; array shift/ES6 dependencies are explicit.
+
+Staged original native `array_shift.rs` plus wiring patch uses the existing checked
+owner/backing and sparse helpers, preserving owner, holes, nil/false and unsigned
+indices. Independent static review reports no concrete stack/local/storage/wiring
+blocker; no Wasm/native execution was performed. Fresh pinned compile13020 and
+Node execution pass7 reference cases, retained as array-shift-primary-* with raw
+observations/hashes. No native-shift pass or general JS interoperability claimed.
+
+Next: poll exact74355 to terminal, record full result, commit/push/draft PR and
+obtain committed-head review/final CI. Then apply and validate the complete staged
+shared-path implementation and primary reader prerequisites. Goal remains active;
+original #16–#19 acceptance and milestone completion remain unproven.
+
+
+## Pinned primary-reader behavior prepared — 2026-10-13
+
+Baseline74355 remains confirmed LIVE; record/transport suites passed and the run
+has reached portable array tests without a reported failure. This is not a final
+workspace result. Production source remains frozen.
+
+`/private/tmp/suss-m4-reader-authoring` now retains24 actual pinned vendored-reader
+outcomes (19 forms,5 read errors), complete tools.reader source, EPL license,
+SHA-bound receipt and regression requirements. Executed through the pinned local
+ClojureScript vendored reader, not recalled JVM semantics. Anonymous placeholders
+in discarded/unselected branches still contribute arguments; registration must
+occur while reading raw syntax. Quote before #?@ consumes only the first emitted
+item and leaves the remaining siblings. Lists/vectors splice; maps pair after
+expansion; selected nil/non-sequential and top-level splicing reject. No primary
+Jank namespace pass or native reader implementation is claimed.
+
+Next: terminal baseline receipt, authorized commit/push/draft PR plus independent
+committed-head review/final CI, then integrate complete staged transducer/shift and
+reader prerequisites. Original #16–#19 requirements and goal scope remain intact.
+
+
+## Native primary-reader draft executes — 2026-10-13
+
+Baseline74355 remains confirmed LIVE, now through portable vector/public command
+suites without reported failure. Production code under validation is unchanged.
+Staged `/private/tmp/suss-m4-reader-authoring/forms.rs` implements raw anonymous
+argument registration and delimited logical-queue splicing. Standalone actual
+Rust harness uses real shared suss_reader types/num_bigint artifacts, copies no
+crate/checkout, and passes17 tests: existing reader/position tests,24 pinned shape
+outcomes, hygiene and indexing metadata. Initial harness build lacked Number and
+num_bigint extern imports; fixed test-driver wiring before execution. No native
+compile failure is credited as a pass. No RUSTFLAGS/profile/fuel change.
+
+Pinned indexing probe26652 TERMINALexit0 (3 shapes) exposed generated metadata:
+fn*/parameter vectors/placeholder symbols have no automatic locations; the real
+body List starts at original '(' and carries positions. Corrected staged draft
+and regression tests accordingly; explicit placeholder metadata remains intact.
+`reader.patch`, SHA-bound native-receipt.json and terminal native-test-final.log
+are retained. This is an uninstalled reader draft, not compiler integration or
+primary Jank acceptance. Independent final draft review requested; raw Kind variant
+consumers, bootstrap identities and formal workspace/primary tests remain required.
+
+Next remains terminal baseline receipt then authorized commit/push/draft PR and
+committed-head review/final CI, followed by integrating complete staged remaining
+paths. Original #16–#19 and entire M4 scope remain unchanged/unproven.
+
+
+## Staged reader review fixes validated — 2026-10-13
+
+Production baseline74355 remains confirmed LIVE, now compiler legacy316 tests;
+its Jank comparison passed7/7 against unchanged reviewed failures. No production
+source mutation or baseline restart. Staged reader review found2 real defects:
+metadata before splicing rejected before logical selection, and anonymous index
+parsing bypassed conditional/discard consumption. Fixed both in the staged module.
+Metadata reaches the first retained item, including empty splices; logical index
+selection preserves queued siblings. Shared literal/selected integer validation
+retains hexadecimal/octal/decimal index formats and explicit resource bounds.
+
+Fresh pinned12 edge cases plus3 logical-index cases augment the original24 shapes.
+Standalone native20/20PASS, including39 pinned shape outcomes, original reader/
+position tests, hygiene and generated/real indexing metadata. Initial generated
+edge harness had a delimiter typo; fixed driver before execution. An actual ^:m
+splice test failed before the metadata fix and now passes; no expectation changed.
+Regenerated reader.patch and SHA-bound native-receipt.json; independent re-review
+requested. This remains uninstalled compiler/reader work, not primary Jank pass.
+Next remains final baseline/publication boundary then complete integration/gates.
+
+
+## Full baseline storage failure — 2026-10-13
+
+Baseline74355 TERMINALexit101. Both failures in compile_expr were StorageFull
+while creating temporary .sus files, before compilation: test_tco_tail_recursive_sum
+and test_tco_tail_recursive_factorial. That suite reports292pass,2fail,22existing
+ignores. The overall baseline is FAILED, not acceptance. Other terminal suite
+passes remain partial receipts; no commit/push/PR readiness inferred.
+
+After the process exited, df reports21GiB free. No cleanup or unrelated file
+deletion was performed. Task target9.8G, incremental0B; own oracle output25M.
+Rerun the2 failed tests with unchanged environment/settings, then the required full
+baseline. Diagnose any repeated StorageFull against actual available space; do
+not reduce threads, change fuel/profiles/RUSTFLAGS or conceal failures.
+
+
+## Storage retry started; composed reader continuation fixed — 2026-10-13
+
+Focused storage-failure rerun48775 TERMINALexit0: both previously failing TCO tests
+pass (61.10s) with unchanged settings. Required full baseline retry LIVE4902:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test --workspace --locked -- --test-threads=2`
+Log `/private/tmp/suss-m4-public-record-full-baseline-retry-20261013.log`.
+Old74355 is terminalFAILED; do not poll/restart it. No cleanup/deletion performed.
+Free space later reports11GiB, task target remains9.8G; monitor actual availability
+and diagnose any repeated StorageFull. No validation setting changed.
+
+Staged reader review found a composed-discard case requiring further physical
+input during logical selection. Added structured continuation hint and pure
+selection retry with additional raw forms only when needed; newregression
+`#(%#_ #?(:jvm ignored) 2 3)` registers argument3. Native21/21PASS, original and
+39 pinned shapes retained. Final static re-review pending; reader.patch and
+SHA-bound receipt refreshed. Production source remains unchanged. No integration,
+primary namespace or complete M4 acceptance inferred from standalone tests.
+Automatic approval review timed out on the final pinned probe; its permitted
+single retry was approved and launched27270. Check terminal probe receipt.
+
+
+## Closed queue boundary validated; whole transducer probe advances — 2026-10-13
+
+Baseline retry4902 confirmedLIVE with22GiB initially free, then11GiB later; no
+cleanup/deletion or settings changes. Production snapshot remains frozen.
+Whole staged14-declaration/4-parent graph probe79434 TERMINALexit1 exposed actual
+missing lazy-seq macro. Expanded its complete retained constructor/thunk form in
+chunkIteratorSeq, preserving all body/hasNext order. Probe21977 TERMINALexit1 now
+advances to genuine unresolved es6-iterable. No parent/source branch was deleted.
+Retained complete lazy-seq.cljc dependency and hash-bound candidate patch. These
+are compile failures, not passing transducer evidence. Current backend already
+has this-as, unchecked-set and owned-constructor prototype machinery; complete
+ES6 feature/registration source still requires explicit adaptation/execution.
+
+Reader re-review found continuation hints leaking from closed inner queues. Those
+collection/conditional-clause boundaries now clear the continuation hint; only
+extensible outer index selection can fetch physical input. Regression malformed
+inner vector returns its missing-retained-form error without consuming outer2.
+Staged native22/22PASS; reader.patch/source/harness hashes refreshed; final static
+re-review requested. This remains uninstalled, not primary Jank completion.
+Next remains final baseline/publication checkpoint then full staged integration.
+
+
+## Public-record draft publication checkpoint — 2026-10-13
+
+The public-record implementation is ready for draft publication. Combined focused
+record/protocol/case validation passed 14 tests; import execution 17, provenance
+17, review invalidation 10, and bootstrap reproduction/execution 4 passed.
+Independent static review completed; review of the committed head remains required.
+Full locked workspace retry session4902 is still live, most recently running CLI
+macro declaration metadata tests. It is not a passing baseline yet. The earlier
+StorageFull failure remains recorded; both affected TCO tests passed their focused
+rerun with unchanged validation settings.
+
+Reader and transducer changes remain staged outside production. Whole transducer
+graph smoke probes execute sequence/count and eduction/reduce, but multi-output
+iteration and registered receiver calls still fail. Candidate array shift and
+ordinary closure receiver binding require integration and execution; no complete
+transducer acceptance is claimed. The staged reader passes 22 standalone tests
+and needs integration with compiler consumers and primary Jank tests.
+
+Next: publish this record change as a draft, obtain committed-head review and CI,
+finish the running baseline, then integrate reader/transducer work. Promote only
+with passing required validation, resolved review findings, and final-head CI.
+Issues #16–#19 remain open; this PR provides partial progress only.

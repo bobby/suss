@@ -210,6 +210,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("source-constructor-new");
                             names.insert("invoke");
                         }
+                        Nominal::SameNominalType => {
+                            names.insert("object-same-descriptor");
+                        }
                         Nominal::Instance => {
                             names.insert("constructor-descriptor");
                             names.insert("object-instance");
@@ -277,7 +280,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
-            "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
+            "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
             "primitive-int" | "primitive-bit-not" => (vec![VALUE], vec![VALUE]),
@@ -1153,6 +1156,7 @@ fn emit_function(
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
                         | Nominal::SourceFunctionName
+                        | Nominal::SameNominalType
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
                         | Nominal::CurrentThis
@@ -1189,6 +1193,7 @@ fn emit_function(
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::SourceFunctionName => "closure-source-name",
+                                Nominal::SameNominalType => "object-same-descriptor",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
                                 Nominal::CurrentThis => "current-this",
                                 Nominal::NativeObjectGet => "native-object-property-get",

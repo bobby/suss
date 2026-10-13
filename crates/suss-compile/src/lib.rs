@@ -38,20 +38,18 @@
 
 mod config;
 mod error;
-pub mod worlds;
-pub mod runtime_abi;
 pub mod portable;
+pub mod runtime_abi;
+pub mod worlds;
 
 // Native compiled phase/session host for compiler embedding and CLI paths.
 // Wasm target assembly remains in portable; these modules require Wasmtime.
 #[cfg(not(target_family = "wasm"))]
-mod portable_module_cache;
+pub mod portable_aot;
 #[cfg(not(target_family = "wasm"))]
 mod portable_defn;
 #[cfg(not(target_family = "wasm"))]
-mod portable_record_factories;
-#[cfg(not(target_family = "wasm"))]
-mod portable_record_label;
+pub mod portable_expression;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_data;
 #[cfg(not(target_family = "wasm"))]
@@ -59,15 +57,20 @@ pub mod portable_macro_graph;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macros;
 #[cfg(not(target_family = "wasm"))]
+mod portable_module_cache;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_project;
+mod portable_record_emitter;
+#[cfg(not(target_family = "wasm"))]
+mod portable_record_factories;
+#[cfg(not(target_family = "wasm"))]
+mod portable_record_label;
+mod portable_record_protocol_facts;
+mod portable_record_public;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_repl;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_session;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_aot;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_expression;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_project;
 
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};
@@ -90,17 +93,24 @@ impl CompiledExpr {
         self,
         session: &mut portable_session::Session,
     ) -> Result<Option<portable_session::SessionValue>, portable_session::SessionError> {
-        self.execute_with_core(session, |_| Ok(())).map(|(value, ())| value)
+        self.execute_with_core(session, |_| Ok(()))
+            .map(|(value, ())| value)
     }
 
     pub fn execute_with_core<T>(
         self,
         session: &mut portable_session::Session,
-        core_ready: impl FnOnce(&mut portable_session::Session) -> Result<T, portable_session::SessionError>,
+        core_ready: impl FnOnce(
+            &mut portable_session::Session,
+        ) -> Result<T, portable_session::SessionError>,
     ) -> Result<(Option<portable_session::SessionValue>, T), portable_session::SessionError> {
-        self.prepared.ok_or_else(|| portable_session::SessionError::Host(
-            wasmtime::Error::msg("This prototype artifact has no shared-ABI expression bundle"),
-        ))?.execute_with_core(session, core_ready)
+        self.prepared
+            .ok_or_else(|| {
+                portable_session::SessionError::Host(wasmtime::Error::msg(
+                    "This prototype artifact has no shared-ABI expression bundle",
+                ))
+            })?
+            .execute_with_core(session, core_ready)
     }
 }
 
@@ -145,8 +155,16 @@ impl Compiler {
     #[cfg(not(target_family = "wasm"))]
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         let prepared = self.prepare_expression(expr_source, &[std::path::PathBuf::from("src")])?;
-        let wasm = prepared.modules().last().expect("expression bootstrap module").to_vec();
-        Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
+        let wasm = prepared
+            .modules()
+            .last()
+            .expect("expression bootstrap module")
+            .to_vec();
+        Ok(CompiledExpr {
+            wasm,
+            is_component: false,
+            prepared: Some(prepared),
+        })
     }
 
     /// Compile Suss source code to a WASM component
@@ -365,12 +383,14 @@ impl DependencyResolver {
     /// This performs a quick parse to extract the `(ns ...)` declaration
     /// and any `(require ...)` statements.
     pub fn scan_file(&mut self, path: &PathBuf) -> CompileResult<Option<String>> {
-        let source = std::fs::read_to_string(path)
-            .map_err(|e| CompileError::IoError(format!("Failed to read {}: {}", path.display(), e)))?;
+        let source = std::fs::read_to_string(path).map_err(|e| {
+            CompileError::IoError(format!("Failed to read {}: {}", path.display(), e))
+        })?;
 
         let mut parser_state = suss_reader::ParserState::new("suss");
-        let exprs = suss_reader::parse_all(&source, &mut parser_state)
-            .map_err(|e| CompileError::Parse(format!("Parse error in {}: {}", path.display(), e)))?;
+        let exprs = suss_reader::parse_all(&source, &mut parser_state).map_err(|e| {
+            CompileError::Parse(format!("Parse error in {}: {}", path.display(), e))
+        })?;
 
         // Extract namespace name and dependencies from (ns ...) form
         let mut ns_name: Option<String> = None;
@@ -686,7 +706,8 @@ mod deftype_tests {
     #[test]
     fn test_deftype_typed_i32_fields() {
         let mut compiler = Compiler::new();
-        let source = "(deftype Vec2 [^i32 x ^i32 y]) (+ (.-x (->Vec2 100 200)) (.-y (->Vec2 100 200)))";
+        let source =
+            "(deftype Vec2 [^i32 x ^i32 y]) (+ (.-x (->Vec2 100 200)) (.-y (->Vec2 100 200)))";
         let result = compiler.compile_expr_with_info(source);
         if let Err(e) = &result {
             eprintln!("Compilation error: {:?}", e);
@@ -739,7 +760,8 @@ mod deftype_tests {
         let mut compiler = Compiler::new();
         // The prototype's `^:type-id N` reserved-id convention is not part of
         // the design; metadata cannot apply to a number (design section 4).
-        let source = "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
+        let source =
+            "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
         let error = match compiler.compile_expr_with_info(source) {
             Ok(_) => panic!("metadata on a number literal must not compile"),
             Err(error) => error.to_string(),

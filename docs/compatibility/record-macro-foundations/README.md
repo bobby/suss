@@ -196,3 +196,60 @@ serialized catalog in both caller phases after GC with default budgets.
 See [producer tests](../../../crates/suss-compile/src/portable/compiler_facts.rs)
 and [transport execution](../../../crates/suss-cli/tests/compiled_macro_compiler_catalog.rs).
 This transport alone is not public `defrecord` acceptance.
+
+
+### Explicit record binding transport
+
+The compiled public record helper requests `:suss/compiler-catalog :record-bindings`.
+This projection carries the genuine caller snapshot and live namespace resolution
+views, each with name, aliases, refers, exclusions, and `:suss/binding-names` from
+actual phase-specific nonhidden identities. It carries actual protocol signatures,
+namespace/global indexes, resolved unqualified bindings, and the typed native Object
+fact. It does not create placeholder definition records or serialized ASTs.
+
+Boolean `true` retains the full compiler catalog and ordinary analysis graph;
+false/nil retain ordinary macro transport. The selected mode is checkpointed with
+the source macro binding and included through its declaration source identity.
+The record resolver accepts membership sets and the existing full definition maps,
+while preserving caller phase, own shadows, refers, exclusions, qualified aliases,
+and provisional protocol declarations. Numeric graph and fuel limits are unchanged.
+
+Focused Full/RecordBindings execution passes in both caller phases, including own
+shadowing, exclusions, renamed refers, qualified lookup and failed-staging mode
+restoration. The complete two-record CLI component compiles under unchanged
+graph/fuel limits and passes all nine exported checks. Full M4 acceptance remains open.
+
+
+## Executed public record integration — 2026-10-13
+
+The dated authoring notes above are historical snapshots. Public `defrecord` is
+installed through compiled Suss helpers, retaining all 15 generated protocols,
+16 methods and 31 flattened entries. User implementations precede generated
+methods. Nominal equality uses immutable type descriptor identity. Both factories
+are integrated; grouped keyword case lowering supports generated membership.
+
+`compiled_public_records` executes two ordinary three-field records through the
+CLI component path. All nine exported checks pass: lookup; adapted Jank dissoc
+and portable empty; nominal equality/equal hashes; metadata/persistent updates;
+missing/nil/false/extension factory values; Reduced stopping; warmed hash
+invalidation; and constructor effect order. A separate independent ABI decoder
+regression passes in both phases after GC, observing fields, metadata, extension
+values and persistent updates directly. Unordered decoded maps are compared
+without iteration-order assumptions. See [provenance](public-contracts-provenance.json).
+
+The latest successful full baseline predates this integration. Provenance/import,
+bootstrap reproduction, integration baseline, independent final review and final-head
+CI remain gates. These bounded results do not establish complete record
+customizations, whole Jank namespaces, all collection/reduction paths, or M4 completion.
+
+
+Public custom protocol follow-up: the [fresh pinned observation](public-custom-observations.json)
+and matching independent native decoding establish unique user methods, generated
+method precedence for duplicate ICounted, and genuine record-input map factory
+conversion. The extra user protocol initially exhausted the unchanged macro budget.
+Mask preparation now resolves every symbol in source order, reuses the complete
+default data only after a matching resolved suffix, and processes every user
+protocol generically. Changed default bindings retain the full generic path.
+The [public adaptation ledger](public-adaptations.json) binds all three integrated
+helper files, compiled sources and retained originals; mutation tests reject stale
+or missing identities. Broader record customizations and M4 acceptance remain open.

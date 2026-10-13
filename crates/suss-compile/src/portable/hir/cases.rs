@@ -1,12 +1,20 @@
-//! Original scalar bootstrap for pinned core.cljc case (2405–2474).
+//! Scalar and keyword bootstrap for pinned core.cljc case (2405–2474).
 //! Full compiled macros, composite constants and no-default printing remain pending.
 use super::*;
 use std::collections::BTreeSet;
 
-fn constant(form: &Form) -> Result<(Literal, (u8, Vec<u8>)), Diagnostic> {
+#[derive(Clone)]
+enum CaseConstant {
+    Scalar(Literal),
+    Keyword(String),
+}
+fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
     Ok(match &form.kind {
-        Kind::Nil => (Literal::Nil, (0, vec![])),
-        Kind::Bool(value) => (Literal::Bool(*value), (1, vec![u8::from(*value)])),
+        Kind::Nil => (CaseConstant::Scalar(Literal::Nil), (0, vec![])),
+        Kind::Bool(value) => (
+            CaseConstant::Scalar(Literal::Bool(*value)),
+            (1, vec![u8::from(*value)]),
+        ),
         Kind::Number(value) => {
             let bits = if *value == 0.0 {
                 0
@@ -15,20 +23,30 @@ fn constant(form: &Form) -> Result<(Literal, (u8, Vec<u8>)), Diagnostic> {
             } else {
                 value.to_bits()
             };
-            (Literal::Number(*value), (2, bits.to_be_bytes().to_vec()))
+            (
+                CaseConstant::Scalar(Literal::Number(*value)),
+                (2, bits.to_be_bytes().to_vec()),
+            )
         }
         Kind::String(units) => (
-            Literal::String(units.clone()),
+            CaseConstant::Scalar(Literal::String(units.clone())),
             (
                 3,
                 units.iter().flat_map(|unit| unit.to_be_bytes()).collect(),
             ),
         ),
+        Kind::Keyword(value) => {
+            let fqn = value.namespace.as_ref().map_or_else(
+                || value.name.clone(),
+                |namespace| format!("{namespace}/{}", value.name),
+            );
+            (CaseConstant::Keyword(fqn.clone()), (4, fqn.into_bytes()))
+        }
         _ => {
             return Err(fail(
                 form.span.clone(),
                 "case bootstrap requires scalar literal constants",
-            ))
+            ));
         }
     })
 }
@@ -77,11 +95,20 @@ impl Analyzer<'_> {
             groups.push((group, &pair[1]));
         }
         let primitive = groups.iter().all(|(group, _)| {
-            group
-                .iter()
-                .all(|(_, value)| matches!(value, Literal::Number(_) | Literal::String(_)))
+            group.iter().all(|(_, value)| {
+                matches!(
+                    value,
+                    CaseConstant::Scalar(Literal::Number(_) | Literal::String(_))
+                )
+            })
         });
-        if !primitive && seen.len() > 8 {
+        let keywords = !primitive
+            && groups.iter().all(|(group, _)| {
+                group
+                    .iter()
+                    .all(|(_, value)| matches!(value, CaseConstant::Keyword(_)))
+            });
+        if !primitive && !keywords && seen.len() > 8 {
             return Err(fail(
                 form.span.clone(),
                 "Case equality bootstrap supports at most eight constants",
@@ -92,7 +119,35 @@ impl Analyzer<'_> {
         // with no clauses.
         let value = self.form(&args[0])?;
         let binding = self.fresh_binding(&args[0], value);
-        let selected = self.local(&args[0], binding.id);
+        let mut selected = self.local(&args[0], binding.id);
+        let mut bindings = vec![binding];
+        if keywords {
+            // Pinned case uses the live qualified keyword? predicate and reads
+            // fqn only in its true branch. Non-keyword selectors become nil.
+            let predicate = Form {
+                span: args[0].span.clone(),
+                metadata: vec![],
+                kind: Kind::Symbol(suss_reader::Symbol::namespaced("suss.core", "keyword?")),
+            };
+            let callee = self.form(&predicate)?;
+            let condition = Hir {
+                source: None,
+                span: form.span.clone(),
+                metadata: vec![],
+                ty: Type::Value,
+                kind: Expression::Call {
+                    callee: Box::new(callee),
+                    arguments: vec![selected.clone()],
+                },
+            };
+            let key = self.literal_form(form, Literal::String("fqn".encode_utf16().collect()));
+            let name = self.callable_named_get(form, selected, key, "fqn")?;
+            let fallback = self.literal_form(form, Literal::Nil);
+            let projected = self.control_if(form, condition, name, fallback);
+            let binding = self.fresh_binding(&args[0], projected);
+            selected = self.local(&args[0], binding.id);
+            bindings.push(binding);
+        }
         // The pinned case macro binds its selector in a let before branching.
         let context = context.returning();
         let mut arms = vec![];
@@ -103,7 +158,13 @@ impl Analyzer<'_> {
         for (group, result) in arms.into_iter().rev() {
             let mut condition = self.literal_form(form, Literal::Bool(false));
             for (syntax, value) in group.into_iter().rev() {
-                let comparison = if primitive {
+                let comparison = if primitive || keywords {
+                    let value = match value {
+                        CaseConstant::Scalar(value) => value,
+                        CaseConstant::Keyword(name) => {
+                            Literal::String(name.encode_utf16().collect())
+                        }
+                    };
                     Hir {
                         source: None,
                         span: syntax.span.clone(),
@@ -126,6 +187,10 @@ impl Analyzer<'_> {
                         }),
                     };
                     let callee = self.form(&symbol)?;
+                    let constant = match value {
+                        CaseConstant::Scalar(value) => self.literal_form(syntax, value),
+                        CaseConstant::Keyword(_) => self.form(syntax)?,
+                    };
                     Hir {
                         source: None,
                         span: syntax.span.clone(),
@@ -133,7 +198,7 @@ impl Analyzer<'_> {
                         ty: Type::Value,
                         kind: Expression::Call {
                             callee: Box::new(callee),
-                            arguments: vec![self.literal_form(syntax, value), selected.clone()],
+                            arguments: vec![constant, selected.clone()],
                         },
                     }
                 };
@@ -152,7 +217,7 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: body.ty,
             kind: Expression::Let {
-                bindings: vec![binding],
+                bindings,
                 body: Box::new(body),
             },
         })

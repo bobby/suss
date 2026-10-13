@@ -23,6 +23,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         Nominal::Class,
         Nominal::Construct,
         Nominal::Instance,
+        Nominal::SameNominalType,
         Nominal::Field(usize::MAX),
         Nominal::FieldSet(usize::MAX),
         Nominal::Key(usize::MAX),

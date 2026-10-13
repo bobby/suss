@@ -3,8 +3,8 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source": "crates/suss-compile/src/portable_record_label.rs",
-  "source-file-sha256": "48901949be22045578190ddcc532c50f75be5fc9de523f1655867399b52a3647",
-  "compiled-source-sha256": "edd96e3da8c18470aa9575186bc73bbe25489ab6597b8cc8a792107ab2805631",
+  "source-file-sha256": "85918e32769a83597ea6ac1232338449ea41b6eed16e1d17f65ecf9904de58e9",
+  "compiled-source-sha256": "7cf2291acea163f75d062f038bf4eb9880971ab9ab66d1c7657c9eda1a6274ec",
   "originals": [
     {
       "path": "docs/compatibility/record-analyzer-context/core-CHAR_MAP-377.cljs",
@@ -27,10 +27,13 @@
     "Compile the complete scalar-name munge path as Suss source for resolved record type labels; analyzer-map lexical munging remains a separate interface.",
     "Retain the entire character and reserved-name tables, using an array map and a vector with value membership scans to avoid eager persistent hash-table construction in the compiled Macro Store.",
     "Use UTF-16 native character reads/slices and explicit scans for non-overlapping .. replacement, division-before-non-line-terminator replacement, per-segment reserved suffixes, and per-code-unit character mapping. Compare the four line-terminator code units directly rather than rebuilding a hash set inside the scan.",
-    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys."
+    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys.",
+    "Sort the complete reserved-name vector and use exact string binary search; compile all character-table pairs into literal case comparisons. Preserve every table entry and fallback, avoiding repeated linear scans and eager hash-table construction.",
+    "Use existing UTF-16 concat-string only for already-known string joins; initial str(value), complete character/reserved tables and all bounds/line guards remain. Three/four-operand helpers evaluate all operands left-to-right before joining.",
+    "Cache immutable UTF-16 string lengths once per private traversal; return the input unchanged when native exact string-index-of proves there is no double-dot pattern. Preserve all transformations and surrogate/line bounds."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_record_labels.rs"
   ],
-  "status": "Focused validation in progress; public record emitter remains missing."
+  "status": "Integrated public record macro passes bounded CLI and independent ABI decoding checks; full workspace baseline and original M4 acceptance remain pending."
 }
