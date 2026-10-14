@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "118fedb4630c2e463ea39d2a2649aee03a28b59eeea23d418da97f7dd1e4d1b5",
+  "replacement": "(def int-array \"Creates an array of ints. Does not coerce array, provided for compatibility\n  with Clojure.\" (fn ([size-or-seq]\n     (if (number? size-or-seq)\n       (int-array size-or-seq nil)\n       (into-array size-or-seq)))\n  ([size init-val-or-seq]\n     (let [a (make-array size)]\n       (if (seq? init-val-or-seq)\n         (let [s (seq init-val-or-seq)]\n           (loop [i 0 s s]\n             (if (and s (< i size))\n               (do\n                 (aset a i (first s))\n                 (recur (inc i) (next s)))\n               a)))\n         (do\n           (let [array-limit__ size]\n             (loop [array-index__ 0]\n               (when (< array-index__ array-limit__)\n                 (aset a array-index__ init-val-or-seq)\n                 (recur (inc array-index__)))))\n           a))))))",
+  "rationale": "Expand complete defn to def/fn, preserving docs/all public clauses. Array initialization retains number/seq discrimination, nil/false and non-coercing values, short/long sequence stopping and unfilled holes. Expand complete dotimes with once-only bound and ordered writes. Production/oracle acceptance pending; no branches removed."
+}

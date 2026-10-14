@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "0e937671e103b26ccaeebf9ef0e5c2b5de8322d3d361547d347ad79f5d68d3df",
+  "replacement": "(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))",
+  "rationale": "Expand the complete es6-iterable macro parent to its owned prototype method, preserving receiver and iterator call."
+}

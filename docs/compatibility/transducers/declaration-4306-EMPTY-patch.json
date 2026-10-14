@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5f086f760d198c9a1dc6efeedada1d8cd6945a85ee5fe973ed3be74af554eea9",
+  "replacement": "(def ^:private EMPTY (Empty.))",
+  "rationale": "Retain the entire pinned declaration unchanged; checked portable owned-array/property/Error and protocol implementations supply the host substrate. No methods or source branches removed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

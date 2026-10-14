@@ -1,0 +1,1 @@
+(def ^:private EMPTY (Empty.))

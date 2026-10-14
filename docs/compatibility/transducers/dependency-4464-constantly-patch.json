@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "0c999d766dfb9126e937e6ad9db6e080e4e5745358e7e205ff5d6d5150feb8ca",
+  "replacement": "(def constantly \"Returns a function that takes any number of arguments and returns x.\" (fn [x] (fn [& args] x)))",
+  "rationale": "Expand complete defn to def/fn, preserving documentation and the complete variadic closure. Capture x once at construction; evaluate invocation arguments in source order without using them. No source clauses removed."
+}

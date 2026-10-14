@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c5fd529bbadcb04f86f544a7a05449010f8131a120d97700a269392a009b0d7e",
+  "replacement": "(def ^{:arglists '([xform* coll])} eduction\n  \"Returns a reducible/iterable application of the transducers\n  to the items in coll. Transducers are applied in order as if\n  combined with comp. Note that these applications will be\n  performed every time reduce/iterator is called.\"\n  (fn [& xforms]\n  (Eduction. (apply comp (butlast xforms)) (last xforms))))",
+  "rationale": "Expand complete defn declaration to def/fn; retain docstring, all clauses and returned reducer arities. Source-only candidate; no branches excluded and no native acceptance claimed. Move the original explicit arglists attribute map to def symbol metadata; preserve its exact data and docstring rather than adding an extra def operand. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

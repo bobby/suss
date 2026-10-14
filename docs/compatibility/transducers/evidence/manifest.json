@@ -1,0 +1,11 @@
+{
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "cljs": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "reference-sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+  "bootstrap-runtime-sha256": "4d3c9bc3adb486608aa4f7ca5c6109672e566952bcbca664ba3f0a91772fcb03",
+  "files": {
+    "jank-before-array-observations.json": "47bce5bae7c6191cf9906b90bd0239d1f0eae9cd1aaa94ad6fd212304f833b9f",
+    "jank-array-observations.json": "0b24e37cc29d0c2b0117d71f238e13623a80d629285276801e08cf8f6d2640d7",
+    "jank-array-audit.json": "4426a076258e675c4ec308a5915c67a5c508824171e0b0e659f2c55a7c6a7500"
+  }
+}

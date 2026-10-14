@@ -27,6 +27,9 @@ enum Class {
     Keyword,
     Symbol,
     Vector,
+    Subvec,
+    RSeq,
+    ValSeq,
     Node,
     SourceArray,
     List,
@@ -171,6 +174,9 @@ impl Decoder {
                 Class::ArrayMapSeq,
             ),
             ("(new suss.core/KeySeq nil nil)", Class::KeySeq),
+            ("(new suss.core/ValSeq nil nil)", Class::ValSeq),
+            ("(new suss.core/RSeq [] 0 nil)", Class::RSeq),
+            ("(new suss.core/Subvec nil [] 0 0 nil)", Class::Subvec),
             (
                 "(new suss.core/NodeSeq nil (suss.core/array) 0 nil nil)",
                 Class::NodeSeq,
@@ -255,6 +261,30 @@ impl Decoder {
             ));
         }
         self.value(store, value, 0)
+    }
+
+    /// Assertion-time observer path: the hook and canonical anchors belong to
+    /// the same live Store. No Session reset, GC, guest call or lazy forcing here.
+    pub fn snapshot_payload(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: &Val,
+    ) -> wasmtime::Result<Vec<Result<Observation, String>>> {
+        let (class, data) = self.object(store, value)?;
+        if class != Class::Vector {
+            return Err(wasmtime::Error::msg(
+                "Observation payload must be a canonical vector",
+            ));
+        }
+        let count = count(store, &data[1])?;
+        let values = self.vector_values(store, &data, 0, count, 0)?;
+        Ok(values
+            .iter()
+            .map(|value| {
+                self.value(store, value, 0)
+                    .map_err(|error| format!("Host error: {error}"))
+            })
+            .collect())
     }
 
     fn value(
@@ -357,6 +387,26 @@ impl Decoder {
                         ));
                     }
                     Class::Vector => return self.vector(store, &args, depth),
+                    Class::Subvec => {
+                        let start = count_field(store, &args[2])?;
+                        let end = count_field(store, &args[3])?;
+                        return Ok(Observation::Vector(self.indexed_slice(
+                            store,
+                            &args[1],
+                            start,
+                            end,
+                            depth + 1,
+                        )?));
+                    }
+                    Class::RSeq => {
+                        let last = count_field(store, &args[1])?;
+                        let end = last.checked_add(1).ok_or_else(|| {
+                            wasmtime::Error::msg("Reverse sequence index overflow")
+                        })?;
+                        let mut items = self.indexed_slice(store, &args[0], 0, end, depth + 1)?;
+                        items.reverse();
+                        return Ok(Observation::List(items));
+                    }
                     Class::IndexedSeq => return self.indexed(store, &args, depth),
                     Class::ChunkedSeq => return self.chunked(store, &args, depth),
                     Class::MapEntry | Class::BlackNode | Class::RedNode => {
@@ -373,31 +423,18 @@ impl Decoder {
                         return self.list(store, value, depth);
                     }
                     Class::IntegerRange | Class::Range => return self.range(store, class, &args),
-                    Class::ArrayMapSeq => return self.array_map_seq(store, &args, depth),
+                    Class::ArrayMapSeq => return self.array_map_seq(store, &args, depth, None),
                     Class::NodeSeq | Class::ArrayNodeSeq => {
-                        return self.hash_seq(store, class, &args, depth);
+                        return self.hash_seq(store, class, &args, depth, None);
                     }
-                    Class::TreeSeq => return self.tree_seq(store, &args, depth),
-                    Class::KeySeq => {
-                        let Observation::List(entries) = self.value(store, &args[0], depth + 1)?
-                        else {
-                            return Err(wasmtime::Error::msg(
-                                "Key sequence needs stored map-entry sequence",
-                            ));
-                        };
-                        let mut keys = Vec::with_capacity(entries.len());
-                        for entry in entries {
-                            let Observation::Vector(mut pair) = entry else {
-                                return Err(wasmtime::Error::msg("Malformed key sequence entry"));
-                            };
-                            if pair.len() != 2 {
-                                return Err(wasmtime::Error::msg(
-                                    "Malformed key sequence entry width",
-                                ));
-                            }
-                            keys.push(pair.remove(0));
-                        }
-                        return Ok(Observation::List(keys));
+                    Class::TreeSeq => return self.tree_seq(store, &args, depth, None),
+                    Class::KeySeq | Class::ValSeq => {
+                        return self.entry_sequence(
+                            store,
+                            &args[0],
+                            if class == Class::KeySeq { 0 } else { 1 },
+                            depth + 1,
+                        );
                     }
                     _ => (),
                 }
@@ -439,10 +476,11 @@ impl Decoder {
                     | Class::ArrayNodeSeq
                     | Class::TreeSeq
                     | Class::BlackNode
-                    | Class::RedNode => 5,
+                    | Class::RedNode
+                    | Class::Subvec => 5,
                     Class::Vector | Class::HashMap | Class::ChunkedSeq | Class::IntegerRange => 6,
                     Class::Range => 7,
-                    Class::Node | Class::KeySeq => 2,
+                    Class::Node | Class::KeySeq | Class::ValSeq => 2,
                     Class::IndexedSeq
                     | Class::MapEntry
                     | Class::HashSet
@@ -450,7 +488,8 @@ impl Decoder {
                     | Class::ArrayNode
                     | Class::ExceptionInfo
                     | Class::ArrayChunk
-                    | Class::ArrayMapSeq => 3,
+                    | Class::ArrayMapSeq
+                    | Class::RSeq => 3,
                     Class::SourceArray => 2,
                     Class::EmptyList => 1,
                 };
@@ -507,15 +546,102 @@ impl Decoder {
         start: usize,
         depth: usize,
     ) -> wasmtime::Result<Vec<Observation>> {
+        let end = count(store, &data[1])?;
+        self.vector_slice(store, data, start, end, depth)
+    }
+
+    fn indexed_count(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: &Val,
+        depth: usize,
+    ) -> wasmtime::Result<usize> {
+        if depth >= 128 {
+            return Err(wasmtime::Error::msg("Indexed backing depth limit"));
+        }
+        self.spend(1)?;
+        let (class, data) = self.object(store, value)?;
+        match class {
+            Class::Vector => Ok(count(store, &data[1])?),
+            Class::Subvec => {
+                let start = count_field(store, &data[2])?;
+                let end = count_field(store, &data[3])?;
+                let backing = self.indexed_count(store, &data[1], depth + 1)?;
+                if start > end || end > backing {
+                    return Err(wasmtime::Error::msg(
+                        "Subvector declared bounds exceed backing",
+                    ));
+                }
+                Ok(end - start)
+            }
+            _ => Err(wasmtime::Error::msg(
+                "Indexed backing needs canonical vector/subvector",
+            )),
+        }
+    }
+
+    fn indexed_slice(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: &Val,
+        start: usize,
+        end: usize,
+        depth: usize,
+    ) -> wasmtime::Result<Vec<Observation>> {
+        if depth >= 128 || start > end {
+            return Err(wasmtime::Error::msg("Indexed slice depth/bounds"));
+        }
+        self.spend(1)?;
+        let (class, data) = self.object(store, value)?;
+        match class {
+            Class::Vector => self.vector_slice(store, &data, start, end, depth),
+            Class::Subvec => {
+                let from = count_field(store, &data[2])?;
+                let to = count_field(store, &data[3])?;
+                let backing = self.indexed_count(store, &data[1], depth + 1)?;
+                if from > to || to > backing || end > to - from {
+                    return Err(wasmtime::Error::msg("Subvector slice exceeds bounds"));
+                }
+                self.indexed_slice(store, &data[1], from + start, from + end, depth + 1)
+            }
+            _ => Err(wasmtime::Error::msg(
+                "Indexed slice needs canonical vector/subvector",
+            )),
+        }
+    }
+
+    fn vector_slice(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        data: &[Val],
+        start: usize,
+        end: usize,
+        depth: usize,
+    ) -> wasmtime::Result<Vec<Observation>> {
+        let values = self.vector_values(store, data, start, end, depth)?;
+        values
+            .iter()
+            .map(|item| self.value(store, item, depth + 1))
+            .collect()
+    }
+
+    fn vector_values(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        data: &[Val],
+        start: usize,
+        end: usize,
+        _depth: usize,
+    ) -> wasmtime::Result<Vec<Val>> {
         let count = count(store, &data[1])?;
-        if start > count {
+        if start > end || end > count {
             return Err(wasmtime::Error::msg("Vector sequence offset exceeds count"));
         }
         let shift = count_field(store, &data[2])?;
         if !(5..=30).contains(&shift) || shift % 5 != 0 {
             return Err(wasmtime::Error::msg("Invalid vector trie shift"));
         }
-        if count - start > self.remaining {
+        if end - start > self.remaining {
             return Err(wasmtime::Error::msg("ABI2 decoder traversal limit"));
         }
         let tail_start = if count <= 32 {
@@ -536,8 +662,8 @@ impl Decoder {
             ));
         }
         self.node(store, &data[3])?;
-        let mut result = Vec::with_capacity(count - start);
-        for index in start..count {
+        let mut result = Vec::with_capacity(end - start);
+        for index in start..end {
             let item = if index >= tail_start {
                 tail[index - tail_start].clone()
             } else {
@@ -552,7 +678,7 @@ impl Decoder {
                     level -= 5;
                 }
             };
-            result.push(self.value(store, &item, depth + 1)?);
+            result.push(item);
         }
         Ok(result)
     }
@@ -746,6 +872,33 @@ impl Decoder {
         declared: usize,
         pairs: &mut Vec<(Observation, Observation)>,
     ) -> wasmtime::Result<()> {
+        let mut raw = Vec::new();
+        self.hash_node_values(
+            store,
+            value,
+            level,
+            depth,
+            declared.saturating_sub(pairs.len()),
+            &mut raw,
+        )?;
+        for (key, value) in raw {
+            pairs.push((
+                self.value(store, &key, depth + 1)?,
+                self.value(store, &value, depth + 1)?,
+            ));
+        }
+        Ok(())
+    }
+
+    fn hash_node_values(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: &Val,
+        level: usize,
+        depth: usize,
+        declared: usize,
+        pairs: &mut Vec<(Val, Val)>,
+    ) -> wasmtime::Result<()> {
         if level > 7 {
             return Err(wasmtime::Error::msg("Hash trie exceeds 32-bit path depth"));
         }
@@ -760,7 +913,7 @@ impl Decoder {
                     let child = array[index].clone();
                     if !internal_absent(store, &child)? {
                         occupied += 1;
-                        self.hash_node(store, &child, level + 1, depth, declared, pairs)?;
+                        self.hash_node_values(store, &child, level + 1, depth, declared, pairs)?;
                     }
                 }
                 if occupied != expected {
@@ -794,17 +947,14 @@ impl Decoder {
                         if collision {
                             return Err(wasmtime::Error::msg("Absent key in hash collision node"));
                         }
-                        self.hash_node(store, &value, level + 1, depth, declared, pairs)?;
+                        self.hash_node_values(store, &value, level + 1, depth, declared, pairs)?;
                     } else {
                         if pairs.len() >= declared {
                             return Err(wasmtime::Error::msg(
                                 "Hash trie exceeds declared map count",
                             ));
                         }
-                        pairs.push((
-                            self.value(store, &key, depth + 1)?,
-                            self.value(store, &value, depth + 1)?,
-                        ));
+                        pairs.push((key, value));
                     }
                 }
             }
@@ -919,11 +1069,100 @@ impl Decoder {
         Ok(Observation::List(result))
     }
 
+    fn entry_fields(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        key: &Val,
+        value: &Val,
+        depth: usize,
+        projection: Option<usize>,
+    ) -> wasmtime::Result<Observation> {
+        match projection {
+            Some(0) => self.value(store, key, depth + 1),
+            Some(1) => self.value(store, value, depth + 1),
+            None => Ok(Observation::Vector(vec![
+                self.value(store, key, depth + 1)?,
+                self.value(store, value, depth + 1)?,
+            ])),
+            _ => Err(wasmtime::Error::msg("Invalid entry projection")),
+        }
+    }
+
+    fn entry_sequence(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        value: &Val,
+        projection: usize,
+        depth: usize,
+    ) -> wasmtime::Result<Observation> {
+        if depth >= 128 || projection > 1 {
+            return Err(wasmtime::Error::msg("Entry projection depth/index"));
+        }
+        let mut current = value.clone();
+        let mut result = Vec::new();
+        let mut counts = Vec::new();
+        while sentinel(store, &current)? != Some(0) {
+            self.spend(1)?;
+            let (class, fields) = self.object(store, &current)?;
+            let tail = match class {
+                Class::Cons | Class::List => {
+                    if class == Class::List {
+                        counts.push((result.len(), count_field(store, &fields[3])?));
+                    }
+                    let (entry_class, entry) = self.object(store, &fields[1])?;
+                    let head = match entry_class {
+                        Class::MapEntry | Class::BlackNode | Class::RedNode => {
+                            self.value(store, &entry[projection], depth + 1)?
+                        }
+                        Class::Vector => {
+                            if count(store, &entry[1])? != 2 {
+                                return Err(wasmtime::Error::msg("Projected vector entry width"));
+                            }
+                            self.vector_slice(store, &entry, projection, projection + 1, depth + 1)?
+                                .remove(0)
+                        }
+                        _ => {
+                            return Err(wasmtime::Error::msg(
+                                "Projection needs canonical stored entry",
+                            ));
+                        }
+                    };
+                    result.push(head);
+                    current = fields[2].clone();
+                    continue;
+                }
+                Class::EmptyList => break,
+                Class::ArrayMapSeq => {
+                    self.array_map_seq(store, &fields, depth + 1, Some(projection))?
+                }
+                Class::NodeSeq | Class::ArrayNodeSeq => {
+                    self.hash_seq(store, class, &fields, depth + 1, Some(projection))?
+                }
+                Class::TreeSeq => self.tree_seq(store, &fields, depth + 1, Some(projection))?,
+                _ => return Err(wasmtime::Error::msg("Unsupported stored entry sequence")),
+            };
+            let Observation::List(tail) = tail else {
+                unreachable!()
+            };
+            result.extend(tail);
+            break;
+        }
+        for (start, declared) in counts {
+            if result.len() - start != declared {
+                return Err(wasmtime::Error::msg(
+                    "Projected list count disagrees with storage",
+                ));
+            }
+        }
+        Ok(Observation::List(result))
+    }
+
     fn array_map_seq(
         &mut self,
         store: &mut StoreContextMut<'_, ()>,
         data: &[Val],
         depth: usize,
+        projection: Option<usize>,
     ) -> wasmtime::Result<Observation> {
         let array = self.raw_array(store, &data[0])?;
         let index = count_field(store, &data[1])?;
@@ -932,10 +1171,7 @@ impl Decoder {
         }
         let mut result = Vec::new();
         for pair in array[index..].chunks_exact(2) {
-            result.push(Observation::Vector(vec![
-                self.value(store, &pair[0], depth + 1)?,
-                self.value(store, &pair[1], depth + 1)?,
-            ]));
+            result.push(self.entry_fields(store, &pair[0], &pair[1], depth, projection)?);
         }
         Ok(Observation::List(result))
     }
@@ -946,6 +1182,7 @@ impl Decoder {
         class: Class,
         data: &[Val],
         depth: usize,
+        projection: Option<usize>,
     ) -> wasmtime::Result<Observation> {
         let nodes = self.raw_array(store, &data[1])?;
         let index = count_field(store, &data[2])?;
@@ -965,7 +1202,10 @@ impl Decoder {
         }
         let mut result = Vec::new();
         if has_tail {
-            let Observation::List(tail) = self.value(store, &data[3], depth + 1)? else {
+            let Observation::List(tail) = (match projection {
+                Some(index) => self.entry_sequence(store, &data[3], index, depth + 1)?,
+                None => self.value(store, &data[3], depth + 1)?,
+            }) else {
                 return Err(wasmtime::Error::msg("Malformed hash sequence current tail"));
             };
             result.extend(tail);
@@ -975,28 +1215,23 @@ impl Decoder {
         if array_node {
             for child in &nodes[index..] {
                 if !internal_absent(store, child)? {
-                    self.hash_node(store, child, 0, depth, bound, &mut pairs)?;
+                    self.hash_node_values(store, child, 0, depth, bound, &mut pairs)?;
                 }
             }
         } else {
             for pair in nodes[index..].chunks_exact(2) {
                 if internal_absent(store, &pair[0])? {
                     if !internal_absent(store, &pair[1])? {
-                        self.hash_node(store, &pair[1], 0, depth, bound, &mut pairs)?;
+                        self.hash_node_values(store, &pair[1], 0, depth, bound, &mut pairs)?;
                     }
                 } else {
-                    pairs.push((
-                        self.value(store, &pair[0], depth + 1)?,
-                        self.value(store, &pair[1], depth + 1)?,
-                    ));
+                    pairs.push((pair[0].clone(), pair[1].clone()));
                 }
             }
         }
-        result.extend(
-            pairs
-                .into_iter()
-                .map(|(key, value)| Observation::Vector(vec![key, value])),
-        );
+        for (key, value) in pairs {
+            result.push(self.entry_fields(store, &key, &value, depth, projection)?);
+        }
         Ok(Observation::List(result))
     }
 
@@ -1005,6 +1240,7 @@ impl Decoder {
         store: &mut StoreContextMut<'_, ()>,
         data: &[Val],
         depth: usize,
+        projection: Option<usize>,
     ) -> wasmtime::Result<Observation> {
         let ascending = match sentinel(store, &data[2])? {
             Some(4) => true,
@@ -1055,10 +1291,7 @@ impl Decoder {
             if !matches!(class, Class::BlackNode | Class::RedNode) {
                 return Err(wasmtime::Error::msg("Tree stack needs canonical tree node"));
             }
-            result.push(Observation::Vector(vec![
-                self.value(store, &fields[0], depth + 1)?,
-                self.value(store, &fields[1], depth + 1)?,
-            ]));
+            result.push(self.entry_fields(store, &fields[0], &fields[1], depth, projection)?);
             let mut child = fields[if ascending { 3 } else { 2 }].clone();
             let mut path = 0;
             while sentinel(store, &child)? != Some(0) {
@@ -1167,6 +1400,8 @@ impl Decoder {
                 | Class::Range
                 | Class::ArrayMapSeq
                 | Class::KeySeq
+                | Class::RSeq
+                | Class::ValSeq
                 | Class::NodeSeq
                 | Class::ArrayNodeSeq
                 | Class::TreeSeq => {

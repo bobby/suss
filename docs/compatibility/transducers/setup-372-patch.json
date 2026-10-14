@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "608c90da5868524bc4244e82b34cfe0db3473b59d2539170b40da91e681676bd",
+  "replacement": "(def ITER_SYMBOL \"@@iterator\")",
+  "rationale": "Select the complete original string fallback because the target has no native js/Symbol binding; retain both upstream branches in ITER_SYMBOL-parent.cljs."
+}

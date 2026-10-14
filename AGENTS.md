@@ -21,6 +21,11 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
   are fulfilled; use `Refs #N` for partial progress. Dispatch an independent
   subagent review for each PR, push significant fixes and require final-head CI.
   Do not merge PRs without a later explicit user instruction.
+* Each PR must fully resolve at least one issue and include its `Closes #N`
+  reference. Split broad work into bounded issues with meaningful acceptance
+  criteria before opening the PR; partial progress may additionally `Refs`
+  umbrella issues. Do not weaken criteria or create bookkeeping-only issues
+  merely to satisfy this rule.
 * No Java dependency in shipped code. JVM/Node may be development test oracles.
 * Completion state lives only in GitHub milestones and issues. Do not record
   milestone or work-package status in repository files. Post progress, evidence

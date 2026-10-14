@@ -2178,16 +2178,101 @@
       "id": "runtime:drop-while:5021",
       "source-sha256": "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0",
       "patch": "docs/compatibility/patches/record-emitter-drop-while.json"
+    },
+    {
+      "id": "runtime:completing:2695",
+      "source-sha256": "a316bf139114b4145bc0a73ee8c77cfd0a8d3ab5a81eb0ec7994c81939972cae",
+      "patch": "docs/compatibility/transducers/declaration-2695-completing-patch.json"
+    },
+    {
+      "id": "runtime:butlast:9673",
+      "source-sha256": "de6ab3e36618199f865851e8584e6730d51cd069d27c0090288816a61f8fad6d",
+      "patch": "docs/compatibility/transducers/declaration-9673-butlast-patch.json"
+    },
+    {
+      "id": "runtime:Many:4262",
+      "source-sha256": "f7707df9ccff7cc1dca7df41f79f63c68c1d82ef2b02f7e5b59864666ecbf063",
+      "patch": "docs/compatibility/transducers/declaration-4262-Many-patch.json"
+    },
+    {
+      "id": "runtime:NONE:4274",
+      "source-sha256": "7b4ec8772f66193dcf69a4b7346ce37e56db778138fb00abc520b50480abb45e",
+      "patch": "docs/compatibility/transducers/declaration-4274-NONE-patch.json"
+    },
+    {
+      "id": "runtime:Single:4276",
+      "source-sha256": "b56c8b6829e2f4f2f53ea47d65675ccbebf9b28ce2e055d6a6da0478b3fcc655",
+      "patch": "docs/compatibility/transducers/declaration-4276-Single-patch.json"
+    },
+    {
+      "id": "runtime:Empty:4295",
+      "source-sha256": "8a3d71ca54f6991f83f2d578f08288c0dedccb41da4ddcfaa19c41db47ea0aa0",
+      "patch": "docs/compatibility/transducers/declaration-4295-Empty-patch.json"
+    },
+    {
+      "id": "runtime:EMPTY:4306",
+      "source-sha256": "5f086f760d198c9a1dc6efeedada1d8cd6945a85ee5fe973ed3be74af554eea9",
+      "patch": "docs/compatibility/transducers/declaration-4306-EMPTY-patch.json"
+    },
+    {
+      "id": "runtime:MultiIterator:4308",
+      "source-sha256": "335a798bb7fa2a8a19dc6baecf447375664af74839206826208a8d2dc2eb6808",
+      "patch": "docs/compatibility/transducers/declaration-4308-MultiIterator-patch.json"
+    },
+    {
+      "id": "runtime:chunkIteratorSeq:4324",
+      "source-sha256": "28002f77a3cd0439ac59725f5a1b0a2aa6ee74a67c1941c4b44459f305d4dad0",
+      "patch": "docs/compatibility/transducers/declaration-4324-chunkIteratorSeq-patch.json"
+    },
+    {
+      "id": "runtime:TransformerIterator:4335",
+      "source-sha256": "9021bd4f7a91656955f1f1edc6f78d7de0dde1451574fae0b5e2a8b30be22e21",
+      "patch": "docs/compatibility/transducers/declaration-4335-TransformerIterator-patch.json"
+    },
+    {
+      "id": "runtime:transformer-iterator:4374",
+      "source-sha256": "5a2714479dc08c5896abe390704e7ce0481116e82d0303a30db0d13ca092a62e",
+      "patch": "docs/compatibility/transducers/declaration-4374-transformer-iterator-patch.json"
+    },
+    {
+      "id": "runtime:sequence:4394",
+      "source-sha256": "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756",
+      "patch": "docs/compatibility/transducers/declaration-4394-sequence-patch.json"
+    },
+    {
+      "id": "runtime:Eduction:11023",
+      "source-sha256": "013298f8999cac7911f49004d5d8fcd6caafc7fc9652c37f7a4b9daef7be9833",
+      "patch": "docs/compatibility/transducers/declaration-11023-Eduction-patch.json"
+    },
+    {
+      "id": "runtime:eduction:11053",
+      "source-sha256": "c5fd529bbadcb04f86f544a7a05449010f8131a120d97700a269392a009b0d7e",
+      "patch": "docs/compatibility/transducers/declaration-11053-eduction-patch.json"
+    },
+    {
+      "id": "runtime:constantly:4464",
+      "source-sha256": "0c999d766dfb9126e937e6ad9db6e080e4e5745358e7e205ff5d6d5150feb8ca",
+      "patch": "docs/compatibility/transducers/dependency-4464-constantly-patch.json"
+    },
+    {
+      "id": "runtime:int-array:3840",
+      "source-sha256": "118fedb4630c2e463ea39d2a2649aee03a28b59eeea23d418da97f7dd1e4d1b5",
+      "patch": "docs/compatibility/transducers/dependency-3840-int-array-patch.json"
+    },
+    {
+      "id": "runtime:object-array:3906",
+      "source-sha256": "376576cfe0a48eaece22ede20d6bb7bcbe5702001cb1f47d51b5ee2d1a55cb4f",
+      "patch": "docs/compatibility/transducers/dependency-3906-object-array-patch.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "522b9e1c885166ea099d86a206ed9513e84b6d3e3d7a6a3a5be532cfc06817f0"
+      "sha256": "2c497fb9225061663903979cce3ef54f381c5d46b5b61f9dd1b83a9f4f13bf09"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "03f25acf05e6471fbfa6f896acf9571fc9cd6e43c571d27999696bd2978bf1d1"
+      "sha256": "5e1e074616431bc3b74fef875ca00fcb6815761457427d3120994373d31355a2"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",

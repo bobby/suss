@@ -5,6 +5,26 @@ import sequence_provenance as provenance
 
 
 class SequenceProvenance(unittest.TestCase):
+    def test_iterator_setup_rejects_branch_receiver_and_target_changes(self):
+        for line, before, after, message in [
+            (372, '"@@iterator"', '"wrong-iterator"', 'exact original string fallback'),
+            (4372, '(cljs.core/es6-iterator __suss_iter_this__)', '(cljs.core/es6-iterator nil)', 'receiver-preserving expansion'),
+            (11051, '(.-prototype Eduction)', '(.-prototype TransformerIterator)', 'receiver-preserving expansion'),
+        ]:
+            statement = next(s for s in self.record['statements'] if s['line'] == line)
+            original = provenance.json_data(
+                provenance.repository_file(provenance.ROOT, statement['patch']).read_bytes())
+            changed = copy.deepcopy(original)
+            changed['replacement'] = changed['replacement'].replace(before, after)
+            self.assertNotEqual(changed['replacement'], original['replacement'])
+            decode = provenance.json_data
+            def changed_patch(raw):
+                value = decode(raw)
+                return changed if value == original else value
+            with patch.object(provenance, 'json_data', side_effect=changed_patch):
+                with self.assertRaisesRegex(ValueError, message):
+                    provenance.verify_payload(self.record, self.source, self.loader)
+
     def test_printer_expansion_rejects_rewritten_reordered_and_invented_stanzas(self):
         statement = next(s for s in self.record['statements']
                          if s.get('patch') == 'docs/compatibility/patches/printing-collection-extensions.json')

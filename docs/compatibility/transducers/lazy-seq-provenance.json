@@ -1,0 +1,13 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "clojurescript/src/main/clojure/cljs/core.cljc",
+  "line": 2285,
+  "license": "EPL-1.0",
+  "retained": "lazy-seq.cljc",
+  "original-sha256": "4e18f2fb7cc62835a5337e1aee84e7faea36b871ba4fd89632fcb8f3c61e05d5",
+  "adapted": "lazy-seq.sus",
+  "adapted-sha256": "fce7897a707370783b86423de2e8c948156a0c2616a38149947715173f15b66e",
+  "adaptation": "Change only declaration head core/defmacro to supported canonical defmacro; preserve complete docstring, signature and syntax-quoted constructor/thunk/body.",
+  "status": "installed in source macro bootstrap; build and public-path execution pending",
+  "source-form-sha256": "a40485cf5ee791eb6e48202ae81f3f6c6340adf5f7c805c5fd36879ef8706a7d"
+}

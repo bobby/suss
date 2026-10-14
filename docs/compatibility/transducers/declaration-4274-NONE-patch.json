@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7b4ec8772f66193dcf69a4b7346ce37e56db778138fb00abc520b50480abb45e",
+  "replacement": "(def ^:private NONE #js {})",
+  "rationale": "Retain the entire pinned declaration unchanged; checked portable owned-array/property/Error and protocol implementations supply the host substrate. No methods or source branches removed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

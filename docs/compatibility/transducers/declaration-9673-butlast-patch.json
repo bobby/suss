@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "de6ab3e36618199f865851e8584e6730d51cd069d27c0090288816a61f8fad6d",
+  "replacement": "(def butlast\n  \"Return a seq of all but the last item in coll, in linear time\"\n  (fn [s]\n  (loop [ret [] s s]\n    (if (next s)\n      (recur (conj ret (first s)) (next s))\n      (seq ret)))))",
+  "rationale": "Expand complete defn declaration to def/fn; retain docstring, all clauses and returned reducer arities. Source-only candidate; no branches excluded and no native acceptance claimed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "28002f77a3cd0439ac59725f5a1b0a2aa6ee74a67c1941c4b44459f305d4dad0",
+  "replacement": "(def ^:private chunkIteratorSeq (fn [iter]\n  (cljs.core/LazySeq. nil (fn* [] (when ^boolean (.hasNext iter)\n      (let [arr (array)]\n        (loop [n 0]\n          (if (and (.hasNext iter) (< n 32))\n            (do\n              (aset arr n (.next iter))\n              (recur (inc n)))\n            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))) nil nil)))",
+  "rationale": "Expand complete defn declaration to def/fn; retain docstring, all clauses and returned reducer arities. Source-only candidate; no branches excluded and no native acceptance claimed. Expand the entire pinned lazy-seq constructor macro to LazySeq with a compiled zero-argument thunk; preserve every body expression and original hasNext-before-size-guard order. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

@@ -1,0 +1,81 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "constant-zero",
+      "source": "((constantly 7))"
+    },
+    {
+      "id": "constant-many",
+      "source": "((constantly false) nil 1 2 3)"
+    },
+    {
+      "id": "constant-once",
+      "source": "(let [f (constantly (do (swap! trace conj :made) nil))] [(f) (f (do (swap! trace conj :arg) 1))])"
+    },
+    {
+      "id": "int-array-zero",
+      "source": "(vec (int-array 0))"
+    },
+    {
+      "id": "int-array-nil-size",
+      "source": "(vec (int-array 3))"
+    },
+    {
+      "id": "int-array-source",
+      "source": "(vec (int-array [nil false 1.75 -0.0 \"x\"]))"
+    },
+    {
+      "id": "int-array-false-fill",
+      "source": "(vec (int-array 3 false))"
+    },
+    {
+      "id": "int-array-vector-fill",
+      "source": "(let [x [1 2] a (int-array 2 x)] [(identical? x (aget a 0)) (identical? x (aget a 1))])"
+    },
+    {
+      "id": "int-array-short-seq",
+      "source": "(let [a (int-array 3 (list false))] [(alength a) (aget a 0) (.hasOwnProperty a \"1\") (.hasOwnProperty a \"2\")])"
+    },
+    {
+      "id": "int-array-long-seq",
+      "source": "(vec (int-array 2 (list 7 11 13)))"
+    },
+    {
+      "id": "int-array-ordered-input",
+      "source": "(let [s (map (fn [x] (swap! trace conj x) x) (list 7 11 13))] [(vec (int-array 2 s)) @trace])"
+    },
+    {
+      "id": "object-array-zero",
+      "source": "(vec (object-array 0))"
+    },
+    {
+      "id": "object-array-nil-size",
+      "source": "(vec (object-array 3))"
+    },
+    {
+      "id": "object-array-source",
+      "source": "(vec (object-array [nil false 1.75 -0.0 \"x\"]))"
+    },
+    {
+      "id": "object-array-false-fill",
+      "source": "(vec (object-array 3 false))"
+    },
+    {
+      "id": "object-array-vector-fill",
+      "source": "(let [x [1 2] a (object-array 2 x)] [(identical? x (aget a 0)) (identical? x (aget a 1))])"
+    },
+    {
+      "id": "object-array-short-seq",
+      "source": "(let [a (object-array 3 (list false))] [(alength a) (aget a 0) (.hasOwnProperty a \"1\") (.hasOwnProperty a \"2\")])"
+    },
+    {
+      "id": "object-array-long-seq",
+      "source": "(vec (object-array 2 (list 7 11 13)))"
+    },
+    {
+      "id": "object-array-ordered-input",
+      "source": "(let [s (map (fn [x] (swap! trace conj x) x) (list 7 11 13))] [(vec (object-array 2 s)) @trace])"
+    }
+  ]
+}

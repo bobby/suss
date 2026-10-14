@@ -4,7 +4,8 @@
   Assertions record raw values for host-side decoding; nothing here decides
   whether Suss passes. The host loads every namespace, then runs each
   namespace's tests as one group under its fixtures, as cljs.test does, and
-  decodes each test's recorded observations.")
+  reads each test's assertion-time host snapshots."
+  (:require [suss.harness.observation :as observation]))
 
 ;; Harness functions use (def name (fn ...)) rather than defn: compiled defn
 ;; expansion currently grows quadratically with preceding definitions (#14).
@@ -17,7 +18,7 @@
 (def namespace-fixtures (atom {}))
 ;; Skips recorded since the host last drained them.
 (def skips (atom []))
-;; Observations of the running test: [kind verdict payload head].
+;; Observations of the running test: [kind verdict snapshot-index head].
 (def observations (atom []))
 ;; Per test of the last group: [threw? thrown-value observations skips].
 (def results (atom []))
@@ -45,7 +46,13 @@
 
 (def record!
   (fn record! [kind verdict payload head]
-    (swap! observations conj [kind verdict payload head])
+    ;; Capture after the original operand/predicate evaluation, before later
+    ;; assertions or fixtures can mutate aliased operands. Source values remain
+    ;; untouched; unsupported values stay explicit host observation failures.
+    (let [index (observation/capture payload)]
+      ;; Host-issued tokens stay paired even if a trap prevents this record from
+      ;; publishing: the next capture receives its own independent token.
+      (swap! observations conj [kind verdict index head]))
     nil))
 
 (def skip!
@@ -133,7 +140,3 @@
 (def observation
   (fn observation [test index]
     (nth (nth (nth @results test) 2) index)))
-
-(def operand
-  (fn operand [test index position]
-    (nth (nth (observation test index) 2) position)))

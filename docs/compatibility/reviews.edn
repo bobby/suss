@@ -645,17 +645,7 @@
    :adaptation-path "docs/compatibility/patches/printing-write-all.json"
    :alternative nil
    :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
-  "runtime:sequence:4394"
-  {:source-sha256 "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756"
-   :visibility :public
-   :arities {:fixed [1 2] :variadic-min 2}
-   :dependencies ["seq?/seq" "chunkIteratorSeq/TransformerIterator/iter/map (unported transducer arities)"]
-   :classification :adapted
-   :rationale "Only the pinned one-argument body at core.cljs4403–4406 is adapted as a private compiler bootstrap coercion for generated reader constructors. Public sequence is not registered or selected for core import. The full source declaration and all public transducer arities remain unfinished. This private helper preserves the seq? identity path and nil-to-empty-list behavior without claiming full public sequence compatibility."
-   :status :in-progress
-   :adaptation-path "crates/suss-compile/src/portable/syntax_quote.rs"
-   :alternative nil
-   :tests ["crates/suss-cli/tests/compiled_macro_syntax_quote.rs" "crates/suss-compile/src/portable/syntax_quote/tests.rs"]}
+
   "runtime:seq?:2340"
   {:source-sha256 "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd"
    :visibility :public
@@ -5120,4 +5110,151 @@
    :rationale "Complete pinned source is retained with EPL provenance. Integrated compiled Suss adaptation preserves complete generated protocol and factory output, using actual caller-phase binding facts and immutable nominal identity. Bounded public CLI, custom protocol/factory and independent post-GC decoding checks pass; broader customizations and original M4 acceptance remain unproven."
    :status :in-progress :adaptation-path "docs/compatibility/record-macro-foundations/factory-adaptations.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_public_records.rs" "crates/suss-cli/tests/compiled_record_protocol_projection.rs"]}
+
+  "runtime:completing:2695"
+  {:source-sha256 "a316bf139114b4145bc0a73ee8c77cfd0a8d3ab5a81eb0ec7994c81939972cae" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-2695-completing-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:butlast:9673"
+  {:source-sha256 "de6ab3e36618199f865851e8584e6730d51cd069d27c0090288816a61f8fad6d" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-9673-butlast-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:Many:4262"
+  {:source-sha256 "f7707df9ccff7cc1dca7df41f79f63c68c1d82ef2b02f7e5b59864666ecbf063" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4262-Many-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:NONE:4274"
+  {:source-sha256 "7b4ec8772f66193dcf69a4b7346ce37e56db778138fb00abc520b50480abb45e" :visibility :private
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4274-NONE-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:Single:4276"
+  {:source-sha256 "b56c8b6829e2f4f2f53ea47d65675ccbebf9b28ce2e055d6a6da0478b3fcc655" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4276-Single-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:Empty:4295"
+  {:source-sha256 "8a3d71ca54f6991f83f2d578f08288c0dedccb41da4ddcfaa19c41db47ea0aa0" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4295-Empty-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:EMPTY:4306"
+  {:source-sha256 "5f086f760d198c9a1dc6efeedada1d8cd6945a85ee5fe973ed3be74af554eea9" :visibility :private
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4306-EMPTY-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:MultiIterator:4308"
+  {:source-sha256 "335a798bb7fa2a8a19dc6baecf447375664af74839206826208a8d2dc2eb6808" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4308-MultiIterator-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:chunkIteratorSeq:4324"
+  {:source-sha256 "28002f77a3cd0439ac59725f5a1b0a2aa6ee74a67c1941c4b44459f305d4dad0" :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4324-chunkIteratorSeq-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:TransformerIterator:4335"
+  {:source-sha256 "9021bd4f7a91656955f1f1edc6f78d7de0dde1451574fae0b5e2a8b30be22e21" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4335-TransformerIterator-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:transformer-iterator:4374"
+  {:source-sha256 "5a2714479dc08c5896abe390704e7ce0481116e82d0303a30db0d13ca092a62e" :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4374-transformer-iterator-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:sequence:4394"
+  {:source-sha256 "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-4394-sequence-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:Eduction:11023"
+  {:source-sha256 "013298f8999cac7911f49004d5d8fcd6caafc7fc9652c37f7a4b9daef7be9833" :visibility :public
+   :arities nil
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-11023-Eduction-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+  "runtime:eduction:11053"
+  {:source-sha256 "c5fd529bbadcb04f86f544a7a05449010f8131a120d97700a269392a009b0d7e" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["complete transducer buffer/iterator graph" "owned array shift and strict call/apply receiver binding" "live reduction/protocol/sequence dependencies" "complete retained iterator feature/setup parents"]
+   :classification :adapted :status :in-progress
+   :rationale "Complete pinned source and all arities, fields, protocols and branches are retained. Explicit adaptations preserve evaluation order and metadata. Candidate direct compilation matches26 pinned raw observations ineachphase with independent post-GC decoding and bounded binding/eval; public reader/macro and Session/CLI validation, regenerated bootstrap, primary Jank namespaces and M4 acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/declaration-11053-eduction-patch.json" :alternative nil
+   :tests ["tests/oracle/transducer-cases.json" "tests/oracle/transducer-observations.json" "docs/compatibility/transducers/README.md"]}
+
+  "macro:lazy-seq:2285"
+  {:source-sha256 "a40485cf5ee791eb6e48202ae81f3f6c6340adf5f7c805c5fd36879ef8706a7d" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["compiled syntax quote" "LazySeq constructor" "compiled zero-argument thunk"]
+   :classification :adapted :status :in-progress
+   :rationale "Retain complete pinned documentation, variadic signature and constructor/thunk/body expansion. Normalize only the declaration head from core/defmacro to canonical defmacro and install it in the compiled macro bootstrap. Production build/public-path tests and milestone acceptance remain pending."
+   :adaptation-path "docs/compatibility/transducers/lazy-seq.sus" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_transducers.rs" "docs/compatibility/transducers/lazy-seq-provenance.json"]}
+
+  "runtime:constantly:4464"
+  {:source-sha256 "0c999d766dfb9126e937e6ad9db6e080e4e5745358e7e205ff5d6d5150feb8ca" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["compiled closure capture" "variadic argument evaluation"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand complete defn to def/fn, preserving documentation and the complete variadic closure. Capture x once at construction; evaluate invocation arguments in source order without using them. No source clauses removed."
+   :adaptation-path "docs/compatibility/transducers/dependency-4464-constantly-patch.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_transducers.rs" "tests/oracle/array-initializer-cases.json" "tests/oracle/array-initializer-observations.json" "scripts/check_transducer_provenance.py"]}
+  "runtime:int-array:3840"
+  {:source-sha256 "118fedb4630c2e463ea39d2a2649aee03a28b59eeea23d418da97f7dd1e4d1b5" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["complete pinned non-coercing initialization" "make-array/into-array/seq/ordered aset" "compiled fn/loop"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand complete defn to def/fn, preserving docs/all public clauses. Array initialization retains number/seq discrimination, nil/false and non-coercing values, short/long sequence stopping and unfilled holes. Expand complete dotimes with once-only bound and ordered writes. Production/oracle acceptance pending; no branches removed."
+   :adaptation-path "docs/compatibility/transducers/dependency-3840-int-array-patch.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_transducers.rs" "tests/oracle/array-initializer-cases.json" "tests/oracle/array-initializer-observations.json" "scripts/check_transducer_provenance.py"]}
+  "runtime:object-array:3906"
+  {:source-sha256 "376576cfe0a48eaece22ede20d6bb7bcbe5702001cb1f47d51b5ee2d1a55cb4f" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["complete pinned non-coercing initialization" "make-array/into-array/seq/ordered aset" "compiled fn/loop"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand complete defn to def/fn, preserving docs/all public clauses. Array initialization retains number/seq discrimination, nil/false and non-coercing values, short/long sequence stopping and unfilled holes. Expand complete dotimes with once-only bound and ordered writes. Production/oracle acceptance pending; no branches removed."
+   :adaptation-path "docs/compatibility/transducers/dependency-3906-object-array-patch.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_transducers.rs" "tests/oracle/array-initializer-cases.json" "tests/oracle/array-initializer-observations.json" "scripts/check_transducer_provenance.py"]}
 }}

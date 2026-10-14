@@ -1,0 +1,23 @@
+{
+  "status": "selected and integrated source; production execution and instance-level lookup pending",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "macro-original-sha256": "50485dfcfed536d295009f61f36df110796b7c203d5df48b0d6d5067b4fde35b",
+  "feature-parent-sha256": "608c90da5868524bc4244e82b34cfe0db3473b59d2539170b40da91e681676bd",
+  "target-evidence": "CLI js/Symbol probe is unresolved; no native Symbol constructor export located",
+  "adaptation": "Use the original @@iterator fallback for this target and retain the entire prototype setter, closure, this-as receiver capture and es6-iterator call. Original native-Symbol feature branch is retained; generic feature/profile behavior remains unproven.",
+  "parents": [
+    {
+      "parent": "4372",
+      "original-sha256": "0e937671e103b26ccaeebf9ef0e5c2b5de8322d3d361547d347ad79f5d68d3df",
+      "replacement": "(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))",
+      "adapted-sha256": "67acb7817bef5c4638e24e9f719c00a2266bdfdb86d88a97acb3a80b75859861"
+    },
+    {
+      "parent": "11051",
+      "original-sha256": "b14c839345687c4429d30ced802808447e83344fadaf57916d64c3f4326a9083",
+      "replacement": "(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))",
+      "adapted-sha256": "0b2f3fb0cc3be75b10bb6dd608abe3e368680ed99deac1b59a899d72f3b82120"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b14c839345687c4429d30ced802808447e83344fadaf57916d64c3f4326a9083",
+  "replacement": "(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))",
+  "rationale": "Expand the complete es6-iterable macro parent to its owned prototype method, preserving receiver and iterator call."
+}

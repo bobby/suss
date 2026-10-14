@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8a3d71ca54f6991f83f2d578f08288c0dedccb41da4ddcfaa19c41db47ea0aa0",
+  "replacement": "(deftype Empty []\n  Object\n  (add [this o]\n    (Single. o))\n  (remove [this]\n    (throw (js/Error. (str_ \"Removing object from empty buffer\"))))\n  (isEmpty [this]\n    true)\n  (toString [this]\n    \"Empty\"))",
+  "rationale": "Retain the entire pinned declaration unchanged; checked portable owned-array/property/Error and protocol implementations supply the host substrate. No methods or source branches removed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}
