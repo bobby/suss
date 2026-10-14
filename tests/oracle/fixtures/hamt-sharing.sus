@@ -1,0 +1,30 @@
+;; Focused physical-sharing fixture. Values used for public behavior checks
+;; are numeric; Rust inspects HAMT node references separately.
+(deftype SharingKey [id hash]
+  IHash
+  (-hash [_] hash)
+  IEquiv
+  (-equiv [this other]
+    (and (instance? SharingKey other)
+         (== id (.-id other)))))
+
+;; Hashes 0/64 share root branch 0; 1/33 share root branch 1.
+;; k0/k1 also form an equal-hash collision beneath branch 0.
+(def share-k0 (SharingKey. 0 0))
+(def share-k1 (SharingKey. 1 0))
+(def share-k2 (SharingKey. 2 64))
+(def share-k3 (SharingKey. 3 1))
+(def share-k4 (SharingKey. 4 33))
+
+(def share-old
+  (hash-map share-k0 100
+            share-k1 101
+            share-k2 102
+            share-k3 103
+            share-k4 104))
+;; Change within the collision path. Branch 1 should remain shared.
+(def share-changed (assoc share-old share-k0 900))
+
+;; Negative path-selection control: update branch 1; branch 0 (including its
+;; collision node) should remain shared with share-old.
+(def share-other-changed (assoc share-old share-k3 903))

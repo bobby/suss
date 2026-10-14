@@ -1,0 +1,51 @@
+{
+  "run_id": 74237,
+  "terminal": true,
+  "exit_code": 0,
+  "head": "13312ea53d3fec19bc0217c3afb4c96e0b9d9b7d",
+  "tree": "b4766da1bfafd1910fce8a36280784b1bbf85bb0",
+  "command": "cargo test --workspace --locked -- --test-threads=2",
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/private/tmp/suss-error-validation-target",
+    "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/private/tmp/suss-m4-fallback-final-jank-evidence"
+  },
+  "completed_suites": 249,
+  "passed": 1781,
+  "failed": 0,
+  "ignored": 22,
+  "log_sha256": "12e11eef515aabed2161254a07c3584c7834709b7c925e2fbc6cfd0ea2ef13df",
+  "primary_capture_audit": {
+    "previous_counts": {
+      "pass": 839,
+      "guest-judged": 11,
+      "fail": 21,
+      "not-executed": 4983,
+      "skipped": 0,
+      "namespaces-failed": 192
+    },
+    "current_counts": {
+      "pass": 839,
+      "guest-judged": 11,
+      "fail": 21,
+      "not-executed": 4983,
+      "skipped": 0,
+      "namespaces-failed": 192
+    },
+    "previous_success_count": 850,
+    "previous_success_regressions": [],
+    "raw_shared_outcomes_changed": [],
+    "newly_loaded_namespaces": [],
+    "lost_loaded_namespaces": [],
+    "test_failures": [],
+    "skip_mismatches_unchanged": true,
+    "assertion_failures": {
+      "clojure.core-test.partial/test-partial#2": "kind:error"
+    },
+    "capture_sha256": "7d45a1d7f0a06ca2ce9d07fff63cd6ef01df30e35f20a8a4b04830dc59a541a3"
+  },
+  "limitation": "Full baseline validates tree b4766da1bfafd1910fce8a36280784b1bbf85bb0; it predates the additional HAMT physical-sharing test. Known failures and unexecuted primary outcomes remain explicit.",
+  "ci_run": 38502985817,
+  "ci_successful_checks": 10,
+  "ci_head": "bd00f879103c8af2cdfadc10d4684a71ac6b2a60"
+}
