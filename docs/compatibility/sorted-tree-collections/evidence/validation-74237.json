@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "kind": "sorted-tree-execution-evidence",
+  "historical_authoring_receipt": "docs/compatibility/sorted-tree-collections/evidence/receipt.json",
+  "validation": {
+    "run_id": 74237,
+    "exit_code": 0,
+    "command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-fallback-final-jank-evidence cargo test --workspace --locked -- --test-threads=2",
+    "head": "13312ea53d3fec19bc0217c3afb4c96e0b9d9b7d",
+    "tree": "b4766da1bfafd1910fce8a36280784b1bbf85bb0",
+    "log_path": "/private/tmp/suss-m4-fallback-full-baseline.log",
+    "log_sha256": "12e11eef515aabed2161254a07c3584c7834709b7c925e2fbc6cfd0ea2ef13df",
+    "workspace": {
+      "passed": 1781,
+      "failed": 0,
+      "ignored": 22,
+      "completed_suites": 249
+    }
+  },
+  "targets": {
+    "portable_sorted_tree_collections": {
+      "passed": 6,
+      "failed": 0,
+      "seconds": 57.13,
+      "scope": "Three collection-contract tests plus three shared adversarial decoder tests; the collection observation test compares 142 pinned value/effect cases in both phases after GC."
+    },
+    "portable_sorted_tree_nodes": {
+      "passed": 7,
+      "failed": 0,
+      "seconds": 31.66
+    }
+  },
+  "files_sha256": {
+    "crates/suss-cli/tests/portable_sorted_tree_collections.rs": "f3e5c523ca718f4a6acac5326c498d7f77cd8613442ec883a23d5399cddc64d0",
+    "crates/suss-cli/tests/portable_sorted_tree_nodes.rs": "f65bb07bd201ba6cf58a47d763b39239bfb86e3954483c4783635f67ea4df746",
+    "tests/oracle/sorted-tree-cases.json": "34cab18abfc6c6aae0a8afba133ef1a71f8dcbb08e03d955b88e54cf9fa06ea7",
+    "docs/compatibility/sorted-tree-collections/evidence/observations.json": "13502009ddc779208837964fde71899c3819a9a39862495df04abd6016dde7ec"
+  },
+  "reference_pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "limitations": [
+    "Historical authoring, first failed reference, unknown and unexecuted records are preserved separately.",
+    "This receipt establishes the named native targets on the recorded tree; it is not an all-host, all-core or whole-upstream compatibility claim.",
+    "The sorted tests retain their existing test fuel settings; no resource setting was changed for this evidence reconciliation."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "public-record-nominal-primary-observations",
+  "language": "ClojureScript",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source_checkout_clean": true,
+  "command": "sh scripts/test-record-nominal-oracle.sh",
+  "exit_code": 0,
+  "cases": 1,
+  "raw_boolean_observations": 10,
+  "capture_path": "docs/compatibility/record-nominal/evidence/cljs-observations.json",
+  "capture_sha256": "57c32b4c7a47dcc414dc2f940f939aa5091229f5c7d155436368c55e1f798e16",
+  "log_path": "/private/tmp/suss-m4-18-record-nominal-cljs.log",
+  "log_sha256": "7fd607491af00d6ccc873f36823a7a651ebf9ad227a0dc64a9c20616bb623af0",
+  "inputs_sha256": {
+    "tests/oracle/record-nominal-cases.json": "8e88f46efc0bfc9e82244a163966f1eb0bc35ecde868e99776b56a7efe968c32",
+    "tests/oracle/fixtures/public-record-contracts.sus": "471fd42576aaabbc7967f4ed25fb0e0159a9d71382b5255f2716aec3832df8a7",
+    "scripts/record_nominal_oracle.py": "4238d4e17d5c2a29434f5af63f8b74ce15af885d5fe05fa166d93cf3a9f05570",
+    "scripts/test-record-nominal-oracle.sh": "43b4173cae7c29c2b2342eb367f26cc4e24352eefcda345aa1616fb067569c9d"
+  },
+  "provenance": "The original fixture retains separate MPL-2.0 Jank dissoc/empty excerpts and authored nominal checks. The shared ten-result expression is authored; the actual pinned CLJS result establishes its portable contract.",
+  "native_validation": "Recorded separately; this receipt is the actual development reference capture, not native or full-workspace acceptance."
+}

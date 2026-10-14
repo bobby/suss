@@ -1140,20 +1140,22 @@ dependencies remain required.
 pinned declarations and all original node methods, with 340 prior selections
 unchanged. The entire seven-target IComparable parent is authored in the loader;
 full ES6/printer parents and macro dependencies remain retained with explicit
-ledgers. Fresh pinned CLJS/Node passes 86 ordered cases. Five native regressions
-and two compiler prerequisites are authored but uncompiled/unexecuted; bootstrap
-artifacts remain unchanged and stale. Reference/source checks are not native
-acceptance. Full tree algorithms, constructors, iteration, ranges and remaining
-host/protocol/macro boundaries continue in the full sorted lane.
+ledgers. Fresh pinned CLJS/Node passes 86 ordered cases. The later locked
+workspace validation 74237 executes all seven native node tests successfully,
+including raw values/effects, child sharing and receiver/call ordering. See the
+[execution receipt](sorted-tree-collections/evidence/validation-74237.json);
+the earlier authoring receipts retain their original unexecuted state.
 
 The [complete sorted tree collections authoring group](sorted-tree-collections/README.md)
 retains all constructors, algorithms, cursor/value sequences, iterator dependencies
 and both range arities, with complete macro/anonymous-parent provenance. Its 142
-fresh pinned raw observations and Python/source checks are authoring evidence;
-native tests remain uncompiled/unexecuted and bootstrap is stale. Reify, typed
-Error ancestry/binding, full ES6/printer integration and original #18/#19/M4 gates
-remain explicit. The prior 86 tree assertions remain supplementary alongside the
-52 independently decoded tree-node observations.
+fresh pinned raw observations are compared by the executed native collection
+test in both phases after GC. Validation 74237 passes all six tests in that
+target: three collection-contract tests and three shared decoder adversarial
+tests. The linked receipt records the exact tested source tree, log and hashes;
+it does not certify every host/prototype or printer interface. The prior 86
+tree assertions remain supplementary alongside the independently decoded
+tree-node observations.
 
 
 ## Portable sequence capability predicate

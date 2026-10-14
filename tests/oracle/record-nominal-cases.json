@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "fixture": "tests/oracle/fixtures/public-record-contracts.sus",
+  "fixture_sha256": "471fd42576aaabbc7967f4ed25fb0e0159a9d71382b5255f2716aec3832df8a7",
+  "cases": [
+    {
+      "id": "public-record-nominal-contract",
+      "source": "(let [r (->TestDissocRecord 1 2 nil) same (->TestDissocRecord 1 2 nil) other (->OtherRecord 1 2 nil) plain {:a 1 :b 2 :c nil}] [(= r same) (= same r) (= (hash r) (hash same)) (= r other) (= other r) (= r plain) (= plain r) (record? r) (record? other) (record? plain)])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {"tag": "bool", "value": true},
+          {"tag": "bool", "value": true},
+          {"tag": "bool", "value": true},
+          {"tag": "bool", "value": false},
+          {"tag": "bool", "value": false},
+          {"tag": "bool", "value": false},
+          {"tag": "bool", "value": false},
+          {"tag": "bool", "value": true},
+          {"tag": "bool", "value": true},
+          {"tag": "bool", "value": false}
+        ]
+      }
+    }
+  ]
+}

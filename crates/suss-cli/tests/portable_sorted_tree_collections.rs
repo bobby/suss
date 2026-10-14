@@ -1,4 +1,4 @@
-//! Full source authoring evidence. Native compilation/execution/bootstrap pending.
+//! Execute retained sorted collections and independently decode their contracts.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
