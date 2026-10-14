@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "oracle_compile_exit": 0,
+  "oracle_node_exit": 0,
+  "sha256": {
+    "reduce-kv-fallback-cases.json": "3b3cc8be33bdf1f6e27c829ab30c761c2200cf9bd71d30211c988a0b2ca1d051",
+    "reduce-kv-fallback-observations.json": "b4173d584aa4595f959c40ff433bc5804c7e7755537495a5a8be9a785f4c9371",
+    "reduce-kv-fallback-probe.sus": "530a82a2750b9bd598105723f334095b47e6c26d7000443d0d130bec4bc59a39",
+    "reduce-kv-fallback-provenance.json": "b56407813b8b92519104a4877e35057ef6971f3ace7888deafb408c2ba8f3823"
+  }
+}

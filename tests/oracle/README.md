@@ -144,3 +144,15 @@ source macros match the shared projected corpus in both caller phases after GC.
 The projection omits symbol metadata and spans. It is not complete portable
 AST/inference, metadata or M3 acceptance. The development-only helper adds no
 shipped Java/Node dependency.
+## Public `reduce-kv` fallback
+
+`sh scripts/test-reduce-kv-fallback-oracle.sh` checks the pinned
+ClojureScript source, validates authored fixture and reference hashes, generates
+and executes the dedicated five-case oracle corpus, compares its strict tagged
+observations, and runs only `portable_reduce_kv_fallback`. The cases exercise the
+public fallback for a seqable associative collection without `IKVReduce`, using
+real `MapEntry` values. They cover dispatch, empty input, reduced stopping,
+throws and left-to-right operand effects, and ordered normal callback traces.
+This bounded lane does not invoke the broader reduction suite or establish
+complete `reduce-kv` compatibility. The implementation PR links #244 and records
+partial roadmap progress with `Refs #19` and `Refs #242`.

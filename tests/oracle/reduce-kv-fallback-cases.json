@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "public-fallback-selected-and-accumulates-real-map-entries",
+      "source": "(let [coll kv-fallback-sample] [(satisfies? IKVReduce coll) (reduce-kv (fn [acc k v] (+ acc (* (if (= k :a) 1 (if (= k :b) 10 100)) v))) 0 coll)])"
+    },
+    {
+      "id": "public-fallback-empty-preserves-init-without-callback",
+      "source": "(let [trace (atom []) coll (KvReduceFallback. []) result (reduce-kv (fn [acc k v] (swap! trace conj [k v]) (+ acc v)) 17 coll)] [result @trace])"
+    },
+    {
+      "id": "public-fallback-reduced-unwraps-and-stops-in-sequence-order",
+      "source": "(let [trace (atom []) result (reduce-kv (fn [acc k v] (swap! trace conj k) (if (= k :a) (reduced [acc k v]) (throw :visited-after-reduced))) :seed kv-fallback-sample)] [result @trace])"
+    },
+    {
+      "id": "public-fallback-throw-stops-effects-and-operands-evaluate-left-to-right",
+      "source": "(let [trace (atom []) outcome (try (reduce-kv (do (swap! trace conj :fn) (fn [_ k _] (swap! trace conj k) (throw :fallback-boom))) (do (swap! trace conj :init) :initial) (do (swap! trace conj :coll) kv-fallback-sample)) [:returned] (catch :default error [:thrown error]))] [outcome @trace])"
+    },
+    {
+      "id": "public-fallback-normal-accumulation-exposes-ordered-callback-trace",
+      "source": "(let [trace (atom []) result (reduce-kv (fn [acc k v] (swap! trace conj [k v]) (+ acc v)) 0 kv-fallback-sample)] [result @trace])"
+    }
+  ]
+}

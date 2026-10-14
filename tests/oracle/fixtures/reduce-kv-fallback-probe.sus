@@ -1,0 +1,26 @@
+;; Authored probe fixture for public reduce-kv's seqable fallback.
+;; Deliberately implements IAssociative and ISeqable, but not IKVReduce.
+;; `entries` contains genuine runtime MapEntry values so the fallback's -key/-val
+;; extraction is tested without manufacturing entry-shaped vectors.
+(deftype KvReduceFallback [entries]
+  IAssociative
+  (-contains-key? [_ k]
+    (boolean (some (fn [entry] (= k (key entry))) entries)))
+  (-assoc [_ k v]
+    (loop [remaining (seq entries) result [] replaced false]
+      (if remaining
+        (let [entry (first remaining)]
+          (if (= k (key entry))
+            (recur (next remaining) (conj result (MapEntry. k v nil)) true)
+            (recur (next remaining) (conj result entry) replaced)))
+        (KvReduceFallback.
+          (if replaced result (conj result (MapEntry. k v nil)))))))
+  ISeqable
+  (-seq [_]
+    (seq entries)))
+
+(def kv-fallback-sample
+  (KvReduceFallback.
+    [(MapEntry. :a 1 nil)
+     (MapEntry. :b 2 nil)
+     (MapEntry. :c 3 nil)]))
