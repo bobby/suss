@@ -8230,6 +8230,41 @@ fn runtime_abi_small_hole_arrays_use_private_masked_storage_without_changing_pre
 }
 
 #[test]
+fn runtime_abi_schema_field_character_guard_checks_every_utf16_unit() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let name = nominal_value(&mut store, runtime, "string-new", &[Val::I32(1)]);
+    let set = runtime.get_func(&mut store, "string-set-unit").unwrap();
+    let supported = runtime
+        .get_func(&mut store, "property-field-name-supported")
+        .unwrap();
+    // Independent explicit whitelist, including boundaries, surrogate units and
+    // non-ASCII units whose low bits could alias an ASCII lookup-table entry.
+    let allowed = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$";
+    store.gc(None).unwrap();
+    for unit in 0..=u16::MAX {
+        set.call(
+            &mut store,
+            &[name.clone(), Val::I32(0), Val::I32(i32::from(unit))],
+            &mut [Val::I32(0)],
+        )
+        .unwrap();
+        let mut result = [Val::I32(0)];
+        supported
+            .call(&mut store, &[name.clone()], &mut result)
+            .unwrap();
+        let expected = allowed.iter().any(|ascii| u16::from(*ascii) == unit);
+        assert_eq!(result[0].unwrap_i32(), i32::from(expected), "unit {unit:#06x}");
+    }
+}
+
+#[test]
 fn runtime_abi_reserved_schema_names_keep_all_spellings_and_near_misses() {
     let engine = support::engine();
     let mut store = Store::new(&engine, ());
