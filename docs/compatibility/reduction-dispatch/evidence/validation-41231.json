@@ -1,0 +1,34 @@
+{
+  "state": "completed",
+  "head": "caac7d61ebed77a4f63e794de88ade1ae2358794",
+  "tree": "6ebb7f6888e9cb12c83f3a8ede21a876be8eb04c",
+  "command": "cargo test --workspace --locked -- --test-threads=2",
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/private/tmp/suss-error-validation-target",
+    "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/private/tmp/suss-m4-reduction-caac7d61-jank-evidence"
+  },
+  "log": "/private/tmp/suss-m4-reduction-caac7d61-full-baseline.log",
+  "terminal": true,
+  "session_id": 41231,
+  "exit_code": 0,
+  "log_sha256": "c2995f36445de78e4241a55f4d5dca3280b523d0e13647b7429de35403ae6025",
+  "completed_suites": 253,
+  "passed": 1796,
+  "failed": 0,
+  "ignored": 22,
+  "terminal_head": "caac7d61ebed77a4f63e794de88ade1ae2358794",
+  "terminal_tree": "6ebb7f6888e9cb12c83f3a8ede21a876be8eb04c",
+  "rebased_head": "1f370ab8108a7899c1e871b1458581f6c03c6768",
+  "rebased_tree": "6ebb7f6888e9cb12c83f3a8ede21a876be8eb04c",
+  "jank_capture": {
+    "path": "/private/tmp/suss-m4-reduction-caac7d61-jank-evidence/suite-observations.json",
+    "sha256": "7d45a1d7f0a06ca2ce9d07fff63cd6ef01df30e35f20a8a4b04830dc59a541a3",
+    "bytes": 684950,
+    "identical_to_previous_capture": true,
+    "limitation": "Harness success preserves the reviewed failure baseline; it does not establish whole-suite conformance."
+  },
+  "remaining_gates": [
+    "final-head CI"
+  ]
+}
