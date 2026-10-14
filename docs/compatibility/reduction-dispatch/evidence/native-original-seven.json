@@ -1,0 +1,1957 @@
+{
+  "decoder": "portable_decode::Decoder raw ABI observations",
+  "phases": [
+    {
+      "cases": [
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-normal",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                98
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4008000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                99
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "401c000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "404b800000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                101
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                103
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "401c000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                99
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4008000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                106
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4024000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                104
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4020000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                98
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4010000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                102
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4018000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                105
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4022000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-empty",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "0000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "0000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-reduced-stop",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                101
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-record-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4044800000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4044800000000000",
+                "tag": "f64"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-queue-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-set-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4008000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4010000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-record-queue-set-reduce-reduced-stops-both-arities",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    97
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "4026000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          },
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    98
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "402a000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                115,
+                                101,
+                                101,
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    97
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "4026000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "bits": "4000000000000000",
+                        "tag": "f64"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "bits": "3ff0000000000000",
+                        "tag": "f64"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                115,
+                                101,
+                                101,
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        }
+      ],
+      "phase": "runtime"
+    },
+    {
+      "cases": [
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-normal",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                98
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4008000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                99
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "401c000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "404b800000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                101
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                103
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "401c000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                99
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4008000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                106
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4024000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                104
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4020000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                98
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4010000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                102
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4018000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                105
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4022000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      },
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-empty",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "0000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4031000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "0000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-reduce-kv-arraymap-and-hamt-reduced-stop",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                97
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                101
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "4014000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  },
+                  {
+                    "tag": "bool",
+                    "value": false
+                  },
+                  {
+                    "tag": "bool",
+                    "value": true
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-record-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4044800000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4044800000000000",
+                "tag": "f64"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-queue-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-set-reduce-two-and-three-arguments",
+          "value": {
+            "items": [
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4008000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "bits": "4024000000000000",
+                "tag": "f64"
+              },
+              {
+                "bits": "4010000000000000",
+                "tag": "f64"
+              },
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4010000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "tag": "bool",
+                "value": true
+              }
+            ],
+            "tag": "vector"
+          }
+        },
+        {
+          "id": "public-record-queue-set-reduce-reduced-stops-both-arities",
+          "value": {
+            "items": [
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    97
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "4026000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          },
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    98
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "402a000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                115,
+                                101,
+                                101,
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "items": [
+                              {
+                                "name": {
+                                  "tag": "string",
+                                  "units": [
+                                    97
+                                  ]
+                                },
+                                "namespace": {
+                                  "tag": "nil"
+                                },
+                                "tag": "keyword"
+                              },
+                              {
+                                "bits": "4026000000000000",
+                                "tag": "f64"
+                              }
+                            ],
+                            "tag": "vector"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "bits": "4000000000000000",
+                        "tag": "f64"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "bits": "3ff0000000000000",
+                        "tag": "f64"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          },
+                          {
+                            "bits": "4000000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        115,
+                        116,
+                        111,
+                        112,
+                        112,
+                        101,
+                        100
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "items": [
+                      {
+                        "items": [
+                          {
+                            "name": {
+                              "tag": "string",
+                              "units": [
+                                115,
+                                101,
+                                101,
+                                100
+                              ]
+                            },
+                            "namespace": {
+                              "tag": "nil"
+                            },
+                            "tag": "keyword"
+                          },
+                          {
+                            "bits": "3ff0000000000000",
+                            "tag": "f64"
+                          }
+                        ],
+                        "tag": "vector"
+                      }
+                    ],
+                    "tag": "vector"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "vector"
+          }
+        }
+      ],
+      "phase": "macro"
+    }
+  ]
+}

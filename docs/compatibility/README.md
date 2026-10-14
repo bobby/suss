@@ -1161,3 +1161,18 @@ tree-node observations.
 ## Portable sequence capability predicate
 
 The [`seqable?` adaptation](seqability/README.md) retains the pinned portable nil, ISeqable, array, and string behavior. Its JavaScript Symbol.iterator branch is an explicit host-interoperability boundary; foreign JS iterables require a portable protocol wrapper.
+
+
+## Public collection reduction dispatch
+
+The [bounded dispatch corpus](reduction-dispatch/README.md) executes public
+`reduce-kv` on PersistentArrayMap and PersistentHashMap, and ordinary `reduce`
+with and without an initial value on records, queues and sets. Ten cases,
+including three source-argument-order supplements, produce 20 independently
+ABI-decoded Runtime/Macro results after GC that match pinned ClojureScript.
+Host checks preserve map multiplicity, accept undefined map/set iteration order,
+and require queue FIFO and `Reduced` stopping/unwrapping effects. Native
+rooted descriptor and owner-type comparisons verify the concrete input classes.
+The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
+is an uncommitted-source execution snapshot; it does not establish a new full
+workspace baseline, committed-head review, CI, or whole-suite conformance.

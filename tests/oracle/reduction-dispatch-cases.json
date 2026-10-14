@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "purpose": "Durable M4 #245 public reduction dispatch acceptance corpus. The first seven cases retain the original authored IDs and source expressions byte-for-byte; three independently captured source-order cases supplement them.",
+  "fixture": "tests/oracle/fixtures/reduction-dispatch-fixture.sus",
+  "portable_reference": {
+    "language": "ClojureScript",
+    "upstream_commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+    "status": "ClojureScript raw observations are pinned; all ten cases have since matched native Runtime and Macro observations in the focused working-tree run.",
+    "original_seven_capture": {
+      "artifact": "docs/compatibility/reduction-dispatch/evidence/clojurescript-original-seven.json",
+      "sha256": "6e451c497f37a4c255e543b9354fae2c0d0189bc7db211f036279fc15ed0d8a4"
+    },
+    "source_order_capture": {
+      "artifact": "docs/compatibility/reduction-dispatch/evidence/clojurescript-source-order-supplement.json",
+      "sha256": "f839f8328dba9742ddd35384308d0999e1c3a90e541e4163a1646bbf4be7d3f4"
+    },
+    "expected_values_embedded": false
+  },
+  "source_guidance": [
+    {
+      "path": "vendor/clojure-test-suite/upstream/test/clojure/core_test/reduce.cljc",
+      "commit": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+      "license": "MPL-2.0",
+      "license_file": "vendor/clojure-test-suite/upstream/LICENSE",
+      "use": "Ordinary reduce two- and three-argument collection coverage guidance only; the upstream file explicitly leaves Reduced to separate tests."
+    },
+    {
+      "path": "tests/oracle/reduction-cases.json",
+      "upstream_commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+      "use": "Existing pinned early-termination, Reduced, empty and singleton cases; guidance, not copied expected observations."
+    },
+    {
+      "path": "tests/oracle/reduction-boundary-cases.json",
+      "upstream_commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+      "use": "Existing bounded collection-reduction and callback-stop shape."
+    },
+    {
+      "path": "runtime/core-import/suss/core.sus",
+      "use": "Source classification only: PersistentArrayMap and PersistentHashMap implement IKVReduce. PersistentHashSet (type body around lines 4375-4460) and PersistentQueue (type body around lines 5626-5695) have no IReduce declaration, and no IReduce extension for either was found; their ordinary reduce cases exercise sequence fallback, not a type-optimized route. No source is copied."
+    }
+  ],
+  "cases": [
+    {
+      "id": "public-reduce-kv-arraymap-and-hamt-normal",
+      "source": "(let [run (fn [m] (let [seen (atom []) result (reduce-kv (fn [acc k v] (swap! seen conj [k v]) (+ acc v)) 0 m)] [result @seen (instance? PersistentArrayMap m) (instance? PersistentHashMap m)]))] [(run array-map-source) (run hamt-source)])",
+      "host_validation": "Each nested result has the expected sum, and its raw callback pairs contain every input entry exactly once. Canonicalize/decode pairs on the host and compare membership without requiring traversal order; do not deduplicate guest-side. Exactly one public representation predicate is true.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-reduce-kv-arraymap-and-hamt-normal"
+      },
+      "source_sha256": "fed801a5bca88361d4ac19e9f00b1d883998f178d3a6688e340f81cb53927433"
+    },
+    {
+      "id": "public-reduce-kv-arraymap-and-hamt-empty",
+      "source": "(let [run (fn [m] (let [calls (atom 0) result (reduce-kv (fn [acc _k _v] (swap! calls inc) acc) 17 m)] [result @calls (instance? PersistentArrayMap m) (instance? PersistentHashMap m)]))] [(run array-map-empty) (run hamt-empty)])",
+      "host_validation": "Both return the initial value with zero callback calls; representation is verified only with public instance? checks.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-reduce-kv-arraymap-and-hamt-empty"
+      },
+      "source_sha256": "838db844094e197069fc6b385b50d43681a09837ef34030f20aa7b55b8773c8d"
+    },
+    {
+      "id": "public-reduce-kv-arraymap-and-hamt-reduced-stop",
+      "source": "(let [run (fn [m] (let [seen (atom []) result (reduce-kv (fn [_acc k v] (swap! seen conj [k v]) (reduced :stopped)) 0 m)] [result @seen (instance? PersistentArrayMap m) (instance? PersistentHashMap m)]))] [(run array-map-source) (run hamt-source)])",
+      "host_validation": "Each result is :stopped and has exactly one raw callback pair; that pair belongs to the full corresponding reference input map. Accept whichever key the implementation visits first; do not assert CLJS traversal order. This calls public reduce-kv, unlike macro-map-cases.json/kv-reduce, which calls -kv-reduce directly.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-reduce-kv-arraymap-and-hamt-reduced-stop"
+      },
+      "source_sha256": "25860241723b2dd8e32d910a304c682af91e08227b8b9f2916648920ac8ffc64"
+    },
+    {
+      "id": "public-record-reduce-two-and-three-arguments",
+      "source": "(let [sum-entry (fn [acc entry] (+ (if (number? acc) acc (val acc)) (val entry)))] [(reduce sum-entry record-source) (reduce sum-entry 0 record-source) (instance? ReductionDispatchRecord record-source)])",
+      "host_validation": "Both public reduce forms sum the declared record values; verify the public record type without inspecting or stripping compiler/test source.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-record-reduce-two-and-three-arguments"
+      },
+      "source_sha256": "2aad512228992708080084d388d0334e80981e2a13bb87bca39ff2ff5af4ee25"
+    },
+    {
+      "id": "public-queue-reduce-two-and-three-arguments",
+      "source": "(let [trace2 (atom []) trace3 (atom []) r2 (reduce (fn [acc x] (swap! trace2 conj x) (+ acc x)) queue-source) r3 (reduce (fn [acc x] (swap! trace3 conj x) (+ acc x)) 0 queue-source)] [r2 @trace2 r3 @trace3 (instance? PersistentQueue queue-source)])",
+      "host_validation": "Both forms sum to 10. Require exact FIFO callback traces: [2 3 4] for no-init and [1 2 3 4] with init. The instance? result confirms only the public concrete type, not an IReduce-optimized dispatch path.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-queue-reduce-two-and-three-arguments"
+      },
+      "source_sha256": "b848399adc74d7e41098bb092f6659793baea402ceb3949fea6a930e6a285c30"
+    },
+    {
+      "id": "public-set-reduce-two-and-three-arguments",
+      "source": "(let [seen2 (atom []) seen3 (atom []) r2 (reduce (fn [acc x] (swap! seen2 conj x) (+ acc x)) set-source) r3 (reduce (fn [acc x] (swap! seen3 conj x) (+ acc x)) 0 set-source)] [r2 (count @seen2) @seen2 r3 (count @seen3) @seen3 (instance? PersistentHashSet set-source)])",
+      "host_validation": "Both forms sum to 10. Host-decode raw callback inputs, then compare order-independently: no-init has any three unique inputs from the full four-element reference input; init has all four. Do not require the reference implementation's exact omitted seed or iteration order, and do not deduplicate guest-side. The instance? result confirms only PersistentHashSet representation; source has no IReduce implementation, so this is sequence-fallback coverage.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-set-reduce-two-and-three-arguments"
+      },
+      "source_sha256": "cc34bf2134c99095cd01f6f7f8672d2ae63edb20f2a11198e4dca083e88562e0"
+    },
+    {
+      "id": "public-record-queue-set-reduce-reduced-stops-both-arities",
+      "source": "(let [record2 (let [seen (atom []) result (reduce (fn [acc entry] (swap! seen conj [acc entry]) (reduced :stopped)) record-source)] [result @seen]) record3 (let [seen (atom []) result (reduce (fn [acc entry] (swap! seen conj [acc entry]) (reduced :stopped)) :seed record-source)] [result @seen]) queue2 (let [seen (atom []) result (reduce (fn [acc x] (swap! seen conj x) (reduced :stopped)) queue-source)] [result @seen]) queue3 (let [seen (atom []) result (reduce (fn [acc x] (swap! seen conj x) (reduced :stopped)) :seed queue-source)] [result @seen]) set2 (let [seen (atom []) result (reduce (fn [acc x] (swap! seen conj [acc x]) (reduced :stopped)) set-source)] [result @seen]) set3 (let [seen (atom []) result (reduce (fn [acc x] (swap! seen conj [acc x]) (reduced :stopped)) :seed set-source)] [result @seen])] [record2 record3 queue2 queue3 set2 set3])",
+      "host_validation": "Each of the six results unwraps to :stopped and records exactly one callback effect, proving no later callback ran. For record, preserve raw accumulator/entry pairs and validate against the complete reference record sequence without inferring JVM order. For queue, require exact FIFO traces: [2] without init and [1] with init. For set, validate raw callback input membership against the full four-element reference set; for no-init the pair contains two distinct set members, while with init the input is one member. Never assert set iteration order. Queue/set representation checks are not evidence of optimized IReduce dispatch; source shows sequence fallback.",
+      "expected_capture": {
+        "artifact": "evidence/clojurescript-original-seven.json",
+        "case_id": "public-record-queue-set-reduce-reduced-stops-both-arities"
+      },
+      "source_sha256": "d29b99f818b487ba5258378761b3f11478c608c176440e07ed54b31e11ef8834"
+    }
+  ],
+  "source_order_supplement": {
+    "status": "Pinned ClojureScript observations and native Runtime/Macro observations matched in the focused working-tree run; full baseline, independent review, and CI remain pending.",
+    "plan_artifact": "docs/compatibility/reduction-dispatch/evidence/source-order-supplement-plan.json",
+    "plan_sha256": "e540c7fd15c9d5f89210cf2d052f0765cb25dab06597fa8c857569b1531497e8",
+    "cases": [
+      {
+        "id": "public-reduce-two-arg-fn-before-coll",
+        "source": "(let [trace (atom []) result (reduce (do (swap! trace conj :fn) (fn [acc x] (swap! trace conj [:call acc x]) (+ acc x))) (do (swap! trace conj :coll) [1 2]))] [result @trace])",
+        "source_sha256": "fb326d8c48a4f15deb8a57703ebfa07a2a8c000a55cce89f4094a772d18ca952",
+        "expected_capture": {
+          "artifact": "evidence/clojurescript-source-order-supplement.json",
+          "case_id": "public-reduce-two-arg-fn-before-coll"
+        },
+        "host_validation": "Require the exact pinned raw result and effect trace for function/init/collection evaluation and callback order; verify numeric results by binary64 bits."
+      },
+      {
+        "id": "public-reduce-three-arg-fn-init-coll",
+        "source": "(let [trace (atom []) result (reduce (do (swap! trace conj :fn) (fn [acc x] (swap! trace conj [:call acc x]) (+ acc x))) (do (swap! trace conj :init) 10) (do (swap! trace conj :coll) [1 2]))] [result @trace])",
+        "source_sha256": "0f4395604eed68ff48c730198a9e78eb5f10ebed41868c18f4fcbf0a7e66063c",
+        "expected_capture": {
+          "artifact": "evidence/clojurescript-source-order-supplement.json",
+          "case_id": "public-reduce-three-arg-fn-init-coll"
+        },
+        "host_validation": "Require the exact pinned raw result and effect trace for function/init/collection evaluation and callback order; verify numeric results by binary64 bits."
+      },
+      {
+        "id": "public-reduce-kv-array-map-fn-init-coll",
+        "source": "(let [trace (atom []) result (reduce-kv (do (swap! trace conj :fn) (fn [acc k v] (swap! trace conj [:call acc k v]) (+ acc v))) (do (swap! trace conj :init) 10) (do (swap! trace conj :coll) (array-map :only 3)))] [result @trace])",
+        "source_sha256": "98e703f5d24b647498a3445b1ed762cfff4e7e3e1000ac903ce36908c1452ce2",
+        "expected_capture": {
+          "artifact": "evidence/clojurescript-source-order-supplement.json",
+          "case_id": "public-reduce-kv-array-map-fn-init-coll"
+        },
+        "host_validation": "Require the exact pinned raw result and effect trace for function/init/collection evaluation and callback order; verify numeric results by binary64 bits."
+      }
+    ]
+  },
+  "independent_decoder_policy": "Capture and decode raw runtime values independently in the native harness; preserve map keys and callback arguments. Perform canonical unordered comparisons on the host only. Do not use guest-computed equality as proof of the reference result."
+}

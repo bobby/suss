@@ -12,16 +12,16 @@
     },
     {
       "path": "crates/suss-compile/src/portable_record_emitter.rs",
-      "sha256": "e47a6ed74f039e54227111a83e7625ffc06fe17abdb4e830418f6114d6c03f4f",
+      "sha256": "80599ac21befc78b3dac5ee9925fdfb592b8ef25a2cb113d9ffa02bb5e6d2c5f",
       "compiled-sources": {
-        "SOURCE": "c377cedb2777f79f6019dd50aa8ab7374be7db66409eb30465eb8b2f77e02ce9"
+        "SOURCE": "91c36b57c128d9a73b351ba583922bcd167c42a3f66a137fdc0751b19b7066e7"
       }
     },
     {
       "path": "crates/suss-compile/src/portable_record_public.rs",
-      "sha256": "de84daaaa9e418f305d79739ff892e05f2d9995a360731d2731f82e8ec17df8e",
+      "sha256": "17d521e96a9f86e58a40223cfa7e58787b44dfd96f6a8c81d88575ef6936962d",
       "compiled-sources": {
-        "SOURCE": "3b4caf5c162ea15ac9a8c76dc39fd398e5e19e5280f27f9152e1c8fc5ee267c8",
+        "SOURCE": "073930a770f75250f60ffc4f0e007f20e5eed38f984c6522f2fab2abeff1d9bc",
         "MACRO_SOURCE": "0a9163f09996c826000c89b9c00b1f57a6bbd4a465490c4f168231cdde737088"
       }
     }
@@ -63,7 +63,9 @@
     "Complete protocol mask table is retained, including duplicate last-wins behavior; local transient collection is persisted once without escaping.",
     "Public macro opts into explicit record-bindings compiler catalog transport; ordinary macros retain their existing graph shape and policy restoration.",
     "Keyword case support implements grouped generated membership without repeated selector evaluation or live equality for all-keyword cases.",
-    "After all symbols resolve in original order, reuse pure default mask data only when the entire resolved default suffix matches; generically process every user protocol, including duplicates. Changed defaults retain full generic preparation."
+    "After all symbols resolve in original order, reuse pure default mask data only when the entire resolved default suffix matches; generically process every user protocol, including duplicates. Changed defaults retain full generic preparation.",
+    "Build generated protocol-fact input with into over one explicit vector of user implementations followed by defaults, preserving the same ordered fact-resolution input while avoiding lazy concat traversal.",
+    "Construct public getBasis directly from the already validated fields vector; preserve its vector value and all public metadata/type/factory outputs."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_public_records.rs",

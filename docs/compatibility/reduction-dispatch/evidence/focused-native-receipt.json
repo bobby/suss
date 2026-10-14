@@ -1,0 +1,50 @@
+{
+  "kind": "working-tree-focused-native-acceptance",
+  "base_head": "504d5111715c3fdb8830dc6c40e962617b958b41",
+  "command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test -p suss-cli --locked --test portable_reduction_dispatch --test record_factory_preservation --test record_label_preservation -- --test-threads=2 --nocapture",
+  "exit_code": 0,
+  "results": {
+    "portable_reduction_dispatch": {
+      "passed": 4,
+      "seconds": 14.63,
+      "native_case_phase_matches": 20,
+      "canonical_identity_checks": 16
+    },
+    "record_factory_preservation": {
+      "passed": 1,
+      "seconds": 4.03,
+      "requests_compared": 7
+    },
+    "record_label_preservation": {
+      "passed": 4,
+      "seconds": 10.11,
+      "extra_inputs_compared": 153
+    }
+  },
+  "log_sha256": "8c6804cf3d9922c83728140ab40d85209e2b8a4626ce78bf280c37bb393a714a",
+  "native_capture_sha256": "d1d88ce2521210a50895f6a1a7d62b1c50d8239a648f874032e3616cb16ac796",
+  "source_sha256": {
+    "crates/suss-cli/tests/portable_reduction_dispatch.rs": "bc675e7aa7676ee7609df6a11ee69f066cb44e2daecdffc15aad37e16075c803",
+    "crates/suss-cli/tests/record_factory_preservation.rs": "b232686df99ea86bc1d3523f568fbfabe259d8cc295e98025b1a508845a9e2dd",
+    "crates/suss-cli/tests/record_label_preservation.rs": "de57f82c03db177b125677bd59ff87bbb9e473870792bf8551204567845fd379",
+    "tests/oracle/reduction-dispatch-cases.json": "34ba6771bc21de083b5babb8262555b3ff5b081e4969edf60cbc775ba7fda65f",
+    "tests/oracle/fixtures/reduction-dispatch-fixture.sus": "7b62d5c79fe667cf4279d5ea2b491c1761895b8d3f1df33b9a246d4e265ed476"
+  },
+  "limits": [
+    "The run used an uncommitted candidate snapshot; full-workspace baseline, independent review, and CI are not established by this receipt.",
+    "The status-only corpus update records the completed source-order native run; case IDs, expressions, fixture, and expected captures are unchanged.",
+    "ClojureScript captures establish the portable contract; native capture is evidence for this candidate run."
+  ],
+  "source_order_supplement": {
+    "executed": true,
+    "native_cases": 3,
+    "phases": [
+      "runtime",
+      "macro"
+    ],
+    "matches": 6,
+    "capture_artifact": "native-acceptance.json",
+    "capture_sha256": "d1d88ce2521210a50895f6a1a7d62b1c50d8239a648f874032e3616cb16ac796"
+  },
+  "corpus_sha256_at_run": "34ba6771bc21de083b5babb8262555b3ff5b081e4969edf60cbc775ba7fda65f"
+}

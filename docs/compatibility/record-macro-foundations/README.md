@@ -113,7 +113,11 @@ metadata/hash arguments. The generated cond->> is expanded explicitly: dissoc
 executes once before record? is tested on the original input, then only record
 input converts the resulting extension map. Generated factory names, name
 metadata and docs remain intact. These are native compiled helper functions,
-not a Rust evaluator that constructs a restricted factory template.
+not a Rust evaluator that constructs a restricted factory template. Factory
+declarations now build the generated field vector directly and use `list*` for
+constructor forms, retaining the original order and hidden arguments while
+avoiding intermediate concat/sequence construction. The positional internal
+constructor and map-extension branches are unchanged.
 
 Two authored two-phase native tests in `compiled_record_factories` consume the
 actual helpers through compiled wrapper macros and intrinsic type declarations.
@@ -160,6 +164,11 @@ private type-label interface does not claim analyzer-map lexical munging.
 Its [adaptation record](label-adaptations.json) binds the retained inputs, native
 source file and compiled source identities. The macro bootstrap source installs
 the helper and includes its source identity in every artifact dependency list.
+Division and reserved-segment passes now search for delimiters and slice spans;
+the slash pass retains non-overlapping JavaScript `/\/(.)/g` behavior, including
+the four excluded line terminators. ASCII letters, digits, `_`, `.`, and `$` skip
+the punctuation case dispatch, while all punctuation and non-ASCII UTF-16 units
+still use the complete table and fallback.
 
 `compiled_record_labels` is authored for ordinary/qualified/punctuation/reserved
 names, empty segments, trailing division, line terminators, astral and lone
@@ -252,4 +261,14 @@ default data only after a matching resolved suffix, and processes every user
 protocol generically. Changed default bindings retain the full generic path.
 The [public adaptation ledger](public-adaptations.json) binds all three integrated
 helper files, compiled sources and retained originals; mutation tests reject stale
-or missing identities. Broader record customizations and M4 acceptance remain open.
+or missing identities. Protocol-fact input construction uses one explicit vector
+in original user-then-default order, and public `getBasis` is built directly from
+the validated fields vector. Broader record customizations and M4 acceptance
+remain open.
+
+The named-property ABI range-check optimization is recorded separately in
+[abi-adaptations.json](abi-adaptations.json). It substitutes unsigned
+`index - low <= high - low` for the equivalent closed-range pair of comparisons;
+the Suss crate license applies to this authored Rust source. This ABI record does
+not change or replace the upstream EPL provenance attached to the retained
+record-macro forms and helper sources.

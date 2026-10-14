@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 from core_import import PIN, digest, extract_forms, pinned_file, repository_file
+from cljs_inventory import Scanner
 ROOT = Path(__file__).resolve().parents[1]
 
 def verify_factory_adaptations(provenance=None, host_source=None):
@@ -59,14 +60,14 @@ def verify_factory_adaptations(provenance=None, host_source=None):
         raise ValueError('compiled factory artifact dependency missing')
     return 2
 
-def verify_label_adaptations(provenance=None, host_source=None):
+def verify_label_adaptations(provenance=None, host_source=None, source_bytes=None):
     if provenance is None:
         provenance = json.loads((ROOT / 'docs/compatibility/record-macro-foundations/label-adaptations.json').read_text())
     if provenance['schema'] != 1 or provenance['upstream'] != PIN or provenance['license'] != 'EPL-1.0':
         raise ValueError('record label adaptation pin/license/schema mismatch')
     if provenance['source'] != 'crates/suss-compile/src/portable_record_label.rs':
         raise ValueError('record label source path mismatch')
-    raw = repository_file(ROOT, provenance['source']).read_bytes()
+    raw = repository_file(ROOT, provenance['source']).read_bytes() if source_bytes is None else source_bytes
     if provenance['source-file-sha256'] != digest(raw):
         raise ValueError('stale record label source file hash')
     text = raw.decode()
@@ -82,6 +83,29 @@ def verify_label_adaptations(provenance=None, host_source=None):
     for entry in provenance['originals']:
         if digest(repository_file(ROOT, entry['path']).read_bytes()) != entry['sha256']:
             raise ValueError('stale retained record label input hash')
+    declarations = provenance.get('declarations', [])
+    declaration_names = ['ns:suss.internal.record-label', 'label-join3', 'label-join4',
+                         'char-map', 'reserved', 'reserved-word?', 'munge-unit',
+                         'replace-dots', 'replace-division', 'mark-reserved', 'type-label']
+    if not isinstance(declarations, list) or [entry.get('name') for entry in declarations] != declaration_names:
+        raise ValueError('closed record label declaration identities/order mismatch')
+    source_text = source.group(1)
+    top_forms = Scanner(source_text).all()
+    if len(top_forms) != len(declaration_names):
+        raise ValueError('record label top-level form count mismatch')
+    namespace_form = source_text[top_forms[0].start:top_forms[0].end] if top_forms else ''
+    adapted = list(extract_forms(source_text, 'macro', provenance['source']).values())
+    if [form['name'] for form in adapted] != declaration_names[1:]:
+        raise ValueError('record label source declaration set/order mismatch')
+    scanned_forms = [source_text[form.start:form.end] for form in top_forms]
+    declaration_forms = [namespace_form] + [form['form'] for form in adapted]
+    if scanned_forms != declaration_forms:
+        raise ValueError('record label top-level forms must exactly match the closed declaration list')
+    if len(set(entry['name'] for entry in declarations)) != len(declarations):
+        raise ValueError('duplicate record label declaration identity')
+    for entry, form in zip(declarations, declaration_forms):
+        if entry.get('sha256') != digest(form.encode()):
+            raise ValueError('stale record label declaration hash')
     if host_source is None:
         host_source = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
     host_source = re.sub(r'\s+', '', host_source)
@@ -90,6 +114,61 @@ def verify_label_adaptations(provenance=None, host_source=None):
     if not re.search(r'"record-label-source".*?sha256\(crate::portable_record_label::SOURCE\.as_bytes\(\)\)', host_source, re.S):
         raise ValueError('record label artifact dependency missing')
     return 4
+
+
+def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
+    """Bind the authored range-check optimization to its exact source bytes."""
+    path = 'docs/compatibility/record-macro-foundations/abi-adaptations.json'
+    if provenance is None:
+        provenance = json.loads((ROOT / path).read_text())
+    expected_path = 'crates/suss-compile/src/runtime_abi/named_properties.rs'
+    if (provenance.get('schema'), provenance.get('source'), provenance.get('license')) != (
+            1, expected_path, 'MIT OR Apache-2.0'):
+        raise ValueError('named-property ABI adaptation identity/license mismatch')
+    raw = repository_file(ROOT, expected_path).read_bytes() if source_bytes is None else source_bytes
+    if provenance.get('source-file-sha256') != digest(raw):
+        raise ValueError('stale named-property ABI source hash')
+    expected_ranges = [['a', 'z'], ['A', 'Z'], ['0', '9']]
+    expected_sequence = ['LocalGet(2)', 'I32Const(low as i32)', 'I32Sub',
+                         'I32Const((high - low) as i32)', 'I32LeU']
+    if provenance.get('guard-location') != 'Named instance access must not mistake raw source names for munged fields.':
+        raise ValueError('named-property ABI guard location mismatch')
+    if provenance.get('allowed-ranges') != expected_ranges:
+        raise ValueError('named-property ABI allowed ranges mismatch')
+    if provenance.get('instruction-sequence') != expected_sequence:
+        raise ValueError('named-property ABI instruction sequence mismatch')
+    source = raw.decode()
+    anchor = provenance['guard-location']
+    if source.count(anchor) != 1:
+        raise ValueError('named-property ABI guard anchor must occur exactly once')
+    if source.count('for (low, high) in') != 1:
+        raise ValueError('named-property ABI range loop must occur exactly once')
+    match = re.search(r'for\s*\(low,\s*high\)\s*in\s*(\[[^\]]*\])\s*\{',
+                      source[source.index(anchor):], re.S)
+    if match is None:
+        raise ValueError('named-property ABI range loop missing after field guard anchor')
+    start = source.index(anchor) + match.start()
+    block_start = source.index('{', start)
+    depth = 0
+    end = None
+    for index in range(block_start, len(source)):
+        if source[index] == '{':
+            depth += 1
+        elif source[index] == '}':
+            depth -= 1
+            if depth == 0:
+                end = index + 1
+                break
+    if end is None:
+        raise ValueError('named-property ABI range loop block is unclosed')
+    actual_block = re.sub(r'\s+', '', source[start:end])
+    range_items = ', '.join(f"(b'{low}', b'{high}')" for low, high in expected_ranges)
+    operations = ', '.join(expected_sequence)
+    expected_block = re.sub(r'\s+', '',
+        f'for (low, high) in [{range_items}] {{ body.extend([ {operations}, ]); }}')
+    if actual_block != expected_block:
+        raise ValueError('named-property ABI range guard block differs from its recorded location/ranges/instructions')
+    return 1
 
 
 def verify_public_adaptations(provenance=None):
@@ -145,6 +224,7 @@ def verify():
     verify_factory_adaptations()
     verify_label_adaptations()
     verify_public_adaptations()
+    verify_named_property_abi_adaptation()
     print('Verified 12 complete pinned macro forms, 2 compiled factory adaptations and label/public helper identities; provenance alone does not certify execution')
 
 if __name__ == '__main__':

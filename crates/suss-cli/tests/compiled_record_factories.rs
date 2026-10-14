@@ -1,5 +1,5 @@
 //! Complete compiled factory helper regressions, not public defrecord acceptance.
-//! Fresh pinned/native execution is pending under the user's test-suite hold.
+//! Public defrecord acceptance is checked separately from these helper cases.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
