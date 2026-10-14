@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5a2714479dc08c5896abe390704e7ce0481116e82d0303a30db0d13ca092a62e",
+  "replacement": "(def transformer-iterator\n  (fn [xform sourceIter multi]\n  (let [iterator (TransformerIterator. EMPTY NONE false nil sourceIter multi)]\n    (set! (.-xf iterator)\n      (xform (fn\n               ([] nil)\n               ([acc] acc)\n               ([acc o]\n                (set! (.-buffer iterator) (.add (.-buffer iterator) o))\n                acc))))\n    iterator)))",
+  "rationale": "Expand complete defn declaration to def/fn; retain docstring, all clauses and returned reducer arities. Source-only candidate; no branches excluded and no native acceptance claimed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

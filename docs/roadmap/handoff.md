@@ -25992,3 +25992,180 @@ Next: publish this record change as a draft, obtain committed-head review and CI
 finish the running baseline, then integrate reader/transducer work. Promote only
 with passing required validation, resolved review findings, and final-head CI.
 Issues #16–#19 remain open; this PR provides partial progress only.
+
+
+## Compiled collection integration evidence — 2026-10-13
+
+Validation uses `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target`, locked dependencies
+and two test threads. No RUSTFLAGS, fuel or profile override was introduced.
+The main checkout is `portable/m4-transducer-integration`; user-owned untracked
+`reference/BUSINESS_DSL_RESEARCH.md`, `reference/clojure-site/` and `target-perf/`
+are preserved. Earlier public-record baseline4902 passed1740 tests with zero
+failures and26existing ignores; that is evidence for the earlier record snapshot,
+not the current integration.
+
+Fourteen complete transducer declarations, their complete iterator/setup parents,
+the public lazy-seq macro and constantly/int-array/object-array dependencies retain
+pinned source, notices, licenses and explicit patches. Original staged Empty/EMPTY
+filenames collided on the case-insensitive filesystem; both complete forms were
+recovered from hash-verified pinned source and renamed with distinct source lines.
+The candidate graph had retained both forms; its52 direct comparisons were only
+supplemental and were superseded by public compiled-source execution.
+
+Focused commands and terminal results:
+
+- `cargo test -p suss-cli --locked --test portable_transducers -- --test-threads=2`:
+  retry50519 passed7 tests in25.82s. Original26transducer and19initializer cases
+  execute in both phases through compiled macros with independent decoding after
+  GC. Includes public namespace/shadow guards, sparse shift and decoder attacks.
+  `/private/tmp/suss-m4-array-reviewed-focused-retry.log`.
+- The final receiver/transducer retry81017 again passed3+7 tests after review
+  fixes and bootstrap refresh:
+  `cargo test -p suss-cli --locked --test portable_closure_receivers --test portable_transducers -- --test-threads=2`.
+  `/private/tmp/suss-m4-review-fixes-focused.log`.
+- Combined reader/receiver/projection/observer checks64090 passed8/3/6/2 tests:
+  `cargo test -p suss-reader -p suss-cli -p suss-compile --locked --test portable_dispatch --test portable_closure_receivers --test portable_sequence_projection --test session_observation_hook -- --test-threads=2`.
+  `/private/tmp/suss-m4-integration-remaining-focused.log`.
+- `cargo test -p suss-compile --lib --locked splicing -- --test-threads=2`:
+  52279 passed2 tests,97filtered,3.53s; directly checks cache identity, nested raw
+  consumer rejection and conservative environment traversal.
+  `/private/tmp/suss-m4-splicing-consumer-focused.log`.
+- Earlier assertion-time snapshot checks71427 passed3 tests in37.30s, including
+  mutation timing, non-forcing opaque lazy values and host-token recovery after a
+  real fuel trap. Hook1236 passed2 tests. Logs
+  `/private/tmp/suss-m4-observation-token-focused.log` and
+  `/private/tmp/suss-m4-observer-token-hook-focused.log`.
+- `scripts/verify-core-import.sh`:61368 passed all source/inventory checks and17
+  native tests. Inventory1065; overlay564reviewed/501unassessed;456generatedfiles.
+  `/private/tmp/suss-m4-integration-import-gate.log`.
+- `python3 scripts/check_transducer_provenance.py` verifies14complete declarations,
+  three helper dependencies and publiclazyseq. Seven checker tests pass (six
+  negative mutations, one positive). Standalone setup provenance now verifies32
+  whole forms; nine `test_sequence_provenance.py` tests pass in13.199s.
+  `/private/tmp/suss-m4-sequence-setup-provenance.log`.
+- `scripts/verify-bootstrap.sh`:final47247 passed4native tests in20.94s, identity
+  validation and two byte-identical generations with Java/Node absent from PATH.
+  `/private/tmp/suss-m4-review-fixes-bootstrap-gate.log`.
+
+Observed failures and corrections are retained, not treated as passes. Initial
+array initializer oracle attempts used the wrong working directory; compilation
+98602 and Node execution succeeded from `tests/oracle`. Native6787 stopped before
+cases due to a bootstrap manifest made stale by review-description changes.
+Retry20354 passed6 tests but shift's new hole fixture failed: make-array fillsnil.
+Changed the fixture to the canonical sparse Array constructor and reran the full
+focused binary. The setup provenance gate initially rejected five unrecorded
+iterator parents; complete originals and hash-bound patches were added while
+preserving exact loader matching. Review also repaired a truthy invalid-apply
+assertion and added explicit consumer/cache tests.
+
+Primary Jank41568 completed in171.82s:8harness tests passed and the known-failure
+comparison differed. Actual capture:839host-decided passes,11guest-judged cases,
+21failures,4983unexecuted assertions and192namespace failures. All714prior
+successful/guest records remained identical. The21failures include partial/inc
+kind:error and20skip-mismatch occurrences across19entries. Independent audit
+checked ordered248namespaces and851uniqueassertionIDs before refreshing the
+failure-only baseline from actual results. Oracle/vendor bytes were unchanged.
+Before/after captures and audit/hash manifest are retained under
+`docs/compatibility/transducers/evidence`. A baseline match does not certify
+compatibility. Captures must only be consumed after the producing process is
+terminal; an incomplete capture can otherwise be serialized as missing results.
+
+Invalid array sizes and initializer exceptions are outside the19case corpus.
+Native Symbol and instance property iterator lookup remain unverified. The original
+map declaration still fails the4096-node macro transport limit; the capture does
+not identify whether input or result transport failed. Other applicable namespaces
+advance to missing ->>, realized? and long-array. Regex and unsupported ordinary
+numeric forms remain explicit reader failures. No body/metadata stripping, quota
+increase, global arity relaxation or blanket skip was used.
+
+The first workspace baseline37861 was explicitly interrupted (exit130) to add
+review regressions; it is not a pass. Final artifacts were regenerated afterward.
+Workspace retry39267 runs the required command:
+
+```sh
+CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-integration-final-jank-evidence cargo test --workspace --locked -- --test-threads=2
+```
+
+Log `/private/tmp/suss-m4-integration-full-baseline-retry.log`. Poll39267 until
+terminal; an observation timeout is not grounds to restart. Its final raw primary
+capture is separate from the earlier independently reviewed capture. No full
+workspace result is inferred from passing focused tests.
+
+Workspace retry39267 terminated exit101. Completed17suites:83passed,5failed;
+all failures are in compiled_macro_compiler_catalog and report the unchanged
+131072-node full analysis graph capacity. Diagnostics show131074recipes, about
+18194forms/40656maps/18992vectors/1152declarations/634namespaces/10670ASTs.
+The full workspace result is a failure, not partial acceptance. Recorded exact
+log remains `/private/tmp/suss-m4-integration-full-baseline-retry.log`.
+Faithful immutable sharing is being investigated without quota/fuel increases,
+compact catalog substitution or omitted source facts.
+
+Catalog sharing trial88471 exited101:all5catalog tests still hit131072 nodes;
+identical-namespace memoization alone did not clear the limit. Final task-root
+map implementation occupies each already-charged taskslot instead of allocating
+a second map recipe and alias. Existing map-cache hits still preserve canonical
+identity; fresh resolved-var info maps retain separate allocations. All bounds
+and fuel settings remain unchanged. Initial generator29501 failed E0308 from a
+missing matchsemicolon; corrected before final44291 generated successfully.
+Source-matching four artifacts checked/installed. Focused76995 remains live:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test -p suss-cli --locked --test compiled_macro_compiler_catalog -- --test-threads=2`.
+Log `/private/tmp/suss-m4-task-map-catalog-focused.log`; no whole-baseline pass
+is established.
+
+Focused fullcatalog76995 exited0:5passed,0failed/ignored/filtered in267.63s
+under the unchanged bounds/fuel. `/private/tmp/suss-m4-task-map-catalog-focused.log`.
+Graph sharing unit checks30251 are running using
+`cargo test -p suss-compile --lib --locked sharing_tests -- --test-threads=2`
+with the existing jobs/target env. This focused pass does not replace the failed
+workspace baseline; affected graph suites and fresh full execution are required.
+
+Graphsharing30251 exited0:10passed,0failed/ignored,91filtered,4.20s;
+`/private/tmp/suss-m4-task-map-unit-focused.log`. Independent static review
+confirmed no remaining blocker after Debug/semicolon fixes and all namespace
+field checks. Affected graph/binding/declaration checks21625 remain running;
+log `/private/tmp/suss-m4-task-map-affected-focused.log`. No quotas/fuel or
+expectations changed.
+
+Affected21625 exited0:analysisgraph11/bindingrecords8/declarationfunctions2/
+declarationmetadata3 allpassed,0failed/ignored/filtered. Lastmetadata suite took
+146.04s and preserves direct source-core evaluation in both phases. Command:
+`cargo test -p suss-cli --locked --test compiled_macro_analysis_graph --test compiled_macro_binding_records --test compiled_macro_declaration_functions --test compiled_macro_declaration_metadata -- --test-threads=2`.
+Log `/private/tmp/suss-m4-task-map-affected-focused.log`. Final bootstrap gate
+is running before fresh workspace validation; source behavior remains frozen.
+
+Bootstrap gate20109 exited0:4passed,0failed/ignored/filtered,21.36s;
+phase/identity and byte-identical double reproduction passed with Java/Node
+absent from PATH. `/private/tmp/suss-m4-task-map-bootstrap-gate.log`.
+Fresh workspace baseline started on the repaired source:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-catalog-fixed-final-jank-evidence cargo test --workspace --locked -- --test-threads=2`.
+Log `/private/tmp/suss-m4-catalog-fixed-full-baseline.log`. Earlier baseline
+39267 remains failed; focused passes and reproduced artifacts do not substitute
+for this new full execution.
+Poll live workspace handle53664; do not restart on observation timeout.
+
+Catalog-fixed workspace53664 terminated exit101:677passed,5failed. The five
+syntax_quote_live_binding tests assumed publicsequence was absent/private and
+firstdefonce replaced it; the imported publicdefinition invalidated that setup.
+Kept every original behavior assertion using an explicit unboundfixture with
+real importedcore helpers, omitting exactly1wholepublicsequence definition and
+retaining its forwarddeclaration. Addeddefaultbootstrap identity/failure/defonce/
+reset coverage. Bare-onlyprobe33582 failedmissingseq?; removingforwarddeclare
+probe12358 failedunresolvedsequence. Correctfixtureprobe16559 passed. Initial
+9test run67549 passed8oldcases but newtestfailedsecondns inoneinput; separated
+namespace transition. Retry34859 exited0:9passed,0failed/ignored/filtered,46.53s.
+`/private/tmp/suss-m4-reader-public-fallback-focused-retry.log`. ProductionRust,
+importsource and versionedbootstrap unchanged by this test-only correction.
+
+Fresh workspace24805 is running after focused fixture correction:
+`CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-public-sequence-final-jank-evidence cargo test --workspace --locked -- --test-threads=2`.
+Log `/private/tmp/suss-m4-public-sequence-full-baseline.log`. Poll24805 until
+terminal; do not restart on observation timeout.
+
+### Workspace validation 24805 and compiled-support reactivation
+
+- `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-public-sequence-final-jank-evidence cargo test --workspace --locked -- --test-threads=2` exited 101: 1086 passed, one failed, 22 ignored. Log: `/private/tmp/suss-m4-public-sequence-full-baseline.log`.
+- All nine public/private sequence fixtures passed. The primary Jank harness passed 9/9; independently audited counts remain 839 host passes, 11 guest-judged, 21 failures, 4983 unexecuted, 192 namespace failures. All 850 prior successful/guest raw records are unchanged. Separate artifact receipt: `docs/compatibility/transducers/evidence/validation-24805.json`; the historical capture receipt is preserved.
+- Failure: `compile_expr::prototype_cases_awaiting_compiled_support` still expected lazy-seq compilation to fail. Reactivated the two original lazy-seq and two constantly execution tests and removed only their stale failure rows. Remaining unsupported tests retain their diagnostics and ignores.
+- Focused `cargo test -p suss-compile --test compile_expr --locked -- test_debug_lazy_seq_simple test_partial_debug_lazy_seq test_variadic_closure_with_capture_zero_args test_variadic_closure_with_capture_multiple_args prototype_cases_awaiting_compiled_support --test-threads=2` exited 0: five passed, 311 filtered, 23.71s. Same jobs/target environment; log `/private/tmp/suss-m4-support-reactivation-focused.log`.
+- The same required full command is running again with capture directory `/private/tmp/suss-m4-support-reactivated-final-jank-evidence` and log `/private/tmp/suss-m4-support-reactivated-full-baseline.log`; terminal result remains pending.

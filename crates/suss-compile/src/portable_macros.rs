@@ -67,7 +67,8 @@ fn mentions_environment(form: &Form) -> bool {
             | Kind::Vector(items)
             | Kind::Set(items)
             | Kind::Map(items)
-            | Kind::Conditional(items) => pending.extend(items),
+            | Kind::Conditional(items)
+            | Kind::SplicingConditional(items) => pending.extend(items),
             Kind::Discard(target) => pending.push(target.as_ref()),
             Kind::Prefix { operator, target } => {
                 pending.push(operator.as_ref());
@@ -77,6 +78,21 @@ fn mentions_environment(form: &Form) -> bool {
         }
     }
     false
+}
+
+#[cfg(test)]
+#[test]
+fn environment_observation_traverses_raw_splicing_children_and_metadata() {
+    let mut form = Form {
+        span: 0..1,
+        metadata: vec![],
+        kind: Kind::SplicingConditional(vec![symbol("&env", 0..1)]),
+    };
+    assert!(mentions_environment(&form));
+    form.kind = Kind::SplicingConditional(vec![symbol("ordinary", 0..1)]);
+    assert!(!mentions_environment(&form));
+    form.metadata.push(symbol("&env", 0..1));
+    assert!(mentions_environment(&form));
 }
 fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, SessionError> {
     let Some(parameters) = parts.first() else {
@@ -124,6 +140,7 @@ impl CompiledMacros {
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
+        macros.define(crate::portable_lazy_seq::SOURCE)?;
         macros
             .session
             .eval(crate::portable_record_factories::SOURCE)?;
@@ -638,12 +655,14 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["defn", "defrecord"].into_iter().find_map(|core_name| {
-                    context
-                        .environment
-                        .resolves_bootstrap_name(context.phase, name, core_name)
-                        .then(|| ("suss.core".into(), core_name.into()))
-                })
+                ["defn", "defrecord", "lazy-seq"]
+                    .into_iter()
+                    .find_map(|core_name| {
+                        context
+                            .environment
+                            .resolves_bootstrap_name(context.phase, name, core_name)
+                            .then(|| ("suss.core".into(), core_name.into()))
+                    })
             })
             .unwrap_or_else(|| {
                 (

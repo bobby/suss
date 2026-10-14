@@ -8,6 +8,7 @@ mod array_join;
 mod array_methods;
 mod array_own_properties;
 mod array_pop;
+mod array_shift;
 mod array_properties;
 mod array_push;
 mod arrays;

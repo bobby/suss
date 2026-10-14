@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "4c5e071e588b130eeea9f62373cc6006bad3db9e1b6ca64af6d4a6d554afd30e",
-  "reviews-sha256": "28f5a541d54d38acfe7a7eda58b6c7800bd55014cd15337affb45b8b332c6f35",
+  "recipe-sha256": "eb0467948b55ac1453405603b3966ad53b593ebcbc65b41bdf7da30fa74023de",
+  "reviews-sha256": "55634ac714e83fbd73a5ba8faf46f735273984e48400bb27002862c301d98444",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -13540,16 +13540,576 @@
       "semantic-tests": [
         "crates/suss-cli/tests/portable_record_emitter_dependencies.rs"
       ]
+    },
+    {
+      "id": "runtime:completing:2695",
+      "name": "completing",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2695,
+      "end-line": 2704,
+      "byte-start": 72604,
+      "byte-end": 72905,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a316bf139114b4145bc0a73ee8c77cfd0a8d3ab5a81eb0ec7994c81939972cae",
+      "extracted": "extracted/0435.cljs",
+      "extracted-sha256": "1e9a0662a61c83ac770e63d82a7cd5cbd56c03c989bc4bd11b0158bea7476ceb",
+      "patch": "docs/compatibility/transducers/declaration-2695-completing-patch.json",
+      "patch-sha256": "56fa49e524c803ffd9b3ae18ee6fd50346289177d1ec3fb8fc8ef745fc0f1eb4",
+      "adapted-form-sha256": "15cce26e7c507c81224dda7763cc1257f861d60e9c4ae6b2d7a047daa24a34cc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:butlast:9673",
+      "name": "butlast",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9673,
+      "end-line": 9679,
+      "byte-start": 269070,
+      "byte-end": 269256,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "de6ab3e36618199f865851e8584e6730d51cd069d27c0090288816a61f8fad6d",
+      "extracted": "extracted/0436.cljs",
+      "extracted-sha256": "4546a24fc7753353714d6ef8d8cf732122af99dfc6dcfb30b34f95062afa38ef",
+      "patch": "docs/compatibility/transducers/declaration-9673-butlast-patch.json",
+      "patch-sha256": "c7bed64ff11d6af690c0ce27f2957020295e68c74e881971ebdf3ab92b8f2864",
+      "adapted-form-sha256": "5a5915a7116c81afa833cf58093f3a7aeb39fb35aee1b0ec2eba17437391b1d8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:Many:4262",
+      "name": "Many",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4262,
+      "end-line": 4272,
+      "byte-start": 112464,
+      "byte-end": 112667,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f7707df9ccff7cc1dca7df41f79f63c68c1d82ef2b02f7e5b59864666ecbf063",
+      "extracted": "extracted/0437.cljs",
+      "extracted-sha256": "a945caef92d2f02a3071c28290cee8cdacbb758d78d46341bba6367093fbeeeb",
+      "patch": "docs/compatibility/transducers/declaration-4262-Many-patch.json",
+      "patch-sha256": "aea677da5f3e17e13f98ed728dee8240401f4c64d7e84a2469cb390f952e0caa",
+      "adapted-form-sha256": "f7707df9ccff7cc1dca7df41f79f63c68c1d82ef2b02f7e5b59864666ecbf063",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:NONE:4274",
+      "name": "NONE",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4274,
+      "end-line": 4274,
+      "byte-start": 112669,
+      "byte-end": 112696,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7b4ec8772f66193dcf69a4b7346ce37e56db778138fb00abc520b50480abb45e",
+      "extracted": "extracted/0438.cljs",
+      "extracted-sha256": "276aaa28bcdd711e10004711f8cf4ac631e9c2be88b2ee5c7c86f3f0358060e2",
+      "patch": "docs/compatibility/transducers/declaration-4274-NONE-patch.json",
+      "patch-sha256": "cc2e2ef4c9e1731c1cf1249a85f6cf222674160b011bcacce712bd8b6c72f0a8",
+      "adapted-form-sha256": "7b4ec8772f66193dcf69a4b7346ce37e56db778138fb00abc520b50480abb45e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:Single:4276",
+      "name": "Single",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4276,
+      "end-line": 4293,
+      "byte-start": 112698,
+      "byte-end": 113125,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b56c8b6829e2f4f2f53ea47d65675ccbebf9b28ce2e055d6a6da0478b3fcc655",
+      "extracted": "extracted/0439.cljs",
+      "extracted-sha256": "2815f6ee68cc7dedb13817dfd39d3b712eb3bd1896594ad621ba463a92664be7",
+      "patch": "docs/compatibility/transducers/declaration-4276-Single-patch.json",
+      "patch-sha256": "fe695b07f251f2e13a8f8d691150cdf6e044e3fb15e685568778d16437dc0df6",
+      "adapted-form-sha256": "496592ce41d37cdd83de464e9ecb5278094eb42ae4efe83a19dfc4ee274c41db",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:Empty:4295",
+      "name": "Empty",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4295,
+      "end-line": 4304,
+      "byte-start": 113127,
+      "byte-end": 113332,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8a3d71ca54f6991f83f2d578f08288c0dedccb41da4ddcfaa19c41db47ea0aa0",
+      "extracted": "extracted/0440.cljs",
+      "extracted-sha256": "648360c324da2e9c307298d069d67696d380e2f80b255bbdf6c1884f5234c724",
+      "patch": "docs/compatibility/transducers/declaration-4295-Empty-patch.json",
+      "patch-sha256": "30ba15066566ef7b033dc9762546c912be30e580f83d2c5d43c1a00dc748d288",
+      "adapted-form-sha256": "8a3d71ca54f6991f83f2d578f08288c0dedccb41da4ddcfaa19c41db47ea0aa0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:EMPTY:4306",
+      "name": "EMPTY",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4306,
+      "end-line": 4306,
+      "byte-start": 113334,
+      "byte-end": 113364,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5f086f760d198c9a1dc6efeedada1d8cd6945a85ee5fe973ed3be74af554eea9",
+      "extracted": "extracted/0441.cljs",
+      "extracted-sha256": "cb9de8898a0df20f42ea174b9c93f3a51445b9720d5b60047d5c79342df38b87",
+      "patch": "docs/compatibility/transducers/declaration-4306-EMPTY-patch.json",
+      "patch-sha256": "a72e13acd34c3b5c8cc49734671e065d52569831a340c2dbba25c388b00cd273",
+      "adapted-form-sha256": "5f086f760d198c9a1dc6efeedada1d8cd6945a85ee5fe973ed3be74af554eea9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:MultiIterator:4308",
+      "name": "MultiIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4308,
+      "end-line": 4322,
+      "byte-start": 113366,
+      "byte-end": 113770,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "335a798bb7fa2a8a19dc6baecf447375664af74839206826208a8d2dc2eb6808",
+      "extracted": "extracted/0442.cljs",
+      "extracted-sha256": "2e4cc9e05ba38d0af69b0d6b4b3ec686fdf192ec60eec6f049b0bd6e73b5a071",
+      "patch": "docs/compatibility/transducers/declaration-4308-MultiIterator-patch.json",
+      "patch-sha256": "28593c46962e7d21ad293a47fa29791f6c5d474f64d65280806075e6754ef6f9",
+      "adapted-form-sha256": "4caed914c6748eaa3661245858ad0b3773d2d8fbb8baa410bd9715ae240cb7c6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:chunkIteratorSeq:4324",
+      "name": "chunkIteratorSeq",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4324,
+      "end-line": 4333,
+      "byte-start": 113772,
+      "byte-end": 114103,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "28002f77a3cd0439ac59725f5a1b0a2aa6ee74a67c1941c4b44459f305d4dad0",
+      "extracted": "extracted/0443.cljs",
+      "extracted-sha256": "3ae1d4c6330e297d89763c32353b2ec50a2ed765f37eef72e19e68bbf02c2db5",
+      "patch": "docs/compatibility/transducers/declaration-4324-chunkIteratorSeq-patch.json",
+      "patch-sha256": "960e9add2c139d46a94cddaff1e4c29acfd09b58dd39e65955fba269c05baaf5",
+      "adapted-form-sha256": "906aec6618f3c62574aef05a13e3ea207a7c44c9394e5e23d6c002716cacd8b2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:TransformerIterator:4335",
+      "name": "TransformerIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4335,
+      "end-line": 4370,
+      "byte-start": 114105,
+      "byte-end": 115266,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9021bd4f7a91656955f1f1edc6f78d7de0dde1451574fae0b5e2a8b30be22e21",
+      "extracted": "extracted/0444.cljs",
+      "extracted-sha256": "932752212929a9691e3c21de7d67583822f5adb943319c0efc097bcc09be0f11",
+      "patch": "docs/compatibility/transducers/declaration-4335-TransformerIterator-patch.json",
+      "patch-sha256": "5763985955752df3dc2114696d7c47f293e5876f185699ce0dfff8f0c742197f",
+      "adapted-form-sha256": "9021bd4f7a91656955f1f1edc6f78d7de0dde1451574fae0b5e2a8b30be22e21",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:transformer-iterator:4374",
+      "name": "transformer-iterator",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4374,
+      "end-line": 4384,
+      "byte-start": 115304,
+      "byte-end": 115665,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5a2714479dc08c5896abe390704e7ce0481116e82d0303a30db0d13ca092a62e",
+      "extracted": "extracted/0445.cljs",
+      "extracted-sha256": "ba6188bb192e05a26654e5c37503438be2efed43d2daddb3f623a55b64bf2ae8",
+      "patch": "docs/compatibility/transducers/declaration-4374-transformer-iterator-patch.json",
+      "patch-sha256": "feb495cb8e9692d728b917c043afde2da4fb3c9be7401b71ba765ff2740a62f2",
+      "adapted-form-sha256": "677f8fa207f8349bcc88748bbf9bd237264cc8612ac4f834413ef780dcc3b5a5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:sequence:4394",
+      "name": "sequence",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4394,
+      "end-line": 4414,
+      "byte-start": 115915,
+      "byte-end": 116747,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756",
+      "extracted": "extracted/0446.cljs",
+      "extracted-sha256": "8219a694e5ce753b72a3e692f27110554688f52b838dfd86a4cadf024e9cce61",
+      "patch": "docs/compatibility/transducers/declaration-4394-sequence-patch.json",
+      "patch-sha256": "9c05b945081a8b5e31aeb6610656c68bca949675beb06b87781058a001636783",
+      "adapted-form-sha256": "78022e46ebaea7b2a2fd78d10ff771222fa51ccc7c1fa9e32b2409138e9eabc0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:Eduction:11023",
+      "name": "Eduction",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11023,
+      "end-line": 11049,
+      "byte-start": 308656,
+      "byte-end": 309327,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "013298f8999cac7911f49004d5d8fcd6caafc7fc9652c37f7a4b9daef7be9833",
+      "extracted": "extracted/0447.cljs",
+      "extracted-sha256": "7b8909c95c46dab58fde75f9448aedf52237efa7f3c565539b5ae38492c13b06",
+      "patch": "docs/compatibility/transducers/declaration-11023-Eduction-patch.json",
+      "patch-sha256": "7ab2f018a9897b2c812a0409926acda4c21a48839b18eedc08b9739d6f0cceb9",
+      "adapted-form-sha256": "013298f8999cac7911f49004d5d8fcd6caafc7fc9652c37f7a4b9daef7be9833",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:eduction:11053",
+      "name": "eduction",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 11053,
+      "end-line": 11060,
+      "byte-start": 309354,
+      "byte-end": 309707,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c5fd529bbadcb04f86f544a7a05449010f8131a120d97700a269392a009b0d7e",
+      "extracted": "extracted/0448.cljs",
+      "extracted-sha256": "a80545c767b623c81612a1d78a8d70bfbb5ae3e317b92cfec4ca6ff0c6951c74",
+      "patch": "docs/compatibility/transducers/declaration-11053-eduction-patch.json",
+      "patch-sha256": "68164855e70aa64c725e52f4ea7411b5de7a4a00e1d91c6ea8d556a16c92578f",
+      "adapted-form-sha256": "8b6ea95db553f4ebb719937fb50e7b97e56e4529a602cb6c1ac08a034c1a33db",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete transducer buffer/iterator graph",
+        "owned array shift and strict call/apply receiver binding",
+        "live reduction/protocol/sequence dependencies",
+        "complete retained iterator feature/setup parents"
+      ],
+      "semantic-tests": [
+        "tests/oracle/transducer-cases.json",
+        "tests/oracle/transducer-observations.json",
+        "docs/compatibility/transducers/README.md"
+      ]
+    },
+    {
+      "id": "runtime:constantly:4464",
+      "name": "constantly",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4464,
+      "end-line": 4466,
+      "byte-start": 118161,
+      "byte-end": 118273,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0c999d766dfb9126e937e6ad9db6e080e4e5745358e7e205ff5d6d5150feb8ca",
+      "extracted": "extracted/0449.cljs",
+      "extracted-sha256": "e6d2647d82306d8f3416cc4d60df3f4218fa7ba9bfdfe6eff41e5696cf2a0303",
+      "patch": "docs/compatibility/transducers/dependency-4464-constantly-patch.json",
+      "patch-sha256": "4a357783f3e8c4e4a88a14c2bba08e108a811f21e73c52c37df1b10629dd8a52",
+      "adapted-form-sha256": "03e61a74b6d6906a489e57c744fbc23564e0225f25259b34cd261e59d597a4d8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "compiled closure capture",
+        "variadic argument evaluation"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_transducers.rs",
+        "tests/oracle/array-initializer-cases.json",
+        "tests/oracle/array-initializer-observations.json",
+        "scripts/check_transducer_provenance.py"
+      ]
+    },
+    {
+      "id": "runtime:int-array:3840",
+      "name": "int-array",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3840,
+      "end-line": 3860,
+      "byte-start": 100047,
+      "byte-end": 100691,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "118fedb4630c2e463ea39d2a2649aee03a28b59eeea23d418da97f7dd1e4d1b5",
+      "extracted": "extracted/0450.cljs",
+      "extracted-sha256": "3e7f1005279cb4a36aa911da26711d3f404be087ea63ba851ae21d0e0f76149e",
+      "patch": "docs/compatibility/transducers/dependency-3840-int-array-patch.json",
+      "patch-sha256": "b71f7252191bb848fe280b463885aa53a33c430c3df88c1fc1185e3f0fbb6ca0",
+      "adapted-form-sha256": "2586dba5b8942499128e7af2bdbee528b90d2f71e14f554e4ccd6c180c44e7e6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete pinned non-coercing initialization",
+        "make-array/into-array/seq/ordered aset",
+        "compiled fn/loop"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_transducers.rs",
+        "tests/oracle/array-initializer-cases.json",
+        "tests/oracle/array-initializer-observations.json",
+        "scripts/check_transducer_provenance.py"
+      ]
+    },
+    {
+      "id": "runtime:object-array:3906",
+      "name": "object-array",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3906,
+      "end-line": 3926,
+      "byte-start": 101997,
+      "byte-end": 102650,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "376576cfe0a48eaece22ede20d6bb7bcbe5702001cb1f47d51b5ee2d1a55cb4f",
+      "extracted": "extracted/0451.cljs",
+      "extracted-sha256": "e3ba0e2a77a847c11c8df69a902c1a440f5b3141fcc52296acaf0b77b5bdfb72",
+      "patch": "docs/compatibility/transducers/dependency-3906-object-array-patch.json",
+      "patch-sha256": "d6c442e1efd988ef5ae0836d57de98c778003279741181593cfc274e79e90d38",
+      "adapted-form-sha256": "bcfc9771e3ad25e617f2952be4628f867dbcd4258ca8e6fbc9eb4ad75a6bf54b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "complete pinned non-coercing initialization",
+        "make-array/into-array/seq/ordered aset",
+        "compiled fn/loop"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_transducers.rs",
+        "tests/oracle/array-initializer-cases.json",
+        "tests/oracle/array-initializer-observations.json",
+        "scripts/check_transducer_provenance.py"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "522b9e1c885166ea099d86a206ed9513e84b6d3e3d7a6a3a5be532cfc06817f0"
+      "sha256": "2c497fb9225061663903979cce3ef54f381c5d46b5b61f9dd1b83a9f4f13bf09"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "03f25acf05e6471fbfa6f896acf9571fc9cd6e43c571d27999696bd2978bf1d1"
+      "sha256": "5e1e074616431bc3b74fef875ca00fcb6815761457427d3120994373d31355a2"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
@@ -13994,6 +14554,23 @@
     "extracted/0432.cljs": "b54bc090ec8f0fdb22d6350a3e15712de88568dc074aac703b3934d496320418",
     "extracted/0433.cljs": "e42d6a92f7da2cce4527d99e7448b327e142226dc2eeef3c3b12a7b6843fd357",
     "extracted/0434.cljs": "758716af4825f4a9f180500c7095bac4316b03ff7ca7f03148b7543f5f814ecf",
-    "suss/core.sus": "b71952ec59003045fc741918a508baa629d2a4468c073754830d201a910c0291"
+    "extracted/0435.cljs": "1e9a0662a61c83ac770e63d82a7cd5cbd56c03c989bc4bd11b0158bea7476ceb",
+    "extracted/0436.cljs": "4546a24fc7753353714d6ef8d8cf732122af99dfc6dcfb30b34f95062afa38ef",
+    "extracted/0437.cljs": "a945caef92d2f02a3071c28290cee8cdacbb758d78d46341bba6367093fbeeeb",
+    "extracted/0438.cljs": "276aaa28bcdd711e10004711f8cf4ac631e9c2be88b2ee5c7c86f3f0358060e2",
+    "extracted/0439.cljs": "2815f6ee68cc7dedb13817dfd39d3b712eb3bd1896594ad621ba463a92664be7",
+    "extracted/0440.cljs": "648360c324da2e9c307298d069d67696d380e2f80b255bbdf6c1884f5234c724",
+    "extracted/0441.cljs": "cb9de8898a0df20f42ea174b9c93f3a51445b9720d5b60047d5c79342df38b87",
+    "extracted/0442.cljs": "2e4cc9e05ba38d0af69b0d6b4b3ec686fdf192ec60eec6f049b0bd6e73b5a071",
+    "extracted/0443.cljs": "3ae1d4c6330e297d89763c32353b2ec50a2ed765f37eef72e19e68bbf02c2db5",
+    "extracted/0444.cljs": "932752212929a9691e3c21de7d67583822f5adb943319c0efc097bcc09be0f11",
+    "extracted/0445.cljs": "ba6188bb192e05a26654e5c37503438be2efed43d2daddb3f623a55b64bf2ae8",
+    "extracted/0446.cljs": "8219a694e5ce753b72a3e692f27110554688f52b838dfd86a4cadf024e9cce61",
+    "extracted/0447.cljs": "7b8909c95c46dab58fde75f9448aedf52237efa7f3c565539b5ae38492c13b06",
+    "extracted/0448.cljs": "a80545c767b623c81612a1d78a8d70bfbb5ae3e317b92cfec4ca6ff0c6951c74",
+    "extracted/0449.cljs": "e6d2647d82306d8f3416cc4d60df3f4218fa7ba9bfdfe6eff41e5696cf2a0303",
+    "extracted/0450.cljs": "3e7f1005279cb4a36aa911da26711d3f404be087ea63ba851ae21d0e0f76149e",
+    "extracted/0451.cljs": "e3ba0e2a77a847c11c8df69a902c1a440f5b3141fcc52296acaf0b77b5bdfb72",
+    "suss/core.sus": "15ad7f92b47c2bbd211ea6fa8057ae450f4d0aba12abc07db36c0a9cce5b240b"
   }
 }

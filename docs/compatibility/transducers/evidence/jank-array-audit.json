@@ -1,0 +1,31 @@
+{
+  "previous_counts": {
+    "pass": 705,
+    "guest-judged": 9,
+    "fail": 21,
+    "not-executed": 5119,
+    "skipped": 0,
+    "namespaces-failed": 199
+  },
+  "current_counts": {
+    "pass": 839,
+    "guest-judged": 11,
+    "fail": 21,
+    "not-executed": 4983,
+    "skipped": 0,
+    "namespaces-failed": 192
+  },
+  "previous_pass_or_guest_preserved": 714,
+  "raw_shared_outcomes_changed": [],
+  "newly_loaded_namespaces": [
+    "clojure.core-test.aclone",
+    "clojure.core-test.butlast",
+    "clojure.core-test.first",
+    "clojure.core-test.next",
+    "clojure.core-test.rest",
+    "clojure.core-test.when",
+    "clojure.core-test.when-not"
+  ],
+  "skip_mismatches_unchanged": true,
+  "executed_failure": "clojure.core-test.partial/test-partial#2: kind:error"
+}

@@ -27,6 +27,7 @@ mod frontend;
 pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
+mod observation;
 
 #[derive(Clone, Debug)]
 pub struct SessionOptions {

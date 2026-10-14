@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "335a798bb7fa2a8a19dc6baecf447375664af74839206826208a8d2dc2eb6808",
+  "replacement": "(deftype MultiIterator [iters]\n  Object\n  (hasNext [_]\n    (loop [iters (seq iters)]\n      (if-not (nil? iters)\n        (let [iter (first iters)]\n          (if-not ^boolean (.hasNext iter)\n            false\n            (recur (next iters))))\n        true)))\n  (next [_]\n    (let [nexts (array)]\n      (let [multi-count__ (alength iters)]\n        (loop [multi-index__ 0]\n          (when (< multi-index__ multi-count__)\n            (aset nexts multi-index__ (.next (aget iters multi-index__)))\n            (recur (inc multi-index__)))))\n      (prim-seq nexts 0))))",
+  "rationale": "Expand complete dotimes: capture array length once and advance each source iterator left-to-right before returning prim-seq. Source-only candidate; no branches excluded and no native acceptance claimed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

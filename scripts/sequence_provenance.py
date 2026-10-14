@@ -61,7 +61,21 @@ def verify_payload(record, source, loader):
                 if replacement != '(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))':
                     raise ValueError('ExceptionInfo requires the complete ordered prototype parent')
                 original_target[1] = '(.-__proto__ (.-prototype ExceptionInfo))'
-            if original_target == ['extend-protocol', 'IComparable']:
+            if statement['line'] == 372:
+                if (text != '(if (and (exists? js/Symbol)\n         (identical? (goog/typeOf js/Symbol) "function"))\n  (def ITER_SYMBOL (.-iterator js/Symbol))\n  (def ITER_SYMBOL "@@iterator"))'
+                        or replacement != '(def ITER_SYMBOL "@@iterator")'):
+                    raise ValueError('iterator symbol requires the exact original string fallback')
+            elif original_target[0] == 'es6-iterable':
+                target = original_target[1]
+                if target not in ('TransformerIterator', 'Eduction'):
+                    raise ValueError('unexpected iterable setup target')
+                expected_expansion = (
+                    f'(unchecked-set (.-prototype {target}) cljs.core/ITER_SYMBOL '
+                    '(fn [] (this-as __suss_iter_this__ '
+                    '(cljs.core/es6-iterator __suss_iter_this__))))')
+                if replacement != expected_expansion:
+                    raise ValueError('iterable setup requires the complete receiver-preserving expansion')
+            elif original_target == ['extend-protocol', 'IComparable']:
                 from tree_node_registration import expand
                 if replacement != expand(text):
                     raise ValueError('IComparable requires all seven ordered complete adapted stanzas')

@@ -311,3 +311,15 @@
 
 ;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
 (set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
+
+;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
+;; Current target uses the pinned string fallback; native Symbol branch is retained in its ledger.
+(def ITER_SYMBOL "@@iterator")
+(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
+(set! (.-create TransformerIterator)
+  (fn [xform source]
+    (transformer-iterator xform source false)))
+(set! (.-createMulti TransformerIterator)
+  (fn [xform sources]
+    (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
+(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))

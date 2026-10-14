@@ -3,6 +3,53 @@ use super::*;
 
 pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
     use Instruction::*;
+    // Ordinary source closures keep strict arity while observing their call/apply receiver.
+    // Reject malformed argument buffers before touching dynamically scoped state.
+    let mut receiver_body = vec![
+        LocalGet(2),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut receiver_body);
+    receiver_body.extend([
+        End,
+        GlobalGet(object_methods::CURRENT_THIS),
+        LocalSet(3),
+        LocalGet(1),
+        GlobalSet(object_methods::CURRENT_THIS),
+        Block(BlockType::Empty),
+        Block(BlockType::Result(VALUE)),
+        TryTable(
+            BlockType::Empty,
+            Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }]),
+        ),
+        LocalGet(0),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        Call(b.names["invoke"]),
+        LocalSet(4),
+        Br(2),
+        End,
+        Unreachable,
+        End,
+        LocalSet(5),
+        LocalGet(3),
+        GlobalSet(object_methods::CURRENT_THIS),
+        LocalGet(5),
+        Throw(0),
+        End,
+        LocalGet(3),
+        GlobalSet(object_methods::CURRENT_THIS),
+        LocalGet(4),
+    ]);
+    b.function_with_locals(
+        "closure-invoke-with-this",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(3, VALUE)],
+        &receiver_body,
+    );
     let mut indices = vec![];
     for applying in [false, true] {
         let mut code = vec![
@@ -109,9 +156,19 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             End,
             End,
             LocalGet(0),
+            LocalGet(2),
+            I32Eqz,
+            If(BlockType::Result(VALUE)),
+            I32Const(UNDEFINED),
+            RefI31,
+            Else,
+            LocalGet(1),
+            I32Const(0),
+            ArrayGet(ARGS),
+            End,
             LocalGet(4),
             RefCastNonNull(HeapType::Concrete(ARGS)),
-            Call(b.names["invoke"]),
+            Call(b.names["closure-invoke-with-this"]),
         ]);
         let callback = b.count;
         b.functions.function(INVOKE);

@@ -100,6 +100,9 @@
 
 ;; Whole sorted collection/iteration/range mutual dependencies.
 (declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
+
+;; Complete transducer graph mutual references; implementations follow as reviewed imports.
+(declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction ITER_SYMBOL)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -8125,6 +8128,255 @@ reduces them without incurring seq initialization"
     ([pred coll] (let [step (fn [pred coll] (let [s (seq coll)]
                             (if (and s (pred (first s))) (recur pred (rest s)) s)))]
                    (new LazySeq nil (fn* [] (step pred coll)) nil nil)))))
+
+(def completing
+  "Takes a reducing function f of 2 args and returns a fn suitable for
+  transduce by adding an arity-1 signature that calls cf (default -
+  identity) on the result argument."
+  (fn ([f] (completing f identity))
+  ([f cf]
+    (fn
+      ([] (f))
+      ([x] (cf x))
+      ([x y] (f x y))))))
+
+(def butlast
+  "Return a seq of all but the last item in coll, in linear time"
+  (fn [s]
+  (loop [ret [] s s]
+    (if (next s)
+      (recur (conj ret (first s)) (next s))
+      (seq ret)))))
+
+(deftype Many [vals]
+  Object
+  (add [this o]
+    (.push vals o)
+    this)
+  (remove [this]
+    (.shift vals))
+  (isEmpty [this]
+    (zero? (.-length vals)))
+  (toString [this]
+    (str_ "Many: " vals)))
+
+(def ^:private NONE #js {})
+
+(deftype Single [^:mutable val]
+  Object
+  (add [this o]
+    (if (identical? val NONE)
+      (do
+        (set! val o)
+        this)
+      (Many. (array val o))))
+  (remove [this]
+    (if (identical? val NONE)
+      (throw (js/Error. (str_ "Removing object from empty buffer")))
+      (let [ret val]
+        (set! val NONE)
+        ret)))
+  (isEmpty [this]
+    (identical? val NONE))
+  (toString [this]
+    (str_ "Single: " val)))
+
+(deftype Empty []
+  Object
+  (add [this o]
+    (Single. o))
+  (remove [this]
+    (throw (js/Error. (str_ "Removing object from empty buffer"))))
+  (isEmpty [this]
+    true)
+  (toString [this]
+    "Empty"))
+
+(def ^:private EMPTY (Empty.))
+
+(deftype MultiIterator [iters]
+  Object
+  (hasNext [_]
+    (loop [iters (seq iters)]
+      (if-not (nil? iters)
+        (let [iter (first iters)]
+          (if-not ^boolean (.hasNext iter)
+            false
+            (recur (next iters))))
+        true)))
+  (next [_]
+    (let [nexts (array)]
+      (let [multi-count__ (alength iters)]
+        (loop [multi-index__ 0]
+          (when (< multi-index__ multi-count__)
+            (aset nexts multi-index__ (.next (aget iters multi-index__)))
+            (recur (inc multi-index__)))))
+      (prim-seq nexts 0))))
+
+(def ^:private chunkIteratorSeq (fn [iter]
+  (cljs.core/LazySeq. nil (fn* [] (when ^boolean (.hasNext iter)
+      (let [arr (array)]
+        (loop [n 0]
+          (if (and (.hasNext iter) (< n 32))
+            (do
+              (aset arr n (.next iter))
+              (recur (inc n)))
+            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))) nil nil)))
+
+(deftype TransformerIterator [^:mutable buffer ^:mutable _next ^:mutable completed ^:mutable xf sourceIter multi]
+  Object
+  (step [this]
+    (if-not (identical? _next NONE)
+      true
+      (loop []
+        (if (identical? _next NONE)
+          (if ^boolean (.isEmpty buffer)
+            (if ^boolean completed
+              false
+              (if ^boolean (.hasNext sourceIter)
+                (let [iter (if ^boolean multi
+                             (apply xf (cons nil (.next sourceIter)))
+                             (xf nil (.next sourceIter)))]
+                  (when (reduced? iter)
+                    (xf nil)
+                    (set! completed true))
+                  (recur))
+                (do
+                  (xf nil)
+                  (set! completed true)
+                  (recur))))
+            (do
+              (set! _next (.remove buffer))
+              (recur)))
+          true))))
+  (hasNext [this]
+    (.step this))
+  (next [this]
+    (if ^boolean (.hasNext this)
+      (let [ret _next]
+        (set! _next NONE)
+        ret)
+      (throw (js/Error. "No such element"))))
+  (remove [_]
+    (js/Error. "Unsupported operation")))
+
+(def transformer-iterator
+  (fn [xform sourceIter multi]
+  (let [iterator (TransformerIterator. EMPTY NONE false nil sourceIter multi)]
+    (set! (.-xf iterator)
+      (xform (fn
+               ([] nil)
+               ([acc] acc)
+               ([acc o]
+                (set! (.-buffer iterator) (.add (.-buffer iterator) o))
+                acc))))
+    iterator)))
+
+(def sequence
+  "Coerces coll to a (possibly empty) sequence, if it is not already
+  one. Will not force a lazy seq. (sequence nil) yields (), When a
+  transducer is supplied, returns a lazy sequence of applications of
+  the transform to the items in coll(s), i.e. to the set of first
+  items of each coll, followed by the set of second
+  items in each coll, until any one of the colls is exhausted.  Any
+  remaining items in other colls are ignored. The transform should accept
+  number-of-colls arguments"
+  (fn ([coll]
+     (if (seq? coll)
+       coll
+       (or (seq coll) ())))
+  ([xform coll]
+   (or (chunkIteratorSeq
+         (.create TransformerIterator xform (iter coll)))
+       ()))
+  ([xform coll & colls]
+   (or (chunkIteratorSeq
+         (.createMulti TransformerIterator xform (map iter (cons coll colls))))
+       ()))))
+
+(deftype Eduction [xform coll]
+  Object
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ISequential
+
+  IIterable
+  (-iterator [_]
+    (.create TransformerIterator xform (iter coll)))
+
+  ISeqable
+  (-seq [_] (seq (sequence xform coll)))
+
+  IReduce
+  (-reduce [_ f] (transduce xform (completing f) coll))
+  (-reduce [_ f init] (transduce xform (completing f) init coll))
+
+  IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(def ^{:arglists '([xform* coll])} eduction
+  "Returns a reducible/iterable application of the transducers
+  to the items in coll. Transducers are applied in order as if
+  combined with comp. Note that these applications will be
+  performed every time reduce/iterator is called."
+  (fn [& xforms]
+  (Eduction. (apply comp (butlast xforms)) (last xforms))))
+
+(def constantly "Returns a function that takes any number of arguments and returns x." (fn [x] (fn [& args] x)))
+
+(def int-array "Creates an array of ints. Does not coerce array, provided for compatibility
+  with Clojure." (fn ([size-or-seq]
+     (if (number? size-or-seq)
+       (int-array size-or-seq nil)
+       (into-array size-or-seq)))
+  ([size init-val-or-seq]
+     (let [a (make-array size)]
+       (if (seq? init-val-or-seq)
+         (let [s (seq init-val-or-seq)]
+           (loop [i 0 s s]
+             (if (and s (< i size))
+               (do
+                 (aset a i (first s))
+                 (recur (inc i) (next s)))
+               a)))
+         (do
+           (let [array-limit__ size]
+             (loop [array-index__ 0]
+               (when (< array-index__ array-limit__)
+                 (aset a array-index__ init-val-or-seq)
+                 (recur (inc array-index__)))))
+           a))))))
+
+(def object-array "Creates an array of objects. Does not coerce array, provided for compatibility
+  with Clojure." (fn ([size-or-seq]
+     (if (number? size-or-seq)
+       (object-array size-or-seq nil)
+       (into-array size-or-seq)))
+  ([size init-val-or-seq]
+     (let [a (make-array size)]
+       (if (seq? init-val-or-seq)
+         (let [s (seq init-val-or-seq)]
+           (loop [i 0 s s]
+             (if (and s (< i size))
+               (do
+                 (aset a i (first s))
+                 (recur (inc i) (next s)))
+               a)))
+         (do
+           (let [array-limit__ size]
+             (loop [array-index__ 0]
+               (when (< array-index__ array-limit__)
+                 (aset a array-index__ init-val-or-seq)
+                 (recur (inc array-index__)))))
+           a))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -8438,6 +8690,18 @@ reduces them without incurring seq initialization"
 
 ;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
 (set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
+
+;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
+;; Current target uses the pinned string fallback; native Symbol branch is retained in its ledger.
+(def ITER_SYMBOL "@@iterator")
+(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
+(set! (.-create TransformerIterator)
+  (fn [xform source]
+    (transformer-iterator xform source false)))
+(set! (.-createMulti TransformerIterator)
+  (fn [xform sources]
+    (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
+(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
 ;; Original Suss WIT integer foundations, not extracted upstream source.
 ;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
 ;; Decimal parsing never converts the complete integer through binary64.

@@ -48,6 +48,7 @@ pub mod worlds;
 pub mod portable_aot;
 #[cfg(not(target_family = "wasm"))]
 mod portable_defn;
+mod portable_lazy_seq;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_expression;
 #[cfg(not(target_family = "wasm"))]

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "013298f8999cac7911f49004d5d8fcd6caafc7fc9652c37f7a4b9daef7be9833",
+  "replacement": "(deftype Eduction [xform coll]\n  Object\n  (indexOf [coll x]\n    (-indexOf coll x 0))\n  (indexOf [coll x start]\n    (-indexOf coll x start))\n  (lastIndexOf [coll x]\n    (-lastIndexOf coll x (count coll)))\n  (lastIndexOf [coll x start]\n    (-lastIndexOf coll x start))\n\n  ISequential\n\n  IIterable\n  (-iterator [_]\n    (.create TransformerIterator xform (iter coll)))\n\n  ISeqable\n  (-seq [_] (seq (sequence xform coll)))\n\n  IReduce\n  (-reduce [_ f] (transduce xform (completing f) coll))\n  (-reduce [_ f init] (transduce xform (completing f) init coll))\n\n  IPrintWithWriter\n  (-pr-writer [coll writer opts]\n    (pr-sequential-writer writer pr-writer \"(\" \" \" \")\" opts coll)))",
+  "rationale": "Retain the entire pinned declaration unchanged; checked portable owned-array/property/Error and protocol implementations supply the host substrate. No methods or source branches removed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

@@ -930,6 +930,13 @@ impl Environment {
     ) -> Result<(), Diagnostic> {
         self.refer_with_role(phase, local, namespace, name, local != name)
     }
+    pub(crate) fn has_binding(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        self.bindings.contains_key(&Global {
+            phase,
+            namespace: canonical(namespace).into(),
+            name: name.into(),
+        })
+    }
     pub(crate) fn refer_with_role(
         &mut self,
         phase: Phase,

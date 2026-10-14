@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "840feac243a3adc6ec55dacedbb2d809e9f03716321b7145aa38c9cfb0a86498",
+  "replacement": "(set! (.-createMulti TransformerIterator)\n  (fn [xform sources]\n    (transformer-iterator xform (MultiIterator. (to-array sources)) true)))",
+  "rationale": "Retain complete original TransformerIterator factory setup without body changes."
+}

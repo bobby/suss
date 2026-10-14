@@ -418,8 +418,32 @@ pub(crate) fn namespace(
                         CoreOption::Rename(names) => {
                             for (old, new) in names {
                                 located(env.exclude_core(phase, symbol(old)?), old)?;
+                                let original = symbol(old)?;
+                                let local = symbol(new)?;
+                                if !env.has_binding(phase, "suss.core", original)
+                                    && expander.supports_macro_imports()
+                                {
+                                    // Macro-only core names have no ordinary value/cell.
+                                    // Import the actual isolated host's export catalog.
+                                    let exports = expander
+                                        .load_macro_namespace("suss.core", old.span.clone())?;
+                                    if exports.iter().any(|name| name == original) {
+                                        env.declare_macro_exports(phase, "suss.core", &exports)?;
+                                        located(
+                                            env.macro_refer_with_role(
+                                                phase,
+                                                local,
+                                                "suss.core",
+                                                original,
+                                                true,
+                                            ),
+                                            new,
+                                        )?;
+                                        continue;
+                                    }
+                                }
                                 located(
-                                    env.refer_with_role(phase, symbol(new)?, "suss.core", symbol(old)?, true),
+                                    env.refer_with_role(phase, local, "suss.core", original, true),
                                     new,
                                 )?;
                             }

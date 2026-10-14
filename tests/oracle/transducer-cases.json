@@ -1,0 +1,109 @@
+{
+  "status": "source-only pending pinned/native execution",
+  "cases": [
+    {
+      "id": "sequence-nil",
+      "source": "(sequence nil)"
+    },
+    {
+      "id": "sequence-vector-nil-false",
+      "source": "(vec (sequence [nil false 3]))"
+    },
+    {
+      "id": "sequence-keeps-lazy-input-unforced",
+      "source": "(let [calls (atom []) s (lazy-seq (swap! calls conj :forced) (list 1 2)) result (sequence s)] [@calls (vec result) @calls])"
+    },
+    {
+      "id": "sequence-transducer-nil-false",
+      "source": "(vec (sequence (map identity) [nil false 3]))"
+    },
+    {
+      "id": "sequence-transducer-demand",
+      "source": "(let [calls (atom []) s (sequence (map (fn [x] (swap! calls conj x) x)) [1 2 3])] [@calls (vec s) @calls])"
+    },
+    {
+      "id": "sequence-multiple-shortest",
+      "source": "(vec (sequence (map +) [1 2 3] [10 20]))"
+    },
+    {
+      "id": "sequence-three-inputs",
+      "source": "(vec (sequence (map +) [1 2] [10 20] [100 200 300]))"
+    },
+    {
+      "id": "sequence-empty-input",
+      "source": "(vec (sequence (map +) [1 2] []))"
+    },
+    {
+      "id": "sequence-many-buffer",
+      "source": "(vec (sequence (mapcat (fn [x] [x nil false (+ x 10)])) [1 2]))"
+    },
+    {
+      "id": "sequence-filter-skips",
+      "source": "(vec (sequence (filter (fn [x] (> x 2))) [1 2 3 4]))"
+    },
+    {
+      "id": "sequence-completion-emits",
+      "source": "(vec (sequence (fn [rf] (fn ([] (rf)) ([r] (rf (rf r 99))) ([r x] (rf r x)))) [1 2]))"
+    },
+    {
+      "id": "sequence-empty-completion-emits",
+      "source": "(vec (sequence (fn [rf] (fn ([] (rf)) ([r] (rf (rf r 99))) ([r x] (rf r x)))) []))"
+    },
+    {
+      "id": "sequence-reduced-stops-before-later-effects",
+      "source": "(vec (sequence (comp (map (fn [x] (swap! trace conj x) x)) (take 1)) [1 2 3]))"
+    },
+    {
+      "id": "sequence-callback-throw",
+      "source": "(vec (sequence (map (fn [x] (swap! trace conj x) (if (= x 2) (throw 42) x))) [1 2 3]))"
+    },
+    {
+      "id": "jank-drop-while-reuses-xform",
+      "source": "(let [xf (drop-while neg?)] [(vec (sequence xf [-2 -1 0 1 2])) (vec (sequence xf [-1 0 1 2]))])"
+    },
+    {
+      "id": "completing-default-all-arities",
+      "source": "(let [rf (completing (fn ([] (swap! trace conj :init) 7) ([a b] (swap! trace conj [:step a b]) (+ a b))))] [(rf) (rf 17) (rf 17 23)])"
+    },
+    {
+      "id": "completing-custom-all-arities",
+      "source": "(let [rf (completing (fn ([] (swap! trace conj :init) 7) ([a b] (swap! trace conj [:step a b]) (+ a b))) (fn [x] (swap! trace conj [:complete x]) (+ x 100)))] [(rf) (rf 17) (rf 17 23)])"
+    },
+    {
+      "id": "eduction-no-xforms",
+      "source": "(vec (eduction [nil false 3]))"
+    },
+    {
+      "id": "eduction-reduce-both-arities",
+      "source": "(let [ed (eduction (map inc) [1 2 3])] [(reduce + ed) (reduce + 10 ed)])"
+    },
+    {
+      "id": "eduction-empty-both-arities",
+      "source": "(let [ed (eduction (map identity) []) f (fn ([] (swap! trace conj :init) 7) ([a b] (+ a b)))] [(reduce f ed) (reduce f 17 ed)])"
+    },
+    {
+      "id": "eduction-repeats-effects",
+      "source": "(let [ed (eduction (map (fn [x] (swap! trace conj x) (+ x 10))) [1 2])] [(reduce + 0 ed) @trace (reduce + 0 ed) @trace])"
+    },
+    {
+      "id": "eduction-seq-repeats-state",
+      "source": "(let [ed (eduction (drop-while neg?) [-2 -1 0 1 2])] [(vec (seq ed)) (vec (seq ed))])"
+    },
+    {
+      "id": "eduction-reduced-stops-before-later-effects",
+      "source": "(reduce (fn [r x] (swap! trace conj x) (reduced (+ r x))) 10 (eduction (map identity) [1 2 3]))"
+    },
+    {
+      "id": "sequence-chunk-boundary-31",
+      "source": "(let [calls (atom []) s (sequence (map (fn [x] (swap! calls conj x) x)) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30])] [(count @calls) (first s) (count @calls) (vec s) (count @calls)])"
+    },
+    {
+      "id": "sequence-chunk-boundary-32",
+      "source": "(let [calls (atom []) s (sequence (map (fn [x] (swap! calls conj x) x)) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31])] [(count @calls) (first s) (count @calls) (vec s) (count @calls)])"
+    },
+    {
+      "id": "sequence-chunk-boundary-33",
+      "source": "(let [calls (atom []) s (sequence (map (fn [x] (swap! calls conj x) x)) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32])] [(count @calls) (first s) (count @calls) (vec s) (count @calls)])"
+    }
+  ]
+}

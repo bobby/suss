@@ -199,7 +199,10 @@ impl Pass<'_> {
                     _ => Kind::Set(items),
                 };
             }
-            Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+            Kind::Conditional(_)
+            | Kind::SplicingConditional(_)
+            | Kind::Discard(_)
+            | Kind::Prefix { .. } => {
                 return Err(error(
                     form,
                     "Syntax quote requires resolved reader conditionals",
@@ -532,8 +535,10 @@ pub(crate) fn reader_sequence_initializer(
     };
     // Lowered reader output names cljs.core; reader data that passed through a
     // macro (for example a defn body) still carries the reader's clojure.core.
-    if !matches!(symbol.namespace.as_deref(), Some("cljs.core" | "clojure.core"))
-        || symbol.name != "sequence"
+    if !matches!(
+        symbol.namespace.as_deref(),
+        Some("cljs.core" | "clojure.core")
+    ) || symbol.name != "sequence"
         || head.span.start < form.span.start
         || head.span.end != form.span.end
     {

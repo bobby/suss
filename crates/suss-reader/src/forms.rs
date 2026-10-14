@@ -5,7 +5,12 @@
 //! Reader metadata remains syntax until phase analysis interprets it. Nesting is
 //! bounded to 64 forms to keep diagnostics safe on ordinary thread stacks.
 use crate::{Keyword, ParseError, Symbol};
-use std::{collections::VecDeque, ops::Range};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    ops::Range,
+    sync::atomic::{AtomicU64, Ordering},
+};
+static ANONYMOUS_IDS: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
@@ -30,6 +35,7 @@ pub enum Kind {
     Map(Vec<Form>),
     /// Ordered feature/body syntax, paired after reader-prefix selection.
     Conditional(Vec<Form>),
+    SplicingConditional(Vec<Form>),
     /// Discard awaiting conditional selection of its logical target.
     Discard(Box<Form>),
     /// Reader prefix awaiting a retained target after conditional selection.
@@ -68,6 +74,9 @@ fn read_forms_internal(
         source,
         offset: 0,
         depth: 0,
+        delimited_depth: 0,
+        anonymous: None,
+        logical_pending: VecDeque::new(),
         locations,
         carets: source_metadata::Carets::new(),
         source_positions: locations.map(|_| source_metadata::Positions::new(source)),
@@ -95,11 +104,18 @@ fn resolve_sequence(forms: Vec<Form>, depth: usize) -> Result<Vec<Form>, ParseEr
     let mut following = VecDeque::from(forms);
     let mut resolved = Vec::new();
     while let Some(form) = following.pop_front() {
-        if let Some(form) = select(form, &mut following, depth)? {
+        if let Some(form) = select(form, &mut following, depth).map_err(closed_selection_error)? {
             resolved.push(form);
         }
     }
     Ok(resolved)
+}
+
+fn closed_selection_error(mut failure: ParseError) -> ParseError {
+    failure
+        .expected
+        .retain(|hint| hint != "logical continuation");
+    failure
 }
 
 fn required_selected(
@@ -112,12 +128,16 @@ fn required_selected(
             return Ok(form);
         }
     }
-    Err(error(span, "Reader prefix requires a retained form"))
+    Err({
+        let mut failure = error(span, "Reader prefix requires a retained form");
+        failure.expected.push("logical continuation".into());
+        failure
+    })
 }
 
 fn pending_prefix(kind: &Kind) -> bool {
     match kind {
-        Kind::Conditional(_) | Kind::Discard(_) => true,
+        Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) => true,
         Kind::Prefix { target, .. } => pending_prefix(&target.kind),
         _ => false,
     }
@@ -135,7 +155,11 @@ fn skip_required(
             return Ok(());
         }
     }
-    Err(error(span, "Reader prefix requires a retained form"))
+    Err({
+        let mut failure = error(span, "Reader prefix requires a retained form");
+        failure.expected.push("logical continuation".into());
+        failure
+    })
 }
 
 fn skip_target(
@@ -186,7 +210,29 @@ fn select(
     let span = form.span.clone();
     let metadata = std::mem::take(&mut form.metadata);
     let selected = match form.kind {
-        Kind::Conditional(clauses) => {
+        Kind::SplicingConditional(clauses) => {
+            let raw = Form {
+                span: span.clone(),
+                metadata: vec![],
+                kind: Kind::Conditional(clauses),
+            };
+            if let Some(selected) = select(raw, following, depth + 1)? {
+                let items = match selected.kind {
+                    Kind::List(items) | Kind::Vector(items) => items,
+                    _ => {
+                        return Err(error(
+                            span,
+                            "Splicing conditional requires a sequential value",
+                        ));
+                    }
+                };
+                for item in items.into_iter().rev() {
+                    following.push_front(item);
+                }
+            }
+            None
+        }
+        Kind::Conditional(clauses) => (|| -> Result<Option<Form>, ParseError> {
             let mut clauses = VecDeque::from(clauses);
             let mut selected = None;
             while let Some(feature) = clauses.pop_front() {
@@ -204,8 +250,9 @@ fn select(
                 }
                 skip_required(&mut clauses, depth + 1, span.clone())?;
             }
-            selected
-        }
+            Ok(selected)
+        })()
+        .map_err(closed_selection_error)?,
         Kind::Discard(target) => {
             if select(*target, following, depth + 1)?.is_none() {
                 required_selected(following, depth + 1, span.clone())?;
@@ -277,11 +324,186 @@ struct Reader<'a> {
     source: &'a str,
     offset: usize,
     depth: usize,
+    delimited_depth: usize,
+    anonymous: Option<(u64, BTreeMap<i32, Symbol>)>,
+    logical_pending: VecDeque<Form>,
     locations: Option<Option<&'a str>>,
     carets: source_metadata::Carets,
     source_positions: Option<source_metadata::Positions>,
 }
 impl Reader<'_> {
+    fn anonymous_symbol(&mut self, index: i32) -> Symbol {
+        let (id, arguments) = self.anonymous.as_mut().unwrap();
+        arguments
+            .entry(index)
+            .or_insert_with(|| {
+                Symbol::new(if index == -1 {
+                    format!("rest__{id}#")
+                } else {
+                    format!("p{index}__{id}#")
+                })
+            })
+            .clone()
+    }
+    fn anonymous_index_value(&self, token: &str, start: usize) -> Result<i32, ParseError> {
+        let token = token;
+        let token = token.strip_suffix('N').unwrap_or(token);
+        let (negative, digits) = if let Some(t) = token.strip_prefix('-') {
+            (true, t)
+        } else {
+            (false, token.strip_prefix('+').unwrap_or(token))
+        };
+        let (radix, digits) = if let Some(t) = digits
+            .strip_prefix("0x")
+            .or_else(|| digits.strip_prefix("0X"))
+        {
+            (16, t)
+        } else if let Some((radix, t)) = digits.split_once('r').or_else(|| digits.split_once('R')) {
+            (radix.parse::<u32>().unwrap_or(0), t)
+        } else if digits.len() > 1 && digits.starts_with('0') {
+            (8, &digits[1..])
+        } else {
+            (10, digits)
+        };
+        if !(2..=36).contains(&radix) {
+            return Err(self.fail(start, "Invalid anonymous argument index"));
+        }
+        let value = i64::from_str_radix(digits, radix)
+            .map_err(|_| self.fail(start, "Invalid anonymous argument index"))?;
+        let value = if negative { -value } else { value };
+        if !(-65535..=65535).contains(&value) {
+            return Err(self.fail(
+                start,
+                "Anonymous argument index exceeds reader resource limit",
+            ));
+        }
+        Ok(value as i32)
+    }
+    fn anonymous_argument(&mut self, start: usize) -> Result<Symbol, ParseError> {
+        let index = match self.peek() {
+            None => 1,
+            Some(c) if delimiter(c) || c == '\'' => 1,
+            Some('&') => {
+                self.take();
+                -1
+            }
+            Some('#') => {
+                let mut pending = std::mem::take(&mut self.logical_pending);
+                let selected = loop {
+                    let raw = match pending.pop_front() {
+                        Some(form) => form,
+                        None => self.required()?,
+                    };
+                    let selected = loop {
+                        let mut trial = pending.clone();
+                        match select(raw.clone(), &mut trial, 0) {
+                            Ok(selected) => {
+                                pending = trial;
+                                break selected;
+                            }
+                            Err(failure)
+                                if failure
+                                    .expected
+                                    .iter()
+                                    .any(|hint| hint == "logical continuation") =>
+                            {
+                                pending.push_back(self.required()?);
+                            }
+                            Err(failure) => return Err(failure),
+                        }
+                    };
+                    if let Some(form) = selected {
+                        break form;
+                    }
+                };
+                self.logical_pending = pending;
+                if !matches!(selected.kind, Kind::Number(_)) {
+                    return Err(self.fail(start, "Anonymous argument index requires an integer"));
+                }
+                self.anonymous_index_value(&self.source[selected.span], start)?
+            }
+            _ => {
+                let token = self.token().to_owned();
+                self.anonymous_index_value(&token, start)?
+            }
+        };
+        Ok(self.anonymous_symbol(index))
+    }
+    fn anonymous_function(&mut self, start: usize) -> Result<Kind, ParseError> {
+        if self.anonymous.is_some() {
+            return Err(self.fail(start, "Nested anonymous function literals are not allowed"));
+        }
+        self.anonymous = Some((
+            ANONYMOUS_IDS.fetch_add(1, Ordering::Relaxed),
+            BTreeMap::new(),
+        ));
+        let body = self.items(start, ')');
+        if body.is_err() {
+            self.anonymous = None;
+        }
+        let body = body?;
+        let maximum = self
+            .anonymous
+            .as_ref()
+            .unwrap()
+            .1
+            .keys()
+            .copied()
+            .max()
+            .unwrap_or(0)
+            .max(0);
+        let mut arguments = Vec::new();
+        for index in 1..=maximum {
+            let symbol = self.anonymous_symbol(index);
+            arguments.push(Form {
+                span: start..start + 2,
+                metadata: vec![],
+                kind: Kind::Symbol(symbol),
+            });
+        }
+        if self.anonymous.as_ref().unwrap().1.contains_key(&-1) {
+            arguments.push(Form {
+                span: start..start + 2,
+                metadata: vec![],
+                kind: Kind::Symbol(Symbol::new("&")),
+            });
+            arguments.push(Form {
+                span: start..start + 2,
+                metadata: vec![],
+                kind: Kind::Symbol(self.anonymous_symbol(-1)),
+            });
+        }
+        self.anonymous = None;
+        Ok(Kind::List(vec![
+            Form {
+                span: start..start + 2,
+                metadata: vec![],
+                kind: Kind::Symbol(Symbol::new("fn*")),
+            },
+            Form {
+                span: start..start + 2,
+                metadata: vec![],
+                kind: Kind::Vector(arguments),
+            },
+            {
+                let mut form = Form {
+                    span: start + 1..self.offset,
+                    metadata: vec![],
+                    kind: Kind::List(body),
+                };
+                if let Some(file) = self.locations {
+                    source_metadata::attach(
+                        self.source,
+                        self.source_positions.as_ref().unwrap(),
+                        file,
+                        &mut form,
+                    );
+                }
+                form
+            },
+        ]))
+    }
+
     fn peek(&self) -> Option<char> {
         self.source[self.offset..].chars().next()
     }
@@ -330,6 +552,9 @@ impl Reader<'_> {
         }
     }
     fn form(&mut self) -> Result<Option<Form>, ParseError> {
+        if let Some(form) = self.logical_pending.pop_front() {
+            return Ok(Some(form));
+        }
         self.padding();
         if self.depth >= 64 {
             return Err(self.fail(self.offset, "Reader nesting limit exceeded"));
@@ -353,7 +578,10 @@ impl Reader<'_> {
                     && !items.iter().any(|item| {
                         matches!(
                             item.kind,
-                            Kind::Conditional(_) | Kind::Prefix { .. } | Kind::Discard(_)
+                            Kind::Conditional(_)
+                                | Kind::SplicingConditional(_)
+                                | Kind::Prefix { .. }
+                                | Kind::Discard(_)
                         )
                     })
                 {
@@ -393,6 +621,7 @@ impl Reader<'_> {
                         | Kind::Map(_)
                         | Kind::Set(_)
                         | Kind::Conditional(_)
+                        | Kind::SplicingConditional(_)
                         | Kind::Discard(_)
                         | Kind::Prefix { .. }
                 ) {
@@ -418,7 +647,23 @@ impl Reader<'_> {
                 };
                 self.wrapper(start, name)?
             }
+            '%' if self.anonymous.is_some() => {
+                let symbol = self.anonymous_argument(start)?;
+                return Ok(Some(Form {
+                    span: start..self.offset,
+                    metadata: vec![],
+                    kind: Kind::Symbol(symbol),
+                }));
+            }
             '#' => match self.take() {
+                Some('(') => {
+                    let kind = self.anonymous_function(start)?;
+                    return Ok(Some(Form {
+                        span: start..self.offset,
+                        metadata: vec![],
+                        kind,
+                    }));
+                }
                 Some('{') => Kind::Set(self.items(start, '}')?),
                 Some('_') => {
                     let target = self.required()?;
@@ -430,24 +675,31 @@ impl Reader<'_> {
                 }
                 Some('\'') => self.wrapper(start, "var")?,
                 Some('?') => {
-                    if self.peek() == Some('@') {
+                    let splicing = self.peek() == Some('@');
+                    if splicing {
                         self.take();
-                        return Err(
-                            self.fail(start, "Splicing reader conditionals are not implemented")
-                        );
+                        if self.delimited_depth == 0 {
+                            return Err(self.fail(
+                                start,
+                                "Splicing conditional requires a delimited collection",
+                            ));
+                        }
                     }
                     self.padding();
                     if self.take() != Some('(') {
                         return Err(self.fail(start, "Reader conditional requires a list"));
                     }
-                    let items = self.items(start, ')')?;
+                    let items = self.items_inner(start, ')')?;
                     // Prefixes can consume following raw forms after an unmatched
                     // conditional disappears. Static clauses can be checked now;
                     // dynamic clauses are paired in their isolated selection queue.
                     if !items.iter().any(|item| {
                         matches!(
                             item.kind,
-                            Kind::Conditional(_) | Kind::Prefix { .. } | Kind::Discard(_)
+                            Kind::Conditional(_)
+                                | Kind::SplicingConditional(_)
+                                | Kind::Prefix { .. }
+                                | Kind::Discard(_)
                         )
                     }) {
                         if items.len() % 2 != 0 {
@@ -464,7 +716,11 @@ impl Reader<'_> {
                             }
                         }
                     }
-                    Kind::Conditional(items)
+                    if splicing {
+                        Kind::SplicingConditional(items)
+                    } else {
+                        Kind::Conditional(items)
+                    }
                 }
                 Some('#') => {
                     let token = self.token();
@@ -497,9 +753,15 @@ impl Reader<'_> {
                                 Some(namespace) => format!("{namespace}/{}", symbol.name),
                                 None => symbol.name.clone(),
                             },
-                            Kind::String(units) => String::from_utf16(units)
-                                .map_err(|_| self.fail(key.span.start, "#js key is not valid UTF-16"))?,
-                            _ => return Err(error(key.span.clone(), "#js keys must be keywords, symbols, or strings")),
+                            Kind::String(units) => String::from_utf16(units).map_err(|_| {
+                                self.fail(key.span.start, "#js key is not valid UTF-16")
+                            })?,
+                            _ => {
+                                return Err(error(
+                                    key.span.clone(),
+                                    "#js keys must be keywords, symbols, or strings",
+                                ));
+                            }
                         };
                         key.kind = Kind::String(spelling.encode_utf16().collect());
                         key.metadata.clear();
@@ -578,8 +840,18 @@ impl Reader<'_> {
         })
     }
     fn items(&mut self, start: usize, end: char) -> Result<Vec<Form>, ParseError> {
+        self.delimited_depth += 1;
+        let result = self.items_inner(start, end);
+        self.delimited_depth -= 1;
+        result
+    }
+    fn items_inner(&mut self, start: usize, end: char) -> Result<Vec<Form>, ParseError> {
         let mut items = Vec::new();
         loop {
+            if let Some(form) = self.logical_pending.pop_front() {
+                items.push(form);
+                continue;
+            }
             self.padding();
             match self.peek() {
                 Some(c) if c == end => {

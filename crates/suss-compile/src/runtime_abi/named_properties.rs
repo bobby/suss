@@ -138,6 +138,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     callbacks.extend(array_methods::functions(b));
     callbacks.extend(array_push::functions(b));
     callbacks.extend(array_pop::functions(b));
+    callbacks.extend(array_shift::functions(b));
     callbacks.extend(array_own_properties::functions(b, equal));
     callbacks.extend(array_join::functions(b));
     let (call, apply) = closure_calls::functions(b);
@@ -776,6 +777,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(equal),
                 If(BlockType::Empty),
                 Call(b.names["source-array-push-method"]),
+                Return,
+                End,
+            ]);
+            body.push(LocalGet(1));
+            name(&mut body, "shift");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["source-array-shift-method"]),
                 Return,
                 End,
             ]);

@@ -17,6 +17,7 @@ use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::{Arc, Mutex};
 use suss_compile::{
     portable_macros::CompiledMacros,
     portable_session::{Session, SessionError, SessionOptions, SessionValue},
@@ -42,7 +43,10 @@ fn root() -> PathBuf {
 }
 
 fn source_file(root: &Path, namespace: &str) -> PathBuf {
-    root.join(format!("{}.cljc", namespace.replace('.', "/").replace('-', "_")))
+    root.join(format!(
+        "{}.cljc",
+        namespace.replace('.', "/").replace('-', "_")
+    ))
 }
 
 /// Print the forms a namespace declaration may contain; None for anything else.
@@ -51,7 +55,13 @@ fn print(form: &Form) -> Option<String> {
         return None;
     }
     let join = |items: &[Form]| -> Option<String> {
-        Some(items.iter().map(print).collect::<Option<Vec<_>>>()?.join(" "))
+        Some(
+            items
+                .iter()
+                .map(print)
+                .collect::<Option<Vec<_>>>()?
+                .join(" "),
+        )
     };
     Some(match &form.kind {
         Kind::Nil => "nil".into(),
@@ -125,11 +135,15 @@ fn route_namespace(source: &str) -> Option<String> {
             let mut runtime_refers = Vec::new();
             for option in libspec[1..].chunks(2) {
                 let [key, value] = option else { return None };
-                let Kind::Keyword(key) = &key.kind else { return None };
+                let Kind::Keyword(key) = &key.kind else {
+                    return None;
+                };
                 match key.name.as_str() {
                     "as" => runtime_spec.extend([":as".into(), print(value)?]),
                     "refer" | "refer-macros" => {
-                        let Kind::Vector(names) = &value.kind else { return None };
+                        let Kind::Vector(names) = &value.kind else {
+                            return None;
+                        };
                         for name in names {
                             let printed = print(name)?;
                             if macro_names.contains(&printed.as_str()) {
@@ -284,7 +298,8 @@ fn count(value: &Observation) -> Option<usize> {
 struct Harness {
     session: Session,
     macros: CompiledMacros,
-    decoder: Decoder,
+    decoder: Arc<Mutex<Decoder>>,
+    snapshots: Arc<Mutex<Vec<Vec<Value>>>>,
     root: String,
 }
 
@@ -298,6 +313,32 @@ impl Harness {
         session.set_operation_fuel(OPERATION_FUEL);
         let mut decoder = Decoder::capture(&mut session, DECODE_BUDGET).unwrap();
         decoder.capture_sequences(&mut session).unwrap();
+        let decoder = Arc::new(Mutex::new(decoder));
+        let snapshots = Arc::new(Mutex::new(Vec::<Vec<Value>>::new()));
+        let observer_decoder = decoder.clone();
+        let observer_snapshots = snapshots.clone();
+        session
+            .install_observation_hook(move |mut store, payload| {
+                let mut decoder = observer_decoder.lock().unwrap();
+                decoder.refill(DECODE_BUDGET);
+                let captured = decoder.snapshot_payload(&mut store, &payload)?;
+                let captured = captured
+                    .into_iter()
+                    .map(|value| match value {
+                        Ok(value) => tagged(&value),
+                        Err(reason) => json!({"tag":"opaque", "reason":reason}),
+                    })
+                    .collect::<Vec<_>>();
+                let mut snapshots = observer_snapshots.lock().unwrap();
+                if snapshots.len() >= 1_000_000 {
+                    return Err(wasmtime::Error::msg("Assertion snapshot count limit"));
+                }
+                let token = u32::try_from(snapshots.len())
+                    .map_err(|_| wasmtime::Error::msg("Snapshot token overflow"))?;
+                snapshots.push(captured);
+                Ok(token)
+            })
+            .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(OPERATION_FUEL);
         session
@@ -307,6 +348,7 @@ impl Harness {
             session,
             macros,
             decoder,
+            snapshots,
             root: source_root.canonicalize().unwrap().display().to_string(),
         }
     }
@@ -325,7 +367,10 @@ impl Harness {
 
     fn decode(&mut self, value: &SessionValue) -> Result<Observation, SessionError> {
         self.session.collect()?;
-        self.decoder.decode_session(&mut self.session, value)
+        self.decoder
+            .lock()
+            .unwrap()
+            .decode_session(&mut self.session, value)
     }
 
     /// A harness accessor whose result must decode; harness defects are fatal.
@@ -360,59 +405,30 @@ impl Harness {
             .collect()
     }
 
-    /// Decode the observations of group result `position`. Records are decoded
-    /// together when possible, otherwise one at a time, and an undecodable
-    /// payload element becomes opaque on its own; it never decides a pass.
+    /// Assertion metadata is immutable; payloads were independently captured
+    /// on the host before later assertions or fixtures could mutate aliases.
     fn assertions(&mut self, position: usize, test: &str) -> Vec<Value> {
-        self.decoder.refill(DECODE_BUDGET);
+        self.decoder.lock().unwrap().refill(DECODE_BUDGET);
         let field = format!("({HARNESS}/result-field {position} 2)");
-        let total = count(&self.query(&format!("(count {field})"))).expect("observation count");
-        let mut all = self
-            .eval(&field)
-            .and_then(|value| self.decode(&value))
-            .ok()
-            .and_then(items);
-        (0..total)
-            .map(|index| {
-                let record = format!("({HARNESS}/observation {position} {index})");
-                let decoded = match &mut all {
-                    Some(records) => items(std::mem::replace(&mut records[index], Observation::Nil)),
-                    None => self.eval(&record).and_then(|value| self.decode(&value)).ok().and_then(items),
-                };
-                let (kind, verdict, payload, head) = match decoded {
-                    Some(mut fields) => {
-                        let head = name(&fields.pop().unwrap());
-                        let payload = items(fields.pop().unwrap()).expect("payload vector");
-                        (name(&fields[0]).unwrap(), name(&fields[1]).unwrap(),
-                         payload.iter().map(tagged).collect::<Vec<_>>(), head)
-                    }
-                    None => {
-                        let kind = name(&self.query(&format!("(nth {record} 0)"))).unwrap();
-                        let verdict = name(&self.query(&format!("(nth {record} 1)"))).unwrap();
-                        let head = name(&self.query(&format!("(nth {record} 3)")));
-                        let width = count(&self.query(&format!("(count (nth {record} 2))"))).unwrap();
-                        let payload = (0..width)
-                            .map(|element| self.opaque_or_tagged(&format!(
-                                "({HARNESS}/operand {position} {index} {element})")))
-                            .collect::<Vec<_>>();
-                        (kind, verdict, payload, head)
-                    }
-                };
-                let mut entry = json!({"test": test, "ordinal": index + 1, "kind": kind,
-                                       "verdict": verdict, "head": head});
-                match kind.as_str() {
-                    "predicate" => {
-                        entry["result"] = payload[0].clone();
-                        entry["operands"] = json!(payload[1..]);
-                    }
-                    "value" => entry["value"] = payload[0].clone(),
-                    "thrown" => entry["threw"] = payload[0]["value"].clone(),
-                    "error" => entry["thrown"] = payload[0].clone(),
-                    other => panic!("unknown harness assertion kind {other}"),
-                }
-                entry
-            })
-            .collect()
+        let records = items(self.query(&field)).expect("assertion metadata vector");
+        records.into_iter().enumerate().map(|(index, record)| {
+            let fields = items(record).expect("assertion metadata record");
+            assert_eq!(fields.len(),4,"assertion metadata width");
+            let kind = name(&fields[0]).expect("assertion kind");
+            let verdict = name(&fields[1]).expect("assertion verdict");
+            let snapshot = count(&fields[2]).expect("assertion snapshot index");
+            let head = name(&fields[3]);
+            let payload = self.snapshots.lock().unwrap().get(snapshot).cloned().expect("assertion snapshot exists");
+            let mut entry = json!({"test":test,"ordinal":index+1,"kind":kind,"verdict":verdict,"head":head});
+            match kind.as_str() {
+                "predicate" => { entry["result"]=payload[0].clone(); entry["operands"]=json!(payload[1..]); }
+                "value" => entry["value"]=payload[0].clone(),
+                "thrown" => entry["threw"]=payload[0]["value"].clone(),
+                "error" => entry["thrown"]=payload[0].clone(),
+                other => panic!("unknown assertion kind {other}"),
+            }
+            entry
+        }).collect()
     }
 
     fn run(&mut self, reference: &Value, source_root: &Path) -> Value {
@@ -424,11 +440,17 @@ impl Harness {
         let mut registered: BTreeMap<String, (usize, Vec<(String, usize)>)> = BTreeMap::new();
         for (namespace_index, namespace) in namespaces(reference).into_iter().enumerate() {
             let path = source_file(source_root, &namespace);
-            if let Some(routed) = std::fs::read_to_string(&path).ok().as_deref().and_then(route_namespace) {
+            if let Some(routed) = std::fs::read_to_string(&path)
+                .ok()
+                .as_deref()
+                .and_then(route_namespace)
+            {
                 std::fs::write(&path, routed).unwrap();
             }
             let before = self.test_count();
-            let result = self.session.load_namespace_with_macros(&namespace, &mut self.macros);
+            let result = self
+                .session
+                .load_namespace_with_macros(&namespace, &mut self.macros);
             let load_skips = self.query(&format!("({HARNESS}/drain-skips!)"));
             skips.extend(self.skips(load_skips, &namespace, None));
             if let Err(error) = result {
@@ -440,7 +462,8 @@ impl Harness {
             self.query(&format!("({HARNESS}/attach-fixtures! {namespace_index})"));
             let tests = (before..self.test_count())
                 .map(|index| {
-                    let name = name(&self.query(&format!("({HARNESS}/test-name {index})"))).unwrap();
+                    let name =
+                        name(&self.query(&format!("({HARNESS}/test-name {index})"))).unwrap();
                     (format!("{namespace}/{name}"), index)
                 })
                 .collect();
@@ -467,7 +490,12 @@ impl Harness {
             };
             let mut group: Vec<(String, usize)> = order
                 .iter()
-                .filter_map(|test| tests.iter().find(|(name, _)| name == test.as_str().unwrap()).cloned())
+                .filter_map(|test| {
+                    tests
+                        .iter()
+                        .find(|(name, _)| name == test.as_str().unwrap())
+                        .cloned()
+                })
                 .collect();
             for test in tests {
                 if !group.contains(test) {
@@ -477,8 +505,14 @@ impl Harness {
             if group.is_empty() {
                 continue;
             }
-            let indices = group.iter().map(|(_, index)| index.to_string()).collect::<Vec<_>>().join(" ");
-            if let Err(error) = self.eval(&format!("({HARNESS}/run-group! [{indices}] {namespace_index})")) {
+            let indices = group
+                .iter()
+                .map(|(_, index)| index.to_string())
+                .collect::<Vec<_>>()
+                .join(" ");
+            if let Err(error) = self.eval(&format!(
+                "({HARNESS}/run-group! [{indices}] {namespace_index})"
+            )) {
                 for (test, _) in &group {
                     test_failures.push(json!({"test": test, "stage": session_stage(&error),
                                               "diagnostic": self.diagnostic(&error)}));
@@ -494,8 +528,11 @@ impl Harness {
                 }
             }
             for (position, (test, _)) in group.iter().enumerate().take(completed) {
-                if self.query(&format!("({HARNESS}/result-field {position} 0)")) == Observation::Bool(true) {
-                    let thrown = self.opaque_or_tagged(&format!("({HARNESS}/result-field {position} 1)"));
+                if self.query(&format!("({HARNESS}/result-field {position} 0)"))
+                    == Observation::Bool(true)
+                {
+                    let thrown =
+                        self.opaque_or_tagged(&format!("({HARNESS}/result-field {position} 1)"));
                     test_failures.push(json!({"test": test, "stage": "language-exception",
                                               "diagnostic": thrown.to_string()}));
                 }
@@ -528,10 +565,25 @@ fn check(suite: &str) {
         .arg(&source_root)
         .output()
         .unwrap();
-    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    assert!(
+        generated.status.success(),
+        "{}",
+        String::from_utf8_lossy(&generated.stderr)
+    );
     let observations = Harness::new(&source_root).run(&reference, &source_root);
     let output = workspace.path().join("observations.json");
     std::fs::write(&output, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    // Retain actual raw evidence before the temporary workspace is dropped,
+    // including when comparison fails. This does not change expected results.
+    if let Some(directory) = std::env::var_os("SUSS_CLOJURE_TEST_SUITE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::copy(
+            &output,
+            directory.join(format!("{suite}-observations.json")),
+        )
+        .unwrap();
+    }
     let mut command = Command::new("python3");
     command
         .arg(&script)
@@ -546,7 +598,10 @@ fn check(suite: &str) {
         String::from_utf8_lossy(&result.stdout),
         String::from_utf8_lossy(&result.stderr)
     );
-    assert!(result.status.success(), "{suite} differs from its reviewed baseline");
+    assert!(
+        result.status.success(),
+        "{suite} differs from its reviewed baseline"
+    );
 }
 
 #[test]
@@ -556,13 +611,19 @@ fn clojure_test_suite_routes_suite_namespace_requires_to_the_harness() {
         route_namespace(source).unwrap(),
         "(ns clojure.core-test.conj (:require [suss.harness.test :as t] [clojure.core-test.portability :as p] [clojure.string :as str]) (:require-macros [suss.harness.portability-macros :refer [when-var-exists]] [suss.harness.test-macros :refer [deftest is testing]]))\n(deftest x)\n"
     );
-    let functions = "(ns a (:require [clojure.core-test.portability :refer-macros [when-var-exists sleep]]))";
+    let functions =
+        "(ns a (:require [clojure.core-test.portability :refer-macros [when-var-exists sleep]]))";
     assert_eq!(
         route_namespace(functions).unwrap(),
         "(ns a (:require [clojure.core-test.portability :refer [sleep]]) (:require-macros [suss.harness.portability-macros :refer [when-var-exists]]))"
     );
-    // Unreadable sources are left for the namespace load to report exactly.
-    assert_eq!(route_namespace("(ns a #?@(:cljs [(:require [b])]))"), None);
+    // Splicing conditionals now resolve through the production reader.
+    assert_eq!(
+        route_namespace("(ns a #?@(:cljs [(:require [b])]))"),
+        Some("(ns a (:require [b]))".into())
+    );
+    // Genuinely unreadable sources stay failures for the namespace loader.
+    assert_eq!(route_namespace("(ns a #?@(:cljs 1))"), None);
 }
 
 #[test]
@@ -580,9 +641,15 @@ fn observation_capture_and_host_decoding_do_not_force_pending_guest_values() {
         .arg(&source_root)
         .output()
         .unwrap();
-    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    assert!(
+        generated.status.success(),
+        "{}",
+        String::from_utf8_lossy(&generated.stderr)
+    );
     let mut harness = Harness::new(&source_root);
-    harness.eval(r#"
+    harness
+        .eval(
+            r#"
       (ns user)
       (def capture-effects 0)
       (def capture-pending
@@ -596,17 +663,102 @@ fn observation_capture_and_host_decoding_do_not_force_pending_guest_values() {
         (fn [] (if (= capture-effects 0) nil
                    (throw (suss.bootstrap/error "later assertion saw observation effects")))))
       (suss.harness.test/run-group! [0 1] 0)
-    "#).unwrap();
-    assert_eq!(harness.query("(suss.harness.test/group-field 0)"), Observation::Bool(false));
+    "#,
+        )
+        .unwrap();
+    assert_eq!(
+        harness.query("(suss.harness.test/group-field 0)"),
+        Observation::Bool(false)
+    );
     for position in 0..2 {
-        assert_eq!(harness.query(&format!("(suss.harness.test/result-field {position} 0)")), Observation::Bool(false));
+        assert_eq!(
+            harness.query(&format!("(suss.harness.test/result-field {position} 0)")),
+            Observation::Bool(false)
+        );
     }
-    let captured = harness.opaque_or_tagged("(suss.harness.test/operand 0 0 1)");
-    assert_eq!(captured["tag"], "opaque");
-    assert_eq!(harness.query("capture-effects"), Observation::Number(0.0_f64.to_bits()));
+    let captured = harness.assertions(0, "pending");
+    assert_eq!(captured[0]["operands"][0]["tag"], "opaque");
+    assert_eq!(
+        harness.query("capture-effects"),
+        Observation::Number(0.0_f64.to_bits())
+    );
 }
 
 #[test]
 fn clojure_test_suite_matches_reviewed_baseline() {
     check("suite");
+}
+
+#[test]
+fn observation_snapshots_preserve_alias_values_before_later_mutation() {
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(root().join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "fixture", "--output"])
+        .arg(&source_root)
+        .output()
+        .unwrap();
+    assert!(generated.status.success());
+    let mut harness = Harness::new(&source_root);
+    harness
+        .eval(
+            r#"
+      (ns user)
+      (def alias-source (array 1 2 3)) (def alias-vector (vec alias-source))
+      (suss.harness.test/register! 'alias
+        (fn []
+          (suss.harness.test/record! :predicate :pass [true [1 2 3] alias-vector] '=)
+          (aset alias-source 0 -1)
+          (suss.harness.test/record! :predicate :pass [true [-1 2 3] alias-vector] '=)))
+      (suss.harness.test/run-group! [0] 0)
+    "#,
+        )
+        .unwrap();
+    let captured = harness.assertions(0, "alias");
+    assert_eq!(captured.len(), 2);
+    let first = &captured[0]["operands"][1]["items"];
+    let second = &captured[1]["operands"][1]["items"];
+    assert_eq!(first[0]["bits"], "3ff0000000000000");
+    assert_eq!(second[0]["bits"], "bff0000000000000");
+    assert_eq!(
+        harness.query("(first alias-vector)"),
+        Observation::Number((-1.0_f64).to_bits()),
+        "Snapshotting must preserve source aliasing"
+    );
+}
+
+#[test]
+fn observation_tokens_do_not_drift_after_capture_then_fuel_trap() {
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(root().join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "fixture", "--output"])
+        .arg(&source_root)
+        .output()
+        .unwrap();
+    assert!(generated.status.success());
+    let mut harness = Harness::new(&source_root);
+    let error = harness
+        .eval("(suss.harness.observation/capture [true [99] [99]]) (loop [] (recur))")
+        .unwrap_err();
+    assert!(
+        matches!(error, SessionError::Trap(_)),
+        "Expected capture followed by actual fuel trap"
+    );
+    assert_eq!(harness.snapshots.lock().unwrap().len(), 1);
+    harness
+        .eval(
+            r#"(ns user)
+      (suss.harness.test/register! 'recovered
+        (fn [] (suss.harness.test/record! :predicate :pass [true [7] [7]] '=)))
+      (suss.harness.test/run-group! [0] 0)"#,
+        )
+        .unwrap();
+    let captured = harness.assertions(0, "recovered");
+    assert_eq!(
+        captured[0]["operands"][1]["items"][0]["bits"], "401c000000000000",
+        "An orphan capture must not replace the next assertion's payload"
+    );
 }

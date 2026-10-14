@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b56c8b6829e2f4f2f53ea47d65675ccbebf9b28ce2e055d6a6da0478b3fcc655",
+  "replacement": "(deftype Single [^:mutable val]\n  Object\n  (add [this o]\n    (if (identical? val NONE)\n      (do\n        (set! val o)\n        this)\n      (Many. (array val o))))\n  (remove [this]\n    (if (identical? val NONE)\n      (throw (js/Error. (str_ \"Removing object from empty buffer\")))\n      (let [ret val]\n        (set! val NONE)\n        ret)))\n  (isEmpty [this]\n    (identical? val NONE))\n  (toString [this]\n    (str_ \"Single: \" val)))",
+  "rationale": "Adapt the complete fixed owned-array literal to array construction; preserve left-to-right values and Many transition. Source-only candidate; no branches excluded and no native acceptance claimed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}

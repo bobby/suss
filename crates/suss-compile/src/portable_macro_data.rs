@@ -804,7 +804,10 @@ impl FormBridge {
                     self.scalar(session, &Literal::Nil)?
                 }
             }
-            Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+            Kind::Conditional(_)
+            | Kind::SplicingConditional(_)
+            | Kind::Discard(_)
+            | Kind::Prefix { .. } => {
                 return Err(failure(
                     "Native macro data requires resolved reader prefixes",
                 ));
@@ -971,7 +974,9 @@ mod identity_tests {
             let owner = session.eval("(def overlap-array (array 1 nil 2))").unwrap();
             let seq = session.eval("(IndexedSeq. overlap-array 0 nil)").unwrap();
             let sparse = session
-                .eval("(let [ctor (type (array)) a (ctor 33)] (set! (.-length a) 3) (aset a 0 9) a)")
+                .eval(
+                    "(let [ctor (type (array)) a (ctor 33)] (set! (.-length a) 3) (aset a 0 9) a)",
+                )
                 .unwrap();
             let head = session
                 .inspect(&sparse, |mut store, value| {

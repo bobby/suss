@@ -12,6 +12,7 @@ use crate::{
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::{
+    cmp::Ordering,
     collections::{BTreeMap, HashMap, VecDeque},
     sync::{Arc, Weak},
 };
@@ -20,6 +21,70 @@ use suss_reader::forms::{Form, Kind};
 type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
 type DeclarationKey = (portable::resolve::Global, usize);
+
+/// Content identity for an immutable namespace snapshot. Equivalent snapshots
+/// can be allocated at separate source-analysis boundaries. Declaration
+/// revisions remain identity-bearing, so their Arc identities are part of the
+/// key rather than comparing their user-visible fields.
+#[derive(Debug, Clone)]
+struct NamespaceKey(Arc<SourceNamespace>);
+impl NamespaceKey {
+    fn new(namespace: &Arc<SourceNamespace>) -> Self {
+        Self(namespace.clone())
+    }
+    fn compare_declarations(
+        left: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+        right: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+    ) -> Ordering {
+        let mut left = left.iter();
+        let mut right = right.iter();
+        loop {
+            match (left.next(), right.next()) {
+                (Some((left_global, left_info)), Some((right_global, right_info))) => {
+                    let order = left_global.cmp(right_global).then_with(|| {
+                        (Arc::as_ptr(left_info) as usize).cmp(&(Arc::as_ptr(right_info) as usize))
+                    });
+                    if order != Ordering::Equal {
+                        return order;
+                    }
+                }
+                (None, None) => return Ordering::Equal,
+                (None, Some(_)) => return Ordering::Less,
+                (Some(_), None) => return Ordering::Greater,
+            }
+        }
+    }
+}
+impl PartialEq for NamespaceKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+impl Eq for NamespaceKey {}
+impl PartialOrd for NamespaceKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for NamespaceKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let left = &self.0;
+        let right = &other.0;
+        left.namespace
+            .cmp(&right.namespace)
+            .then_with(|| left.aliases.cmp(&right.aliases))
+            .then_with(|| left.refers.cmp(&right.refers))
+            .then_with(|| left.used_refers.cmp(&right.used_refers))
+            .then_with(|| left.renamed_refers.cmp(&right.renamed_refers))
+            .then_with(|| left.excluded_core.cmp(&right.excluded_core))
+            .then_with(|| left.macro_aliases.cmp(&right.macro_aliases))
+            .then_with(|| left.macro_refers.cmp(&right.macro_refers))
+            .then_with(|| left.used_macro_refers.cmp(&right.used_macro_refers))
+            .then_with(|| left.renamed_macro_refers.cmp(&right.renamed_macro_refers))
+            .then_with(|| Self::compare_declarations(&left.declarations, &right.declarations))
+            .then_with(|| left.identities.cmp(&right.identities))
+    }
+}
 
 // Aggregate graph capacity, distinct from the unchanged per-form and traversal
 // guards. Retained printer source facts require 66,474 recipes in a real macro
@@ -83,7 +148,10 @@ fn validate_form_data(form: &Form) -> Result<()> {
                     walk(item, depth + 1, nodes, units)?;
                 }
             }
-            Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+            Kind::Conditional(_)
+            | Kind::SplicingConditional(_)
+            | Kind::Discard(_)
+            | Kind::Prefix { .. } => {
                 return Err(SessionError::Host(wasmtime::Error::msg(
                     "Native macro data requires resolved reader prefixes",
                 )));
@@ -198,13 +266,15 @@ fn form_key(form: &Form) -> Result<Vec<u8>> {
             | Kind::Vector(items)
             | Kind::Set(items)
             | Kind::Map(items)
-            | Kind::Conditional(items) => {
+            | Kind::Conditional(items)
+            | Kind::SplicingConditional(items) => {
                 key.push(match &form.kind {
                     Kind::List(_) => 6,
                     Kind::Vector(_) => 7,
                     Kind::Set(_) => 8,
                     Kind::Map(_) => 9,
                     Kind::Conditional(_) => 10,
+                    Kind::SplicingConditional(_) => 13,
                     _ => unreachable!(),
                 });
                 size(key, items.len());
@@ -291,6 +361,7 @@ pub struct AnalysisGraph<'a> {
     scopes: BTreeMap<usize, (Arc<FunctionScope>, Value)>,
     callables: BTreeMap<usize, (Arc<hir::SourceCallable>, Value)>,
     namespaces: BTreeMap<usize, (Arc<SourceNamespace>, Value)>,
+    namespace_contents: BTreeMap<NamespaceKey, Value>,
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
     jobs: VecDeque<(Value, Task)>,
@@ -316,6 +387,7 @@ impl<'a> AnalysisGraph<'a> {
             scopes: BTreeMap::new(),
             callables: BTreeMap::new(),
             namespaces: BTreeMap::new(),
+            namespace_contents: BTreeMap::new(),
             asts: BTreeMap::new(),
             recipes: Vec::new(),
             jobs: VecDeque::new(),
@@ -361,16 +433,16 @@ impl<'a> AnalysisGraph<'a> {
             Ok(())
         }
         while let Some((id, task)) = self.jobs.pop_front() {
-            let result = match task {
-                Task::Namespace(value) => self.namespace_record(&value, 0)?,
-                Task::Local(value) => self.local_record(&value, 0)?,
-                Task::Field(value) => self.field_record(&value, 0)?,
-                Task::Scope(value) => self.scope_record(&value, 0)?,
-                Task::Callable(value) => self.callable_record(&value, 0)?,
-                Task::Ast(value) => self.ast_record(&value, 0)?,
-                Task::Lowering(value) => self.lowering_record(&value, 0)?,
+            match task {
+                Task::Namespace(value) => self.namespace_record(id, &value, 0)?,
+                Task::Local(value) => self.local_record(id, &value, 0)?,
+                Task::Field(value) => self.field_record(id, &value, 0)?,
+                Task::Scope(value) => self.scope_record(id, &value, 0)?,
+                Task::Callable(value) => self.callable_record(id, &value, 0)?,
+                Task::Ast(value) => self.ast_record(id, &value, 0)?,
+                Task::Lowering(value) => self.lowering_record(id, &value, 0)?,
             };
-            self.recipes[id] = Some(Recipe::Alias(result));
+            debug_assert!(self.recipes[id].is_some(), "task root was not finalized");
         }
         fn dependencies(recipe: &Recipe) -> Vec<Value> {
             match recipe {
@@ -685,6 +757,22 @@ impl<'a> AnalysisGraph<'a> {
         self.maps.insert(entries, value);
         Ok(value)
     }
+    /// Finalize a task in its already-charged placeholder. New immutable maps
+    /// occupy that slot directly; a cache hit keeps an alias to the canonical
+    /// map recipe so runtime identity sharing remains unchanged.
+    fn map_in_task_slot(&mut self, slot: Value, entries: Vec<(&str, Value)>) -> Result<Value> {
+        let entries = entries
+            .into_iter()
+            .map(|(key, value)| Ok((self.keyword(key)?, value)))
+            .collect::<Result<Vec<_>>>()?;
+        if let Some(value) = self.maps.get(&entries) {
+            self.recipes[slot] = Some(Recipe::Alias(*value));
+            return Ok(slot);
+        }
+        self.recipes[slot] = Some(Recipe::Map(entries.clone()));
+        self.maps.insert(entries, slot);
+        Ok(slot)
+    }
     fn vector(&mut self, values: &[Value]) -> Result<Value> {
         if let Some(value) = self.vectors.get(values) {
             return Ok(*value);
@@ -789,7 +877,10 @@ impl<'a> AnalysisGraph<'a> {
                     .collect::<Result<Vec<_>>>()?;
                 Recipe::ReaderMap(pairs)
             }
-            Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+            Kind::Conditional(_)
+            | Kind::SplicingConditional(_)
+            | Kind::Discard(_)
+            | Kind::Prefix { .. } => {
                 return Err(SessionError::Host(wasmtime::Error::msg(
                     "Native macro data requires resolved reader prefixes",
                 )));
@@ -1110,8 +1201,17 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.namespaces.get(&key) {
             return Ok(value.clone());
         }
+        let content_key = NamespaceKey::new(namespace);
+        if let Some(value) = self.namespace_contents.get(&content_key) {
+            let value = *value;
+            // The content key owns a snapshot, keeping declaration Arc addresses
+            // live for this graph's entire lifetime without cloning its maps.
+            self.namespaces.insert(key, (namespace.clone(), value));
+            return Ok(value);
+        }
         let value = self.task(Task::Namespace(namespace.clone()))?;
         self.namespaces.insert(key, (namespace.clone(), value));
+        self.namespace_contents.insert(content_key, value);
         Ok(value)
     }
     // The pinned namespace contract retains nil for unused ordinary requires,
@@ -1125,6 +1225,7 @@ impl<'a> AnalysisGraph<'a> {
     }
     fn namespace_record(
         &mut self,
+        slot: Value,
         namespace: &Arc<SourceNamespace>,
         depth: usize,
     ) -> Result<Value> {
@@ -1191,19 +1292,21 @@ impl<'a> AnalysisGraph<'a> {
             declarations.push((short, record));
         }
         let declarations = self.map_values(declarations)?;
-        let value = self.map(vec![
-            ("name", name),
-            ("requires", aliases),
-            ("suss/refers", refers),
-            ("uses", uses),
-            ("renames", renames),
-            ("require-macros", macro_aliases),
-            ("use-macros", macro_uses),
-            ("rename-macros", macro_renames),
-            ("excludes", exclusions),
-            ("defs", declarations),
-        ])?;
-        Ok(value)
+        self.map_in_task_slot(
+            slot,
+            vec![
+                ("name", name),
+                ("requires", aliases),
+                ("suss/refers", refers),
+                ("uses", uses),
+                ("renames", renames),
+                ("require-macros", macro_aliases),
+                ("use-macros", macro_uses),
+                ("rename-macros", macro_renames),
+                ("excludes", exclusions),
+                ("defs", declarations),
+            ],
+        )
     }
     // Copyright (c) Rich Hickey. All rights reserved.
     // The use and distribution terms for this software are covered by the
@@ -1670,7 +1773,7 @@ impl<'a> AnalysisGraph<'a> {
         self.locals.insert(key, (binding.clone(), value));
         Ok(value)
     }
-    fn local_record(&mut self, binding: &LocalBinding, depth: usize) -> Result<Value> {
+    fn local_record(&mut self, slot: Value, binding: &LocalBinding, depth: usize) -> Result<Value> {
         let name = self.form(&binding.declaration, depth + 1)?;
         let kind = self.keyword(match binding.source_kind() {
             hir::LocalKind::Let => "let",
@@ -1784,8 +1887,7 @@ impl<'a> AnalysisGraph<'a> {
         }
         let context = self.context(binding.declaration_context)?;
         entries.push(("suss/declaration-context", context));
-        let value = self.map(entries)?;
-        Ok(value)
+        self.map_in_task_slot(slot, entries)
     }
     fn field(&mut self, field: &FieldBinding, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -1797,7 +1899,7 @@ impl<'a> AnalysisGraph<'a> {
         self.fields.insert(key, (field.clone(), value));
         Ok(value)
     }
-    fn field_record(&mut self, field: &FieldBinding, depth: usize) -> Result<Value> {
+    fn field_record(&mut self, slot: Value, field: &FieldBinding, depth: usize) -> Result<Value> {
         let name = self.form(&field.declaration, depth + 1)?;
         let kind = self.keyword("field")?;
         let is_field = self.flag(true)?;
@@ -1841,7 +1943,7 @@ impl<'a> AnalysisGraph<'a> {
             entries.push(("line", self.number(position.line)?));
             entries.push(("column", self.number(position.column)?));
         }
-        self.map(entries)
+        self.map_in_task_slot(slot, entries)
     }
     fn scope(&mut self, scope: &Arc<FunctionScope>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -1853,7 +1955,12 @@ impl<'a> AnalysisGraph<'a> {
         self.scopes.insert(key, (scope.clone(), value));
         Ok(value)
     }
-    fn scope_record(&mut self, scope: &Arc<FunctionScope>, depth: usize) -> Result<Value> {
+    fn scope_record(
+        &mut self,
+        slot: Value,
+        scope: &Arc<FunctionScope>,
+        depth: usize,
+    ) -> Result<Value> {
         let name = self.form(&scope.declaration, depth + 1)?;
         let kind = self.keyword("fn")?;
         let parents = scope
@@ -1911,7 +2018,7 @@ impl<'a> AnalysisGraph<'a> {
         }).filter(|tag| !matches!(tag.kind, Kind::Nil)) {
             entries.push(("ret-tag", self.form(tag, depth + 1)?));
         }
-        self.map(entries)
+        self.map_in_task_slot(slot, entries)
     }
     fn ast(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -1935,7 +2042,12 @@ impl<'a> AnalysisGraph<'a> {
         self.callables.insert(key, (callable.clone(), value));
         Ok(value)
     }
-    fn callable_record(&mut self, callable: &hir::SourceCallable, depth: usize) -> Result<Value> {
+    fn callable_record(
+        &mut self,
+        slot: Value,
+        callable: &hir::SourceCallable,
+        depth: usize,
+    ) -> Result<Value> {
         let mut methods = Vec::new();
         for method in &callable.methods {
             let mut parameters = Vec::new();
@@ -1967,13 +2079,16 @@ impl<'a> AnalysisGraph<'a> {
             ))
         })?;
         let fixed = self.number(fixed)?;
-        self.map(vec![
-            ("suss/methods", methods),
-            ("suss/variadic", variadic),
-            ("suss/max-fixed-arity", fixed),
-        ])
+        self.map_in_task_slot(
+            slot,
+            vec![
+                ("suss/methods", methods),
+                ("suss/variadic", variadic),
+                ("suss/max-fixed-arity", fixed),
+            ],
+        )
     }
-    fn ast_record(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+    fn ast_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         let source = hir.source.as_ref().expect("source AST task");
         let quote = if source.form.metadata.is_empty()
             && let Kind::List(items) = &source.form.kind
@@ -2450,13 +2565,12 @@ impl<'a> AnalysisGraph<'a> {
                 fields.push(("children", children));
             }
         }
-        let value = self.map(fields)?;
-        Ok(value)
+        self.map_in_task_slot(slot, fields)
     }
     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         self.task(Task::Lowering(hir.clone()))
     }
-    fn lowering_record(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+    fn lowering_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
         let (operation, children): (&str, Vec<&Hir>) = match &hir.kind {
             Expression::Future { body, .. } => ("future", vec![body]),
@@ -2586,7 +2700,7 @@ impl<'a> AnalysisGraph<'a> {
             .map(|child| self.ast(child, depth + 1))
             .collect::<Result<Vec<_>>>()?;
         entries.push(("suss/children", self.vector(&children)?));
-        self.map(entries)
+        self.map_in_task_slot(slot, entries)
     }
 }
 
@@ -2620,6 +2734,151 @@ mod sharing_tests {
         };
         assert_eq!(values.len(), 2);
         assert!(values.iter().all(|value| value.kind == Kind::Number(42.0)));
+    }
+    #[test]
+    fn namespace_snapshots_share_only_when_all_facts_and_declaration_revisions_match() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def namespace-cache-value 17)").unwrap();
+        let snapshot = session.compilation_snapshot();
+        let source = Arc::new(SourceNamespace::capture(
+            &snapshot.environment,
+            portable::resolve::Phase::Macro,
+        ));
+        let same_revision = Arc::new(source.as_ref().clone());
+        assert_eq!(
+            NamespaceKey::new(&source),
+            NamespaceKey::new(&same_revision)
+        );
+
+        let target = source.declarations.keys().next().unwrap().clone();
+        for field in 0..11 {
+            let mut changed = source.as_ref().clone();
+            match field {
+                0 => changed.namespace.push_str(".different"),
+                1 => {
+                    changed.aliases.insert("probe".into(), "other".into());
+                }
+                2 => {
+                    changed.refers.insert("probe".into(), target.clone());
+                }
+                3 => {
+                    changed.used_refers.insert("probe".into());
+                }
+                4 => {
+                    changed.renamed_refers.insert("probe".into());
+                }
+                5 => {
+                    changed.excluded_core.insert("probe".into());
+                }
+                6 => {
+                    changed.macro_aliases.insert("probe".into(), "other".into());
+                }
+                7 => {
+                    changed
+                        .macro_refers
+                        .insert("probe".into(), ("other".into(), "macro".into()));
+                }
+                8 => {
+                    changed.used_macro_refers.insert("probe".into());
+                }
+                9 => {
+                    changed.renamed_macro_refers.insert("probe".into());
+                }
+                10 => {
+                    changed.identities.push(target.clone());
+                }
+                _ => unreachable!(),
+            }
+            assert_ne!(
+                NamespaceKey::new(&source),
+                NamespaceKey::new(&Arc::new(changed)),
+                "namespace field {field}"
+            );
+        }
+
+        let mut changed_facts = source.as_ref().clone();
+        changed_facts.excluded_core.insert("cache-probe".into());
+        let changed_facts = Arc::new(changed_facts);
+        assert_ne!(
+            NamespaceKey::new(&source),
+            NamespaceKey::new(&changed_facts)
+        );
+
+        let mut changed_revision = source.as_ref().clone();
+        let (global, definition) = changed_revision
+            .declarations
+            .iter()
+            .find(|(global, _)| global.name() == "namespace-cache-value")
+            .map(|(global, definition)| (global.clone(), definition.clone()))
+            .expect("captured definition revision");
+        changed_revision
+            .declarations
+            .insert(global, Arc::new(definition.as_ref().clone()));
+        let changed_revision = Arc::new(changed_revision);
+        assert_ne!(
+            NamespaceKey::new(&source),
+            NamespaceKey::new(&changed_revision)
+        );
+
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let original = graph.namespace(&source, 0).unwrap();
+        let same = graph.namespace(&same_revision, 0).unwrap();
+        let changed = graph.namespace(&changed_facts, 0).unwrap();
+        let new_revision = graph.namespace(&changed_revision, 0).unwrap();
+        assert_eq!(
+            original, same,
+            "same source revision should reuse its graph root"
+        );
+        assert_ne!(
+            original, changed,
+            "different namespace facts must remain distinct"
+        );
+        assert_ne!(
+            original, new_revision,
+            "different declaration Arc is a new revision"
+        );
+        assert_eq!(graph.namespace_contents.len(), 3);
+        assert_eq!(graph.namespaces.len(), 4);
+        graph.materialize(original).unwrap();
+        assert!(matches!(
+            graph.recipes[original].as_ref(),
+            Some(Recipe::Map(_))
+        ));
+        assert!(graph.maps.values().any(|value| *value == original));
+        assert!(matches!(
+            graph.recipes[changed].as_ref(),
+            Some(Recipe::Map(_))
+        ));
+        assert!(matches!(
+            graph.recipes[new_revision].as_ref(),
+            Some(Recipe::Map(_))
+        ));
+    }
+    #[test]
+    fn task_map_slot_keeps_alias_on_a_canonical_map_cache_hit() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let value = graph.scalar(Literal::Number(17.0)).unwrap();
+        let canonical = graph.map(vec![("value", value)]).unwrap();
+        let map_count = graph.maps.len();
+
+        // A task slot is already charged by task(); simulate only its reserved
+        // recipe storage so this test isolates the final-root cache behavior.
+        graph.charge(0).unwrap();
+        let slot = graph.recipes.len();
+        graph.recipes.push(None);
+        assert_eq!(
+            graph
+                .map_in_task_slot(slot, vec![("value", value)])
+                .unwrap(),
+            slot
+        );
+        assert!(
+            matches!(graph.recipes[slot].as_ref(), Some(Recipe::Alias(target)) if *target == canonical)
+        );
+        assert_eq!(graph.maps.len(), map_count);
     }
     #[test]
     fn retained_declaration_metadata_keeps_cold_budgets_and_releases_dead_revisions() {
@@ -2704,6 +2963,45 @@ mod sharing_tests {
             bridge.read(&mut session, &value, 0..1).unwrap().kind,
             Kind::Number(17.0)
         );
+    }
+    #[test]
+    fn raw_splicing_forms_have_distinct_cache_identity_and_are_rejected_by_consumers() {
+        let items = suss_reader::forms::read_forms("[:cljs [17]]").unwrap();
+        let splice = Form {
+            span: 0..1,
+            metadata: vec![],
+            kind: Kind::SplicingConditional(items.clone()),
+        };
+        let conditional = Form {
+            span: 0..1,
+            metadata: vec![],
+            kind: Kind::Conditional(items.clone()),
+        };
+        let vector = Form {
+            span: 0..1,
+            metadata: vec![],
+            kind: Kind::Vector(items),
+        };
+        assert_ne!(form_key(&splice).unwrap(), form_key(&conditional).unwrap());
+        assert_ne!(form_key(&splice).unwrap(), form_key(&vector).unwrap());
+        let nested = Form {
+            span: 0..1,
+            metadata: vec![],
+            kind: Kind::List(vec![splice]),
+        };
+        assert!(
+            validate_form_data(&nested)
+                .unwrap_err()
+                .to_string()
+                .contains("resolved reader prefixes")
+        );
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let error = bridge
+            .quote(&mut session, nested)
+            .err()
+            .expect("raw splice must be rejected");
+        assert!(error.to_string().contains("resolved reader prefixes"));
     }
     #[test]
     fn reader_data_identity_preserves_number_bits_metadata_and_order() {

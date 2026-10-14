@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f7707df9ccff7cc1dca7df41f79f63c68c1d82ef2b02f7e5b59864666ecbf063",
+  "replacement": "(deftype Many [vals]\n  Object\n  (add [this o]\n    (.push vals o)\n    this)\n  (remove [this]\n    (.shift vals))\n  (isEmpty [this]\n    (zero? (.-length vals)))\n  (toString [this]\n    (str_ \"Many: \" vals)))",
+  "rationale": "Retain the entire pinned declaration unchanged; checked portable owned-array/property/Error and protocol implementations supply the host substrate. No methods or source branches removed. Production source import integration; candidate direct compiler comparisons are supplemental evidence, with public reader/macro, bootstrap and original milestone acceptance pending."
+}
