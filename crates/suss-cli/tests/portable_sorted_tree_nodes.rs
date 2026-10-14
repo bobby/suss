@@ -1,4 +1,4 @@
-//! Complete tree nodes; authored tests, compilation/bootstrap/native execution pending.
+//! Execute complete tree nodes, raw values/effects and physical child sharing.
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AsContextMut, Val};

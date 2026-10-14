@@ -175,3 +175,64 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
         );
     }
 }
+
+#[test]
+fn public_record_nominal_equality_and_predicate_decode_after_gc_in_both_phases() {
+    use portable_decode::{Decoder, Observation};
+    use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
+
+    const UPSTREAM: &str = "c4295f303100bbf5afac449242d30bca1126f1a1";
+    const FIXTURE: &str = "tests/oracle/fixtures/public-record-contracts.sus";
+    const FIXTURE_SHA256: &str = "471fd42576aaabbc7967f4ed25fb0e0159a9d71382b5255f2716aec3832df8a7";
+    const CASE_ID: &str = "public-record-nominal-contract";
+    const FIXTURE_SOURCE: &str =
+        include_str!("../../../tests/oracle/fixtures/public-record-contracts.sus");
+    assert_eq!(
+        suss_compile::portable::bootstrap::sha256(FIXTURE_SOURCE.as_bytes()),
+        FIXTURE_SHA256
+    );
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/record-nominal-cases.json"
+    ))
+    .unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(corpus["upstream"], UPSTREAM);
+    assert_eq!(corpus["fixture"], FIXTURE);
+    assert_eq!(corpus["fixture_sha256"], FIXTURE_SHA256);
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 1);
+    let case = &cases[0];
+    assert_eq!(case["id"], CASE_ID);
+    let query = case["source"].as_str().unwrap();
+    let expected = case["expected"].as_object().unwrap();
+    assert_eq!(expected.len(), 2);
+    assert_eq!(expected["tag"], "vector");
+    let expected_items = expected["items"].as_array().unwrap();
+    assert_eq!(expected_items.len(), 10);
+    let expected = Observation::Vector(
+        expected_items
+            .iter()
+            .map(|item| {
+                assert_eq!(item.as_object().unwrap().len(), 2);
+                assert_eq!(item["tag"], "bool");
+                Observation::Bool(item["value"].as_bool().unwrap())
+            })
+            .collect(),
+    );
+
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // This decoder lives outside both Wasm modules and observes the result
+        // only after collection; the guest never prints or re-evaluates it.
+        let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        session
+            .eval_with_macros(FIXTURE_SOURCE, &mut macros)
+            .unwrap();
+        session.enter_namespace("app-records").unwrap();
+        macros.enter_namespace("app-records").unwrap();
+        let actual = session.eval(query).unwrap();
+        session.collect().unwrap();
+        decoder.refill(4096);
+        assert_eq!(decoder.decode_session(&mut session, &actual).unwrap(), expected);
+    }
+}
