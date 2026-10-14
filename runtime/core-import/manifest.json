@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "eb0467948b55ac1453405603b3966ad53b593ebcbc65b41bdf7da30fa74023de",
-  "reviews-sha256": "55634ac714e83fbd73a5ba8faf46f735273984e48400bb27002862c301d98444",
+  "recipe-sha256": "6a420f4c6f9393ac793c9500971d2cb51fdad3254b8a539c72c01fe348ef6d18",
+  "reviews-sha256": "06a959c6938d810b7305d651bb23a4182d2a3884b95a75100a9048605a0114da",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -14100,6 +14100,38 @@
         "tests/oracle/array-initializer-observations.json",
         "scripts/check_transducer_provenance.py"
       ]
+    },
+    {
+      "id": "runtime:realized?:10948",
+      "name": "realized?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 10948,
+      "end-line": 10951,
+      "byte-start": 306434,
+      "byte-end": 306558,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f583583061c1d18fb2c3c60fecccd2f1a1d8b3870a368b36e7c60985c6751d64",
+      "extracted": "extracted/0452.cljs",
+      "extracted-sha256": "7ed57417f89d3699b97fa76b718c56d5d06a5c7ebbe3aa24cdffae31e83d1f59",
+      "patch": "docs/compatibility/patches/realized.json",
+      "patch-sha256": "57bd3d9c90a9e7db05d4fc22b8e7f3c5c59088ae4e82d7bcca77989ac3f790d6",
+      "adapted-form-sha256": "c0cfc944a368d47bc7ef116aa0efc4be8172b35e7f509a6c47c4412f7e5b1f6a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IPending:814",
+        "compiled IPending/-realized? dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_realized.rs",
+        "tests/oracle/realized-fixture.sus",
+        "tests/oracle/realized-observations.json",
+        "scripts/test-realized-oracle.sh"
+      ]
     }
   ],
   "loader": {
@@ -14571,6 +14603,7 @@
     "extracted/0449.cljs": "e6d2647d82306d8f3416cc4d60df3f4218fa7ba9bfdfe6eff41e5696cf2a0303",
     "extracted/0450.cljs": "3e7f1005279cb4a36aa911da26711d3f404be087ea63ba851ae21d0e0f76149e",
     "extracted/0451.cljs": "e3ba0e2a77a847c11c8df69a902c1a440f5b3141fcc52296acaf0b77b5bdfb72",
-    "suss/core.sus": "15ad7f92b47c2bbd211ea6fa8057ae450f4d0aba12abc07db36c0a9cce5b240b"
+    "extracted/0452.cljs": "7ed57417f89d3699b97fa76b718c56d5d06a5c7ebbe3aa24cdffae31e83d1f59",
+    "suss/core.sus": "51f4f48bbb9a3a75ed38a9167da90182fe787aad0a95d0fe587d3226bcdc190f"
   }
 }

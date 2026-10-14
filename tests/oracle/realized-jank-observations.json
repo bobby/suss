@@ -1,0 +1,4144 @@
+{
+ "schema": 1,
+ "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+ "namespaces": [
+  {
+   "namespace": "clojure.core-test.concat",
+   "status": "loaded"
+  },
+  {
+   "namespace": "clojure.core-test.drop-while",
+   "status": "loaded"
+  },
+  {
+   "namespace": "clojure.core-test.take",
+   "status": "loaded"
+  }
+ ],
+ "assertions": [
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 1,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 2,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 3,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "seq"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 4,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 5,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 6,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 7,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 8,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 9,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "seq"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 10,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "seq"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 11,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "seq"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 12,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 13,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 14,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 15,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 16,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 17,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 18,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 19,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 20,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 21,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.take/test-take",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 22,
+   "test": "clojure.core-test.take/test-take",
+   "threw": true,
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 23,
+   "test": "clojure.core-test.take/test-take",
+   "threw": true,
+   "verdict": "pass"
+  },
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 1,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 2,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "empty?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 3,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 4,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 5,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 6,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 7,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 8,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 9,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4024000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4024000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 10,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 11,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 12,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 13,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 14,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4024000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4026000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4028000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4024000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4026000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4028000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 15,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4010000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 16,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 17,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 18,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 19,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 20,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.concat/test-concat",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 1,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 2,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 3,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "tag": "string",
+       "units": [
+        111
+       ]
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "tag": "string",
+       "units": [
+        111
+       ]
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 4,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 5,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           99
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4008000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      },
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           100
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4010000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           99
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4008000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      },
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           100
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4010000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 6,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 7,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         100
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         100
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 8,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 9,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 10,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 11,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 12,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 13,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 14,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 15,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 16,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 17,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 18,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 19,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 20,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 21,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 22,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "vector"
+    }
+   ],
+   "ordinal": 23,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 24,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "0000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 25,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    },
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 26,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 27,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 28,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "tag": "string",
+       "units": [
+        111
+       ]
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "tag": "string",
+       "units": [
+        111
+       ]
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 29,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "bits": "4014000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4018000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "401c000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4020000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4022000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 30,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           99
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4008000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      },
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           100
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4010000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           99
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4008000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      },
+      {
+       "items": [
+        {
+         "name": {
+          "tag": "string",
+          "units": [
+           100
+          ]
+         },
+         "namespace": {
+          "tag": "nil"
+         },
+         "tag": "keyword"
+        },
+        {
+         "bits": "4010000000000000",
+         "tag": "f64"
+        }
+       ],
+       "tag": "vector"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 31,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 32,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         100
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         100
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 33,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 34,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 35,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 36,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 37,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "vector"
+    },
+    {
+     "items": [
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         97
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         98
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "name": {
+        "tag": "string",
+        "units": [
+         99
+        ]
+       },
+       "namespace": {
+        "tag": "nil"
+       },
+       "tag": "keyword"
+      },
+      {
+       "bits": "3ff0000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4000000000000000",
+       "tag": "f64"
+      },
+      {
+       "bits": "4008000000000000",
+       "tag": "f64"
+      }
+     ],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 38,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 39,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 40,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 41,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 42,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 43,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 44,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 45,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 46,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 47,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "items": [],
+     "tag": "vector"
+    },
+    {
+     "items": [],
+     "tag": "seq"
+    }
+   ],
+   "ordinal": 48,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/lazy-seq?",
+   "kind": "predicate",
+   "operands": [
+    {
+     "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+     "tag": "opaque"
+    }
+   ],
+   "ordinal": 49,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "not",
+   "kind": "predicate",
+   "operands": [
+    {
+     "tag": "bool",
+     "value": false
+    }
+   ],
+   "ordinal": 50,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "=",
+   "kind": "predicate",
+   "operands": [
+    {
+     "bits": "4014000000000000",
+     "tag": "f64"
+    },
+    {
+     "bits": "4014000000000000",
+     "tag": "f64"
+    }
+   ],
+   "ordinal": 51,
+   "result": {
+    "tag": "bool",
+    "value": true
+   },
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 52,
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "threw": true,
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 53,
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "threw": true,
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 54,
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "threw": true,
+   "verdict": "pass"
+  },
+  {
+   "head": "p/thrown?",
+   "kind": "thrown",
+   "ordinal": 55,
+   "test": "clojure.core-test.drop-while/test-drop-while",
+   "threw": true,
+   "verdict": "pass"
+  }
+ ],
+ "test-failures": [],
+ "skips": [],
+ "map-namespace": {
+  "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 239..5926",
+  "namespace": "clojure.core-test.map",
+  "stage": "macro",
+  "status": "failure"
+ }
+}

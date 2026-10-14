@@ -2263,6 +2263,11 @@
       "id": "runtime:object-array:3906",
       "source-sha256": "376576cfe0a48eaece22ede20d6bb7bcbe5702001cb1f47d51b5ee2d1a55cb4f",
       "patch": "docs/compatibility/transducers/dependency-3906-object-array-patch.json"
+    },
+    {
+      "id": "runtime:realized?:10948",
+      "source-sha256": "f583583061c1d18fb2c3c60fecccd2f1a1d8b3870a368b36e7c60985c6751d64",
+      "patch": "docs/compatibility/patches/realized.json"
     }
   ],
   "loader": {
