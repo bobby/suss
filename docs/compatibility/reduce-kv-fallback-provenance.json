@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "fixture": {
+    "path": "tests/oracle/fixtures/reduce-kv-fallback-probe.sus",
+    "origin": "newly authored focused fixture; no upstream test implementation copied",
+    "sha256": "530a82a2750b9bd598105723f334095b47e6c26d7000443d0d130bec4bc59a39"
+  },
+  "contract": {
+    "project": "ClojureScript portable contract",
+    "path": "clojurescript/src/main/cljs/cljs/core.cljs",
+    "commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+    "line": 2677,
+    "sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+    "description": "Public reduce-kv fallback for collections without IKVReduce; sequence map entries and apply -key/-val."
+  },
+  "test_guidance": {
+    "project": "Jank Clojure test suite",
+    "path": "vendor/clojure-test-suite/upstream/test/clojure/core_test/reduce.cljc",
+    "commit": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+    "license": "MPL-2.0",
+    "sha256": "0c91a87339e85e968b83b42fc821b1d28002d9fb21bbc0af2321bcf923efedb8",
+    "relevance": "Guidance for reduce arity and collection shapes; this file contains no reduce-kv tests."
+  },
+  "portable_adaptation": {
+    "path": "docs/compatibility/patches/hamt-reduce-kv.json",
+    "sha256": "9b70a9b9d85b391d87eddc380eafd4b66c707b36021c76ddcab9378d421de766",
+    "shipped_wrapper_path": "runtime/core-import/suss/core.sus",
+    "shipped_wrapper_sha256": "15ad7f92b47c2bbd211ea6fa8057ae450f4d0aba12abc07db36c0a9cce5b240b"
+  }
+}

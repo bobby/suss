@@ -1,0 +1,25 @@
+{
+  "head": "ffabb7e81c580fea62b4bbc5f6bdd07e2c4ef335",
+  "command": "cargo test --workspace --locked -- --test-threads=2",
+  "exit": 0,
+  "completed_suites": 248,
+  "passed": 1777,
+  "failed": 0,
+  "ignored": 22,
+  "log_sha256": "87cdb537c23cc22efe1237b0e9e5565b8831d59a6e3412b5ee36e6038f88e16f",
+  "capture_audit": "850 previous successful/guest records unchanged; known failures/unexecuted retained",
+  "jank_classification": {
+    "pass": 839,
+    "guest-judged": 11,
+    "fail": 21,
+    "not-executed": 4983,
+    "skipped": 0,
+    "namespaces-failed": 192
+  },
+  "prior_successes_preserved": 850,
+  "prior_success_regressions": [],
+  "raw_shared_changes": [],
+  "ci_run": 38493885952,
+  "ci_successful_checks": 10,
+  "limitation": "A passing failure baseline preserves known failures, unknowns and unexecuted outcomes; it is not whole-suite compatibility acceptance."
+}

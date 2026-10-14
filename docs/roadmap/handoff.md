@@ -26169,3 +26169,15 @@ terminal; do not restart on observation timeout.
 - Failure: `compile_expr::prototype_cases_awaiting_compiled_support` still expected lazy-seq compilation to fail. Reactivated the two original lazy-seq and two constantly execution tests and removed only their stale failure rows. Remaining unsupported tests retain their diagnostics and ignores.
 - Focused `cargo test -p suss-compile --test compile_expr --locked -- test_debug_lazy_seq_simple test_partial_debug_lazy_seq test_variadic_closure_with_capture_zero_args test_variadic_closure_with_capture_multiple_args prototype_cases_awaiting_compiled_support --test-threads=2` exited 0: five passed, 311 filtered, 23.71s. Same jobs/target environment; log `/private/tmp/suss-m4-support-reactivation-focused.log`.
 - The same required full command is running again with capture directory `/private/tmp/suss-m4-support-reactivated-final-jank-evidence` and log `/private/tmp/suss-m4-support-reactivated-full-baseline.log`; terminal result remains pending.
+
+### Completed workspace validation 97540
+
+- The same required workspace command and jobs/target policy exited 0: 1777 passed, zero failed, 22 explicit ignores across 248 completed suites including documentation tests. Log: `/private/tmp/suss-m4-support-reactivated-full-baseline.log`; SHA-256 `87cdb537c23cc22efe1237b0e9e5565b8831d59a6e3412b5ee36e6038f88e16f`.
+- Jank harness: 9/9 passed, 187.82s. Independent raw capture audit preserves all 850 prior successful/guest records; counts remain 839 host, 11 guest, 21 failures, 4983 unexecuted, 192 namespace failures. Known gaps remain explicit.
+- Independent review and ten CI checks passed for `ffabb7e81c580fea62b4bbc5f6bdd07e2c4ef335`; CI run `38493885952`. Receipt: `docs/compatibility/transducers/evidence/validation-97540.json`. Earlier failed-run receipts are retained separately.
+
+### Public reduce-kv fallback validation
+
+- `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target cargo test -p suss-cli --test portable_reduce_kv_fallback --locked -- --test-threads=2` exited 0: four passed, no failures/ignores, 13.84s. The authored five-case comparison executes Runtime and Macro artifacts after GC; the other three tests check adversarial decoder storage. Log: `/private/tmp/suss-m4-reduce-kv-fallback-focused.log`.
+- Dedicated pinned ClojureScript generation/compile and Node execution exited 0; `python3 scripts/reduce_kv_fallback_oracle.py compare` confirms all five actual observations match exactly. Compile log: `/private/tmp/suss-m4-reduce-kv-fallback-integrated-cljs.log`.
+- The required unchanged workspace command is running with capture `/private/tmp/suss-m4-fallback-final-jank-evidence` and log `/private/tmp/suss-m4-fallback-full-baseline.log`; terminal result is not yet known.

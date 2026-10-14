@@ -1,0 +1,303 @@
+{
+  "schema": 2,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "public-fallback-selected-and-accumulates-real-map-entries",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "f64",
+            "bits": "4074100000000000"
+          }
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "public-fallback-empty-preserves-init-without-callback",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4031000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": []
+          }
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "public-fallback-reduced-unwraps-and-stops-in-sequence-order",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    115,
+                    101,
+                    101,
+                    100
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              },
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "public-fallback-throw-stops-effects-and-operands-evaluate-left-to-right",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    116,
+                    104,
+                    114,
+                    111,
+                    119,
+                    110
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    102,
+                    97,
+                    108,
+                    108,
+                    98,
+                    97,
+                    99,
+                    107,
+                    45,
+                    98,
+                    111,
+                    111,
+                    109
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    102,
+                    110
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    105,
+                    110,
+                    105,
+                    116
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99,
+                    111,
+                    108,
+                    108
+                  ]
+                }
+              },
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "public-fallback-normal-accumulation-exposes-ordered-callback-trace",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4018000000000000"
+          },
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "keyword",
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "keyword",
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  }
+                ]
+              },
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "keyword",
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "effects": []
+    }
+  ]
+}
