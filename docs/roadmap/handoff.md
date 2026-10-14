@@ -26161,3 +26161,11 @@ Fresh workspace24805 is running after focused fixture correction:
 `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-public-sequence-final-jank-evidence cargo test --workspace --locked -- --test-threads=2`.
 Log `/private/tmp/suss-m4-public-sequence-full-baseline.log`. Poll24805 until
 terminal; do not restart on observation timeout.
+
+### Workspace validation 24805 and compiled-support reactivation
+
+- `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/private/tmp/suss-error-validation-target SUSS_CLOJURE_TEST_SUITE_CAPTURE=/private/tmp/suss-m4-public-sequence-final-jank-evidence cargo test --workspace --locked -- --test-threads=2` exited 101: 1086 passed, one failed, 22 ignored. Log: `/private/tmp/suss-m4-public-sequence-full-baseline.log`.
+- All nine public/private sequence fixtures passed. The primary Jank harness passed 9/9; independently audited counts remain 839 host passes, 11 guest-judged, 21 failures, 4983 unexecuted, 192 namespace failures. All 850 prior successful/guest raw records are unchanged. Separate artifact receipt: `docs/compatibility/transducers/evidence/validation-24805.json`; the historical capture receipt is preserved.
+- Failure: `compile_expr::prototype_cases_awaiting_compiled_support` still expected lazy-seq compilation to fail. Reactivated the two original lazy-seq and two constantly execution tests and removed only their stale failure rows. Remaining unsupported tests retain their diagnostics and ignores.
+- Focused `cargo test -p suss-compile --test compile_expr --locked -- test_debug_lazy_seq_simple test_partial_debug_lazy_seq test_variadic_closure_with_capture_zero_args test_variadic_closure_with_capture_multiple_args prototype_cases_awaiting_compiled_support --test-threads=2` exited 0: five passed, 311 filtered, 23.71s. Same jobs/target environment; log `/private/tmp/suss-m4-support-reactivation-focused.log`.
+- The same required full command is running again with capture directory `/private/tmp/suss-m4-support-reactivated-final-jank-evidence` and log `/private/tmp/suss-m4-support-reactivated-full-baseline.log`; terminal result remains pending.

@@ -24,3 +24,5 @@ preserves expected gaps; it does not certify compatibility. Each assertion is fo
 unchanged. The previous capture
 allows per-assertion regression auditing, including raw successful observations,
 which the failure-only baseline cannot supply.
+
+`validation-24805.json` records a separate completed Jank capture on implementation commit 721ad13 with the current bootstrap identity. Its parsed observations are identical to the retained canonical capture; the historical manifest remains unchanged. The Jank harness passed 9/9 and preserved all 850 prior successful/guest observations. The containing workspace run exited 101 on a stale lazy-seq support expectation (1086 passed, one failed, 22 ignored); it is not a passing baseline.

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "implementation_commit": "721ad13563fe15d0f6d06a5f7f4c208ffd274de2",
+  "validation_run": "24805",
+  "workspace_command": "cargo test --workspace --locked -- --test-threads=2",
+  "workspace_exit": 101,
+  "workspace_results": {
+    "passed": 1086,
+    "failed": 1,
+    "ignored": 22
+  },
+  "workspace_failure": "compile_expr::prototype_cases_awaiting_compiled_support: stale lazy-seq failure expectation",
+  "jank_harness": {
+    "passed": 9,
+    "failed": 0,
+    "seconds": 177.41
+  },
+  "classification": {
+    "pass": 839,
+    "guest-judged": 11,
+    "fail": 21,
+    "not-executed": 4983,
+    "namespaces-failed": 192
+  },
+  "previous_successes_preserved": 850,
+  "raw_shared_changes": [],
+  "test_failures": [],
+  "original_capture_sha256": "7d45a1d7f0a06ca2ce9d07fff63cd6ef01df30e35f20a8a4b04830dc59a541a3",
+  "canonical_observation_path": "jank-array-observations.json",
+  "canonical_observation_sha256": "0b24e37cc29d0c2b0117d71f238e13623a80d629285276801e08cf8f6d2640d7",
+  "parsed_capture_equals_canonical": true,
+  "artifact_sha256": {
+    "runtime/bootstrap/runtime.wasm": "f3047c5a6eea8c5c0e156afc51e719a712ed4c0cb17f4d58d7eac61cf704d89e",
+    "runtime/core-import/suss/core.sus": "15ad7f92b47c2bbd211ea6fa8057ae450f4d0aba12abc07db36c0a9cce5b240b",
+    "tests/oracle/clojure-test-suite-observations.json": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a"
+  },
+  "limitation": "The primary failure-baseline match is not compatibility acceptance. The workspace failed; historical manifest remains unchanged."
+}

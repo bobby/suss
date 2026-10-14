@@ -1511,7 +1511,6 @@ fn test_closure_capture_multiple_vars() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support"]
 fn test_variadic_closure_with_capture_zero_args() {
     // Variadic closure with capture, called with zero args
     // This was a bug: CLOSURE_1 (arity=1 for args array) was incorrectly
@@ -1520,7 +1519,6 @@ fn test_variadic_closure_with_capture_zero_args() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name constantly; see prototype_cases_awaiting_compiled_support"]
 fn test_variadic_closure_with_capture_multiple_args() {
     // Variadic closure with capture, called with multiple args
     assert_eq!(run_expr_i32("((constantly 99) 1 2 3)"), 99);
@@ -2119,7 +2117,6 @@ fn test_partial_debug_concat_count() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support"]
 fn test_partial_debug_lazy_seq() {
     let result = run_expr_i32("(first (lazy-seq [1 2 3]))");
     assert_eq!(result, 1);
@@ -2140,7 +2137,6 @@ fn test_debug_comp_simple() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name lazy-seq; see prototype_cases_awaiting_compiled_support"]
 fn test_debug_lazy_seq_simple() {
     // Simplest lazy-seq: a thunk that returns a cons
     let result = run_expr_i32("(first (lazy-seq (cons 42 nil)))");
@@ -2573,11 +2569,9 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_atom_validator_swap_rejects", "(let [a (atom 5)] (set-validator! a pos?) (try (swap! a (fn [x] (- 0 x))) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_cond_thread_first", "(cond-> 1 true inc true inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_cond_thread_first_false", "(cond-> 1 true inc false inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
-    ("test_debug_lazy_seq_simple", "(first (lazy-seq (cons 42 nil)))", "Unresolved Runtime name lazy-seq at bytes 8..16"),
     ("test_doseq_basic", "(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)", "Unresolved Runtime name doseq at bytes 19..24"),
     ("test_map_destructuring_direct", "(let [{x :a y :b} {:a 10 :b 20}] (+ x y))", "Binding destructuring is not lowered yet at bytes 6..17"),
     ("test_map_destructuring_keys", "(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..19"),
-    ("test_partial_debug_lazy_seq", "(first (lazy-seq [1 2 3]))", "Unresolved Runtime name lazy-seq at bytes 8..16"),
     ("test_print_no_newline", "(print \"hello\")", "Unresolved Runtime name print at bytes 1..6"),
     ("test_println_basic", "(println \"hello\")", "Unresolved Runtime name println at bytes 1..8"),
     ("test_println_multiple_args", "(println \"hello\" \"world\")", "Unresolved Runtime name println at bytes 1..8"),
@@ -2585,8 +2579,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_println_number", "(println 42)", "Unresolved Runtime name println at bytes 1..8"),
     ("test_prn_basic", "(prn 42)", "Unresolved Runtime name prn at bytes 1..4"),
     ("test_some_thread_first", "(some-> 1 inc inc)", "Unresolved Runtime name some-> at bytes 1..7"),
-    ("test_variadic_closure_with_capture_multiple_args", "((constantly 99) 1 2 3)", "Unresolved Runtime name constantly at bytes 2..12"),
-    ("test_variadic_closure_with_capture_zero_args", "((constantly 42))", "Unresolved Runtime name constantly at bytes 2..12"),
     ("test_vector_destructuring_let", "(let [[a b] [10 20]] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..11"),
     ("test_vector_destructuring_rest", "(let [[a & rest] [1 2 3]] (count rest))", "Binding destructuring is not lowered yet at bytes 6..16"),
     ("test_when_first", "(when-first [x [42 1 2]] x)", "Unresolved Runtime name when-first at bytes 1..11"),
