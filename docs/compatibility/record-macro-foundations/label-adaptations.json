@@ -3,8 +3,8 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source": "crates/suss-compile/src/portable_record_label.rs",
-  "source-file-sha256": "85918e32769a83597ea6ac1232338449ea41b6eed16e1d17f65ecf9904de58e9",
-  "compiled-source-sha256": "7cf2291acea163f75d062f038bf4eb9880971ab9ab66d1c7657c9eda1a6274ec",
+  "source-file-sha256": "2893255ef63ef94adacfafb6d62ea62c1105116444c3db49592480e3531bfbb3",
+  "compiled-source-sha256": "3529c3276cf916a5151c733f5cc8433070580b88210898726066f3e24e30bd9c",
   "originals": [
     {
       "path": "docs/compatibility/record-analyzer-context/core-CHAR_MAP-377.cljs",
@@ -25,15 +25,59 @@
   ],
   "adaptations": [
     "Compile the complete scalar-name munge path as Suss source for resolved record type labels; analyzer-map lexical munging remains a separate interface.",
-    "Retain the entire character and reserved-name tables, using an array map and a vector with value membership scans to avoid eager persistent hash-table construction in the compiled Macro Store.",
-    "Use UTF-16 native character reads/slices and explicit scans for non-overlapping .. replacement, division-before-non-line-terminator replacement, per-segment reserved suffixes, and per-code-unit character mapping. Compare the four line-terminator code units directly rather than rebuilding a hash set inside the scan.",
-    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys.",
-    "Sort the complete reserved-name vector and use exact string binary search; compile all character-table pairs into literal case comparisons. Preserve every table entry and fallback, avoiding repeated linear scans and eager hash-table construction.",
-    "Use existing UTF-16 concat-string only for already-known string joins; initial str(value), complete character/reserved tables and all bounds/line guards remain. Three/four-operand helpers evaluate all operands left-to-right before joining.",
-    "Cache immutable UTF-16 string lengths once per private traversal; return the input unchanged when native exact string-index-of proves there is no double-dot pattern. Preserve all transformations and surrogate/line bounds."
+    "Retain the entire character and reserved-name tables, sorted reserved-name binary search, all fallbacks and the full upstream EPL source inputs.",
+    "Find slash and dot delimiters by native string-index-of on the remaining suffix and slice complete untouched spans; retain regex-compatible non-overlapping slash replacement and JavaScript line-terminator behavior before reserved-segment checks.",
+    "Use UTF-16 unit reads for slash-following regex semantics and character mapping. ASCII letters, digits, underscore, dot and dollar pass through directly; punctuation and non-ASCII units continue through the complete literal character mapping.",
+    "Install source in the Macro Store and include its complete identity in macro artifact dependency keys. Initial str(value), all bounds/line guards and exact reserved-word lookup remain."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_record_labels.rs"
   ],
-  "status": "Integrated public record macro passes bounded CLI and independent ABI decoding checks; full workspace baseline and original M4 acceptance remain pending."
+  "status": "Integrated public record macro passes bounded CLI and independent ABI decoding checks; full workspace baseline and original M4 acceptance remain pending.",
+  "declarations": [
+    {
+      "name": "ns:suss.internal.record-label",
+      "sha256": "4dca90385e499b16d68dc24566cf242fee6a46e575c58a8886c5f55139e59a3e"
+    },
+    {
+      "name": "label-join3",
+      "sha256": "79a02ea0c762e9796e6c3b6c44ee7b37019dd6d70845062bdb427808e88221ea"
+    },
+    {
+      "name": "label-join4",
+      "sha256": "f45dd35e504f4a6bb746f65f7143fe79b732464157811051b97058ce53b79d11"
+    },
+    {
+      "name": "char-map",
+      "sha256": "ff92a936a9ba6ba87ce17f9b400860cb7fae4c82b4990dea6e79f8445471d814"
+    },
+    {
+      "name": "reserved",
+      "sha256": "283136cacb1426fd2a987323837d895eb18e33b86ceafd3696e8ce0a14d9c815"
+    },
+    {
+      "name": "reserved-word?",
+      "sha256": "061cd7652c32d20ff16a1d0bd08e19ab74a20d13ffa387603fd97a2d76042f90"
+    },
+    {
+      "name": "munge-unit",
+      "sha256": "a8b7b806f0463f1cc3566e2e7fba2b6754f628faa00e9caa4dae37588d25f384"
+    },
+    {
+      "name": "replace-dots",
+      "sha256": "487edf6a77220be03cb43d73d723fd9c63ac7382d286e3d34d5caeb5b0799831"
+    },
+    {
+      "name": "replace-division",
+      "sha256": "60f8726eadbfc3ddfa05f112dfa247ef0f3f815c4ed20abb5e32b98fd1c2b2c2"
+    },
+    {
+      "name": "mark-reserved",
+      "sha256": "a9f350d87ac659f645998f3e788b355a2c30384567e95139130307f2174b31ee"
+    },
+    {
+      "name": "type-label",
+      "sha256": "3ab2dbde8fb09166459e420e83b74e82e117e141c4a749931ebcc2c7baea80a4"
+    }
+  ]
 }

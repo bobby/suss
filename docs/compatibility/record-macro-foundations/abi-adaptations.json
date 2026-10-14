@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "source": "crates/suss-compile/src/runtime_abi/named_properties.rs",
+  "source-file-sha256": "0d6fee9121c979615e1a74f3604e76d9245fb5c48e42cf15164ec1d2b5415891",
+  "license": "MIT OR Apache-2.0",
+  "scope": "named-property index range guard",
+  "adaptation": "For each closed index interval [low, high], replace unsigned lower-bound AND upper-bound comparisons with wrapping i32 subtraction index-low followed by unsigned <= high-low. The bounds are compile-time constants with low <= high; unsigned subtraction maps values below low to a large value that fails this bounded-width comparison. No accepted indices or dispatch targets change.",
+  "instruction-sequence": [
+    "LocalGet(2)",
+    "I32Const(low as i32)",
+    "I32Sub",
+    "I32Const((high - low) as i32)",
+    "I32LeU"
+  ],
+  "guard-location": "Named instance access must not mistake raw source names for munged fields.",
+  "allowed-ranges": [
+    [
+      "a",
+      "z"
+    ],
+    [
+      "A",
+      "Z"
+    ],
+    [
+      "0",
+      "9"
+    ]
+  ]
+}

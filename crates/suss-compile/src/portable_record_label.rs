@@ -91,24 +91,43 @@ pub(crate) const SOURCE: &str = r###"
         result))))))
 (def ^:private replace-division
   (fn [text]
-    (let [length (count text)] (loop [i 0 result ""]
-      (if (< i length)
-        (if (and (= (.charAt text i) "/") (< (+ i 1) length)
-                 (let [unit (.charCodeAt text (+ i 1))]
-                   (not (or (= unit 10) (= unit 13) (= unit 8232) (= unit 8233)))))
-          (recur (+ i 2) (label-join3 result "." (.charAt text (+ i 1))))
-          (recur (+ i 1) (suss.bootstrap/concat-string result (.charAt text i))))
-        result)))))
+    (let [length (count text)]
+      (loop [start 0 result ""]
+        (let [suffix (suss.bootstrap/string-slice text start length)
+              relative (suss.bootstrap/string-index-of suffix "/")]
+          (if (< relative 0)
+            (suss.bootstrap/concat-string result suffix)
+            (let [slash (+ start relative)
+                  next-index (+ slash 1)]
+              (if (and (< next-index length)
+                       (let [unit (.charCodeAt text next-index)]
+                         (not (or (= unit 10) (= unit 13)
+                                  (= unit 8232) (= unit 8233)))))
+                (recur (+ slash 2)
+                       (label-join4 result
+                                    (suss.bootstrap/string-slice text start slash)
+                                    "."
+                                    (.charAt text next-index)))
+                (recur next-index
+                       (suss.bootstrap/concat-string
+                         result
+                         (suss.bootstrap/string-slice text start next-index)))))))))))
+
 (def ^:private mark-reserved
   (fn [text]
-    (let [length (count text)] (loop [i 0 start 0 result ""]
-      (if (< i length)
-        (if (= (.charAt text i) ".")
-          (let [part (suss.bootstrap/string-slice text start i)]
-            (recur (+ i 1) (+ i 1) (label-join4 result part (if (reserved-word? part) "$" "") ".")))
-          (recur (+ i 1) start result))
-        (let [part (suss.bootstrap/string-slice text start i)]
-          (label-join3 result part (if (reserved-word? part) "$" ""))))))))
+    (let [length (count text)]
+      (loop [start 0 result ""]
+        (let [suffix (suss.bootstrap/string-slice text start length)
+              relative (suss.bootstrap/string-index-of suffix ".")]
+          (if (< relative 0)
+            (let [part (suss.bootstrap/string-slice text start length)]
+              (label-join3 result part (if (reserved-word? part) "$" "")))
+            (let [dot (+ start relative)
+                  part (suss.bootstrap/string-slice text start dot)]
+              (recur (+ dot 1)
+                     (label-join4 result part
+                                  (if (reserved-word? part) "$" "")
+                                  ".")))))))))
 (def type-label
   (fn [value]
     (when-not (or (symbol? value) (string? value))
@@ -117,8 +136,14 @@ pub(crate) const SOURCE: &str = r###"
           length (count text)]
       (loop [i 0 result ""]
         (if (< i length)
-          (let [unit (.charAt text i)]
-            (recur (+ i 1) (suss.bootstrap/concat-string result (munge-unit unit))))
+          (let [unit (.charAt text i)
+                code (.charCodeAt text i)
+                unchanged (or (and (<= 65 code) (<= code 90))
+                              (and (<= 97 code) (<= code 122))
+                              (and (<= 48 code) (<= code 57))
+                              (= code 95) (= code 46) (= code 36))]
+            (recur (+ i 1) (suss.bootstrap/concat-string result
+                              (if unchanged unit (munge-unit unit)))))
           result)))))
 
 "###;

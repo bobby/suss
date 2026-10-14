@@ -1,0 +1,26 @@
+;; Scratch-authored M4 #19 public reduction dispatch fixture.
+;; Case-shape guidance only: vendor/clojure-test-suite/upstream/test/clojure/core_test/reduce.cljc
+;; at 95d4a9112cfc5fe6629be3d14bb99080ea00af2f (MPL-2.0; see
+;; vendor/clojure-test-suite/upstream/LICENSE). That source separates Reduced
+;; behavior from ordinary reduce arity guidance. Existing pinned CLJS cases:
+;; tests/oracle/reduction-cases.json and reduction-boundary-cases.json.
+;; This file copies no upstream implementation or test body.
+;; Source classification: PersistentHashSet (core.sus definition around lines 4375-4460)
+;; is ISeqable and does not declare IReduce; no IReduce extension was found.
+;; Set and queue reduce cases therefore target sequence fallback, not a type-optimized path.
+
+(ns suss.m4.reduction-dispatch-preparation)
+
+(def array-map-source
+  (array-map :a 2 :b 3 :c 5 :d 7))
+(def hamt-source
+  (hash-map :a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9 :j 10))
+(def array-map-empty (array-map))
+(def hamt-empty (empty hamt-source))
+
+(defrecord ReductionDispatchRecord [a b c])
+(def record-source (->ReductionDispatchRecord 11 13 17))
+
+(def queue-source
+  (into (.-EMPTY PersistentQueue) [1 2 3 4]))
+(def set-source (set [1 2 3 4]))

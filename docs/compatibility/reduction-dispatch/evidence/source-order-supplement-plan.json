@@ -1,0 +1,65 @@
+{
+  "kind": "authored-unexecuted-source-order-supplement",
+  "purpose": "Plan explicit side-effect observations for public reduce and reduce-kv operand evaluation; supplemental to, and not a replacement for, the original seven #245 cases.",
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "original_seven_case_corpus_sha256": "dbedb53dc286718f9d649ebdc511c1f8b490110a8a9eb530e25a44acead48de3",
+  "original_fixture_sha256": "7b62d5c79fe667cf4279d5ea2b491c1761895b8d3f1df33b9a246d4e265ed476",
+  "original_fixture_or_query_changes": false,
+  "status": "authored_only_no_CLJS_or_native_capture",
+  "existing_case_mapping": [
+    {
+      "path": "tests/oracle/reduction-cases.json",
+      "id": "reduce-operand-effects",
+      "operation": "public reduce, three arguments",
+      "source": "(do (def reduction-trace 0) (reduce (do (set! reduction-trace 1) +) (do (set! reduction-trace (+ (* reduction-trace 10) 2)) 0) (do (set! reduction-trace (+ (* reduction-trace 10) 3)) (list 1 2))) reduction-trace)",
+      "authored_expected": {"tag": "f64", "bits": "405ec00000000000"},
+      "relevance": "Same public three-argument reduce call; the returned decimal effect code encodes function, init, collection order as 123. It does not cover two-argument reduce or return a distinct trace vector."
+    },
+    {
+      "path": "tests/oracle/reduce-kv-fallback-cases.json",
+      "id": "public-fallback-throw-stops-effects-and-operands-evaluate-left-to-right",
+      "operation": "public reduce-kv, three arguments, fallback collection",
+      "source": "(let [trace (atom []) outcome (try (reduce-kv (do (swap! trace conj :fn) (fn [_ k _] (swap! trace conj k) (throw :fallback-boom))) (do (swap! trace conj :init) :initial) (do (swap! trace conj :coll) kv-fallback-sample)) [:returned] (catch :default error [:thrown error]))] [outcome @trace])",
+      "relevance": "Same public reduce-kv entry point and explicit fn/init/coll side effects, but it targets fallback dispatch and throws on the callback. It is not evidence for the ArrayMap/record dispatch branch in #245."
+    },
+    {
+      "path": "tests/oracle/core-interface-cases.json",
+      "id": "operations-reduce-operand-order",
+      "operation": "cljs.core/-reduce protocol operation",
+      "relevance": "Not treated as public reduce coverage: the query invokes cljs.core/-reduce directly."
+    }
+  ],
+  "supplemental_cases": [
+    {
+      "id": "public-reduce-two-arg-fn-before-coll",
+      "operation": "public reduce, two arguments",
+      "source": "(let [trace (atom []) result (reduce (do (swap! trace conj :fn) (fn [acc x] (swap! trace conj [:call acc x]) (+ acc x))) (do (swap! trace conj :coll) [1 2]))] [result @trace])",
+      "authored_expected_shape": [
+        3,
+        [":fn", ":coll", [":call", 1, 2]]
+      ],
+      "capture_status": "unexecuted"
+    },
+    {
+      "id": "public-reduce-three-arg-fn-init-coll",
+      "operation": "public reduce, three arguments",
+      "source": "(let [trace (atom []) result (reduce (do (swap! trace conj :fn) (fn [acc x] (swap! trace conj [:call acc x]) (+ acc x))) (do (swap! trace conj :init) 10) (do (swap! trace conj :coll) [1 2]))] [result @trace])",
+      "authored_expected_shape": [
+        13,
+        [":fn", ":init", ":coll", [":call", 10, 1], [":call", 11, 2]]
+      ],
+      "capture_status": "unexecuted"
+    },
+    {
+      "id": "public-reduce-kv-array-map-fn-init-coll",
+      "operation": "public reduce-kv, three arguments, one-entry ArrayMap",
+      "source": "(let [trace (atom []) result (reduce-kv (do (swap! trace conj :fn) (fn [acc k v] (swap! trace conj [:call acc k v]) (+ acc v))) (do (swap! trace conj :init) 10) (do (swap! trace conj :coll) (array-map :only 3)))] [result @trace])",
+      "authored_expected_shape": [
+        13,
+        [":fn", ":init", ":coll", [":call", 10, ":only", 3]]
+      ],
+      "capture_status": "unexecuted"
+    }
+  ],
+  "execution_boundary": "Do not include these cases in the original seven-case acceptance corpus. First capture each exact source on the pinned ClojureScript revision, then host-decode Suss results in Runtime and Macro; do not infer operand order from callback traces alone."
+}

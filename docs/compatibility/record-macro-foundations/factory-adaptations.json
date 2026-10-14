@@ -3,20 +3,20 @@
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "license": "EPL-1.0",
   "source": "crates/suss-compile/src/portable_record_factories.rs",
-  "source-file-sha256": "b8917bda74562ad8738594c7108bf848e5903de4ceba277c8188bffb5565f66b",
-  "compiled-source-sha256": "782d9fa0f5e1a6db533ce53b3d3a7cf30b8696180eb064ee5ef5578ee75d044e",
+  "source-file-sha256": "3b9ea000fe9c73f7945d5fb95d25c2c2ab073f44234713bfcbf6813d2670159d",
+  "compiled-source-sha256": "4f56ba03a06e8f318f8f8566dfb62974ac4e0b8f18fc093720aa70e271dd6184",
   "forms": [
     {
       "id": "macro:build-positional-factory:1760",
       "original-sha256": "fad1f2e6fed6882ad744d70464383de431b5e5a297fd0152513440a815c83527",
       "original": "docs/compatibility/record-macro-foundations/build-positional-factory.cljc",
-      "adapted-declaration-sha256": "a6eb28baa4b367bc3a641f8ef3eb83aedc722feba53d7a007719c7fbcfaa3850"
+      "adapted-declaration-sha256": "c99388f7fa5ce41639a7f86341ef4de92ef0a112679345329c41a7d9c5043872"
     },
     {
       "id": "macro:build-map-factory:1960",
       "original-sha256": "6406d90207c872c9eee82e38054bffa08d7d6a3092dec6ef56a22e6296b541cb",
       "original": "docs/compatibility/record-macro-foundations/build-map-factory.cljc",
-      "adapted-declaration-sha256": "80fdfda86f37fab3b4996f413377f6333d4a45baea48778dc23b63f810364783"
+      "adapted-declaration-sha256": "b5707ea0581242b420afc40ae5795acfd04e8e36a7531e348722a51ef6a2088d"
     }
   ],
   "adaptations": [
@@ -24,8 +24,8 @@
     "Retain generated factory names, docs, metadata, fields and constructor arguments; preserve the positional internal-ctor branch and all map-factory branches.",
     "Expand the generated cond->> explicitly: evaluate dissoc once before testing record? on the original input, then convert the extension map with into only for record input.",
     "Include the complete helper source identity in every compiled-macro artifact dependency key.",
-    "Private static template construction retains the complete factory output, field order, hints, docstrings and map branches; all added helper declarations are closed and hash-verified.",
-    "Retain once-per-factory symbol str conversions; use exact UTF-16 joins for fixed name prefixes and known docstring operands. Original/candidate complete output and metadata match at zero/3 hinted/33 fields with both constructor modes."
+    "Construct factory field vectors directly with vec and constructor forms with list*, retaining field order, hidden nil arguments, ordinary/internal constructor arities, and map-factory extension handling.",
+    "Retain once-per-factory symbol str conversions and exact UTF-16 joins for fixed prefixes/docstrings. Original/candidate output and metadata match at zero/3 hinted/33 fields with both constructor modes."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_record_factories.rs"

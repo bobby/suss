@@ -194,11 +194,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         body.extend([
             LocalGet(2),
             I32Const(low as i32),
-            I32GeU,
-            LocalGet(2),
-            I32Const(high as i32),
+            I32Sub,
+            I32Const((high - low) as i32),
             I32LeU,
-            I32And,
         ]);
     }
     body.extend([
