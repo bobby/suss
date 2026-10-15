@@ -115,5 +115,8 @@ checkout restores rustdoc execution. Its identical-source negative control and
 all failed/recovery outputs are retained. This identifies a reproducible build
 artifact collision mechanism, without replaying the exact original Suss process.
 The [exclusive doctest recheck](../compatibility/caching-hash-callable/doctest-recheck-2026-10-15.tar.gz)
-completed all four targets with one explicit ignore. The full workspace baseline
-must still complete with exclusive target ownership.
+completed all four targets with one explicit ignore. The subsequent
+[exclusive full workspace baseline](../compatibility/caching-hash-callable/baseline-exclusive-2026-10-15.tar.gz)
+completed all254 targets with1,802 passing tests,0 failures and22 explicit
+ignores, including every doctest target. Its terminal command exited0; earlier
+failed commands retain their original outcomes. Final-head CI remains required.
