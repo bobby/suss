@@ -8377,6 +8377,8 @@ reduces them without incurring seq initialization"
                  (aset a array-index__ init-val-or-seq)
                  (recur (inc array-index__)))))
            a))))))
+
+(def ^boolean realized? "Returns true if a value has been produced for a delay or lazy sequence." (fn [x] (-realized? x)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

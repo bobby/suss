@@ -5257,4 +5257,12 @@
    :rationale "Expand complete defn to def/fn, preserving docs/all public clauses. Array initialization retains number/seq discrimination, nil/false and non-coercing values, short/long sequence stopping and unfilled holes. Expand complete dotimes with once-only bound and ordered writes. Production/oracle acceptance pending; no branches removed."
    :adaptation-path "docs/compatibility/transducers/dependency-3906-object-array-patch.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_transducers.rs" "tests/oracle/array-initializer-cases.json" "tests/oracle/array-initializer-observations.json" "scripts/check_transducer_provenance.py"]}
+  "runtime:realized?:10948"
+  {:source-sha256 "f583583061c1d18fb2c3c60fecccd2f1a1d8b3870a368b36e7c60985c6751d64" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IPending:814" "compiled IPending/-realized? dispatch"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining the Boolean var tag, documentation, one operand and exact IPending method call. Status inspection does not force a value or coerce arbitrary data. Existing supported pending implementations retain their protocol behavior. Original source and EPL attribution remain packaged. Focused native tests cover both phases, actual AOT, nonforcing lazy/empty/metadata behavior, GC, existing Repeat/Iterate and user-defined protocol dispatch. The shared fixture compares 25 pinned ClojureScript value/effect observations; a separate test executes the unchanged pinned Jank lazy-sequence block. This does not certify unsupported deferred types or the full Jank map namespace."
+   :adaptation-path "docs/compatibility/patches/realized.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_realized.rs" "tests/oracle/realized-fixture.sus" "tests/oracle/realized-observations.json" "scripts/test-realized-oracle.sh"]}
 }}

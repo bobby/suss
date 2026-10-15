@@ -102,10 +102,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.compare (Some(\"<root>/clojure/core_test/compare.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 408..413"
   },
-  "clojure.core-test.concat": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.concat (Some(\"<root>/clojure/core_test/concat.cljc\")): Unresolved Runtime name realized? at bytes 242..2114"
-  },
   "clojure.core-test.constantly": {
    "stage": "read",
    "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 506..511"
@@ -169,10 +165,6 @@
   "clojure.core-test.drop-last": {
    "stage": "macro",
    "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Compiled macro expansion failed: Invalid or unsupported compiled macro data: Map count disagrees with bounded pair storage at bytes 245..3362 at bytes 245..3362"
-  },
-  "clojure.core-test.drop-while": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.drop-while (Some(\"<root>/clojure/core_test/drop_while.cljc\")): Unresolved Runtime name realized? at bytes 246..3788"
   },
   "clojure.core-test.empty": {
    "stage": "read",
@@ -661,10 +653,6 @@
   "clojure.core-test.symbol-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.symbol-qmark (Some(\"<root>/clojure/core_test/symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 432..434"
-  },
-  "clojure.core-test.take": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.take (Some(\"<root>/clojure/core_test/take.cljc\")): Unresolved Runtime name realized? at bytes 236..1788"
   },
   "clojure.core-test.take-last": {
    "stage": "namespace",

@@ -1,0 +1,56 @@
+;; Shared portable source: public IPending status, demand and ordered effects.
+(def realized-effects 0)
+(def realized-checks 0)
+(deftype RealizedProbe [value]
+  cljs.core/IPending
+  (-realized? [this] (do (set! realized-checks (+ realized-checks 1)) value)))
+
+(def realized-lazy-observations
+  (fn []
+    (set! realized-effects 0)
+    (let [pending (new cljs.core/LazySeq nil
+                    (fn [] (do (set! realized-effects (+ realized-effects 1)) (list 42))) nil nil)
+          decorated (with-meta pending {:marker 73})
+          before (if (realized? decorated) 1 0)
+          before-effects realized-effects
+          marker (get (meta decorated) :marker)
+          value (first decorated)
+          after (if (realized? decorated) 1 0)
+          after-effects realized-effects
+          cached (first decorated)]
+      (list before before-effects marker value after after-effects cached realized-effects))))
+
+(def realized-empty-observations
+  (fn []
+    (set! realized-effects 0)
+    (let [pending (new cljs.core/LazySeq nil
+                    (fn [] (do (set! realized-effects (+ realized-effects 1)) nil)) nil nil)
+          before (if (realized? pending) 1 0)
+          before-effects realized-effects
+          empty-value (if (nil? (first pending)) 1 0)
+          after (if (realized? pending) 1 0)]
+      (list before before-effects empty-value after realized-effects))))
+
+(def realized-sequence-observations
+  (fn []
+    (set! realized-effects 0)
+    (let [repeated (repeat 42)
+          repeat-before (if (realized? repeated) 1 0)
+          repeat-value (first repeated)
+          repeat-after (if (realized? repeated) 1 0)
+          iter (iterate (fn [x] (do (set! realized-effects (+ realized-effects 1)) (+ x 1))) 0)
+          iter-before (if (realized? iter) 1 0)
+          tail (next iter)
+          tail-before (if (realized? tail) 1 0)
+          before-effects realized-effects
+          value (first tail)
+          after-effects realized-effects
+          tail-after (if (realized? tail) 1 0)]
+      (list repeat-before repeat-value repeat-after iter-before tail-before before-effects value after-effects tail-after))))
+
+(def realized-protocol-observations
+  (fn []
+    (set! realized-checks 0)
+    (let [a (if (realized? (new RealizedProbe false)) 1 0)
+          b (if (realized? (new RealizedProbe true)) 1 0)]
+      (list a b realized-checks))))
