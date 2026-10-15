@@ -2,14 +2,14 @@
   "format_version": 1,
   "phase": "macro",
   "source_sha256": "51f4f48bbb9a3a75ed38a9167da90182fe787aad0a95d0fe587d3226bcdc190f",
-  "compiler_source_sha256": "07e5656c0bf5188e588841387954d27c8fa7e8a268c0e184e27194fe8f98f56a",
+  "compiler_source_sha256": "47c5dd9e2db7b0361082ef99c0380268f52fea9ffb9b5683b1a404a045a4653e",
   "dependency_graph_sha256": "c7d86630eab8ec31bc32bb636400ff9a75bdc01c99e08356613e955c72617845",
   "runtime_abi": 2,
   "compiler": "0.1.0+portable.2",
   "wasm_tools": "0.258.0",
   "target": "portable-wasm-gc-shared-abi",
   "flags": [],
-  "wasm_sha256": "b7baf5627e2c62759a976947d9615acf21d2a5eab0dfacaa39599d7f29682405",
+  "wasm_sha256": "faa626db6906d5dabfd5a6bc506c43650b738825953f512615e5e335e330c208",
   "cells": [
     "suss.bindings.macro:js/Error",
     "suss.bindings.macro:suss.core/*",
@@ -778,6 +778,6 @@
     "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31",
     "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32",
     "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30",
-    "suss.bindings.macro:suss.internal.reify/t-reify-2610-10368"
+    "suss.bindings.macro:suss.internal.reify/t-reify-2610-10383"
   ]
 }
