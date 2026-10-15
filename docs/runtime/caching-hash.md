@@ -78,3 +78,42 @@ This is an original compiler adaptation of the ordinary call in pinned
 body is copied, no shipped JVM dependency is added, and the existing adapted macro
 inventory entry retains its source hash and partial classification. Its linked
 native test and this adaptation document include the supplemental evidence.
+
+The callable repair's execution evidence is retained under
+[caching-hash-callable](../compatibility/caching-hash-callable/).
+The [focused archive](../compatibility/caching-hash-callable/focused-evidence-2026-10-15.tar.gz)
+contains the failing callable observation, corrected primary/native observations,
+bootstrap reproduction and provenance checks. The
+[selected Jank identities](../compatibility/caching-hash-callable/jank-selection.json)
+cover the complete original hash-map and hash-set tests;
+[actual classifications](../compatibility/caching-hash-callable/jank-results.json)
+record 19 host-decided passes. These tests exercise collection hashing and equality;
+the supplemental callable fixture supplies the IFn hash-function boundary.
+The [Jank archive](../compatibility/caching-hash-callable/jank-evidence-2026-10-15.tar.gz)
+retains complete raw captures and the unchanged failure baseline: 931 passes,
+17 guest-judged results, 21 failures and 4,885 unexecuted assertions across
+189 failed namespaces, with zero skips.
+
+The [initial workspace failure](../compatibility/caching-hash-callable/baseline-failure-2026-10-15.tar.gz)
+records an async startup timeout before reset. Unchanged focused rechecks passed
+1/1 for that test and 8/8 for its target, with their raw output in the
+[recheck archive](../compatibility/caching-hash-callable/async-io-rechecks-2026-10-15.tar.gz).
+The timeout's cause remains unexplained. These rechecks do not substitute for the
+required full workspace baseline or final-head CI. Each archive includes a
+checksum manifest; commands, tested revisions and limitations are in the handoff.
+
+The [repeated baseline failure](../compatibility/caching-hash-callable/baseline-doctest-failure-2026-10-15.tar.gz)
+retains 1,802 passing tests and 21 explicit ignores across 250 completed suites,
+followed by a doctest dependency-loading error in suss_cli. Later doctest targets
+did not execute. These passing suites do not make the full command successful;
+the complete log and target-by-target receipt preserve that boundary.
+
+The [isolated collision reproducer](../compatibility/caching-hash-callable/dependency-collision-reproducer-2026-10-15.tar.gz)
+shows the same dependency-loader error after replacing an unversioned
+`cdylib`/`rlib` dependency from a different checkout; rebuilding the original
+checkout restores rustdoc execution. Its identical-source negative control and
+all failed/recovery outputs are retained. This identifies a reproducible build
+artifact collision mechanism, without replaying the exact original Suss process.
+The [exclusive doctest recheck](../compatibility/caching-hash-callable/doctest-recheck-2026-10-15.tar.gz)
+completed all four targets with one explicit ignore. The full workspace baseline
+must still complete with exclusive target ownership.

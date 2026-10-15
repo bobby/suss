@@ -1,0 +1,2228 @@
+{
+  "schema": 1,
+  "issue": 258,
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "code-head": "936da38e65b24837155511a3fda0ec17576b0764",
+  "reference-sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+  "actual-observations-sha256": "85061d5d1798cc69c25e602bb6830c10ac20569b52a885f8d79ecfa2e6603efb",
+  "selection-sha256": "4680fd53f2df7d09f38df58473b8fd551b1b615357492ff281a4c4bf0d84da83",
+  "comparison-script-sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+  "known-failure-baseline-sha256": "5aa41386f441371e8ee153943fd748d6d39c86c652ece1f6f09624d34a399ffa",
+  "full-reviewed-baseline-matched": true,
+  "full-suite-counts": {
+    "pass": 931,
+    "guest-judged": 17,
+    "fail": 21,
+    "not-executed": 4885,
+    "skipped": 0,
+    "namespaces-failed": 189
+  },
+  "selected-counts": {
+    "pass": 19
+  },
+  "coverage-limit": "These original tests do not supply an IFn object as caching-hash hash-fn. The pinned ClojureScript shared callable fixture and both-phase native regression establish that contract; this selection is regression coverage, not a substitute.",
+  "selected-namespaces": [
+    {
+      "namespace": "clojure.core-test.hash-map",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.hash-set",
+      "status": "loaded"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#1",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#1",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 1,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {} (hash-map))",
+        "line": 8,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": []
+          },
+          {
+            "tag": "map",
+            "entries": []
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [],
+            "tag": "map"
+          },
+          {
+            "entries": [],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 1,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#2",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#2",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 2,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {:a 1} (hash-map :a 1))",
+        "line": 9,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 2,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#3",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#3",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 3,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {:a 2} (hash-map :a 1 :a 2))",
+        "line": 10,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "4000000000000000"
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "4000000000000000"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "4000000000000000",
+                  "tag": "f64"
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "4000000000000000",
+                  "tag": "f64"
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 3,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#4",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#4",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 4,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {:a 1, :b \"2\"} (hash-map :a 1 :b \"2\"))",
+        "line": 11,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ],
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      98
+                    ]
+                  }
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      98
+                    ]
+                  }
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ],
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ],
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      98
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      98
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ],
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 4,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#5",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#5",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 5,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {\"a\" 1, [:b :c] \"2\", \"d\" nil} (hash-map \"a\" 1 [:b :c] \"2\" \"d\" nil))",
+        "line": 12,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ],
+              [
+                {
+                  "tag": "vector",
+                  "items": [
+                    {
+                      "tag": "keyword",
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          98
+                        ]
+                      }
+                    },
+                    {
+                      "tag": "keyword",
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          99
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ],
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    100
+                  ]
+                },
+                {
+                  "tag": "nil"
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    100
+                  ]
+                },
+                {
+                  "tag": "nil"
+                }
+              ],
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                }
+              ],
+              [
+                {
+                  "tag": "vector",
+                  "items": [
+                    {
+                      "tag": "keyword",
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          98
+                        ]
+                      }
+                    },
+                    {
+                      "tag": "keyword",
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          99
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ],
+              [
+                {
+                  "items": [
+                    {
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          98
+                        ]
+                      },
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "tag": "keyword"
+                    },
+                    {
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          99
+                        ]
+                      },
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "tag": "keyword"
+                    }
+                  ],
+                  "tag": "vector"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ],
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    100
+                  ]
+                },
+                {
+                  "tag": "nil"
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    100
+                  ]
+                },
+                {
+                  "tag": "nil"
+                }
+              ],
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "bits": "3ff0000000000000",
+                  "tag": "f64"
+                }
+              ],
+              [
+                {
+                  "items": [
+                    {
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          98
+                        ]
+                      },
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "tag": "keyword"
+                    },
+                    {
+                      "name": {
+                        "tag": "string",
+                        "units": [
+                          99
+                        ]
+                      },
+                      "namespace": {
+                        "tag": "nil"
+                      },
+                      "tag": "keyword"
+                    }
+                  ],
+                  "tag": "vector"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 5,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#6",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#6",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 6,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {\"a\" {}} (hash-map \"a\" (hash-map)))",
+        "line": 13,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "tag": "map",
+                  "entries": []
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "tag": "map",
+                  "entries": []
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "entries": [],
+                  "tag": "map"
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "entries": [],
+                  "tag": "map"
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 6,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#7",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#7",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= {:a {:b {:c 1}, :d 2}} (hash-map :a (hash-map :b (hash-map :c 1) :d 2)))",
+        "line": 14,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "map",
+                  "entries": [
+                    [
+                      {
+                        "tag": "keyword",
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            98
+                          ]
+                        }
+                      },
+                      {
+                        "tag": "map",
+                        "entries": [
+                          [
+                            {
+                              "tag": "keyword",
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  99
+                                ]
+                              }
+                            },
+                            {
+                              "tag": "f64",
+                              "bits": "3ff0000000000000"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      {
+                        "tag": "keyword",
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4000000000000000"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "tag": "map",
+            "entries": [
+              [
+                {
+                  "tag": "keyword",
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                },
+                {
+                  "tag": "map",
+                  "entries": [
+                    [
+                      {
+                        "tag": "keyword",
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            98
+                          ]
+                        }
+                      },
+                      {
+                        "tag": "map",
+                        "entries": [
+                          [
+                            {
+                              "tag": "keyword",
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  99
+                                ]
+                              }
+                            },
+                            {
+                              "tag": "f64",
+                              "bits": "3ff0000000000000"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      {
+                        "tag": "keyword",
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "tag": "f64",
+                        "bits": "4000000000000000"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "entries": [
+                    [
+                      {
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            98
+                          ]
+                        },
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "tag": "keyword"
+                      },
+                      {
+                        "entries": [
+                          [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  99
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "bits": "3ff0000000000000",
+                              "tag": "f64"
+                            }
+                          ]
+                        ],
+                        "tag": "map"
+                      }
+                    ],
+                    [
+                      {
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            100
+                          ]
+                        },
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "tag": "keyword"
+                      },
+                      {
+                        "bits": "4000000000000000",
+                        "tag": "f64"
+                      }
+                    ]
+                  ],
+                  "tag": "map"
+                }
+              ]
+            ],
+            "tag": "map"
+          },
+          {
+            "entries": [
+              [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "entries": [
+                    [
+                      {
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            98
+                          ]
+                        },
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "tag": "keyword"
+                      },
+                      {
+                        "entries": [
+                          [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  99
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "bits": "3ff0000000000000",
+                              "tag": "f64"
+                            }
+                          ]
+                        ],
+                        "tag": "map"
+                      }
+                    ],
+                    [
+                      {
+                        "name": {
+                          "tag": "string",
+                          "units": [
+                            100
+                          ]
+                        },
+                        "namespace": {
+                          "tag": "nil"
+                        },
+                        "tag": "keyword"
+                      },
+                      {
+                        "bits": "4000000000000000",
+                        "tag": "f64"
+                      }
+                    ]
+                  ],
+                  "tag": "map"
+                }
+              ]
+            ],
+            "tag": "map"
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#8",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-map/test-hash-map#8",
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "ordinal": 8,
+        "kind": "thrown",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(p/thrown? (hash-map :a))",
+        "line": null,
+        "column": null,
+        "contexts": [
+          "common"
+        ],
+        "threw": true
+      },
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 8,
+        "test": "clojure.core-test.hash-map/test-hash-map",
+        "threw": true,
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#1",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#1",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 1,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{} (hash-set))",
+        "line": 8,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": []
+          },
+          {
+            "tag": "set",
+            "items": []
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [],
+            "tag": "set"
+          },
+          {
+            "items": [],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 1,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#2",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#2",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 2,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{:a} (hash-set :a))",
+        "line": 9,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "keyword",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 2,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#3",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#3",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 3,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{\"a\"} (hash-set \"a\"))",
+        "line": 10,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 3,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#4",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#4",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 4,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{1} (hash-set 1 1))",
+        "line": 11,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "3ff0000000000000"
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "bits": "3ff0000000000000",
+                "tag": "f64"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "bits": "3ff0000000000000",
+                "tag": "f64"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 4,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#5",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#5",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 5,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{nil} (hash-set nil))",
+        "line": 12,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "nil"
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "nil"
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "tag": "nil"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "tag": "nil"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 5,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#6",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#6",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 6,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{\" \"} (hash-set \" \"))",
+        "line": 13,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "tag": "string",
+                "units": [
+                  32
+                ]
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 6,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#7",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#7",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{(quote ())} (hash-set (quote ())))",
+        "line": 14,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "seq",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "seq",
+                "items": []
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [],
+                "tag": "seq"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "items": [],
+                "tag": "seq"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#8",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#8",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{[]} (hash-set []))",
+        "line": 15,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "vector",
+                "items": []
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [],
+                "tag": "vector"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "items": [],
+                "tag": "vector"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#9",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#9",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{(quote (1 2 3))} (hash-set (quote (1 2 3))))",
+        "line": 16,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#10",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#10",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{[1 2 3]} (hash-set [1 2 3]))",
+        "line": 17,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "vector",
+                "items": [
+                  {
+                    "tag": "f64",
+                    "bits": "3ff0000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4000000000000000"
+                  },
+                  {
+                    "tag": "f64",
+                    "bits": "4008000000000000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "bits": "3ff0000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4000000000000000",
+                    "tag": "f64"
+                  },
+                  {
+                    "bits": "4008000000000000",
+                    "tag": "f64"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#11",
+      "status": "pass",
+      "reason": null,
+      "reference": {
+        "id": "clojure.core-test.hash-set/test-hash-set#11",
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "ordinal": 11,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= #{nil #{}} (hash-set nil (hash-set)))",
+        "line": 18,
+        "column": 11,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "set",
+                "items": []
+              }
+            ]
+          },
+          {
+            "tag": "set",
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "tag": "set",
+                "items": []
+              }
+            ]
+          }
+        ]
+      },
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "items": [],
+                "tag": "set"
+              }
+            ],
+            "tag": "set"
+          },
+          {
+            "items": [
+              {
+                "tag": "nil"
+              },
+              {
+                "items": [],
+                "tag": "set"
+              }
+            ],
+            "tag": "set"
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.hash-set/test-hash-set",
+        "verdict": "pass"
+      }
+    }
+  ]
+}
