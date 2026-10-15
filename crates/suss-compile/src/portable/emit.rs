@@ -68,6 +68,10 @@ fn emit_utf16_literal(
 }
 pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(ir)?;
+    emit_verified(ir)
+}
+/// The caller must verify this exact immutable graph before entry.
+pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -456,6 +460,7 @@ fn collect_bodies<'a>(
     dispatchers: &mut Vec<&'a GeneralClosureBody>,
     futures: &mut Vec<&'a FutureBody>,
 ) {
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
     for block in &function.blocks {
         for inst in &block.instructions {
             match &inst.operation {
@@ -478,6 +483,7 @@ fn collect_bodies<'a>(
             }
         }
     }
+    });
 }
 fn emit_dispatcher(
     body: &GeneralClosureBody,

@@ -84,12 +84,7 @@ impl Analyzer<'_> {
                 if !seen.insert(key) {
                     return Err(fail(syntax.span.clone(), "Duplicate case test constant"));
                 }
-                if seen.len() > 256 {
-                    return Err(fail(
-                        form.span.clone(),
-                        "Case constant expansion limit exceeded",
-                    ));
-                }
+                self.expander.charge_expansion_work(1, syntax.span.clone())?;
                 group.push((syntax, value));
             }
             groups.push((group, &pair[1]));

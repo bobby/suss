@@ -19,6 +19,8 @@ pub struct CompiledMacros {
     definitions: BTreeMap<(String, String), SessionValue>,
     // Macros whose definitions cannot read their implicit &env parameter.
     environment_free: BTreeSet<(String, String)>,
+    // Conservatively proven definitions that cannot read their implicit &form.
+    caller_form_free: BTreeSet<(String, String)>,
     // Explicit source compiler helpers need cross-namespace/protocol revisions.
     // This transport policy is rolled back with the corresponding macro binding.
     compiler_catalog_macros: BTreeMap<(String, String), CompilerCatalogMode>,
@@ -46,23 +48,34 @@ fn failure(form: &Form, message: &str) -> SessionError {
         message: message.into(),
     })
 }
+fn trace_fuel(session: &Session, target: &(String, String), stage: &str) -> Result<(), SessionError> {
+    if std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
+        eprintln!("macro-fuel {}/{} {stage}: {}", target.0, target.1,
+            session.operation_fuel_remaining()?);
+    }
+    Ok(())
+}
 pub(crate) type MacroCheckpoint = (
     crate::portable_session::BindingCheckpoint,
     BTreeMap<(String, String), SessionValue>,
     BTreeMap<(String, String), String>,
     BTreeSet<(String, String)>,
     BTreeMap<(String, String), CompilerCatalogMode>,
+    BTreeSet<(String, String)>,
 );
 
 /// Whether a definition contains a symbol named &env anywhere, including in
 /// quoted or syntax-quoted data. Together with source-macro expansions observed
 /// while its body compiles, this decides whether a macro may read &env.
 fn mentions_environment(form: &Form) -> bool {
+    mentions_parameter(form, "&env")
+}
+fn mentions_parameter(form: &Form, name: &str) -> bool {
     let mut pending = vec![form];
     while let Some(form) = pending.pop() {
         pending.extend(&form.metadata);
         match &form.kind {
-            Kind::Symbol(symbol) if symbol.name == "&env" => return true,
+            Kind::Symbol(symbol) if symbol.name == name => return true,
             Kind::List(items)
             | Kind::Vector(items)
             | Kind::Set(items)
@@ -130,6 +143,7 @@ impl CompiledMacros {
             declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             environment_free: BTreeSet::new(),
+            caller_form_free: BTreeSet::new(),
             compiler_catalog_macros: BTreeMap::new(),
             environment_materializations: 0,
             source_expansions: 0,
@@ -167,6 +181,7 @@ impl CompiledMacros {
             self.declaration_sources.clone(),
             self.environment_free.clone(),
             self.compiler_catalog_macros.clone(),
+            self.caller_form_free.clone(),
         ))
     }
     pub(crate) fn restore_bindings(
@@ -186,6 +201,11 @@ impl CompiledMacros {
                 self.environment_free.insert(key.clone());
             } else {
                 self.environment_free.remove(&key);
+            }
+            if checkpoint.5.contains(&key) {
+                self.caller_form_free.insert(key.clone());
+            } else {
+                self.caller_form_free.remove(&key);
             }
             if let Some(mode) = checkpoint.4.get(&key) {
                 self.compiler_catalog_macros.insert(key.clone(), *mode);
@@ -207,7 +227,13 @@ impl CompiledMacros {
         self.session.enter_namespace(namespace)
     }
     pub fn define(&mut self, source: &str) -> Result<(), SessionError> {
-        let forms = read_forms(source).map_err(|error| {
+        let _budget = self.session.operation_budget_scope()?;
+        self.session.charge_host_work(source.len() as u64)?;
+        let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
+            self.session.charge_host_work(work).map_err(|error| suss_reader::ParseError {
+                span: 0..source.len(), message: error.to_string(), expected: vec![],
+            })
+        }).map_err(|error| {
             SessionError::Compile(Diagnostic {
                 span: error.span,
                 message: error.message,
@@ -232,6 +258,7 @@ impl CompiledMacros {
         policy: crate::portable::MacroReload,
     ) -> Result<Vec<String>, SessionError> {
         use crate::portable::{modules, resolve::Phase};
+        let _budget = self.session.operation_budget_scope()?;
         if matches!(namespace, "suss.core" | "cljs.core")
             && policy != crate::portable::MacroReload::Once
         {
@@ -255,12 +282,16 @@ impl CompiledMacros {
                     .retain(|identity| identity.namespace() == "suss.core");
             }
         }
-        let graph = modules::discover_phase_modules(
+        let graph = modules::discover_phase_modules_metered(
             namespace,
             &snapshot.source_paths,
             &snapshot.environment,
             Phase::Macro,
             &snapshot.provided,
+            &mut |work| self.session.charge_host_work(work).map_err(|error| Diagnostic {
+                span: 0..0,
+                message: format!("Namespace discovery budget exhausted: {error}"),
+            }),
         )
         .map_err(SessionError::Module)?;
         // Discovery errors preserve previous loaded identities. Once execution
@@ -282,6 +313,7 @@ impl CompiledMacros {
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
+                self.session.charge_host_work(unit.source.len() as u64)?;
                 let source_identity = crate::portable::bootstrap::sha256(
                     format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes(),
                 );
@@ -363,6 +395,7 @@ impl CompiledMacros {
         span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
+        let _budget = self.session.operation_budget_scope()?;
         let form = &form;
         let Kind::List(items) = &form.kind else {
             return Err(failure(form, "Expected source defmacro"));
@@ -423,8 +456,7 @@ impl CompiledMacros {
                 });
             }
         }
-        let metadata = crate::portable::hir::reader_metadata_pairs(&name_form)
-            .map_err(SessionError::Compile)?;
+        let metadata = crate::portable_macro_data::normalized_reader_metadata(&mut self.session, &name_form)?;
         let mut compiler_catalog = None;
         for pair in metadata.chunks_exact(2) {
             if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.as_deref() == Some("suss") && key.name == "compiler-catalog")
@@ -471,9 +503,15 @@ impl CompiledMacros {
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
         let reads_environment = mentions_environment(form) || self.source_expansions != expansions;
+        let reads_caller_form = mentions_parameter(form, "&form") || self.source_expansions != expansions;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
+        if reads_caller_form {
+            self.caller_form_free.remove(&key);
+        } else {
+            self.caller_form_free.insert(key.clone());
+        }
         if reads_environment || compiler_catalog.is_some() {
             self.environment_free.remove(&key);
         } else {
@@ -514,6 +552,26 @@ impl CompiledMacros {
     }
 }
 impl ExpansionHost for CompiledMacros {
+    fn expansion_work_fuel(&self) -> u64 {
+        self.session.options().fuel_per_operation
+    }
+    fn begin_expansion_request(&mut self, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
+        self.session.begin_operation_budget().map_err(|error| Diagnostic {
+            span,
+            message: format!("Unable to start macro expansion budget: {error}"),
+        })
+    }
+    fn end_expansion_request(&mut self) {
+        self.session.end_operation_budget();
+    }
+
+    fn charge_expansion_work(&mut self, work: u64, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
+        self.session.charge_host_work(work).map_err(|error| Diagnostic {
+            span,
+            message: format!("Macro expansion analysis budget exhausted: {error}"),
+        })
+    }
+
     fn emit_fragment(
         &mut self,
         function: &crate::portable::ir::Function,
@@ -522,8 +580,14 @@ impl ExpansionHost for CompiledMacros {
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
         let dependencies = self.artifact_dependencies();
-        self.artifact_cache
-            .emit(function, phase, forms, origin, dependencies.as_deref())
+        let session = &mut self.session;
+        self.artifact_cache.emit_metered(
+            function, phase, forms, origin, dependencies.as_deref(),
+            &mut |work| session.charge_host_work(work).map_err(|error| Diagnostic {
+                span: function.span.clone(),
+                message: format!("IR verification budget exhausted: {error}"),
+            }),
+        )
     }
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         if !self.incomplete_sources.is_empty() {
@@ -677,17 +741,36 @@ impl ExpansionHost for CompiledMacros {
             return Ok(None);
         };
         self.source_expansions += 1;
-        let result = (|| -> Result<Form, SessionError> {
-            let caller_data = context
-                .origin
-                .map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
-                .map_err(SessionError::Compile)?;
-            let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
+        let mut stage = String::from("caller form provenance");
+        let result = self.session.with_operation_budget(|session| -> Result<Form, SessionError> {
+            trace_fuel(session, &target, "start")?;
+            let mut meter = |work| {
+                    session.charge_host_work(work).map_err(|error| Diagnostic {
+                        span: form.span.clone(),
+                        message: error.to_string(),
+                    })
+                };
+            let caller_data = match context.origin {
+                Some(origin) => origin.macro_form_data_metered(form, &mut meter),
+                None => crate::portable::clone_form_metered(form, &mut meter),
+            }.map_err(SessionError::Compile)?;
+            trace_fuel(session, &target, "provenance")?;
+            stage = "caller &form input transport".into();
+            // Keep complete provenance for explicit arguments and &env. Only
+            // the unused implicit parameter can be replaced with nil. Any
+            // source expansion while compiling the body disables this proof.
+            let caller_form = if self.caller_form_free.contains(&target) {
+                self.bridge.quote(session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
+            } else {
+                self.bridge.quote_ref(session, &caller_data)?
+            };
+            trace_fuel(session, &target, "caller-form")?;
             // A macro that cannot read &env receives nil instead of a
             // materialized analysis graph; nothing else can observe it.
+            stage = "caller &env input transport".into();
             let caller_environment = if self.environment_free.contains(&target) {
                 self.bridge.quote(
-                    &mut self.session,
+                    session,
                     Form {
                         span: form.span.clone(),
                         metadata: vec![],
@@ -698,7 +781,7 @@ impl ExpansionHost for CompiledMacros {
                 self.environment_materializations += 1;
                 let mut graph = AnalysisGraph::with_declaration_values(
                     &self.bridge,
-                    &mut self.session,
+                    session,
                     &mut self.declaration_values,
                 );
                 match self.compiler_catalog_macros.get(&target) {
@@ -712,20 +795,27 @@ impl ExpansionHost for CompiledMacros {
                 }
             };
             let mut arguments = vec![caller_form, caller_environment];
+            trace_fuel(session, &target, "caller-environment")?;
             let Kind::List(caller_items) = &caller_data.kind else {
                 unreachable!("matched macro call")
             };
-            for argument in &caller_items[1..] {
-                arguments.push(self.bridge.quote(&mut self.session, argument.clone())?);
+            for (index, argument) in caller_items[1..].iter().enumerate() {
+                stage = format!("explicit argument {} input transport", index + 1);
+                arguments.push(self.bridge.quote_ref(session, argument)?);
             }
+            trace_fuel(session, &target, "arguments")?;
             let arguments = arguments.iter().collect::<Vec<_>>();
-            let result = self.session.invoke(&function, &arguments)?;
-            self.bridge
-                .read(&mut self.session, &result, form.span.clone())
-        })();
+            stage = "compiled macro invocation".into();
+            let result = session.invoke(&function, &arguments)?;
+            trace_fuel(session, &target, "invoked")?;
+            stage = "expanded result transport".into();
+            let expanded = self.bridge.read(session, &result, form.span.clone())?;
+            trace_fuel(session, &target, "decoded")?;
+            Ok(expanded)
+        });
         result.map(Some).map_err(|error| Diagnostic {
             span: form.span.clone(),
-            message: format!("Compiled macro expansion failed: {error}"),
+            message: format!("Compiled macro expansion failed during {stage}: {error}"),
         })
     }
 }

@@ -635,7 +635,7 @@ mod tests {
             let source = "(declare nth seq first next get --destructure-map Keyword PersistentVector PersistentArrayMap) (fn again [[n total] {:keys [step]}] (if (< n 3) (recur [(inc n) (+ total step)] {:step step}) total))";
             let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
             let (hir, _) = prepare(&forms, 0..source.len(), &environment, phase).unwrap();
-            let Expression::Do(items) = hir.kind else {
+            let Expression::Do(items) = &hir.kind else {
                 panic!("top-level")
             };
             // Named functions publish their genuine owner/delegates through

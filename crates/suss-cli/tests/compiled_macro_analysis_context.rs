@@ -99,7 +99,7 @@ fn compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_sc
             let value = session.eval(name).unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
             assert!(
-                matches!(decoded.kind, Kind::String(units) if units == expected.as_str().unwrap().encode_utf16().collect::<Vec<_>>())
+                matches!(&decoded.kind, Kind::String(units) if *units == expected.as_str().unwrap().encode_utf16().collect::<Vec<_>>())
             );
         }
         // :return is analyzer context, not a license for recur in an operand.

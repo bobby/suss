@@ -8499,6 +8499,51 @@ fn runtime_abi_munged_field_aliases_copy_last_constructor_value_and_use_last_nam
 }
 
 #[test]
+fn runtime_abi_property_key_comparison_preserves_utf16_live_mutation_and_error_order() {
+    fn text(store: &mut Store<()>, runtime: Instance, units: &[u16]) -> Val {
+        let value = nominal_value(store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+        let setter = runtime.get_func(&mut *store, "string-set-unit").unwrap();
+        for (index, unit) in units.iter().enumerate() {
+            let mut result = [Val::I32(0)];
+            setter.call(&mut *store, &[value.clone(), Val::I32(index as i32), Val::I32(i32::from(*unit))], &mut result).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 1);
+        }
+        value
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let equal = runtime.get_func(&mut store, "property-key-equal").unwrap();
+    let mut result = [Val::I32(-1)];
+    for units in [vec![], vec![0], vec![0xd800, 0, 0xdfff, 0xffff, 97]] {
+        let left = text(&mut store, runtime, &units);
+        let right = text(&mut store, runtime, &units);
+        let longer = text(&mut store, runtime, &[units.as_slice(), &[98]].concat());
+        store.gc(None).unwrap();
+        for (a, b, expected) in [(&left, &left, 1), (&left, &right, 1), (&left, &longer, 0)] {
+            equal.call(&mut store, &[a.clone(), b.clone()], &mut result).unwrap();
+            assert_eq!(result[0].unwrap_i32(), expected);
+        }
+        if !units.is_empty() {
+            runtime.get_func(&mut store, "string-set-unit").unwrap()
+                .call(&mut store, &[right.clone(), Val::I32(0), Val::I32(99)], &mut result).unwrap();
+            equal.call(&mut store, &[left.clone(), right.clone()], &mut result).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 0, "later calls must observe changed units");
+            runtime.get_func(&mut store, "string-set-unit").unwrap()
+                .call(&mut store, &[right.clone(), Val::I32(0), Val::I32(i32::from(units[0]))], &mut result).unwrap();
+            equal.call(&mut store, &[left.clone(), right.clone()], &mut result).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 1);
+        }
+        let nil = nominal_value(&mut store, runtime, "nil", &[]);
+        equal.call(&mut store, &[nil.clone(), nil.clone()], &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), 0, "left type rejection precedes right validation");
+        assert!(equal.call(&mut store, &[left.clone(), nil], &mut result).is_err());
+        equal.call(&mut store, &[left.clone(), right], &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), 1, "a valid call must recover after rejection");
+    }
+}
+
+#[test]
 fn runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc() {
     let engine = support::engine();
     let mut store = Store::new(&engine, ());
@@ -8559,19 +8604,28 @@ fn runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match
     }
     getter.call(&mut store, &[owner.clone(), key.clone()], &mut result).unwrap();
     assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), a.unwrap_anyref().unwrap()).unwrap());
-    // Exercise the first fallback pair (slot 8) and a later duplicate at 10.
-    let long = nominal_value(&mut store, runtime, "args-new", &[Val::I32(12)]);
+    // Exercise the first fallback pair (slot 32) and a later duplicate at 34.
+    let long = nominal_value(&mut store, runtime, "args-new", &[Val::I32(36)]);
     let long_array = long.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
-    for pair in 0..4 {
+    for pair in 0..16 {
         let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
         let unrelated = nominal_value(&mut store, producer, "descriptor-new", &[schema]);
         long_array.set(&mut store, pair * 2, unrelated).unwrap();
         long_array.set(&mut store, pair * 2 + 1, a.clone()).unwrap();
     }
-    for (index, value) in [key.clone(), a.clone(), key.clone(), b].into_iter().enumerate() {
-        long_array.set(&mut store, 8 + index as u32, value).unwrap();
+    for (index, value) in [key.clone(), a.clone(), key.clone(), b.clone()].into_iter().enumerate() {
+        long_array.set(&mut store, 32 + index as u32, value).unwrap();
     }
     descriptor.set_field(&mut store, 2, long).unwrap();
+    store.gc(None).unwrap();
+    getter.call(&mut store, &[owner.clone(), key.clone()], &mut result).unwrap();
+    assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), a.unwrap_anyref().unwrap()).unwrap());
+    long_array.set(&mut store, 33, b.clone()).unwrap();
+    getter.call(&mut store, &[owner.clone(), key.clone()], &mut result).unwrap();
+    assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), b.unwrap_anyref().unwrap()).unwrap());
+    // A duplicate at the final unrolled pair wins over both fallback matches.
+    long_array.set(&mut store, 30, key.clone()).unwrap();
+    long_array.set(&mut store, 31, a.clone()).unwrap();
     store.gc(None).unwrap();
     getter.call(&mut store, &[owner.clone(), key], &mut result).unwrap();
     assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), a.unwrap_anyref().unwrap()).unwrap());

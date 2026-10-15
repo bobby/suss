@@ -41,6 +41,31 @@ mod tests {
             .unwrap()
     }
     #[test]
+    fn source_cache_hit_and_miss_debit_the_caller_verification_budget() {
+        let function = graph("42");
+        let mut cache = ArtifactCache::default();
+        let mut consumed = 0;
+        let original = cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
+            &mut |work| { consumed += work; Ok(()) }).unwrap();
+        assert!(consumed > 0);
+        let before = cache.stats();
+        let mut remaining = consumed - 1;
+        let error = cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
+            &mut |work| {
+                remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                    span: 0..0, message: "test shared verification fuel exhausted".into(),
+                })?;
+                Ok(())
+            }).unwrap_err();
+        assert!(error.message.contains("fuel exhausted"));
+        assert_eq!(cache.stats(), before);
+        let mut hit_consumed = 0;
+        assert_eq!(cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
+            &mut |work| { hit_consumed += work; Ok(()) }).unwrap(), original);
+        assert_eq!(consumed, hit_consumed);
+        assert_eq!(cache.stats().hits, before.hits + 1);
+    }
+    #[test]
     fn source_cache_distinguishes_source_dependency_phase_and_origin() {
         let mut cache = ArtifactCache::default();
         let function = graph("42");
@@ -213,27 +238,71 @@ fn field(hash: &mut Sha256, value: &[u8]) {
     hash.update((value.len() as u64).to_le_bytes());
     hash.update(value);
 }
+// Stream framed Debug fragments rather than allocating an entire tree string.
+fn debug_field(
+    hash: &mut Sha256,
+    value: &impl std::fmt::Debug,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    span: &std::ops::Range<usize>,
+) -> Result<(), Diagnostic> {
+    struct Writer<'a, 'm> {
+        hash: &'a mut Sha256,
+        meter: &'a mut (dyn FnMut(u64) -> Result<(), Diagnostic> + 'm),
+        error: Option<Diagnostic>,
+        span: &'a std::ops::Range<usize>,
+    }
+    impl std::fmt::Write for Writer<'_, '_> {
+        fn write_str(&mut self, text: &str) -> std::fmt::Result {
+            for chunk in text.as_bytes().chunks(4096) {
+                if let Err(mut error) = (self.meter)(chunk.len() as u64) {
+                    error.span = self.span.clone();
+                    self.error = Some(error);
+                    return Err(std::fmt::Error);
+                }
+                field(self.hash, chunk);
+            }
+            Ok(())
+        }
+    }
+    field(hash, b"debug-start");
+    let mut writer = Writer { hash, meter, error: None, span };
+    if std::fmt::write(&mut writer, format_args!("{value:?}")).is_err() {
+        return Err(writer.error.unwrap_or_else(|| Diagnostic {
+            span: span.clone(), message: "Unable to encode source artifact key".into(),
+        }));
+    }
+    field(writer.hash, b"debug-end");
+    Ok(())
+}
 // Debug is a process-local encoding, qualified by the complete compiler source
 // identity. It is never a published serialization format. Preserve binary64
 // payload bits separately: Debug intentionally collapses distinct NaNs.
-fn numbers(hash: &mut Sha256, function: &ir::Function) {
+fn numbers(hash: &mut Sha256, function: &ir::Function,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<(), Diagnostic> {
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+
     for block in &function.blocks {
+        meter(1)?;
         for instruction in &block.instructions {
+            meter(1)?;
             match &instruction.operation {
                 ir::Operation::Literal(super::hir::Literal::Number(value)) => {
                     hash.update(value.to_bits().to_le_bytes());
                 }
-                ir::Operation::MakeFuture { body, .. } => numbers(hash, &body.continuation.function),
-                ir::Operation::MakeClosure { body, .. } => numbers(hash, &body.function),
+                ir::Operation::MakeFuture { body, .. } => numbers(hash, &body.continuation.function, meter)?,
+                ir::Operation::MakeClosure { body, .. } => numbers(hash, &body.function, meter)?,
                 ir::Operation::MakeGeneralClosure { body, .. } => {
                     for method in &body.methods {
-                        numbers(hash, &method.function);
+                        numbers(hash, &method.function, meter)?;
                     }
                 }
                 _ => {}
             }
         }
     }
+    Ok(())
+    })
 }
 impl ArtifactCache {
     pub fn stats(&self) -> CacheStats {
@@ -250,14 +319,32 @@ impl ArtifactCache {
         origin: Option<&SourceOrigin>,
         dependencies: Option<&[(String, String)]>,
     ) -> Result<Vec<u8>, Diagnostic> {
+        let mut remaining = super::DEFAULT_OPERATION_FUEL;
+        self.emit_metered(function, phase, forms, origin, dependencies, &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                span: function.span.clone(),
+                message: "Artifact verification fuel exhausted".into(),
+            })?;
+            Ok(())
+        })
+    }
+    pub(crate) fn emit_metered(
+        &mut self,
+        function: &ir::Function,
+        phase: Phase,
+        forms: &[Form],
+        origin: Option<&SourceOrigin>,
+        dependencies: Option<&[(String, String)]>,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<Vec<u8>, Diagnostic> {
         // A hit must never bypass verifier failures for a newly analyzed graph.
-        ir::verify(function)?;
+        ir::verify_metered(function, meter)?;
         let Some(dependencies) = dependencies else {
             self.stats.bypasses += 1;
-            return super::compile_ir(function);
+            return super::compile_verified_ir(function);
         };
         let mut hash = Sha256::new();
-        field(&mut hash, b"suss-source-artifact-cache-v1");
+        field(&mut hash, b"suss-source-artifact-cache-v2");
         field(&mut hash, env!("SUSS_COMPILER_SOURCE_SHA256").as_bytes());
         field(
             &mut hash,
@@ -269,17 +356,36 @@ impl ArtifactCache {
         field(&mut hash, b"default-profile;flags=[]");
         field(&mut hash, bootstrap::phase_name(phase).as_bytes());
         if let Some(origin) = origin {
-            field(&mut hash, origin.text().as_bytes());
-            field(&mut hash, format!("{:?}", origin.path()).as_bytes());
+            hash.update((origin.text().len() as u64).to_le_bytes());
+            for chunk in origin.text().as_bytes().chunks(4096) {
+                meter(chunk.len() as u64)?;
+                hash.update(chunk);
+            }
+            debug_field(&mut hash, &origin.path(), meter, &function.span)?;
         } else {
             field(&mut hash, b"unknown-source-origin");
         }
-        field(&mut hash, format!("{forms:?}").as_bytes());
-        let mut dependencies = dependencies.to_vec();
-        dependencies.sort();
-        field(&mut hash, format!("{dependencies:?}").as_bytes());
-        field(&mut hash, format!("{function:?}").as_bytes());
-        numbers(&mut hash, function);
+        debug_field(&mut hash, &forms, meter, &function.span)?;
+        meter(dependencies.len() as u64)?;
+        let mut dependencies: Vec<_> = dependencies.iter().collect();
+        // Fallible insertion sort permits cancellation at each comparison and
+        // preserves the same lexicographic tuple ordering without text clones.
+        for index in 1..dependencies.len() {
+            let mut current = index;
+            while current > 0 {
+                let left = dependencies[current - 1];
+                let right = dependencies[current];
+                for text in [&left.0, &left.1, &right.0, &right.1] {
+                    meter(text.len() as u64)?;
+                }
+                if left <= right { break; }
+                dependencies.swap(current - 1, current);
+                current -= 1;
+            }
+        }
+        debug_field(&mut hash, &dependencies, meter, &function.span)?;
+        debug_field(&mut hash, function, meter, &function.span)?;
+        numbers(&mut hash, function, meter)?;
         let key: [u8; 32] = hash.finalize().into();
         if let Some(index) = self.entries.iter().position(|entry| entry.key == key) {
             let entry = self.entries.remove(index).unwrap();
@@ -311,7 +417,7 @@ impl ArtifactCache {
             return Ok(wasm);
         }
         self.stats.misses += 1;
-        let wasm = super::compile_ir(function)?;
+        let wasm = super::compile_verified_ir(function)?;
         if wasm.len() <= MAX_BYTES {
             while self.entries.len() >= MAX_ENTRIES || self.stats.bytes + wasm.len() > MAX_BYTES {
                 let old = self.entries.pop_front().unwrap();

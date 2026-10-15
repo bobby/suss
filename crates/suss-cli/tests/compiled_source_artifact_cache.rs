@@ -19,7 +19,7 @@ fn source_artifact_cache_executes_distinct_nan_payloads_and_unknown_host_bypass(
             form: &Form,
             _: portable::ExpansionContext<'_>,
         ) -> Result<Option<Form>, portable::Diagnostic> {
-            if matches!(form.kind, Kind::List(_)) {
+            if matches!(&form.kind, Kind::List(_)) {
                 Ok(Some(Form {
                     kind: Kind::Number(f64::from_bits(self.bits)),
                     metadata: vec![],

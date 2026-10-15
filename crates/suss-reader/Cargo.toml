@@ -13,6 +13,7 @@ chumsky = { workspace = true }
 ariadne = { workspace = true }
 num-bigint = { workspace = true }
 num-rational = { workspace = true }
+stacker = "=0.1.22"
 wit-bindgen = { workspace = true, optional = true }
 
 [dev-dependencies]

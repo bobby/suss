@@ -158,7 +158,7 @@ fn namespace_globals_lower_into_shared_binding_reads() {
     }
     assert_eq!(bits(&mut store, &old_value), (-0.0f64).to_bits());
     let hir = portable::analyze_in("^:retained app/value", &env, Phase::Runtime).unwrap();
-    let portable::hir::Expression::Do(body) = hir.kind else {
+    let portable::hir::Expression::Do(body) = &hir.kind else {
         panic!()
     };
     let portable::hir::Expression::Global(global) = &body[0].kind else {
@@ -220,7 +220,7 @@ fn namespace_aliases_refers_exclusions_and_shadowing_share_resolution() {
     env.refer(Phase::Runtime, "+", "dependency", "value")
         .unwrap();
     let hir = portable::analyze_in("(+ 1 2)", &env, Phase::Runtime).unwrap();
-    let portable::hir::Expression::Do(body) = hir.kind else {
+    let portable::hir::Expression::Do(body) = &hir.kind else {
         panic!()
     };
     let portable::hir::Expression::Call { callee, .. } = &body[0].kind else {

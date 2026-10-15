@@ -38,12 +38,7 @@ impl Analyzer<'_> {
         context: super::super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
-        if args.len() > 256 {
-            return Err(fail(
-                form.span.clone(),
-                "Control macro expansion limit exceeded",
-            ));
-        }
+        self.expander.charge_expansion_work(args.len() as u64, form.span.clone())?;
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
             ControlForm::Case => self.case_form(form, args, context, tail),
@@ -227,7 +222,7 @@ impl Analyzer<'_> {
                     && !self.locals.contains_key(&key.name)
                     && self.fields.contains_key(&key.name)
                 {
-                    let field = self.fields[&key.name].clone();
+                    let mut field = self.fields[&key.name].clone();
                     if !field.mutable {
                         return Err(fail(
                             args[2].span.clone(),
@@ -237,7 +232,7 @@ impl Analyzer<'_> {
                     let Expression::Nominal {
                         operation,
                         mut arguments,
-                    } = field.access.kind
+                    } = field.access.take_kind()
                     else {
                         unreachable!()
                     };

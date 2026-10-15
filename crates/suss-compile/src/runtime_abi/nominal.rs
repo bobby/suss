@@ -283,6 +283,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let table = index + 1;
         let fresh = index + 2;
         let length = table + if writing { 2 } else { 1 };
+        let typed_table = length + 1;
         let mut body = vec![];
         guard(&mut body, 0, DESCRIPTOR);
         guard(&mut body, 1, DESCRIPTOR);
@@ -311,25 +312,28 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         get(&mut body, 0, DESCRIPTOR, 2);
         body.push(LocalSet(table));
         guard(&mut body, table, ARGS);
+        // Retain the checked array in a typed local for this call only. No
+        // callback occurs during lookup; later calls still load the live table.
+        body.extend([LocalGet(table), RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(typed_table)]);
         // Reject malformed odd-length tables before pair indexing.
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([ArrayLen, LocalTee(length), I32Const(1), I32And, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
         if !writing {
-            // Check the first four pairs in order without loop transfers. This
+            // Check the first sixteen pairs in order without loop transfers. This
             // preserves first-match semantics, including duplicate-key tables.
-            for offset in [0, 2, 4, 6] {
+            for offset in (0..32).step_by(2) {
                 body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
                     I32Const(0), RefI31, Return, End]);
-                array(&mut body, table);
+                body.push(LocalGet(typed_table));
                 body.extend([I32Const(offset), ArrayGet(ARGS), LocalGet(1), RefEq, If(BlockType::Empty)]);
-                array(&mut body, table);
+                body.push(LocalGet(typed_table));
                 body.extend([I32Const(offset + 1), ArrayGet(ARGS), Return, End]);
             }
         }
         body.extend([
-            I32Const(if writing { 0 } else { 8 }),
+            I32Const(if writing { 0 } else { 32 }),
             LocalSet(index),
             Block(BlockType::Empty),
             Loop(BlockType::Empty),
@@ -338,7 +342,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         // No callback occurs during this table walk. Its GC array length is
         // immutable even when an existing slot is replaced, so read it once.
         body.extend([LocalGet(length), I32GeU, BrIf(1)]);
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([
             LocalGet(index),
             ArrayGet(ARGS),
@@ -346,7 +350,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             RefEq,
             If(BlockType::Empty),
         ]);
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([LocalGet(index), I32Const(1), I32Add]);
         if writing {
             body.extend([LocalGet(2), ArraySet(ARGS), Return]);
@@ -381,7 +385,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             ]);
             array(&mut body, fresh);
             body.push(I32Const(0));
-            array(&mut body, table);
+            body.push(LocalGet(typed_table));
             body.push(I32Const(0));
             body.extend([
                 LocalGet(length),
@@ -422,7 +426,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                 &[VALUE, VALUE]
             },
             if writing { &[] } else { &[VALUE] },
-            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE), (1, ValType::I32)],
+            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE), (1, ValType::I32), (1, reference(ARGS))],
             &body,
         );
         if !writing {

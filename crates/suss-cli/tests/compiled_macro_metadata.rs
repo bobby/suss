@@ -15,12 +15,12 @@ fn compiled_macro_metadata_transports_actual_maps_on_nested_syntax_after_gc() {
         assert_eq!(output.span, 300..350);
         assert_eq!(output.metadata.len(), 1);
         assert!(matches!(&output.metadata[0].kind, Kind::Map(entries) if entries.len() == 4));
-        let Kind::Vector(items) = output.kind else {
+        let Kind::Vector(items) = output.into_parts().2 else {
             panic!("Vector");
         };
         assert_eq!(items[0].metadata.len(), 1);
         assert_eq!(items[1].metadata.len(), 1);
-        assert!(matches!(items[1].kind, Kind::List(_)));
+        assert!(matches!(&items[1].kind, Kind::List(_)));
     }
 }
 
@@ -41,7 +41,7 @@ fn compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_inv
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 500..510).unwrap();
         assert_eq!(form.metadata.len(), 1, "{source}");
-        assert!(matches!(form.metadata[0].kind, Kind::Map(_)));
+        assert!(matches!(&form.metadata[0].kind, Kind::Map(_)));
     }
     for source in [
         "(with-meta '(x) 1)",
@@ -186,12 +186,12 @@ fn compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_bo
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 700..710).unwrap();
         assert_eq!(form.metadata.len(), 1);
-        let Kind::List(entries) = form.kind else {
+        let Kind::List(entries) = form.into_parts().2 else {
             panic!("Chunked sequence");
         };
         assert_eq!(entries.len(), 64);
         for (i, entry) in entries.iter().enumerate() {
-            assert!(matches!(entry.kind, Kind::Number(n) if n == (i + 1) as f64));
+            assert!(matches!(&entry.kind, Kind::Number(n) if *n == (i + 1) as f64));
         }
         for source in [
             "(suss.core/ChunkedSeq. source-vector (array) 0 0 nil nil)",
@@ -397,12 +397,12 @@ fn compiled_macro_metadata_merges_data_before_constructing_discarded_values() {
             .unwrap();
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 810..820).unwrap();
-        assert!(matches!(form.kind, Kind::Number(7.0)));
+        assert!(matches!(&form.kind, Kind::Number(7.0)));
         let input = read_forms(&syntax).unwrap().remove(0);
         let value = bridge.quote(&mut session, input).unwrap();
         session.collect().unwrap();
         let output = bridge.read(&mut session, &value, 820..830).unwrap();
-        assert!(matches!(output.kind, Kind::Symbol(_)));
+        assert!(matches!(&output.kind, Kind::Symbol(_)));
         let value = session.eval("(== metadata-constructions 0)").unwrap();
         assert!(
             session

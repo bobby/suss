@@ -51,13 +51,13 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
     }
     let value = macros.eval("(seq \"a😀\")").unwrap();
     let form = bridge.read(&mut macros, &value, 20..30).unwrap();
-    let Kind::List(items) = form.kind else {
+    let Kind::List(items) = form.into_parts().2 else {
         panic!("Sequence form")
     };
     let actual = items
         .into_iter()
         .map(|f| {
-            let Kind::String(s) = f.kind else {
+            let Kind::String(s) = f.into_parts().2 else {
                 panic!("UTF16 unit")
             };
             s
@@ -68,7 +68,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         .eval("(new suss.core/IndexedSeq (array) 0 nil)")
         .unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
     );
     macros.eval("(def saved-seq suss.core/IndexedSeq)").unwrap();
     macros.eval("(ns suss.core) (def IndexedSeq nil)").unwrap();
@@ -76,7 +76,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
     macros.collect().unwrap();
     let value = macros.eval("(new saved-seq (array 42) 0 nil)").unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==1)
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==1)
     );
 }
 #[test]
@@ -110,7 +110,7 @@ fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_limits()
         .eval("(new suss.core/IndexedSeq (make-array 4094) 0 nil)")
         .unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==4094)
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==4094)
     );
     let value = macros
         .eval("(new suss.core/IndexedSeq (make-array 4095) 0 nil)")

@@ -173,15 +173,18 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // This original guard rejects the unsupported adaptation instead of porting it.
     let mut body = vec![];
     guard(&mut body, 0, STRING);
+    // Length is immutable and no callback occurs during this validation.
     body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        LocalSet(3),
         I32Const(0),
         LocalSet(1),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(1),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
+        LocalGet(3),
         I32GeU,
         BrIf(1),
         LocalGet(0),
@@ -190,30 +193,45 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayGetU(STRING),
         LocalSet(2),
     ]);
-    for (low, high) in [(b'a', b'z'), (b'A', b'Z'), (b'0', b'9')] {
-        body.extend([
-            LocalGet(2),
-            I32Const(low as i32),
-            I32Sub,
-            I32Const((high - low) as i32),
-            I32LeU,
-        ]);
+    // Exactly the existing ASCII whitelist, represented by two word masks.
+    // Reject all non-ASCII units before Wasm's modulo-64 shift semantics apply.
+    let mut allowed = [0_u64; 2];
+    for unit in b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$" {
+        allowed[usize::from(*unit) / 64] |= 1_u64 << (*unit % 64);
     }
     body.extend([
-        I32Or,
-        I32Or,
+        // Lowercase letters dominate source field names. This only skips the
+        // equivalent character mask, never the later reserved-spelling check.
         LocalGet(2),
-        I32Const(b'_' as i32),
-        I32Eq,
-        I32Or,
+        I32Const(i32::from(b'a')),
+        I32Sub,
+        I32Const(25),
+        I32LeU,
+        If(BlockType::Empty),
+        Else,
         LocalGet(2),
-        I32Const(b'$' as i32),
-        I32Eq,
-        I32Or,
-        I32Eqz,
+        I32Const(128),
+        I32GeU,
         If(BlockType::Empty),
         I32Const(0),
         Return,
+        End,
+        I64Const(allowed[0] as i64),
+        I64Const(allowed[1] as i64),
+        LocalGet(2),
+        I32Const(64),
+        I32LtU,
+        Select,
+        LocalGet(2),
+        I64ExtendI32U,
+        I64ShrU,
+        I64Const(1),
+        I64And,
+        I64Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
         End,
         LocalGet(1),
         I32Const(1),
@@ -297,10 +315,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         by_length.entry(reserved.len()).or_default().push(reserved);
     }
     body.extend([
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
-        LocalSet(3),
         LocalGet(3),
         I32Eqz,
         If(BlockType::Empty),
@@ -412,6 +426,50 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         I32Const(-1),
         LocalSet(5),
+        // Field schemas have already established a STRING lookup key above.
+        // Keep full per-entry validation, but avoid repeating stride dispatch,
+        // key type tests, and identity/equality selection for every field.
+        LocalGet(2),
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
+        I32Const(0),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+    ]);
+    array(&mut body, 0);
+    body.extend([ArrayLen, I32GeU, BrIf(1)]);
+    array(&mut body, 0);
+    body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(4)]);
+    guard(&mut body, 4, STRING);
+    body.extend([
+        LocalGet(4),
+        Call(field_supported),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut body);
+    body.extend([
+        End,
+        LocalGet(4),
+        LocalGet(1),
+        Call(equal),
+        If(BlockType::Empty),
+        LocalGet(3),
+        LocalSet(5),
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        Else,
+        // Stride-two tables retain native-key validation and first-match
+        // behavior. This is the former mixed-table scan without field branches.
         I32Const(0),
         LocalSet(3),
         Block(BlockType::Empty),
@@ -425,22 +483,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(3),
         ArrayGet(ARGS),
         LocalSet(4),
-        LocalGet(2),
-        I32Const(1),
-        I32Eq,
-        If(BlockType::Empty),
-    ]);
-    guard(&mut body, 4, STRING);
-    body.extend([
-        LocalGet(4),
-        Call(field_supported),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    nominal::error(&mut body);
-    body.push(End);
-    body.extend([
-        Else,
         LocalGet(4),
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Eqz,
@@ -461,8 +503,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
-    body.extend([End, End]);
     body.extend([
+        End,
         End,
         LocalGet(4),
         LocalGet(1),
@@ -481,22 +523,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(5),
         I32Const(0),
         I32LtS,
-        // Field aliases use the last constructor assignment. Method tables
-        // retain their existing first-match policy (stride two).
-        LocalGet(2),
-        I32Const(1),
-        I32Eq,
-        I32Or,
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(5),
         End,
         End,
         LocalGet(3),
-        LocalGet(2),
+        I32Const(2),
         I32Add,
         LocalSet(3),
         Br(0),
+        End,
         End,
         End,
         LocalGet(5),

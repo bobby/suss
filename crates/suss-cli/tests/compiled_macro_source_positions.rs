@@ -106,13 +106,13 @@ fn compiler_macro_source_positions_execute_with_exact_pinned_utf16_and_newline_l
         {
             let value = session.eval(name).unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let Kind::Vector(items) = decoded.kind else {
+            let Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("Position vector")
             };
             assert_eq!(items.len(), 2);
             for (item, expected) in items.iter().zip([*line, *column]) {
                 assert!(
-                    matches!(item.kind, Kind::Number(n) if n.to_bits() == (expected as f64).to_bits())
+                    matches!(&item.kind, Kind::Number(n) if n.to_bits() == (expected as f64).to_bits())
                 );
             }
         }
@@ -181,13 +181,13 @@ fn compiler_local_positions_exclude_metadata_prefixes_using_actual_source_tokens
         {
             let value = session.eval(name).unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let Kind::Vector(items) = decoded.kind else {
+            let Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("position vector")
             };
             assert_eq!(items.len(), 2);
             for (item, expected) in items.iter().zip([*line, *column]) {
                 assert!(
-                    matches!(item.kind, Kind::Number(n) if n.to_bits() == (expected as f64).to_bits())
+                    matches!(&item.kind, Kind::Number(n) if n.to_bits() == (expected as f64).to_bits())
                 );
             }
         }

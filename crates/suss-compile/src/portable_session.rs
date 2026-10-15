@@ -39,7 +39,7 @@ impl Default for SessionOptions {
     fn default() -> Self {
         Self {
             source_paths: vec![PathBuf::from("src")],
-            fuel_per_operation: 10_000_000,
+            fuel_per_operation: portable::DEFAULT_OPERATION_FUEL,
         }
     }
 }
@@ -189,6 +189,7 @@ pub struct Session {
     identity: u64,
     handles: Arc<AtomicUsize>,
     interrupt: Arc<AtomicBool>,
+    operation_budget_depth: Arc<AtomicUsize>,
     store: Store<()>,
     runtime: Instance,
     numeric_memory: Memory,
@@ -203,6 +204,19 @@ pub struct Session {
     pending_host_futures: SharedPendingRegistry,
     native_factories: Vec<native_async::FactoryProfile>,
     last_async_recovered_owner: Option<OwnedRooted<AnyRef>>,
+}
+// Own the depth rather than borrowing Session, so the closure can use &mut Session
+// and unwinding still retires the scope without unsafe pointers or panic catching.
+pub(crate) struct OperationBudgetScope(Arc<AtomicUsize>);
+impl Drop for OperationBudgetScope {
+    fn drop(&mut self) {
+        end_operation_budget(&self.0);
+    }
+}
+fn end_operation_budget(depth: &AtomicUsize) {
+    depth
+        .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+        .expect("Operation budget scopes must be balanced");
 }
 struct PendingHostFuture {
     root: OwnedRooted<AnyRef>,
@@ -590,6 +604,7 @@ impl Session {
             identity,
             handles: Arc::new(AtomicUsize::new(0)),
             interrupt,
+            operation_budget_depth: Arc::new(AtomicUsize::new(0)),
             store,
             runtime,
             numeric_memory,
@@ -614,6 +629,9 @@ impl Session {
     }
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.options.fuel_per_operation = fuel;
+    }
+    pub(crate) fn operation_fuel_remaining(&self) -> Result<u64, SessionError> {
+        self.store.get_fuel().map_err(Into::into)
     }
     pub fn current_namespace(&self) -> &str {
         self.environment.current_namespace(self.phase)
@@ -1076,12 +1094,82 @@ impl Session {
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {
+        if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
+            return Ok(());
+        }
         // A request made while idle does not cancel the next operation.
         self.interrupt.store(false, Ordering::SeqCst);
         self.store.set_epoch_deadline(1);
         self.store
             .set_fuel(self.options.fuel_per_operation)
             .map_err(Into::into)
+    }
+    /// One cumulative budget for host transport and every nested Wasm helper.
+    /// Only the outermost scope starts an operation; errors and unwinding retire
+    /// its scope, leaving the next operation free to establish its own budget.
+    pub(crate) fn with_operation_budget<T>(
+        &mut self,
+        f: impl FnOnce(&mut Self) -> Result<T, SessionError>,
+    ) -> Result<T, SessionError> {
+        let _scope = self.operation_budget_scope()?;
+        f(self)
+    }
+    /// Owned request guard with no Session borrow, so a caller can guard an
+    /// entire define/load path while continuing to use the host's other fields.
+    /// Drop balances this entry on success, error and panic unwinding.
+    pub(crate) fn operation_budget_scope(&mut self) -> Result<OperationBudgetScope, SessionError> {
+        self.begin_operation_budget()?;
+        Ok(OperationBudgetScope(self.operation_budget_depth.clone()))
+    }
+    /// Begin a compiler request that can include multiple recursive expansions.
+    /// The caller must arrange a matching end on success, error and unwinding.
+    pub(crate) fn begin_operation_budget(&mut self) -> Result<(), SessionError> {
+        let depth = self.operation_budget_depth.load(Ordering::SeqCst);
+        let next = depth.checked_add(1).ok_or_else(|| {
+            SessionError::Host(wasmtime::Error::msg("Operation budget scope depth exhausted"))
+        })?;
+        if depth == 0 {
+            self.budget()?;
+        }
+        self.operation_budget_depth.store(next, Ordering::SeqCst);
+        Ok(())
+    }
+    /// End the matching request without refilling fuel or clearing cancellation.
+    pub(crate) fn end_operation_budget(&mut self) {
+        end_operation_budget(&self.operation_budget_depth);
+    }
+    /// Capture before borrowing the Store for compiler-data traversal. This is
+    /// the same cancellation flag used by this Session's epoch callback.
+    pub(crate) fn host_work_interrupt(&self) -> Arc<AtomicBool> {
+        self.interrupt.clone()
+    }
+    /// Debit host work from the current operation, without replenishing fuel.
+    pub(crate) fn charge_host_work(&mut self, units: u64) -> Result<(), SessionError> {
+        Self::consume_host_work(self.store.as_context_mut(), units, &self.interrupt)
+            .map_err(Into::into)
+    }
+    /// Store-context counterpart for decoders. Callers must pass the cancellation
+    /// flag captured from this same Session, not another Store's flag.
+    pub(crate) fn consume_host_work(
+        mut store: StoreContextMut<'_, ()>,
+        units: u64,
+        interrupt: &AtomicBool,
+    ) -> wasmtime::Result<()> {
+        if interrupt.swap(false, Ordering::SeqCst) {
+            // Match the epoch callback's consumed request, but do not let a
+            // caller catch cancellation and continue the same fueled operation.
+            // Finite dynamic restoration saves/restores this exhausted budget.
+            store.set_fuel(0)?;
+            return Err(wasmtime::Trap::Interrupt.into());
+        }
+        let fuel = store.get_fuel()?;
+        match fuel.checked_sub(units) {
+            Some(remaining) => store.set_fuel(remaining),
+            None => {
+                store.set_fuel(0)?;
+                Err(wasmtime::Trap::OutOfFuel.into())
+            }
+        }
     }
     /// Validate all artifacts before allocating bindings. Stage cell imports and
     /// instantiate all fragments before publishing declarations or executing eval.
@@ -1272,16 +1360,22 @@ impl Session {
         source: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<SessionValue, SessionError> {
-        let forms = suss_reader::forms::read_forms(source).map_err(|error| {
+        let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
+        let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
+            portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len()).map_err(|error| suss_reader::ParseError {
+                message: error.message, span: error.span, expected: vec![],
+            })
+        }).map_err(|error| {
             SessionError::Compile(Diagnostic {
                 span: error.span,
                 message: error.message,
             })
         })?;
+        portable::ExpansionHost::charge_expansion_work(&mut request, source.len() as u64, 0..source.len()).map_err(SessionError::Compile)?;
         let prepared = self.compilation_snapshot().prepare_with_origin(
             forms,
             0..source.len(),
-            expander,
+            &mut request,
             Some(&portable::SourceOrigin::new(source, None)),
         )?;
         self.eval_prepared(prepared)
@@ -1699,6 +1793,128 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn operation_budget_host_exhaustion_and_next_request_recovery() {
+        let mut session = Session::new().unwrap();
+        session.set_operation_fuel(100);
+        let error = session.with_operation_budget(|session| {
+            for _ in 0..4 {
+                session.charge_host_work(25)?;
+            }
+            assert_eq!(session.store.get_fuel().unwrap(), 0);
+            session.charge_host_work(1)
+        }).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
+        session.with_operation_budget(|session| {
+            assert_eq!(session.store.get_fuel()?, 100);
+            session.charge_host_work(17)?;
+            assert_eq!(session.store.get_fuel()?, 83);
+            Ok(())
+        }).unwrap();
+    }
+
+    #[test]
+    fn operation_budget_request_hooks_and_nested_helpers_share_fuel() {
+        let mut session = Session::new().unwrap();
+        session.set_operation_fuel(100);
+        session.begin_operation_budget().unwrap();
+        session.charge_host_work(7).unwrap();
+        session.with_operation_budget(|session| {
+            assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 2);
+            session.budget()?;
+            session.charge_host_work(11)
+        }).unwrap();
+        // Separate transformer calls inside the same prepare request cannot reset it.
+        session.with_operation_budget(|session| session.charge_host_work(13)).unwrap();
+        assert_eq!(session.store.get_fuel().unwrap(), 69);
+        assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 1);
+        session.end_operation_budget();
+        assert_eq!(session.store.get_fuel().unwrap(), 69);
+        session.begin_operation_budget().unwrap();
+        assert_eq!(session.store.get_fuel().unwrap(), 100);
+        session.end_operation_budget();
+    }
+
+    #[test]
+    fn operation_budget_wasm_helpers_and_host_work_share_exhaustion() {
+        let mut session = Session::new().unwrap();
+        let function = session.eval("(fn [] 17)").unwrap();
+        // Measure genuine helper consumption instead of assuming emitted instruction costs.
+        let cost = session.with_operation_budget(|session| {
+            let before = session.store.get_fuel()?;
+            session.invoke(&function, &[])?;
+            Ok(before - session.store.get_fuel()?)
+        }).unwrap();
+        assert!(cost > 0);
+        session.set_operation_fuel(cost);
+        let error = session.with_operation_budget(|session| {
+            session.charge_host_work(cost)?;
+            session.invoke(&function, &[])
+        }).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert_eq!(session.store.get_fuel().unwrap(), 0,
+            "dynamic restoration must preserve the exhausted operation's fuel");
+        session.set_operation_fuel(10_000_000);
+        session.with_operation_budget(|session| {
+            let before = session.store.get_fuel()?;
+            session.invoke(&function, &[])?;
+            let after_first = session.store.get_fuel()?;
+            session.invoke(&function, &[])?;
+            assert!(after_first < before);
+            assert!(session.store.get_fuel()? < after_first,
+                "a repeated invoke must not replenish helper fuel");
+            Ok(())
+        }).unwrap();
+    }
+
+    #[test]
+    fn operation_budget_nested_entry_preserves_interrupt_for_host_decoder() {
+        let mut session = Session::new().unwrap();
+        session.set_operation_fuel(100);
+        let interrupt = session.host_work_interrupt();
+        let error = session.with_operation_budget(|session| {
+            session.charge_host_work(7)?;
+            interrupt.store(true, Ordering::SeqCst);
+            session.with_operation_budget(|session| {
+                session.budget()?;
+                assert!(interrupt.load(Ordering::SeqCst));
+                Session::consume_host_work(session.store.as_context_mut(), 1, &interrupt)
+                    .map_err(Into::into)
+            })
+        }).unwrap_err();
+        assert!(error.is_interrupt());
+        assert_eq!(session.store.get_fuel().unwrap(), 0);
+        assert!(!interrupt.load(Ordering::SeqCst));
+        assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
+        session.with_operation_budget(|session| session.charge_host_work(1)).unwrap();
+        assert_eq!(session.store.get_fuel().unwrap(), 99);
+    }
+
+    #[test]
+    fn operation_budget_panic_unwinds_all_nested_scope_depths() {
+        let mut session = Session::new().unwrap();
+        session.set_operation_fuel(100);
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _: Result<(), SessionError> = session.with_operation_budget(|session| {
+                session.charge_host_work(17)?;
+                session.with_operation_budget(|session| {
+                    session.charge_host_work(19)?;
+                    panic!("intentional operation-budget unwind")
+                })
+            });
+        }));
+        assert!(panic.is_err());
+        assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
+        assert_eq!(session.store.get_fuel().unwrap(), 64);
+        session.with_operation_budget(|session| {
+            assert_eq!(session.store.get_fuel()?, 100);
+            session.charge_host_work(1)
+        }).unwrap();
+    }
+
     std::thread_local! {
         static INTERRUPT_ASYNC_RECOVERY: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
         static OBSERVED_RECOVERY_INTERRUPT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };

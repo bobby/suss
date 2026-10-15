@@ -80,12 +80,12 @@ fn compiled_macro_vectors_preserve_trie_updates_and_transport_across_gc() {
     session.collect().unwrap();
     let value = session.eval("original").unwrap();
     let form = bridge.read(&mut session, &value, 101..111).unwrap();
-    let Kind::Vector(items) = form.kind else {
+    let Kind::Vector(items) = form.into_parts().2 else {
         panic!("Actual vector syntax");
     };
     assert_eq!(items.len(), 1100);
     for (i, item) in items.iter().enumerate() {
-        assert!(matches!(item.kind, Kind::Number(n) if n == i as f64));
+        assert!(matches!(&item.kind, Kind::Number(n) if *n == i as f64));
         assert_eq!(item.span, 101..111);
     }
     for source in [
@@ -119,19 +119,19 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
     let value = bridge.quote(&mut session, original).unwrap();
     session.collect().unwrap();
     let actual = bridge.read(&mut session, &value, 77..88).unwrap();
-    let Kind::Vector(items) = actual.kind else {
+    let Kind::Vector(items) = actual.into_parts().2 else {
         panic!("Vector syntax");
     };
     assert_eq!(items.len(), 3);
-    assert!(matches!(items[0].kind, Kind::Symbol(_)));
-    assert!(matches!(items[1].kind, Kind::Vector(_)));
+    assert!(matches!(&items[0].kind, Kind::Symbol(_)));
+    assert!(matches!(&items[1].kind, Kind::Vector(_)));
     let Kind::Vector(nested) = &items[1].kind else {
         panic!("nested vector");
     };
     let Kind::List(list) = &nested[1].kind else {
         panic!("nested list");
     };
-    let Kind::Number(n) = list[1].kind else {
+    let Kind::Number(n) = &list[1].kind else {
         panic!("binary64");
     };
     assert_eq!(n.to_bits(), (-0f64).to_bits());
@@ -210,12 +210,12 @@ fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
             .unwrap_or_else(|error| panic!("size{size}: {error:?}"));
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 900..910).unwrap();
-        let Kind::Vector(items) = form.kind else {
+        let Kind::Vector(items) = form.into_parts().2 else {
             panic!("Vector");
         };
         assert_eq!(items.len(), size);
         for (index, item) in items.iter().enumerate() {
-            assert!(matches!(item.kind, Kind::Number(n) if n == index as f64));
+            assert!(matches!(&item.kind, Kind::Number(n) if *n == index as f64));
         }
     }
     session.eval("(def old [10 20 30]) (def t (transient old)) (-assoc-n! t 1 99) (conj! t 40) (def result (persistent! t))").unwrap();
@@ -335,12 +335,12 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 300..310).unwrap();
-            let Kind::Vector(items) = decoded.kind else {
+            let Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("{source}: canonical vector contents");
             };
             assert_eq!(items.len(), length, "{source}");
             for (index, item) in items.iter().enumerate() {
-                let Kind::Number(actual) = item.kind else {
+                let Kind::Number(actual) = &item.kind else {
                     panic!("{source}[{index}]: independently decoded Number");
                 };
                 let expected = if changed && (index == 31 || index == 1024) {
@@ -353,12 +353,12 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
         }
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &old, 400..410).unwrap();
-        let Kind::Vector(items) = decoded.kind else {
+        let Kind::Vector(items) = decoded.into_parts().2 else {
             panic!("retained old vector after collapse, regrowth and GC");
         };
         assert_eq!(items.len(), 1057);
         for (index, item) in items.iter().enumerate() {
-            let Kind::Number(actual) = item.kind else {
+            let Kind::Number(actual) = &item.kind else {
                 panic!("old[{index}]: Number");
             };
             assert_eq!(actual.to_bits(), (index as f64).to_bits(), "old[{index}]");

@@ -196,12 +196,12 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
         let result = session.invoke(&project, &[&original]).unwrap();
         let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
         let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-        let suss_reader::forms::Kind::Vector(items) = decoded.kind else {
+        let suss_reader::forms::Kind::Vector(items) = decoded.into_parts().2 else {
             panic!("queue projected vector")
         };
         assert_eq!(items.len(), 3);
         for (item, expected) in items.iter().zip([1.0_f64, 2.0, 3.0]) {
-            let suss_reader::forms::Kind::Number(actual) = item.kind else {
+            let suss_reader::forms::Kind::Number(actual) = &item.kind else {
                 panic!("queue numeric item")
             };
             assert_eq!(actual.to_bits(), expected.to_bits());

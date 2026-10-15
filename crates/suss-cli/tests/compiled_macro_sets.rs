@@ -40,7 +40,7 @@ fn compiled_quoted_sets_keep_symbols_nested_syntax_metadata_and_factory_boundari
             let bridge = FormBridge::new(&mut session).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let Kind::Set(items) = decoded.kind else { panic!("quoted set artifact") };
+            let Kind::Set(items) = decoded.kind.clone() else { panic!("quoted set artifact") };
             let mut names = items.iter().map(|item| {
                 let Kind::Symbol(symbol) = &item.kind else { panic!("symbol datum") };
                 assert_eq!(symbol.namespace, None);
@@ -80,7 +80,7 @@ fn compiled_macro_sets_transport_canonical_small_and_hamt_values_after_gc() {
             let value = bridge.quote(&mut session, input).unwrap();
             session.collect().unwrap();
             let output = bridge.read(&mut session, &value, 10..20).unwrap();
-            let Kind::Set(items) = output.kind else { panic!("canonical set syntax") };
+            let Kind::Set(items) = output.kind.clone() else { panic!("canonical set syntax") };
             let mut actual = items.iter().map(|item| { let Kind::Number(n) = item.kind else { panic!("number") }; n as usize }).collect::<Vec<_>>();
             actual.sort_unstable();
             assert_eq!(actual, (0..size).collect::<Vec<_>>());
@@ -111,7 +111,7 @@ fn compiled_macro_key_sequences_ignore_values_and_keep_their_own_metadata() {
             session.collect().unwrap();
             let output = bridge.read(&mut session, &value, 1..2).unwrap();
             assert_eq!(output.metadata.len(), 1);
-            let Kind::List(items) = output.kind else { panic!("actual key sequence") };
+            let Kind::List(items) = output.kind.clone() else { panic!("actual key sequence") };
             let mut keys = items.iter().map(|item| { let Kind::Number(n) = item.kind else { panic!("key") }; n as usize }).collect::<Vec<_>>();
             keys.sort_unstable(); assert_eq!(keys, (0..size).collect::<Vec<_>>());
         }
@@ -168,12 +168,12 @@ fn compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc
         let decoded = bridge.read(&mut session, &saved, 10..20).unwrap();
         assert!(matches!(&decoded.kind, Kind::Set(items) if items.len() == 3 && items.iter().any(|item| matches!(item.kind, Kind::Nil))));
         assert_eq!(decoded.metadata.len(), 1);
-        assert!(matches!(bridge.read(&mut session, &keys, 10..20).unwrap().kind, Kind::List(items) if items.len() == 2));
+        assert!(matches!(&bridge.read(&mut session, &keys, 10..20).unwrap().kind, Kind::List(items) if items.len() == 2));
         let before = session.stats();
         let quoted = bridge.quote(&mut session, decoded).unwrap();
         session.collect().unwrap();
         let roundtrip = bridge.read(&mut session, &quoted, 10..20).unwrap();
-        assert!(matches!(roundtrip.kind, Kind::Set(items) if items.len() == 3));
+        assert!(matches!(&roundtrip.kind, Kind::Set(items) if items.len() == 3));
         assert_eq!(roundtrip.metadata.len(), 1);
         assert_eq!(session.stats().resident_fragments, before.resident_fragments);
         assert_eq!(session.stats().resident_artifact_bytes, before.resident_artifact_bytes);

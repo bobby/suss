@@ -20,8 +20,9 @@ use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
-pub use quotes::{identifier_hash, reader_metadata_pairs};
+pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
+pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     ops::Range,
@@ -615,13 +616,46 @@ pub struct SourceAnalysis {
     pub namespace: String,
     pub origin: Option<super::SourceOrigin>,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Hir {
     pub source: Option<std::sync::Arc<SourceAnalysis>>,
     pub span: Range<usize>,
     pub metadata: Vec<Form>,
     pub ty: Type,
     pub kind: Expression,
+}
+impl Clone for Hir {
+    fn clone(&self) -> Self {
+        // Cloning analyzed subtrees also recurses through Expression; protecting
+        // analysis entry alone does not protect these later native stack frames.
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || Self {
+            source: self.source.clone(),
+            span: self.span.clone(),
+            metadata: self.metadata.clone(),
+            ty: self.ty,
+            kind: self.kind.clone(),
+        })
+    }
+}
+impl Hir {
+    /// Extract an owned expression without bypassing stack-safe cleanup of the
+    /// remaining source facts and metadata.
+    pub fn take_kind(&mut self) -> Expression {
+        std::mem::replace(&mut self.kind, Expression::Literal(Literal::Nil))
+    }
+}
+impl Drop for Hir {
+    fn drop(&mut self) {
+        let kind = self.take_kind();
+        let metadata = std::mem::take(&mut self.metadata);
+        let source = self.source.take();
+        // Every boxed HIR child enters this guard, including partial trees
+        // discarded after analysis errors. Cleanup must finish even when the
+        // request has no fuel left; it executes no user code.
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            drop((kind, metadata, source));
+        });
+    }
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -871,45 +905,47 @@ impl Analyzer<'_> {
         tail: bool,
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
-        // Bounded bootstrap expansion can create deeper syntax than the reader
-        // saw (notably nested threading). Check total analysis depth, including
-        // nested macros, before recursive analyzer frames exhaust the stack.
-        if self.analysis_depth >= 64 {
-            return Err(fail(
-                form.span.clone(),
-                "Bootstrap analysis expansion limit exceeded",
-            ));
-        }
+        // Recursive re-expansion consumes the enclosing request budget. The
+        // growable stack below protects native analysis without imposing a
+        // fixed language-level nesting ceiling.
+        self.expander.charge_expansion_work(1, form.span.clone())?;
         let previous_origin = self.origin.clone();
-        let reader_form = if self.analysis_depth == 0 && super::syntax_quote::has_template(form)? {
+        let has_template = self.analysis_depth == 0 && super::syntax_quote::has_template_metered(
+            form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+        )?;
+        let reader_form = if has_template {
+            let expander = &mut *self.expander;
+            let mut meter = |work| expander.charge_expansion_work(work, form.span.clone());
             let mut reader = self.environment.reader_state.clone();
-            let raw = reader.expand_with_origin(
+            let raw = reader.expand_with_origin_metered(
                 form,
                 &self.environment,
                 self.phase,
                 self.origin.as_ref(),
+                &mut meter,
             )?;
             // Replay the same initial counter against verified indexing data;
             // this does not allocate another set of observable generated IDs.
             let mut replay = self.environment.reader_state.clone();
             let located = if let Some(origin) = &self.origin {
-                origin.reader_tree(form)?
+                origin.reader_tree_metered(form, &mut meter)?
             } else {
-                form.clone()
+                super::clone_form_metered(form, &mut meter)?
             };
-            let located = replay.expand(&located, &self.environment, self.phase)?;
+            let located = replay.expand_with_origin_metered(&located, &self.environment, self.phase, None, &mut meter)?;
             if reader != replay {
                 return Err(fail(
                     form.span.clone(),
                     "Reader provenance generated IDs diverged",
                 ));
             }
-            let lowered = super::syntax_quote::lower_generated(&raw)?;
+            let lowered = super::syntax_quote::lower_generated_metered(&raw, &mut meter)?;
             let origin = self
                 .origin
                 .clone()
                 .unwrap_or_else(|| super::SourceOrigin::new("", None));
-            self.origin = Some(origin.with_reader_expansion(lowered.clone(), located));
+            let lowered_source = super::clone_form_metered(&lowered, &mut meter)?;
+            self.origin = Some(origin.with_reader_expansion(lowered_source, located));
             self.environment.reader_state = reader;
             Some(lowered)
         } else {
@@ -993,12 +1029,14 @@ impl Analyzer<'_> {
                 }
             }
         }
-        if let Some(coerced) = super::syntax_quote::reader_sequence_initializer(
-            form,
-            &self.environment,
-            self.phase,
-            self.origin.as_ref(),
-        )? {
+        let coerced = {
+            let expander = &mut *self.expander;
+            super::syntax_quote::reader_sequence_initializer(
+                form, &self.environment, self.phase, self.origin.as_ref(),
+                &mut |work| expander.charge_expansion_work(work, form.span.clone()),
+            )?
+        };
+        if let Some(coerced) = coerced {
             let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
             if fresh {
                 let initializer = self.form(&coerced)?;
@@ -1097,11 +1135,12 @@ impl Analyzer<'_> {
             // analyzed node. Preserve that record instead of attributing the
             // original macro call to the expanded expression.
             if expression.source.is_none() {
-                let tags = source_tags::source_tags(
+                let tags = source_tags::source_tags_metered(
                     form,
                     resolved.as_ref(),
                     callable.as_deref(),
                     &expression,
+                    &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                 )?;
                 let mut source = SourceAnalysis {
                     is_body: false,
@@ -1139,7 +1178,10 @@ impl Analyzer<'_> {
                     child.context = super::AnalysisContext::Expression;
                     child.node = inner.clone();
                     value.source = Some(std::sync::Arc::new(child));
-                    source.tags = source_tags::metadata_wrapper_tags(form)?;
+                    source.tags = source_tags::metadata_wrapper_tags_metered(
+                        form,
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+                    )?;
                     source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
                         expression: std::sync::Arc::new(value),
                         metadata: metadata.clone(),
@@ -1677,7 +1719,7 @@ impl Analyzer<'_> {
             }
         };
         let (args, variadic, rest_parameter) = Self::normalize_function_method(form, args)?;
-        let (method, mut source_method) = self.fixed_function_fields(
+        let (mut method, mut source_method) = self.fixed_function_fields(
             form,
             &args,
             bootstrap_macro,
@@ -1693,7 +1735,7 @@ impl Analyzer<'_> {
             parameters,
             body,
             captures,
-        } = method.kind
+        } = method.take_kind()
         else {
             unreachable!()
         };
@@ -2346,10 +2388,8 @@ impl Analyzer<'_> {
                 constructor,
             ];
             parts.extend_from_slice(args);
-            let expanded = Form {
-                kind: Kind::List(parts),
-                ..form.clone()
-            };
+            let mut expanded = form.clone();
+            expanded.kind = Kind::List(parts);
             // This fixed rewrite cannot recurse through another trailing dot;
             // preserve the existing source-depth bound like let/loop rewrites.
             return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
@@ -2459,7 +2499,7 @@ impl Analyzer<'_> {
             }
             if let Kind::Symbol(name) = &args[0].kind {
                 if name.namespace.is_none() && !self.locals.contains_key(&name.name) {
-                    if let Some(field) = self.fields.get(&name.name).cloned() {
+                    if let Some(mut field) = self.fields.get(&name.name).cloned() {
                         if !field.mutable {
                             return Err(fail(
                                 args[0].span.clone(),
@@ -2469,7 +2509,7 @@ impl Analyzer<'_> {
                         let Expression::Nominal {
                             operation,
                             mut arguments,
-                        } = field.access.kind
+                        } = field.access.take_kind()
                         else {
                             unreachable!()
                         };
@@ -2594,7 +2634,7 @@ impl Analyzer<'_> {
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
-                let body = self.body(args, form.span.clone(), context, tail)?;
+                let mut body = self.body(args, form.span.clone(), context, tail)?;
                 let Expression::Do(children) = &body.kind else {
                     unreachable!()
                 };
@@ -2614,7 +2654,7 @@ impl Analyzer<'_> {
                         statements: statements.into(),
                         result: std::sync::Arc::new(result),
                     }));
-                (body.kind, body.ty)
+                (body.take_kind(), body.ty)
             }
             (true, "if") => {
                 if !(2..=3).contains(&args.len()) {

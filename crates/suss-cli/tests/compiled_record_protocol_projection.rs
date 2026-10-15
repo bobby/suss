@@ -51,10 +51,10 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
                 let observed = bridge.read(&mut session, &value, 0..0).unwrap();
                 let expected = read_forms(expected).unwrap().remove(0);
                 println!("{phase}/{case}/{projection}: actual {:?}", observed.kind);
-                let Kind::Vector(actual) = observed.kind else {
+                let Kind::Vector(actual) = observed.into_parts().2 else {
                     panic!("fact vector")
                 };
-                let Kind::Vector(expected) = expected.kind else {
+                let Kind::Vector(expected) = expected.into_parts().2 else {
                     panic!()
                 };
                 if actual
@@ -92,16 +92,16 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
         session.collect().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let value = bridge.read(&mut session, &value, 0..0).unwrap();
-        let Kind::Vector(parts) = value.kind else {
+        let Kind::Vector(parts) = value.into_parts().2 else {
             panic!("compact facts")
         };
         assert!(matches!(&parts[0].kind, Kind::Keyword(key) if key.name == "record-bindings"));
         assert!(
-            matches!(parts[1].kind, Kind::Bool(false)),
+            matches!(&parts[1].kind, Kind::Bool(false)),
             "compact view must not manufacture defs"
         );
         assert!(
-            matches!(parts[2].kind, Kind::Bool(false)),
+            matches!(&parts[2].kind, Kind::Bool(false)),
             "provider binding is not an own binding"
         );
         let Kind::Set(protocols) = &parts[3].kind else {
@@ -125,7 +125,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
             .eval_with_macros("(user/mode)", &mut macros)
             .unwrap();
         let value = bridge.read(&mut session, &value, 0..0).unwrap();
-        assert!(matches!(value.kind, Kind::Keyword(key) if key.name == "record-bindings"));
+        assert!(matches!(&value.kind, Kind::Keyword(key) if key.name == "record-bindings"));
         suss_cli::portable_repl::evaluate_script_compiled(&mut session, &mut macros,
             "(defmacro ^{:suss/compiler-catalog true} mode [] (list 'quote (:suss/projection &env)))", None).unwrap();
         let value = session
@@ -133,7 +133,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
             .unwrap();
         let value = bridge.read(&mut session, &value, 0..0).unwrap();
         assert!(
-            matches!(value.kind, Kind::Nil),
+            matches!(&value.kind, Kind::Nil),
             "successful full-mode replacement must publish"
         );
     }

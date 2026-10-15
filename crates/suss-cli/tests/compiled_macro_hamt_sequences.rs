@@ -103,7 +103,7 @@ fn compiled_macro_hamt_sequences_retain_metadata_old_descriptors_and_reject_fore
         for (value, size) in [(&bitmap, 9), (&array, 65)] {
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, value, 70..80).unwrap();
-            let Kind::List(items) = decoded.kind else {
+            let Kind::List(items) = &decoded.kind else {
                 panic!("sequence")
             };
             assert_eq!(items.len(), size);
@@ -115,7 +115,7 @@ fn compiled_macro_hamt_sequences_retain_metadata_old_descriptors_and_reject_fore
             assert!(
                 matches!(&meta[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "doc")
             );
-            assert!(matches!(meta[1].kind, Kind::Number(7.0)));
+            assert!(matches!(&meta[1].kind, Kind::Number(7.0)));
         }
     }
 }
@@ -219,9 +219,16 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
         session.collect().unwrap();
         let failure = bridge.read(&mut session, &cycle, 70..80).unwrap_err();
         assert!(
-            matches!(failure, suss_cli::portable_session::SessionError::Compile(ref diagnostic) if diagnostic.span == (70..80) && diagnostic.message.contains("nesting exceeds 64")),
+            matches!(failure, suss_cli::portable_session::SessionError::Compile(ref diagnostic) if diagnostic.span == (70..80) && diagnostic.message.contains("Cyclic runtime sequence")),
             "{failure:?}"
         );
+        // Shared acyclic aliases remain valid within one decode, even though
+        // a recursive alias of the same cursor must be rejected above.
+        let shared = session.eval("(let [s (NodeSeq. nil (array 7 8) 0 nil nil)] [s s])").unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &shared, 70..80).unwrap();
+        let entry = serde_json::json!({"tag":"seq", "items":[{"tag":"vector", "items":[{"tag":"f64", "bits":"401c000000000000"}, {"tag":"f64", "bits":"4020000000000000"}]}]});
+        assert_eq!(tagged(&decoded), serde_json::json!({"tag":"vector", "items":[entry.clone(), entry]}));
         let sparse = session
             .eval("(NodeSeq. nil (array 7 8 nil (aget (array) 0)) 0 nil nil)")
             .unwrap();

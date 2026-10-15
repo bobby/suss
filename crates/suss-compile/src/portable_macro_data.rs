@@ -4,7 +4,18 @@ use crate::portable::Diagnostic;
 use crate::portable_session::{Session, SessionError, SessionValue};
 use std::{collections::BTreeMap, ops::Range};
 use suss_reader::forms::{Form, Kind};
-use wasmtime::{AnyRef, Rooted, StoreContextMut, Val};
+use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
+
+pub(crate) fn normalized_reader_metadata(
+    session: &mut Session,
+    form: &Form,
+) -> Result<Vec<Form>, SessionError> {
+    crate::portable::hir::reader_metadata_pairs_metered(form, &mut |work| {
+        session.charge_host_work(work).map_err(|error| Diagnostic {
+            span: form.span.clone(), message: error.to_string(),
+        })
+    }).map_err(SessionError::Compile)
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
@@ -333,11 +344,13 @@ impl FormBridge {
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        if entries.len() > 65_536 {
-            return Err(SessionError::Host(error(
-                "Compiler map construction exceeds 65536 entries",
-            )));
-        }
+        session.with_operation_budget(|session| self.map_values_inner(session, entries))
+    }
+    fn map_values_inner(
+        &self,
+        session: &mut Session,
+        entries: &[(SessionValue, SessionValue)],
+    ) -> Result<SessionValue, SessionError> {
         if entries.is_empty() {
             return Ok(self.factories["empty-map"].clone());
         }
@@ -349,8 +362,8 @@ impl FormBridge {
         let mut hashes: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
         let mut nil_value = None;
         let mut nil_index = 0;
-        let mut comparisons = 1_048_576usize;
         for (key, value) in entries {
+            session.charge_host_work(1)?;
             session.inspect(value, |_, _| Ok(()))?;
             let is_nil = session.inspect(key, |store, key| Ok(absent(&store, &key)?))?;
             if is_nil {
@@ -383,9 +396,7 @@ impl FormBridge {
             };
             let mut existing = None;
             for index in hashes.entry(hash).or_default().iter().copied() {
-                comparisons = comparisons.checked_sub(1).ok_or_else(|| {
-                    SessionError::Host(error("Compiler map key comparisons exceed bound"))
-                })?;
+                session.charge_host_work(1)?;
                 let equal = if let Some(identifier) = self.identifier_key(session, key)? {
                     self.identifier_key(session, &pairs[index].1)?
                         .is_some_and(|other| other == identifier)
@@ -452,6 +463,7 @@ impl FormBridge {
         session: &mut Session,
         value: &SessionValue,
     ) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
+        let interrupt = session.host_work_interrupt();
         session.inspect(value, |mut store, value| {
             let Some(structure) = reference(&value)?.as_struct(&store)? else {
                 return Ok(None);
@@ -478,9 +490,12 @@ impl FormBridge {
             let mut budget = Budget {
                 display: None,
                 include_metadata: true,
-                nodes: 4096,
-                units: 1_048_576,
+                interrupt,
                 calls: None,
+                active: Vec::new(),
+                        profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
+                        host_fuel: std::cell::Cell::new(0),
+                        lazy_calls: std::cell::Cell::new(0),
             };
             Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
         })
@@ -493,6 +508,7 @@ impl FormBridge {
         nil: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
+        session.charge_host_work(pairs.len() as u64)?;
         if pairs.is_empty() {
             return Ok(nil.clone());
         }
@@ -547,6 +563,14 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
+        session.with_operation_budget(|session| self.set_values_inner(session, items))
+    }
+    fn set_values_inner(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        session.charge_host_work(items.len() as u64)?;
         if items.is_empty() {
             return Ok(self.factories["empty-set"].clone());
         }
@@ -577,11 +601,14 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        if items.len() > 65_536 {
-            return Err(SessionError::Host(error(
-                "Compiler vector construction exceeds 65536 entries",
-            )));
-        }
+        session.with_operation_budget(|session| self.vector_values_inner(session, items))
+    }
+    fn vector_values_inner(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        session.charge_host_work(items.len() as u64)?;
         use crate::portable::hir::Literal;
         let nil = self.scalar(session, &Literal::Nil)?;
         let tail_offset = if items.is_empty() {
@@ -609,6 +636,7 @@ impl FormBridge {
         shift: u32,
         nil: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
+        session.charge_host_work(32)?;
         let mut fields = vec![nil.clone(); 32];
         if shift == 0 {
             for (field, value) in fields.iter_mut().zip(items) {
@@ -632,6 +660,14 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
+        session.with_operation_budget(|session| self.list_values_inner(session, items))
+    }
+    fn list_values_inner(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        session.charge_host_work(items.len() as u64)?;
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let mut tail = self.factories["empty-list"].clone();
         for (index, value) in items.iter().enumerate().rev() {
@@ -700,155 +736,193 @@ impl FormBridge {
         }
     }
     pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
-        self.check(session)?;
-        let mut budget = Budget {
-            display: None,
-            include_metadata: true,
-            nodes: 4096,
-            units: 1_048_576,
-            calls: None,
-        };
-        self.form_value(session, &form, 0, &mut budget)
+        self.quote_ref(session, &form)
     }
-    fn form_value(
+    pub(crate) fn quote_ref(
         &self,
         session: &mut Session,
         form: &Form,
-        depth: usize,
-        budget: &mut Budget,
     ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.with_operation_budget(|session| self.form_value(session, &form))
+    }
+    fn form_value(&self, session: &mut Session, form: &Form) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
-        let failure = |message: &str| {
+        enum Task<'a> {
+            Visit(&'a Form),
+            Finish {
+                form: &'a Form,
+                children: usize,
+                has_metadata: bool,
+            },
+        }
+        let failure = |form: &Form, message: &str| {
             SessionError::Compile(Diagnostic {
                 span: form.span.clone(),
                 message: message.into(),
             })
         };
-        if depth >= 64 {
-            return Err(failure("Macro form construction exceeds 64 levels"));
-        }
-        spend(budget).map_err(SessionError::Host)?;
-        let units = match &form.kind {
-            Kind::String(value) => value.len(),
-            Kind::Symbol(value) => {
-                2 * (value.name.encode_utf16().count()
-                    + value
-                        .namespace
-                        .as_ref()
-                        .map_or(0, |ns| ns.encode_utf16().count() + 1))
-            }
-            Kind::Keyword(value) => {
-                2 * (value.name.encode_utf16().count()
-                    + value
-                        .namespace
-                        .as_ref()
-                        .map_or(0, |ns| ns.encode_utf16().count() + 1))
-            }
-            _ => 0,
-        };
-        budget.units = budget
-            .units
-            .checked_sub(units)
-            .ok_or_else(|| failure("Macro form construction exceeds UTF-16 storage bound"))?;
-        let mut set_items = None;
-        let value = match &form.kind {
-            Kind::Nil => self.scalar(session, &Literal::Nil)?,
-            Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
-            Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
-            Kind::String(value) => self.scalar(session, &Literal::String(value.clone()))?,
-            Kind::Symbol(value) => self.identifier(
-                session,
-                value.namespace.as_deref(),
-                &value.name,
-                false,
-                None,
-            )?,
-            Kind::Keyword(value) => {
-                self.identifier(session, value.namespace.as_deref(), &value.name, true, None)?
-            }
-            Kind::List(items) | Kind::Vector(items) => {
-                let items = items
-                    .iter()
-                    .map(|item| self.form_value(session, item, depth + 1, budget))
-                    .collect::<Result<Vec<_>, _>>()?;
-                if matches!(form.kind, Kind::List(_)) {
-                    self.list_values(session, &items)?
-                } else {
-                    self.vector_values(session, &items)?
+        let mut tasks = vec![Task::Visit(form)];
+        let mut values = Vec::<SessionValue>::new();
+        while let Some(task) = tasks.pop() {
+            match task {
+                Task::Visit(form) => {
+                    let work = 1u64.saturating_add(match &form.kind {
+                        Kind::String(text) => text.len() as u64,
+                        Kind::Symbol(name) => {
+                            name.name.encode_utf16().count() as u64
+                                + name
+                                    .namespace
+                                    .as_ref()
+                                    .map_or(0, |part| part.encode_utf16().count() as u64 + 1)
+                        }
+                        Kind::Keyword(name) => {
+                            name.name.encode_utf16().count() as u64
+                                + name
+                                    .namespace
+                                    .as_ref()
+                                    .map_or(0, |part| part.encode_utf16().count() as u64 + 1)
+                        }
+                        _ => 0,
+                    });
+                    session.charge_host_work(work)?;
+                    let has_metadata = !form.metadata.is_empty();
+                    let children: Vec<&Form> = match &form.kind {
+                        Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
+                            items.iter().collect()
+                        }
+                        Kind::Map(items) => {
+                            if items.len() % 2 != 0 {
+                                return Err(failure(
+                                    form,
+                                    "Macro form map requires paired entries",
+                                ));
+                            }
+                            items.iter().collect()
+                        }
+                        Kind::Conditional(_)
+                        | Kind::SplicingConditional(_)
+                        | Kind::Discard(_)
+                        | Kind::Prefix { .. } => {
+                            return Err(failure(
+                                form,
+                                "Native macro data requires resolved reader prefixes",
+                            ));
+                        }
+                        _ => Vec::new(),
+                    };
+                    let is_collection = matches!(
+                        form.kind,
+                        Kind::Symbol(_)
+                            | Kind::List(_)
+                            | Kind::Vector(_)
+                            | Kind::Map(_)
+                            | Kind::Set(_)
+                    );
+                    if has_metadata && !is_collection {
+                        return Err(failure(form, "Metadata requires a symbol or collection"));
+                    }
+                    tasks.push(Task::Finish {
+                        form,
+                        children: children.len(),
+                        has_metadata,
+                    });
+                    for child in children.into_iter().rev() {
+                        tasks.push(Task::Visit(child));
+                    }
+                }
+                Task::Finish {
+                    form,
+                    children,
+                    has_metadata,
+                } => {
+                    let take = children;
+                    if values.len() < take {
+                        return Err(failure(form, "Invalid macro form construction stack"));
+                    }
+                    let start = values.len() - take;
+                    let built = values.split_off(start);
+                    let mut result = match &form.kind {
+                        Kind::Nil => self.scalar(session, &Literal::Nil)?,
+                        Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
+                        Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
+                        Kind::String(value) => {
+                            self.scalar(session, &Literal::String(value.clone()))?
+                        }
+                        Kind::Symbol(value) => self.identifier(
+                            session,
+                            value.namespace.as_deref(),
+                            &value.name,
+                            false,
+                            None,
+                        )?,
+                        Kind::Keyword(value) => self.identifier(
+                            session,
+                            value.namespace.as_deref(),
+                            &value.name,
+                            true,
+                            None,
+                        )?,
+                        Kind::List(_) => self.list_values(session, &built)?,
+                        Kind::Vector(_) => self.vector_values(session, &built)?,
+                        Kind::Map(_) => {
+                            let entries = built
+                                .chunks_exact(2)
+                                .map(|pair| (pair[0].clone(), pair[1].clone()))
+                                .collect::<Vec<_>>();
+                            self.map_values(session, &entries)?
+                        }
+                        Kind::Set(_) if has_metadata => self.scalar(session, &Literal::Nil)?,
+                        Kind::Set(_) => self.set_values(session, &built)?,
+                        _ => {
+                            return Err(failure(
+                                form,
+                                "Native macro data requires resolved reader prefixes",
+                            ));
+                        }
+                    };
+                    if has_metadata {
+                        // Preserve quotation order: realize children and the
+                        // base collection before evaluating its metadata map.
+                        let pairs = normalized_reader_metadata(session, form)?;
+                        let metadata_form = Form {
+                            span: form.span.clone(),
+                            metadata: vec![],
+                            kind: Kind::Map(pairs),
+                        };
+                        let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                            self.form_value(session, &metadata_form)
+                        })?;
+                        if matches!(form.kind, Kind::Set(_)) {
+                            result = self.set_with_metadata(session, &built, &metadata)?;
+                        } else {
+                            let class = match form.kind {
+                                Kind::Symbol(_) => Class::Symbol,
+                                Kind::List(ref items) if items.is_empty() => Class::EmptyList,
+                                Kind::List(_) => Class::List,
+                                Kind::Vector(_) => Class::PersistentVector,
+                                Kind::Map(ref items) if items.len() <= 16 => {
+                                    Class::PersistentArrayMap
+                                }
+                                Kind::Map(_) => Class::PersistentHashMap,
+                                _ => unreachable!("metadata-bearing datum validated"),
+                            };
+                            let mut fields = session.data_fields(&result)?;
+                            fields[if class == Class::Symbol { 4 } else { 0 }] = metadata;
+                            result = session.data_construct(
+                                &self.roots[self.constructors[&class]],
+                                &fields.iter().collect::<Vec<_>>(),
+                            )?;
+                        }
+                    }
+                    values.push(result);
                 }
             }
-            Kind::Map(items) => {
-                if items.len() % 2 != 0 {
-                    return Err(failure("Macro form map requires paired entries"));
-                }
-                let mut entries = Vec::new();
-                for pair in items.chunks_exact(2) {
-                    entries.push((
-                        self.form_value(session, &pair[0], depth + 1, budget)?,
-                        self.form_value(session, &pair[1], depth + 1, budget)?,
-                    ));
-                }
-                self.map_values(session, &entries)?
-            }
-            Kind::Set(items) => {
-                let items = items
-                    .iter()
-                    .map(|item| self.form_value(session, item, depth + 1, budget))
-                    .collect::<Result<Vec<_>, _>>()?;
-                if form.metadata.is_empty() {
-                    self.set_values(session, &items)?
-                } else {
-                    // Metadata reconstruction must use the captured class root:
-                    // retained -with-meta code resolves its constructor global.
-                    set_items = Some(items);
-                    self.scalar(session, &Literal::Nil)?
-                }
-            }
-            Kind::Conditional(_)
-            | Kind::SplicingConditional(_)
-            | Kind::Discard(_)
-            | Kind::Prefix { .. } => {
-                return Err(failure(
-                    "Native macro data requires resolved reader prefixes",
-                ));
-            }
-        };
-        if form.metadata.is_empty() {
-            return Ok(value);
         }
-        if !matches!(
-            form.kind,
-            Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
-        ) {
-            return Err(failure("Metadata requires a symbol or collection"));
+        if values.len() != 1 {
+            return Err(failure(form, "Invalid macro form construction result"));
         }
-        let pairs =
-            crate::portable::hir::reader_metadata_pairs(form).map_err(SessionError::Compile)?;
-        let metadata = Form {
-            span: form.span.clone(),
-            metadata: vec![],
-            kind: Kind::Map(pairs),
-        };
-        let metadata = self.form_value(session, &metadata, depth + 1, budget)?;
-        if let Some(items) = set_items {
-            self.set_with_metadata(session, &items, &metadata)
-        } else {
-            let class = match form.kind {
-                Kind::Symbol(_) => Class::Symbol,
-                Kind::List(ref items) if items.is_empty() => Class::EmptyList,
-                Kind::List(_) => Class::List,
-                Kind::Vector(_) => Class::PersistentVector,
-                Kind::Map(ref items) if items.len() <= 16 => Class::PersistentArrayMap,
-                Kind::Map(_) => Class::PersistentHashMap,
-                _ => unreachable!("metadata-bearing data checked above"),
-            };
-            let mut fields = session.data_fields(&value)?;
-            fields[if class == Class::Symbol { 4 } else { 0 }] = metadata;
-            session.data_construct(
-                &self.roots[self.constructors[&class]],
-                &fields.iter().collect::<Vec<_>>(),
-            )
-        }
+        Ok(values.pop().unwrap())
     }
     /// Original result locations are not encoded in runtime values. Attribute
     /// expansion data to the supplied macro call site; never invent source bytes.
@@ -866,32 +940,38 @@ impl FormBridge {
         value: &SessionValue,
     ) -> Result<DisplayDatum, SessionError> {
         self.check(session)?;
-        let display = display_calls(session)?;
-        session.data_inspect_calls(
-            value,
-            &self.factories["lazy-sval"],
-            |mut store, value, args_new, invoke, function| {
-                let mut budget = Budget {
-                    include_metadata: false,
-                    display: Some(display),
-                    nodes: 4096,
-                    units: 1_048_576,
-                    calls: Some(ReadCalls {
-                        args_new,
-                        invoke,
-                        function,
-                    }),
-                };
-                decode_datum::<DisplayDatum>(
-                    &mut store,
-                    &value,
-                    &self.classes,
-                    &(0..0),
-                    0,
-                    &mut budget,
-                )
-            },
-        )
+        session.with_operation_budget(|session| {
+            let display = display_calls(session)?;
+            let interrupt = session.host_work_interrupt();
+            session.data_inspect_calls(
+                value,
+                &self.factories["lazy-sval"],
+                |mut store, value, args_new, invoke, function| {
+                    let mut budget = Budget {
+                        include_metadata: false,
+                        display: Some(display),
+                        interrupt,
+                        active: Vec::new(),
+                        profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
+                        host_fuel: std::cell::Cell::new(0),
+                        lazy_calls: std::cell::Cell::new(0),
+                        calls: Some(ReadCalls {
+                            args_new,
+                            invoke,
+                            function,
+                        }),
+                    };
+                    decode_datum::<DisplayDatum>(
+                        &mut store,
+                        &value,
+                        &self.classes,
+                        &(0..0),
+                        0,
+                        &mut budget,
+                    )
+                },
+            )
+        })
     }
     fn read_with_metadata(
         &self,
@@ -901,36 +981,46 @@ impl FormBridge {
         include_metadata: bool,
     ) -> Result<Form, SessionError> {
         self.check(session)?;
-        session
-            .data_inspect_calls(
-                value,
-                &self.factories["lazy-sval"],
-                |mut store, value, args_new, invoke, function| {
-                    let mut budget = Budget {
-                        display: None,
-                        include_metadata,
-                        nodes: 4096,
-                        units: 1_048_576,
-                        calls: Some(ReadCalls {
-                            args_new,
-                            invoke,
-                            function,
-                        }),
-                    };
-                    decode(&mut store, &value, &self.classes, &span, 0, &mut budget)
-                },
-            )
-            .map_err(|failure| match failure {
-                SessionError::Host(failure) => SessionError::Compile(Diagnostic {
-                    span,
-                    message: if include_metadata {
-                        format!("Invalid or unsupported compiled macro data: {failure}")
-                    } else {
-                        format!("Invalid or unsupported value display: {failure}")
+        session.with_operation_budget(|session| {
+            let interrupt = session.host_work_interrupt();
+            session
+                .data_inspect_calls(
+                    value,
+                    &self.factories["lazy-sval"],
+                    |mut store, value, args_new, invoke, function| {
+                        let mut budget = Budget {
+                            display: None,
+                            include_metadata,
+                            interrupt,
+                            active: Vec::new(),
+                        profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
+                        host_fuel: std::cell::Cell::new(0),
+                        lazy_calls: std::cell::Cell::new(0),
+                            calls: Some(ReadCalls {
+                                args_new,
+                                invoke,
+                                function,
+                            }),
+                        };
+                        let result = decode(&mut store, &value, &self.classes, &span, 0, &mut budget);
+                        if budget.profile {
+                            eprintln!("macro-decode host-fuel={} lazy-calls={} success={}", budget.host_fuel.get(), budget.lazy_calls.get(), result.is_ok());
+                        }
+                        result
                     },
-                }),
-                failure => failure,
-            })
+                )
+                .map_err(|failure| match failure {
+                    SessionError::Host(failure) => SessionError::Compile(Diagnostic {
+                        span,
+                        message: if include_metadata {
+                            format!("Invalid or unsupported compiled macro data: {failure}")
+                        } else {
+                            format!("Invalid or unsupported value display: {failure}")
+                        },
+                    }),
+                    failure => failure,
+                })
+        })
     }
 }
 fn error(message: &str) -> wasmtime::Error {
@@ -940,6 +1030,106 @@ fn error(message: &str) -> wasmtime::Error {
 #[cfg(test)]
 mod identity_tests {
     use super::*;
+
+    #[test]
+    fn realized_lazy_data_retains_guest_dispatch_and_metadata_checks() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let cached = session.eval("(new cljs.core/LazySeq nil nil (list 42) nil)").unwrap();
+            session.collect().unwrap();
+            let actual = bridge.read(&mut session, &cached, 11..19).unwrap();
+            assert!(matches!(&actual.kind, Kind::List(items)
+                if items.len() == 1 && items[0].kind == Kind::Number(42.0)));
+
+            session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+            let malformed = session.eval("(new cljs.core/LazySeq nil nil (new cljs.core/List 7 42 nil 1 nil) nil)").unwrap();
+            let error = bridge.read(&mut session, &malformed, 21..29).unwrap_err();
+            assert!(error.to_string().contains("metadata"), "{error:?}");
+            let cycle = session.eval("(new cljs.core/LazySeq nil nil nil nil)").unwrap();
+            session.inspect(&cycle, |mut store, value| {
+                let storage = fields(&mut store, &value, 4)?;
+                let data = reference(&storage[1])?.as_array(&store)?.unwrap();
+                data.set(&mut store, 2, value)?;
+                Ok(())
+            }).unwrap();
+            assert!(bridge.read(&mut session, &cycle, 31..39).unwrap_err()
+                .to_string().contains("Cyclic runtime sequence"));
+        }
+    }
+
+    #[test]
+    fn macro_form_quote_uses_an_explicit_stack_and_accepts_large_forms() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let leaf = Form {
+                span: 0..1,
+                metadata: vec![],
+                kind: Kind::Number(7.0),
+            };
+            let wide = Form {
+                span: 0..1,
+                metadata: vec![],
+                kind: Kind::Vector(vec![leaf.clone(); 5_000]),
+            };
+            let mut deep = leaf.clone();
+            for _ in 0..256 {
+                deep = Form {
+                    span: 0..1,
+                    metadata: vec![],
+                    kind: Kind::Vector(vec![deep]),
+                };
+            }
+            let large_text = Form {
+                span: 0..1,
+                metadata: vec![],
+                kind: Kind::String(vec![b'x' as u16; 1_100_000]),
+            };
+            let metadata = Form {
+                span: 0..1,
+                metadata: vec![Form {
+                    span: 0..1,
+                    metadata: vec![],
+                    kind: Kind::Map(vec![
+                        Form {
+                            span: 0..1,
+                            metadata: vec![],
+                            kind: Kind::Keyword(suss_reader::Keyword {
+                                namespace: None,
+                                name: "payload".into(),
+                            }),
+                        },
+                        large_text,
+                    ]),
+                }],
+                kind: Kind::Vector(vec![leaf]),
+            };
+            let wide_value = bridge.quote_ref(&mut session, &wide).unwrap();
+            let wide_result = bridge.read(&mut session, &wide_value, 0..1).unwrap();
+            assert!(matches!(&wide_result.kind, Kind::Vector(items) if items.len() == 5_000));
+            let deep_value = bridge.quote_ref(&mut session, &deep).unwrap();
+            let mut deep_result = bridge.read(&mut session, &deep_value, 0..1).unwrap();
+            for _ in 0..256 {
+                let Kind::Vector(mut items) = deep_result.take_kind() else {
+                    panic!("deep quoted vector did not decode as a vector");
+                };
+                assert_eq!(items.len(), 1);
+                deep_result = items.pop().unwrap();
+            }
+            let metadata_value = bridge.quote_ref(&mut session, &metadata).unwrap();
+            let observed = bridge.read(&mut session, &metadata_value, 0..1).unwrap();
+            assert_eq!(observed.metadata.len(), 1);
+            let Kind::Map(metadata_pairs) = &observed.metadata[0].kind else {
+                panic!("metadata payload did not remain a map");
+            };
+            assert!(
+                matches!(&metadata_pairs[1].kind, Kind::String(text) if text.len() == 1_100_000)
+            );
+            let unobserved = bridge
+                .read_with_metadata(&mut session, &metadata_value, 0..1, false)
+                .unwrap();
+            assert!(unobserved.metadata.is_empty());
+        }
+    }
 
     #[test]
     fn macro_data_reads_sparse_array_abi_without_inventing_hole_syntax() {
@@ -962,9 +1152,9 @@ mod identity_tests {
                 let value = session.eval(source).unwrap();
                 session.collect().unwrap();
                 let form = bridge.read(&mut session, &value, 0..1).unwrap();
-                match form.kind {
+                match form.into_parts().2 {
                     Kind::List(items) | Kind::Vector(items) => assert_eq!(
-                        items.into_iter().map(|item| item.kind).collect::<Vec<_>>(),
+                        items.into_iter().map(|item| item.into_parts().2).collect::<Vec<_>>(),
                         expected
                     ),
                     _ => panic!("Expected collection for {source}"),
@@ -1042,7 +1232,7 @@ mod identity_tests {
                 .unwrap();
             session.collect().unwrap();
             assert!(
-                matches!(bridge.read(&mut session, &seq, 0..1).unwrap().kind, Kind::List(items) if items.iter().map(|item| item.kind.clone()).collect::<Vec<_>>() == vec![Kind::Number(1.0), Kind::Number(2.0)])
+                matches!(&bridge.read(&mut session, &seq, 0..1).unwrap().kind, Kind::List(items) if items.iter().map(|item| item.kind.clone()).collect::<Vec<_>>() == vec![Kind::Number(1.0), Kind::Number(2.0)])
             );
         }
     }
@@ -1092,8 +1282,13 @@ mod identity_tests {
                             &mut Budget {
                                 display: None,
                                 include_metadata: true,
-                                nodes: 4096,
-                                units: 1_048_576,
+                                interrupt: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(
+                                    false,
+                                )),
+                                active: Vec::new(),
+                        profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
+                        host_fuel: std::cell::Cell::new(0),
+                        lazy_calls: std::cell::Cell::new(0),
                                 calls: None,
                             },
                         )
@@ -1103,6 +1298,45 @@ mod identity_tests {
                 assert!(rejected, "copied descriptor identity accepted for {source}");
             }
         }
+    }
+
+    #[test]
+    fn macro_data_rejects_recursive_collection_cycles() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let vector = session.eval("[1]").unwrap();
+            session
+                .inspect(&vector, |mut store, root| {
+                    let (_, data) = object(&mut store, &root, &bridge.classes)?;
+                    let (_, owner) = object(&mut store, &data[4], &bridge.classes)?;
+                    let backing = array(&mut store, &owner[0])?;
+                    let dense = reference(&backing[2])?
+                        .as_array(&store)?
+                        .ok_or_else(|| error("Expected vector tail dense storage"))?;
+                    dense.set(&mut store, 0, root.clone())?;
+                    Ok(())
+                })
+                .unwrap();
+            let error = bridge
+                .read(&mut session, &vector, 0..1)
+                .expect_err("recursive runtime collection must be rejected");
+            assert!(
+                error.to_string().contains("Cyclic runtime value"),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
+    fn macro_data_host_traversal_exhausts_the_operation_fuel() {
+        let mut session = Session::new_repl().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let value = session.eval("[1]").unwrap();
+        session.set_operation_fuel(1);
+        let error = bridge
+            .read(&mut session, &value, 0..1)
+            .expect_err("decoder host work must consume operation fuel");
+        assert!(error.to_string().to_lowercase().contains("fuel"), "{error}");
     }
 }
 fn reference(value: &Val) -> wasmtime::Result<&Rooted<AnyRef>> {
@@ -1129,8 +1363,11 @@ fn array(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<V
     let array = reference(value)?
         .as_array(&*store)?
         .ok_or_else(|| error("Expected field array"))?;
-    if array.len(&*store)? > 4096 {
-        return Err(error("Macro data field array exceeds bound"));
+    // Every array read here is a descriptor owner, nominal field vector, or
+    // sparse-array node. Their pinned ABI widths are at most six; source
+    // elements are traversed through source_array_suffix instead.
+    if array.len(&*store)? > 6 {
+        return Err(error("Nominal field array exceeds ABI layout"));
     }
     Ok(array.elems(&mut *store)?.collect())
 }
@@ -1179,10 +1416,8 @@ fn text(
     ) {
         return Err(error("Expected UTF16 element storage"));
     }
-    budget.units = budget
-        .units
-        .checked_sub(array.len(&*store)? as usize)
-        .ok_or_else(|| error("Macro data exceeds total UTF16 storage bound"))?;
+    let len = array.len(&*store)?;
+    charge_read_work(store, len as u64, budget)?;
     array
         .elems(&mut *store)?
         .map(|unit| match unit {
@@ -1233,8 +1468,11 @@ struct Budget {
     display: Option<DisplayCalls>,
     include_metadata: bool,
     calls: Option<ReadCalls>,
-    nodes: usize,
-    units: usize,
+    interrupt: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    active: Vec<Val>,
+    profile: bool,
+    host_fuel: std::cell::Cell<u64>,
+    lazy_calls: std::cell::Cell<u64>,
 }
 fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
     if budget.display.is_some() {
@@ -1243,12 +1481,52 @@ fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
         error(&format!("{name} are not macro syntax"))
     }
 }
-fn spend(budget: &mut Budget) -> wasmtime::Result<()> {
-    budget.nodes = budget
-        .nodes
-        .checked_sub(1)
-        .ok_or_else(|| error("Macro data traversal exceeds 4096 nodes"))?;
-    Ok(())
+fn charge_read_work(store: &mut StoreContextMut<'_, ()>, units: u64, budget: &Budget) -> wasmtime::Result<()> {
+    if !budget.profile {
+        return Session::consume_host_work(store.as_context_mut(), units, &budget.interrupt);
+    }
+    let before = store.get_fuel()?;
+    let result = Session::consume_host_work(store.as_context_mut(), units, &budget.interrupt);
+    let after = store.get_fuel()?;
+    budget.host_fuel.set(budget.host_fuel.get().saturating_add(before.saturating_sub(after)));
+    result
+}
+fn spend(store: &mut StoreContextMut<'_, ()>, budget: &mut Budget) -> wasmtime::Result<()> {
+    charge_read_work(store, 1, budget)
+}
+fn enter_active(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    budget: &mut Budget,
+    cycle_message: &str,
+    allow_top_alias: bool,
+) -> wasmtime::Result<bool> {
+    if value.anyref().flatten().is_none() {
+        return Ok(false);
+    }
+    for (index, prior) in budget.active.iter().enumerate() {
+        charge_read_work(store, 1, budget)?;
+        if Rooted::ref_eq(&*store, reference(prior)?, reference(value)?)? {
+            if allow_top_alias && index + 1 == budget.active.len() {
+                // `decode_datum` marks a sequence root active before calling
+                // `sequence` for that same value. Record this one permitted
+                // wrapper alias as its own stack frame: otherwise a nested
+                // self-link (for example NodeSeq.s = NodeSeq) is repeatedly
+                // mistaken for the same wrapper and recurses until fuel runs
+                // out instead of reporting the cycle.
+                budget.active.push(value.clone());
+                return Ok(true);
+            }
+            return Err(error(cycle_message));
+        }
+    }
+    budget.active.push(value.clone());
+    Ok(true)
+}
+fn leave_active(budget: &mut Budget, pushed: bool) {
+    if pushed {
+        budget.active.pop();
+    }
 }
 fn decode(
     store: &mut StoreContextMut<'_, ()>,
@@ -1268,10 +1546,28 @@ fn decode_datum<T: DatumTarget>(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<T> {
-    if depth >= 64 {
-        return Err(error("Macro data nesting exceeds 64"));
-    }
-    spend(budget)?;
+    let pushed = enter_active(
+        store,
+        value,
+        budget,
+        "Cyclic runtime value cannot be transported as macro data",
+        false,
+    )?;
+    let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        decode_datum_inner(store, value, classes, span, depth, budget)
+    });
+    leave_active(budget, pushed);
+    result
+}
+fn decode_datum_inner<T: DatumTarget>(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<T> {
+    spend(store, budget)?;
     if let Some(calls) = budget.display {
         if let Some(leaf) = calls.read(store, *value)? {
             return T::opaque(leaf);
@@ -1344,9 +1640,9 @@ fn decode_datum<T: DatumTarget>(
                         return Err(error("Invalid persistent array map field layout"));
                     }
                     let count = integer(store, &data[1])?;
-                    let entries = source_elements(store, &data[2], classes)?;
-                    if entries.len() != count * 2 || entries.len() > budget.nodes {
-                        return Err(error("Map count disagrees with bounded pair storage"));
+                    let entries = source_elements(store, &data[2], classes, budget)?;
+                    if count.checked_mul(2) != Some(entries.len()) {
+                        return Err(error("Map count disagrees with pair storage"));
                     }
                     DecodedKind::Map(
                         entries
@@ -1374,11 +1670,9 @@ fn decode_datum<T: DatumTarget>(
                                 return Err(error("Invalid set array map layout"));
                             }
                             let count = integer(store, &map_data[1])?;
-                            let entries = source_elements(store, &map_data[2], classes)?;
-                            if entries.len() != count * 2 || count > budget.nodes {
-                                return Err(error(
-                                    "Set count disagrees with bounded array map storage",
-                                ));
+                            let entries = source_elements(store, &map_data[2], classes, budget)?;
+                            if count.checked_mul(2) != Some(entries.len()) {
+                                return Err(error("Set count disagrees with array map storage"));
                             }
                             entries
                         }
@@ -1474,21 +1768,49 @@ fn sequence<T: DatumTarget>(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<T>> {
-    if depth >= 64 {
-        return Err(error("Macro sequence nesting exceeds 64"));
-    }
+    let pushed = enter_active(
+        store,
+        value,
+        budget,
+        "Cyclic runtime sequence cannot be transported as macro data",
+        true,
+    )?;
+    let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        sequence_inner(store, value, classes, span, depth, budget)
+    });
+    leave_active(budget, pushed);
+    result
+}
+fn sequence_inner<T: DatumTarget>(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<T>> {
     let mut cursor = value.clone();
     let mut items = Vec::new();
     let mut counts = Vec::new();
+    let mut cursor_roots = Vec::<Val>::new();
     let mut first_segment = true;
     loop {
         if absent(store, &cursor)? {
             break;
         }
-        spend(budget)?;
+        for prior in &cursor_roots {
+            charge_read_work(store, 1, budget)?;
+            if Rooted::ref_eq(&*store, reference(prior)?, reference(&cursor)?)? {
+                return Err(error(
+                    "Cyclic runtime sequence cannot be transported as macro data",
+                ));
+            }
+        }
+        cursor_roots.push(cursor.clone());
+        spend(store, budget)?;
         if reference(&cursor)?.as_array(&*store)?.is_some() {
             for unit in text(store, &cursor, budget)? {
-                spend(budget)?;
+                spend(store, budget)?;
                 items.push(T::plain(Form {
                     span: span.clone(),
                     metadata: vec![],
@@ -1524,6 +1846,7 @@ fn sequence<T: DatumTarget>(
                     .ok_or_else(|| error("Invalid invocation arguments"))?
                     .set(&mut *store, 0, cursor.clone())?;
                 let mut result = [Val::null_any_ref()];
+                budget.lazy_calls.set(budget.lazy_calls.get().saturating_add(1));
                 calls.invoke.call(
                     &mut *store,
                     &[calls.function.clone(), args[0].clone()],
@@ -1542,11 +1865,11 @@ fn sequence<T: DatumTarget>(
                 if class != Class::ArrayChunk || chunk.len() != 3 {
                     return Err(error("Chunked cons needs canonical array chunk storage"));
                 }
-                let entries = source_elements(store, &chunk[0], classes)?;
+                let entries = source_elements(store, &chunk[0], classes, budget)?;
                 let start = integer(store, &chunk[1])?;
                 let end = integer(store, &chunk[2])?;
-                if start >= end || end > entries.len() || end - start > budget.nodes {
-                    return Err(error("Invalid bounded array chunk cursor"));
+                if start >= end || end > entries.len() {
+                    return Err(error("Invalid array chunk cursor"));
                 }
                 for entry in &entries[start..end] {
                     items.push(decode_datum(
@@ -1628,7 +1951,7 @@ fn sequence<T: DatumTarget>(
                 if !first_segment {
                     metadata(store, &data[0], classes, span, depth, budget)?;
                 }
-                let nodes = source_elements(store, &data[1], classes)?;
+                let nodes = source_elements(store, &data[1], classes, budget)?;
                 let index = integer(store, &data[2])?;
                 let is_array = matches!(class, Class::ArrayNodeSeq);
                 if index > nodes.len()
@@ -1662,13 +1985,10 @@ fn sequence<T: DatumTarget>(
                         } else {
                             pairs.extend_from_slice(pair);
                         }
-                        if pairs.len() > budget.nodes {
-                            return Err(error("Hash node sequence exceeds bounded pair storage"));
-                        }
                     }
                 }
                 for pair in pairs.chunks_exact(2) {
-                    spend(budget)?;
+                    spend(store, budget)?;
                     let pair = pair
                         .iter()
                         .map(|entry| decode_datum(store, entry, classes, span, depth + 2, budget))
@@ -1690,16 +2010,12 @@ fn sequence<T: DatumTarget>(
                     metadata(store, &data[2], classes, span, depth, budget)?;
                 }
                 let index = integer(store, &data[1])?;
-                let entries = source_elements(store, &data[0], classes)?;
-                if entries.len() % 2 != 0
-                    || index % 2 != 0
-                    || index >= entries.len()
-                    || entries.len() - index > budget.nodes
-                {
-                    return Err(error("Invalid bounded array map sequence pair storage"));
+                let entries = source_elements(store, &data[0], classes, budget)?;
+                if entries.len() % 2 != 0 || index % 2 != 0 || index >= entries.len() {
+                    return Err(error("Invalid array map sequence pair storage"));
                 }
                 for pair in entries[index..].chunks_exact(2) {
-                    spend(budget)?;
+                    spend(store, budget)?;
                     let pair = pair
                         .iter()
                         // The generated entry vector is one syntax level below
@@ -1731,7 +2047,7 @@ fn sequence<T: DatumTarget>(
                 let count = integer(store, &vector_data[1])?;
                 let mut index = integer(store, &data[2])?;
                 let mut offset = integer(store, &data[3])?;
-                let mut node = source_elements(store, &data[1], classes)?;
+                let mut node = source_elements(store, &data[1], classes, budget)?;
                 if index >= count || offset >= node.len() {
                     return Err(error("Invalid chunked vector sequence index"));
                 }
@@ -1804,7 +2120,7 @@ fn append_indexed<T: DatumTarget>(
         if index > f64::from(u32::MAX) {
             return Err(error("IndexedSeq index exceeds source array storage"));
         }
-        let values = source_array_suffix(store, &data[0], classes, index as u32, budget.nodes)?;
+        let values = source_array_suffix(store, &data[0], classes, index as u32, budget)?;
         for value in values {
             items.push(decode_datum(
                 store,
@@ -1829,16 +2145,10 @@ fn append_indexed<T: DatumTarget>(
         return Err(error("IndexedSeq index exceeds backing storage"));
     }
     let index = index as u32;
-    if (length - index) as usize > budget.nodes {
-        return Err(error("IndexedSeq exceeds macro data traversal bound"));
-    }
+    charge_read_work(store, u64::from(length - index), budget)?;
     for offset in index..length {
         let value = backing.get(&mut *store, offset)?;
-        spend(budget)?;
-        budget.units = budget
-            .units
-            .checked_sub(1)
-            .ok_or_else(|| error("Macro data exceeds total UTF16 storage bound"))?;
+        spend(store, budget)?;
         let Val::I32(unit) = value else {
             return Err(error("Invalid UTF16 indexed unit"));
         };
@@ -1857,8 +2167,8 @@ fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result
         return Err(error("Invalid vector integer field"));
     };
     let n = f64::from_bits(*bits);
-    if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > 4096.0 {
-        return Err(error("Vector integer field exceeds transport bounds"));
+    if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > f64::from(u32::MAX) {
+        return Err(error("Vector integer field exceeds ABI range"));
     }
     Ok(n as usize)
 }
@@ -1866,8 +2176,9 @@ fn source_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
     classes: &BTreeMap<i64, (Class, SessionValue)>,
+    budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
-    source_array_suffix(store, value, classes, 0, 4096)
+    source_array_suffix(store, value, classes, 0, budget)
 }
 
 // Read the current sparse source-array ABI directly. Never execute guest code or
@@ -1877,7 +2188,7 @@ fn source_array_suffix(
     value: &Val,
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     start: u32,
-    bound: usize,
+    budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     fn uint32(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
         let data = fields(store, value, 1)?;
@@ -1903,9 +2214,7 @@ fn source_array_suffix(
         return Err(error("Source array index exceeds logical length"));
     }
     let count = (length - start) as usize;
-    if count > bound {
-        return Err(error("Source array suffix exceeds macro transport bound"));
-    }
+    charge_read_work(store, count as u64, budget)?;
     let dense = reference(&backing[2])?
         .as_array(&*store)?
         .ok_or_else(|| error("Invalid dense source array storage"))?;
@@ -1925,8 +2234,10 @@ fn source_array_suffix(
         &mut *store,
         wasmtime::I31::wrapping_u32(6),
     )));
+    let mask_len = mask.len(&*store)?;
+    charge_read_work(store, mask_len as u64, budget)?;
     let mut result = vec![undefined; count];
-    for index in 0..mask.len(&*store)? {
+    for index in 0..mask_len {
         let flag = mask.get(&mut *store, index)?.unwrap_i32();
         if !(0..=1).contains(&flag) {
             return Err(error("Invalid source array presence bit"));
@@ -1939,12 +2250,9 @@ fn source_array_suffix(
     let mut seen: Vec<Val> = Vec::new();
     let mut previous = None;
     while !nil(store, &next)? {
-        if seen.len() >= 4096 {
-            return Err(error(
-                "Source array sparse chain exceeds macro transport bound",
-            ));
-        }
+        spend(store, budget)?;
         for prior in &seen {
+            charge_read_work(store, 1, budget)?;
             if Rooted::ref_eq(&*store, reference(prior)?, reference(&next)?)? {
                 return Err(error("Cyclic source array sparse chain"));
             }
@@ -1976,12 +2284,12 @@ fn node_elements(
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
-    spend(budget)?;
+    spend(store, budget)?;
     let (class, data) = object(store, value, classes)?;
     if !matches!(class, Class::VectorNode) || data.len() != 2 {
         return Err(error("Invalid persistent vector trie node"));
     }
-    let items = source_elements(store, &data[1], classes)?;
+    let items = source_elements(store, &data[1], classes, budget)?;
     if items.len() != 32 {
         return Err(error("Invalid vector trie array width"));
     }
@@ -2003,7 +2311,7 @@ fn vector<T: DatumTarget>(
     if shift < 5 || shift > 30 || shift % 5 != 0 {
         return Err(error("Invalid vector trie shift"));
     }
-    let tail = source_elements(store, &data[4], classes)?;
+    let tail = source_elements(store, &data[4], classes, budget)?;
     let offset = if count < 32 {
         0
     } else {
@@ -2076,7 +2384,7 @@ fn vector_leaf(
     }
     let mut node = node_elements(store, &data[3], classes, budget)?;
     if index >= tail_offset {
-        let tail = source_elements(store, &data[4], classes)?;
+        let tail = source_elements(store, &data[4], classes, budget)?;
         if tail.len() != count - tail_offset {
             return Err(error("Vector count disagrees with tail storage"));
         }
@@ -2104,9 +2412,6 @@ fn hash_map<T: DatumTarget>(
     if data.len() != 6 {
         return Err(error("Invalid persistent hash map field layout"));
     }
-    if integer(store, &data[1])? > budget.nodes / 2 {
-        return Err(error("Hash map exceeds bounded pair storage"));
-    }
     hash_map_pairs(store, data, classes, budget)?
         .iter()
         .map(|entry| decode_datum(store, entry, classes, span, depth + 1, budget))
@@ -2122,9 +2427,6 @@ fn hash_map_pairs(
         return Err(error("Invalid persistent hash map field layout"));
     }
     let count = integer(store, &data[1])?;
-    if count > budget.nodes {
-        return Err(error("Hash map exceeds bounded pair storage"));
-    }
     let has_nil = match sentinel(store, &data[3])? {
         Some(2) => false,
         Some(4) => true,
@@ -2141,7 +2443,7 @@ fn hash_map_pairs(
     if !nil(store, &data[2])? {
         hash_node(store, &data[2], classes, 0, budget, &mut pairs)?;
     }
-    if pairs.len() != count * 2 {
+    if count.checked_mul(2) != Some(pairs.len()) {
         return Err(error("Hash map count disagrees with trie storage"));
     }
     Ok(pairs)
@@ -2156,13 +2458,30 @@ fn map_sequence_pairs(
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
-    if cursor_depth >= 64 {
-        return Err(error("Key sequence cursor nesting exceeds 64"));
-    }
+    let pushed = enter_active(
+        store,
+        value,
+        budget,
+        "Cyclic map key cursor cannot be transported as macro data",
+        false,
+    )?;
+    let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        map_sequence_pairs_inner(store, value, classes, cursor_depth, budget)
+    });
+    leave_active(budget, pushed);
+    result
+}
+fn map_sequence_pairs_inner(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    cursor_depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Val>> {
     if nil(store, value)? {
         return Ok(Vec::new());
     }
-    spend(budget)?;
+    spend(store, budget)?;
     let (class, data) = object(store, value, classes)?;
     let mut pairs = Vec::new();
     match class {
@@ -2171,7 +2490,7 @@ fn map_sequence_pairs(
                 return Err(error("Invalid array map key cursor layout"));
             }
             let index = integer(store, &data[1])?;
-            let entries = source_elements(store, &data[0], classes)?;
+            let entries = source_elements(store, &data[0], classes, budget)?;
             if entries.len() % 2 != 0 || index % 2 != 0 || index >= entries.len() {
                 return Err(error("Invalid array map key cursor range"));
             }
@@ -2181,7 +2500,7 @@ fn map_sequence_pairs(
             if data.len() != 5 {
                 return Err(error("Invalid hash key cursor layout"));
             }
-            let nodes = source_elements(store, &data[1], classes)?;
+            let nodes = source_elements(store, &data[1], classes, budget)?;
             let index = integer(store, &data[2])?;
             let is_array = matches!(class, Class::ArrayNodeSeq);
             if index > nodes.len()
@@ -2215,9 +2534,6 @@ fn map_sequence_pairs(
                     } else {
                         pairs.extend_from_slice(pair);
                     }
-                    if pairs.len() > budget.nodes {
-                        return Err(error("Key cursor exceeds bounded pair storage"));
-                    }
                 }
             }
         }
@@ -2246,9 +2562,6 @@ fn map_sequence_pairs(
         }
         _ => return Err(error("Key sequence needs a canonical map cursor")),
     }
-    if pairs.len() > budget.nodes {
-        return Err(error("Key cursor exceeds bounded pair storage"));
-    }
     Ok(pairs)
 }
 fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
@@ -2273,7 +2586,7 @@ fn hash_node(
     if level > 7 {
         return Err(error("Hash trie depth exceeds 32-bit hash path"));
     }
-    spend(budget)?;
+    spend(store, budget)?;
     let (class, data) = object(store, value, classes)?;
     match class {
         Class::BitmapIndexedNode => {
@@ -2281,11 +2594,14 @@ fn hash_node(
                 return Err(error("Invalid bitmap node field layout"));
             }
             let count = bitmap(store, &data[1])?.count_ones() as usize;
-            let entries = source_elements(store, &data[2], classes)?;
-            if entries.len() < count * 2 || entries.len() % 2 != 0 {
+            let entries = source_elements(store, &data[2], classes, budget)?;
+            let Some(occupied_len) = count.checked_mul(2) else {
+                return Err(error("Bitmap population overflows pair storage"));
+            };
+            if entries.len() < occupied_len || entries.len() % 2 != 0 {
                 return Err(error("Bitmap population exceeds pair storage"));
             }
-            for pair in entries[..count * 2].chunks_exact(2) {
+            for pair in entries[..occupied_len].chunks_exact(2) {
                 if absent(store, &pair[0])? {
                     hash_node(store, &pair[1], classes, level + 1, budget, pairs)?;
                 } else {
@@ -2298,7 +2614,7 @@ fn hash_node(
                 return Err(error("Invalid array node field layout"));
             }
             let count = integer(store, &data[1])?;
-            let entries = source_elements(store, &data[2], classes)?;
+            let entries = source_elements(store, &data[2], classes, budget)?;
             if entries.len() != 32 {
                 return Err(error("Invalid hash array node width"));
             }
@@ -2319,11 +2635,14 @@ fn hash_node(
             }
             bitmap(store, &data[1])?;
             let count = integer(store, &data[2])?;
-            let entries = source_elements(store, &data[3], classes)?;
-            if count == 0 || entries.len() < count * 2 || entries.len() % 2 != 0 {
+            let entries = source_elements(store, &data[3], classes, budget)?;
+            let Some(occupied_len) = count.checked_mul(2) else {
+                return Err(error("Collision count overflows pair storage"));
+            };
+            if count == 0 || entries.len() < occupied_len || entries.len() % 2 != 0 {
                 return Err(error("Collision count exceeds pair storage"));
             }
-            for pair in entries[..count * 2].chunks_exact(2) {
+            for pair in entries[..occupied_len].chunks_exact(2) {
                 if absent(store, &pair[0])? {
                     return Err(error("Nil key in hash collision node"));
                 }
@@ -2331,9 +2650,6 @@ fn hash_node(
             }
         }
         _ => return Err(error("Hash map needs canonical trie nodes")),
-    }
-    if pairs.len() > budget.nodes {
-        return Err(error("Hash trie exceeds bounded pair storage"));
     }
     Ok(())
 }

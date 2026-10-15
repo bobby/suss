@@ -20,6 +20,7 @@ pub mod compiler_names;
 pub mod aot;
 pub mod command;
 pub use origin::{SourceOrigin, SourcePosition};
+pub(crate) use origin::clone_form_metered;
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
 
@@ -62,7 +63,26 @@ pub enum MacroReload {
     Reload,
     ReloadAll,
 }
+pub const DEFAULT_OPERATION_FUEL: u64 = 10_000_000;
 pub trait ExpansionHost {
+    /// Cumulative native work allowance for one preparation request. Compiled
+    /// hosts return their configured Session allowance and debit guest/host work
+    /// from that Session as well. The compiler enforces this fallback even when
+    /// a custom host leaves its accounting hooks at their defaults.
+    fn expansion_work_fuel(&self) -> u64 { DEFAULT_OPERATION_FUEL }
+    /// One preparation request shares its expansion budget across transformer
+    /// calls, recursive re-expansion and nested macro dependency preparation.
+    fn begin_expansion_request(&mut self, _span: Range<usize>) -> Result<(), Diagnostic> {
+        Ok(())
+    }
+    fn end_expansion_request(&mut self) {}
+
+    /// Charge native analysis performed within the current expansion request.
+    /// Hosts executing compiled transformers share this with their guest fuel.
+    fn charge_expansion_work(&mut self, _work: u64, _span: Range<usize>) -> Result<(), Diagnostic> {
+        Ok(())
+    }
+
     /// Immutable selected macro source identities; None means unverified/unknown.
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { None }
 
@@ -73,7 +93,14 @@ pub trait ExpansionHost {
         forms: &[suss_reader::forms::Form], origin: Option<&SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
         let _ = (phase, forms, origin);
-        compile_ir(function)
+        let mut remaining = self.expansion_work_fuel();
+        compile_ir_metered(function, &mut |work| {
+            self.charge_expansion_work(work, function.span.clone())?;
+            remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                span: function.span.clone(), message: "IR verification fuel exhausted".into(),
+            })?;
+            Ok(())
+        })
     }
 
     fn supports_macro_imports(&self) -> bool {
@@ -134,15 +161,14 @@ pub fn analyze_in(
     environment: &resolve::Environment,
     phase: resolve::Phase,
 ) -> Result<hir::Hir, Diagnostic> {
-    let mut forms = read_forms(source)
+    let forms = read_forms(source)
         .and_then(resolve_conditionals)
         .map_err(|error| Diagnostic {
             span: error.span,
             message: error.message,
         })?;
-    let mut snapshot = environment.clone();
-    source::namespace(&mut forms, &mut snapshot, phase, &mut NoExpansion)?;
-    Ok(hir::prepare_with_origin(&forms, 0..source.len(), &snapshot, phase, &mut NoExpansion, Some(&SourceOrigin::new(source, None)))?.0)
+    Ok(analyze_selected_fragment(forms, 0..source.len(), environment, phase,
+        &mut NoExpansion, Some(&SourceOrigin::new(source, None)))?.hir)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
     compile_in(
@@ -167,6 +193,18 @@ pub fn compile_in(
 /// Emit a normalized function only after graph/type verification and Wasm validation.
 pub fn compile_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
     let wasm = emit::emit(function)?;
+    artifact_identity::annotate_ir(&wasm).map_err(|message| Diagnostic { span: function.span.clone(), message })
+}
+
+pub(crate) fn compile_ir_metered(
+    function: &ir::Function,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    ir::verify_metered(function, meter)?;
+    compile_verified_ir(function)
+}
+pub(crate) fn compile_verified_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
+    let wasm = emit::emit_verified(function)?;
     artifact_identity::annotate_ir(&wasm).map_err(|message| Diagnostic { span: function.span.clone(), message })
 }
 
@@ -230,10 +268,13 @@ pub fn prepare_fragment_forms_with_origin(
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<PreparedFragment, Diagnostic> {
-    let forms = resolve_conditionals(forms).map_err(|error| Diagnostic {
-        span: error.span, message: error.message,
-    })?;
-    prepare_selected_fragment_with_origin(forms, span, environment, phase, expander, origin)
+    let mut request = ExpansionRequest::new(expander, span.clone())?;
+    let forms = suss_reader::forms::resolve_conditionals_metered(forms, &mut |work| {
+        request.charge_expansion_work(work, span.clone()).map_err(|error| suss_reader::ParseError {
+            message: error.message, span: error.span, expected: vec![],
+        })
+    }).map_err(|error| Diagnostic { span: error.span, message: error.message })?;
+    prepare_selected_fragment_with_origin(forms, span, environment, phase, &mut request, origin)
 }
 pub(crate) fn prepare_selected_fragment_with_expander(
     forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
@@ -247,10 +288,30 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<PreparedFragment, Diagnostic> {
-    let analyzed = analyze_selected_fragment(forms.clone(), span, environment, phase, expander, origin)?;
-    let function = ir::lower(&analyzed.hir)?;
-    let wasm = expander.emit_fragment(&function, phase, &forms, origin)?;
-    let dependencies = expander.artifact_dependencies();
+    let mut request = ExpansionRequest::new(expander, span.clone())?;
+    request.charge_expansion_work(
+        u64::try_from(forms.len()).unwrap_or(u64::MAX),
+        span.clone(),
+    )?;
+    let mut analysis_forms = Vec::with_capacity(forms.len());
+    for form in &forms {
+        analysis_forms.push(clone_form_metered(form, &mut |work| {
+            request.charge_expansion_work(work, span.clone())
+        })?);
+    }
+    let analyzed = analyze_selected_fragment(
+        analysis_forms,
+        span.clone(),
+        environment,
+        phase,
+        &mut request,
+        origin,
+    )?;
+    let function = ir::lower_metered(&analyzed.hir, &mut |work| {
+        request.charge_expansion_work(work, analyzed.hir.span.clone())
+    })?;
+    let wasm = request.emit_fragment(&function, phase, &forms, origin)?;
+    let dependencies = request.artifact_dependencies();
     let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
     Ok(PreparedFragment { wasm, environment: analyzed.environment,
@@ -263,14 +324,62 @@ pub(crate) struct AnalyzedFragment {
     pub cells: Vec<resolve::Global>,
     pub namespace_directive: Option<suss_reader::forms::Form>,
 }
+pub(crate) struct ExpansionRequest<'a> {
+    host: &'a mut dyn ExpansionHost,
+    remaining: u64,
+}
+impl<'a> ExpansionRequest<'a> {
+    pub(crate) fn new(host: &'a mut dyn ExpansionHost, span: Range<usize>) -> Result<Self, Diagnostic> {
+        host.begin_expansion_request(span)?;
+        let remaining = host.expansion_work_fuel();
+        Ok(Self { host, remaining })
+    }
+}
+impl ExpansionHost for ExpansionRequest<'_> {
+    fn expansion_work_fuel(&self) -> u64 { self.remaining }
+    fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+        self.host.charge_expansion_work(work, span.clone())?;
+        self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span,
+            message: "Macro expansion native work fuel exhausted".into(),
+        })?;
+        Ok(())
+    }
+    fn emit_fragment(
+        &mut self, function: &ir::Function, phase: resolve::Phase,
+        forms: &[suss_reader::forms::Form], origin: Option<&SourceOrigin>,
+    ) -> Result<Vec<u8>, Diagnostic> {
+        self.host.emit_fragment(function, phase, forms, origin)
+    }
+    fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
+        self.host.artifact_dependencies()
+    }
+    fn supports_macro_imports(&self) -> bool { self.host.supports_macro_imports() }
+    fn source_paths(&mut self, paths: &[std::path::PathBuf]) { self.host.source_paths(paths) }
+    fn load_macro_namespace(&mut self, namespace: &str, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
+        self.host.load_macro_namespace(namespace, span)
+    }
+    fn load_macro_namespace_with_policy(&mut self, namespace: &str, policy: MacroReload, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
+        self.host.load_macro_namespace_with_policy(namespace, policy, span)
+    }
+    fn expand(&mut self, form: &suss_reader::forms::Form, context: ExpansionContext<'_>) -> Result<Option<suss_reader::forms::Form>, Diagnostic> {
+        self.host.expand(form, context)
+    }
+}
+impl Drop for ExpansionRequest<'_> {
+    fn drop(&mut self) {
+        self.host.end_expansion_request();
+    }
+}
 pub(crate) fn analyze_selected_fragment(
     mut forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<AnalyzedFragment, Diagnostic> {
+    let mut request = ExpansionRequest::new(expander, span.clone())?;
     let mut snapshot = environment.clone();
-    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, expander)?;
-    let (hir, environment) = hir::prepare_with_origin(&forms, span, &snapshot, phase, expander, origin)?;
+    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, &mut request)?;
+    let (hir, environment) = hir::prepare_with_origin(&forms, span, &snapshot, phase, &mut request, origin)?;
     let cells = environment
         .cells()
         .into_iter()

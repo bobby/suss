@@ -74,7 +74,7 @@ fn reified_object_retains_capture_with_only_host_handle_after_gc() {
         session.collect().unwrap();
         let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
         let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-        let suss_reader::forms::Kind::Number(actual) = decoded.kind else {
+        let suss_reader::forms::Kind::Number(actual) = decoded.into_parts().2 else {
             panic!("captured vector field")
         };
         assert_eq!(actual.to_bits(), 23.0_f64.to_bits());
