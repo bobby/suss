@@ -93,7 +93,19 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(0),
         Return,
         End,
-        I32Const(0),
+    ]);
+    // Short property names avoid loop bookkeeping. Both operand guards and the
+    // length comparison above still run before any unit access; no callback
+    // occurs, and longer strings continue through the original live-unit loop.
+    for index in 0..4 {
+        body.extend([LocalGet(3), I32Const(index), I32LeU, If(BlockType::Empty), I32Const(1), Return, End]);
+        for local in [0, 1] {
+            body.extend([LocalGet(local), RefCastNonNull(HeapType::Concrete(STRING)), I32Const(index), ArrayGetU(STRING)]);
+        }
+        body.extend([I32Ne, If(BlockType::Empty), I32Const(0), Return, End]);
+    }
+    body.extend([
+        I32Const(4),
         LocalSet(2),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),

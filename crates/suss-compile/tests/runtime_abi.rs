@@ -8589,7 +8589,7 @@ fn runtime_abi_property_key_comparison_preserves_utf16_live_mutation_and_error_o
     let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
     let equal = runtime.get_func(&mut store, "property-key-equal").unwrap();
     let mut result = [Val::I32(-1)];
-    for units in [vec![], vec![0], vec![0xd800, 0, 0xdfff, 0xffff, 97]] {
+    for units in [vec![], vec![0], vec![97, 98], vec![97, 98, 99], vec![97, 98, 99, 100], vec![0xd800, 0, 0xdfff, 0xffff, 97], vec![97; 9]] {
         let left = text(&mut store, runtime, &units);
         let right = text(&mut store, runtime, &units);
         let longer = text(&mut store, runtime, &[units.as_slice(), &[98]].concat());
@@ -8598,13 +8598,13 @@ fn runtime_abi_property_key_comparison_preserves_utf16_live_mutation_and_error_o
             equal.call(&mut store, &[a.clone(), b.clone()], &mut result).unwrap();
             assert_eq!(result[0].unwrap_i32(), expected);
         }
-        if !units.is_empty() {
+        for (index, unit) in units.iter().enumerate() {
             runtime.get_func(&mut store, "string-set-unit").unwrap()
-                .call(&mut store, &[right.clone(), Val::I32(0), Val::I32(99)], &mut result).unwrap();
+                .call(&mut store, &[right.clone(), Val::I32(index as i32), Val::I32(i32::from(*unit) ^ 1)], &mut result).unwrap();
             equal.call(&mut store, &[left.clone(), right.clone()], &mut result).unwrap();
             assert_eq!(result[0].unwrap_i32(), 0, "later calls must observe changed units");
             runtime.get_func(&mut store, "string-set-unit").unwrap()
-                .call(&mut store, &[right.clone(), Val::I32(0), Val::I32(i32::from(units[0]))], &mut result).unwrap();
+                .call(&mut store, &[right.clone(), Val::I32(index as i32), Val::I32(i32::from(*unit))], &mut result).unwrap();
             equal.call(&mut store, &[left.clone(), right.clone()], &mut result).unwrap();
             assert_eq!(result[0].unwrap_i32(), 1);
         }
