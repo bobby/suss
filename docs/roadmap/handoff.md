@@ -27961,3 +27961,28 @@ Archive SHA2561d3f37790e9b3c4cd0fa8b3ebdc6a19530e3625f6d2a50d046ca93d5e45ad2eb;
 495 manifested payloads (plus manifest), all payload hashes read back verified.
 Cache receipt/current raw paths: /home/bobby/.cache/suss-m4-work/current-hash-stacks/;
 package receipt: /home/bobby/.cache/suss-m4-work/current-hash-stacks-package-result.json.
+
+Resolved diagnostic supplement (no guest rerun): wasmparser export/body ranges
+from saved41 modules and reconstructed frozen-source Macro ABI uniquely match
+EVERY raw frame by function index plus module_offset-function_offset/body start.
+The ABI was reconstructed after execution, not originally captured. Its SHA256
+09b92d1fbc75d4507f0f3669b87b04f178712a219d25b9ac8498d5ea06ab1f5a
+exactly matches old saved hash-profile-macro-runtime.wasm; old exports also match
+fresh wasmparser parsing. Original index-only source inference is superseded by
+this byte/range mapping. Unexported bodies remain explicitly unexported indices.
+Resolved top counts: invoke70,macro-memo-field-set10,property-key-equal6;
+named-property-get/number-box/object-method-invoke-dispatch/closure-environment3
+each. Representative full top-to-root stack:
+property-field-name-supported -> property-find -> fixed-named-property-get ->
+named-property-get -> hash_symbol -> hash_keyword -> Keyword method body ->
+unexported186 (source live dispatcher) -> hash. These are sample counts, NOT
+exclusive fuel costs, and do not establish an optimization savings estimate.
+
+Supplement m4-current-hash-stacks-resolved-2026-10-16.tar.gz
+SHA256491281f8180b8a552d439b63c034ef3394001d440e9d500241b5b125d3d9d52d
+contains19 manifested payloads: raw wasmparser output, module hash/export/body
+map, all resolved raw samples/full-stack summaries, reconstruction/parse scripts,
+reconstructed ABI, original raw samples/log/receipt and verification report.
+Before restoration all436 snapshots match tested9b22bf5 and current source bytes;
+all495 original payload hashes and all original raw/cache bytes verify. Original
+archive and diagnostic commit remain immutable. No further guest execution.
