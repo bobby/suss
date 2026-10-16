@@ -27452,3 +27452,7 @@ review remains required before integration; no subagent dispatch capability was
 available in this session. Next bounded step is physical-store observation plus
 independent write-time domain proof, preserving write-then-throw behavior and
 rejecting generic writes/poison-and-restore; this checkpoint does not implement it.
+
+### Public cumulative checks on dispatch observer (2026-10-16)
+
+Frozen3485718 compiled_macro_cumulative_fuel target TERMINAL101:9pass1fail0ignored300.71s (wrapper320.55s), source_unchanged:true. Solefailure source_metadata_keeps_identity_with_a_replaced_hash_method remains [false false true true true true] inbothcallerphases versus required [true true true true true true]. Other9tests including metadata observer/nonobserver and poison-at-write restoration pass. No new failure in this selection; no receipt authorization added. Command cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture, jobs2/ihash-dispatch-target. Archive docs/roadmap/evidence/m4-dispatch-public-cumulative-2026-10-16.tar.gz SHA256 aeb76c91c78923ddc90c1918002260273ede7739354db47af8c4252c23213e64 retainsrawlog/freeze/runner/receipt. Independent3485718 code/archive review found no blockers; active-frame GC has owned-root proof but no explicit forced-GCexecution yet. Next physicalstore/domainproof remains required.
