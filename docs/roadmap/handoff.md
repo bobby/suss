@@ -27348,3 +27348,14 @@ the unchanged comparator successfully without rerunning or changing observations
 CI38884636909 is live on107a736; no result is implied. No current-head full
 baseline yet. Remaining child/binding/location evidence gaps require explicit
 reconciliation, and Symbol/Keyword native parity is under investigation.
+
+### Binding identity and source-location equivalents at107a736 (2026-10-16)
+
+All four focused suss-cli tests pass, source unchanged across424 frozen hashes:
+- `reference_asts_keep_initializer_scope_metadata_and_variadic_self_identity`: exit0, wrapper84.11s.
+- `compiled_source_macro_form_retains_reader_positions_on_nested_syntax`: exit0, wrapper164.29s.
+- `compiled_source_macro_file_metadata_uses_the_loaded_source_path`: exit0, wrapper117.38s.
+- `compiled_argument_lists_preserve_quoted_data_and_actual_file_positions`: exit0, wrapper144.70s.
+Commands: `cargo test -p suss-cli --locked --test TARGET NAME -- --test-threads=2 --nocapture`, exact target/name mapping in archived runner/receipt; jobs2/target-m4-prototype. These execute captured/shadowed initializer identity, variadic self, nested reader positions (including Unicode/CRLF), loaded filename and quoted argument-list metadata. They supplement public10; they do not replace the six failing source-transport corpora.
+
+Archive `m4-binding-location-107a736-2026-10-16.tar.gz`, SHA256 `e2112e0c0ac9a2029c1588220b4130a9d0838e5838176f0e3eabe4f092d3c33e`, six hashed payloads plus manifest, read back verified. No full workspace acceptance, terminal CI or issue closure claimed.
