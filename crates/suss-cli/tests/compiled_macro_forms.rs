@@ -1,6 +1,6 @@
 use suss_cli::portable_session::{Session, SessionError};
 use suss_compile::portable::resolve::Phase;
-use suss_reader::forms::{read_forms, Form, Kind};
+use suss_reader::forms::{Form, Kind, read_forms};
 use wasmtime::Val;
 
 #[test]
@@ -212,22 +212,22 @@ fn compiled_macro_forms_reject_unknown_malformed_metadata_and_bounded_data() {
     macros.enter_namespace("user").unwrap();
     macros.collect().unwrap();
     let form = bridge.read(&mut macros, &old, 1..2).unwrap();
-    let Kind::Symbol(symbol) = form.kind else {
+    let Kind::Symbol(symbol) = &form.kind else {
         panic!("Captured class identity");
     };
     assert_eq!(symbol.name, "x");
     let empty = macros.eval("'()").unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &empty, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
+        matches!(&bridge.read(&mut macros, &empty, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
     );
     let cons = macros.eval("(cons 1 (cons 2 nil))").unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &cons, 0..1).unwrap().kind, Kind::List(items) if items.len() == 2)
+        matches!(&bridge.read(&mut macros, &cons, 0..1).unwrap().kind, Kind::List(items) if items.len() == 2)
     );
 }
 
 #[test]
-fn compiled_macro_forms_bound_cycles_and_total_utf16_allocation() {
+fn compiled_macro_forms_reject_cycles_and_charge_large_finite_transport_to_fuel() {
     use suss_cli::portable_macro_data::FormBridge;
     let mut macros = Session::new_macro().unwrap();
     let bridge = FormBridge::new(&mut macros).unwrap();
@@ -246,23 +246,32 @@ fn compiled_macro_forms_bound_cycles_and_total_utf16_allocation() {
         })
         .unwrap();
     let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &cycle, 10..20) else {
-        panic!("Cyclic syntax must fail within traversal bound");
+        panic!("Cyclic syntax must fail explicitly");
     };
-    assert!(error.message.contains("4096"));
+    assert!(
+        error.message.contains("Cyclic runtime sequence"),
+        "{error:?}"
+    );
+    assert_eq!(error.span, 10..20);
     let wide = macros
         .eval(&format!("(list {})", vec!["1"; 128].join(" ")))
         .unwrap();
     macros.collect().unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &wide, 0..1).unwrap().kind, Kind::List(items) if items.len() == 128)
+        matches!(&bridge.read(&mut macros, &wide, 0..1).unwrap().kind, Kind::List(items) if items.len() == 128)
     );
     let deep = macros
         .eval("(loop [i 0 s nil] (if (< i 65) (recur (+ i 1) (list s)) s))")
         .unwrap();
-    let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &deep, 0..1) else {
-        panic!("Runtime nesting must be bounded independently of source nesting");
-    };
-    assert!(error.message.contains("nesting exceeds 64"));
+    let mut form = bridge.read(&mut macros, &deep, 0..1).unwrap();
+    for _ in 0..65 {
+        let Kind::List(mut items) = form.take_kind() else {
+            panic!("Retain complete nested list")
+        };
+        assert_eq!(items.len(), 1);
+        form = items.remove(0);
+    }
+    assert!(matches!(form.kind, Kind::Nil));
     let strings = macros.eval("(list \"a\" \"b\")").unwrap();
     macros
         .inspect(&strings, |mut store, value| {
@@ -299,12 +308,25 @@ fn compiled_macro_forms_bound_cycles_and_total_utf16_allocation() {
             Ok(())
         })
         .unwrap();
-    let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &strings, 21..30) else {
-        panic!("Total copied UTF16 storage must be bounded");
+    let large = bridge.read(&mut macros, &strings, 21..30).unwrap();
+    let Kind::List(items) = large.into_parts().2 else {
+        panic!("Retain the source sequence")
     };
-    assert!(error.message.contains("total UTF16"));
+    assert_eq!(items.len(), 2);
+    for item in items {
+        let Kind::String(units) = item.into_parts().2 else {
+            panic!("Retain UTF16 string data")
+        };
+        assert_eq!(units.len(), 524_289);
+        assert!(units.iter().all(|unit| *unit == 97));
+    }
+    macros.set_operation_fuel(100_000);
+    let error = bridge.read(&mut macros, &strings, 21..30).unwrap_err();
+    assert!(matches!(error, SessionError::Trap(ref trap)
+        if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+        "Copied UTF16 work must exhaust real Store fuel: {error:?}");
     let value = macros.eval("'ok").unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::Symbol(symbol) if symbol.name == "ok")
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::Symbol(symbol) if symbol.name == "ok")
     );
 }

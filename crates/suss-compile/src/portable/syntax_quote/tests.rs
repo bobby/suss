@@ -351,18 +351,25 @@ fn namespace_aliases_referrals_exclusions_and_phase_are_observed() {
 }
 
 #[test]
-fn bounded_expansion_rejects_large_synthetic_inputs_without_consuming_ids() {
+fn finite_synthetic_input_uses_work_budget_and_failure_preserves_ids() {
     let mut state = ReaderState::default();
+    let env = Environment::default();
     let item = read("x");
     let form = data(&(0..1), Kind::Vector(vec![item; 65_536]));
-    assert!(
-        state
-            .expand(&form, &Environment::default(), Phase::Runtime)
-            .unwrap_err()
-            .message
-            .contains("bounds")
-    );
-    assert_eq!(state.next_gensym, 0);
+    assert_eq!(state.expand(&form, &env, Phase::Runtime).unwrap(), form);
+    let quote = read("`(x# x#)");
+    let before = state.clone();
+    let mut remaining = 12_u64;
+    let error = state.expand_with_origin_metered(&quote, &env, Phase::Runtime, None, &mut |work| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: quote.span.clone(), message: "test syntax quote fuel exhausted".into(),
+        })?;
+        Ok(())
+    }).unwrap_err();
+    assert!(error.message.contains("fuel exhausted"));
+    assert_eq!(state, before);
+    state.expand(&quote, &env, Phase::Runtime).unwrap();
+    assert!(state.next_gensym > before.next_gensym);
 }
 
 #[test]
@@ -374,8 +381,7 @@ fn scalar_bits_utf16_and_textual_collection_effect_order_are_preserved() {
             state: &mut ReaderState::default(),
             environment: &env,
             phase: Phase::Runtime,
-            work: 65_536,
-            units: 1_048_576,
+            meter: &mut |_| Ok(()),
             origin: None,
         }
         .quote(&form, &mut BTreeMap::new(), 0)
@@ -398,13 +404,7 @@ fn scalar_bits_utf16_and_textual_collection_effect_order_are_preserved() {
     }
     let mut state = ReaderState::default();
     let oversized = data(&(0..1), Kind::String(vec![0x61; 1_048_577]));
-    assert!(
-        state
-            .expand(&oversized, &env, Phase::Runtime)
-            .unwrap_err()
-            .message
-            .contains("text bounds")
-    );
+    assert_eq!(state.expand(&oversized, &env, Phase::Runtime).unwrap(), oversized);
 }
 
 #[test]
@@ -417,15 +417,26 @@ fn private_reader_cell_is_absent_from_source_namespace_identities_until_promoted
         // The linker still owns the shared live cell, but &env namespace :defs
         // must describe source bindings rather than hidden reader support.
         assert!(env.cells().contains(&global));
-        assert!(!super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&global));
+        assert!(
+            !super::super::hir::SourceNamespace::capture(&env, phase)
+                .identities
+                .contains(&global)
+        );
         env.enter_namespace(phase, fallback.namespace()).unwrap();
-        assert!(!super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&fallback));
+        assert!(
+            !super::super::hir::SourceNamespace::capture(&env, phase)
+                .identities
+                .contains(&fallback)
+        );
         env.enter_namespace(phase, "cljs.core").unwrap();
         env.declare_cell(phase, "cljs.core", "sequence").unwrap();
-        assert!(super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&global));
+        assert!(
+            super::super::hir::SourceNamespace::capture(&env, phase)
+                .identities
+                .contains(&global)
+        );
     }
 }
-
 
 #[test]
 fn publication_probe_cannot_promote_real_reader_or_internal_reservations() {
@@ -501,4 +512,28 @@ fn publication_probe_cannot_promote_real_reader_or_internal_reservations() {
             assert!(env.is_hidden_cell(phase, reserved.namespace(), reserved.name()));
         }
     }
+}
+
+#[test]
+fn private_reader_sequence_provenance_and_initializer_use_the_caller_meter() {
+    let source = "`(1 2)";
+    let env = Environment::default();
+    let raw = ReaderState::default().expand(&read(source), &env, Phase::Runtime).unwrap();
+    let lowered = lower_generated(&raw).unwrap();
+    let origin = super::super::SourceOrigin::new(source, None)
+        .with_reader_expansion(lowered.clone(), raw);
+    let mut used = 0;
+    assert!(reader_sequence_initializer(&lowered, &env, Phase::Runtime, Some(&origin), &mut |work| {
+        used += work; Ok(())
+    }).unwrap().is_some());
+    assert!(used > 0);
+    let mut remaining = used - 1;
+    let error = reader_sequence_initializer(&lowered, &env, Phase::Runtime, Some(&origin), &mut |work| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: lowered.span.clone(), message: "test sequence initializer fuel exhausted".into(),
+        })?;
+        Ok(())
+    }).unwrap_err();
+    assert!(error.message.contains("fuel exhausted"));
+    assert!(reader_sequence_initializer(&lowered, &env, Phase::Runtime, Some(&origin), &mut |_| Ok(())).unwrap().is_some());
 }

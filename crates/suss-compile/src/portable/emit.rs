@@ -68,6 +68,22 @@ fn emit_utf16_literal(
 }
 pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(ir)?;
+    emit_verified(ir)
+}
+/// The caller must verify this exact immutable graph before entry.
+pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+    emit_options(ir, None)
+}
+
+pub(super) fn emit_memo_plan(plan: &super::bootstrap::VerifiedMemoPlan<'_>) -> Result<Vec<u8>, Diagnostic> {
+    ir::verify(plan.root())?;
+    let mut emission = plan.emission();
+    let bytes = emit_options(plan.root(), Some(&mut emission))?;
+    emission.finish()?;
+    Ok(bytes)
+}
+
+fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -79,6 +95,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function));
     let mut names = BTreeSet::new();
+    if memos.is_some() { names.insert(super::bootstrap::MEMO_WRITE_IMPORT_NAME); }
     let mut throws = !futures.is_empty();
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
@@ -301,7 +318,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-greater"
             | "comparison-greater-equal"
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
-            "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "object-field-set" | super::bootstrap::MEMO_WRITE_IMPORT_NAME => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -352,7 +369,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         };
         types.ty().function(params, results);
         imports.import(
-            "suss.runtime",
+            if *name == super::bootstrap::MEMO_WRITE_IMPORT_NAME { super::bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE } else { "suss.runtime" },
             name,
             EntityType::Function(type_count + i as u32),
         );
@@ -393,7 +410,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None,
+        &futures, None, memos.as_deref_mut(),
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -404,7 +421,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None,
+            &futures, None, memos.as_deref_mut(),
         )?);
     }
     for dispatcher in &dispatchers {
@@ -414,7 +431,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation))?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut())?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -456,6 +473,7 @@ fn collect_bodies<'a>(
     dispatchers: &mut Vec<&'a GeneralClosureBody>,
     futures: &mut Vec<&'a FutureBody>,
 ) {
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
     for block in &function.blocks {
         for inst in &block.instructions {
             match &inst.operation {
@@ -478,6 +496,7 @@ fn collect_bodies<'a>(
             }
         }
     }
+    });
 }
 fn emit_dispatcher(
     body: &GeneralClosureBody,
@@ -639,6 +658,7 @@ fn emit_function(
     dispatchers: &[&GeneralClosureBody],
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
+    mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
 ) -> Result<Function, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
@@ -1110,11 +1130,12 @@ fn emit_function(
                             }
                         }
                         Nominal::FieldSet(field) => {
+                            let selected = if let Some(memos) = memos.as_deref_mut() { memos.select(ir, inst)? } else { None };
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&I32Const(*field as i32))
+                                .instruction(&I32Const(selected.as_ref().map_or(*field as i32, |site| site.index as i32)))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset))
-                                .instruction(&Call(index("object-field-set")))
+                                .instruction(&Call(index(if selected.is_some() { super::bootstrap::MEMO_WRITE_IMPORT_NAME } else { "object-field-set" })))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
                         Nominal::Field(field) | Nominal::Key(field) => {

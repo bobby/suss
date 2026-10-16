@@ -10,8 +10,9 @@
 //! Adapted indexing metadata and read-meta precedence from pinned tools.reader,
 //! reader.clj181–239,308–328,372–406 at c4295f303100bbf5afac449242d30bca1126f1a1.
 //! Source SHA256: 614e857a4d92e22edbaf38e4e87c3f499e8703fb7f930c23e1df136535cc4597.
-use super::{Form, Kind};
+use super::{Form, Kind, WorkMeter, charge};
 use crate::Keyword;
+use crate::ParseError;
 use std::{collections::HashMap, ops::Range};
 
 pub(super) type Carets = HashMap<(usize, usize), (usize, usize)>;
@@ -89,18 +90,29 @@ fn pair(span: &Range<usize>, key: &str, value: Kind) -> [Form; 2] {
     ]
 }
 
-pub(super) fn attach(source: &str, positions: &Positions, file: Option<&str>, form: &mut Form) {
+pub(super) fn attach_metered(
+    source: &str,
+    positions: &Positions,
+    file: Option<&str>,
+    form: &mut Form,
+    meter: &mut WorkMeter<'_>,
+) -> Result<(), ParseError> {
     if !matches!(
         &form.kind,
         Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_) | Kind::Symbol(_)
     ) {
-        return;
+        return Ok(());
     }
     // Pinned read-symbol returns the slash special symbol without indexing meta.
     if matches!(&form.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "/")
     {
-        return;
+        return Ok(());
     }
+    charge(
+        meter,
+        9 + file.map_or(0, |name| 2 + name.len() as u64),
+        form.span.clone(),
+    )?;
     let (line, column) = positions.position(source, form.span.start);
     let (end_line, end_column) = positions.position(source, form.span.end);
     let mut entries = vec![];
@@ -120,22 +132,43 @@ pub(super) fn attach(source: &str, positions: &Positions, file: Option<&str>, fo
         ));
     }
     form.metadata.push(data(&form.span, Kind::Map(entries)));
+    Ok(())
 }
 
-pub(super) fn list_prefixes(forms: &mut [Form], carets: &Carets) {
+pub(super) fn list_prefixes_metered(
+    forms: &mut [Form],
+    carets: &Carets,
+    meter: &mut WorkMeter<'_>,
+) -> Result<(), ParseError> {
+    stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        list_prefixes_inner(forms, carets, meter)
+    })
+}
+fn list_prefixes_inner(
+    forms: &mut [Form],
+    carets: &Carets,
+    meter: &mut WorkMeter<'_>,
+) -> Result<(), ParseError> {
     for form in forms {
-        list_prefixes(&mut form.metadata, carets);
+        charge(meter, 1, form.span.clone())?;
+        list_prefixes_metered(&mut form.metadata, carets, meter)?;
         if matches!(form.kind, Kind::List(_)) {
             for prefix in &mut form.metadata {
                 if let Some(&(line, column)) = carets.get(&(prefix.span.start, prefix.span.end)) {
+                    charge(meter, 4, prefix.span.clone())?;
                     let mut entries = vec![];
                     entries.extend(pair(&prefix.span, "line", Kind::Number(line as f64)));
                     entries.extend(pair(&prefix.span, "column", Kind::Number(column as f64)));
                     match &prefix.kind {
-                        Kind::Map(items) => entries.extend(items.clone()),
-                        Kind::Keyword(_) => {
-                            entries.extend([prefix.clone(), data(&prefix.span, Kind::Bool(true))])
+                        Kind::Map(items) => {
+                            for item in items {
+                                entries.push(item.clone_metered(meter)?);
+                            }
                         }
+                        Kind::Keyword(_) => entries.extend([
+                            prefix.clone_metered(meter)?,
+                            data(&prefix.span, Kind::Bool(true)),
+                        ]),
                         Kind::Symbol(_) | Kind::String(_) => {
                             entries.push(data(
                                 &prefix.span,
@@ -144,7 +177,7 @@ pub(super) fn list_prefixes(forms: &mut [Form], carets: &Carets) {
                                     name: "tag".into(),
                                 }),
                             ));
-                            entries.push(prefix.clone());
+                            entries.push(prefix.clone_metered(meter)?);
                         }
                         _ => unreachable!("reader validated metadata prefix"),
                     }
@@ -154,11 +187,12 @@ pub(super) fn list_prefixes(forms: &mut [Form], carets: &Carets) {
         }
         match &mut form.kind {
             Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) => {
-                list_prefixes(items, carets)
+                list_prefixes_metered(items, carets, meter)?
             }
             _ => (),
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]

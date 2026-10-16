@@ -117,7 +117,7 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
 
 
 def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
-    """Bind the authored range-check optimization to its exact source bytes."""
+    """Pin the complete ASCII guard and reserved dispatch, not runtime execution."""
     path = 'docs/compatibility/record-macro-foundations/abi-adaptations.json'
     if provenance is None:
         provenance = json.loads((ROOT / path).read_text())
@@ -125,49 +125,32 @@ def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
     if (provenance.get('schema'), provenance.get('source'), provenance.get('license')) != (
             1, expected_path, 'MIT OR Apache-2.0'):
         raise ValueError('named-property ABI adaptation identity/license mismatch')
+    if provenance.get('upstream') != PIN:
+        raise ValueError('named-property ABI upstream mismatch')
+    expected_whitelist = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$'
+    if provenance.get('allowed-ascii') != expected_whitelist:
+        raise ValueError('named-property ABI ASCII whitelist mismatch')
+    if provenance.get('algorithm') != 'ascii-masks-lowercase-fastpath-reserved-dispatch':
+        raise ValueError('named-property ABI algorithm mismatch')
+    anchor = '    // Named instance access must not mistake raw source names for munged fields.\n'
+    boundary = '    // Stride one is a field schema, stride two a mixed native/name table.\n'
+    if provenance.get('guard-location') != anchor.strip()[3:]:
+        raise ValueError('named-property ABI guard location mismatch')
+    # Independent of the manifest's refreshable whole-file hash: include setup,
+    # all instructions, whitelist construction, reserved names and registration.
+    # Keep exact bytes (including comments identifying the pinned upstream).
+    expected_guard_hash = 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5'
+    if provenance.get('guard-sha256') != expected_guard_hash:
+        raise ValueError('named-property ABI guard identity mismatch')
     raw = repository_file(ROOT, expected_path).read_bytes() if source_bytes is None else source_bytes
     if provenance.get('source-file-sha256') != digest(raw):
         raise ValueError('stale named-property ABI source hash')
-    expected_ranges = [['a', 'z'], ['A', 'Z'], ['0', '9']]
-    expected_sequence = ['LocalGet(2)', 'I32Const(low as i32)', 'I32Sub',
-                         'I32Const((high - low) as i32)', 'I32LeU']
-    if provenance.get('guard-location') != 'Named instance access must not mistake raw source names for munged fields.':
-        raise ValueError('named-property ABI guard location mismatch')
-    if provenance.get('allowed-ranges') != expected_ranges:
-        raise ValueError('named-property ABI allowed ranges mismatch')
-    if provenance.get('instruction-sequence') != expected_sequence:
-        raise ValueError('named-property ABI instruction sequence mismatch')
-    source = raw.decode()
-    anchor = provenance['guard-location']
-    if source.count(anchor) != 1:
-        raise ValueError('named-property ABI guard anchor must occur exactly once')
-    if source.count('for (low, high) in') != 1:
-        raise ValueError('named-property ABI range loop must occur exactly once')
-    match = re.search(r'for\s*\(low,\s*high\)\s*in\s*(\[[^\]]*\])\s*\{',
-                      source[source.index(anchor):], re.S)
-    if match is None:
-        raise ValueError('named-property ABI range loop missing after field guard anchor')
-    start = source.index(anchor) + match.start()
-    block_start = source.index('{', start)
-    depth = 0
-    end = None
-    for index in range(block_start, len(source)):
-        if source[index] == '{':
-            depth += 1
-        elif source[index] == '}':
-            depth -= 1
-            if depth == 0:
-                end = index + 1
-                break
-    if end is None:
-        raise ValueError('named-property ABI range loop block is unclosed')
-    actual_block = re.sub(r'\s+', '', source[start:end])
-    range_items = ', '.join(f"(b'{low}', b'{high}')" for low, high in expected_ranges)
-    operations = ', '.join(expected_sequence)
-    expected_block = re.sub(r'\s+', '',
-        f'for (low, high) in [{range_items}] {{ body.extend([ {operations}, ]); }}')
-    if actual_block != expected_block:
-        raise ValueError('named-property ABI range guard block differs from its recorded location/ranges/instructions')
+    first, last = anchor.encode(), boundary.encode()
+    if raw.count(first) != 1 or raw.count(last) != 1:
+        raise ValueError('named-property ABI guard boundaries must occur exactly once')
+    start, end = raw.index(first), raw.index(last)
+    if end <= start or digest(raw[start:end]) != expected_guard_hash:
+        raise ValueError('named-property ABI complete guard differs from its recorded algorithm')
     return 1
 
 

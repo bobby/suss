@@ -83,6 +83,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             RefCastNonNull(HeapType::Concrete(STRING)),
             ArrayLen,
         ]);
+        if local == 0 {
+            body.push(LocalTee(3));
+        }
     }
     body.extend([
         I32Ne,
@@ -95,9 +98,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
+        LocalGet(3),
         I32GeU,
         BrIf(1),
     ]);
@@ -128,7 +129,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "property-key-equal",
         &[VALUE, VALUE],
         &[ValType::I32],
-        &[(1, ValType::I32)],
+        &[(2, ValType::I32)],
         &body,
     );
 
@@ -147,25 +148,57 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
     guard(&mut body, 0, STRING);
+    body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        LocalSet(1),
+    ]);
+    let mut native_names = std::collections::BTreeMap::<usize, Vec<(usize, &str)>>::new();
     for (kind, spelling) in [
         "null", "boolean", "number", "string", "function", "object", "array", "_",
     ]
     .into_iter()
     .enumerate()
     {
-        body.push(LocalGet(0));
-        name(&mut body, spelling);
+        native_names.entry(spelling.len()).or_default().push((kind, spelling));
+    }
+    // These closed ASCII spellings need no temporary GC strings. Length is
+    // immutable; read the live UTF-16 units on every call, without callbacks.
+    for (length, spellings) in native_names {
         body.extend([
-            Call(equal),
+            LocalGet(1),
+            I32Const(length as i32),
+            I32Eq,
             If(BlockType::Empty),
-            I32Const(kind as i32),
-            RefI31,
-            Return,
-            End,
         ]);
+        for (kind, spelling) in spellings {
+            body.push(I32Const(1));
+            for (index, unit) in spelling.encode_utf16().enumerate() {
+                body.extend([
+                    LocalGet(0),
+                    RefCastNonNull(HeapType::Concrete(STRING)),
+                    I32Const(index as i32),
+                    ArrayGetU(STRING),
+                    I32Const(i32::from(unit)),
+                    I32Eq,
+                    I32And,
+                ]);
+            }
+            body.extend([
+                If(BlockType::Empty),
+                I32Const(kind as i32),
+                RefI31,
+                Return,
+                End,
+            ]);
+        }
+        body.push(End);
     }
     body.push(LocalGet(0));
-    let normalize = b.function("property-native-name", &[VALUE], &[VALUE], &body);
+    let normalize = b.function_with_locals(
+        "property-native-name", &[VALUE], &[VALUE], &[(1, ValType::I32)], &body,
+    );
 
     // Named instance access must not mistake raw source names for munged fields.
     // Boundary spellings checked against cljs/analyzer.cljc js-reserved (line190)
@@ -173,15 +206,18 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // This original guard rejects the unsupported adaptation instead of porting it.
     let mut body = vec![];
     guard(&mut body, 0, STRING);
+    // Length is immutable and no callback occurs during this validation.
     body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        LocalSet(3),
         I32Const(0),
         LocalSet(1),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(1),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
+        LocalGet(3),
         I32GeU,
         BrIf(1),
         LocalGet(0),
@@ -190,30 +226,45 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayGetU(STRING),
         LocalSet(2),
     ]);
-    for (low, high) in [(b'a', b'z'), (b'A', b'Z'), (b'0', b'9')] {
-        body.extend([
-            LocalGet(2),
-            I32Const(low as i32),
-            I32Sub,
-            I32Const((high - low) as i32),
-            I32LeU,
-        ]);
+    // Exactly the existing ASCII whitelist, represented by two word masks.
+    // Reject all non-ASCII units before Wasm's modulo-64 shift semantics apply.
+    let mut allowed = [0_u64; 2];
+    for unit in b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$" {
+        allowed[usize::from(*unit) / 64] |= 1_u64 << (*unit % 64);
     }
     body.extend([
-        I32Or,
-        I32Or,
+        // Lowercase letters dominate source field names. This only skips the
+        // equivalent character mask, never the later reserved-spelling check.
         LocalGet(2),
-        I32Const(b'_' as i32),
-        I32Eq,
-        I32Or,
+        I32Const(i32::from(b'a')),
+        I32Sub,
+        I32Const(25),
+        I32LeU,
+        If(BlockType::Empty),
+        Else,
         LocalGet(2),
-        I32Const(b'$' as i32),
-        I32Eq,
-        I32Or,
-        I32Eqz,
+        I32Const(128),
+        I32GeU,
         If(BlockType::Empty),
         I32Const(0),
         Return,
+        End,
+        I64Const(allowed[0] as i64),
+        I64Const(allowed[1] as i64),
+        LocalGet(2),
+        I32Const(64),
+        I32LtU,
+        Select,
+        LocalGet(2),
+        I64ExtendI32U,
+        I64ShrU,
+        I64Const(1),
+        I64And,
+        I64Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
         End,
         LocalGet(1),
         I32Const(1),
@@ -297,10 +348,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         by_length.entry(reserved.len()).or_default().push(reserved);
     }
     body.extend([
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
-        LocalSet(3),
         LocalGet(3),
         I32Eqz,
         If(BlockType::Empty),
@@ -351,7 +398,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             }
             body.push(End);
         }
-        body.push(End);
+        // Length buckets are disjoint. After every reserved spelling in this
+        // bucket has failed, no later bucket can reject this fully checked name.
+        body.extend([I32Const(1), Return, End]);
     }
     body.push(I32Const(1));
     let field_supported = b.function_with_locals(
@@ -406,30 +455,28 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     nominal::error(&mut body);
     body.push(End);
     array(&mut body, 0);
-    body.extend([ArrayLen, LocalGet(2), I32RemU, If(BlockType::Empty)]);
+    body.extend([ArrayLen, LocalTee(6), LocalGet(2), I32RemU, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.extend([
         End,
         I32Const(-1),
         LocalSet(5),
+        // Field schemas have already established a STRING lookup key above.
+        // Keep full per-entry validation, but avoid repeating stride dispatch,
+        // key type tests, and identity/equality selection for every field.
+        LocalGet(2),
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
         I32Const(0),
         LocalSet(3),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(3),
     ]);
+    body.extend([LocalGet(6), I32GeU, BrIf(1)]);
     array(&mut body, 0);
-    body.extend([ArrayLen, I32GeU, BrIf(1)]);
-    array(&mut body, 0);
-    body.extend([
-        LocalGet(3),
-        ArrayGet(ARGS),
-        LocalSet(4),
-        LocalGet(2),
-        I32Const(1),
-        I32Eq,
-        If(BlockType::Empty),
-    ]);
+    body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(4)]);
     guard(&mut body, 4, STRING);
     body.extend([
         LocalGet(4),
@@ -438,9 +485,37 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
-    body.push(End);
     body.extend([
+        End,
+        LocalGet(4),
+        LocalGet(1),
+        Call(equal),
+        If(BlockType::Empty),
+        LocalGet(3),
+        LocalSet(5),
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
         Else,
+        // Stride-two tables retain native-key validation and first-match
+        // behavior. This is the former mixed-table scan without field branches.
+        I32Const(0),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+    ]);
+    body.extend([LocalGet(6), I32GeU, BrIf(1)]);
+    array(&mut body, 0);
+    body.extend([
+        LocalGet(3),
+        ArrayGet(ARGS),
+        LocalSet(4),
         LocalGet(4),
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Eqz,
@@ -461,8 +536,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
-    body.extend([End, End]);
     body.extend([
+        End,
         End,
         LocalGet(4),
         LocalGet(1),
@@ -481,22 +556,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(5),
         I32Const(0),
         I32LtS,
-        // Field aliases use the last constructor assignment. Method tables
-        // retain their existing first-match policy (stride two).
-        LocalGet(2),
-        I32Const(1),
-        I32Eq,
-        I32Or,
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(5),
         End,
         End,
         LocalGet(3),
-        LocalGet(2),
+        I32Const(2),
         I32Add,
         LocalSet(3),
         Br(0),
+        End,
         End,
         End,
         LocalGet(5),
@@ -505,7 +575,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "property-find",
         &[VALUE, VALUE, ValType::I32],
         &[ValType::I32],
-        &[(1, ValType::I32), (1, VALUE), (1, ValType::I32)],
+        &[(1, ValType::I32), (1, VALUE), (2, ValType::I32)],
         &body,
     );
 

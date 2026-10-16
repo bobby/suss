@@ -73,14 +73,9 @@ impl Analyzer<'_> {
         let body = self.nominal(form, Nominal::ObjectInvoke, operands);
         let mut bindings = vec![owner_binding, method_binding];
         bindings.extend(entries);
-        Ok(Hir {
-            source: None,
-            kind: Expression::Let {
-                bindings,
-                body: Box::new(body),
-            },
-            ..self.nominal(form, Nominal::ObjectInvoke, vec![])
-        })
+        let mut result = self.nominal(form, Nominal::ObjectInvoke, vec![]);
+        result.kind = Expression::Let { bindings, body: Box::new(body) };
+        Ok(result)
     }
 
     pub(super) fn vector_literal(

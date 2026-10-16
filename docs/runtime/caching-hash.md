@@ -120,3 +120,39 @@ completed all four targets with one explicit ignore. The subsequent
 completed all254 targets with1,802 passing tests,0 failures and22 explicit
 ignores, including every doctest target. Its terminal command exited0; earlier
 failed commands retain their original outcomes. Final-head CI remains required.
+
+Macro bootstrap generation has a private emission mode for the25 catalogued
+canonical hash memo stores. It consumes a verified plan borrowing the exact
+bootstrap IR and checks complete, nonduplicate site coverage. Selected calls
+carry the original receiver and computed result plus a source-order site ID to
+a Store-bound native bridge. The bridge charges the active operation budget,
+maps the ID to its original field slot and invokes the ordinary runtime setter.
+Runtime bootstrap emission retains ordinary setters so embedded AOT providers
+need no native compiler-integrity imports. Ordinary source compilation cannot
+select private emission; Session admission reserves the import namespace.
+
+Explicit recorded constructor inputs may register a private weak watch in the
+Macro host before guest exposure. Protected stores check the watched receiver,
+initial class/schema and canonical IHash method, preserve the ordinary setter,
+and stage a receipt binding the stored numeric reference and independent bits.
+Canonical Number payloads are immutable. Generic writes, replacement numeric
+objects and replaced IHash methods do not authenticate themselves. Runtime
+bootstrap stores remain uninstrumented and receive no such receipt.
+
+Standalone constructor watches provide provisional protected-store evidence.
+Recorded source data additionally binds each watch to a factory-grounded write
+domain. Before and after a protected store, the domain checks original payload
+storage, recorded child edges, initial seeds/class schemas/default parent, and
+all live child IHash obligations. A class method obligation is registered even
+when its method is already replaced; only an initially nil slot is eligible for
+a receipt. Clearing an initially non-nil slot cannot enable receipt minting.
+Source receipts require this live domain and bind the exact numeric reference
+and bits; later payload or method restoration cannot authorize an unsafe store.
+
+The metadata reuse controller consumes these source receipts together with
+independent logical expectations, construction facts and prototype authority.
+Standalone provisional receipts cannot authorize source reuse. Generic writes,
+UID changes and unsupported source layouts remain conservative rejection paths.
+A trap after storage changes can leave the memo unauthenticated; publication
+follows all fallible checks. Focused evidence and remaining fuel failures are in
+the handoff; these mechanisms do not establish whole-issue acceptance.

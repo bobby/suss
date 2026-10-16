@@ -95,12 +95,12 @@ fn compiled_macro_syntax_quote_matches_actual_pinned_execution_and_reader_form()
         runtime.collect().unwrap();
         let bridge = FormBridge::new(&mut runtime).unwrap();
         let actual = bridge.read(&mut runtime, &value, 0..28).unwrap();
-        let Kind::List(actual) = actual.kind else {
+        let Kind::List(actual) = actual.into_parts().2 else {
             panic!("Expected independently decoded observations")
         };
         assert_eq!(actual.len(), expected.len());
         for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            let Kind::Number(actual) = actual.kind else {
+            let Kind::Number(actual) = &actual.kind else {
                 panic!("Expected numeric observation {index}")
             };
             assert_eq!(
@@ -151,7 +151,7 @@ fn compiled_macro_reader_provenance_retains_automatic_parent_positions() {
         runtime.collect().unwrap();
         let bridge = FormBridge::new(&mut runtime).unwrap();
         let actual = bridge.read(&mut runtime, &value, 0..source.len()).unwrap();
-        let Kind::Vector(items) = actual.kind else {
+        let Kind::Vector(items) = actual.into_parts().2 else {
             panic!("reader observations")
         };
         assert_eq!(items.len(), 3);
@@ -178,7 +178,7 @@ fn syntax_quote_state_survives_fragments_and_failed_input_does_not_advance_it() 
         assert!(runtime.eval("`[value# ~unresolved]").is_err());
         let second = runtime.eval("`value#").unwrap();
         let second = bridge.read(&mut runtime, &second, 0..7).unwrap();
-        let (Kind::Symbol(first), Kind::Symbol(second)) = (first.kind, second.kind) else {
+        let (Kind::Symbol(first), Kind::Symbol(second)) = (&first.kind, &second.kind) else {
             panic!("generated symbols")
         };
         fn id(name: &str) -> u64 {

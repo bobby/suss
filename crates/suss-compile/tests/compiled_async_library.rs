@@ -48,7 +48,7 @@ fn bundled_async_library_loads_and_compiled_macros_preserve_ordered_body_forms()
             )
             .unwrap()
             .expect("bundled compiled macro must expand");
-        let Kind::List(items) = expanded.kind else {
+        let Kind::List(items) = expanded.into_parts().2 else {
             panic!("compiler marker must be a list");
         };
         let Kind::Symbol(head) = &items[0].kind else {

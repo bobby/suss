@@ -51,13 +51,13 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
     }
     let value = macros.eval("(seq \"a😀\")").unwrap();
     let form = bridge.read(&mut macros, &value, 20..30).unwrap();
-    let Kind::List(items) = form.kind else {
+    let Kind::List(items) = form.into_parts().2 else {
         panic!("Sequence form")
     };
     let actual = items
         .into_iter()
         .map(|f| {
-            let Kind::String(s) = f.kind else {
+            let Kind::String(s) = f.into_parts().2 else {
                 panic!("UTF16 unit")
             };
             s
@@ -68,7 +68,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         .eval("(new suss.core/IndexedSeq (array) 0 nil)")
         .unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
     );
     macros.eval("(def saved-seq suss.core/IndexedSeq)").unwrap();
     macros.eval("(ns suss.core) (def IndexedSeq nil)").unwrap();
@@ -76,11 +76,11 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
     macros.collect().unwrap();
     let value = macros.eval("(new saved-seq (array 42) 0 nil)").unwrap();
     assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==1)
+        matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==1)
     );
 }
 #[test]
-fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_limits() {
+fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_cycles() {
     let mut macros = Session::new_macro().unwrap();
     let bridge = FormBridge::new(&mut macros).unwrap();
     for source in [
@@ -91,7 +91,6 @@ fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_limits()
         "(new suss.core/IndexedSeq (array 1) nil nil)",
         "(new suss.core/IndexedSeq (list 1) 0 nil)",
         "(new suss.core/IndexedSeq (array 1) 0 42)",
-        "(new suss.core/IndexedSeq (make-array 4096) 0 nil)",
         "(let [a (array nil)] (let [s (new suss.core/IndexedSeq a 0 nil)] (aset a 0 s) s))",
     ] {
         let value = macros.eval(source).unwrap();
@@ -102,23 +101,69 @@ fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_limits()
     }
     macros.eval("(deftype Spoof [arr i meta])").unwrap();
     let value = macros.eval("(new Spoof (array 1) 0 nil)").unwrap();
+    let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &value, 91..99) else {
+        panic!("Reject spoofed IndexedSeq");
+    };
+    assert_eq!(error.span, 91..99);
+    let mut foreign = Session::new_macro().unwrap();
+    let value = foreign.eval("(seq (array 42))").unwrap();
+    // Session ownership fails before decoding; ForeignValue has no source span.
     assert!(matches!(
-        bridge.read(&mut macros, &value, 0..1),
-        Err(SessionError::Compile(_))
-    ));
-    let value = macros
-        .eval("(new suss.core/IndexedSeq (make-array 4094) 0 nil)")
-        .unwrap();
-    assert!(
-        matches!(bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==4094)
-    );
-    let value = macros
-        .eval("(new suss.core/IndexedSeq (make-array 4095) 0 nil)")
-        .unwrap();
-    assert!(matches!(
-        bridge.read(&mut macros, &value, 0..1),
-        Err(SessionError::Compile(_))
+        bridge.read(&mut macros, &value, 91..99),
+        Err(SessionError::ForeignValue)
     ));
     let value = macros.eval("(seq (array 42))").unwrap();
-    assert!(bridge.read(&mut macros, &value, 0..1).is_ok());
+    let form = bridge.read(&mut macros, &value, 91..99).unwrap();
+    assert_eq!(form.span, 91..99);
+    assert!(matches!(&form.kind, Kind::List(items)
+        if items.len() == 1 && items[0].kind == Kind::Number(42.0)));
+}
+#[test]
+fn compiled_macro_indexed_data_finite_sizes_use_fuel_instead_of_element_limits() {
+    let mut macros = Session::new_macro().unwrap();
+    let bridge = FormBridge::new(&mut macros).unwrap();
+    assert_eq!(macros.options().fuel_per_operation, 10_000_000);
+    let mut large = None;
+    for length in [4094, 4095, 4096, 8192] {
+        let value = macros
+            .eval(&format!("(new suss.core/IndexedSeq (make-array {length}) 0 nil)"))
+            .unwrap();
+        macros.collect().unwrap();
+        let form = bridge.read(&mut macros, &value, 91..99).unwrap();
+        assert_eq!(form.span, 91..99);
+        let Kind::List(items) = &form.kind else {
+            panic!("Expected IndexedSeq list at length {length}");
+        };
+        assert_eq!(items.len(), length);
+        for (index, item) in items.iter().enumerate() {
+            assert_eq!(item.kind, Kind::Nil, "length {length}, index {index}");
+            assert_eq!(item.span, 91..99);
+            assert!(item.metadata.is_empty());
+        }
+        large = Some(value);
+    }
+    assert_eq!(macros.options().fuel_per_operation, 10_000_000);
+    // Construct both roots before reducing fuel: this tests decoding alone.
+    let small = macros
+        .eval("(new suss.core/IndexedSeq (array nil) 0 nil)")
+        .unwrap();
+    macros.collect().unwrap();
+    macros.set_operation_fuel(1_000);
+    let error = bridge.read(&mut macros, large.as_ref().unwrap(), 91..99).unwrap_err();
+    assert!(matches!(error, SessionError::Trap(ref trap)
+        if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+        "Finite IndexedSeq decoding must exhaust real Store fuel: {error:?}");
+    // The next independent read recovers at the SAME fuel setting, without eval
+    // or a budget increase between the failed decode and the small decode.
+    assert_eq!(macros.options().fuel_per_operation, 1_000);
+    let form = bridge.read(&mut macros, &small, 91..99).unwrap();
+    assert_eq!(form.span, 91..99);
+    let Kind::List(items) = &form.kind else {
+        panic!("Expected small IndexedSeq after fuel exhaustion");
+    };
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].kind, Kind::Nil);
+    assert_eq!(items[0].span, 91..99);
+    assert!(items[0].metadata.is_empty());
+    assert_eq!(macros.options().fuel_per_operation, 1_000);
 }

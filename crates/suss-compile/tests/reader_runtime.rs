@@ -49,7 +49,7 @@ fn portable_reader_scalars_transfer_losslessly_into_shared_runtime() {
         ("##-Inf", f64::NEG_INFINITY),
     ] {
         let forms = read_forms(source).unwrap();
-        let Kind::Number(value) = forms[0].kind else {
+        let Kind::Number(value) = &forms[0].kind else {
             panic!("expected ordinary number")
         };
         let mut result = [Val::null_any_ref()];

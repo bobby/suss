@@ -394,7 +394,7 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     use portable::hir::Expression;
     let source = "(let [^:first x 1] (let [x 2] x) ^:last x)";
     let hir = portable::analyze(source).unwrap();
-    let Expression::Do(top) = hir.kind else {
+    let Expression::Do(top) = &hir.kind else {
         panic!()
     };
     let Expression::Let { bindings, body } = &top[0].kind else {
@@ -915,4 +915,12 @@ fn nil_test_verifier_checks_result_type_and_operand_definition() {
             .message
             .contains("nil-test HIR")
     );
+}
+
+#[test]
+fn closures_beyond_the_old_verifier_depth_execute() {
+    let mut source = "42".to_owned();
+    for _ in 0..80 { source = format!("(fn* [] {source})"); }
+    for _ in 0..80 { source = format!("({source})"); }
+    assert_eq!(number(&source), 42.0);
 }

@@ -11,13 +11,13 @@ fn compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values() {
     let value = bridge.quote(&mut session, input).unwrap();
     session.collect().unwrap();
     let form = bridge.read(&mut session, &value, 301..320).unwrap();
-    let Kind::Map(entries) = form.kind else {
+    let Kind::Map(entries) = form.into_parts().2 else {
         panic!("Real map syntax");
     };
     assert_eq!(entries.len(), 4);
-    assert!(matches!(entries[0].kind, Kind::Keyword(_)));
-    assert!(matches!(entries[1].kind, Kind::Number(n) if n == 42.0));
-    assert!(matches!(entries[3].kind, Kind::Vector(_)));
+    assert!(matches!(&entries[0].kind, Kind::Keyword(_)));
+    assert!(matches!(&entries[1].kind, Kind::Number(n) if *n == 42.0));
+    assert!(matches!(&entries[3].kind, Kind::Vector(_)));
     session
         .eval(
             "(def m {:a 1 :b 2}) (def changed (-assoc m :a 99)) (def removed (-dissoc changed :b))",
@@ -56,18 +56,18 @@ fn compiled_macro_maps_transport_actual_entries_and_sequences_after_gc() {
         let value = session.eval("(seq {:a [7] :b '(call x)})").unwrap();
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 70..80).unwrap();
-        let Kind::List(entries) = form.kind else {
+        let Kind::List(entries) = form.into_parts().2 else {
             panic!("Map sequence");
         };
         assert_eq!(entries.len(), 2);
         assert!(
-            matches!(&entries[0].kind, Kind::Vector(pair) if pair.len() == 2 && matches!(pair[1].kind, Kind::Vector(_)))
+            matches!(&entries[0].kind, Kind::Vector(pair) if pair.len() == 2 && matches!(&pair[1].kind, Kind::Vector(_)))
         );
         let value = session.eval("(first {:a '(call x)})").unwrap();
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 80..90).unwrap();
         assert!(
-            matches!(form.kind, Kind::Vector(pair) if pair.len() == 2 && matches!(pair[1].kind, Kind::List(_)))
+            matches!(&form.kind, Kind::Vector(pair) if pair.len() == 2 && matches!(&pair[1].kind, Kind::List(_)))
         );
     }
 }

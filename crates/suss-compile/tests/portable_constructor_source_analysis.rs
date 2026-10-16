@@ -33,10 +33,10 @@ impl portable::ExpansionHost for Observe {
         match head.name.as_str() {
             "mark" => {
                 assert_eq!(items.len(), 2);
-                let Kind::Number(value) = items[1].kind else {
+                let Kind::Number(value) = &items[1].kind else {
                     panic!("number mark required")
                 };
-                self.marks.push(value);
+                self.marks.push(*value);
                 Ok(Some(items[1].clone()))
             }
             "inspect" => {
@@ -99,7 +99,7 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
         // parse-new has a present nil result tag for a non-reference class AST.
         // This checks analysis only: it is not a claim about upstream JS emission
         // of a computed constructor, which failed the exploratory Node probe.
-        assert!(matches!(source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
+        assert!(matches!(&source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
         assert!(source.tags.inferred.is_none());
     }
 }
@@ -159,7 +159,7 @@ fn invocation_class_has_no_reference_result_tag() {
         assert_eq!(host.marks, [1.0, 2.0]);
         let init = host.initializer.unwrap();
         let source = init.source.as_ref().unwrap();
-        assert!(matches!(source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
+        assert!(matches!(&source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
         assert!(source.tags.inferred.is_none());
         let hir::SourceNode::Construct { class, .. } = source.node.as_deref().unwrap() else {
             panic!("constructor source record required")
@@ -206,7 +206,7 @@ fn current_type_metadata_replaces_an_older_declared_definition() {
             let metadata = hir::reader_metadata_pairs(&info.declaration).unwrap();
             assert!(metadata.chunks_exact(2).any(|pair| matches!(&pair[0].kind,
             Kind::Keyword(key) if key.namespace.is_none() && key.name == "private")
-                && matches!(pair[1].kind, Kind::Bool(true))));
+                && matches!(&pair[1].kind, Kind::Bool(true))));
             let Kind::List(form) = &info.definition_form.kind else {
                 panic!("definition form required")
             };

@@ -147,12 +147,12 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         assert_eq!(host.calls.len(), 1);
         let Kind::Vector(values) = &host.calls[0].kind else { panic!("executed source methods query") };
         assert_eq!(values.len(), 19);
-        assert!(matches!(values[0].kind, Kind::Bool(false)));
-        assert!(matches!(values[1].kind, Kind::Number(1.0)));
+        assert!(matches!(&values[0].kind, Kind::Bool(false)));
+        assert!(matches!(&values[1].kind, Kind::Number(1.0)));
         assert!(matches!(&values[3].kind, Kind::Symbol(name) if name.name == "number"));
-        assert!(matches!(values[4].kind, Kind::Bool(true)));
-        assert!(matches!(values[5].kind, Kind::Number(2.0)));
-        assert!(matches!(values[8].kind, Kind::Number(1.0)));
+        assert!(matches!(&values[4].kind, Kind::Bool(true)));
+        assert!(matches!(&values[5].kind, Kind::Number(2.0)));
+        assert!(matches!(&values[8].kind, Kind::Number(1.0)));
         for (index, expected) in [(2, vec!["x"]), (6, vec!["x"]), (7, vec!["x", "y", "more"]), (9, vec!["x"]), (10, vec!["y"]), (14, vec!["outer"]), (15, vec!["inner"])] {
             let Kind::Vector(parameters) = &values[index].kind else { panic!("actual source parameters") };
             assert_eq!(parameters.len(), expected.len());
@@ -160,8 +160,8 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
                 assert!(matches!(&actual.kind, Kind::Symbol(name) if name.name == expected));
             }
         }
-        assert!(matches!(values[11].kind, Kind::Nil));
-        assert!(matches!(values[12].kind, Kind::Bool(true)));
+        assert!(matches!(&values[11].kind, Kind::Nil));
+        assert!(matches!(&values[12].kind, Kind::Bool(true)));
         assert!(matches!(&values[13].kind, Kind::Keyword(name) if name.name == "do"));
         assert!(matches!(&values[16].kind, Kind::Keyword(name) if name.name == "do"));
         let Kind::Vector(children) = &values[17].kind else { panic!("actual source do children") };
@@ -172,7 +172,7 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         assert!(matches!(&values[18].kind, Kind::Keyword(name) if name.name == "fn"));
         let result = session.eval("(+ (fixed 11) (multiple 12) (multiple 12 13 14) (duplicate 17) ((nested 20) 22) effects)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Number(81.0)));
+        assert!(matches!(&bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Number(81.0)));
     }
 }
 
@@ -220,18 +220,18 @@ fn native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalo
         for (index, (actual, (scalar, doc, nested, catalog))) in host.calls.iter().zip(expected).enumerate() {
             let Kind::Vector(values) = &actual.kind else { panic!("executed snapshot query") };
             assert_eq!(values.len(), 9);
-            assert!(matches!(values[0].kind, Kind::Bool(value) if value == scalar), "snapshot {index}");
+            assert!(matches!(&values[0].kind, Kind::Bool(value) if *value == scalar), "snapshot {index}");
             match doc {
                 Some(doc) => assert!(matches!(&values[1].kind, Kind::String(units) if String::from_utf16(units).unwrap() == doc), "old declaration {index}"),
-                None => assert!(matches!(values[1].kind, Kind::Nil), "absent document {index}"),
+                None => assert!(matches!(&values[1].kind, Kind::Nil), "absent document {index}"),
             }
             for (value, expected) in values[2..5].iter().zip(nested).chain(values[5..9].iter().zip(catalog)) {
-                assert!(matches!(value.kind, Kind::Bool(value) if value == expected), "catalog/snapshot visibility {index}");
+                assert!(matches!(&value.kind, Kind::Bool(value) if *value == expected), "catalog/snapshot visibility {index}");
             }
         }
         let value = session.eval("(+ scalar nested-first nested-second nested-wrapper)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(127.0)));
+        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(127.0)));
     }
 }
 
@@ -264,15 +264,15 @@ fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source
         let Kind::Vector(values) = &host.calls[0].kind else {
             panic!("executed graph query")
         };
-        assert!(matches!(values[0].kind, Kind::Bool(true)));
-        assert!(matches!(values[1].kind, Kind::Number(96.0)));
+        assert!(matches!(&values[0].kind, Kind::Bool(true)));
+        assert!(matches!(&values[1].kind, Kind::Number(96.0)));
         assert!(
             matches!(&values[2].kind, Kind::List(parts) if parts.len() == 3 && matches!(&parts[0].kind, Kind::Symbol(name) if name.name == "+"))
         );
         assert!(
             matches!(&values[3].kind, Kind::String(text) if String::from_utf16(text).unwrap() == "Add")
         );
-        assert!(matches!(values[4].kind, Kind::Bool(true)));
+        assert!(matches!(&values[4].kind, Kind::Bool(true)));
         let effects = session.eval("effects").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         assert!(matches!(
@@ -300,7 +300,7 @@ fn native_analysis_graph_keeps_function_declaration_environment_outside_new_self
             panic!("scope query")
         };
         assert!(matches!(&values[0].kind, Kind::Symbol(name) if name.name == "self"));
-        assert!(matches!(values[1].kind, Kind::Bool(true)));
+        assert!(matches!(&values[1].kind, Kind::Bool(true)));
         let phase = if session.phase() == portable::resolve::Phase::Runtime {
             "runtime"
         } else {
@@ -321,7 +321,7 @@ fn native_analysis_graph_keeps_function_declaration_environment_outside_new_self
 }
 
 #[test]
-fn oversized_analysis_metadata_fails_before_runtime_effects_or_macro_store_allocation() {
+fn exhausted_analysis_metadata_budget_preserves_effects_and_session_state() {
     let mut session = Session::new_repl().unwrap();
     session.eval("(def effects 0)").unwrap();
     let mut host = Inspect::new("(fn [env] (count (get env :locals)))");
@@ -336,7 +336,8 @@ fn oversized_analysis_metadata_fails_before_runtime_effects_or_macro_store_alloc
         error,
         suss_cli::portable_session::SessionError::Compile(_)
     ));
-    assert!(error.to_string().contains("UTF-16 storage bound"));
+    let message = error.to_string().to_lowercase();
+    assert!(message.contains("all fuel consumed by webassembly") || message.contains("out of fuel"), "{error}");
     assert!(host.calls.is_empty());
     assert_eq!(
         session.stats().resident_fragments,
@@ -408,7 +409,7 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
     session
         .eval_with_macros("(let [x 1] (inspect-graph))", &mut host)
         .unwrap();
-    assert!(matches!(host.calls[0].kind, Kind::Number(42.0)));
+    assert!(matches!(&host.calls[0].kind, Kind::Number(42.0)));
 }
 
 #[test]
@@ -441,13 +442,13 @@ fn native_analysis_graph_preserves_actual_definition_forms_through_staging_and_r
         for (index, (actual, expected)) in host.calls.iter().zip(&expected).enumerate() {
             let Kind::Vector(values) = &actual.kind else { panic!("definition staging facts") };
             assert_eq!(values.len(), 4);
-            assert!(matches!(values[1].kind, Kind::Bool(completed) if completed == (index == 2)));
+            assert!(matches!(&values[1].kind, Kind::Bool(completed) if *completed == (index == 2)));
             if index == 2 {
-                assert!(matches!(values[2].kind, Kind::Bool(true)));
-                assert!(matches!(values[3].kind, Kind::Bool(false)));
+                assert!(matches!(&values[2].kind, Kind::Bool(true)));
+                assert!(matches!(&values[3].kind, Kind::Bool(false)));
             } else {
-                assert!(matches!(values[2].kind, Kind::Nil));
-                assert!(matches!(values[3].kind, Kind::Nil));
+                assert!(matches!(&values[2].kind, Kind::Nil));
+                assert!(matches!(&values[3].kind, Kind::Nil));
             }
             let mut actual = values[0].clone();
             erase_spans(&mut actual);
@@ -455,7 +456,7 @@ fn native_analysis_graph_preserves_actual_definition_forms_through_staging_and_r
         }
         let value = session.eval("tracked").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(8.0)));
+        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(8.0)));
     }
 }
 
@@ -478,7 +479,7 @@ fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
         assert_eq!(host.calls.len(), 2);
         for call in &host.calls {
             let Kind::Vector(values) = &call.kind else { panic!("staged query") };
-            assert!(matches!(values[0].kind, Kind::Bool(false)));
+            assert!(matches!(&values[0].kind, Kind::Bool(false)));
             // Read-back spans deliberately refer to the macro call. Compare
             // actual syntax after discarding only those host-owned spans.
             fn erase_span(form: &mut Form) {
@@ -493,9 +494,9 @@ fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
                 let mut actual = actual.clone(); erase_span(&mut actual);
                 assert_eq!(actual, expected);
             }
-            assert!(matches!(values[3].kind, Kind::Bool(false)));
-            assert!(matches!(values[4].kind, Kind::Bool(true)));
-            assert!(matches!(values[5].kind, Kind::Bool(true)));
+            assert!(matches!(&values[3].kind, Kind::Bool(false)));
+            assert!(matches!(&values[4].kind, Kind::Bool(true)));
+            assert!(matches!(&values[5].kind, Kind::Bool(true)));
         }
         let result = session.eval("(== (+ (staged 1) (staged 1 2 3)) 84)").unwrap();
         assert_eq!(session.inspect(&result, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4);
@@ -508,9 +509,9 @@ fn native_analysis_graph_namespace_exclusions_are_canonical_sets() {
     let mut session = Session::new_repl().unwrap();
     session.eval_with_macros("(ns exclusions (:refer-clojure :exclude [identity])) (inspect-graph)", &mut host).unwrap();
     let Kind::Vector(values) = &host.calls[0].kind else { panic!("namespace exclusions") };
-    assert!(matches!(values[0].kind, Kind::Bool(true)));
-    assert!(matches!(values[1].kind, Kind::Number(1.0)));
-    assert!(matches!(values[2].kind, Kind::Bool(true)));
+    assert!(matches!(&values[0].kind, Kind::Bool(true)));
+    assert!(matches!(&values[1].kind, Kind::Number(1.0)));
+    assert!(matches!(&values[2].kind, Kind::Bool(true)));
 }
 
 
@@ -553,7 +554,7 @@ fn native_analysis_graph_namespace_maps_preserve_actual_imports_and_renames_in_b
             }
             let mut actual_maps = Vec::new();
             for ((name, map), present) in ["requires", "uses", "renames", "require-macros", "use-macros", "rename-macros"].into_iter().zip(&maps[1..7]).zip(presence) {
-                let Kind::Bool(present) = present.kind else { panic!("map presence") };
+                let Kind::Bool(present) = &present.kind else { panic!("map presence") };
                 let entries = match &map.kind {
                     Kind::Nil => serde_json::Value::Null,
                     Kind::Map(entries) => {

@@ -1,0 +1,355 @@
+{
+  "schema": 1,
+  "clojurescript-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "tests/oracle/src/suss_oracle/metadata_memo_call_boundary.cljs",
+  "source-sha256": "6971527ab7d39e97fc76010990c0f4281a8950143881c698636f48ffeea08774",
+  "runner": "scripts/probe-metadata-memo-call-boundary.sh",
+  "runner-sha256": "4a151592d4903882c15c41c41416dd3b35d9fa17b5387d8cf6caf05326be81a1",
+  "execution": {
+    "returncode": 0,
+    "command": "PATH=/home/bobby/.cache/suss-m4-oracle-tools/bin:/home/bobby/.cache/suss-m4-oracle-tools/jdk-21.0.8+9-jre/bin:$PATH scripts/probe-metadata-memo-call-boundary.sh"
+  },
+  "limits": [
+    "Pinned CLJS analyzer and registered compiled macros, not Suss execution or acceptance.",
+    "Nested callback is an ordinary function call, not recursive IHash dispatch.",
+    "Write-throw requires the exact intended Error object through the analyzer cause chain; unrelated errors rethrow.",
+    "No recursive hash calls, cancellation, concurrency, different receiver, or return/memo mismatch exercised.",
+    "CLJS observations do not weaken Suss source-integrity and forgery rejection requirements."
+  ],
+  "observations": {
+    "schema": 1,
+    "source-controls": [
+      {
+        "declaration-value": 17,
+        "audit-x": 17
+      },
+      {
+        "declaration-value": 17,
+        "audit-x": 17
+      }
+    ],
+    "cases": [
+      {
+        "subject-dispatches": 1,
+        "observations": [
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 0,
+            "stage": "baseline",
+            "old-memo": null,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": null,
+            "resolved-audit": true,
+            "current-x": 17
+          },
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 1,
+            "stage": "hash-window",
+            "old-memo": 91,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 1,
+            "current-memo": 91,
+            "resolved-audit": true,
+            "current-x": 17
+          },
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 1,
+            "stage": "next-invocation",
+            "old-memo": 91,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 1,
+            "current-memo": 91,
+            "resolved-audit": true,
+            "current-x": 17
+          }
+        ],
+        "method-installed": true,
+        "events": [
+          {
+            "event": "macro-before-hash",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 0,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "hash-enter",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "callback-enter",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 1,
+            "nested-callbacks": 1
+          },
+          {
+            "event": "callback-write",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 1
+          },
+          {
+            "event": "hash-return",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 1
+          },
+          {
+            "event": "macro-after-hash",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 1
+          }
+        ],
+        "mode": "nested-write",
+        "boundary": "Pinned CLJS analyzer and registered compiled macro; no Suss transport",
+        "macro-entries": 3,
+        "nested-callbacks": 1,
+        "exception": null,
+        "canonical-control": 1217894065
+      },
+      {
+        "subject-dispatches": 1,
+        "observations": [
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 0,
+            "stage": "baseline",
+            "old-memo": null,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": null,
+            "resolved-audit": true,
+            "current-x": 17
+          },
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 1,
+            "stage": "hash-window",
+            "old-memo": 91,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": 91,
+            "resolved-audit": true,
+            "current-x": 17
+          },
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 1,
+            "stage": "next-invocation",
+            "old-memo": 91,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": 91,
+            "resolved-audit": true,
+            "current-x": 17
+          }
+        ],
+        "method-installed": true,
+        "events": [
+          {
+            "event": "macro-before-hash",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 0,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "hash-enter",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "method-write",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "method-poison",
+            "stage": "hash-window",
+            "x": 99,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "method-restore",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "hash-return",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "macro-after-hash",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          }
+        ],
+        "mode": "write-poison-restore",
+        "boundary": "Pinned CLJS analyzer and registered compiled macro; no Suss transport",
+        "macro-entries": 3,
+        "nested-callbacks": 0,
+        "exception": null,
+        "canonical-control": 1217894065
+      },
+      {
+        "subject-dispatches": 1,
+        "observations": [
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 0,
+            "stage": "baseline",
+            "old-memo": null,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": null,
+            "resolved-audit": true,
+            "current-x": 17
+          },
+          {
+            "old-x": 17,
+            "env-meta": true,
+            "subject-dispatches": 1,
+            "stage": "next-invocation",
+            "old-memo": 91,
+            "env-audit": true,
+            "ast-audit": true,
+            "resolved-meta": true,
+            "ast-meta": true,
+            "nested-callbacks": 0,
+            "current-memo": 91,
+            "resolved-audit": true,
+            "current-x": 17
+          }
+        ],
+        "method-installed": true,
+        "events": [
+          {
+            "event": "macro-before-hash",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 0,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "hash-enter",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": null,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "method-write",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "method-throw",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          },
+          {
+            "event": "runner-caught-intended",
+            "stage": "hash-window",
+            "x": 17,
+            "memo": 91,
+            "subject-dispatches": 1,
+            "nested-callbacks": 0
+          }
+        ],
+        "mode": "write-throw",
+        "boundary": "Pinned CLJS analyzer and registered compiled macro; no Suss transport",
+        "macro-entries": 3,
+        "nested-callbacks": 0,
+        "exception": {
+          "escaped-macro": true,
+          "exact-intended-cause": true,
+          "name": "MemoCallBoundaryError",
+          "message": "memo-call-boundary intended throw",
+          "cause-chain": [
+            "Error",
+            "MemoCallBoundaryError"
+          ]
+        },
+        "canonical-control": 1217894065
+      }
+    ],
+    "limits": [
+      "Development-only CLJS reference draft; no Suss acceptance.",
+      "Nested callback is an ordinary function call inside IHash, not recursive hash dispatch.",
+      "Identity and event observations concern these three synchronous cases only.",
+      "No cancellation, concurrency, or recursive hash calls exercised."
+    ]
+  }
+}

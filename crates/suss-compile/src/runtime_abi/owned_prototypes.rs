@@ -203,6 +203,10 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         Drop,
         End,
     ]);
+    // Stage provenance first. If the ordinary cache setter traps after mutation,
+    // its prototype already has a genuine creation witness. Orphan witnesses
+    // cannot certify a different prototype, and later retries replace one slot.
+    prototype_origins::record_inline(&mut code);
     code.extend([
         LocalGet(0),
         I32Const(PROTOTYPE_KEY),
@@ -219,7 +223,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         "owned-constructor-prototype-implementation",
         &[VALUE],
         &[VALUE],
-        &[(2, VALUE)],
+        &[(10, VALUE), (2, ValType::I32)],
         &code,
     );
     // Kernel-only descriptors without a source constructor have no public
@@ -381,8 +385,24 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         I32Const(1),
         Return,
         End,
+        // The whole chain was validated above. This search has no callbacks
+        // or writes, so advance through the already-checked backing directly.
         LocalGet(1),
-        Call(b.names["native-object-prototype"]),
+        Call(b.names["owned-error-backing"]),
+        LocalTee(3),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        If(BlockType::Result(VALUE)),
+        LocalGet(1),
+        Else,
+        LocalGet(3),
+        End,
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 1 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
         LocalSet(1),
         Br(0),
         End,
@@ -406,7 +426,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         "owned-prototype-instance-implementation",
         &[VALUE, VALUE],
         &[ValType::I32],
-        &[(1, VALUE)],
+        &[(2, VALUE)],
         &instance_code,
     );
     let ancestry = b.function(

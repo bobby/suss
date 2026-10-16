@@ -409,3 +409,25 @@ fn public_command_initializer_failure_preserves_the_actual_language_payload() {
         42.0_f64.to_bits()
     );
 }
+
+#[test]
+fn shipped_bootstrap_keeps_native_integrity_import_out_of_portable_runtime() {
+    use portable::resolve::Phase;
+    for (phase, expected) in [(Phase::Runtime, 0), (Phase::Macro, 1)] {
+        let bootstrap = portable::bootstrap::shipped(phase).unwrap();
+        let mut private = 0;
+        for payload in wasmparser::Parser::new(0).parse_all(&bootstrap.wasm) {
+            if let wasmparser::Payload::ImportSection(imports) = payload.unwrap() {
+                for import in imports.into_imports() {
+                    let import = import.unwrap();
+                    if import.module == "suss.compiler-integrity" {
+                        assert_eq!(import.name, "memo-field-set");
+                        assert!(matches!(import.ty, wasmparser::TypeRef::Func(_)));
+                        private += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(private, expected, "{phase:?}");
+    }
+}

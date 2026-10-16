@@ -23,7 +23,7 @@ fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
             .unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
         caller.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().into_parts().2 else {
             panic!("Expected declaration projection");
         };
         assert_eq!(items.len(), 3);
@@ -36,7 +36,7 @@ fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
             .eval_with_macros("(user/declaration-facts graph-owned)", &mut macros)
             .unwrap();
         caller.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().into_parts().2 else {
             panic!("Expected fresh declaration projection");
         };
         assert_eq!(items[1].kind, Kind::Bool(true));

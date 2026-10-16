@@ -1436,9 +1436,10 @@ impl Analyzer<'_> {
                             rest_parameter,
                             Some(type_declaration),
                         )?;
+                        let mut implementation = implementation;
                         let Expression::Function {
                             parameters, body, ..
-                        } = implementation.kind
+                        } = implementation.take_kind()
                         else {
                             unreachable!()
                         };

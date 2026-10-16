@@ -33,7 +33,7 @@ fn compiler_facts_resolve_actual_phase_aliases_and_declaration_identity() {
         fields: &fields,
         function_scopes: &[],
     };
-    let Kind::Symbol(symbol) = read_forms("own/value").unwrap().remove(0).kind else {
+    let Kind::Symbol(symbol) = read_forms("own/value").unwrap().remove(0).into_parts().2 else {
         unreachable!()
     };
     let SourceBinding::Global {
@@ -49,7 +49,7 @@ fn compiler_facts_resolve_actual_phase_aliases_and_declaration_identity() {
         declaration.is_none(),
         "cell declaration is not fabricated source syntax"
     );
-    let Kind::Symbol(missing) = read_forms("own/missing").unwrap().remove(0).kind else {
+    let Kind::Symbol(missing) = read_forms("own/missing").unwrap().remove(0).into_parts().2 else {
         unreachable!()
     };
     let error = context

@@ -159,7 +159,7 @@ fn first_public_defonce_replaces_private_reader_fallback_once() {
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(values) = actual.kind else {
+        let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("reader result and initializer count")
         };
         assert_eq!(values[0].kind, Kind::Number(42.0));
@@ -195,7 +195,7 @@ fn reader_fallback_preserves_declared_and_failed_defonce_initialization() {
             .eval("[(first (make-quoted)) cljs.core/reader-definition-effects]")
             .unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(values) = actual.kind else {
+        let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("reader result and failed/retried initializer count")
         };
         assert_eq!(values[0].kind, Kind::Number(42.0));
@@ -217,7 +217,7 @@ fn reader_callee_is_selected_before_unquote_redefines_its_live_binding() {
         );
         let after = session.eval("[(first `(+ 1 2)) reader-effects]").unwrap();
         let actual = bridge.read(&mut session, &after, 0..1).unwrap();
-        let Kind::Vector(values) = actual.kind else {
+        let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("new callee and once-only unquote effects")
         };
         assert_eq!(values[0].kind, Kind::Number(99.0));
@@ -238,7 +238,7 @@ fn bootstrapped_public_sequence_survives_reader_failures_defonce_and_reset() {
         let value = session.eval("[(identical? saved-sequence cljs.core/sequence) cljs.core/reader-definition-effects (count `(+ 1 2)) (count (cljs.core/sequence (list 7 11)))]").unwrap();
         session.collect().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        let Kind::Vector(values) = bridge.read(&mut session, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(values) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {
             panic!("public reader results")
         };
         assert_eq!(
@@ -257,7 +257,7 @@ fn bootstrapped_public_sequence_survives_reader_failures_defonce_and_reset() {
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         assert_eq!(
-            bridge.read(&mut session, &value, 0..1).unwrap().kind,
+            bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2,
             Kind::Number(2.0)
         );
     }

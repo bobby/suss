@@ -37,7 +37,7 @@ fn same_captured_declaration_metadata_across_distinct_macro_invocations() {
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let result = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(groups) = result.kind else {
+        let Kind::Vector(groups) = result.into_parts().2 else {
             panic!("probe groups")
         };
         assert_eq!(groups.len(), 3);
@@ -65,7 +65,7 @@ fn same_captured_declaration_metadata_across_distinct_macro_invocations() {
                     matches!(&fields[0].kind, Kind::String(s) if *s == labels[i].encode_utf16().collect::<Vec<_>>())
                 );
                 assert!(
-                    matches!(fields[1].kind, Kind::Bool(b) if b == expected_identity[i]),
+                    matches!(&fields[1].kind, Kind::Bool(b) if *b == expected_identity[i]),
                     "captured declaration identity: {}: {:?}",
                     labels[i],
                     fields[1]
@@ -75,7 +75,7 @@ fn same_captured_declaration_metadata_across_distinct_macro_invocations() {
                 );
             }
         }
-        assert!(matches!(groups[2].kind, Kind::Number(n) if n == 17.0));
+        assert!(matches!(&groups[2].kind, Kind::Number(n) if *n == 17.0));
         macros
             .define(
                 r#"(defmacro retained-projection []

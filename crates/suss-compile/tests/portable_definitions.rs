@@ -355,7 +355,7 @@ fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
     let value = session.eval("(let [local 3] ((fn [] (def captured-value local)))) captured-value");
     assert_eq!(session.bits(&value), 3.0f64.to_bits());
     let hir = portable::analyze("(def ^:retained value \"doc\" 7)").unwrap();
-    let portable::hir::Expression::Do(body) = hir.kind else {
+    let portable::hir::Expression::Do(body) = &hir.kind else {
         panic!()
     };
     let portable::hir::Expression::Definition {
@@ -377,7 +377,7 @@ fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
     )
     .unwrap();
     let directive = prepared.namespace_directive.unwrap();
-    let suss_reader::forms::Kind::List(items) = directive.kind else {
+    let suss_reader::forms::Kind::List(items) = directive.into_parts().2 else {
         panic!()
     };
     assert_eq!(items[1].metadata.len(), 1);
@@ -611,7 +611,7 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
         let environment = Environment::new("review.declaration").unwrap();
         let source = "(declare ^:retained first second first)";
         let hir = portable::analyze_in(source, &environment, phase).unwrap();
-        let portable::hir::Expression::Do(body) = hir.kind else {
+        let portable::hir::Expression::Do(body) = &hir.kind else {
             panic!()
         };
         let portable::hir::Expression::Do(definitions) = &body[0].kind else {
@@ -649,11 +649,11 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
             let merged = portable::hir::reader_metadata_pairs(&declaration).unwrap();
             assert!(merged.chunks_exact(2).any(|pair|
                 matches!(&pair[0].kind, Kind::Keyword(key) if key.name == "declared" && key.namespace.is_none())
-                && matches!(pair[1].kind, Kind::Bool(true))));
+                && matches!(&pair[1].kind, Kind::Bool(true))));
             if index == 0 {
                 assert!(merged.chunks_exact(2).any(|pair|
                     matches!(&pair[0].kind, Kind::Keyword(key) if key.name == "retained" && key.namespace.is_none())
-                    && matches!(pair[1].kind, Kind::Bool(true))));
+                    && matches!(&pair[1].kind, Kind::Bool(true))));
             }
         }
         // Analysis uses a snapshot even on successful declaration expansion.
