@@ -27770,3 +27770,76 @@ Applied only the reviewed65b565f..bb444a7 entry-arena source delta onto f1ab36c,
 All432 frozen Rust/Suss/bootstrap paths remain unchanged. Independent map comparison confirms all69 ordered assertions:62host passes/7guest judgments and0fail/missing/skips/test/namespace failures. Raw commands, failures, observations, classification and snapshots are in `docs/roadmap/evidence/m4-combined-paged-entries-focused-2026-10-16.tar.gz`, SHA256 `6a446b450c6d4615548face53ff2d38b5ecf563250f801fb7682759d884e0749` (449 payloads). No full baseline or CI success is claimed at this combined source.
 
 Separately reviewed component bb444a7 evidence is retained in `docs/roadmap/evidence/m4-paged-canonical-entries-focused-2026-10-16.tar.gz`, SHA256 `5158c12b92b5e342e49d8c97c479af2a12e85a3220be5cba5d6eff821e2d7180`:42focusedpasses, two retained critical fuel failures,612048netstorage saving including85352extraaccess charges;matchedBitmap remainingfuel gain612860. These component savings are not additional combined acceptance evidence. Next: validate explicit analyzer-literal keyword provenance against pinned observations and repair the source-tag/default-fuel gaps; require full baseline, independent review and final-head CI for issue resolution.
+
+
+## Combined literal provenance and pinned keyword execution — 2026-10-16
+
+Isolated current-a3 integration applies only f1ab36c..be6a219 crates changes,
+plus the ec0eea2..1f034b4 pinned keyword test delta. Independent source review
+confirmed all semantic/route files match be6, keyword gate matches1f, and current
+a3 raw-key/paged canonical entries remain byte-identical. No production
+source mutation occurred during execution. Dedicated analyzer-literal-key-target,
+jobs2, locked Cargo, test-threads2; no RUSTFLAGS. All434 frozen source/bootstrap
+paths match across focused and preservation producers.
+
+- Bootstrap regeneration exit0,32.26s command.
+- Native analyzer_literal:5pass/0fail,68.98s command.
+- Actual CLI analyzer-literal environments:2pass/0fail,100.86s command.
+- Pinned unchanged complete keyword declaration:1test pass,60 ordered assertions
+  independently host-decided,0guest/fail/missing/skips/test/ns failures,63.92s
+  command. Actual observations and comparator output retained.
+- Both unchanged source-tag tests:0pass/2default-fuel failures,66.58s command.
+- Collection source AST target:1pass/2fuel failures,110.14s command.
+- Control source AST target:4pass/1fuel failure,180.19s command.
+- Constructor source AST target:1pass/1fuel failure,73.17s command.
+- Global-reference AST target:1pass/1fuel failure,105.74s command.
+- Core environment target:0pass/1fuel failure,60.49s command.
+- Unchanged complete pinned map transport test:1pass,134.06s command. This first
+  invocation did not configure operand capture; the separately recorded captured
+  replay supplies actual assertion operands and independent comparison. Repeated
+  runs are not additional unique coverage.
+
+The eight named fuel failures are the known six direct preservation gaps plus
+the two source-tag gaps. Their actual assertions are not discharged by keyword
+or map transport success. This cohort does not execute all public-record cases,
+other catalogue/declaration cases or original collection boundary/lifecycle/
+reduction/sharing corpora. Previously passing historical results are not promoted
+to current-head proof. No full workspace baseline or final-head CI was run on
+this exact source. Separately reviewed actual-env custom-IHash regression and
+namespace-origin candidate are not integrated into this frozen snapshot.
+
+Provenance setup attempt is retained: this new worktree had an empty uninitialized
+clojurescript gitlink directory; revision discovery reached parenta3 and rejected
+the reviewed pin. Python tests had15errors and nine further provenance stages
+failed; four unrelated stages passed. No compiler/bootstrap fix was made. A local
+shared clone from the clean pinned checkout was populated at exactc4295f3 with
+clean status, then all checks were rerun. Corrected execution:348Python tests
+pass43.382s; all13inventory/review/import/catalog/sequence/record/transducer/
+bitwise/WASI/numeric/Jank/overlap checks pass. Both initial failure and corrected
+raw logs, commands, dependency setup receipt and unchanged source freeze remain.
+Supporting dependency/fingerprint inputs were captured after tests rather than
+independently frozen before them. No expanded compatibility or acceptance claim.
+
+Captured map replay: exit0,124.70s command, complete69 ordered IDs; independent
+comparison62pass/7guest-judged/0fail/0missing/0skip, no test or namespace failure.
+The seven guest-judged assertions remain separately classified, not independent
+passes. Canonical commands are the archived cargo tests with --locked and
+--test-threads=2 --nocapture: suss-compile --lib analyzer_literal; suss-cli
+--test compiled_macro_analyzer_literal_memos / compiled_macro_source_tags /
+compiled_macro_collection_source_asts / compiled_macro_control_source_asts /
+compiled_macro_constructor_source_asts / compiled_macro_global_reference_asts /
+compiled_macro_core_environment; and suss-compile --test clojure_test_suite with
+pinned_keyword_namespace_keeps_values or
+pinned_map_declaration_executes_without_transport_loss. The exact argv, exits,
+durations and original source bodies are retained in the evidence receipts.
+
+Archive `docs/roadmap/evidence/m4-combined-literal-focused-2026-10-16.tar.gz`
+SHA256 6580853319dd21126235678814e97d29ee744eb2c2ce0b172a6d862845fc0adb
+contains516 manifested payloads, complete434-path snapshots, all raw
+positive/negative results and runners, captured keyword/map operands/comparisons,
+initial provenance setup errors and corrected provenance results. Both phases'
+compiler/core/dependency/Wasm fingerprints recompute true from archived bytes.
+All payload hashes were read back verified. Source-only integration review
+passed; independent final artifact/committed-head review is requested. Next
+implementation remains explicit namespace provenance with pinned observations,
+then integration of the separately executed actual-env effect regression.
