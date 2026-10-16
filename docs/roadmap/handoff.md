@@ -27381,3 +27381,74 @@ Independent committed-head review of7abc0e9 found no blockers: crates/runtime/Ca
 ### Foundation provenance refresh (2026-10-16)
 
 CI38871518498 foundation failed before Rust execution: Python test_exact_source_and_instruction_provenance rejected stale named-property ABI whole-file source hash after the property comparison optimization. Updated only source-file-sha256 to7b1b1e197e78cc8583e59970ec143448029fa46903145e9e841edda2482cba66. The separately pinned complete guard hash/algorithm/license remain unchanged. python3 scripts/check_record_macro_provenance.py exits0; python3 -m unittest discover -s scripts -p test_*.py passes348tests23.620s. Native/compiler/bootstrap unchanged, so ongoing regression freeze remains valid. Raw/clean CI log and local verification logs: docs/roadmap/evidence/m4-foundation-provenance-refresh-2026-10-16.tar.gz SHA256 02102bd996142cc5546b6228df820a6ae45b2ef1c7abc28138b8bfb589bc59ca. Other CI jobs still live/queued when inspected; no aggregate success inference.
+
+### Macro actual-IHash dispatch observer checkpoint (2026-10-16)
+
+Isolated branch `portable/m4-ihash-dispatch-boundary`, based on
+`9f951b0c26897df2986b3e2d79c97df062aafc56`; no changes to primary or the
+old-record-audit/object-method-lookup worktrees. Refs #257. This adds observation
+infrastructure only: no physical memo-store interception, new receipts or
+custom-write authorization. Cold custom-IHash metadata identity and existing
+fuel failures remain unresolved. Full workspace baseline and final-head CI have
+not been run for this branch. No push, PR or acceptance claim.
+
+Macro-only runtime bytes append a nullable private callback reference and a
+one-time host installer; Session rejects guest installer imports. Ordinary
+Runtime/AOT bytes have neither observer installer nor additional imports. Hooks
+receive the exact already-selected method, prepared arguments and actual receiver:
+native nominal methods delegate raw `invoke`, native fallback delegates raw
+`protocol-native-invoke`, and legacy nominal dispatch delegates raw `invoke`.
+IFn keeps its original adaptation. No extra method lookup, public dispatcher
+wrapper, argument evaluation or guest callback is introduced. Raw Wasmtime
+exceptions/pending exceptions propagate without a Session invocation boundary.
+An exception-tag type cursor increment is necessary because the Macro installer
+is appended after the tag signature.
+
+The observer recognizes the exact sealed IHash key and its storage witness;
+bad storage declines observation without replacing successful native/legacy
+dispatch with a new guest error. RAII roots exact selected method/receiver and
+cleans nested frames on return, original language exception and fuel trap.
+Unrelated protocol callbacks inherit the nearest actual IHash receiver using a
+cached frame index; nested actual IHash overrides it. This is scope observation,
+not source-domain proof. Future writers must resolve nearest actual IHash,
+validate exact receiver/slot and independently prove the write-time source domain.
+The nested ICounted helper regression writes the outer memo but cannot obtain a
+receipt. All hook entries precharge four host-work units before route validation,
+authority lock/clone or frame checks, including unsealed bootstrap. Sealed key
+inspection, roots and checked geometric frame allocation/relocation have separate
+charges on the same caller Store; no refill or tariff change.
+
+Final commands (CARGO_BUILD_JOBS=2, own CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/ihash-dispatch-target; no RUSTFLAGS assignment):
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`: exit0, 43.58s wrapper.
+- `cargo test -p suss-compile --lib --locked ihash_dispatch_boundary_ -- --test-threads=2 --nocapture`: 4pass/0fail, 23.14s tests; 60.99s wrapper.
+- `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`: 8pass/0fail, 38.78s tests; 39.41s wrapper.
+- `cargo test -p suss-compile --locked --test runtime_abi runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc -- --test-threads=2`: 1pass/0fail, 0.75s tests; 17.63s wrapper.
+- `python3 scripts/check_record_macro_provenance.py`: exit0, explicit JSON exit receipt retained.
+
+Final focused runner source_unchanged=true for crates Rust/source files and
+bootstrap artifacts. Runner handle32288 is terminal0; it is a diagnostic driver
+that continues failed stages, so per-stage receipts, not driver exit alone,
+establish the above results. Initial Wasm validation failure (installer type
+cursor), missing oracle submodule provenance failure, first observer2/4 and
+second observer3/4 runs are retained. First failures were combined namespace
+fixture setup and absent native number -hash; second failure was correctly
+rejected undeclared source extension arity. Final native padding fixture installs
+a deliberately different-arity closure via the native-method ABI, not source
+extend-type. The pinned oracle submodule was initialized only in this worktree.
+A failed fixture-edit assertion changed no source; a redundant bootstrap ran
+before the checked correction script. These do not count as final successes.
+
+Evidence: `docs/roadmap/evidence/m4-ihash-dispatch-boundary-2026-10-16.tar.gz`,
+SHA256 `4eb8787c30eed4775cc58f9493f345dbfab2271ec815d5cc2fbfd2bb579c914f`,
+45 entries including manifest; payload hashes independently read back. Contains
+raw failed/final logs, both earlier source snapshots, final source/bootstrap
+snapshots, freeze/exit receipts and runners. Final cache receipts:
+`ihash-dispatch-focused-result.json`, `ihash-dispatch-bootstrap-receipt.json`,
+`ihash-dispatch-provenance-receipt.json` under `/home/bobby/.cache/suss-m4-work`.
+Main preliminary source review requested nearest-IHash inheritance and unconditional
+host bookkeeping charge; both are implemented. Independent final committed-head
+review remains required before integration; no subagent dispatch capability was
+available in this session. Next bounded step is physical-store observation plus
+independent write-time domain proof, preserving write-then-throw behavior and
+rejecting generic writes/poison-and-restore; this checkpoint does not implement it.

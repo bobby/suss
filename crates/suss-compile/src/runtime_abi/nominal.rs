@@ -470,7 +470,9 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         LocalSet(2),
     ];
     guard(&mut dispatch_body, 2, 4);
-    dispatch_body.extend([LocalGet(2), LocalGet(1), Call(generic_invoke)]);
+    dispatch_body.extend([LocalGet(2), LocalGet(1)]);
+    dispatch_observer::emit(b, &mut dispatch_body, 0,
+        &[LocalGet(1), I32Const(0), ArrayGet(ARGS)], 2, generic_invoke);
     let dispatcher = invoke_body_with_locals(b, &[(1, VALUE)], &dispatch_body);
     for (name, callback, minimum) in [
         ("constructor-new", constructor, 0),

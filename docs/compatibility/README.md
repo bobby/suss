@@ -1176,3 +1176,16 @@ rooted descriptor and owner-type comparisons verify the concrete input classes.
 The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
 is an uncommitted-source execution snapshot; it does not establish a new full
 workspace baseline, committed-head review, CI, or whole-suite conformance.
+
+
+## Macro IHash dispatch observation infrastructure
+
+Macro sessions privately observe already-selected protocol methods with their
+prepared arguments. The public dispatcher closure and live bindings remain
+unchanged; Runtime/AOT ABI modules have no observer callback or new imports.
+Exact sealed IHash key storage identifies an observation scope. Unrelated
+protocol callbacks inherit its nearest receiver; nested actual IHash dispatch
+overrides that receiver until return, exception or fuel trap. These scopes
+grant no memo-write authorization and publish no receipts. Physical store
+observation and independent write-time source-domain authentication remain
+necessary for cold custom-IHash metadata identity (#257).

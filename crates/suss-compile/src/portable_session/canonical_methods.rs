@@ -464,6 +464,24 @@ impl CanonicalMethods {
     }
 
     /// No budget scope/refill: host callbacks debit their active caller Store.
+    // Read-only recognition of an actual dispatcher environment. Never performs
+    // method lookup or invokes code; malformed/non-IHash environments decline.
+    pub(super) fn ihash_dispatch_matches_in_context(
+        &self, context: InspectionContext<'_>, environment: &Val, legacy: bool,
+    ) -> Result<bool> {
+        if context.identity != self.identity { return Err(SessionError::ForeignValue); }
+        let mut scope = RootScope::new(context.store);
+        Session::consume_host_work(scope.as_context_mut(), 4, context.interrupt)?;
+        let Some(value) = environment.anyref().flatten() else { return Ok(false); };
+        let Some(array) = value.as_array(&scope)? else { return Ok(false); };
+        if array.len(&scope)? != if legacy { 1 } else { 2 } { return Ok(false); }
+        let found = array.get(&mut scope, 0)?;
+        let Some(found) = found.anyref().flatten() else { return Ok(false); };
+        let key = self.key.value.to_rooted(&mut scope);
+        if !Rooted::<AnyRef>::ref_eq(&scope, found, &key)? { return Ok(false); }
+        self.key_storage.matches_in_context(scope.as_context_mut(),
+            Val::AnyRef(Some(key)), context.identity, context.interrupt)
+    }
     pub(super) fn matches_in_context(
         &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
     ) -> Result<bool> {

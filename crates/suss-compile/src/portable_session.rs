@@ -32,6 +32,7 @@ pub(crate) mod storage_snapshot;
 mod canonical_methods;
 mod canonical_seeds;
 mod memo_bridge;
+mod dispatch_observer;
 mod write_domain;
 mod prototype_origin;
 mod private_fixups;
@@ -218,6 +219,7 @@ pub struct Session {
     bootstrap_core: bool,
     canonical_methods: Option<Arc<canonical_methods::CanonicalMethods>>,
     memo_ledger: Arc<memo_bridge::Ledger>,
+    dispatch_observer: Option<Arc<dispatch_observer::Observer>>,
     canonical_seeds: Option<Arc<canonical_seeds::CanonicalSeeds>>,
     prototype_origin: Option<Arc<prototype_origin::Authority>>,
     pending_host_futures: SharedPendingRegistry,
@@ -555,6 +557,7 @@ impl Session {
         if self.phase == Phase::Macro {
             self.memo_ledger.seal(methods.clone(),self.prototype_origin.clone().unwrap())?;
         }
+        if let Some(observer) = &self.dispatch_observer { observer.seal(methods.clone())?; }
         self.canonical_methods = Some(methods);
         self.canonical_seeds = Some(Arc::new(seeds));
         self.bootstrap_core = true;
@@ -594,7 +597,7 @@ impl Session {
         let mut store = Store::new(&engine, ());
         store.set_fuel(u64::MAX)?;
         install_interrupt(&mut store, &interrupt);
-        let runtime_bytes = runtime_abi::module();
+        let runtime_bytes = if phase == Phase::Macro { runtime_abi::macro_module() } else { runtime_abi::module() };
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
         let runtime = Instance::new(
@@ -602,6 +605,9 @@ impl Session {
             &crate::portable_module_cache::compile(&engine, &runtime_bytes)?,
             &[],
         )?;
+        let dispatch_observer = if phase == Phase::Macro {
+            Some(dispatch_observer::install(&mut store, runtime, identity, interrupt.clone())?)
+        } else { None };
         let numeric_memory = runtime
             .get_memory(&mut store, "numeric-scratch-memory")
             .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;
@@ -661,6 +667,7 @@ impl Session {
             bootstrap_core: false,
             canonical_methods: None,
             memo_ledger,
+            dispatch_observer,
             canonical_seeds: None,
             prototype_origin: None,
             pending_host_futures: Arc::new(Mutex::new(Vec::new())),
@@ -1264,6 +1271,9 @@ impl Session {
                 // These are host provisioning controls, never guest imports.
                 if import.module() == "suss.runtime" && matches!(import.name(), "prototype-origin-begin" | "prototype-origin-seal") {
                     return Err(SessionError::Host(wasmtime::Error::msg("Prototype origin lifecycle is host-only")));
+                }
+                if import.module() == "suss.runtime" && import.name() == "macro-dispatch-observer-install" {
+                    return Err(SessionError::Host(wasmtime::Error::msg("Dispatch observer installation is host-only")));
                 }
                 if import.module() == portable::bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE
                     && !authority.is_some_and(|authority| authority.permits(self.phase, &identity)) {
