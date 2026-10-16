@@ -676,12 +676,9 @@ impl FormBridge {
             session,
             &crate::portable::hir::Literal::String(fqn.encode_utf16().collect()),
         )?;
-        let hash = self.scalar(
-            session,
-            &crate::portable::hir::Literal::Number(crate::portable::hir::identifier_hash(
-                namespace, name, keyword,
-            ) as f64),
-        )?;
+        // Reader/analyzer values start cold in pinned CLJS. Let the live IHash
+        // method warm the memo; eager seeding changes nil-aware user effects.
+        // Compiled constants have their separate initialization contract.
         if keyword {
             if metadata.is_some() {
                 return Err(SessionError::Host(error(
@@ -690,12 +687,12 @@ impl FormBridge {
             }
             session.data_construct(
                 &self.roots[self.constructors[&Class::Keyword]],
-                &[&ns, &name_value, &fqn, &hash],
+                &[&ns, &name_value, &fqn, &nil],
             )
         } else {
             session.data_construct(
                 &self.roots[self.constructors[&Class::Symbol]],
-                &[&ns, &name_value, &fqn, &hash, metadata.unwrap_or(&nil)],
+                &[&ns, &name_value, &fqn, &nil, metadata.unwrap_or(&nil)],
             )
         }
     }
