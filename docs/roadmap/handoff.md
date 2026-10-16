@@ -27250,3 +27250,13 @@ Five fresh-state cases exercise custom IHash memo91, direct memo991, poison/cust
 CLJS itself retains forged/poisoned metadata. This is reference evidence for user hash effects, not authority to weaken Suss immutable-source integrity or numeric memo forgery rejection. Nested callback writes, exceptions, recursion and cancellation are unexecuted by this probe. No Suss acceptance result is implied. Initial external runner failed Node module resolution after successful compilation; both that failure and successful corrected/reproducible runs are preserved.
 
 Archive: `docs/roadmap/evidence/m4-metadata-memo-boundary-reference-2026-10-16.tar.gz`, SHA-256 `604f35d8587eddd2b0601a9db7aafa1aa35c9d96c8e7eb451735e87f163e1e5e`. Source/runner hashes and observations are in `tests/oracle/metadata-memo-boundary-observations.json`.
+
+### Pinned custom hash callback and exception effects (2026-10-16)
+
+Command: `PATH=/home/bobby/.cache/suss-m4-oracle-tools/bin:/home/bobby/.cache/suss-m4-oracle-tools/jdk-21.0.8+9-jre/bin:$PATH scripts/probe-metadata-memo-call-boundary.sh`, exit0. External and checked-in runners produce identical JSON at pinned CLJS `c4295f303100bbf5afac449242d30bca1126f1a1`.
+
+Three fresh-state cases cover nested callback memo91, healthy memo91 write then x99 poison/restoration to17, and memo91 write followed by an exception escaping the actual macro. All48 projected metadata/audit identities remain true. Each dispatch executes once; nested callback executes once in its case. The exact intended Error is found through the analyzer cause chain; the next macro invocation retains memo91/x17. Independent before/after source controls both produce declaration17/audit17. Canonical control remains1217894065.
+
+These synchronous reference observations do not establish Suss acceptance or relax numeric-forgery/source-integrity checks. They do not cover recursion, cancellation, concurrency, different receivers or return/memo mismatch. No direct-body-only or normal-return-only authorization rule follows from these observations.
+
+Archive `docs/roadmap/evidence/m4-memo-call-boundary-reference-2026-10-16.tar.gz`, SHA-256 `aa402dec0d83fa57ea4f511a97666cec89cb45a34d682b6355f06baafcb32fe0`, includes both raw successful runs, exact source/runner and hashes.
