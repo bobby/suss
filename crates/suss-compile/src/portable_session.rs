@@ -23,6 +23,7 @@ use wasmtime::{
     ValType,
 };
 
+pub(crate) mod fuel_partition;
 mod frontend;
 pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
@@ -389,7 +390,7 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
     let fuel = scope.as_context_mut().get_fuel()?;
     // Restoration executes only finite, checked runtime frame/cell operations,
     // never a source body or finally callback. Preserve the operation's fuel.
-    scope.as_context_mut().set_fuel(u64::MAX)?;
+    fuel_partition::set(&mut scope.as_context_mut(), u64::MAX, "restore-open")?;
     let result = (|| -> wasmtime::Result<()> {
         loop {
             let current = global.get(&mut *scope);
@@ -408,7 +409,7 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
             pop.call(&mut *scope, &[current], &mut [])?;
         }
     })();
-    scope.as_context_mut().set_fuel(fuel)?;
+    fuel_partition::set(&mut scope.as_context_mut(), fuel, "restore-close")?;
     if result.is_err() {
         scope.as_context_mut().take_pending_exception();
     }
@@ -595,7 +596,8 @@ impl Session {
             })
             .map_err(|_| wasmtime::Error::msg("Session identity exhausted"))?;
         let mut store = Store::new(&engine, ());
-        store.set_fuel(u64::MAX)?;
+        fuel_partition::register(&store, identity);
+        fuel_partition::set(&mut store.as_context_mut(), u64::MAX, "setup-max")?;
         install_interrupt(&mut store, &interrupt);
         let runtime_bytes = if phase == Phase::Macro { runtime_abi::macro_module() } else { runtime_abi::module() };
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
@@ -768,7 +770,7 @@ impl Session {
                     let fuel = scope.as_context_mut().get_fuel()?;
                     // Both attempts execute checked runtime retirement only,
                     // never the consumed source continuation or its effects.
-                    scope.as_context_mut().set_fuel(u64::MAX)?;
+                    fuel_partition::set(&mut scope.as_context_mut(), u64::MAX, "async-open")?;
                     // Capture only owners still Pending at the trapped boundary.
                     // Recovery can transition exactly its active owner to the
                     // private marker, excluding unrelated earlier failures.
@@ -800,7 +802,7 @@ impl Session {
                                     .flatten();
                         }
                     }
-                    scope.as_context_mut().set_fuel(fuel)?;
+                    fuel_partition::set(&mut scope.as_context_mut(), fuel, "async-close")?;
                     recovery
                 })();
                 if recovery.is_err() {
@@ -1166,8 +1168,7 @@ impl Session {
         // A request made while idle does not cancel the next operation.
         self.interrupt.store(false, Ordering::SeqCst);
         self.store.set_epoch_deadline(1);
-        self.store
-            .set_fuel(self.options.fuel_per_operation)
+        fuel_partition::set(&mut self.store.as_context_mut(), self.options.fuel_per_operation, "budget-reset")
             .map_err(Into::into)
     }
     /// One cumulative budget for host transport and every nested Wasm helper.
@@ -1225,14 +1226,14 @@ impl Session {
             // Match the epoch callback's consumed request, but do not let a
             // caller catch cancellation and continue the same fueled operation.
             // Finite dynamic restoration saves/restores this exhausted budget.
-            store.set_fuel(0)?;
+            fuel_partition::set(&mut store, 0, "host-interrupt")?;
             return Err(wasmtime::Trap::Interrupt.into());
         }
         let fuel = store.get_fuel()?;
         match fuel.checked_sub(units) {
-            Some(remaining) => store.set_fuel(remaining),
+            Some(remaining) => fuel_partition::set(&mut store, remaining, "host-success"),
             None => {
-                store.set_fuel(0)?;
+                fuel_partition::set(&mut store, 0, "host-exhaust")?;
                 Err(wasmtime::Trap::OutOfFuel.into())
             }
         }

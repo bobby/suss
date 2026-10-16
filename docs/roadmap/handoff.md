@@ -27899,3 +27899,68 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+## String candidate inference fuel partition diagnostic — 2026-10-16
+
+Isolated diagnostic/m4-inference-fuel-partition from8fda18a copied ONLY main
+primitive-string-access emit.rs SHA256
+f4af4079fb2716d1d6de7173fc96076622b069eeb720539f071ff8c7fbfb5b9c.
+No main worktree writes. Native TLS diagnostic wraps all production Session fuel
+setters without changing amounts, returned errors, control, guest calls or fees.
+Store identity comes from registration at creation and StoreInner-backed data
+address; separate Runtime/Macro Stores are not merged by interrupt identity.
+No epoch/stack sampler. All test bodies, defaults, quota and tariffs unchanged.
+
+Dedicated inference-fuel-partition-target, reflink of terminal owned before-control
+target; jobs2, locked Cargo, no RUSTFLAGS. Runner cache:
+/home/bobby/.cache/suss-m4-work/run-inference-fuel-partition.py.
+Bootstrap `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+exit0,28.52s. Exact fixture command:
+`cargo test -p suss-cli --locked --test compiled_macro_source_tags compiled_source_inference_matches_pinned_tags_without_changing_executed_storage_or_effects -- --exact --nocapture --test-threads=1`
+SUSS_FUEL_PARTITION=1 plus original SUSS_MACRO_FUEL_TRACE=1 and
+SUSS_METADATA_FUEL_TRACE=1. Exit101,0pass/1fail/0ignored/1filtered,38.86s test/
+58.27s command. Decoded[6548798,3283219,20631]; fourth starts20210 and fails
+caller &env transport at382..414,matching supplied current-String boundaries.
+Fourth caller-form leaves19880; host success19860 then partial failed host20
+exhausts budget before any measured VM fuel in that env interval.
+
+Completed env intervals, total=successful_host+finite_VM:
+3179696=1566860+1612836;
+3026096=1464104+1561992;
+3023114=1462052+1561062.
+No unlimited VM debit, failed host debit, administrative net debit or unknown in
+those three intervals. 53041/49549/49424 paired restore-open/close transitions
+respectively: temporary MAX credits/debits cancel exactly. All28 stage rows
+finite/depth0, all cumulative unknown/read/set errors zero, and every interval
+reconciles total=host_success+host_failed_actual+VM_finite+VM_unlimited+
+administrative_debit-administrative_credit. Thus finite VM residual is metered
+guest fuel for these bounded env intervals, not an exclusive callee attribution.
+No inference passing claim; guest hash hotspots from invocation fixture are not
+assumed transferable to inference. Roughly half remaining env fuel is host work.
+
+Audited production setters: setupMAX, outer budget reset, dynamic save/MAX/restore,
+async recovery save/MAX/restore, successful host debit and interrupt/partial-failure
+exhaustion. Other census setters in sibling modules are cfg(test) injection paths.
+Budget/charge_read_work delegates to consume_host_work; counted once, not added
+again from existing decode profile. inspect itself never refills; its restoration
+MAX region is separated. Caller eval_with_macros first opens Macro expansion
+budget; reader/compiler callbacks and AnalysisGraph debit that Macro store3.
+Caller eval_prepared execution is after compilation success and is unreached.
+No caller-store fuel copying/transfer exists. The fixture preconstructs Runtime
+and Macro caller sessions but fails while compiling first Runtime iteration;
+this run does not establish Macro caller iteration execution.
+
+436-path Rust/Suss/bootstrap freeze unchanged. Both fingerprints recompute true.
+Both diagnostic bootstraps match main's post-execution captured String candidate
+operational bytes after custom-section stripping; raw hashes differ because of
+compiler-source fingerprint custom metadata. Candidate bytes and comparison
+retained as supporting post-execution inputs, not independently pre-frozen.
+Native ledger BTreeMap/allocation/extra get_fuel reads perturb wall time but add
+no guest instruction or unit fee. Matching fuel proves fixture boundary equivalence
+only. No full baseline/CI/cancellation test or source-tags acceptance claim.
+
+Archive m4-inference-fuel-partition-2026-10-16.tar.gz
+SHA2563b8d3a3267fcdee95b8ff685e53ffd802786063ec31a43efd01d518ef97c663e
+contains467 manifested payloads: complete tested snapshots, raw logs/counters,
+all interval equations, setter census, store/budget derivation, matched candidate
+Wasm comparison inputs, runners and original failure. All hashes read back verified.

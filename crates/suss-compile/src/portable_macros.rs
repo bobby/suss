@@ -49,6 +49,7 @@ fn failure(form: &Form, message: &str) -> SessionError {
     })
 }
 fn trace_fuel(session: &Session, target: &(String, String), stage: &str) -> Result<(), SessionError> {
+    crate::portable_session::fuel_partition::stage(session, target, stage);
     if std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
         eprintln!("macro-fuel {}/{} {stage}: {}", target.0, target.1,
             session.operation_fuel_remaining()?);
@@ -809,6 +810,7 @@ impl ExpansionHost for CompiledMacros {
             trace_fuel(session, &target, "decoded")?;
             Ok(expanded)
         });
+        crate::portable_session::fuel_partition::stage(&self.session, &target, "expansion-exit");
         result.map(Some).map_err(|error| Diagnostic {
             span: form.span.clone(),
             message: format!("Compiled macro expansion failed during {stage}: {error}"),
