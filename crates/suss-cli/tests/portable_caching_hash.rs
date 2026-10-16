@@ -277,3 +277,38 @@ fn canonical_nan_comparison_is_narrow_and_cache_storage_preserves_both_signs() {
             .collect()
     );
 }
+
+#[test]
+fn caching_hash_invokes_callable_objects_and_skips_hit_effects_in_both_phases() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/caching-hash-callable-case.json"
+    ))
+    .unwrap();
+    let fixture = &fixture["cases"][0];
+    let mut failures = Vec::new();
+    for (phase, mut session) in [
+        ("runtime", Session::new_repl().unwrap()),
+        ("macro", Session::new_macro().unwrap()),
+    ] {
+        let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
+        match session.eval(fixture["source"].as_str().unwrap()) {
+            Ok(value) => {
+                session.collect().unwrap();
+                let form = bridge.read(&mut session, &value, 0..0).unwrap();
+                let suss_reader::forms::Kind::Vector(items) = &form.kind else {
+                    panic!("Expected vector")
+                };
+                let items: Vec<_> = items.iter().map(|item| {
+                    let suss_reader::forms::Kind::Number(number) = &item.kind else { panic!("Expected number") };
+                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
+                }).collect();
+                let actual = serde_json::json!({"tag":"vector", "items":items});
+                if actual != fixture["expected"] {
+                    failures.push(format!("{phase}: {actual}"));
+                }
+            }
+            Err(error) => failures.push(format!("{phase}: {error}")),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}

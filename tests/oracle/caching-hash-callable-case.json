@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "callable-hash-function-miss-and-hit",
+      "source": "(do\n  (def memo-call-count 0)\n  (def memo-call-cache nil)\n  (deftype MemoCallable [] IFn\n    (-invoke [this value]\n      (do (set! memo-call-count (inc memo-call-count)) (+ value 62))))\n  (def memo-call-ordinary ((MemoCallable.) 9))\n  (set! memo-call-count 0)\n  (def memo-call-first (cljs.core/caching-hash 9 (MemoCallable.) memo-call-cache))\n  (def memo-call-hit (cljs.core/caching-hash (throw 31) (throw 37) memo-call-cache))\n  (vector memo-call-ordinary memo-call-first memo-call-hit memo-call-count))",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4051c00000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4051c00000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4051c00000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}
