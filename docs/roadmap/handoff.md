@@ -27310,3 +27310,9 @@ Archive docs/roadmap/evidence/m4-hash-dispatch-layers-2026-10-16.tar.gz SHA256 7
 ### Regression execution-count qualification (2026-10-16)
 
 The terminal e24340d matrix16pass17fail across9harnesses comprises33executions but30distinctnames: indexed_string_rejects_immutable_utf16_backing, canonical_descriptor_does_not_validate_foreign_owner_layout and sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers each run twice through shared portable_decode test modules. All17failednames remain distinct; no verdict changes. Prior wording all33selectedfunctions should be read as executions, not unique tests. Exact source-log count receipt retained in task cache global-bound-direct-count-qualification.json; PRdescription corrected.
+
+### Terminal exact full baseline9f951b0 (2026-10-16)
+
+cargo test --workspace --locked -- --test-threads=2 withCARGO_BUILD_JOBS=2,target-m4-prototype TERMINAL101 after3000.09s:81pass2fail0ignored across16completedharnesses; all frozen source/bootstrap hashes unchanged. collection_source_nodes_retain_original_children_before_factory_lowering and unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order remain fuel failures. Freshlockedcargo metadata reproduces253selectedharnesses and4doctesttargets;237harnesses+4doctests unexecuted afterCargo stopped atfirstfailingbinary. Plan identities match prior baseline; no prefix-as-full-passclaim. Focused33execution matrix precededthisrun.
+
+Rawlog, command/result/freeze, freshmetadata, completeper-targetclassification, runner and all frozen source/bootstrap snapshots withpayloadhashes: docs/roadmap/evidence/m4-full-baseline-9f951b0-2026-10-16.tar.gz SHA256 f453fdc97d43f547421a670a823ff8bf6139bd010a9bf66bb2bf3cd6726b32a1. Current-headCI9f also terminalred independently; M4/supportingacceptance unresolved. Next incorporate only reviewed fixes that repair actual acceptance, then focused/baseline/final-headCI again.
