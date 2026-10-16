@@ -27860,3 +27860,43 @@ source-tag charged stages and nesting-aware cold/nonnil Keyword versus Symbol
 receiver dispatches, using native fields without additional guest calls. Do not
 infer literal eligibility from the old unnamed193-dispatch diagnostic or expand
 warming without explicit pinned constructor provenance.
+
+
+## Explicit analyzer literal constructor routes — 2026-10-16
+
+Follow-up to ec0eea2 records explicit pinned CLJS analyzer constructors for
+parameter/local bindings, let/loop bindings, type fields, function self names,
+method records and vector AST items/children. Shared binding selection checks
+actual role/kind and charges six primitive units; adapted catch, receiver and
+other unproved roles remain cold. Reader forms, dynamic symbols, metadata
+values, bridge authority and compiled constants are unchanged. Pinned citations
+are archived; graph SHA256
+a6ed3936a07cc7fc08fc30e72b2f87dc5a0fd26ea0522aa29422a0ab8fccfdfe
+received independent source review from Carver without blockers.
+
+Dedicated target, jobs2, locked Cargo, test-threads2, no RUSTFLAGS:
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  exit0,28.61s; both phase fingerprints recomputed from archived inputs.
+- `cargo test -p suss-compile --locked --lib analyzer_literal -- --test-threads=2 --nocapture`:
+  5pass/0fail,36.60s test,58.64s command.
+- `cargo test -p suss-cli --locked --test compiled_macro_analyzer_literal_memos -- --test-threads=2 --nocapture`:
+  2pass/0fail,91.09s test,112.42s command. Includes vector :items/:children
+  key and child-keyword memo observations in both caller phases after GC.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  0pass/2default-fuel failures,60.56s test,62.46s command. Neither unchanged
+  source-tag acceptance fixture passes. No measured fuel-saving claim.
+
+Producer terminal,433 frozen source/bootstrap paths unchanged. Archive
+`docs/roadmap/evidence/m4-analyzer-literal-proved-routes-2026-10-16.tar.gz`
+SHA256 d7face45a989763539524eadd7662bfecb0daaf69a665149bb744c53c42a608b
+contains466 manifested payloads, complete freeze, raw logs, failed nested-borrow
+compile, runners, source patch, pinned constructor citations and fingerprint
+checks. Main read back verified every payload and current frozen path.
+Supporting fingerprint inputs were captured after execution, not independently
+frozen beforehand. Parent before/after evidence remains unchanged. No Jank gate,
+full workspace baseline or final-head CI was executed on this exact source;
+the separately reviewed keyword gate is supplemental and requires integration.
+Next diagnostic must identify actual remaining cold Keyword receivers via native
+field reads and nesting-aware counts without extra guest hashing. Do not infer
+literal origins from spelling or broaden warming from an unnamed cost sample.

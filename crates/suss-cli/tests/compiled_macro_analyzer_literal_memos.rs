@@ -44,3 +44,25 @@ fn fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_g
     }
     assert!(failures.is_empty(),"{}",failures.join("\n"));
 }
+
+#[test]
+fn vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos() {
+    for mut caller in [Session::new_repl().unwrap(),Session::new_macro().unwrap()] {
+        let mut macros=CompiledMacros::new().unwrap();
+        macros.define(r#"(defmacro inspect-vector-literals [name]
+          (let [find-key (fn [m text] (reduce (fn [found key] (if (= (str key) text) key found)) nil (keys m)))
+                ast (:init (get (:locals &env) name))
+                items-key (find-key ast ":items")
+                children-key (find-key ast ":children")
+                child-name (first (:children ast))]
+            (list 'quote [(some? (.-_hash items-key)) (some? (.-_hash children-key))
+                         (some? (.-_hash child-name)) (= :items child-name)
+                         (= 17 (:val (first (:items ast))))])))"#).unwrap();
+        caller.collect().unwrap();
+        let value=caller.eval_with_macros("(let [v [17]] (inspect-vector-literals v))",&mut macros).unwrap();
+        let bridge=FormBridge::new(&mut caller).unwrap();
+        let form=bridge.read(&mut caller,&value,0..1).unwrap();
+        eprintln!("analyzer-literal-vector: {:?}",form.kind);
+        assert!(matches!(&form.kind,Kind::Vector(values) if values.len()==5 && values.iter().all(|v|v.kind==Kind::Bool(true))));
+    }
+}

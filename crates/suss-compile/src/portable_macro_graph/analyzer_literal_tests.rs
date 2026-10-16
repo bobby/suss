@@ -86,3 +86,67 @@ fn analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority()
     session.collect().unwrap();
     assert!(!records.matches_direct_facts(&mut session).unwrap(), "clearing a literal must not authorize a protected rewarming receipt");
 }
+
+#[test]
+fn analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles() {
+    let mut session = Session::new_macro().unwrap();
+    let bridge = FormBridge::new(&mut session).unwrap();
+    let mut binding = LocalBinding {
+        identity: Arc::new(()), id: hir::BindingId(0), ty: hir::Type::Value,
+        declaration: suss_reader::forms::read_forms("p").unwrap().remove(0),
+        origin: None, kind: hir::LocalKind::Let,
+        declaration_context: portable::AnalysisContext::Expression,
+        source_role: SourceRole::Plain, initializer: None, shadow: None, shadow_field: None,
+    };
+    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+    let operation = graph.session.operation_budget_scope().unwrap();
+    for kind in [hir::LocalKind::Let,hir::LocalKind::Loop,hir::LocalKind::Argument{index:0,rest:false}] {
+        binding.kind=kind;
+        assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Literal(_)));
+    }
+    binding.kind=hir::LocalKind::Let;
+    binding.source_role=SourceRole::PrivateCatch{anchor:0..1};
+    assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
+    binding.source_role=SourceRole::FunctionName{variadic:false,methods:None};
+    binding.kind=hir::LocalKind::FunctionName;
+    assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
+    let access=Hir{source:None,span:0..1,metadata:vec![],ty:hir::Type::Value,kind:Expression::Literal(Literal::Nil)};
+    binding.source_role=SourceRole::MethodThis{
+        type_declaration:binding.declaration.clone(),namespace:"user".into(),protocol_receiver:false,
+        receiver_declaration:binding.declaration.clone(),argument:None,access,
+    };
+    assert_eq!(binding.source_kind(),hir::LocalKind::Let);
+    assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
+    drop(operation);
+}
+
+#[test]
+fn analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold() {
+    let mut session=Session::new_macro().unwrap();
+    let bridge=FormBridge::new(&mut session).unwrap();
+    let binding=LocalBinding{
+        identity:Arc::new(()),id:hir::BindingId(1),ty:hir::Type::Value,
+        declaration:suss_reader::forms::read_forms("^{:audit :source-leaf} p").unwrap().remove(0),
+        origin:None,kind:hir::LocalKind::Argument{index:0,rest:false},
+        declaration_context:portable::AnalysisContext::Expression,
+        source_role:SourceRole::Plain,initializer:None,shadow:None,shadow_field:None,
+    };
+    let value={
+        let mut graph=AnalysisGraph::new(&bridge,&mut session);
+        let id=graph.local(&binding,0).unwrap();
+        graph.finish_recipes().unwrap();
+        let entries=match graph.recipes[id].as_ref().unwrap(){Recipe::Map(entries)=>entries,_=>panic!("actual parameter recipe must be a map")};
+        for name in ["form","local","binding-form?","arg-id","shadow","info"] {
+            assert!(entries.iter().any(|(key,_)|matches!(graph.recipes[*key].as_ref(),Some(Recipe::Identifier{name:n,literal:Some(_),..}) if n==name)),"{name}");
+        }
+        graph.materialize(id).unwrap()
+    };
+    session.collect().unwrap();
+    let form=session.eval("(fn [info] (:form info))").unwrap();
+    let form=session.invoke(&form,&[&value]).unwrap();
+    assert_eq!(memo(&mut session,&bridge,&form),Kind::Nil);
+    let leaf=session.eval("(fn [info] (:audit (meta (:form info))))").unwrap();
+    let leaf=session.invoke(&leaf,&[&value]).unwrap();
+    assert_eq!(memo(&mut session,&bridge,&leaf),Kind::Nil);
+    assert!(matches!(bridge.read(&mut session,&leaf,0..1).unwrap().kind,Kind::Keyword(ref k) if k.name=="source-leaf"));
+}
