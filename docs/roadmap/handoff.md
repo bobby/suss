@@ -27930,3 +27930,70 @@ Lookup-focused artifact review independently verified 473payloads/439frozenpaths
 no blockers for bounded evidence, not issue acceptance.
 
 Post-classification focused execution: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target cargo test -p suss-compile --locked --test portable_primitive_string_access --test portable_primitive_string_root_success -- --test-threads=2 --nocapture` exits0. Access2pass/0fail/0filtered (21.13s); root-success1pass/0fail/0filtered (20.82s), matching Runtime/Macro rows. Raw log retained losslessly as `active-tests-after-classification.log.gz` beside diagnostic README; decompressed SHA256 bacba85610cc048d694282a1e9d88accd5987d7e222f60bdb3876e0490b0f47c. Classification independently verified exact originals and unchanged active regressions. `git diff --check` exits0. Source-tag failure and absent full-baseline/final-CI evidence remain unchanged.
+
+## Private slot-log focused evidence and published String CI — 2026-10-16
+
+Packaging only on7c08c91 plus dirty private-slot-log source; no new builds,
+production edits, commit or push. All producers terminal before packaging.
+Final formatted commands (CARGO_BUILD_JOBS=2, dedicated analyzer-literal-key-target,
+locked Cargo, no RUSTFLAGS assignment):
+
+- `cargo test -p suss-compile --locked --lib portable_macro_graph::reuse::tests:: -- --test-threads=2 --nocapture`:
+  5pass/0fail,18.26s test/37.23s command.
+- `cargo test -p suss-compile --locked --lib portable_session::private_fixups:: -- --test-threads=2 --nocapture`:
+  9pass/0fail,17.21s test/17.46s command; includes both new slot-log tests,
+  not9plus2 distinct tests.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  1pass/1default-fuel failure,77.32s test/104.61s command; inference fails caller
+  &env transport at382..414. Invocation-tag passes.
+- Same source, exact inference test selected with --exact --nocapture
+  --test-threads=1 and existing SUSS_MACRO_FUEL_TRACE=1/SUSS_METADATA_FUEL_TRACE=1:
+  exit101,0pass/1fuel-fail/1filtered,40.64s test/41.09s command. Four starts,
+  three decodes [6646323,4203570,1761858]; fourth still fails at382..414.
+  Matched prior decoded [6646406,3477639,307237], differences[-83,725931,1454621].
+  Pair-to-fixed inclusive interval debits[0,745105,747685] become[0,722,722].
+  No additional completed observation and no additive/exclusive cost claim.
+
+All436 paths in final tags/trace/focused freezes match each other and archived
+current bytes, including tests/fixtures/primitive_string_root_success.cljs.
+The earlier435-path formatted manifest differs only by omitting that .cljs file.
+Two tracked compiler inputs, portable/stdlib/async.sus and async-macros.sus, are
+absent from supplied freeze manifests: included as post-execution support bytes,
+verified equal7c08c91. Both compiler/core/dependency/Wasm phase fingerprints
+recompute true with them included. Do not claim individual pre/post freezing
+for these two inputs or other supporting Cargo/numeric/WIT inputs.
+
+All initial E0308/E0599/E0716 compilation failures, stale-bootstrap identity
+failure (slot2:0pass/2fail), regenerated slot2pass, initial reuse3pass/1fail,
+route-fix bootstrap/reuse5/private9 passes, formatted regeneration, final logs,
+runners and historical hash manifests remain. Historical preformat snapshots
+are not complete: source-freeze has6 overwritten source/bootstrap paths and
+route-freeze5 with original bytes unavailable. Their hashes are retained and
+listed explicitly, never reconstructed or represented as final-source bytes.
+Final formatted reuse5/private9 reruns close the earlier format-only evidence
+qualification for those14 tests. No full local baseline or dirty-slot-log CI.
+
+Focused archive `evidence/m4-private-slot-log-focused-2026-10-16.tar.gz`
+SHA25615c5a63fd6d9f658b6f50bdf15b952a2b4ee819705b4124eaf562a28b38db443
+contains490 manifested payloads, final snapshots, historical manifests/raw failures,
+current source patch (new untracked slot_log.rs is included in full snapshot),
+trace comparison, fingerprints and exact command receipts. All payload hashes
+read back verified. Historical failures are not replaced by later successes.
+
+Separate CI archive `evidence/m4-primitive-string-ci-2026-10-16.tar.gz`
+SHA2565a2adc9db74d24acdbb79a482a2fdf714b4d3bb1b5a1d45e8bb67a5906ecff8e
+contains481 manifested payloads: run38959090355 terminal logs, all8 shard
+classifications and classifier, foundation log, summary, workflow, GitHub
+synthetic commit receipt and exact published7c08c91 source/bootstrap snapshots.
+Both phase fingerprints recompute true. Checked-out synthetic40f29f2a43654f0a3b2f3e4ec1e5099567c169ae
+has tree979be870fa697c6d718c44d7038d2a98e153006b equal7c08c91; parentsa3/7c.
+The runner image's first Commit line is not the checked-out source identity.
+
+Published7c08c91 CI: foundation400Rust execution passes/0fail/1ignore (includes
+repeated bootstrap verifier executions, not distinct tests); Python348pass in
+26.964s. Integration31/252 targets completed,221unexecuted;122pass/17fail across
+8 shards. Exact17 failed names and all unexecuted targets retained in summary
+and classifications. Run failure is not a full workspace baseline or exhaustive
+failure inventory; this CI says nothing about dirty slot-log changes. Raw unknowns
+remain available. Both archives are ready for independent Carver review before
+main commits/pushes; final-head CI remains a separate requirement.
