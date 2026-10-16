@@ -1,5 +1,7 @@
-//! Invocation-local query reuse. Only the callback-free final certification
-//! interval may retain this value; construction/rebuild paths must not use it.
+//! Invocation-local query reuse within a callback-free inspection interval.
+//! Such intervals may occur between constructions or during final certification.
+//! Discard the audit before every construction or fallback materialization; no
+//! cached query may survive a potential guest callback, including on failure.
 use super::{Session, SessionError, SessionValue, canonical_methods::CanonicalMethods,
     construction_records::BridgeClassInput, prototype_origin::{Authority, PrototypeInputs}};
 use std::{cmp::Ordering, sync::Arc};

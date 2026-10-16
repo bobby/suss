@@ -2234,11 +2234,26 @@ fn sequence_inner<T: DatumTarget>(
                     .set(&mut *store, 0, cursor.clone())?;
                 let mut result = [Val::null_any_ref()];
                 budget.lazy_calls.set(budget.lazy_calls.get().saturating_add(1));
-                calls.invoke.call(
+                // Observational reads never replace an invocation error. This
+                // delta includes callback-triggered host charges, not just Wasm.
+                let fuel_before = if budget.profile { store.get_fuel().ok() } else { None };
+                if budget.profile {
+                    eprintln!("macro-lazy-invoke call={} stage=before fuel={fuel_before:?}",
+                        budget.lazy_calls.get());
+                }
+                let invoked = calls.invoke.call(
                     &mut *store,
                     &[calls.function.clone(), args[0].clone()],
                     &mut result,
-                )?;
+                );
+                if budget.profile {
+                    let fuel_after = store.get_fuel().ok();
+                    let delta = fuel_before.zip(fuel_after)
+                        .and_then(|(before, after)| before.checked_sub(after));
+                    eprintln!("macro-lazy-invoke call={} stage=after fuel={fuel_after:?} delta={delta:?} success={}",
+                        budget.lazy_calls.get(), invoked.is_ok());
+                }
+                invoked?;
                 cursor = result[0].clone();
             }
             Class::ChunkedCons => {
