@@ -17,6 +17,7 @@ use std::{collections::HashMap, ops::Range};
 
 pub(super) type Carets = HashMap<(usize, usize), (usize, usize)>;
 
+#[derive(Debug)]
 pub(super) struct Positions {
     starts: Vec<usize>,
     // Byte overhead relative to UTF-16, recorded only after non-ASCII scalars.

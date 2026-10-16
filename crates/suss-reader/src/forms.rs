@@ -178,7 +178,7 @@ pub fn read_forms_metered(
     source: &str,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Vec<Form>, ParseError> {
-    read_forms_internal(source, None, meter).map(|(forms, _)| forms)
+    read_forms_internal(source, None, false, meter).map(|(forms, _, _, _)| forms)
 }
 
 /// Indexing-reader data with the complete ordinary source metadata retained.
@@ -194,19 +194,22 @@ pub fn read_forms_with_source_metadata_metered(
     file: Option<&str>,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Vec<Form>, ParseError> {
-    let (forms, carets) = read_forms_internal(source, Some(file), meter)?;
+    let (forms, carets, _, _) = read_forms_internal(source, Some(file), false, meter)?;
     let mut forms = resolve_conditionals_metered(forms, meter)?;
     source_metadata::list_prefixes_metered(&mut forms, &carets, meter)?;
     Ok(forms)
 }
 
 mod source_metadata;
+mod source_snapshot;
+pub use source_snapshot::{SourceMetadata, SourceMetadataNode};
 
 fn read_forms_internal(
     source: &str,
     locations: Option<Option<&str>>,
+    capture_sites: bool,
     meter: &mut WorkMeter<'_>,
-) -> Result<(Vec<Form>, source_metadata::Carets), ParseError> {
+) -> Result<(Vec<Form>, source_metadata::Carets, source_snapshot::Capture, Vec<((usize,usize),usize)>), ParseError> {
     let source_positions = if locations.is_some() {
         charge(meter, source.len() as u64, 0..source.len())?;
         Some(source_metadata::Positions::new(source))
@@ -220,6 +223,8 @@ fn read_forms_internal(
         anonymous: None,
         logical_pending: VecDeque::new(),
         locations,
+        capture: capture_sites.then(source_snapshot::Capture::default),
+        raw_carets: Vec::new(),
         carets: source_metadata::Carets::new(),
         source_positions,
         meter,
@@ -240,7 +245,7 @@ fn read_forms_internal(
     if let Some(failure) = reader.work_failure {
         return Err(failure);
     }
-    result.map(|forms| (forms, reader.carets))
+    result.map(|forms| (forms, reader.carets, reader.capture.unwrap_or_default(), reader.raw_carets))
 }
 
 /// Resolve the first matching portable clause in source order, cumulatively metered.
@@ -530,6 +535,8 @@ struct Reader<'a, 'm, 'f> {
     anonymous: Option<(u64, BTreeMap<i32, Symbol>)>,
     logical_pending: VecDeque<Form>,
     locations: Option<Option<&'a str>>,
+    capture: Option<source_snapshot::Capture>,
+    raw_carets: Vec<((usize,usize),usize)>,
     carets: source_metadata::Carets,
     source_positions: Option<source_metadata::Positions>,
     meter: &'m mut WorkMeter<'f>,
@@ -639,6 +646,10 @@ impl Reader<'_, '_, '_> {
         if self.anonymous.is_some() {
             return Err(self.fail(start, "Nested anonymous function literals are not allowed"));
         }
+        // Preserve the legacy provenance reader's anonymous-ID replay effects.
+        // Until separately proven, anonymous source uses its eager fallback.
+        if let Some(capture)=&mut self.capture {capture.unsupported();}
+        let body_site=self.capture.as_mut().map(|capture|capture.begin(start+1,self.meter)).transpose()?;
         self.anonymous = Some((
             ANONYMOUS_IDS.fetch_add(1, Ordering::Relaxed),
             BTreeMap::new(),
@@ -717,6 +728,7 @@ impl Reader<'_, '_, '_> {
                         self.meter,
                     )?;
                 }
+                if let Some(capture)=&mut self.capture {capture.finish(body_site,&form,self.meter)?;}
                 form
             },
         ]))
@@ -793,6 +805,9 @@ impl Reader<'_, '_, '_> {
         let Some(c) = self.take() else {
             return Err(self.fail(start, "Expected a form"));
         };
+        let capture_slot=if matches!(c,'('| '[' | '{' | '#' | '^') {
+            self.capture.as_mut().map(|capture|capture.begin(start,self.meter)).transpose()?
+        } else {None};
         let kind = match c {
             '(' => Kind::List(self.items(start, ')')?),
             '[' => Kind::Vector(self.items(start, ']')?),
@@ -818,6 +833,11 @@ impl Reader<'_, '_, '_> {
             '\\' => Kind::String(vec![self.character(start)?]),
             '^' => {
                 let metadata = self.required()?;
+                if self.capture.is_some() {
+                    charge(self.meter,3,metadata.span.clone())?;
+                    source_snapshot::reserve(&mut self.raw_carets,1,self.meter,metadata.span.clone())?;
+                    self.raw_carets.push(((metadata.span.start,metadata.span.end),start));
+                }
                 if self.locations.is_some() {
                     self.carets.insert(
                         (metadata.span.start, metadata.span.end),
@@ -856,6 +876,9 @@ impl Reader<'_, '_, '_> {
                 }
                 target.metadata.insert(0, metadata);
                 target.span.start = start;
+                if let Some(capture)=&mut self.capture {
+                    capture.retarget(capture_slot.expect("metadata slot"),&target,self.meter)?;
+                }
                 return Ok(Some(target));
             }
             '\'' | '`' | '~' | '@' => {
@@ -1051,6 +1074,7 @@ impl Reader<'_, '_, '_> {
                 self.meter,
             )?;
         }
+        if let Some(capture)=&mut self.capture {capture.finish(capture_slot,&form,self.meter)?;}
         Ok(Some(form))
     }
     fn wrapper(&mut self, start: usize, name: &str) -> Result<Kind, ParseError> {

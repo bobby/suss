@@ -303,8 +303,9 @@ const TRAVERSAL_BOUND: usize = 1_048_576;
 
 #[derive(Debug)]
 pub(super) struct MetadataSnapshot {
-    original: IndexedForms,
-    located: IndexedForms,
+    source: suss_reader::forms::SourceMetadata,
+    index: FormIndex,
+    located: std::sync::OnceLock<IndexedForms>,
 }
 
 #[derive(Debug)]
@@ -576,6 +577,48 @@ impl FormIndex {
     }
 }
 
+enum MacroFormSource<'a> {
+    Borrowed(&'a Form),
+    Original(suss_reader::forms::SourceMetadataNode<'a>),
+}
+fn demand_read<T>(meter:&mut WorkMeter<'_>,run:impl FnOnce(&mut suss_reader::forms::WorkMeter<'_>)->Result<T,suss_reader::ParseError>)->Result<T,Diagnostic> {
+    let mut reader_meter=|work|meter(work).map_err(|error|suss_reader::ParseError {
+        span:error.span,message:error.message,expected:vec![],
+    });
+    run(&mut reader_meter).map_err(|error|Diagnostic{span:error.span,message:error.message})
+}
+impl FormIndex {
+    fn find_source_metered<'a>(&self,source:&'a suss_reader::forms::SourceMetadata,wanted:&Form,meter:&mut WorkMeter<'_>)
+        ->Result<Option<suss_reader::forms::SourceMetadataNode<'a>>,Diagnostic> {
+        charge(meter,1,&wanted.span)?;
+        if let Some(candidates)=self.spans.get(&(wanted.span.start,wanted.span.end)) {
+            for &rank in candidates {
+                charge(meter,1,&wanted.span)?;
+                let mut rank=rank;
+                let mut steps=Vec::new();
+                let root=loop {
+                    charge(meter,2,&wanted.span)?;
+                    let node=&self.nodes[rank];
+                    if let Some(parent)=node.parent {
+                        if steps.len()==steps.capacity() {
+                            let capacity=steps.capacity().saturating_mul(2).max(4);
+                            charge(meter,(capacity+steps.len())*std::mem::size_of::<Step>(),&wanted.span)?;
+                            steps.reserve_exact(capacity-steps.len());
+                        }
+                        steps.push(node.step); rank=parent;
+                    } else {let Step::Root(root)=node.step else {unreachable!()};break root;}
+                };
+                let mut node=source.root(root).expect("original source root");
+                for step in steps.into_iter().rev() {
+                    charge(meter,2,&wanted.span)?;
+                    node=match step {Step::Metadata(i)=>node.child(true,i),Step::Code(i)=>node.child(false,i),Step::Root(_)=>unreachable!()}.expect("original source path");
+                }
+                if same_metered(node.form(),wanted,true,meter)? {return Ok(Some(node));}
+            }
+        }
+        Ok(None)
+    }
+}
 impl SourceOrigin {
     /// Reader metadata for a source form whose entire original syntax and spans
     /// still match. Expanded data with reused spans retains only explicit meta.
@@ -600,8 +643,13 @@ impl SourceOrigin {
         &self, form: &Form,
         meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
     ) -> Result<Form, Diagnostic> {
-        let selected = self.macro_form_source_metered(form, meter)?.unwrap_or(form);
-        clone_form_metered(selected, meter)
+        match self.macro_form_source_metered(form,meter)? {
+            Some(MacroFormSource::Original(node))=>{
+                if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand mode=full composite={} span={}:{}",matches!(node.form().kind,Kind::List(_)|Kind::Vector(_)|Kind::Map(_)|Kind::Set(_)),form.span.start,form.span.end);}
+                demand_read(meter,|meter|node.located_metered(meter))
+            }
+            source=>clone_form_metered(match source {Some(MacroFormSource::Borrowed(form))=>form,None=>form,_=>unreachable!()},meter),
+        }
     }
 
     /// Root metadata with the same complete provenance checks as full reader
@@ -610,7 +658,13 @@ impl SourceOrigin {
         &self, form: &Form,
         meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
     ) -> Result<(std::ops::Range<usize>, Vec<Form>), Diagnostic> {
-        let selected = self.macro_form_source_metered(form, meter)?.unwrap_or(form);
+        let selected=match self.macro_form_source_metered(form,meter)? {
+            Some(MacroFormSource::Original(node))=>{
+                if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand mode=root span={}:{}",form.span.start,form.span.end);}
+                return demand_read(meter,|meter|node.root_metadata_metered(meter));
+            }
+            Some(MacroFormSource::Borrowed(form))=>form,None=>form,
+        };
         let mut metadata = Vec::new();
         charge(meter, selected.metadata.len().saturating_mul(std::mem::size_of::<Form>()), &selected.span)?;
         metadata.try_reserve_exact(selected.metadata.len()).map_err(|_| Diagnostic {
@@ -625,13 +679,13 @@ impl SourceOrigin {
 
     fn macro_form_source_metered(
         &self, form: &Form, meter: &mut WorkMeter<'_>,
-    ) -> Result<Option<&Form>, Diagnostic> {
+    ) -> Result<Option<MacroFormSource<'_>>, Diagnostic> {
         if let Some(pair) = &self.reader_forms {
             let mut pending = vec![(&pair.0, &pair.1)];
             while let Some((lowered, reader)) = pending.pop() {
                 charge(meter, 1, &form.span)?;
                 if same_metered(lowered, form, true, &mut *meter)? {
-                    return Ok(Some(reader));
+                    return Ok(Some(MacroFormSource::Borrowed(reader)));
                 }
                 // Metadata has an independent shape; source indexing may add
                 // prefixes. Never let it shift correspondence of code children.
@@ -704,85 +758,141 @@ impl SourceOrigin {
         &self, form: &Form, meter: &mut WorkMeter<'_>,
     ) -> Result<Option<Form>, Diagnostic> {
         self.original_form_ref_metered(form, meter)?
-            .map(|found| clone_form_metered(found, meter)).transpose()
+            .map(|found| match found {
+                MacroFormSource::Borrowed(form)=>clone_form_metered(form,meter),
+                MacroFormSource::Original(node)=>demand_read(meter,|meter|node.located_metered(meter)),
+            }).transpose()
     }
 
     fn original_form_ref_metered(
-        &self,
-        form: &Form,
-        meter: &mut WorkMeter<'_>,
-    ) -> Result<Option<&Form>, Diagnostic> {
+        &self,form:&Form,meter:&mut WorkMeter<'_>,
+    )->Result<Option<MacroFormSource<'_>>,Diagnostic> {
         if self.metadata_forms.get().is_none() {
-            // The reader charges actual scanning, selection and location work
-            // to this same operation rather than starting an independent pool.
-            let path = self
-                .path
-                .as_ref()
-                .map(|path| {
-                    charge(meter, path.as_os_str().len(), &form.span)?;
-                    path.to_str().ok_or_else(|| Diagnostic {
-                        span: form.span.clone(),
-                        message: "Source metadata path is not Unicode".into(),
-                    })
-                })
-                .transpose()?;
-            let mut reader_meter = |work| {
-                meter(work).map_err(|error| suss_reader::ParseError {
-                    span: error.span,
-                    message: error.message,
-                    expected: vec![],
-                })
-            };
-            let parsed = suss_reader::forms::read_forms_metered(&self.text, &mut reader_meter)
-                .map_err(|error| Diagnostic {
-                    span: form.span.clone(),
-                    message: format!("Unable to construct source metadata snapshot: {error}"),
-                })?;
-            let original =
-                suss_reader::forms::resolve_conditionals_metered(parsed, &mut reader_meter)
-                    .map_err(|error| Diagnostic {
-                        span: form.span.clone(),
-                        message: format!("Unable to construct source metadata snapshot: {error}"),
-                    })?;
-            let located = suss_reader::forms::read_forms_with_source_metadata_metered(
-                &self.text,
-                path,
-                &mut reader_meter,
-            )
-            .map_err(|error| Diagnostic {
-                span: form.span.clone(),
-                message: format!("Unable to construct source metadata snapshot: {error}"),
-            })?;
-            let snapshot = MetadataSnapshot {
-                original: IndexedForms::new_metered(original, meter)?,
-                located: IndexedForms::new_metered(located, meter)?,
-            };
-            // If another thread won the OnceLock race, our extra construction
-            // was still charged, and all future lookup work uses the winner.
-            let _ = self.metadata_forms.set(Ok(snapshot));
+            let file=self.path.as_ref().map(|path| {
+                    charge(meter,path.as_os_str().len(),&form.span)?;
+                    path.to_str().map(str::to_owned).ok_or_else(||Diagnostic{span:form.span.clone(),message:"Source metadata path is not Unicode".into()})
+                }).transpose()?;
+            let result=(|| -> Result<MetadataSnapshot,Diagnostic> {
+                charge(meter,2,&form.span)?;
+                let source=demand_read(meter,|meter|suss_reader::forms::SourceMetadata::read_metered(self.text.clone(),file,meter)).map_err(|error|Diagnostic{span:form.span.clone(),message:format!("Unable to construct source metadata snapshot: {}",error.message)})?;
+                // Keep the old second read (including anonymous reader IDs) for
+                // unsupported mappings, before original index construction.
+                let located_forms=if source.requires_eager() {
+                    let path=self.path.as_ref().and_then(|p|p.to_str());
+                    Some(demand_read(meter,|meter|suss_reader::forms::read_forms_with_source_metadata_metered(&self.text,path,meter)).map_err(|error|Diagnostic{span:form.span.clone(),message:format!("Unable to construct source metadata snapshot: {}",error.message)})?)
+                } else {None};
+                let index=FormIndex::new_metered(source.forms(),meter)?;
+                let located=std::sync::OnceLock::new();
+                if let Some(forms)=located_forms {let _=located.set(IndexedForms::new_metered(forms,meter)?);}
+                if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand snapshot bytes={} eager={}",self.text.len(),source.requires_eager());}
+                Ok(MetadataSnapshot {source,index,located})
+            })()?;
+            let _=self.metadata_forms.set(Ok(result));
         }
-        let forms = self.metadata_forms.get().expect("snapshot initialized");
-        let snapshot = forms.as_ref().map_err(|error| Diagnostic {
-            span: form.span.clone(),
-            message: format!("Unable to construct source metadata snapshot: {error}"),
+        let snapshot=self.metadata_forms.get().expect("snapshot initialized").as_ref().map_err(|error|Diagnostic{
+            span:form.span.clone(),message:format!("Unable to construct source metadata snapshot: {error}"),
         })?;
-        if snapshot.original.find_metered(form, true, meter)?.is_none() {
-            return Ok(None);
+        let Some(node)=snapshot.index.find_source_metered(&snapshot.source,form,meter)? else {return Ok(None)};
+        if node.is_caret_prefix() && snapshot.located.get().is_none() {
+            // Legacy span-index selection can see generated metadata maps at
+            // these same spans. Preserve that exact behavior through fallback.
+            let path=self.path.as_ref().and_then(|p|p.to_str());
+            let forms=demand_read(meter,|meter|suss_reader::forms::read_forms_with_source_metadata_metered(&self.text,path,meter))?;
+            let located=IndexedForms::new_metered(forms,meter)?;
+            let _=snapshot.located.set(located);
+            if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand late-eager reason=caret-prefix bytes={}",self.text.len());}
         }
-        let Some(found) = snapshot.located.find_metered(form, false, meter)? else {
-            return Err(Diagnostic {
-                span: form.span.clone(),
-                message: "Verified source form missing from source metadata snapshot".into(),
-            });
-        };
-        Ok(Some(found))
+        if let Some(located)=snapshot.located.get() {
+            let Some(found)=located.find_metered(form,false,meter)? else {return Err(Diagnostic {span:form.span.clone(),message:"Verified source form missing from source metadata snapshot".into()})};
+            if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand mode=eager-return bytes={}",self.text.len());}
+            return Ok(Some(MacroFormSource::Borrowed(found)));
+        }
+        Ok(Some(MacroFormSource::Original(node)))
     }
+
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[test]
+    fn demand_caret_prefix_fallback_preserves_legacy_generated_span_selection() {
+        for source in ["^number (f)","^:outer (f)","^{:line 7} (f)","^\"tag\" (f)"] {
+            let original=read_forms(source).unwrap().remove(0);
+            let wanted=&original.metadata[0];
+            let located=IndexedForms::new(read_forms_with_source_metadata(source,None).unwrap());
+            let expected=located.find_metered(wanted,false,&mut |_|Ok(())).unwrap();
+            let origin=SourceOrigin::new(source,None);
+            let actual=origin.macro_form_data_metered(wanted,&mut |_|Ok(()));
+            match expected {Some(expected)=>assert_eq!(&actual.unwrap(),expected,"{source}"),None=>assert!(actual.is_err(),"{source}")}
+            assert!(origin.metadata_forms.get().unwrap().as_ref().unwrap().located.get().is_some());
+        }
+    }
+    #[test]
+    fn demand_origin_symbol_then_root_then_full_composite_never_repays_eager_forest() {
+        let source=format!("(def ^:dynamic target [{}])",vec!["17";2048].join(" "));
+        let original=read_forms(&source).unwrap().remove(0);
+        let Kind::List(items)=&original.kind else {unreachable!()};
+        let origin=SourceOrigin::new(source.clone(),Some("demand.sus".into()));
+        let mut cold=0;
+        origin.macro_form_data_metered(&items[1],&mut |n|{cold+=n;Ok(())}).unwrap();
+        assert!(origin.metadata_forms.get().unwrap().as_ref().unwrap().located.get().is_none());
+        let mut root_cost=0;
+        origin.macro_form_root_metadata_metered(&original,&mut |n|{root_cost+=n;Ok(())}).unwrap();
+        let mut full_cost=0;
+        let full=origin.macro_form_data_metered(&original,&mut |n|{full_cost+=n;Ok(())}).unwrap();
+        assert_eq!(full,read_forms_with_source_metadata(&source,Some("demand.sus")).unwrap().remove(0));
+        assert!(origin.metadata_forms.get().unwrap().as_ref().unwrap().located.get().is_none());
+        // Execute the previous independent parser/index/clone route, using
+        // genuine readers and matching rather than a mocked validity result.
+        let mut legacy_cost=0;
+        let mut legacy_meter=|n|{legacy_cost+=n;Ok(())};
+        let raw=demand_read(&mut legacy_meter,|meter|suss_reader::forms::read_forms_metered(&source,meter)).unwrap();
+        let raw=demand_read(&mut legacy_meter,|meter|suss_reader::forms::resolve_conditionals_metered(raw,meter)).unwrap();
+        let located=demand_read(&mut legacy_meter,|meter|suss_reader::forms::read_forms_with_source_metadata_metered(&source,Some("demand.sus"),meter)).unwrap();
+        let raw=IndexedForms::new_metered(raw,&mut legacy_meter).unwrap();
+        let located=IndexedForms::new_metered(located,&mut legacy_meter).unwrap();
+        for (wanted,root_only) in [(&items[1],false),(&original,true),(&original,false)] {
+            assert!(raw.find_metered(wanted,true,&mut legacy_meter).unwrap().is_some());
+            let selected=located.find_metered(wanted,false,&mut legacy_meter).unwrap().unwrap();
+            if root_only {
+                charge(&mut legacy_meter,selected.metadata.len()*std::mem::size_of::<Form>(),&selected.span).unwrap();
+                for prefix in &selected.metadata {
+                    charge(&mut legacy_meter,1,&selected.span).unwrap();
+                    clone_form_metered(prefix,&mut legacy_meter).unwrap();
+                }
+            } else {clone_form_metered(selected,&mut legacy_meter).unwrap();}
+        }
+        let total=cold+root_cost+full_cost;
+        assert!(total<legacy_cost,"demand={total} legacy={legacy_cost}");
+        eprintln!("demand-origin cold-symbol={cold} root={root_cost} later-full={full_cost} total={total} legacy-total={legacy_cost} eager=false");
+    }
+    #[test]
+    fn demand_origin_rejects_changed_bits_namespace_metadata_and_forged_string_span() {
+        let source="^{:kept 1} [0 -0.0 foo/bar]";
+        let original=read_forms(source).unwrap().remove(0);
+        let origin=SourceOrigin::new(source,None);
+        origin.macro_form_data_metered(&original,&mut |_|Ok(())).unwrap();
+        for edit in 0..3 {
+            let mut changed=original.clone();
+            match edit {
+                0=>{let Kind::Vector(v)=&mut changed.kind else {unreachable!()};v[1].kind=Kind::Number(0.0);}
+                1=>{let Kind::Vector(v)=&mut changed.kind else {unreachable!()};v[2].kind=Kind::Symbol(suss_reader::Symbol::namespaced("other","bar"));}
+                _=>changed.metadata=vec![read_forms(":changed").unwrap().remove(0)],
+            }
+            assert_eq!(origin.macro_form_data_metered(&changed,&mut |_|Ok(())).unwrap(),changed);
+        }
+        let nan_origin=SourceOrigin::new("##NaN",None);
+        let mut nan=read_forms("##NaN").unwrap().remove(0);
+        let payload=0x7ff8_0000_0000_0001;
+        nan.kind=Kind::Number(f64::from_bits(payload));
+        let result=nan_origin.macro_form_data_metered(&nan,&mut |_|Ok(())).unwrap();
+        let Kind::Number(number)=result.kind else {unreachable!()};
+        assert_eq!(number.to_bits(),payload);
+        let mut forged=read_forms("target").unwrap().remove(0);forged.span=1..7;
+        assert_eq!(SourceOrigin::new("\"target\"",None).macro_form_data_metered(&forged,&mut |_|Ok(())).unwrap(),forged);
+    }
     #[test]
     fn root_metadata_projection_preserves_values_with_less_work_than_full_copy() {
         let source = format!("(def target [{}])", vec!["17"; 512].join(" "));
