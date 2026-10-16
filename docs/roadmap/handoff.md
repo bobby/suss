@@ -27860,3 +27860,42 @@ source-tag charged stages and nesting-aware cold/nonnil Keyword versus Symbol
 receiver dispatches, using native fields without additional guest calls. Do not
 infer literal eligibility from the old unnamed193-dispatch diagnostic or expand
 warming without explicit pinned constructor provenance.
+
+Supplemental #261 unchanged keyword namespace evidence (2026-10-16)
+
+Isolated branch `portable/m4-keyword-conformance-evidence`, based on reviewed
+`ec0eea2655c71f9e4957cf1b0cbd8727c7ec97b1`, adds
+`pinned_keyword_namespace_keeps_values` in
+`crates/suss-compile/tests/clojure_test_suite.rs`. The existing Harness loads the
+entire unchanged pinned `clojure.core-test.keyword` namespace and executes
+`test-keyword`. Generated source bytes must equal the vendored namespace before
+normal harness namespace routing. No clauses, portability branches or numeric
+forms are rewritten by this gate. The independent Python suite comparator
+checks every operand and the full ordered assertion identities; namespace/test
+failures (including exceptions after the final assertion), skips, missing
+assertions and guest-only verdicts cannot satisfy the gate.
+
+One focused run only, with `CARGO_BUILD_JOBS=2`, separate
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/keyword-conformance-target`,
+and `SUSS_KEYWORD_CONFORMANCE_CAPTURE=/home/bobby/.cache/suss-m4-work/keyword-conformance`:
+`cargo test -p suss-compile --locked --test clojure_test_suite pinned_keyword_namespace_keeps_values -- --exact --test-threads=2 --nocapture`.
+No RUSTFLAGS override. Exit 0; compile 14.98s, test 1 pass/0 fail/0 ignored in
+38.13s, runner 53.80s. Independent comparison: 60 pass, 0 guest-judged,
+0 fail, 0 not-executed, 0 skipped, 0 namespaces-failed; exact ordered IDs,
+no test failures or skip mismatches. All 3,441 tracked file hashes were unchanged
+during this run. External task cache retains runner, command, raw log,
+observations, comparator stdout/stderr/JSON, full before/after freezes, tested
+source snapshot and diff, pinned reference snapshot and explicit exit receipt.
+
+Test source SHA256:
+`a3c2eceaf02071963369246d4dcca137be744671681fee683572f85da3c47211`.
+Unmodified vendored keyword namespace SHA256:
+`055a97c5a9385a0fe22d2ad1f3ff3014d8f1e3b18844bb5bf7322dbe508aa0b2`.
+Suite pin `95d4a9112cfc5fe6629be3d14bb99080ea00af2f`; CLJS reference pin
+`c4295f303100bbf5afac449242d30bca1126f1a1`.
+
+Limits: supplemental keyword value conformance only, not keyword memo-state or
+callback-effect evidence, source-tag fuel acceptance, full baseline or final-head
+CI. No production/bootstrap changes, compatibility skips, quota changes, PR or
+integration. Next step is independent review of this exact test/evidence delta
+before integrating the gate; Epicurus owns literal-origin implementation work.
