@@ -818,3 +818,6 @@ impl ExpansionHost for CompiledMacros {
 
 #[cfg(test)]
 mod memo_leaf_tests;
+
+#[cfg(test)]
+mod analyzer_literal_effect_tests;

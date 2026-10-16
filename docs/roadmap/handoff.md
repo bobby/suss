@@ -27900,3 +27900,48 @@ the separately reviewed keyword gate is supplemental and requires integration.
 Next diagnostic must identify actual remaining cold Keyword receivers via native
 field reads and nesting-aware counts without extra guest hashing. Do not infer
 literal origins from spelling or broaden warming from an unnamed cost sample.
+
+### Actual macro-&env delegated IHash effect regression (2026-10-16)
+
+Isolated `portable/m4-analyzer-literal-env-effects` from `be6a219` in
+`/home/bobby/Work/code/bobby/suss-m4-analyzer-literal-env-effects`. Refs #261.
+Only a cfg(test) child module of portable_macros and its registration were added;
+production behavior, source quotas, tariffs and existing fixtures are unchanged.
+The supplied cache draft was not executed. Its stage1 event-log ambiguity was
+corrected before execution: restore the exact captured canonical Keyword IHash,
+then clear literal-events before transporting the next caller environment.
+Matching stage0 events are selected by exact transported :op key identity, not
+just spelling; at least one must exist and every recorded pre-delegation nil
+predicate must be false. Hash dispatch still delegates the actual original
+method. Same-text explicit keyword/symbol arguments and the source metadata leaf
+remain cold, while the actual analyzer :op memo equals -1882987955 and the
+initializer value remains17. Both caller phases execute custom and restored
+stages after GC in caller and macro Stores. Fallible observation work attempts
+method restoration before propagating an error. All four eight-Boolean rows
+were observed, not fabricated; no cold-keyword rehash or authority grant is used.
+
+Producer tool79072 terminal0. Commands use CARGO_BUILD_JOBS=2,
+RAYON_NUM_THREADS=2 and separate CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-env-effects-target.
+The old ihash-dispatch-target was confirmed idle via process target inspection
+and reflink-copied to that owned target; live targets were untouched.
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`: exit0,35.12s wrapper.
+- `cargo test -p suss-compile --lib --locked analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration -- --test-threads=2 --nocapture`:1pass0fail0ignored100.51s test/126.48s wrapper;331filtered unrelated tests are not successes.
+
+Source/bootstrap freeze434 paths unchanged across focused execution; all source
+hashes also unchanged across regeneration. Both bootstrap manifests match their
+Wasm digests. Regeneration reflects the compiler source fingerprint change from
+the test module, not a production semantic fix. No failed stage occurred in this
+producer; the original unexecuted draft is retained separately in the archive.
+The freeze covers Rust/Suss/bootstrap paths, not every toolchain or dependency
+input. No full workspace baseline, final-head CI, #261 completion, push or PR is
+claimed. The two source-tag acceptance failures on the parent remain separate;
+this single regression supplies actual-&env callback evidence absent from the
+native recipe-construction fixture. Main integrates only after independent review.
+
+Evidence `docs/roadmap/evidence/m4-analyzer-literal-env-effects-2026-10-16.tar.gz`,
+SHA256 `28764e00187ab191cc38d01dd57639985c3a66cf1ba1a6086aec77270d146e83`:
+442 payload hashes plus manifest, complete434-path tested snapshots/freeze,
+raw bootstrap/test logs, commands/exits, runner, packager and original draft.
+Every payload was read back and verified. Cache receipt:
+`/home/bobby/.cache/suss-m4-work/analyzer-literal-env-effects-result.json`.
