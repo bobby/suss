@@ -28,6 +28,8 @@ pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 mod observation;
+#[cfg(test)]
+pub(crate) mod memo_leaf_test_support;
 
 #[derive(Clone, Debug)]
 pub struct SessionOptions {

@@ -729,3 +729,6 @@ impl ExpansionHost for CompiledMacros {
         })
     }
 }
+
+#[cfg(test)]
+mod memo_leaf_tests;

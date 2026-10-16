@@ -526,6 +526,14 @@ acceptance remain unfinished. No inventory status changed. See
 [collection literal evidence](../runtime/collection-literals.md).
 
 
+## Reader identifier hash initialization
+
+Reader/analyzer Symbol and Keyword values use cold nil hash memos; the live
+IHash method performs warming and preserves custom value/effect behavior.
+Compiled constants retain their separate pinned emission contract. See
+[reader identifier memo observations](../runtime/reader-identifier-memos.md)
+for the matched cold/warm cases and scope.
+
 ## Quoted identifiers for compiled macro data
 
 Real source-backed Symbol/Keyword and nested list literals now execute through the
