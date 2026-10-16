@@ -458,7 +458,21 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         module.section(&elements);
     }
     module.section(&code);
+    // Debug names only: no call, branch, allocation, or import added to Wasm.
+    let mut debug=wasm_encoder::NameSection::new();
+    let mut functions=wasm_encoder::NameMap::new();
+    for (i,name) in names.iter().enumerate(){functions.append(i as u32,name);}
+    functions.append(names.len() as u32,&format!("eval@{}..{}",ir.span.start,ir.span.end));
+    for (i,body) in bodies.iter().enumerate(){functions.append((names.len()+1+i) as u32,&format!("body:{}@{}..{}",body.display_name.as_ref().map(|x|String::from_utf16_lossy(x)).unwrap_or_default(),body.function.span.start,body.function.span.end));}
+    for (i,body) in dispatchers.iter().enumerate(){functions.append((names.len()+1+bodies.len()+i) as u32,&format!("dispatch:{}",body.display_name.as_ref().map(|x|String::from_utf16_lossy(x)).unwrap_or_default()));}
+    debug.functions(&functions);module.section(&debug);
     let bytes = module.finish();
+    if let Some(directory) = std::env::var_os("SUSS_HASH_STACK_MODULES") {
+        use sha2::{Digest, Sha256};
+        let path = std::path::PathBuf::from(directory).join(format!("{:x}.wasm", Sha256::digest(&bytes)));
+        if let Err(error) = std::fs::write(&path, &bytes) { eprintln!("diagnostic module capture failed: {error}"); }
+    }
+
     runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).map_err(|message| {
         Diagnostic {
             span: ir.span.clone(),

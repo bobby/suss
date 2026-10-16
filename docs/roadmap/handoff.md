@@ -27899,3 +27899,65 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+## Current invocation-tag hash-stack diagnostic — 2026-10-16
+
+Isolated diagnostic/m4-current-hash-stacks starts at8fda18a. This is diagnostic
+source, not an integration/optimization recommendation. Added emit NameSection
+and host-only module capture; OperationScope around each original compiled macro
+expansion; actual IHash dynamic-depth guard; existing epoch callback samples
+only after checking/consuming cancellation. Original requested interrupt traps
+and Continue(1) behavior preserved. No guest helper/hash calls, imports, quotas,
+fixture bodies or tariffs changed. Debug epoch engine uses requested100us timer;
+scheduler and guest entry/safepoint bias remain.
+
+Runner /home/bobby/.cache/suss-m4-work/run-current-hash-stacks.py uses dedicated
+current-hash-stacks-target (reflink of idle old hash-stack target), locked Cargo,
+jobs2 and no RUSTFLAGS assignment. Bootstrap command:
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`
+exit0,27.29s. Removing all custom sections from both regenerated bootstrap Wasm
+files gives byte-identical operational bytes to8fda18a. No independent matched
+baseline for each dynamically emitted expression module is claimed; emitter
+changes append custom names and host capture only.
+
+Only fixture command:
+`cargo test -p suss-cli --locked --test compiled_macro_source_tags compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods -- --exact --nocapture --test-threads=1`
+with SUSS_HASH_STACK_SAMPLE=1, SUSS_HASH_STACK_MODULES pointing at task cache,
+and existing SUSS_MACRO_FUEL_TRACE=1/SUSS_METADATA_FUEL_TRACE=1. Exit101,
+0pass/1fuel-fail/0ignored/1filtered,37.84s test/58.07s command. Five invocation
+starts; decoded remaining[8354757,6639177,4094597,1538479] exactly match supplied
+untraced8fda balances. Fifth invocation exhausts caller &env transport at388..413.
+436 Rust/Suss/bootstrap hashes identical before/after fixture.
+
+Per-expansion64 fuel strata of156250 anchored to first eligible hash tick;
+up to8 deterministic reservoir rows per stratum,512 per expansion,4096 total.
+Retained samples across all five expansions:13,19,31,32,22 (117total), covering
+7,8,11,11,8 strata. No cap reached; no eligible samples dropped by reservoir
+in this execution. Each row has operation ID/target, current fuel, eligible tick,
+hash depth and complete captured Wasmtime frames with names/indices/offsets.
+All operation guards exit hash depth0. Nested operation scopes are deliberately
+rejected by this diagnostic; this fixture did not trigger that restriction.
+
+Current named stacks include hash_keyword -> hash_symbol ->
+m3_hash_unencoded_chars and mixing/rotate helpers in all expansions. Full stacks
+also show string hash and property access/coercion paths. Next source investigation
+can follow the actual cold identifier hash/string/property helpers; these samples
+do not establish exclusive fuel ranking or a justified savings amount. Many
+sampled top frames are invoke, consistent with entry bias. Do not select an invoke
+rewrite from its sample count alone; earlier typed-invoke experiment was negative.
+ABI exported-name mapping is source-derived from current linked Runtime module:
+Macro nominal.rs inserts macro-memo-field-set before object-field-set, shifting
+later indices by1; observer finish appends helpers. Internal live dispatcher
+label is inferred from its immediately preceding body. Raw unnamed frames remain
+unchanged; this mapping is not a captured Macro ABI byte-equivalence assertion.
+
+Archive m4-current-hash-stacks-2026-10-16.tar.gz contains source/bootstrap freeze,
+raw logs and samples, 39 captured expression modules plus both bootstrap name
+maps, ABI mapping input/output, raw expected failure, runners and manifest.
+Supporting Cargo inputs captured after execution. No cancellation test, full
+baseline, CI, portable conformance or issue closure claim. Sampling perturbs wall
+time; matching fuel boundaries only establishes this fixture's fuel equivalence.
+Archive SHA2561d3f37790e9b3c4cd0fa8b3ebdc6a19530e3625f6d2a50d046ca93d5e45ad2eb;
+495 manifested payloads (plus manifest), all payload hashes read back verified.
+Cache receipt/current raw paths: /home/bobby/.cache/suss-m4-work/current-hash-stacks/;
+package receipt: /home/bobby/.cache/suss-m4-work/current-hash-stacks-package-result.json.
