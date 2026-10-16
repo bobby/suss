@@ -38,3 +38,12 @@ Symbol/Keyword definitions and constant-lowering arithmetic retain their upstrea
 EPL-1.0 provenance. JVM/Node remain development oracles; shipped execution has no
 Java dependency. This initialization contract does not certify mutable retained
 storage; that is the separate contract in issue257.
+
+The exact workspace command `cargo test --workspace --locked -- --test-threads=2`
+exited successfully at `5aff6827`, with 1808 pass executions, zero failures and
+22 explicit ignores. The frozen source remained unchanged. The terminal raw log,
+metadata, snapshot and classification are retained in the reader baseline archive
+under `docs/roadmap/evidence/`; the handoff records its digest and limitations.
+The separate CI run 38931494913 passed all ten jobs at that source head, including
+all 244 planned integration targets. Neither result converts ignored tests or
+previously unexecuted conformance assertions into portable compatibility evidence.
