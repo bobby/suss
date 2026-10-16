@@ -124,7 +124,6 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     }
                     Operation::GlobalRead(global) => {
                         globals.insert(global.clone());
-                        names.insert("binding-bound");
                         names.insert("binding-get");
                     }
                     Operation::GlobalBound(global) => {
@@ -846,11 +845,14 @@ fn emit_function(
                         globals.binary_search(global).expect("collected global") as u32;
                     function
                         .instruction(&GlobalGet(index_global))
-                        .instruction(&Call(index("binding-bound")))
-                        .instruction(&RefCastNonNull(HeapType::I31))
-                        .instruction(&I31GetU)
-                        .instruction(&I32Const(4))
-                        .instruction(&I32Eq)
+                        // The shared binding cell stores the bound flag as i32.
+                        // Read the same checked field as binding-bound without
+                        // boxing and immediately unboxing its Boolean result.
+                        .instruction(&RefCastNonNull(HeapType::Concrete(5)))
+                        .instruction(&StructGet {
+                            struct_type_index: 5,
+                            field_index: 1,
+                        })
                         .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-get")))

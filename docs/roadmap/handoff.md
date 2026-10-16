@@ -27365,3 +27365,11 @@ property-key-equal unrolls the first4UTF16 units after the original type/length 
 Unchanged public_record_custom_protocols_and_record_input_factory_decode_after_gc remains0pass1fail56.01s (wrapper71.17s, source unchanged). Transformer remaining fuel1261765→1291684, saving29919 at the same allowance. Caller-environment7774991 unchanged: this does not repair the set-hash hotspot. Second caller unexecuted, known17fuel+1identity failures remain unresolved. Commands use the same separate target/buildjobs2, focused test and regeneration commands above; full native command cargo test -p suss-compile --locked --test runtime_abi -- --test-threads=2. No new full workspace baseline/final-head CI claim.
 
 Archive docs/roadmap/evidence/m4-short-property-comparison-2026-10-16.tar.gz SHA256 9321bdb54d6877e3d5a16e98bc7a7e2cd280000934910826af70ce83c4984de4 retains raw logs, before-profile comparison, runner, patch and6 source/bootstrap snapshots.
+
+### Direct checked binding flag (2026-10-16)
+
+GlobalRead emits the same shared binding-cell type5/field1 checked access as binding-bound, directly branching on the i32 flag rather than calling, boxing, unpacking and comparing a Boolean. Every nonzero flag remains bound; zero yields undefined. The existing binding-get still performs live dynamic lookup. GlobalBound remains unchanged. Independent source review found no correctness/error-order blocker. Regenerated bootstrap exited0; portable_dynamic_bindings10pass0fail8.51s.
+
+Unchanged publicrecord fixture still fails; remaining transformer fuel1291684→1385114 (93430saved), caller-env7774991→7790801 (15810saved) against1731314. No allowance changed. Second caller remains unexecuted. Logs, runner, patch and5 source/bootstrap snapshots: docs/roadmap/evidence/m4-direct-bound-flag-2026-10-16.tar.gz SHA256 6528582437d23d2ebbddb00b9ca4b25d2884e96e4db9fa6204a65261ee2c2006.
+
+The nine-harness33-test regression matrix is running on frozen source in tool session12936: python3 /home/bobby/.cache/suss-m4-work/run-global-bound-direct-regressions.py; raw global-bound-direct-regressions.log and JSON under the task cache. Obtain terminal results and source_unchanged before claiming any repaired failure. Full workspace baseline and final-head CI remain required, unclaimed for this candidate.
