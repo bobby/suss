@@ -1166,4 +1166,37 @@ mod tests {
         }
     }
 
+    #[test]
+    fn actual_view_hash_distributes_numbers_line_values_and_class_distinctions() {
+        let mut classes=Vec::new();
+        for name in ["ArrayMap","HashMap","PersistentHashMap","PersistentVector","List","LazySeq","ReaderMap","ReaderSet","SourceArray","Symbol","Keyword","String"] {
+            classes.push(form(Kind::Symbol(suss_reader::Symbol {namespace:Some("suss.core".into()),name:name.into()})));
+            classes.push(form(Kind::Keyword(suss_reader::Keyword {namespace:Some("suss.core".into()),name:name.into()})));
+            classes.push(form(Kind::String(name.encode_utf16().collect())));
+        }
+        classes.extend([form(Kind::Nil),form(Kind::Bool(false)),form(Kind::Bool(true)),form(Kind::List(vec![])),form(Kind::Vector(vec![])),form(Kind::Map(vec![])),form(Kind::Set(vec![]))]);
+        for (label,values) in [
+            ("f64-0-through-127",(0..128).map(|i|form(Kind::Number(i as f64))).collect::<Vec<_>>()),
+            ("integer-line-values",(0..128).map(|i|form(Kind::Number((1000+i*37) as f64))).collect()),
+            ("class-distinctions",classes),
+        ] {
+            let mut placements=std::collections::BTreeMap::<usize,usize>::new();
+            let mut small=std::collections::BTreeSet::new();
+            let mut table=Interner::default();
+            for (index,value) in values.iter().enumerate() {
+                let (node,plan)=leaf_view(value);
+                let view=View {form:value,node:&node,nodes:&plan.nodes,groups:None};
+                let hash=view.hash(&mut |_|Ok::<_,Error>(())).unwrap();
+                *placements.entry(hash as usize & 8191).or_default()+=1;
+                small.insert(hash as usize & 255);
+                assert_eq!(table.intern_view(&view,&mut |_|Ok::<_,Error>(())),Ok(KeyId(index)));
+                assert_eq!(table.intern_view(&view,&mut |_|Ok::<_,Error>(())),Ok(KeyId(index)));
+            }
+            eprintln!("raw-avalanche-placement {label} inputs={} slots8192={} slots256={} max-slot-load={}",values.len(),placements.len(),small.len(),placements.values().max().unwrap());
+            assert!(placements.len()>=values.len()*7/8,"{label}: collapsed 8192-slot placement");
+            assert!(small.len()>=values.len()*5/8,"{label}: collapsed 256-slot placement");
+            assert!(*placements.values().max().unwrap()<=3,"{label}: concentrated placement");
+        }
+    }
+
 }

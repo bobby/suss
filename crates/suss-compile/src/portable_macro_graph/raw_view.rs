@@ -148,6 +148,13 @@ impl View<'_> {
             }
             Ok(true)
         })?;
+        // Finalize the whole word stream before RawHeads masks its low bits.
+        // Prepay all three shifts/xors, two wrapping multiplies and fixed
+        // assignment/return control. Existing stream tariffs are unchanged.
+        charge(10)?;
+        hash = (hash ^ (hash >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+        hash = (hash ^ (hash >> 27)).wrapping_mul(0x94d049bb133111eb);
+        hash ^= hash >> 31;
         Ok(hash)
     }
     pub(super) fn encode<E>(
