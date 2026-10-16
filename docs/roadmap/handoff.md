@@ -27604,3 +27604,142 @@ Isolated portable/m4-combined-acceptance from107a736, applying only e24340d→30
 Focused runner run-combined-focused.py: 115pass executions/6preserved fuel failures/zero ignored. Raw keys15, Plan3, initializer-native3, runtime ABI81, public cumulative10, authored initializer1 and pinned map1 pass; collection target also has one passing test. All six direct source-transport gaps still fail: core environment, both collection AST cases, control AST, constructor AST and captured global references. No existing fuel failure claimed fixed. Pinned map completes all69ordered IDs; explicit unchanged suite comparator verifies62host-decided/seven guest-judged passes, zero failed/skipped/unexecuted assertions. Source unchanged during tests across3427 tracked regular-file hashes. Documentation/evidence updates occur after that freeze; no claim they retain their prior hashes.
 
 Commands/logs/exit receipts/source snapshots and original combined patch in m4-combined-transport-focused-2026-10-16.tar.gz, SHA256 cd96c353e79a21d454d7c4591a35b537dc6ced33c21b59c12df264820f7f8e9c, 32hashed payloads plus manifest, read back verified. Dedicated combined-acceptance-target/jobs2/test-threads2, no quota change. No cold-identifier initialization patch included in this frozen source. Next: integrate independently reviewed cold/nested memo fix, then execute combined acceptance; full baseline and final-head CI remain required.
+
+### Matched native memo-leaf evidence before initialization fix (2026-10-16)
+
+Evidence child portable/m4-native-memo-leaf-evidence of107a736; no changes to the
+scoped-store branch under review. Fixtures in portable_macros/memo_leaf_tests.rs
+execute all8 pinned cases (Symbol/Keyword × warm/cold × force/nil-aware) in both
+Runtime/Macro callers, with3 actual macro invocations each. Test-only
+portable_session/memo_leaf_test_support.rs captures the initial IHash closure for
+exact delegation on nonsubject receivers and restores the method afterward.
+Production eligibility/initialization are unchanged. Native views are &env
+metadata and leaf identity only; CLJS resolve/AST views are unexecuted natively.
+Subject writes are counted by a native branch counter; expected counts follow the
+pinned callback branch and memo observations, not an independent oracle write counter.
+
+Pinned input: oracle worktree commit69d74d0cd18aeaecfaee158b53ad55de5e4977cf,
+CLJS c4295f303100bbf5afac449242d30bca1126f1a1. Structured JSON SHA256
+5835f6b0cacd7c30b93a599762f154c2705abab4529df58a322c1dd581ee7324;
+source SHA256 e605cfae08a5d8636dc3f5ffd2b4064e4f1e987b2b9c7a836a881c655c60fb24.
+The oracle was executed by main, not rerun here. Its reference8cases/144identity
+observations are not native conformance claims.
+
+Own COW target native-memo-leaf-target, jobs2, no RUSTFLAGS assignment.
+`cargo test -p suss-compile --lib --locked native_memo_leaf_ --no-run`:exit0,43.58s.
+Bootstrap regeneration via cargo run --profile test -p suss-cli --bin
+suss-bootstrap --locked -- runtime/bootstrap:exit0,50.95s wrapper. Only test
+module registrations/source were added; regenerated bootstrap tracks the changed
+compiler source fingerprint, not a runtime semantic fix.
+`cargo test -p suss-compile --lib --locked native_memo_leaf_ -- --test-threads=2 --nocapture`:
+TERMINAL101,0pass4fail0ignored111.59s (130.08s wrapper), all48rows complete,
+source_unchanged=true. Tool8298 exits101; it is expected-red evidence, not success.
+
+All48rows differ in initial memo: native precomputed Numbers versus pinned nil.
+Warm canonical hashes match exactly (force Symbol1454146648/Keyword-24028250;
+nil-aware Symbol94864730/Keyword43176044). Cold nil-aware callbacks dispatch once
+but write zero times and return precomputed hashes rather than91;4hash-result
+mismatches across kinds/caller phases. Force-write91 executes once, but restored
+method/next invocation loses metadata and leaf identity in8cases (8differences
+for each native identity view). Unchanged declaration controls17 are checked.
+No assertion aborts later completed observations; execution errors are reported
+as errors, never reclassified as successful comparisons.
+
+Raw48rows, full failures, freeze/exit receipts, fixtures, bootstrap and initial
+FormBridge source: docs/roadmap/evidence/m4-native-memo-leaf-before-2026-10-16.tar.gz
+SHA256 e5c908e4d400cf878f528193b376c824b4aeb7eee2609412d46c2ad8ddd2e99a,
+20entries including manifest;19payload hashes read back. Cache native-memo-leaf-
+result.json/observations.json/differences.json and raw native log are retained.
+Next authorized isolated child: change only FormBridge.identifier cold memo to
+nil after checking source canonical hash support, rerun the same cases without
+changing eligible_transition. A nil-captured watch followed by canonical warming
+may already support warm custom writes via its authenticated current receipt.
+No acceptance, full baseline, final-head CI or new-PR claim; this child is unpushed.
+
+
+### 2026-10-16 — isolated cold identifier and nested memo proof checkpoint (Refs #257, #260)
+
+Worktree suss-m4-cold-memo-leaves, branch portable/m4-cold-memo-leaves,
+base10fb544; own COW cold-memo-leaf-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS
+assignment. This is independent from main's standalone cold-reader branch.
+FormBridge.identifier now supplies nil to Symbol/Keyword memo fields, matching
+pinned CLJS69d74d0 initial state. The live core hash methods compute unchanged
+canonical numbers; compiled constant lowering remains unchanged. Receipt
+eligible_transition is unchanged, including its captured-original-nil condition.
+Explicit warm cases acquire canonical receipts before later custom writes.
+
+Initialization-only matched native groups passed4/4, but public cumulative
+validation failed9pass/1fail: source_metadata_keeps_identity_with_a_replaced_hash_method
+lost identity on the next invocation (not a fuel failure). Preserve that entire
+run and426-file freeze/source snapshot. A targeted native trace reproduced:
+custom Map -> canonical cold Keyword -> domain sees replaced Map -> child
+source_safe=false -> parent rejects unauthenticated child. The original numeric
+hash was correct1217894065. Diagnostic native failure and raw trace are retained;
+its driver subsequently raised AttributeError in final exit after writing its
+stage receipt/source archive. Neither failure is reclassified as success.
+
+The domain fix snapshots rooted actual IHash receiver frames with charged
+enumeration/allocation, without guest calls under the observer mutex. Each
+proof accepts a descriptor for live-layout inspection only after an exact live
+watch receiver/descriptor/storage match in this same recorded domain. Target
+membership is also required. Other descriptors stay canonical. This transient
+proof changes no payload/edge/schema/constructor/prototype or authenticated-child
+requirements. Nearest actual receiver plus exact physical storage/slot remains
+the write authorization boundary; descriptor-sharing never authorizes sibling
+writes. Canonical child setters retain their canonical method guards. Full
+pre/post proof and staged publication remain before guest resumes/throws; old
+unsafe receipts are never retroactively upgraded. Generic stores neither mint
+receipts nor erase an older authentic exact-reference receipt.
+
+Ancestor focused runner79882: regenerated bootstrap exit0; scoped13/13 pass22.69s.
+Positive canonical cold child/custom parent, nested throw/fuel cases, poison at
+child write versus restore before write, foreign-domain/unregistered ancestors,
+and existing wrong-slot/receiver/unrelated-descriptor/GC cases execute. The
+subsequent new direct identifier fixture failed compile E0308 (unwrap_f64 already
+returns f64); preserve original source/log. Correct only that test decoder.
+No production changes followed the successful scoped run.
+
+Final runner66619 TERMINAL0, cold-memo-final-result.json: all13 stages exit0,
+source_unchanged=true. Commands are recorded verbatim in the archived runner and
+receipt; Cargo commands use --locked and --test-threads=2. Test times exclude
+compilation unless explicitly marked wrapper:
+
+- direct FormBridge cold/canonical/GC identifier fixture1pass66.23s;
+- matched native_memo_leaf_ groups4pass313.18s,48/48 exact complete rows;
+- compiled_macro_cumulative_fuel10pass305.94s, including cold custom Map,
+  warm replacement, and poisoned-at-write rejection, unchanged budgets;
+- compiled_macro_cross_invocation_identity_probe2pass117.61s: existing captured
+  declaration test unchanged (both phases/revisions/reset/GC), plus actual
+  metadata and nested nine-entry hash maps across invocations/GC;
+- pinned identifier corpus1pass40.75s, decoder2pass19.61s;
+- receipt_tests8pass37.07s, write_domain tests2pass27.56s;
+- forged identifier FQN after GC1pass51.50s;
+- FormBridge identity_tests9pass120.64s;
+- dispatch observer4pass20.18s, canonical error tests2pass36.03s;
+- provenance checker exit0.
+
+The new identifier fixture pins the four warm oracle values; extra namespaced
+Unicode comparisons are native consistency controls, not independent oracle
+observations. Native matched leaf views remain &env metadata/leaf only, unlike
+the separate pinned CLJS six-view144 observations. No aggregate unique count.
+No captured-original-nonnil eligibility broadening, no tariff/quota changes,
+no unsupported nominal aset support, no full workspace/final CI or #257/#260
+acceptance claim. The next gate is independent committed-head review before any
+integration/push; main owns its standalone reader fix and final CI.
+
+Evidence docs/roadmap/evidence/m4-cold-memo-ancestors-2026-10-16.tar.gz:
+SHA256 e18655b49232e5075ee10f10920321a880938c9fd84a6339f52796df526d2a1f,
+62entries including manifest,61payload hashes read back. Contains initialization-only
+success/failure logs and source snapshot, failing diagnostic trace/source,
+focused bootstrap/scoped results and failed E0308 fixture, final raw logs/48rows,
+source/bootstrap snapshots, implementation diff, runners, freezes/exit receipts.
+Before-fix48row archive e5c908e4 remains unchanged in base10fb544. Oracle JSON
+5835f6b0 remains unchanged; oracle execution was main's, not rerun here.
+
+### Combined cold memo and reviewed transport source (2026-10-16)
+
+Isolated combined branch froma182b98 applied107a736→84eba2f delta. Source files merged cleanly; both handoff histories retained and bootstrap regenerated (tool85049exit0). No changes to frozen standalone5aff682 baseline.
+
+Focused run-combined-cold-focused.py TERMINALdriver0 with all eight command exits0: scoped13, matched leaf4/all48rows, raw keys15, initializer-native3, direct identifier1, public cumulative10, cross-invocation2 and pinned map1. Total49pass executions/0fail/0ignored, source unchanged across430Rust/source/bootstrap hashes. Explicit pinned comparator:69ordered IDs,62host-decided/seven guest-judged, no failed/skipped/unexecuted assertions. This preserves the original complete map declaration/default allowance, not a full workspace claim.
+
+Archive m4-combined-cold-memo-focused-2026-10-16.tar.gz SHA256 0c54460bf50b07f94f375f103931cd366b89b6ac14fdb13cc559694522b2b06a, 25hashed payloads plus manifest, read back verified. Commands use combined-acceptance-target/jobs2/test-threads2; no quota changes. Previous six direct transport fuel failures remain recorded at a182b98; they were not rerun by this cohort. Next: integrate reviewed source-location optimization, then target the remaining fuel regressions. Full workspace baseline/final-head CI and independent committed-head integration review remain required. No issue closure/merge.

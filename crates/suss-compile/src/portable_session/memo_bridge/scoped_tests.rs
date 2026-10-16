@@ -97,7 +97,7 @@ fn scoped_memo_stores_throw_publishes_before_unwind_and_next_invocation() {
     let (values, records) = maps(&mut session, 1);
     replace(
         &mut session,
-        "(do (set! (.-__hash self) 91) (throw scoped-error))",
+        "(do (hash (aget (.-arr self) 0)) (set! (.-__hash self) 91) (throw scoped-error))",
     );
     let SessionError::Language(actual) = run(&mut session, &values[0]).unwrap_err() else {
         panic!("expected original language exception")
@@ -225,13 +225,19 @@ fn scoped_memo_stores_forced_gc_in_nested_protocol_scope() {
 fn scoped_memo_stores_poststore_fuel_failure_publishes_none_and_recovers() {
     let mut session = Session::new_macro().unwrap();
     let (values, records) = maps(&mut session, 1);
-    replace(&mut session, "(do (set! (.-__hash self) 91) 91)");
+    replace(
+        &mut session,
+        "(do (hash (aget (.-arr self) 0)) (set! (.-__hash self) 91) 91)",
+    );
     let function = session.eval("(fn [x] (-hash x))").unwrap();
-    let clear = session.eval("(fn [x] (set! (.-__hash x) nil))").unwrap();
+    let clear = session
+        .eval("(fn [x] (do (set! (.-_hash (aget (.-arr x) 0)) nil) (set! (.-__hash x) nil)))")
+        .unwrap();
     let get = session.eval("(fn [x] (.-__hash x))").unwrap();
     let default = session.options.fuel_per_operation;
     let mut witnessed = false;
     for fuel in (1..=65_536).step_by(64) {
+        session.invoke(&clear, &[&values[0]]).unwrap();
         session.set_operation_fuel(fuel);
         let result = session.invoke(&function, &[&values[0]]);
         session.set_operation_fuel(default);
@@ -250,7 +256,9 @@ fn scoped_memo_stores_poststore_fuel_failure_publishes_none_and_recovers() {
             assert!(
                 watches
                     .iter()
-                    .all(|watch| registry_lock(&watch.receipt).is_none())
+                    .filter(|watch| watch.owner == "PersistentArrayMap")
+                    .all(|watch| registry_lock(&watch.receipt).is_none()),
+                "failed parent store cannot publish; completed child effects remain"
             );
             check(&mut session, &records, false);
             witnessed = true;
@@ -386,4 +394,73 @@ fn scoped_memo_stores_nested_ihash_overrides_outer_receiver() {
     let call = session.eval("(fn [outer inner] (do (set! scoped-outer outer) (set! scoped-inner inner) (-hash outer)))").unwrap();
     session.invoke(&call, &[&values[0], &values[1]]).unwrap();
     check(&mut session, &records, false);
+}
+
+#[test]
+fn scoped_memo_stores_cold_canonical_child_inside_custom_parent() {
+    let mut session = Session::new_macro().unwrap();
+    let (values, records) = maps(&mut session, 1);
+    replace(
+        &mut session,
+        "(let [h (hash-unordered-coll self)] (set! (.-__hash self) h) h)",
+    );
+    let result = run(&mut session, &values[0]).unwrap();
+    assert_eq!(display(&mut session, &result), "1217894065");
+    check(&mut session, &records, true);
+}
+
+#[test]
+fn scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore() {
+    let mut session = Session::new_macro().unwrap();
+    for (restore_before, expected) in [(false, false), (true, true)] {
+        let (values, records) = maps(&mut session, 1);
+        let body = if restore_before {
+            "(let [a (.-arr self) old (aget a 1)] (aset a 1 99) (aset a 1 old) (hash (aget a 0)) (set! (.-__hash self) 91) 91)"
+        } else {
+            "(let [a (.-arr self) old (aget a 1)] (aset a 1 99) (hash (aget a 0)) (aset a 1 old) (set! (.-__hash self) 91) 91)"
+        };
+        replace(&mut session, body);
+        run(&mut session, &values[0]).unwrap();
+        check(&mut session, &records, expected);
+        let watches = registry_lock(&session.memo_ledger.entries)
+            .watches
+            .iter()
+            .filter_map(Weak::upgrade)
+            .collect::<Vec<_>>();
+        let keyword = watches
+            .iter()
+            .find(|watch| watch.owner == "Keyword")
+            .unwrap();
+        assert_eq!(
+            registry_lock(&keyword.receipt)
+                .as_ref()
+                .unwrap()
+                .source_safe,
+            expected,
+            "restoring payload cannot upgrade the child write-time proof"
+        );
+    }
+}
+
+#[test]
+fn scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout() {
+    let mut session = Session::new_macro().unwrap();
+    for foreign in [false, true] {
+        let (values, records) = maps(&mut session, 1);
+        let key = session.eval("(fn [x] (aget (.-arr x) 0))").unwrap();
+        let key = session.invoke(&key, &[&values[0]]).unwrap();
+        let (parent, _keep_foreign_records) = if foreign {
+            let (mut parents, records) = maps(&mut session, 1);
+            (parents.remove(0), Some(records))
+        } else {
+            (session.eval("{:unregistered 17}").unwrap(), None)
+        };
+        session.eval("(def scoped-cross-domain-key nil)").unwrap();
+        replace(&mut session, "(do (hash scoped-cross-domain-key) 91)");
+        let invoke = session
+            .eval("(fn [parent key] (do (set! scoped-cross-domain-key key) (-hash parent)))")
+            .unwrap();
+        session.invoke(&invoke, &[&parent, &key]).unwrap();
+        check(&mut session, &records, false);
+    }
 }

@@ -1207,8 +1207,30 @@ callbacks, original thrown-object identity, forced GC, source poison/restore and
 post-store fuel failure. The existing public compiled_macro_cumulative_fuel
 selection passes10/10, including cold Map identity that failed on observer-only
 3485718. This does not establish all #257 criteria, full workspace results or
-final-head CI. Original-nonnil Symbol/Keyword memo transitions remain unsupported
-by this new path. Pinned CLJS cold leaves start with nil, while the native bridge
-currently precomputes their memo; that possible eager-warming semantic gap needs
-matched value/effect tests before any receipt-only extension. No unsupported
+final-head CI. Original-nonnil captured memo transitions remain unsupported
+by this new path. At that checkpoint the native bridge precomputed identifier
+memos, unlike pinned CLJS cold leaves; the matched investigation below addresses
+that eager-warming difference. No unsupported
 nominal aset behavior was added. See the scoped-store handoff and evidence.
+
+Matched native leaf evidence now preserves an expected-red8case comparison in
+both caller phases: initial native identifier memo precomputation differs from
+pinned CLJS nil and changes cold nil-aware callback writes/results. Force writes
+also lose later identity. All48native windows complete; the four grouped tests
+failed in the preserved before-fix run. Warm canonical numbers match. That evidence added no initialization
+or receipt-eligibility fix and observes only &env identity, not resolve/AST views.
+See the dated native memo-leaf handoff/archive for exact results and limitations.
+
+The isolated cold-leaf/ancestor checkpoint now initializes FormBridge identifiers
+with nil, preserving live canonical hashing and its actual callback effects.
+All48 matched native windows pass without broadening receipt eligibility. Full
+pre/post source-domain proofs permit live method layout for descriptors anchored
+by actual IHash receiver frames with exact watches in the same domain; unrelated
+descriptors retain canonical obligations. This supports a cold canonical child
+hash inside a custom parent method without upgrading a prior unsafe receipt.
+Exact nearest receiver/storage/slot still gates physical-store authorization.
+Focused scoped tests13, public cumulative10, and cross-invocation tests2 pass;
+the latter includes actual metadata hash maps over eight entries. Preserved
+initialization-only public failure and diagnostic trace explain why initialization
+alone was insufficient. No full baseline, final CI, all-view oracle conformance,
+or whole-issue acceptance claim; see the cold-memo-ancestor handoff/archive.

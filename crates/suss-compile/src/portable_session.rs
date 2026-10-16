@@ -614,7 +614,7 @@ impl Session {
         let mut linker = Linker::new(&engine);
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let memo_ledger = memo_bridge::Ledger::new(identity);
-        memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone())?;
+        memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone(), dispatch_observer.clone())?;
         if let Some(observer) = &dispatch_observer {
             memo_bridge::install_scoped(&mut store, runtime, interrupt.clone(), memo_ledger.clone(), observer.clone())?;
         }
@@ -3739,3 +3739,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+pub(crate) mod memo_leaf_test_support;

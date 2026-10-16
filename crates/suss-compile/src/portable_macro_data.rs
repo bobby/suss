@@ -899,12 +899,10 @@ impl FormBridge {
             session,
             &crate::portable::hir::Literal::String(fqn.encode_utf16().collect()),
         )?;
-        let hash = self.scalar(
-            session,
-            &crate::portable::hir::Literal::Number(crate::portable::hir::identifier_hash(
-                namespace, name, keyword,
-            ) as f64),
-        )?;
+        // Reader-backed analyzer metadata starts with a cold memo in pinned
+        // CLJS. Let the live IHash method perform any warming; precomputing here
+        // changes nil-aware callbacks and prevents witnessing their first write.
+        // Compiled constant lowering has a separate initialization contract.
         if keyword {
             if metadata.is_some() {
                 return Err(SessionError::Host(error(
@@ -913,12 +911,12 @@ impl FormBridge {
             }
             self.construct(session,
                 Class::Keyword,
-                &[&ns, &name_value, &fqn, &hash],
+                &[&ns, &name_value, &fqn, &nil],
             )
         } else {
             self.construct(session,
                 Class::Symbol,
-                &[&ns, &name_value, &fqn, &hash, metadata.unwrap_or(&nil)],
+                &[&ns, &name_value, &fqn, &nil, metadata.unwrap_or(&nil)],
             )
         }
     }
