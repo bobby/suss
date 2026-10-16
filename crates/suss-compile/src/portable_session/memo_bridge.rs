@@ -213,6 +213,27 @@ impl Session {
     }
 }
 
+// Reserve only candidates that passed receiver/site/canonical inspection.
+// Every allocation and possible relocation is charged before guest mutation.
+fn reserve_candidate(
+    mut store: StoreContextMut<'_, ()>,
+    candidates: &mut Vec<(Arc<Watch>, Receipt, bool)>,
+    irq: &AtomicBool,
+) -> wasmtime::Result<()> {
+    Session::consume_host_work(store.as_context_mut(), 1, irq)?;
+    if candidates.len() < candidates.capacity() { return Ok(()); }
+    let capacity = candidates.capacity().checked_mul(2)
+        .ok_or_else(|| wasmtime::Error::msg("Memo staging capacity overflow"))?.max(1);
+    let bytes = capacity.checked_add(candidates.len())
+        .and_then(|count| count.checked_mul(std::mem::size_of::<(Arc<Watch>, Receipt, bool)>()))
+        .and_then(|bytes| u64::try_from(bytes).ok())
+        .ok_or_else(|| wasmtime::Error::msg("Memo staging allocation overflow"))?;
+    Session::consume_host_work(store.as_context_mut(), bytes, irq)?;
+    candidates.try_reserve_exact(capacity - candidates.len())
+        .map_err(|_| wasmtime::Error::msg("Memo staging allocation failed"))?;
+    Ok(())
+}
+
 pub(super) fn install(
     store: &mut Store<()>, linker: &mut Linker<()>, runtime: Instance,
     interrupt: Arc<AtomicBool>, ledger: Arc<Ledger>,
@@ -234,10 +255,7 @@ pub(super) fn install(
             let entries = registry_lock(&ledger.entries);
             (entries.authority.clone(), entries.prototype.clone(), entries.watches.len())
         };
-        Session::consume_host_work(caller.as_context_mut(),
-            (count as u64).saturating_mul(std::mem::size_of::<(Arc<Watch>, Receipt, bool)>() as u64) + 1, &interrupt)?;
         let mut candidates = Vec::new();
-        candidates.try_reserve_exact(count).map_err(|_| wasmtime::Error::msg("Memo staging allocation failed"))?;
         if let Some(authority) = authority.as_ref() {
             for index in 0..count {
                 Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
@@ -249,6 +267,7 @@ pub(super) fn install(
                     watch.authenticated(caller.as_context_mut(), &current, &interrupt)?) { continue }
                 let Some(bits) = bits(caller.as_context_mut(), &arguments[2], &watch.number_type)? else { continue };
                 if watch.canonical(caller.as_context_mut(), runtime, authority, &interrupt)? {
+                    reserve_candidate(caller.as_context_mut(), &mut candidates, &interrupt)?;
                     Session::consume_host_work(caller.as_context_mut(), std::mem::size_of::<Receipt>() as u64 + 1, &interrupt)?;
                     let value = {
                         let mut scope = RootScope::new(&mut caller);
@@ -481,6 +500,46 @@ mod receipt_tests {
         drop(session.invoke(&function, &[value]).unwrap());
     }
     #[test]
+    fn memo_receipts_unmatched_watches_do_not_require_staging_storage() {
+        let mut session = Session::new_macro().unwrap();
+        let target = session.eval("(list 17)").unwrap();
+        let fields = session.data_fields(&target).unwrap();
+        let class = session.eval("suss.core/List").unwrap();
+        let args = fields.iter().collect::<Vec<_>>();
+        let mut registered = Vec::new();
+        for _ in 0..128 {
+            let (value, inputs) = session.data_construct_with_inputs(&class, &args).unwrap();
+            let inputs = inputs.unwrap();
+            assert!(inputs.memo_watch().unwrap().eligible_transition);
+            registered.push((value, inputs));
+        }
+        assert_eq!(registry_lock(&session.memo_ledger.entries).watches.len(), 128);
+        let number = session.eval("719").unwrap();
+        let bridge = session.linker.get(&mut session.store,
+            bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE, bootstrap::MEMO_WRITE_IMPORT_NAME)
+            .unwrap().into_func().unwrap();
+        // Native capability exercise only: ordinary guest installation cannot
+        // import this bridge. No registered watch matches this receiver.
+        session.with_operation_budget(|session| {
+            session.store.set_fuel(2_500)?;
+            let mut scope = RootScope::new(&mut session.store);
+            let receiver = Val::AnyRef(Some(target.value.to_rooted(&mut scope)));
+            let number = Val::AnyRef(Some(number.value.to_rooted(&mut scope)));
+            bridge.call(&mut scope, &[receiver, Val::I32(0), number], &mut [])
+                .map_err(SessionError::Trap)
+        }).unwrap();
+        let memo = session.data_fields(&target).unwrap().remove(4);
+        assert_eq!(crate::portable_repl::display(&mut session, &memo).unwrap(), "719");
+        assert!(session.inspect(&memo, |mut store, value| {
+            let expected = number.value.to_rooted(&mut store);
+            Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &expected)
+        }).unwrap());
+        for (value, inputs) in registered {
+            assert!(inputs.matches(&mut session, &value).unwrap());
+            assert!(registry_lock(&inputs.memo_watch().unwrap().receipt).is_none());
+        }
+    }
+    #[test]
     fn memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing() {
         let mut session = Session::new_macro().unwrap();
         let original = session.eval("(list 17)").unwrap();
@@ -697,6 +756,12 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
         let (value, inputs) = registered_list(&mut session);
         let watch = registry_lock(&session.memo_ledger.entries).watches[0].upgrade().unwrap();
         assert_eq!(bootstrap::memo_owner_slots().nth(watch.site), Some(("List", 4)));
+        let mut watches = vec![watch.clone()];
+        let fields = session.data_fields(&value).unwrap().into_iter().map(Some).collect::<Vec<_>>();
+        for _ in 0..2 {
+            watches.push(session.watch_constructor_memo(&watch.constructor, &watch.descriptor,
+                &value, &watch.storage, &fields).unwrap().unwrap());
+        }
         let number = session.eval("719").unwrap();
         let bridge = session.linker.get(&mut session.store,
             bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE, bootstrap::MEMO_WRITE_IMPORT_NAME)
@@ -725,7 +790,8 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
                 assert!(matches!(error, SessionError::Trap(ref error)
                     if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
                 assert!(!inputs.matches(&mut session, &value).unwrap());
-                assert!(registry_lock(&watch.receipt).is_none());
+                assert!(watches.iter().all(|watch| registry_lock(&watch.receipt).is_none()),
+                    "post-store exhaustion cannot publish any of the matching receipts");
                 witnessed = true;
                 break;
             }
@@ -736,6 +802,7 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
         drop(session.invoke(&clear, &[&value]).unwrap());
         hash(&mut session, &value);
         assert!(inputs.matches(&mut session, &value).unwrap());
+        for watch in watches { assert!(watch.matches(&mut session).unwrap()); }
     }
 }
 

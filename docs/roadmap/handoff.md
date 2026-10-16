@@ -27250,3 +27250,15 @@ Five fresh-state cases exercise custom IHash memo91, direct memo991, poison/cust
 CLJS itself retains forged/poisoned metadata. This is reference evidence for user hash effects, not authority to weaken Suss immutable-source integrity or numeric memo forgery rejection. Nested callback writes, exceptions, recursion and cancellation are unexecuted by this probe. No Suss acceptance result is implied. Initial external runner failed Node module resolution after successful compilation; both that failure and successful corrected/reproducible runs are preserved.
 
 Archive: `docs/roadmap/evidence/m4-metadata-memo-boundary-reference-2026-10-16.tar.gz`, SHA-256 `604f35d8587eddd2b0601a9db7aafa1aa35c9d96c8e7eb451735e87f163e1e5e`. Source/runner hashes and observations are in `tests/oracle/metadata-memo-boundary-observations.json`.
+
+### Candidate allocation and compiled construction measurements (2026-10-16)
+
+Protected memo writes now reserve candidate storage only for actual eligible canonical matches, with checked geometric backing/relocation charges before the setter. A128unrelated-watch/2500fuel native capability regression failed before the change and passes afterward; exact stored reference, nil unrelated receivers and no receipts are checked. Native receipt target8passes42.04s, including3matchingwatch post-store failure/recovery. No authorization condition or default allowance changes.
+
+Compiled `Nominal::Construct` uses existing `source-constructor-plan`/`source-construct-from-plan`, preserving its SSA selection point and exact runtime construction body; special constructor closures retain invoke. Existing alias/array/error constructor filter5passes and host constructor-plan5passes. Publicrecord profile saves71190transformerfuel but still exhausts during result realization; its second caller phase is unexecuted after the first failure. The allocation change does not alter that profile.
+
+Old-record audit reuse passes the strengthened mutation/order test; deliberately retaining the audit across construction fails the intended ordering assertion, and positive source/bootstrap were restored. Its original18-test matrix remains8passes/10fuel failures, and additional15-test matrix8passes/7fuel failures. It saves measured repeated class/prototype inspection work but does not establish repaired acceptance.
+
+Diagnostic `SUSS_MACRO_FUEL_TRACE=1` logs before/after existing lazy calls, including failures, without replacing invocation errors. Realization deltas include callback-triggered host charges. Current publicrecord input818recipes has0metadata sources:2,221,426caller-environment fuel, of which75,910preparation and2,145,516ordinary materialization. No retained-metadata certification/fixup occurs in that interval.
+
+Commands/results, exact versioned before/after patches, failed getter/setup attempts, broken-lifetime negative control and snapshots are in `docs/roadmap/evidence/m4-allocation-construction-candidate-2026-10-16.tar.gz`, SHA-256 `2d08e7316ecbe915a7fbe23b0f3de85cd10aec269250b85ad844d75bfdaa07d2`. These are bounded candidate measurements; known17fuel and1identity failures remain unresolved.

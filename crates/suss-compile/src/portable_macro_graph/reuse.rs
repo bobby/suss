@@ -226,9 +226,19 @@ impl<'a> Build<'a> {
         // retained and is not repaired behind a guest's back.
         loop {
             let mut rebuilt = false;
+            // valid_using observes finite data and fixed authority adapters only.
+            // Share queries until the next potentially guest-calling construction.
+            let mut audit = None;
             for pending in &mut self.pending {
                 graph.session.charge_host_work(1)?;
-                if pending.old && !Self::valid(graph, pending)? {
+                if !pending.old { continue; }
+                if audit.is_none() {
+                    audit = Some(crate::portable_session::certification_audit::CertificationAudit::new(graph.session)?);
+                }
+                if !Self::valid_using(graph, pending, audit.as_mut())? {
+                    // Drop BEFORE fresh(), including its None/fallback route.
+                    // Neither successful nor failed construction may retain queries.
+                    drop(audit.take());
                     pending.record = fresh(graph, pending.index)?;
                     pending.value = match &pending.record {
                         Some(record) => record.value.clone(),
@@ -386,137 +396,195 @@ mod tests {
     fn reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh() {
         use super::super::Recipe;
 
-        let mut session = Session::new_macro().unwrap();
-        session.eval(r#"
-          (def ^{:doc "A"} rebuild-a 17)
-          (def ^{:items #{101 102 103 104 105 106 107 108 109}} rebuild-b 18)
-          (def ^{:doc "C"} rebuild-c 19)
-          (def rebuild-armed false)
-          (def rebuild-events [])
-          (def rebuild-old-a nil)
-          (def rebuild-fresh-c nil)
-          (def rebuild-original-hash suss.core/hash)
-        "#).unwrap();
-        // Install before bridge capture: B's real ReaderSet construction invokes
-        // this captured hash function. Initial priming/production runs unarmed.
-        session.enter_namespace("suss.core").unwrap();
-        session.eval(r#"
-          (def hash
-            (fn [key]
-              (do
-                (if (and user/rebuild-armed (= key 101))
+        for poison_prototype in [false, true] {
+            let mut session = Session::new_macro().unwrap();
+            session.eval(if poison_prototype {
+                "(def rebuild-poison-prototype true)"
+            } else {
+                "(def rebuild-poison-prototype false)"
+            }).unwrap();
+            session.eval(r#"
+              (def ^{:doc "A" :items #{301 302 303 304 305 306 307 308 309}} rebuild-a 17)
+              (def ^{:items #{101 102 103 104 105 106 107 108 109}} rebuild-b 18)
+              (def ^{:doc "C"} rebuild-c 19)
+              (def ^{:items #{201 202 203 204 205 206 207 208 209}} rebuild-d 20)
+              (def rebuild-track-a false)
+              (def rebuild-track-d false)
+              (def rebuild-armed false)
+              (def rebuild-events [])
+              (def rebuild-old-a nil)
+              (def rebuild-fresh-c nil)
+              (def rebuild-original-hash suss.core/hash)
+            "#).unwrap();
+            // Install before bridge capture: B's real ReaderSet construction invokes
+            // this captured hash function. Initial priming/production runs unarmed.
+            session.enter_namespace("suss.core").unwrap();
+            session.eval(r#"
+              (def hash
+                (fn [key]
                   (do
-                    (set! user/rebuild-armed false)
-                    (set! user/rebuild-events (conj user/rebuild-events :b-rebuild))
-                    (set! (.-__hash user/rebuild-old-a) 991)
-                    (set! (.-__hash user/rebuild-fresh-c) 992))
-                  nil)
-                (user/rebuild-original-hash key))))
-        "#).unwrap();
-        session.enter_namespace("user").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
-        let snapshot = session.compilation_snapshot();
-        let namespace = SourceNamespace::capture(&snapshot.environment, Phase::Macro);
-        // Own real immutable definition revisions for the complete test lifetime.
-        let owners = ["rebuild-a", "rebuild-b", "rebuild-c"].map(|name| {
-            let (global, revision) = namespace.declarations.iter()
-                .find(|(global, _)| global.name() == name).unwrap();
-            (global.clone(), revision.clone())
-        });
-        let mut cache = DeclarationValues::default();
-        let mut graph = AnalysisGraph::new(&bridge, &mut session);
-        for (global, revision) in &owners {
-            graph.declaration(global, Some(revision), 0).unwrap();
+                    (if (and user/rebuild-armed (= key 101))
+                      (do
+                        (set! user/rebuild-armed false)
+                        (set! user/rebuild-events (conj user/rebuild-events :b-rebuild))
+                        (if user/rebuild-poison-prototype
+                          (do
+                            (set! user/rebuild-track-a true)
+                            (set! user/rebuild-track-d true)
+                            (aset (.-prototype PersistentArrayMap) "rebuildAuthorityPoison" 99))
+                          (do
+                            (set! (.-__hash user/rebuild-old-a) 991)
+                            (set! (.-__hash user/rebuild-fresh-c) 992))))
+                      nil)
+                    (if (and user/rebuild-track-a (= key 301))
+                      (do
+                        (set! user/rebuild-track-a false)
+                        (set! user/rebuild-events (conj user/rebuild-events :a-rebuild)))
+                      nil)
+                    (if (and user/rebuild-track-d (= key 201))
+                      (do
+                        (set! user/rebuild-track-d false)
+                        (set! user/rebuild-events (conj user/rebuild-events :d-rebuild)))
+                      nil)
+                    (user/rebuild-original-hash key))))
+            "#).unwrap();
+            session.enter_namespace("user").unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let snapshot = session.compilation_snapshot();
+            let namespace = SourceNamespace::capture(&snapshot.environment, Phase::Macro);
+            // Own real immutable definition revisions for the complete test lifetime.
+            let owners = ["rebuild-a", "rebuild-b", "rebuild-c", "rebuild-d"].map(|name| {
+                let (global, revision) = namespace.declarations.iter()
+                    .find(|(global, _)| global.name() == name).unwrap();
+                (global.clone(), revision.clone())
+            });
+            let mut cache = DeclarationValues::default();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            for (global, revision) in &owners {
+                graph.declaration(global, Some(revision), 0).unwrap();
+            }
+            graph.finish_recipes().unwrap();
+            let indices = owners.each_ref().map(|(global, revision)| {
+                graph.metadata_sources.iter().position(|source| {
+                    &source.global == global && Arc::ptr_eq(&source.revision, revision)
+                }).unwrap()
+            });
+            let aliases = indices.map(|index| graph.metadata_sources[index].recipe);
+            let root = graph.recipe(Recipe::ReaderVector(aliases.to_vec())).unwrap();
+            let keys = owners.each_ref().map(|(global, revision)| {
+                (global.clone(), Arc::as_ptr(revision) as usize)
+            });
+
+            // Prime A/B/D with real production recordings; C must start fresh.
+            for index in [indices[0], indices[1], indices[3]] {
+                let record = fresh(&mut graph, index).unwrap().unwrap();
+                assert!(record.matches_recorded_source(graph.session, graph.bridge).unwrap());
+                let source = &graph.metadata_sources[index];
+                let key = (source.global.clone(), Arc::as_ptr(&source.revision) as usize);
+                cache.metadata.insert(key, Some(record), &mut Meter(graph.session)).unwrap();
+            }
+            let mut build = Build::new(&mut graph, &mut cache).unwrap();
+            let a_token = build.produce(&mut graph, aliases[0]).unwrap();
+            let b_token = build.produce(&mut graph, aliases[1]).unwrap();
+            let c_value = build.produce(&mut graph, aliases[2]).unwrap();
+            let d_token = build.produce(&mut graph, aliases[3]).unwrap();
+            assert_eq!(build.pending.len(), 4);
+            assert!(build.pending[3].old);
+            assert!(build.pending[0].old && build.pending[1].old);
+            assert!(!build.pending[2].old);
+            assert!(build.pending[0].placeholder.is_some());
+            assert!(build.pending[1].placeholder.is_some());
+            assert!(build.pending[2].placeholder.is_none());
+            let old_a = build.pending[0].value.clone();
+            let old_b = build.pending[1].value.clone();
+            let fresh_c = build.pending[2].record.as_ref().unwrap().clone();
+            // Genuine private parent, with the exact tokens produced above. Direct
+            // controller access fixes pending order A/B/C/D without fabricating facts.
+            let private = bridge.private_parent_bridge(graph.session).unwrap();
+            let parent = private.vector_values(graph.session, &[a_token, b_token, c_value, d_token]).unwrap();
+
+            let arm = graph.session.eval(r#"
+              (fn [a b c]
+                (do
+                  (set! rebuild-old-a a)
+                  (set! rebuild-fresh-c c)
+                  (set! (.-__hash b) 990)
+                  (set! rebuild-armed true)))
+            "#).unwrap();
+            drop(graph.session.invoke(&arm, &[&old_a, &old_b, &fresh_c.value]).unwrap());
+            // B's logical source remains intact; only its unauthenticated memo forces
+            // finish() to call real fresh(), whose set callback poisons A and fresh C.
+            assert!(build.pending[1].current.as_ref().unwrap()
+                .matches_logical_source(graph.session, graph.bridge, &old_b).unwrap());
+            assert!(Build::valid(&mut graph, &build.pending[0]).unwrap());
+            assert!(!Build::valid(&mut graph, &build.pending[1]).unwrap());
+            assert!(Build::valid(&mut graph, &build.pending[2]).unwrap());
+            let value = build.finish(&mut graph, root, parent).unwrap();
+
+            if poison_prototype {
+                // B poisons shared map prototype authority after A's audited check.
+                // D must rebuild in THIS pass, before A rebuilds in the next pass.
+                // Keeping the audit across B gives [:b-rebuild :a-rebuild :d-rebuild]
+                // (or stale retention), so a next-pass-only reset cannot satisfy this.
+                for key in &keys {
+                    assert!(matches!(cache.metadata.get(key, &mut Meter(graph.session)).unwrap(), Some(None)),
+                        "callback-poisoned prototype must prevent retaining any A/B/C/D certificate");
+                }
+                assert!(!fresh_c.matches_recorded_source(graph.session, graph.bridge).unwrap());
+                let check = graph.session.eval(r#"
+                  (fn [v old-a old-b fresh-c]
+                    [(= rebuild-events [:b-rebuild :d-rebuild :a-rebuild])
+                     (not rebuild-armed)
+                     (not (identical? (nth v 0) old-a))
+                     (not (identical? (nth v 1) old-b))
+                     (identical? (nth v 2) fresh-c)
+                     (nil? (.-__hash old-a))
+                     (= (.-rebuildAuthorityPoison (.-prototype suss.core/PersistentArrayMap)) 99)])
+                "#).unwrap();
+                let result = graph.session.invoke(&check, &[&value, &old_a, &old_b, &fresh_c.value])
+                    .unwrap_or_else(|error| panic!("{}", crate::portable_repl::error_display(graph.session, &error)));
+                assert_eq!(crate::portable_repl::display(graph.session, &result).unwrap(),
+                    "[true true true true true true true]");
+                continue;
+            }
+
+            let a_record = cache.metadata.get(&keys[0], &mut Meter(graph.session))
+                .unwrap().unwrap().as_ref().unwrap().clone();
+            let b_record = cache.metadata.get(&keys[1], &mut Meter(graph.session))
+                .unwrap().unwrap().as_ref().unwrap().clone();
+            assert!(matches!(cache.metadata.get(&keys[2], &mut Meter(graph.session)).unwrap(), Some(None)),
+                "poisoned fresh C must not be retained");
+            let d_record = cache.metadata.get(&keys[3], &mut Meter(graph.session))
+                .unwrap().unwrap().as_ref().unwrap().clone();
+            assert!(d_record.matches_recorded_source(graph.session, graph.bridge).unwrap());
+            assert!(a_record.matches_recorded_source(graph.session, graph.bridge).unwrap());
+            assert!(b_record.matches_recorded_source(graph.session, graph.bridge).unwrap());
+            assert!(!fresh_c.matches_recorded_source(graph.session, graph.bridge).unwrap());
+            graph.session.collect().unwrap();
+            let check = graph.session.eval(r#"
+              (fn [v old-a old-b fresh-c cached-a cached-b]
+                [(= rebuild-events [:b-rebuild])
+                 (not rebuild-armed)
+                 (= (.-__hash old-a) 991)
+                 (= (.-__hash old-b) 990)
+                 (= (.-__hash fresh-c) 992)
+                 (not (identical? (nth v 0) old-a))
+                 (not (identical? (nth v 1) old-b))
+                 (identical? (nth v 2) fresh-c)
+                 (identical? (nth v 0) cached-a)
+                 (identical? (nth v 1) cached-b)
+                 (nil? (.-__hash (nth v 0)))
+                 (nil? (.-__hash (nth v 1)))
+                 (= (:doc (nth v 0)) "A")
+                 (= (:items (nth v 1)) #{101 102 103 104 105 106 107 108 109})
+                 (= (:doc (nth v 2)) "C")])
+            "#).unwrap();
+            let result = graph.session.invoke(&check, &[
+                &value, &old_a, &old_b, &fresh_c.value, &a_record.value, &b_record.value,
+            ]).unwrap();
+            assert_eq!(crate::portable_repl::display(graph.session, &result).unwrap(),
+                "[true true true true true true true true true true true true true true true]");
         }
-        graph.finish_recipes().unwrap();
-        let indices = owners.each_ref().map(|(global, revision)| {
-            graph.metadata_sources.iter().position(|source| {
-                &source.global == global && Arc::ptr_eq(&source.revision, revision)
-            }).unwrap()
-        });
-        let aliases = indices.map(|index| graph.metadata_sources[index].recipe);
-        let root = graph.recipe(Recipe::ReaderVector(aliases.to_vec())).unwrap();
-        let keys = owners.each_ref().map(|(global, revision)| {
-            (global.clone(), Arc::as_ptr(revision) as usize)
-        });
-
-        // Prime exactly A/B with real production recordings; C must start fresh.
-        for index in [indices[0], indices[1]] {
-            let record = fresh(&mut graph, index).unwrap().unwrap();
-            assert!(record.matches_recorded_source(graph.session, graph.bridge).unwrap());
-            let source = &graph.metadata_sources[index];
-            let key = (source.global.clone(), Arc::as_ptr(&source.revision) as usize);
-            cache.metadata.insert(key, Some(record), &mut Meter(graph.session)).unwrap();
-        }
-        let mut build = Build::new(&mut graph, &mut cache).unwrap();
-        let a_token = build.produce(&mut graph, aliases[0]).unwrap();
-        let b_token = build.produce(&mut graph, aliases[1]).unwrap();
-        let c_value = build.produce(&mut graph, aliases[2]).unwrap();
-        assert_eq!(build.pending.len(), 3);
-        assert!(build.pending[0].old && build.pending[1].old);
-        assert!(!build.pending[2].old);
-        assert!(build.pending[0].placeholder.is_some());
-        assert!(build.pending[1].placeholder.is_some());
-        assert!(build.pending[2].placeholder.is_none());
-        let old_a = build.pending[0].value.clone();
-        let old_b = build.pending[1].value.clone();
-        let fresh_c = build.pending[2].record.as_ref().unwrap().clone();
-        // Genuine private parent, with the exact tokens produced above. Direct
-        // controller access fixes pending order A/B/C without fabricating facts.
-        let private = bridge.private_parent_bridge(graph.session).unwrap();
-        let parent = private.vector_values(graph.session, &[a_token, b_token, c_value]).unwrap();
-
-        let arm = graph.session.eval(r#"
-          (fn [a b c]
-            (do
-              (set! rebuild-old-a a)
-              (set! rebuild-fresh-c c)
-              (set! (.-__hash b) 990)
-              (set! rebuild-armed true)))
-        "#).unwrap();
-        drop(graph.session.invoke(&arm, &[&old_a, &old_b, &fresh_c.value]).unwrap());
-        // B's logical source remains intact; only its unauthenticated memo forces
-        // finish() to call real fresh(), whose set callback poisons A and fresh C.
-        assert!(build.pending[1].current.as_ref().unwrap()
-            .matches_logical_source(graph.session, graph.bridge, &old_b).unwrap());
-        assert!(Build::valid(&mut graph, &build.pending[0]).unwrap());
-        assert!(!Build::valid(&mut graph, &build.pending[1]).unwrap());
-        assert!(Build::valid(&mut graph, &build.pending[2]).unwrap());
-        let value = build.finish(&mut graph, root, parent).unwrap();
-
-        let a_record = cache.metadata.get(&keys[0], &mut Meter(graph.session))
-            .unwrap().unwrap().as_ref().unwrap().clone();
-        let b_record = cache.metadata.get(&keys[1], &mut Meter(graph.session))
-            .unwrap().unwrap().as_ref().unwrap().clone();
-        assert!(matches!(cache.metadata.get(&keys[2], &mut Meter(graph.session)).unwrap(), Some(None)),
-            "poisoned fresh C must not be retained");
-        assert!(a_record.matches_recorded_source(graph.session, graph.bridge).unwrap());
-        assert!(b_record.matches_recorded_source(graph.session, graph.bridge).unwrap());
-        assert!(!fresh_c.matches_recorded_source(graph.session, graph.bridge).unwrap());
-        graph.session.collect().unwrap();
-        let check = graph.session.eval(r#"
-          (fn [v old-a old-b fresh-c cached-a cached-b]
-            [(= rebuild-events [:b-rebuild])
-             (not rebuild-armed)
-             (= (.-__hash old-a) 991)
-             (= (.-__hash old-b) 990)
-             (= (.-__hash fresh-c) 992)
-             (not (identical? (nth v 0) old-a))
-             (not (identical? (nth v 1) old-b))
-             (identical? (nth v 2) fresh-c)
-             (identical? (nth v 0) cached-a)
-             (identical? (nth v 1) cached-b)
-             (nil? (.-__hash (nth v 0)))
-             (nil? (.-__hash (nth v 1)))
-             (= (:doc (nth v 0)) "A")
-             (= (:items (nth v 1)) #{101 102 103 104 105 106 107 108 109})
-             (= (:doc (nth v 2)) "C")])
-        "#).unwrap();
-        let result = graph.session.invoke(&check, &[
-            &value, &old_a, &old_b, &fresh_c.value, &a_record.value, &b_record.value,
-        ]).unwrap();
-        assert_eq!(crate::portable_repl::display(graph.session, &result).unwrap(),
-            "[true true true true true true true true true true true true true true true]");
     }
     #[test]
     fn reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones() {

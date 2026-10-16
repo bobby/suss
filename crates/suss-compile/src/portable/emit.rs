@@ -224,8 +224,8 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::Construct => {
                             names.insert("constructor-descriptor");
-                            names.insert("source-constructor-new");
-                            names.insert("invoke");
+                            names.insert("source-constructor-plan");
+                            names.insert("source-construct-from-plan");
                         }
                         Nominal::SameNominalType => {
                             names.insert("object-same-descriptor");
@@ -327,10 +327,18 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "protocol-value-new"
             | "constructor-new"
             | "source-constructor-new"
+            | "source-constructor-plan"
             | "value-constructor"
             | "constructor-descriptor"
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
+            "source-construct-from-plan" => (
+                vec![VALUE, ValType::Ref(RefType {
+                    nullable: false,
+                    heap_type: HeapType::Concrete(runtime_abi::ARGS),
+                })],
+                vec![VALUE],
+            ),
             "source-array-new"
             | "source-array-make"
             | "source-array-make-literal"
@@ -1095,10 +1103,14 @@ fn emit_function(
                             }
                         }
                         Nominal::Construct => {
+                            // Operands are already evaluated SSA locals. Select the
+                            // live plan at the original constructor-selection point.
+                            // Plain descriptors share runtime construction directly;
+                            // special constructor closures retain generic invocation.
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&Call(index("constructor-descriptor")))
-                                .instruction(&Call(index("source-constructor-new")));
+                                .instruction(&Call(index("source-constructor-plan")));
                             for argument in &arguments[1..] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1107,7 +1119,7 @@ fn emit_function(
                                     array_type_index: runtime_abi::ARGS,
                                     array_size: arguments.len() as u32 - 1,
                                 })
-                                .instruction(&Call(index("invoke")));
+                                .instruction(&Call(index("source-construct-from-plan")));
                         }
                         Nominal::Instance | Nominal::Set | Nominal::Marker => {
                             function
