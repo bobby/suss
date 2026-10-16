@@ -27373,3 +27373,7 @@ GlobalRead emits the same shared binding-cell type5/field1 checked access as bin
 Unchanged publicrecord fixture still fails; remaining transformer fuel1291684→1385114 (93430saved), caller-env7774991→7790801 (15810saved) against1731314. No allowance changed. Second caller remains unexecuted. Logs, runner, patch and5 source/bootstrap snapshots: docs/roadmap/evidence/m4-direct-bound-flag-2026-10-16.tar.gz SHA256 6528582437d23d2ebbddb00b9ca4b25d2884e96e4db9fa6204a65261ee2c2006.
 
 The nine-harness33-test regression matrix is running on frozen source in tool session12936: python3 /home/bobby/.cache/suss-m4-work/run-global-bound-direct-regressions.py; raw global-bound-direct-regressions.log and JSON under the task cache. Obtain terminal results and source_unchanged before claiming any repaired failure. Full workspace baseline and final-head CI remain required, unclaimed for this candidate.
+
+### Integration review and cumulative fuel qualification (2026-10-16)
+
+Independent committed-head review of7abc0e9 found no blockers: crates/runtime/Cargo inputs exactly match tested e24340d, all five archive hashes unchanged, and both handoff histories retained. Correction to the previous conversational total: invoked remaining fuel is cumulative. The93430saved through invocation already includes15810caller-env savings; transformer-only savings are77620 (arguments7684121→7699931, invoked1291684→1385114). Do not add93430+15810. This does not change raw logs, test outcomes or acceptance classifications.
