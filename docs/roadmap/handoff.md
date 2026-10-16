@@ -27860,3 +27860,45 @@ source-tag charged stages and nesting-aware cold/nonnil Keyword versus Symbol
 receiver dispatches, using native fields without additional guest calls. Do not
 infer literal eligibility from the old unnamed193-dispatch diagnostic or expand
 warming without explicit pinned constructor provenance.
+
+
+## Remaining cold identifier receiver diagnostic — 2026-10-16
+
+Isolated observational source based on the reviewed literal-route extension,
+with native descriptor/field reads before existing dispatch and dynamic direct
+input labels. No added guest hash call or replacement delegate. Command:
+`cargo test -p suss-cli --locked --test compiled_macro_source_tags compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods -- --exact --nocapture --test-threads=1`,
+with dedicated cold-identifier-receiver-target, jobs2, existing default fuel,
+and SUSS_COLD_RECEIVER_TRACE/SUSS_MACRO_FUEL_TRACE/SUSS_METADATA_FUEL_TRACE=1.
+Bootstrap exit0,31.55s; test terminal101,0pass/1fuel-fail,50.80s test/76.56s
+command. Frozen source/bootstrap unchanged. Same invocation span388..413
+fails during caller &env input transport.
+
+All688 diagnostic entries have matching exits, successful native inspection
+and known fuel deltas.174 cold Keyword entries in43 groups have summed
+observed-exclusive intervals4,480,699.55 Suss-only key entries account for
+1,890,907 of those intervals; these keys remain cold. Namespace keys include
+require-macros5/173390, rename-macros5/164295, use-macros5/133710,
+excludes5/113870 and uses+defs10/148380 (calls/observed interval fuel).
+These labels identify matching current direct constructor inputs, NOT proof
+of creation provenance. No new literal eligibility is established.
+
+Archive `docs/roadmap/evidence/m4-remaining-cold-keyword-diagnostic-2026-10-16.tar.gz`
+SHA25656c8f599206a4699571b23cc50bb629868b9203be1f52d59e3fd538de39a06b5
+contains454 manifested payloads, exact diagnostic snapshots, raw logs, summaries,
+patch, runners and limitations. Its package-receipt payload_count453 excludes
+that receipt itself; the manifest contains454 payloads. Main verified all hashes
+and every changed file against archived bytes before restoring production/test/
+bootstrap bytes to committed ec0eea2. No diagnostic source is shipped here.
+
+Carver source review: native names/memo units are usable observations, but
+additional roots/scans/logging can perturb GC/host work and failure position.
+Inclusive intervals include nested guest/host work; exclusive subtracts only
+nested observed intervals, not all nested work, and excludes pre-entry observer
+charges. No matched uninstrumented interval proof exists. The diagnostic has
+unchecked malformed-layout indexing and fails to propagate unknown nested deltas;
+all captures in this run succeeded, but it must be repaired before use on such
+cases. Errors/unknowns must never be converted to positive provenance evidence.
+Next task: audit actual pinned namespace constructors before any narrow origin
+annotation; preserve every Suss-only field cold. No performance, acceptance,
+full-baseline, CI or issue-closure conclusion follows from this diagnostic.
