@@ -9,6 +9,42 @@ use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
 use wasm_encoder::*;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
+
+// Literal names are SSA values, never expressions to re-evaluate.
+#[derive(Default)]
+struct PrimitiveStringKeys {
+    length: BTreeSet<usize>,
+    char_code_at: BTreeSet<usize>,
+    char_code_at_methods: BTreeSet<(usize, usize)>,
+}
+impl PrimitiveStringKeys {
+    fn new(function: &IrFunction) -> Self {
+        let mut keys = Self::default();
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if let Operation::Literal(Literal::String(units)) = &instruction.operation {
+                    match units.as_slice() {
+                        [108, 101, 110, 103, 116, 104] => { keys.length.insert(instruction.result.0); }
+                        [99, 104, 97, 114, 67, 111, 100, 101, 65, 116] => { keys.char_code_at.insert(instruction.result.0); }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        // ObjectInvoke carries [selected method, receiver, arguments...].
+        // Only pair a lookup with the exact same receiver SSA value.
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if let Operation::Nominal { operation: Nominal::NamedGet, arguments } = &instruction.operation {
+                    if arguments.len() == 2 && keys.char_code_at.contains(&arguments[1].0) {
+                        keys.char_code_at_methods.insert((instruction.result.0, arguments[0].0));
+                    }
+                }
+            }
+        }
+        keys
+    }
+}
 fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
@@ -101,6 +137,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
     for function in all_functions {
+        let primitive_strings = PrimitiveStringKeys::new(function);
         for block in &function.blocks {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
@@ -157,7 +194,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
-                    Operation::Nominal { operation, .. } => match operation {
+                    Operation::Nominal { operation, arguments } => match operation {
                         Nominal::IsNumber | Nominal::IsString => {
                             names.insert(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" });
                             names.insert("invoke");
@@ -188,10 +225,15 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
+                            if arguments.len() == 3 && primitive_strings.char_code_at_methods.contains(&(arguments[0].0, arguments[1].0)) {
+                                names.insert("string-char-code-at");
+                            }
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
                             names.insert("named-property-get");
+                            if primitive_strings.length.contains(&arguments[1].0) { names.insert("number-box"); }
+                            if primitive_strings.char_code_at.contains(&arguments[1].0) { names.insert("string-char-code-at-method"); }
                         }
                         Nominal::NamedSet => {
                             names.insert("named-property-set");
@@ -345,7 +387,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "source-array-get-indices"
             | "source-array-set-indices"
             | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
-            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
+            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" | "string-char-code-at-method" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -667,6 +709,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
 ) -> Result<Function, Diagnostic> {
+    let primitive_strings = PrimitiveStringKeys::new(ir);
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1164,7 +1207,47 @@ fn emit_function(
                                     },
                                 )));
                         }
+                        Nominal::NamedGet => {
+                            let length = primitive_strings.length.contains(&arguments[1].0);
+                            let char_code_at = primitive_strings.char_code_at.contains(&arguments[1].0);
+                            let fast = length || char_code_at;
+                            if fast {
+                                function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&If(BlockType::Result(VALUE)));
+                                if length {
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                        .instruction(&ArrayLen)
+                                        .instruction(&F64ConvertI32U)
+                                        .instruction(&Call(index("number-box")));
+                                } else {
+                                    // Use the same lazily initialized shared root
+                                    // as named-property-get, at the lookup position.
+                                    function.instruction(&Call(index("string-char-code-at-method")));
+                                }
+                                function.instruction(&Else);
+                            }
+                            for argument in arguments { function.instruction(&LocalGet(argument.0 as u32 + offset)); }
+                            function.instruction(&Call(index("named-property-get")));
+                            if fast { function.instruction(&End); }
+                        }
                         Nominal::ObjectInvoke => {
+                            // Numeric indices cannot invoke guest coercion. Other
+                            // owners, indices and arities retain member dispatch.
+                            let fast = arguments.len() == 3 && primitive_strings.char_code_at_methods.contains(&(arguments[0].0, arguments[1].0));
+                            if fast {
+                                function.instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&LocalGet(arguments[2].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
+                                    .instruction(&I32And)
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                    .instruction(&LocalGet(arguments[2].0 as u32 + offset))
+                                    .instruction(&Call(index("string-char-code-at")))
+                                    .instruction(&Else);
+                            }
                             for argument in &arguments[..2] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1177,6 +1260,7 @@ fn emit_function(
                                     array_size: arguments.len() as u32 - 2,
                                 })
                                 .instruction(&Call(index("object-method-invoke")));
+                            if fast { function.instruction(&End); }
                         }
                         Nominal::Class
                         | Nominal::BindingDefined
@@ -1200,7 +1284,6 @@ fn emit_function(
                         | Nominal::NativeObjectSet
                         | Nominal::NativeObjectStrictSet
                         | Nominal::ObjectSet
-                        | Nominal::NamedGet
                         | Nominal::CallableGet
                         | Nominal::NamedSet
                         | Nominal::Protocol

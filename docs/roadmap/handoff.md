@@ -27899,3 +27899,34 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+### Primitive String root-write matched execution (2026-10-16)
+
+Exact original root fixture SHA256e4795d3adb7cb5f83fffd563544f29eb0ae291c825dc9c2e82a3e7e48017fd62 on unchanged8fda18a exits101, matching the candidate language exception and subsequent error-display Unexpected structure layout. Supplemental fixture18e7b821f1f5467173d39ebda1212a2e8f0b1b3fc64fa66b30d38c8421952594 is byte-identical before/candidate. Both Runtime and Macro rows are `[66 66 true true false 17 [10 20 30 41]]`: reserved call/apply assignments throw, saved/direct calls return66, ordinary custom root field assignment succeeds. Both supplemental commands exit101 because the custom-field assertion incorrectly expected rejection. These failures are preserved, not relabelled passes.
+
+Commands: `cargo test -p suss-compile --locked --test portable_primitive_string_access primitive_string_member_keeps_selected_body_when_index_mutates_root_properties -- --exact --test-threads=2 --nocapture` on before; supplemental target `portable_primitive_string_root_writes`, exact filter `primitive_string_root_writes_observe_caught_boundaries_in_both_phases`, both worktrees. Jobs2; owned before target and idle candidate analyzer-literal-key-target. All execution freezes unchanged, candidate bootstrap fingerprints match both phases.
+
+Raw source, logs, receipts, freezes, fingerprints and comparison: `evidence/m4-primitive-string-root-matched-2026-10-16.tar.gz`, SHA256a40321c83b0bbd9d3b383cdf19716c6a87562b82dac20db5a9e98d894c811b8b,893 independently verified payloads. This is matched negative evidence only. It does not execute successful root mutation between lookup and invocation: the successful custom-field write is afterward and not read back from the root. It does not establish CLJS mutation compatibility, a passing mutation regression, or complete source-tag acceptance. No production edit was made by these probes.
+
+### Guarded primitive String lookup execution (2026-10-16)
+
+Emittercd8b6ba6bcdf0dd4adaa8dae6182b2e6484435c85b444c24a6d65bc70a2f12eb adds exact-literal charCodeAt lookup guarded by actual STRING, calling the same zero-argument shared-root helper at the original lookup position. Other owners/keys retain generic lookup. No operand replay, quota or tariff change. Regeneration exits0; numeric/effect tests2pass; successful custom-root mutation during index evaluation1pass in both phases; unchanged source-tag target1pass/1fuel failure. Original reserved call/apply mutation fixtures remain failed and retained separately.
+
+Root-success exactguest33fde62f0f7eea4377c1b642afbb2d7370a0fb961b11989a6dacc299c17e6f53 matches pinnedCLJS two0runs and native before/candidate bothphase rows `[66 17 true 66 [1 2 3 4]]`. Oracle archive SHA256f3d3cb48235a393fa66ce8b54d962d5700c713fbcdd308c59a5659e257bfa988; native matched archive SHA25615f8691ee62aecf2743f6000c0ba33f0c3f9957df6ec8bb200177c07030c539d. Both independently reviewed.
+
+Focused commands, raw outcomes and snapshots: `evidence/m4-primitive-string-lookup-focused-2026-10-16.tar.gz`, SHA256a35fac6a932e7808c77f1c6fb1e0b3ded5300a6938b862936835d821e2d1d019 (473payloads,439 frozen paths includingcljs,unchanged; bothphasefingerprints). Existing stage-trace run reproduces inference failure at span382..414:4starts,3decodes withbalances6646406,3477639,307237; fourthstarts306816 andfailscaller&env. Priorf4aftrace same4starts/3decodes/span; gains97608,194420,286606 are inclusive matched progress, not additiveexclusivecost. Earlier interpretation of later-span progress was incorrect. Bothunchangedsource-tagtests must passdefaultfuel beforeacceptance. Sixpreservationcorpora, broaderJank/core acceptance and fullworkspacebaseline were not rerun by this focusedcohort.
+
+### Exploratory String diagnostic classification (2026-10-16)
+
+After independent review, retained the original access test file and supplemental
+root-writes target byte-for-byte under `docs/roadmap/diagnostics/primitive-string-root-writes/`,
+with the third test also extracted verbatim. Removed only these exploratory failing
+checks from Cargo discovery; two access regressions and the separate pinned
+root-success regression remain active. README records original names, source
+hashes, both-version failures and raw archive a40321c...11b8b. Historical filtered
+runs remain 2passed/1filtered; reserved call/apply compatibility remains unresolved.
+No acceptance test was removed and no prior failure reclassified as success.
+Lookup-focused artifact review independently verified 473payloads/439frozenpaths;
+no blockers for bounded evidence, not issue acceptance.
+
+Post-classification focused execution: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target cargo test -p suss-compile --locked --test portable_primitive_string_access --test portable_primitive_string_root_success -- --test-threads=2 --nocapture` exits0. Access2pass/0fail/0filtered (21.13s); root-success1pass/0fail/0filtered (20.82s), matching Runtime/Macro rows. Raw log retained losslessly as `active-tests-after-classification.log.gz` beside diagnostic README; decompressed SHA256 bacba85610cc048d694282a1e9d88accd5987d7e222f60bdb3876e0490b0f47c. Classification independently verified exact originals and unchanged active regressions. `git diff --check` exits0. Source-tag failure and absent full-baseline/final-CI evidence remain unchanged.
