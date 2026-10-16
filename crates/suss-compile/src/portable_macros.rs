@@ -2,7 +2,7 @@
 use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use crate::{
     portable_macro_data::FormBridge,
-    portable_macro_graph::{AnalysisGraph, DeclarationValues},
+    portable_macro_graph::AnalysisGraph,
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::{BTreeMap, BTreeSet};
@@ -15,7 +15,6 @@ pub(crate) enum CompilerCatalogMode {
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
-    declaration_values: DeclarationValues,
     definitions: BTreeMap<(String, String), SessionValue>,
     // Macros whose definitions cannot read their implicit &env parameter.
     environment_free: BTreeSet<(String, String)>,
@@ -31,6 +30,7 @@ pub struct CompiledMacros {
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
     artifact_cache: crate::portable::artifact_cache::ArtifactCache,
+    declaration_values: crate::portable_macro_graph::DeclarationValues,
 }
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
     Form {
@@ -140,7 +140,6 @@ impl CompiledMacros {
         let mut macros = Self {
             session,
             bridge,
-            declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             environment_free: BTreeSet::new(),
             caller_form_free: BTreeSet::new(),
@@ -151,6 +150,7 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
+            declaration_values: Default::default(),
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
@@ -585,7 +585,7 @@ impl ExpansionHost for CompiledMacros {
             function, phase, forms, origin, dependencies.as_deref(),
             &mut |work| session.charge_host_work(work).map_err(|error| Diagnostic {
                 span: function.span.clone(),
-                message: format!("IR verification budget exhausted: {error}"),
+                message: format!("Artifact preparation budget exhausted: {error}"),
             }),
         )
     }
@@ -779,11 +779,7 @@ impl ExpansionHost for CompiledMacros {
                 )?
             } else {
                 self.environment_materializations += 1;
-                let mut graph = AnalysisGraph::with_declaration_values(
-                    &self.bridge,
-                    session,
-                    &mut self.declaration_values,
-                );
+                let mut graph = AnalysisGraph::with_declaration_values(&self.bridge, session, &mut self.declaration_values);
                 match self.compiler_catalog_macros.get(&target) {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?

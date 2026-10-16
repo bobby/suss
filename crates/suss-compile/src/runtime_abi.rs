@@ -38,6 +38,7 @@ mod numeric_hash;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
+mod prototype_origins;
 mod predicates;
 mod primitive_constructors;
 mod range_errors;
@@ -763,6 +764,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(object_descriptor_functions);
     arithmetic_functions.extend(exception_info::functions(&mut b));
     type_values::functions(&mut b);
+    prototype_origins::functions(&mut b);
     let prototype_functions = owned_prototypes::functions(&mut b);
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
@@ -1099,6 +1101,7 @@ fn build_module() -> Vec<u8> {
         },
         &ConstExpr::extended([GlobalGet(object_methods::DEFAULT_THIS)]),
     );
+    prototype_origins::append_global(&mut globals);
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

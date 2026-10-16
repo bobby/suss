@@ -202,6 +202,7 @@ impl Analyzer<'_> {
                     kind: Expression::NilTest(Box::new(cached.clone())),
                 };
                 let callee = self.form(&args[1])?;
+                let callee = self.prepare_source_callee(form, callee, 1)?;
                 let collection = self.form(&args[0])?;
                 let hash = Hir {
                     source: None,

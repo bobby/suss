@@ -1199,7 +1199,7 @@ fn expression_preallocation_work(hir: &Hir) -> usize {
     base.saturating_add(sized)
 }
 
-fn operands(operation: &Operation) -> &[ValueId] {
+pub(super) fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
         Operation::Literal(_)
         | Operation::GlobalRead(_)

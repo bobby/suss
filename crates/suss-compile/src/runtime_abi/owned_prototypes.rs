@@ -203,6 +203,10 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         Drop,
         End,
     ]);
+    // Stage provenance first. If the ordinary cache setter traps after mutation,
+    // its prototype already has a genuine creation witness. Orphan witnesses
+    // cannot certify a different prototype, and later retries replace one slot.
+    prototype_origins::record_inline(&mut code);
     code.extend([
         LocalGet(0),
         I32Const(PROTOTYPE_KEY),
@@ -219,7 +223,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         "owned-constructor-prototype-implementation",
         &[VALUE],
         &[VALUE],
-        &[(2, VALUE)],
+        &[(10, VALUE), (2, ValType::I32)],
         &code,
     );
     // Kernel-only descriptors without a source constructor have no public

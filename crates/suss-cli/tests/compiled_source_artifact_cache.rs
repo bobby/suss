@@ -312,3 +312,130 @@ fn source_artifact_cache_bypasses_partial_load_until_successful_reload() {
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 2);
     assert_eq!(macros.artifact_cache_stats().bypasses, before.bypasses);
 }
+
+#[test]
+fn source_artifact_key_admission_keeps_effects_and_executes_uncached_large_inputs() {
+    let mut runtime = Session::new_repl().unwrap();
+    runtime.eval("(def review-cache-runtime-calls 0)").unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define("(defmacro review-cache-large [] (defonce review-cache-macro-calls 0) (set! review-cache-macro-calls (+ review-cache-macro-calls 1)) review-cache-macro-calls)").unwrap();
+    let source = format!(
+        "(do (set! review-cache-runtime-calls (+ review-cache-runtime-calls 1)) (+ review-cache-runtime-calls (review-cache-large))) ;{}",
+        "x".repeat(128 * 1024)
+    );
+    let before = macros.artifact_cache_stats();
+    for expected in [2.0f64, 4.0] {
+        assert_eq!(
+            number(&mut runtime, &mut macros, &source),
+            expected.to_bits()
+        );
+        runtime.collect().unwrap();
+        let now = macros.artifact_cache_stats();
+        assert_eq!(now.entries, before.entries);
+        assert_eq!(now.bytes, before.bytes);
+        assert_eq!(now.hits, before.hits);
+        assert_eq!(now.misses, before.misses);
+        assert_eq!(now.bypasses, before.bypasses + (expected as usize / 2));
+    }
+    let next_macro_count = number(&mut runtime, &mut macros, "(review-cache-large)");
+    assert_eq!(
+        next_macro_count,
+        3.0f64.to_bits(),
+        "uncached emission must not suppress or replay macro effects"
+    );
+    let runtime_count = runtime.eval("review-cache-runtime-calls").unwrap();
+    let actual = runtime
+        .inspect(&runtime_count, |mut store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&store)?
+                .unwrap()
+                .field(&mut store, 0)?
+                .unwrap_f64()
+                .to_bits())
+        })
+        .unwrap();
+    assert_eq!(
+        actual,
+        2.0f64.to_bits(),
+        "each runtime initializer executes exactly once"
+    );
+}
+
+#[test]
+fn large_ir_artifact_key_decline_executes_every_expansion() {
+    use suss_compile::portable::{self, ExpansionHost, artifact_cache::ArtifactCache};
+    use suss_reader::{
+        Symbol,
+        forms::{Form, Kind},
+    };
+    struct Host {
+        cache: ArtifactCache,
+        expansions: usize,
+    }
+    impl ExpansionHost for Host {
+        fn expand(
+            &mut self,
+            form: &Form,
+            _: portable::ExpansionContext<'_>,
+        ) -> Result<Option<Form>, portable::Diagnostic> {
+            let Kind::List(items) = &form.kind else {
+                return Ok(None);
+            };
+            if !matches!(items.first().map(|f| &f.kind), Some(Kind::Symbol(s)) if s.name == "large-ir")
+            {
+                return Ok(None);
+            }
+            self.expansions += 1;
+            let mut arguments = vec![Form {
+                span: form.span.clone(),
+                metadata: vec![],
+                kind: Kind::Symbol(Symbol {
+                    namespace: None,
+                    name: "+".into(),
+                }),
+            }];
+            arguments.extend((0..2000).map(|_| Form {
+                span: form.span.clone(),
+                metadata: vec![],
+                kind: Kind::Number(1.0),
+            }));
+            Ok(Some(Form {
+                span: form.span.clone(),
+                metadata: vec![],
+                kind: Kind::List(arguments),
+            }))
+        }
+        fn emit_fragment(
+            &mut self,
+            function: &portable::ir::Function,
+            phase: portable::resolve::Phase,
+            forms: &[Form],
+            origin: Option<&portable::SourceOrigin>,
+        ) -> Result<Vec<u8>, portable::Diagnostic> {
+            assert!(function.values.len() > 2000);
+            self.cache.emit(function, phase, forms, origin, Some(&[]))
+        }
+    }
+    let mut runtime = Session::new().unwrap();
+    let mut host = Host {
+        cache: ArtifactCache::default(),
+        expansions: 0,
+    };
+    for round in 1..=2 {
+        let value = runtime.eval_with_macros("(large-ir)", &mut host).unwrap();
+        runtime.collect().unwrap();
+        runtime
+            .inspect(&value, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 2000.0);
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(host.expansions, round);
+        assert_eq!(host.cache.stats().bypasses, round);
+        assert_eq!(host.cache.stats().entries, 0);
+        assert_eq!(host.cache.stats().hits, 0);
+    }
+}

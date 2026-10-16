@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "clojurescript-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "node-version": "v26.8.2",
+  "clojure-cli-version": "1.12.1.1550",
+  "source": "tests/oracle/src/suss_oracle/metadata_custom_hash.cljs",
+  "source-sha256": "03d005055b17e5a01da4f67208485d05ee4e1871684b2d9253d1e4b878eb50a4",
+  "runner": "scripts/probe-metadata-custom-hash.sh",
+  "runner-sha256": "4a925d012fff88e72d5c648d5f0c155c1e70f52575780ff217e81aacd2ac181c",
+  "limits": [
+    "Bootstrap-registered compiled CLJS macro; not macro loading acceptance.",
+    "Actual delegated ArrayMap IHash method replacement; optimized dispatch passes null as protocol argument and uses JS this.",
+    "Counts target the saved nested metadata map only; no Suss transport.",
+    "Initial PATH failure and incorrect receiver instrumentation failure retained in evidence archive.",
+    "Immediate pre-miss/pre-hit memo samples and memo identity are observed directly; this remains a delegated CLJS method probe, not a Suss transport observation."
+  ],
+  "observations": {
+    "schema": 1,
+    "boundary": "Pinned CLJS macroexpander; delegated PersistentArrayMap IHash replacement; no Suss transport",
+    "windows": [
+      {
+        "stage": "macro-original",
+        "subject-custom-hash-calls": 0
+      },
+      {
+        "stage": "macro-custom-before-warming",
+        "subject-custom-hash-calls": 0
+      },
+      {
+        "stage": "explicit-custom-hash-miss",
+        "subject-custom-hash-calls": 1
+      },
+      {
+        "stage": "macro-custom-after-warming",
+        "subject-custom-hash-calls": 0
+      },
+      {
+        "stage": "explicit-custom-hash-hit",
+        "subject-custom-hash-calls": 1
+      }
+    ],
+    "custom-method-installed": true,
+    "memo": {
+      "initial-nil": true,
+      "miss-was-nil-before-call": true,
+      "hit-was-numeric-before-call": true,
+      "hit-kept-memo-identity": true,
+      "warmed-numeric": true,
+      "miss-equals-memo": true,
+      "hit-equals-miss": true
+    },
+    "identity": {
+      "original": true,
+      "custom-before-warming": true,
+      "custom-after-warming": true,
+      "custom-resolved": true,
+      "custom-ast": true,
+      "nested-before-warming": true,
+      "nested-after-warming": true
+    },
+    "values": {
+      "x-before": 17,
+      "x-after": 17
+    }
+  },
+  "execution": {
+    "returncode": 0,
+    "command": "PATH=/home/bobby/.cache/suss-m4-oracle-tools/bin:/home/bobby/.cache/suss-m4-oracle-tools/jdk-21.0.8+9-jre/bin:$PATH scripts/probe-metadata-custom-hash.sh"
+  }
+}

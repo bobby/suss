@@ -1,0 +1,1 @@
+{"schema":1,"upstream":"c4295f303100bbf5afac449242d30bca1126f1a1","cases":[{"id":"callable-hash-function-miss-and-hit","value":{"tag":"vector","items":[{"tag":"f64","bits":"4051c00000000000"},{"tag":"f64","bits":"4051c00000000000"},{"tag":"f64","bits":"4051c00000000000"},{"tag":"f64","bits":"3ff0000000000000"}]}}]}

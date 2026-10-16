@@ -421,6 +421,7 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
         b.function_with_locals(export, &[], &[VALUE], &[(1, VALUE)], &code);
     }
     let mut code = vec![];
+    let mut plan = vec![];
     for (descriptor, factory) in [
         (nominal::ERROR_GLOBAL, "error-constructor"),
         (range_errors::DESCRIPTOR_GLOBAL, "range-error-constructor"),
@@ -430,7 +431,7 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
         ),
         (owned_prototypes::OBJECT_DESCRIPTOR, "object-constructor"),
     ] {
-        code.extend([
+        let branch = [
             LocalGet(0),
             GlobalGet(descriptor),
             RefEq,
@@ -438,8 +439,23 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
             Call(b.names[factory]),
             Return,
             End,
-        ]);
+        ];
+        code.extend(branch.iter().cloned());
+        plan.extend(branch);
     }
     code.extend([LocalGet(0), Call(b.names["nominal-source-constructor-new"])]);
     b.function("source-constructor-new", &[VALUE], &[VALUE], &code);
+    plan.extend([LocalGet(0), Call(b.names["nominal-source-constructor-plan"])]);
+    b.function("source-constructor-plan", &[VALUE], &[VALUE], &plan);
+    b.function(
+        "source-construct-from-plan", &[VALUE, reference(ARGS)], &[VALUE],
+        &[
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0), LocalGet(1), Call(b.names["nominal-source-object-new"]),
+            Else,
+            LocalGet(0), LocalGet(1), Call(b.names["invoke"]),
+            End,
+        ],
+    );
 }

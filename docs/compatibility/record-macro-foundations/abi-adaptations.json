@@ -1,30 +1,13 @@
 {
   "schema": 1,
   "source": "crates/suss-compile/src/runtime_abi/named_properties.rs",
-  "source-file-sha256": "0d6fee9121c979615e1a74f3604e76d9245fb5c48e42cf15164ec1d2b5415891",
+  "source-file-sha256": "b11fbeb6378a9bd2dd696ff0efcdb688b9c3151e40410f152af63af1f80d1a29",
   "license": "MIT OR Apache-2.0",
-  "scope": "named-property index range guard",
-  "adaptation": "For each closed index interval [low, high], replace unsigned lower-bound AND upper-bound comparisons with wrapping i32 subtraction index-low followed by unsigned <= high-low. The bounds are compile-time constants with low <= high; unsigned subtraction maps values below low to a large value that fails this bounded-width comparison. No accepted indices or dispatch targets change.",
-  "instruction-sequence": [
-    "LocalGet(2)",
-    "I32Const(low as i32)",
-    "I32Sub",
-    "I32Const((high - low) as i32)",
-    "I32LeU"
-  ],
+  "scope": "named-property ASCII field guard and reserved spelling dispatch",
+  "adaptation": "Accept exactly ASCII letters, digits, underscore and dollar via two u64 masks, with an equivalent wrapping-subtraction lowercase fast path. Reject non-ASCII UTF-16 units before modulo-64 shifts. Validate every unit before rejecting pinned reserved spellings through length/first-unit dispatch; empty names remain accepted. After the matching reserved-length bucket is exhausted, return accepted without testing disjoint lengths. This original checked guard rejects unsupported munging rather than porting upstream code; provenance does not establish execution.",
   "guard-location": "Named instance access must not mistake raw source names for munged fields.",
-  "allowed-ranges": [
-    [
-      "a",
-      "z"
-    ],
-    [
-      "A",
-      "Z"
-    ],
-    [
-      "0",
-      "9"
-    ]
-  ]
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "algorithm": "ascii-masks-lowercase-fastpath-reserved-dispatch",
+  "allowed-ascii": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$",
+  "guard-sha256": "ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5"
 }

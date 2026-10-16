@@ -597,16 +597,41 @@ impl SourceOrigin {
     /// The legacy `macro_form_data` wrapper retains a finite allowance for
     /// callers that do not provide the session's operation meter.
     pub(crate) fn macro_form_data_metered(
-        &self,
-        form: &Form,
+        &self, form: &Form,
         meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
     ) -> Result<Form, Diagnostic> {
+        let selected = self.macro_form_source_metered(form, meter)?.unwrap_or(form);
+        clone_form_metered(selected, meter)
+    }
+
+    /// Root metadata with the same complete provenance checks as full reader
+    /// data. The selected span is retained for normalization diagnostics.
+    pub(crate) fn macro_form_root_metadata_metered(
+        &self, form: &Form,
+        meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<(std::ops::Range<usize>, Vec<Form>), Diagnostic> {
+        let selected = self.macro_form_source_metered(form, meter)?.unwrap_or(form);
+        let mut metadata = Vec::new();
+        charge(meter, selected.metadata.len().saturating_mul(std::mem::size_of::<Form>()), &selected.span)?;
+        metadata.try_reserve_exact(selected.metadata.len()).map_err(|_| Diagnostic {
+            span: selected.span.clone(), message: "Source root metadata allocation failed".into(),
+        })?;
+        for prefix in &selected.metadata {
+            charge(meter, 1, &selected.span)?;
+            metadata.push(clone_form_metered(prefix, meter)?);
+        }
+        Ok((selected.span.clone(), metadata))
+    }
+
+    fn macro_form_source_metered(
+        &self, form: &Form, meter: &mut WorkMeter<'_>,
+    ) -> Result<Option<&Form>, Diagnostic> {
         if let Some(pair) = &self.reader_forms {
             let mut pending = vec![(&pair.0, &pair.1)];
             while let Some((lowered, reader)) = pending.pop() {
                 charge(meter, 1, &form.span)?;
                 if same_metered(lowered, form, true, &mut *meter)? {
-                    return clone_form_metered(reader, &mut *meter);
+                    return Ok(Some(reader));
                 }
                 // Metadata has an independent shape; source indexing may add
                 // prefixes. Never let it shift correspondence of code children.
@@ -625,10 +650,7 @@ impl SourceOrigin {
                 }
             }
         }
-        match self.original_form_data_metered(form, &mut *meter)? {
-            Some(original) => Ok(original),
-            None => clone_form_metered(form, &mut *meter),
-        }
+        self.original_form_ref_metered(form, meter)
     }
 
     pub(crate) fn with_reader_expansion(&self, lowered: Form, reader: Form) -> Self {
@@ -679,10 +701,17 @@ impl SourceOrigin {
     }
 
     fn original_form_data_metered(
+        &self, form: &Form, meter: &mut WorkMeter<'_>,
+    ) -> Result<Option<Form>, Diagnostic> {
+        self.original_form_ref_metered(form, meter)?
+            .map(|found| clone_form_metered(found, meter)).transpose()
+    }
+
+    fn original_form_ref_metered(
         &self,
         form: &Form,
         meter: &mut WorkMeter<'_>,
-    ) -> Result<Option<Form>, Diagnostic> {
+    ) -> Result<Option<&Form>, Diagnostic> {
         if self.metadata_forms.get().is_none() {
             // The reader charges actual scanning, selection and location work
             // to this same operation rather than starting an independent pool.
@@ -746,13 +775,69 @@ impl SourceOrigin {
                 message: "Verified source form missing from source metadata snapshot".into(),
             });
         };
-        Ok(Some(clone_form_metered(found, meter)?))
+        Ok(Some(found))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn root_metadata_projection_preserves_values_with_less_work_than_full_copy() {
+        let source = format!("(def target [{}])", vec!["17"; 512].join(" "));
+        let form = read_forms(&source).unwrap().remove(0);
+        let origin = SourceOrigin::new(source, None);
+        let expected = origin.macro_form_data_metered(&form, &mut |_| Ok(())).unwrap();
+        let mut full_work = 0;
+        let full = origin.macro_form_data_metered(&form, &mut |n| {full_work += n; Ok(())}).unwrap();
+        let mut root_work = 0;
+        let (span, metadata) = origin.macro_form_root_metadata_metered(&form, &mut |n| {root_work += n; Ok(())}).unwrap();
+        assert_eq!(span, full.span);
+        assert_eq!(metadata, expected.metadata);
+        assert_eq!(metadata, full.metadata);
+        assert!(root_work < full_work, "root-only work {root_work} must avoid full copy {full_work}");
+    }
+
+    #[test]
+    fn root_metadata_projection_preserves_reader_correspondence_and_unverified_fallback() {
+        let source = "^{:line 99 :custom :kept} (def target [1 2])";
+        let form = read_forms(source).unwrap().remove(0);
+        let origin = SourceOrigin::new(source, None);
+        let full = origin.macro_form_data_metered(&form, &mut |_| Ok(())).unwrap();
+        let mut reader = full.clone();
+        reader.span = 100..200;
+        let expanded = SourceOrigin::new("", None).with_reader_expansion(form.clone(), reader.clone());
+        let (span, metadata) = expanded.macro_form_root_metadata_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(span, reader.span);
+        assert_eq!(metadata, reader.metadata);
+        let mut changed = form.clone();
+        changed.kind = Kind::List(vec![]);
+        assert_eq!(origin.macro_form_root_metadata_metered(&changed, &mut |_| Ok(())).unwrap().1,changed.metadata);
+        let mut forged = read_forms("target").unwrap().remove(0);
+        forged.span = 1..7;
+        let string_origin = SourceOrigin::new("\"target\"", None);
+        assert!(string_origin.macro_form_root_metadata_metered(&forged, &mut |_| Ok(())).unwrap().1.is_empty());
+    }
+
+    #[test]
+    fn root_metadata_projection_charges_cold_and_warm_cancellation_and_recovers() {
+        let source = format!("(def target [{}])", vec!["17"; 512].join(" "));
+        let form = read_forms(&source).unwrap().remove(0);
+        let origin = SourceOrigin::new(source, None);
+        let mut work = 0;
+        let error = origin.macro_form_root_metadata_metered(&form, &mut |n| {
+            work += n;
+            if work > 128 {Err(Diagnostic {span:0..1,message:"projection cancelled".into()})} else {Ok(())}
+        }).unwrap_err();
+        assert_eq!(error.message,"Unable to construct source metadata snapshot: projection cancelled");
+        assert!(origin.metadata_forms.get().is_none());
+        let metadata = origin.macro_form_root_metadata_metered(&form, &mut |_| Ok(())).unwrap();
+        let expected = origin.macro_form_data_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(metadata.1,expected.metadata);
+        assert!(origin.macro_form_root_metadata_metered(&form, &mut |_| Err(Diagnostic {span:0..1,message:"warm cancelled".into()})).is_err());
+        assert_eq!(origin.macro_form_root_metadata_metered(&form, &mut |_| Ok(())).unwrap(),metadata);
+    }
 
     fn all_forms(forms: &[Form]) -> Vec<&Form> {
         let mut pending: Vec<_> = forms.iter().rev().collect();

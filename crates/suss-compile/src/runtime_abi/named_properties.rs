@@ -83,6 +83,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             RefCastNonNull(HeapType::Concrete(STRING)),
             ArrayLen,
         ]);
+        if local == 0 {
+            body.push(LocalTee(3));
+        }
     }
     body.extend([
         I32Ne,
@@ -95,9 +98,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
+        LocalGet(3),
         I32GeU,
         BrIf(1),
     ]);
@@ -128,7 +129,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "property-key-equal",
         &[VALUE, VALUE],
         &[ValType::I32],
-        &[(1, ValType::I32)],
+        &[(2, ValType::I32)],
         &body,
     );
 
@@ -147,25 +148,57 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
     guard(&mut body, 0, STRING);
+    body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        LocalSet(1),
+    ]);
+    let mut native_names = std::collections::BTreeMap::<usize, Vec<(usize, &str)>>::new();
     for (kind, spelling) in [
         "null", "boolean", "number", "string", "function", "object", "array", "_",
     ]
     .into_iter()
     .enumerate()
     {
-        body.push(LocalGet(0));
-        name(&mut body, spelling);
+        native_names.entry(spelling.len()).or_default().push((kind, spelling));
+    }
+    // These closed ASCII spellings need no temporary GC strings. Length is
+    // immutable; read the live UTF-16 units on every call, without callbacks.
+    for (length, spellings) in native_names {
         body.extend([
-            Call(equal),
+            LocalGet(1),
+            I32Const(length as i32),
+            I32Eq,
             If(BlockType::Empty),
-            I32Const(kind as i32),
-            RefI31,
-            Return,
-            End,
         ]);
+        for (kind, spelling) in spellings {
+            body.push(I32Const(1));
+            for (index, unit) in spelling.encode_utf16().enumerate() {
+                body.extend([
+                    LocalGet(0),
+                    RefCastNonNull(HeapType::Concrete(STRING)),
+                    I32Const(index as i32),
+                    ArrayGetU(STRING),
+                    I32Const(i32::from(unit)),
+                    I32Eq,
+                    I32And,
+                ]);
+            }
+            body.extend([
+                If(BlockType::Empty),
+                I32Const(kind as i32),
+                RefI31,
+                Return,
+                End,
+            ]);
+        }
+        body.push(End);
     }
     body.push(LocalGet(0));
-    let normalize = b.function("property-native-name", &[VALUE], &[VALUE], &body);
+    let normalize = b.function_with_locals(
+        "property-native-name", &[VALUE], &[VALUE], &[(1, ValType::I32)], &body,
+    );
 
     // Named instance access must not mistake raw source names for munged fields.
     // Boundary spellings checked against cljs/analyzer.cljc js-reserved (line190)
@@ -365,7 +398,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             }
             body.push(End);
         }
-        body.push(End);
+        // Length buckets are disjoint. After every reserved spelling in this
+        // bucket has failed, no later bucket can reject this fully checked name.
+        body.extend([I32Const(1), Return, End]);
     }
     body.push(I32Const(1));
     let field_supported = b.function_with_locals(
@@ -420,7 +455,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     nominal::error(&mut body);
     body.push(End);
     array(&mut body, 0);
-    body.extend([ArrayLen, LocalGet(2), I32RemU, If(BlockType::Empty)]);
+    body.extend([ArrayLen, LocalTee(6), LocalGet(2), I32RemU, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.extend([
         End,
@@ -439,8 +474,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Loop(BlockType::Empty),
         LocalGet(3),
     ]);
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32GeU, BrIf(1)]);
+    body.extend([LocalGet(6), I32GeU, BrIf(1)]);
     array(&mut body, 0);
     body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(4)]);
     guard(&mut body, 4, STRING);
@@ -476,8 +510,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Loop(BlockType::Empty),
         LocalGet(3),
     ]);
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32GeU, BrIf(1)]);
+    body.extend([LocalGet(6), I32GeU, BrIf(1)]);
     array(&mut body, 0);
     body.extend([
         LocalGet(3),
@@ -542,7 +575,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "property-find",
         &[VALUE, VALUE, ValType::I32],
         &[ValType::I32],
-        &[(1, ValType::I32), (1, VALUE), (1, ValType::I32)],
+        &[(1, ValType::I32), (1, VALUE), (2, ValType::I32)],
         &body,
     );
 

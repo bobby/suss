@@ -28,6 +28,21 @@ pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 mod observation;
+pub(crate) mod storage_snapshot;
+mod canonical_methods;
+mod canonical_seeds;
+mod memo_bridge;
+mod write_domain;
+mod prototype_origin;
+mod private_fixups;
+mod constructor_inputs;
+pub(crate) use constructor_inputs::ConstructorInputs;
+mod source_array_inputs;
+pub(crate) use source_array_inputs::SourceArrayInputs;
+mod scalar_inputs;
+pub(crate) use scalar_inputs::ScalarInputs;
+pub(crate) mod construction_records;
+pub(crate) mod certification_audit;
 
 #[derive(Clone, Debug)]
 pub struct SessionOptions {
@@ -201,6 +216,10 @@ pub struct Session {
     base_runtime_artifact_bytes: usize,
     artifact_bytes: usize,
     bootstrap_core: bool,
+    canonical_methods: Option<Arc<canonical_methods::CanonicalMethods>>,
+    memo_ledger: Arc<memo_bridge::Ledger>,
+    canonical_seeds: Option<Arc<canonical_seeds::CanonicalSeeds>>,
+    prototype_origin: Option<Arc<prototype_origin::Authority>>,
     pending_host_futures: SharedPendingRegistry,
     native_factories: Vec<native_async::FactoryProfile>,
     last_async_recovered_owner: Option<OwnedRooted<AnyRef>>,
@@ -303,8 +322,8 @@ fn engine() -> Result<Engine, SessionError> {
         .clone()
         .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))
 }
-fn own(
-    scope: &mut RootScope<&mut Store<()>>,
+fn own<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     value: Val,
     identity: u64,
     handles: &Arc<AtomicUsize>,
@@ -326,8 +345,8 @@ struct DynamicCheckpoint {
     array_join: OwnedRooted<AnyRef>,
 }
 // Snapshot the caller's rooted dynamic context, including native interop calls.
-fn dynamic_checkpoint(
-    scope: &mut RootScope<&mut Store<()>>,
+fn dynamic_checkpoint<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
 ) -> Result<DynamicCheckpoint, SessionError> {
     let frame = runtime
@@ -348,8 +367,8 @@ fn dynamic_checkpoint(
         .to_owned_rooted(scope)?;
     Ok(DynamicCheckpoint { frame, array_join })
 }
-fn restore_dynamic(
-    scope: &mut RootScope<&mut Store<()>>,
+fn restore_dynamic<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     checkpoint: &DynamicCheckpoint,
 ) -> Result<(), SessionError> {
@@ -393,8 +412,8 @@ fn restore_dynamic(
     }
     result.map_err(SessionError::Host)
 }
-fn call(
-    scope: &mut RootScope<&mut Store<()>>,
+fn call<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     function: Func,
     args: &[Val],
@@ -410,8 +429,8 @@ fn call(
     restore_dynamic(scope, runtime, &checkpoint)?;
     outcome
 }
-fn execution_error(
-    scope: &mut RootScope<&mut Store<()>>,
+fn execution_error<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     error: wasmtime::Error,
     identity: u64,
@@ -514,15 +533,30 @@ impl Session {
         Ok(session)
     }
     fn provision_core(&mut self) -> Result<(), SessionError> {
+        self.begin_prototype_origins()?;
         let namespace = self.current_namespace().to_owned();
         let fragment = portable::bootstrap::shipped(self.phase)
             .map_err(SessionError::Compile)?
             .clone();
-        self.eval_prepared(portable::modules::PreparedInput {
+        self.eval_prepared_with_authority(portable::modules::PreparedInput {
             modules: Vec::new(),
             fragment,
-        })?;
+        }, Some(portable::bootstrap::shipped_authority(self.phase).map_err(SessionError::Compile)?))?;
         self.enter_namespace(&namespace)?;
+        // No caller can mutate the newly provisioned core before this point.
+        // Stage every root/check before publishing the private registry.
+        let authority = portable::bootstrap::shipped_authority(self.phase)
+            .map_err(SessionError::Compile)?;
+        let methods = canonical_methods::CanonicalMethods::capture(self, authority)?;
+        let seeds = canonical_seeds::CanonicalSeeds::capture(self, authority)?;
+        let prototype_origin = self.seal_prototype_origins(&methods)?;
+        self.prototype_origin = Some(Arc::new(prototype_origin));
+        let methods = Arc::new(methods);
+        if self.phase == Phase::Macro {
+            self.memo_ledger.seal(methods.clone(),self.prototype_origin.clone().unwrap())?;
+        }
+        self.canonical_methods = Some(methods);
+        self.canonical_seeds = Some(Arc::new(seeds));
         self.bootstrap_core = true;
         Ok(())
     }
@@ -543,6 +577,14 @@ impl Session {
         options: SessionOptions,
         phase: Phase,
     ) -> Result<Self, SessionError> {
+        Self::with_engine_interrupt(engine, options, phase, Arc::new(AtomicBool::new(false)))
+    }
+    fn with_engine_interrupt(
+        engine: Engine,
+        options: SessionOptions,
+        phase: Phase,
+        interrupt: Arc<AtomicBool>,
+    ) -> Result<Self, SessionError> {
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
         let identity = NEXT_ID
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
@@ -551,7 +593,6 @@ impl Session {
             .map_err(|_| wasmtime::Error::msg("Session identity exhausted"))?;
         let mut store = Store::new(&engine, ());
         store.set_fuel(u64::MAX)?;
-        let interrupt = Arc::new(AtomicBool::new(false));
         install_interrupt(&mut store, &interrupt);
         let runtime_bytes = runtime_abi::module();
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
@@ -566,6 +607,8 @@ impl Session {
             .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;
         let mut linker = Linker::new(&engine);
         linker.instance(&mut store, "suss.runtime", runtime)?;
+        let memo_ledger = memo_bridge::Ledger::new(identity);
+        memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone())?;
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
         let bindings = portable::core_bindings::compile(phase).map_err(SessionError::Compile)?;
@@ -616,6 +659,10 @@ impl Session {
             base_runtime_artifact_bytes: runtime_bytes.len() + bindings.wasm.len(),
             artifact_bytes: 0,
             bootstrap_core: false,
+            canonical_methods: None,
+            memo_ledger,
+            canonical_seeds: None,
+            prototype_origin: None,
             pending_host_futures: Arc::new(Mutex::new(Vec::new())),
             native_factories: Vec::new(),
             last_async_recovered_owner: None,
@@ -905,6 +952,8 @@ impl Session {
         })
     }
     pub fn collect(&mut self) -> Result<(), SessionError> {
+        let _request = self.operation_budget_scope()?;
+        self.memo_ledger.sweep(self.store.as_context_mut(), &self.interrupt)?;
         self.retire_host_futures()?;
         self.store.gc(None).map_err(Into::into)
     }
@@ -1010,10 +1059,7 @@ impl Session {
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         let mut replacement =
-            Self::with_engine_in(self.engine.clone(), self.options.clone(), self.phase)?;
-        // Existing interrupt handles keep addressing this session after reset.
-        replacement.interrupt = self.interrupt.clone();
-        install_interrupt(&mut replacement.store, &replacement.interrupt);
+            Self::with_engine_interrupt(self.engine.clone(), self.options.clone(), self.phase, self.interrupt.clone())?;
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
@@ -1032,6 +1078,16 @@ impl Session {
         } else {
             Err(SessionError::ForeignValue)
         }
+    }
+    /// No refill: callers establish the operation budget before this scan.
+    /// Each reached foreign value fails before its own charge; a valid prefix
+    /// can exhaust/cancel before a later foreign value is reached.
+    fn check_data_input_owners(&mut self, values: &[&SessionValue]) -> Result<(), SessionError> {
+        for value in values {
+            self.check(value)?;
+            self.charge_host_work(1)?;
+        }
+        Ok(())
     }
     /// Native inspection/interop in a bounded root scope. Do not return raw Rooted
     /// references from the callback; use ordinary observations or owned host data.
@@ -1179,11 +1235,21 @@ impl Session {
         environment: Environment,
         cells: &[CellIdentity],
     ) -> Result<Vec<Instance>, SessionError> {
+        self.install_with_authority(bytes, environment, cells, None)
+    }
+    fn install_with_authority(
+        &mut self,
+        bytes: &[&[u8]],
+        environment: Environment,
+        cells: &[CellIdentity],
+        authority: Option<&portable::bootstrap::IntegrityAuthority>,
+    ) -> Result<Vec<Instance>, SessionError> {
+        self.charge_host_work(0)?;
         let mut compiled = Vec::new();
         for bytes in bytes {
             runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
                 .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            portable::artifact_identity::verify(
+            let identity = portable::artifact_identity::verify(
                 bytes,
                 portable::artifact_identity::Expected {
                     phase: Some(self.phase),
@@ -1191,7 +1257,25 @@ impl Session {
                 },
             )
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            compiled.push(crate::portable_module_cache::compile(&self.engine, bytes)?);
+            let module = crate::portable_module_cache::compile(&self.engine, bytes)?;
+            self.charge_host_work(0)?;
+            for import in module.imports() {
+                self.charge_host_work(1)?;
+                // These are host provisioning controls, never guest imports.
+                if import.module() == "suss.runtime" && matches!(import.name(), "prototype-origin-begin" | "prototype-origin-seal") {
+                    return Err(SessionError::Host(wasmtime::Error::msg("Prototype origin lifecycle is host-only")));
+                }
+                if import.module() == portable::bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE
+                    && !authority.is_some_and(|authority| authority.permits(self.phase, &identity)) {
+                    // No ordinary installation may obtain compiler authority
+                    // merely because a previous linker already defines it.
+                    // Only the exact embedded bootstrap body may inherit them.
+                    return Err(SessionError::Host(wasmtime::Error::msg(
+                        "Compiler integrity imports require authenticated bootstrap authority",
+                    )));
+                }
+            }
+            compiled.push(module);
         }
         let mut linker = self.linker.clone();
         let mut staged = BTreeMap::new();
@@ -1405,6 +1489,13 @@ impl Session {
         &mut self,
         prepared: portable::modules::PreparedInput,
     ) -> Result<SessionValue, SessionError> {
+        self.eval_prepared_with_authority(prepared, None)
+    }
+    fn eval_prepared_with_authority(
+        &mut self,
+        prepared: portable::modules::PreparedInput,
+        authority: Option<&portable::bootstrap::IntegrityAuthority>,
+    ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
             environment,
@@ -1418,7 +1509,7 @@ impl Session {
             .map(|module| module.wasm.as_slice())
             .collect();
         bytes.push(&wasm);
-        let mut instances = self.install(&bytes, environment, &cells)?;
+        let mut instances = self.install_with_authority(&bytes, environment, &cells, authority)?;
         let input = instances.pop().unwrap();
         self.initialize_modules(prepared.modules, instances)?;
         self.eval_instance(input)
@@ -1550,6 +1641,7 @@ impl Session {
     ) -> Result<SessionValue, SessionError> {
         use portable::hir::Literal;
         self.budget()?;
+        let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         match literal {
             Literal::Undefined => Err(SessionError::Host(wasmtime::Error::msg(
@@ -1606,6 +1698,7 @@ impl Session {
                     .as_array(&scope)?
                     .expect("runtime string is a UTF-16 array");
                 for (index, unit) in units.iter().enumerate() {
+                    Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
                     array.set(&mut scope, index as u32, Val::I32(i32::from(*unit)))?;
                 }
                 Ok(value)
@@ -1618,15 +1711,14 @@ impl Session {
         &mut self,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
-        for value in values {
-            self.check(value)?;
-        }
         let length = i32::try_from(values.len()).map_err(|_| {
             SessionError::Host(wasmtime::Error::msg(
                 "Compiler data array exceeds runtime length",
             ))
         })?;
         self.budget()?;
+        self.check_data_input_owners(values)?;
+        let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         let mut result = [Val::null_any_ref()];
         self.runtime
@@ -1639,6 +1731,7 @@ impl Session {
             .as_array(&scope)?
             .expect("runtime argument array");
         for (index, value) in values.iter().enumerate() {
+            Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
             let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
@@ -1662,11 +1755,16 @@ impl Session {
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(class)?;
-        for argument in arguments {
-            self.check(argument)?;
-        }
         self.budget()?;
-        let constructor = {
+        self.check_data_input_owners(arguments)?;
+        let (_, plan) = self.data_constructor_plan(class)?;
+        self.data_construct_from_plan(&plan, arguments)
+    }
+    fn data_constructor_plan(
+        &mut self,
+        class: &SessionValue,
+    ) -> Result<(SessionValue, SessionValue), SessionError> {
+        {
             let mut scope = RootScope::new(&mut self.store);
             let function = self
                 .runtime
@@ -1683,19 +1781,58 @@ impl Session {
             )?;
             let function = self
                 .runtime
-                .get_func(&mut scope, "source-constructor-new")
-                .expect("shared runtime source constructor");
+                .get_func(&mut scope, "source-constructor-plan")
+                .expect("shared runtime constructor preflight");
             let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
-            call(
+            let plan = call(
                 &mut scope,
                 self.runtime,
                 function,
                 &[value],
                 self.identity,
                 &self.handles,
-            )?
-        };
-        self.invoke(&constructor, arguments)
+            )?;
+            Ok((descriptor, plan))
+        }
+    }
+    fn data_construct_from_plan(
+        &mut self,
+        plan: &SessionValue,
+        arguments: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        let length = i32::try_from(arguments.len()).map_err(|_| {
+            SessionError::Host(wasmtime::Error::msg("Too many invocation arguments"))
+        })?;
+        let interrupt = self.host_work_interrupt();
+        let mut scope = RootScope::new(&mut self.store);
+        let mut values = [Val::null_any_ref()];
+        self.runtime
+            .get_func(&mut scope, "args-new")
+            .unwrap()
+            .call(&mut scope, &[Val::I32(length)], &mut values)?;
+        let array = values[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&scope)?
+            .unwrap();
+        for (index, value) in arguments.iter().enumerate() {
+            Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+            let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+            array.set(&mut scope, index as u32, value)?;
+        }
+        let function = self
+            .runtime
+            .get_func(&mut scope, "source-construct-from-plan")
+            .expect("shared runtime constructor plan invocation");
+        let plan = Val::AnyRef(Some(plan.value.to_rooted(&mut scope)));
+        call(
+            &mut scope,
+            self.runtime,
+            function,
+            &[plan, values[0].clone()],
+            self.identity,
+            &self.handles,
+        )
     }
     pub(crate) fn data_descriptor(
         &mut self,
@@ -1755,13 +1892,12 @@ impl Session {
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(function)?;
-        for value in arguments {
-            self.check(value)?;
-        }
         let length = i32::try_from(arguments.len()).map_err(|_| {
             SessionError::Host(wasmtime::Error::msg("Too many invocation arguments"))
         })?;
         self.budget()?;
+        self.check_data_input_owners(arguments)?;
+        let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         let mut result = [Val::null_any_ref()];
         self.runtime
@@ -1774,6 +1910,7 @@ impl Session {
             .as_array(&scope)?
             .unwrap();
         for (index, value) in arguments.iter().enumerate() {
+            Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
             let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
@@ -1793,6 +1930,622 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn legacy_construct(
+        session: &mut Session,
+        class: &SessionValue,
+        arguments: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        session.check(class)?;
+        session.budget()?;
+        // Apply the same input-validation policy to isolate guest route costs.
+        session.check_data_input_owners(arguments)?;
+        let constructor = {
+            let mut scope = RootScope::new(&mut session.store);
+            let function = session
+                .runtime
+                .get_func(&mut scope, "constructor-descriptor")
+                .expect("shared runtime class descriptor");
+            let value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+            let descriptor = call(
+                &mut scope,
+                session.runtime,
+                function,
+                &[value],
+                session.identity,
+                &session.handles,
+            )?;
+            let function = session
+                .runtime
+                .get_func(&mut scope, "source-constructor-new")
+                .expect("shared runtime source constructor");
+            let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
+            call(
+                &mut scope,
+                session.runtime,
+                function,
+                &[value],
+                session.identity,
+                &session.handles,
+            )?
+        };
+        session.invoke(&constructor, arguments)
+    }
+
+    fn constructor_runtime_call(
+        session: &mut Session,
+        name: &str,
+        values: &[&SessionValue],
+    ) -> SessionValue {
+        session.budget().unwrap();
+        let mut scope = RootScope::new(&mut session.store);
+        let arguments: Vec<_> = values
+            .iter()
+            .map(|value| Val::AnyRef(Some(value.value.to_rooted(&mut scope))))
+            .collect();
+        let function = session.runtime.get_func(&mut scope, name).unwrap();
+        call(
+            &mut scope,
+            session.runtime,
+            function,
+            &arguments,
+            session.identity,
+            &session.handles,
+        )
+        .unwrap()
+    }
+    #[test]
+    fn compiler_data_constructor_plan_preserves_argument_buffer_and_reads_live_schema() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            session
+                .eval("(deftype ConstructorBufferProbe [a c b])")
+                .unwrap();
+            let class = session.eval("ConstructorBufferProbe").unwrap();
+            let descriptor = session.data_descriptor(&class, true).unwrap();
+            let plan =
+                constructor_runtime_call(&mut session, "source-constructor-plan", &[&descriptor]);
+            let mut arguments = Vec::new();
+            for number in [7.0, 11.0, 99.0] {
+                arguments.push(
+                    session
+                        .data_scalar(&portable::hir::Literal::Number(number))
+                        .unwrap(),
+                );
+            }
+            let buffer = {
+                session.budget().unwrap();
+                let mut scope = RootScope::new(&mut session.store);
+                let function = session.runtime.get_func(&mut scope, "args-new").unwrap();
+                call(
+                    &mut scope,
+                    session.runtime,
+                    function,
+                    &[Val::I32(3)],
+                    session.identity,
+                    &session.handles,
+                )
+                .unwrap()
+            };
+            session
+                .inspect(&buffer, |mut store, value| {
+                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                    for (index, argument) in arguments.iter().enumerate() {
+                        let argument = argument.value.to_rooted(&mut store);
+                        array.set(&mut store, index as u32, Val::AnyRef(Some(argument)))?;
+                    }
+                    Ok(())
+                })
+                .unwrap();
+            // Mutate after plan creation: plans must not retain an old schema copy.
+            session
+                .inspect(&descriptor, |mut store, value| {
+                    let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    let schema = descriptor
+                        .field(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_array(&store)?
+                        .unwrap();
+                    let first = schema.get(&mut store, 0)?;
+                    schema.set(&mut store, 1, first)
+                })
+                .unwrap();
+            let object = constructor_runtime_call(
+                &mut session,
+                "source-construct-from-plan",
+                &[&plan, &buffer],
+            );
+            session.collect().unwrap();
+            let fields = session.data_fields(&object).unwrap();
+            assert_eq!(fields.len(), 3);
+            for (field, expected) in
+                fields
+                    .iter()
+                    .zip([&arguments[1], &arguments[1], &arguments[2]])
+            {
+                assert!(
+                    session
+                        .inspect(field, |mut store, value| {
+                            let expected = expected.value.to_rooted(&mut store);
+                            wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                &store,
+                                value.unwrap_anyref().unwrap(),
+                                &expected,
+                            )
+                        })
+                        .unwrap()
+                );
+            }
+            session
+                .inspect(&buffer, |mut store, value| {
+                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                    assert_eq!(array.len(&store)?, 3);
+                    for (index, argument) in arguments.iter().enumerate() {
+                        let actual = array.get(&mut store, index as u32)?;
+                        let expected = argument.value.to_rooted(&mut store);
+                        assert!(wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                            &store,
+                            actual.unwrap_anyref().unwrap(),
+                            &expected
+                        )?);
+                    }
+                    Ok(())
+                })
+                .unwrap();
+        }
+    }
+    #[test]
+    fn compiler_data_constructor_plan_keeps_padding_duplicates_and_live_schema() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            session
+                .eval("(deftype ConstructorSchemaProbe [a c b])")
+                .unwrap();
+            let class = session.eval("ConstructorSchemaProbe").unwrap();
+            let a = session
+                .data_scalar(&portable::hir::Literal::Number(7.0))
+                .unwrap();
+            let b = session
+                .data_scalar(&portable::hir::Literal::Number(11.0))
+                .unwrap();
+            let c = session
+                .data_scalar(&portable::hir::Literal::Number(99.0))
+                .unwrap();
+            let descriptor = session.data_descriptor(&class, true).unwrap();
+            session
+                .inspect(&descriptor, |mut store, value| {
+                    let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    let schema = descriptor
+                        .field(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_array(&store)?
+                        .unwrap();
+                    let first = schema.get(&mut store, 0)?;
+                    schema.set(&mut store, 1, first)
+                })
+                .unwrap();
+            for edited in [false, true] {
+                if edited {
+                    session
+                        .inspect(&descriptor, |mut store, value| {
+                            let descriptor =
+                                value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                            let schema = descriptor
+                                .field(&mut store, 1)?
+                                .unwrap_anyref()
+                                .unwrap()
+                                .as_array(&store)?
+                                .unwrap();
+                            let first = schema.get(&mut store, 0)?;
+                            schema.set(&mut store, 2, first)
+                        })
+                        .unwrap();
+                }
+                for arguments in [
+                    vec![],
+                    vec![&a],
+                    vec![&a, &b],
+                    vec![&a, &b, &c],
+                    vec![&a, &b, &c, &a],
+                ] {
+                    let old = legacy_construct(&mut session, &class, &arguments).unwrap();
+                    let new = session.data_construct(&class, &arguments).unwrap();
+                    session.collect().unwrap();
+                    let old_fields = session.data_fields(&old).unwrap();
+                    let new_fields = session.data_fields(&new).unwrap();
+                    assert_eq!(old_fields.len(), 3);
+                    assert_eq!(new_fields.len(), 3);
+                    for (left, right) in old_fields.iter().zip(&new_fields) {
+                        assert!(
+                            session
+                                .inspect(left, |mut store, value| {
+                                    let right = right.value.to_rooted(&mut store);
+                                    wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                        &store,
+                                        value.unwrap_anyref().unwrap(),
+                                        &right,
+                                    )
+                                })
+                                .unwrap()
+                        );
+                    }
+                }
+            }
+            session
+                .inspect(&descriptor, |mut store, value| {
+                    let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    let schema = descriptor
+                        .field(&mut store, 1)?
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_array(&store)?
+                        .unwrap();
+                    let invalid = Val::AnyRef(Some(a.value.to_rooted(&mut store)));
+                    schema.set(&mut store, 2, invalid)
+                })
+                .unwrap();
+            // Non-string names are not aliases in this internal ABI. Preserve
+            // the existing indexed construction behavior instead of inventing
+            // a new source-level schema rejection.
+            for legacy in [true, false] {
+                let value = if legacy {
+                    legacy_construct(&mut session, &class, &[&a, &b, &c]).unwrap()
+                } else {
+                    session.data_construct(&class, &[&a, &b, &c]).unwrap()
+                };
+                let fields = session.data_fields(&value).unwrap();
+                for (field, expected) in fields.iter().zip([&b, &b, &c]) {
+                    assert!(
+                        session
+                            .inspect(field, |mut store, value| {
+                                let expected = expected.value.to_rooted(&mut store);
+                                wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                    &store,
+                                    value.unwrap_anyref().unwrap(),
+                                    &expected,
+                                )
+                            })
+                            .unwrap()
+                    );
+                }
+            }
+            let recovery = session.eval("42").unwrap();
+            assert_eq!(
+                crate::portable_repl::display(&mut session, &recovery).unwrap(),
+                "42"
+            );
+        }
+    }
+    #[test]
+    fn compiler_data_constructor_plan_keeps_special_constructor_dispatch() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            let message = session
+                .data_scalar(&portable::hir::Literal::String(
+                    "plan-message".encode_utf16().collect(),
+                ))
+                .unwrap();
+            for factory in [
+                "error-constructor",
+                "range-error-constructor",
+                "type-error-constructor",
+            ] {
+                let class = constructor_runtime_call(&mut session, factory, &[]);
+                let descriptor = session.data_descriptor(&class, true).unwrap();
+                for legacy in [true, false] {
+                    let value = if legacy {
+                        legacy_construct(&mut session, &class, &[&message]).unwrap()
+                    } else {
+                        session.data_construct(&class, &[&message]).unwrap()
+                    };
+                    session.collect().unwrap();
+                    session
+                        .inspect(&value, |mut store, value| {
+                            let error = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                            let found = error.field(&mut store, 0)?;
+                            let expected = descriptor.value.to_rooted(&mut store);
+                            assert!(wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                &store,
+                                found.unwrap_anyref().unwrap(),
+                                &expected
+                            )?);
+                            let message = error
+                                .field(&mut store, 1)?
+                                .unwrap_anyref()
+                                .unwrap()
+                                .as_array(&store)?
+                                .unwrap();
+                            let units: Vec<_> = message
+                                .elems(&mut store)?
+                                .map(|unit| unit.unwrap_i32() as u16)
+                                .collect();
+                            assert_eq!(units, "plan-message".encode_utf16().collect::<Vec<_>>());
+                            Ok(())
+                        })
+                        .unwrap();
+                }
+                if factory != "range-error-constructor" {
+                    let replacement = session.eval("(fn [x] 73)").unwrap();
+                    session
+                        .inspect(&descriptor, |mut store, value| {
+                            let descriptor =
+                                value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                            let cache = descriptor
+                                .field(&mut store, 2)?
+                                .unwrap_anyref()
+                                .unwrap()
+                                .as_array(&store)?
+                                .unwrap();
+                            let original = class.value.to_rooted(&mut store);
+                            let mut replaced = false;
+                            for index in (1..cache.len(&store)?).step_by(2) {
+                                let entry = cache.get(&mut store, index)?;
+                                if let Some(entry) = entry.unwrap_anyref() {
+                                    if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                        &store, entry, &original,
+                                    )? {
+                                        let replacement = replacement.value.to_rooted(&mut store);
+                                        cache.set(
+                                            &mut store,
+                                            index,
+                                            Val::AnyRef(Some(replacement)),
+                                        )?;
+                                        replaced = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            assert!(replaced, "live constructor cache entry");
+                            Ok(())
+                        })
+                        .unwrap();
+                    for legacy in [true, false] {
+                        let value = if legacy {
+                            legacy_construct(&mut session, &class, &[&message]).unwrap()
+                        } else {
+                            session.data_construct(&class, &[&message]).unwrap()
+                        };
+                        session.collect().unwrap();
+                        assert_eq!(
+                            crate::portable_repl::display(&mut session, &value).unwrap(),
+                            "73"
+                        );
+                    }
+                    session
+                        .inspect(&descriptor, |mut store, value| {
+                            let descriptor =
+                                value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                            let cache = descriptor
+                                .field(&mut store, 2)?
+                                .unwrap_anyref()
+                                .unwrap()
+                                .as_array(&store)?
+                                .unwrap();
+                            let replaced = replacement.value.to_rooted(&mut store);
+                            let mut restored = false;
+                            for index in (1..cache.len(&store)?).step_by(2) {
+                                let entry = cache.get(&mut store, index)?;
+                                if let Some(entry) = entry.unwrap_anyref() {
+                                    if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                        &store, entry, &replaced,
+                                    )? {
+                                        let original = class.value.to_rooted(&mut store);
+                                        cache.set(
+                                            &mut store,
+                                            index,
+                                            Val::AnyRef(Some(original)),
+                                        )?;
+                                        restored = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            assert!(
+                                restored,
+                                "restore constructor before dependent factory tests"
+                            );
+                            Ok(())
+                        })
+                        .unwrap();
+                }
+            }
+            let object = constructor_runtime_call(&mut session, "object-constructor", &[]);
+            let input = constructor_runtime_call(&mut session, "native-object-default-new", &[]);
+            for legacy in [true, false] {
+                let value = if legacy {
+                    legacy_construct(&mut session, &object, &[&input]).unwrap()
+                } else {
+                    session.data_construct(&object, &[&input]).unwrap()
+                };
+                session.collect().unwrap();
+                assert!(
+                    session
+                        .inspect(&value, |mut store, value| {
+                            let input = input.value.to_rooted(&mut store);
+                            wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                &store,
+                                value.unwrap_anyref().unwrap(),
+                                &input,
+                            )
+                        })
+                        .unwrap()
+                );
+            }
+        }
+    }
+    #[test]
+    fn compiler_data_constructor_plan_preflight_ownership_fuel_and_interrupt_recovery() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            session
+                .eval("(deftype ConstructorGuardProbe [a b])")
+                .unwrap();
+            let class = session.eval("ConstructorGuardProbe").unwrap();
+            let a = session
+                .data_scalar(&portable::hir::Literal::Number(7.0))
+                .unwrap();
+            let descriptor = session.data_descriptor(&class, true).unwrap();
+            let bad_class = {
+                let mut scope = RootScope::new(&mut session.store);
+                let original = descriptor
+                    .value
+                    .to_rooted(&mut scope)
+                    .as_struct(&scope)
+                    .unwrap()
+                    .unwrap();
+                let ty = original.ty(&scope).unwrap();
+                let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
+                let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
+                fields[1] = Val::AnyRef(Some(a.value.to_rooted(&mut scope)));
+                let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
+                    .unwrap()
+                    .to_anyref();
+                let original = class
+                    .value
+                    .to_rooted(&mut scope)
+                    .as_struct(&scope)
+                    .unwrap()
+                    .unwrap();
+                let ty = original.ty(&scope).unwrap();
+                let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
+                let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
+                fields[0] = Val::AnyRef(Some(invalid));
+                let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
+                    .unwrap()
+                    .to_anyref();
+                own(
+                    &mut scope,
+                    Val::AnyRef(Some(invalid)),
+                    session.identity,
+                    &session.handles,
+                )
+                .unwrap()
+            };
+            for legacy in [true, false] {
+                let error = if legacy {
+                    legacy_construct(&mut session, &bad_class, &[&a, &a])
+                } else {
+                    session.data_construct(&bad_class, &[&a, &a])
+                }
+                .unwrap_err();
+                assert!(matches!(error, SessionError::Language(_)), "{error:?}");
+            }
+            let mut costs = Vec::new();
+            for legacy in [true, false] {
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.store.get_fuel().unwrap();
+                let error = if legacy {
+                    legacy_construct(&mut session, &bad_class, &[&a, &a])
+                } else {
+                    session.data_construct(&bad_class, &[&a, &a])
+                }
+                .unwrap_err();
+                assert!(matches!(error, SessionError::Language(_)));
+                costs.push(before - session.store.get_fuel().unwrap());
+                drop(request);
+            }
+            assert_eq!(
+                costs[0], costs[1],
+                "invalid-schema preflight must precede argument allocation"
+            );
+            let mut foreign = Session::new().unwrap();
+            let value = foreign
+                .data_scalar(&portable::hir::Literal::Number(1.0))
+                .unwrap();
+            let before = session.stats();
+            assert!(matches!(
+                session.data_construct(&class, &[&value]),
+                Err(SessionError::ForeignValue)
+            ));
+            assert_eq!(session.stats(), before);
+            drop(session.data_construct(&class, &[&a, &a]).unwrap());
+            session.set_operation_fuel(1000);
+            for interrupt in [false, true] {
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.stats();
+                if interrupt {
+                    session.interrupt_handle().interrupt();
+                } else {
+                    session.store.set_fuel(0).unwrap();
+                }
+                let error = session.data_construct(&class, &[&a, &a]).unwrap_err();
+                if interrupt {
+                    assert!(error.is_interrupt(), "{error:?}");
+                } else {
+                    assert!(
+                        matches!(error, SessionError::Trap(ref error) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))
+                    );
+                }
+                assert_eq!(session.stats(), before);
+                drop(request);
+                let value = session
+                    .with_operation_budget(|session| session.data_construct(&class, &[&a, &a]))
+                    .unwrap();
+                assert_eq!(session.data_fields(&value).unwrap().len(), 2);
+            }
+        }
+    }
+    #[test]
+    fn compiler_data_constructor_plan_preserves_fields_and_reduces_fuel() {
+        let mut failures = Vec::new();
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            session
+                .eval("(deftype ConstructorPlanProbe [a b])")
+                .unwrap();
+            let class = session.eval("ConstructorPlanProbe").unwrap();
+            let a = session
+                .data_scalar(&portable::hir::Literal::Number(7.0))
+                .unwrap();
+            let b = session
+                .data_scalar(&portable::hir::Literal::Number(11.0))
+                .unwrap();
+            drop(legacy_construct(&mut session, &class, &[&a, &b]).unwrap());
+            drop(session.data_construct(&class, &[&a, &b]).unwrap());
+            let mut costs = Vec::new();
+            for legacy in [true, false] {
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.store.get_fuel().unwrap();
+                let mut last = None;
+                for _ in 0..1000 {
+                    last = Some(if legacy {
+                        legacy_construct(&mut session, &class, &[&a, &b]).unwrap()
+                    } else {
+                        session.data_construct(&class, &[&a, &b]).unwrap()
+                    });
+                }
+                costs.push(before - session.store.get_fuel().unwrap());
+                drop(request);
+                let value = last.unwrap();
+                session.collect().unwrap();
+                let fields = session.data_fields(&value).unwrap();
+                assert_eq!(fields.len(), 2);
+                for (field, expected) in fields.iter().zip([&a, &b]) {
+                    assert!(
+                        session
+                            .inspect(field, |mut store, value| {
+                                let expected = expected.value.to_rooted(&mut store);
+                                wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
+                                    &store,
+                                    value.unwrap_anyref().unwrap(),
+                                    &expected,
+                                )
+                            })
+                            .unwrap()
+                    );
+                }
+            }
+            eprintln!(
+                "{phase:?} constructor plan legacy={} planned={}",
+                costs[0], costs[1]
+            );
+            if costs[1] >= costs[0] {
+                failures.push(format!("{phase:?}: {costs:?}"));
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
     #[test]
     fn operation_budget_host_exhaustion_and_next_request_recovery() {
         let mut session = Session::new().unwrap();
@@ -2505,6 +3258,284 @@ mod tests {
                 })
                 .unwrap();
             assert_eq!(bits, 42.0f64.to_bits());
+        }
+    }
+    fn compiler_integrity_import_fixture(phase: Phase, module_name: &str) -> Vec<u8> {
+        use wasm_encoder::*;
+        let value = ValType::Ref(RefType::EQREF);
+        let mut types = runtime_abi::prelude();
+        types.ty().function([ValType::I32], [ValType::I32]);
+        types.ty().function([], []);
+        types.ty().function([], [value]);
+        let mut imports = ImportSection::new();
+        imports.import(
+            module_name,
+            "memo-write",
+            EntityType::Function(runtime_abi::TYPE_COUNT),
+        );
+        let mut functions = FunctionSection::new();
+        functions.function(runtime_abi::TYPE_COUNT + 1);
+        functions.function(runtime_abi::TYPE_COUNT + 2);
+        let mut exports = ExportSection::new();
+        exports.export("eval", ExportKind::Func, 2);
+        let mut code = CodeSection::new();
+        let mut start = Function::new([]);
+        start
+            .instruction(&Instruction::I32Const(7))
+            .instruction(&Instruction::Call(0))
+            .instruction(&Instruction::Drop)
+            .instruction(&Instruction::End);
+        code.function(&start);
+        let mut eval = Function::new([]);
+        eval.instruction(&Instruction::I32Const(4))
+            .instruction(&Instruction::RefI31)
+            .instruction(&Instruction::End);
+        code.function(&eval);
+        let mut module = wasm_encoder::Module::new();
+        module
+            .section(&types)
+            .section(&imports)
+            .section(&functions)
+            .section(&exports)
+            .section(&StartSection { function_index: 1 })
+            .section(&code)
+            .section(&runtime_abi::Manifest::default().section())
+            .section(&CustomSection {
+                name: std::borrow::Cow::Borrowed("suss.compiler-integrity"),
+                data: std::borrow::Cow::Borrowed(b"memo-write"),
+            });
+        portable::artifact_identity::annotate_source(
+            &module.finish(),
+            phase,
+            Some(&portable::SourceOrigin::new(
+                "compiler integrity import fixture",
+                None,
+            )),
+            Some(&[]),
+        )
+        .unwrap()
+    }
+    #[test]
+    fn session_lifecycle_compiler_integrity_imports_cannot_inherit_linker_authority() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            let calls = Arc::new(AtomicUsize::new(0));
+            let called = calls.clone();
+            session
+                .linker
+                .func_wrap(
+                    "suss.compiler-integrity",
+                    "memo-write",
+                    move |value: i32| {
+                        called.fetch_add(1, Ordering::SeqCst);
+                        value
+                    },
+                )
+                .unwrap();
+            let prepared =
+                portable::prepare_fragment("(def integrity-ghost 7)", &session.environment, phase)
+                    .unwrap();
+            let original = compiler_integrity_import_fixture(phase, "suss.compiler-integrity");
+            let forged = portable::artifact_identity::annotate_source(
+                &original,
+                phase,
+                Some(&portable::SourceOrigin::new(
+                    portable::bootstrap::SOURCE,
+                    None,
+                )),
+                Some(&[(
+                    "core-import-manifest".into(),
+                    portable::bootstrap::sha256(include_bytes!(
+                        "../../../runtime/core-import/manifest.json"
+                    )),
+                )]),
+            )
+            .unwrap();
+            let authority = portable::bootstrap::shipped_authority(phase).unwrap();
+            let shipped = portable::bootstrap::shipped(phase).unwrap();
+            let identity = portable::artifact_identity::verify(&shipped.wasm, Default::default()).unwrap();
+            assert!(authority.permits(phase, &identity));
+            let other_phase = match phase { Phase::Runtime => Phase::Macro, Phase::Macro => Phase::Runtime };
+            assert!(!authority.permits(other_phase, &identity));
+            for bytes in [original, forged] {
+                // A genuine bootstrap token cannot authorize another module,
+                // even one carrying the canonical source/dependency claims.
+                for grant in [None, Some(authority)] {
+                let before = session.stats();
+                let result =
+                    session.install_with_authority(&[&bytes], prepared.environment.clone(), &prepared.cells, grant);
+                assert_eq!(
+                    calls.load(Ordering::SeqCst),
+                    0,
+                    "an ordinary valid artifact must not execute even a pre-registered compiler hook"
+                );
+                assert!(matches!(result, Err(SessionError::Host(ref error))
+                if error.to_string().contains("Compiler integrity imports require authenticated bootstrap authority")));
+                assert_eq!(session.stats(), before);
+                assert!(matches!(
+                    session.eval("integrity-ghost"),
+                    Err(SessionError::Compile(_))
+                ));
+            }
+            }
+            let recovered = session.eval("42").unwrap();
+            session
+                .inspect(&recovered, |mut store, value| {
+                    assert_eq!(
+                        value
+                            .unwrap_anyref()
+                            .unwrap()
+                            .as_struct(&store)?
+                            .unwrap()
+                            .field(&mut store, 0)?
+                            .unwrap_f64(),
+                        42.0
+                    );
+                    Ok(())
+                })
+                .unwrap();
+        }
+    }
+    #[test]
+    fn session_lifecycle_compiler_integrity_gate_checks_import_modules_and_whole_batches() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+            let private_calls = Arc::new(AtomicUsize::new(0));
+            let ordinary_calls = Arc::new(AtomicUsize::new(0));
+            for (module, calls) in [
+                ("suss.compiler-integrity", private_calls.clone()),
+                ("user.callbacks", ordinary_calls.clone()),
+            ] {
+                session
+                    .linker
+                    .func_wrap(module, "memo-write", move |value: i32| {
+                        calls.fetch_add(1, Ordering::SeqCst);
+                        value
+                    })
+                    .unwrap();
+            }
+            let private = compiler_integrity_import_fixture(phase, "suss.compiler-integrity");
+            let ordinary = compiler_integrity_import_fixture(phase, "user.callbacks");
+            let prepared = portable::prepare_fragment(
+                "(def integrity-batch-ghost 7)",
+                &session.environment,
+                phase,
+            )
+            .unwrap();
+            let before = session.stats();
+            assert!(
+                session
+                    .install(
+                        &[&ordinary, &private],
+                        prepared.environment.clone(),
+                        &prepared.cells
+                    )
+                    .is_err()
+            );
+            let shipped = portable::bootstrap::shipped(phase).unwrap();
+            let authority = portable::bootstrap::shipped_authority(phase).unwrap();
+            let error = session.install_with_authority(
+                &[&shipped.wasm, &ordinary, &private],
+                prepared.environment.clone(),
+                &prepared.cells,
+                Some(authority),
+            ).unwrap_err();
+            assert!(error.to_string().contains("Compiler integrity imports require authenticated bootstrap authority"));
+            assert_eq!(private_calls.load(Ordering::SeqCst), 0);
+            assert_eq!(
+                ordinary_calls.load(Ordering::SeqCst),
+                0,
+                "all artifacts must be gated before any start function"
+            );
+            assert_eq!(session.stats(), before);
+            assert!(matches!(
+                session.eval("integrity-batch-ghost"),
+                Err(SessionError::Compile(_))
+            ));
+            let instances = session
+                .install(&[&ordinary], session.environment.clone(), &[])
+                .unwrap();
+            assert_eq!(ordinary_calls.load(Ordering::SeqCst), 1);
+            let value = session.eval_instance(instances[0]).unwrap();
+            session.collect().unwrap();
+            session
+                .inspect(&value, |store, value| {
+                    assert_eq!(
+                        value
+                            .unwrap_anyref()
+                            .unwrap()
+                            .as_i31(&store)?
+                            .unwrap()
+                            .get_u32(),
+                        4
+                    );
+                    Ok(())
+                })
+                .unwrap();
+        }
+    }
+    #[test]
+    fn session_lifecycle_compiler_integrity_guard_uses_active_fuel_and_interrupts() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            for interrupted in [false, true] {
+                let mut session =
+                    Session::with_options_in(SessionOptions::default(), phase).unwrap();
+                session.set_operation_fuel(100_000);
+                let called = Arc::new(AtomicUsize::new(0));
+                let calls = called.clone();
+                session
+                    .linker
+                    .func_wrap(
+                        "suss.compiler-integrity",
+                        "memo-write",
+                        move |value: i32| {
+                            calls.fetch_add(1, Ordering::SeqCst);
+                            value
+                        },
+                    )
+                    .unwrap();
+                let bytes = compiler_integrity_import_fixture(phase, "suss.compiler-integrity");
+                let prepared = portable::prepare_fragment(
+                    "(def integrity-budget-ghost 7)",
+                    &session.environment,
+                    phase,
+                )
+                .unwrap();
+                let request = session.operation_budget_scope().unwrap();
+                if interrupted {
+                    session.interrupt_handle().interrupt();
+                } else {
+                    session.charge_host_work(100_000).unwrap();
+                }
+                let before = session.stats();
+                let error = session
+                    .install(&[&bytes], prepared.environment, &prepared.cells)
+                    .unwrap_err();
+                assert!(matches!(error, SessionError::Trap(ref error)
+                    if error.downcast_ref::<wasmtime::Trap>() == Some(
+                        &if interrupted { wasmtime::Trap::Interrupt } else { wasmtime::Trap::OutOfFuel })));
+                assert_eq!(session.operation_fuel_remaining().unwrap(), 0);
+                assert_eq!(session.stats(), before);
+                assert_eq!(called.load(Ordering::SeqCst), 0);
+                drop(request);
+                let recovered = session.eval("42").unwrap();
+                assert_eq!(session.options().fuel_per_operation, 100_000);
+                session
+                    .inspect(&recovered, |mut store, value| {
+                        assert_eq!(
+                            value
+                                .unwrap_anyref()
+                                .unwrap()
+                                .as_struct(&store)?
+                                .unwrap()
+                                .field(&mut store, 0)?
+                                .unwrap_f64(),
+                            42.0
+                        );
+                        Ok(())
+                    })
+                    .unwrap();
+            }
         }
     }
     #[test]

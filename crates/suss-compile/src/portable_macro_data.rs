@@ -2,7 +2,7 @@
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable::Diagnostic;
 use crate::portable_session::{Session, SessionError, SessionValue};
-use std::{collections::BTreeMap, ops::Range};
+use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
@@ -44,6 +44,46 @@ enum Class {
     ChunkedCons,
     ArrayChunk,
 }
+// One enumeration for bridge construction and initial bootstrap authority.
+const SOURCE_CLASSES: [(&str, Class); 23] = [
+    ("Symbol", Class::Symbol),
+    ("Keyword", Class::Keyword),
+    ("List", Class::List),
+    ("EmptyList", Class::EmptyList),
+    ("Cons", Class::Cons),
+    ("IndexedSeq", Class::IndexedSeq),
+    ("PersistentVector", Class::PersistentVector),
+    ("VectorNode", Class::VectorNode),
+    ("PersistentArrayMap", Class::PersistentArrayMap),
+    ("PersistentHashMap", Class::PersistentHashMap),
+    ("PersistentHashSet", Class::PersistentHashSet),
+    ("BitmapIndexedNode", Class::BitmapIndexedNode),
+    ("ArrayNode", Class::ArrayNode),
+    ("HashCollisionNode", Class::HashCollisionNode),
+    ("NodeSeq", Class::NodeSeq),
+    ("ArrayNodeSeq", Class::ArrayNodeSeq),
+    ("MapEntry", Class::MapEntry),
+    ("KeySeq", Class::KeySeq),
+    ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
+    ("ChunkedSeq", Class::ChunkedSeq),
+    ("LazySeq", Class::LazySeq),
+    ("ChunkedCons", Class::ChunkedCons),
+    ("ArrayChunk", Class::ArrayChunk),
+];
+pub(crate) fn source_class_names() -> impl ExactSizeIterator<Item = &'static str> {
+    SOURCE_CLASSES.iter().map(|(name, _)| *name)
+}
+fn source_class_name(class: Class) -> &'static str {
+    if class == Class::SourceArray {
+        return "SourceArray";
+    }
+    SOURCE_CLASSES
+        .iter()
+        .find(|(_, candidate)| *candidate == class)
+        .expect("complete bridge class enumeration")
+        .0
+}
+
 #[derive(Clone, Copy)]
 pub(crate) enum MetadataShape {
     Symbol,
@@ -199,13 +239,178 @@ enum DecodedKind<T> {
 
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
-pub struct FormBridge {
+// Immutable native containers; their Wasm referents still require live checks.
+struct BridgeCore {
     roots: Vec<SessionValue>,
     classes: BTreeMap<i64, (Class, SessionValue)>,
     constructors: BTreeMap<Class, usize>,
     factories: BTreeMap<&'static str, SessionValue>,
 }
+pub struct FormBridge {
+    core: Arc<BridgeCore>,
+    recording: Option<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>,
+    private_arguments: bool,
+}
 impl FormBridge {
+    /// Parents containing private analysis placeholders must use only the
+    /// immediate native constructor route. The caller must separately exclude
+    /// private values from hash/equality arguments. This does not certify data.
+    pub(crate) fn private_parent_bridge(&self, session: &mut Session) -> Result<Self, SessionError> {
+        self.check(session)?;
+        if self.recording.is_some() {
+            return Err(SessionError::Host(error("Private parents cannot be source recordings")));
+        }
+        session.charge_host_work(2)?; // Arc increment and pointer copy.
+        Ok(Self {
+            core: self.core.clone(),
+            recording: None, private_arguments: true,
+        })
+    }
+    pub(crate) fn recording(&self, session: &mut Session) -> Result<Self, SessionError> {
+        if self.private_arguments {
+            return Err(SessionError::Host(error("Private parents cannot be source recordings")));
+        }
+        self.check(session)?;
+        session.charge_host_work(2)?; // No container copies or factory recapture.
+        // These are captured bridge inputs, not an authority minted here.
+        let mut inputs = Vec::new();
+        let count = SOURCE_CLASSES.len() + 1;
+        session.charge_host_work((count * std::mem::size_of::<crate::portable_session::construction_records::BridgeClassInput>()) as u64 + 1)?;
+        inputs.try_reserve_exact(count).map_err(|_| SessionError::Host(error("Bridge class input allocation failed")))?;
+        for (name, class) in SOURCE_CLASSES {
+            inputs.push(crate::portable_session::construction_records::BridgeClassInput {
+                name,
+                constructor: Some(self.core.roots[self.core.constructors[&class]].clone()),
+                descriptor: self.class_descriptor(session, class)?.clone(),
+            });
+        }
+        inputs.push(crate::portable_session::construction_records::BridgeClassInput {
+            name: "SourceArray", constructor: None,
+            descriptor: self.class_descriptor(session, Class::SourceArray)?.clone(),
+        });
+        let mut records = crate::portable_session::construction_records::ConstructionRecords::with_bridge_classes(inputs);
+        let valid = records.matches_class_schemas(session)?;
+        records.note_class_precheck(valid);
+        // Preserve the already-captured factory values and their capture time.
+        Ok(Self {
+            core: self.core.clone(),
+            recording: Some(std::sync::Mutex::new(records)),
+            private_arguments: false,
+        })
+    }
+    fn class_descriptor(&self, session: &mut Session, class: Class) -> Result<&SessionValue, SessionError> {
+        session.charge_host_work(self.core.classes.len() as u64 + 1)?;
+        self.core.classes.values().find(|(candidate, _)| *candidate == class)
+            .map(|(_, descriptor)| descriptor)
+            .ok_or_else(|| SessionError::Host(error("Missing captured bridge descriptor")))
+    }
+    fn precheck_class(&self, session: &mut Session, class: Class) -> Result<(), SessionError> {
+        let Some(records) = &self.recording else { return Ok(()); };
+        session.charge_host_work(SOURCE_CLASSES.len() as u64 + 1)?;
+        let constructor = if class == Class::SourceArray { None } else {
+            Some(&self.core.roots[self.core.constructors[&class]])
+        };
+        let descriptor = self.class_descriptor(session, class)?;
+        // This runtime adapter only reads native constructor identity. Never hold
+        // the recording lock across it, validation, or ordinary construction.
+        let valid = session.initial_source_class_matches(source_class_name(class), constructor, descriptor)?;
+        records.lock().map_err(|_| SessionError::Host(error("Poisoned construction records")))?
+            .note_class_precheck(valid);
+        // A false audit does not substitute a pristine constructor or prevent
+        // ordinary transport. The final recorded-source check declines instead.
+        Ok(())
+    }
+    fn record(
+        &self,
+        session: &mut Session,
+        value: &SessionValue,
+        fact: crate::portable_session::construction_records::Fact,
+    ) -> Result<(), SessionError> {
+        if let Some(records) = &self.recording {
+            // Clone the domain under the lock, then perform every factory and
+            // runtime check without it. The lock protects publication only.
+            let domain=records.lock().map_err(|_|SessionError::Host(error("Poisoned construction records")))?.write_domain();
+            domain.record(session,value,&fact)?;
+            records.lock().map_err(|_|SessionError::Host(error("Poisoned construction records")))?
+                .push_prepared(session,value.clone(),fact)?;
+        }
+        Ok(())
+    }
+    fn construct(
+        &self,
+        session: &mut Session,
+        class: Class,
+        arguments: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.precheck_class(session, class)?;
+        let class = &self.core.roots[self.core.constructors[&class]];
+        if self.private_arguments {
+            return session.data_construct_without_guest_callbacks(class, arguments);
+        }
+        if self.recording.is_some() {
+            let (value, fact) = session.data_construct_with_inputs(class, arguments)?;
+            let fact = match fact {
+                Some(fact) => {
+                    crate::portable_session::construction_records::Fact::Constructor(fact)
+                }
+                None => crate::portable_session::construction_records::Fact::ExternalSeed(
+                    "special constructor",
+                ),
+            };
+            self.record(session, &value, fact)?;
+            Ok(value)
+        } else {
+            session.data_construct(class, arguments)
+        }
+    }
+    fn array(
+        &self,
+        session: &mut Session,
+        values: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        if self.recording.is_some() {
+            self.precheck_class(session, Class::SourceArray)?;
+            let (value, fact) = session.data_array_with_inputs(values)?;
+            self.record(
+                session,
+                &value,
+                crate::portable_session::construction_records::Fact::Array(fact),
+            )?;
+            Ok(value)
+        } else {
+            session.data_array(values)
+        }
+    }
+    fn seed(
+        &self,
+        session: &mut Session,
+        name: &'static str,
+    ) -> Result<SessionValue, SessionError> {
+        let value = self.core.factories[name].clone();
+        let fact = if self.recording.is_some() {
+            match session.canonical_seed(name)? {
+                Some(seed) => crate::portable_session::construction_records::Fact::CanonicalSeed(seed),
+                None => crate::portable_session::construction_records::Fact::ExternalSeed(name),
+            }
+        } else {
+            crate::portable_session::construction_records::Fact::ExternalSeed(name)
+        };
+        self.record(
+            session,
+            &value,
+            fact,
+        )?;
+        Ok(value)
+    }
+    pub(crate) fn into_records(
+        self,
+    ) -> Result<crate::portable_session::construction_records::ConstructionRecords, SessionError>
+    {
+        self.recording
+            .ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?
+            .into_inner()
+            .map_err(|_| SessionError::Host(error("Poisoned construction records")))
+    }
     pub(crate) fn with_form_metadata(
         &self,
         session: &mut Session,
@@ -226,8 +431,8 @@ impl FormBridge {
         };
         let mut fields = session.data_fields(value)?;
         fields[if class == Class::Symbol { 4 } else { 0 }] = metadata.clone();
-        session.data_construct(
-            &self.roots[self.constructors[&class]],
+        self.construct(session,
+            class,
             &fields.iter().collect::<Vec<_>>(),
         )
     }
@@ -235,31 +440,7 @@ impl FormBridge {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
-        for (name, class) in [
-            ("Symbol", Class::Symbol),
-            ("Keyword", Class::Keyword),
-            ("List", Class::List),
-            ("EmptyList", Class::EmptyList),
-            ("Cons", Class::Cons),
-            ("IndexedSeq", Class::IndexedSeq),
-            ("PersistentVector", Class::PersistentVector),
-            ("VectorNode", Class::VectorNode),
-            ("PersistentArrayMap", Class::PersistentArrayMap),
-            ("PersistentHashMap", Class::PersistentHashMap),
-            ("PersistentHashSet", Class::PersistentHashSet),
-            ("BitmapIndexedNode", Class::BitmapIndexedNode),
-            ("ArrayNode", Class::ArrayNode),
-            ("HashCollisionNode", Class::HashCollisionNode),
-            ("NodeSeq", Class::NodeSeq),
-            ("ArrayNodeSeq", Class::ArrayNodeSeq),
-            ("MapEntry", Class::MapEntry),
-            ("KeySeq", Class::KeySeq),
-            ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
-            ("ChunkedSeq", Class::ChunkedSeq),
-            ("LazySeq", Class::LazySeq),
-            ("ChunkedCons", Class::ChunkedCons),
-            ("ArrayChunk", Class::ArrayChunk),
-        ] {
+        for (name, class) in SOURCE_CLASSES {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
                 let closure = fields(&mut store, &value, 5)?;
@@ -315,15 +496,16 @@ impl FormBridge {
         ] {
             factories.insert(name, session.eval(source)?);
         }
+        session.charge_host_work((std::mem::size_of::<BridgeCore>()
+            + 2 * std::mem::size_of::<usize>()) as u64)?;
         Ok(Self {
-            roots,
-            classes,
-            constructors,
-            factories,
+            core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
+            recording: None,
+            private_arguments: false,
         })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {
-        for root in &self.roots {
+        for root in &self.core.roots {
             session.inspect(root, |_, _| Ok(()))?;
         }
         Ok(())
@@ -336,7 +518,11 @@ impl FormBridge {
         literal: &crate::portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        session.data_scalar(literal)
+        if self.recording.is_some() {
+            let (value,fact)=session.data_scalar_with_inputs(literal)?;
+            self.record(session,&value,crate::portable_session::construction_records::Fact::Scalar(fact))?;
+            Ok(value)
+        } else { session.data_scalar(literal) }
     }
     pub fn map_values(
         &self,
@@ -352,7 +538,7 @@ impl FormBridge {
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         if entries.is_empty() {
-            return Ok(self.factories["empty-map"].clone());
+            return self.seed(session,"empty-map");
         }
         // Bulk construction is original host code. Retained factories resolve
         // public class cells dynamically, so capturing their closures alone is
@@ -378,7 +564,7 @@ impl FormBridge {
             let hash = if entries.len() <= 8 {
                 0
             } else {
-                let hash = session.invoke(&self.factories["hash"], &[key])?;
+                let hash = session.invoke(&self.core.factories["hash"], &[key])?;
                 session.inspect(&hash, |mut store, hash| {
                     let data = fields(&mut store, &hash, 1)?;
                     let [Val::F64(bits)] = data.as_slice() else {
@@ -402,7 +588,7 @@ impl FormBridge {
                         .is_some_and(|other| other == identifier)
                 } else {
                     let equal =
-                        session.invoke(&self.factories["key-test"], &[key, &pairs[index].1])?;
+                        session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1])?;
                     session.inspect(&equal, |store, value| {
                         Ok(sentinel(&store, &value)? == Some(4))
                     })?
@@ -432,9 +618,9 @@ impl FormBridge {
             if let Some(value) = &nil_value {
                 data.splice(nil_index * 2..nil_index * 2, [&nil, value]);
             }
-            let array = session.data_array(&data)?;
-            session.data_construct(
-                &self.roots[self.constructors[&Class::PersistentArrayMap]],
+            let array = self.array(session, &data)?;
+            self.construct(session,
+                Class::PersistentArrayMap,
                 &[&nil, &count, &array, &nil],
             )
         } else {
@@ -443,8 +629,8 @@ impl FormBridge {
                 session,
                 &crate::portable::hir::Literal::Bool(nil_value.is_some()),
             )?;
-            session.data_construct(
-                &self.roots[self.constructors[&Class::PersistentHashMap]],
+            self.construct(session,
+                Class::PersistentHashMap,
                 &[
                     &nil,
                     &count,
@@ -476,19 +662,20 @@ impl FormBridge {
             let Val::I64(id) = descriptor[0] else {
                 return Ok(None);
             };
-            if !self
+            if !self.core
                 .classes
                 .get(&id)
                 .is_some_and(|(class, _)| matches!(class, Class::Symbol | Class::Keyword))
             {
                 return Ok(None);
             }
-            let (class, data) = object(&mut store, &value, &self.classes)?;
+            let (class, data) = object(&mut store, &value, &self.core.classes)?;
             if data.len() != if class == Class::Symbol { 5 } else { 4 } {
                 return Err(error("Invalid compiler identifier key layout"));
             }
             let mut budget = Budget {
                 display: None,
+                source_valid: None,
                 include_metadata: true,
                 interrupt,
                 calls: None,
@@ -519,9 +706,9 @@ impl FormBridge {
                 .iter()
                 .flat_map(|(_, key, value)| [key, value])
                 .collect::<Vec<_>>();
-            let array = session.data_array(&items)?;
-            return session.data_construct(
-                &self.roots[self.constructors[&Class::HashCollisionNode]],
+            let array = self.array(session, &items)?;
+            return self.construct(session,
+                Class::HashCollisionNode,
                 &[nil, &hash, &count, &array],
             );
         }
@@ -550,9 +737,9 @@ impl FormBridge {
             }
         }
         let bitmap = self.scalar(session, &Literal::Number(bitmap as i32 as f64))?;
-        let array = session.data_array(&items.iter().collect::<Vec<_>>())?;
-        session.data_construct(
-            &self.roots[self.constructors[&Class::BitmapIndexedNode]],
+        let array = self.array(session, &items.iter().collect::<Vec<_>>())?;
+        self.construct(session,
+            Class::BitmapIndexedNode,
             &[nil, &bitmap, &array],
         )
     }
@@ -572,7 +759,7 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
         if items.is_empty() {
-            return Ok(self.factories["empty-set"].clone());
+            return self.seed(session,"empty-set");
         }
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         self.set_with_metadata(session, items, &nil)
@@ -590,8 +777,8 @@ impl FormBridge {
             .map(|item| (item.clone(), nil.clone()))
             .collect::<Vec<_>>();
         let map = self.map_values(session, &entries)?;
-        session.data_construct(
-            &self.roots[self.constructors[&Class::PersistentHashSet]],
+        self.construct(session,
+            Class::PersistentHashSet,
             &[metadata, &map, &nil],
         )
     }
@@ -616,7 +803,7 @@ impl FormBridge {
         } else {
             ((items.len() - 1) / 32) * 32
         };
-        let tail = session.data_array(&items[tail_offset..].iter().collect::<Vec<_>>())?;
+        let tail = self.array(session, &items[tail_offset..].iter().collect::<Vec<_>>())?;
         let mut shift = 5u32;
         while (tail_offset / 32) > (1usize << shift) {
             shift += 5;
@@ -624,8 +811,8 @@ impl FormBridge {
         let root = self.vector_node(session, &items[..tail_offset], shift, &nil)?;
         let count = self.scalar(session, &Literal::Number(items.len() as f64))?;
         let shift = self.scalar(session, &Literal::Number(shift as f64))?;
-        session.data_construct(
-            &self.roots[self.constructors[&Class::PersistentVector]],
+        self.construct(session,
+            Class::PersistentVector,
             &[&nil, &count, &shift, &root, &tail, &nil],
         )
     }
@@ -647,9 +834,9 @@ impl FormBridge {
                 fields[index] = self.vector_node(session, chunk, shift - 5, nil)?;
             }
         }
-        let array = session.data_array(&fields.iter().collect::<Vec<_>>())?;
-        session.data_construct(
-            &self.roots[self.constructors[&Class::VectorNode]],
+        let array = self.array(session, &fields.iter().collect::<Vec<_>>())?;
+        self.construct(session,
+            Class::VectorNode,
             &[nil, &array],
         )
     }
@@ -669,14 +856,14 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
-        let mut tail = self.factories["empty-list"].clone();
+        let mut tail = self.seed(session,"empty-list")?;
         for (index, value) in items.iter().enumerate().rev() {
             let count = self.scalar(
                 session,
                 &crate::portable::hir::Literal::Number((items.len() - index) as f64),
             )?;
-            tail = session.data_construct(
-                &self.roots[self.constructors[&Class::List]],
+            tail = self.construct(session,
+                Class::List,
                 &[&nil, value, &tail, &count, &nil],
             )?;
         }
@@ -724,13 +911,13 @@ impl FormBridge {
                     "Keyword compiler data cannot carry metadata",
                 )));
             }
-            session.data_construct(
-                &self.roots[self.constructors[&Class::Keyword]],
+            self.construct(session,
+                Class::Keyword,
                 &[&ns, &name_value, &fqn, &hash],
             )
         } else {
-            session.data_construct(
-                &self.roots[self.constructors[&Class::Symbol]],
+            self.construct(session,
+                Class::Symbol,
                 &[&ns, &name_value, &fqn, &hash, metadata.unwrap_or(&nil)],
             )
         }
@@ -909,8 +1096,8 @@ impl FormBridge {
                             };
                             let mut fields = session.data_fields(&result)?;
                             fields[if class == Class::Symbol { 4 } else { 0 }] = metadata;
-                            result = session.data_construct(
-                                &self.roots[self.constructors[&class]],
+                            result = self.construct(session,
+                                class,
                                 &fields.iter().collect::<Vec<_>>(),
                             )?;
                         }
@@ -934,6 +1121,33 @@ impl FormBridge {
     ) -> Result<Form, SessionError> {
         self.read_with_metadata(session, value, span, true)
     }
+    /// Callback-free finite-data observation for logical source validation.
+    /// Hash/UID/property storage and alias identity need separate integrity
+    /// checks; a successful read is not a memo or source-storage certificate.
+    pub(crate) fn read_finite(
+        &self,
+        session: &mut Session,
+        value: &SessionValue,
+    ) -> Result<(Form, bool), SessionError> {
+        let _request = session.operation_budget_scope()?;
+        self.check(session)?;
+        let interrupt = session.host_work_interrupt();
+        session.inspect(value, |mut store, value| {
+            let mut budget = Budget {
+                display: None,
+                source_valid: Some(true),
+                include_metadata: true,
+                calls: None,
+                interrupt,
+                active: Vec::new(),
+                profile: false,
+                host_fuel: std::cell::Cell::new(0),
+                lazy_calls: std::cell::Cell::new(0),
+            };
+            let form = decode(&mut store, &value, &self.core.classes, &(0..0), 0, &mut budget)?;
+            Ok((form, budget.source_valid.unwrap()))
+        })
+    }
     pub(crate) fn read_for_display(
         &self,
         session: &mut Session,
@@ -945,11 +1159,12 @@ impl FormBridge {
             let interrupt = session.host_work_interrupt();
             session.data_inspect_calls(
                 value,
-                &self.factories["lazy-sval"],
+                &self.core.factories["lazy-sval"],
                 |mut store, value, args_new, invoke, function| {
                     let mut budget = Budget {
                         include_metadata: false,
                         display: Some(display),
+                        source_valid: None,
                         interrupt,
                         active: Vec::new(),
                         profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
@@ -964,7 +1179,7 @@ impl FormBridge {
                     decode_datum::<DisplayDatum>(
                         &mut store,
                         &value,
-                        &self.classes,
+                        &self.core.classes,
                         &(0..0),
                         0,
                         &mut budget,
@@ -986,10 +1201,11 @@ impl FormBridge {
             session
                 .data_inspect_calls(
                     value,
-                    &self.factories["lazy-sval"],
+                    &self.core.factories["lazy-sval"],
                     |mut store, value, args_new, invoke, function| {
                         let mut budget = Budget {
                             display: None,
+                            source_valid: None,
                             include_metadata,
                             interrupt,
                             active: Vec::new(),
@@ -1002,7 +1218,7 @@ impl FormBridge {
                                 function,
                             }),
                         };
-                        let result = decode(&mut store, &value, &self.classes, &span, 0, &mut budget);
+                        let result = decode(&mut store, &value, &self.core.classes, &span, 0, &mut budget);
                         if budget.profile {
                             eprintln!("macro-decode host-fuel={} lazy-calls={} success={}", budget.host_fuel.get(), budget.lazy_calls.get(), result.is_ok());
                         }
@@ -1031,6 +1247,134 @@ fn error(message: &str) -> wasmtime::Error {
 mod identity_tests {
     use super::*;
 
+    #[test]
+    fn shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners() {
+        use crate::portable::hir::Literal;
+        use std::sync::Arc;
+
+        let mut session = Session::new_macro().unwrap();
+        session.eval(r#"
+          (def bridge-old-hash-calls 0)
+          (def bridge-new-hash-calls 0)
+          (def bridge-original-hash suss.core/hash)
+        "#).unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        session.eval(r#"
+          (def hash (fn [key]
+            (do (set! user/bridge-old-hash-calls (+ user/bridge-old-hash-calls 1))
+                (user/bridge-original-hash key))))
+        "#).unwrap();
+        session.enter_namespace("user").unwrap();
+
+        let original = FormBridge::new(&mut session).unwrap();
+        let first = original.recording(&mut session).unwrap();
+        let second = original.recording(&mut session).unwrap();
+        let private = original.private_parent_bridge(&mut session).unwrap();
+        assert!(Arc::ptr_eq(&original.core, &first.core));
+        assert!(Arc::ptr_eq(&original.core, &second.core));
+        assert!(Arc::ptr_eq(&original.core, &private.core));
+        let first_domain = first.recording.as_ref().unwrap().lock().unwrap().write_domain();
+        let second_domain = second.recording.as_ref().unwrap().lock().unwrap().write_domain();
+        assert!(!Arc::ptr_eq(&first_domain, &second_domain));
+        assert!(!first.private_arguments && !second.private_arguments);
+        assert!(private.private_arguments && private.recording.is_none());
+        assert!(first.private_parent_bridge(&mut session).is_err());
+        assert!(second.private_parent_bridge(&mut session).is_err());
+        assert!(private.recording(&mut session).is_err());
+        drop(original);
+        session.collect().unwrap();
+
+        // Redefine the PUBLIC binding only after all captures/forks. No fork may
+        // recapture it. Counter reset excludes setup/compiler activity explicitly.
+        session.enter_namespace("suss.core").unwrap();
+        session.eval(r#"
+          (def hash (fn [key]
+            (do (set! user/bridge-new-hash-calls (+ user/bridge-new-hash-calls 1))
+                (user/bridge-original-hash key))))
+        "#).unwrap();
+        session.enter_namespace("user").unwrap();
+        session.eval("(set! bridge-old-hash-calls 0) (set! bridge-new-hash-calls 0)").unwrap();
+
+        // Every input is recorded by its own bridge. Nine elements force the
+        // hash-map construction path used by ReaderSet materialization.
+        fn set(bridge: &FormBridge, session: &mut Session) -> SessionValue {
+            let items = (101..110).map(|number| {
+                bridge.scalar(session, &Literal::Number(f64::from(number))).unwrap()
+            }).collect::<Vec<_>>();
+            bridge.set_values(session, &items).unwrap()
+        }
+        let first_set = set(&first, &mut session);
+        let second_set = set(&second, &mut session);
+        // Read counters before any further semantic operations can affect them.
+        let counters = session.eval("[bridge-old-hash-calls bridge-new-hash-calls]").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &counters).unwrap(), "[18 0]");
+
+        let first_records = first.into_records().unwrap();
+        let second_records = second.into_records().unwrap();
+        assert!(!Arc::ptr_eq(&first_records.write_domain(), &second_records.write_domain()));
+        session.collect().unwrap();
+        assert!(first_records.matches_direct_facts(&mut session).unwrap());
+        assert!(second_records.matches_direct_facts(&mut session).unwrap());
+        assert!(first_records.matches_recorded_inputs(&mut session, &first_set).unwrap());
+        assert!(second_records.matches_recorded_inputs(&mut session, &second_set).unwrap());
+        assert!(first_records.matches_class_schemas(&mut session).unwrap());
+        assert!(second_records.matches_class_schemas(&mut session).unwrap());
+        assert!(first_records.matches_prototype_origins(&mut session).unwrap());
+        assert!(second_records.matches_prototype_origins(&mut session).unwrap());
+
+        let forge = session.eval("(fn [s] (set! (.-__hash s) 991))").unwrap();
+        drop(session.invoke(&forge, &[&first_set]).unwrap());
+        session.collect().unwrap();
+        assert!(!first_records.matches_direct_facts(&mut session).unwrap(),
+            "generic first-set memo mutation must remain unauthenticated");
+        assert!(second_records.matches_direct_facts(&mut session).unwrap(),
+            "sharing capture containers must not share recording facts or domains");
+        let check = session.eval(r#"
+          (fn [a b] [(not (identical? a b)) (= (.-__hash a) 991)
+                      (nil? (.-__hash b)) (= (count a) 9) (= (count b) 9)
+                      (contains? a 101) (contains? b 109)])
+        "#).unwrap();
+        let result = session.invoke(&check, &[&first_set, &second_set]).unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &result).unwrap(),
+            "[true true true true true true true]");
+
+        // The surviving private fork owns the captured core after every other
+        // bridge wrapper has been consumed/dropped. Ownership checks stay live.
+        assert!(private.scalar(&mut session, &Literal::Number(17.0)).is_ok());
+        let mut foreign = Session::new_macro().unwrap();
+        assert!(matches!(private.scalar(&mut foreign, &Literal::Number(17.0)),
+            Err(SessionError::ForeignValue)));
+        session.reset().unwrap();
+        assert!(matches!(private.scalar(&mut session, &Literal::Number(17.0)),
+            Err(SessionError::ForeignValue)));
+    }
+    #[test]
+    fn private_bridge_fork_fits_finite_fuel() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.set_operation_fuel(1_000);
+        let operation = session.operation_budget_scope().unwrap();
+        let before = session.operation_fuel_remaining().unwrap();
+        let fork = bridge.private_parent_bridge(&mut session).unwrap();
+        eprintln!("private bridge fork fuel: {}", before - session.operation_fuel_remaining().unwrap());
+        assert!(fork.private_arguments && fork.recording.is_none());
+        drop(operation);
+    }
+    #[test]
+    fn two_recording_bridge_forks_fit_finite_fuel() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.set_operation_fuel(30_000);
+        let operation = session.operation_budget_scope().unwrap();
+        let before = session.operation_fuel_remaining().unwrap();
+        let first = bridge.recording(&mut session).unwrap();
+        let second = bridge.recording(&mut session).unwrap();
+        eprintln!("two recording bridge forks fuel: {}", before - session.operation_fuel_remaining().unwrap());
+        let first = first.into_records().unwrap();
+        let second = second.into_records().unwrap();
+        assert!(!std::sync::Arc::ptr_eq(&first.write_domain(), &second.write_domain()));
+        drop(operation);
+    }
     #[test]
     fn realized_lazy_data_retains_guest_dispatch_and_metadata_checks() {
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
@@ -1276,11 +1620,12 @@ mod identity_tests {
                         Ok(decode(
                             &mut store,
                             &value,
-                            &bridge.classes,
+                            &bridge.core.classes,
                             &(0..1),
                             0,
                             &mut Budget {
                                 display: None,
+                                source_valid: None,
                                 include_metadata: true,
                                 interrupt: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(
                                     false,
@@ -1307,8 +1652,8 @@ mod identity_tests {
             let vector = session.eval("[1]").unwrap();
             session
                 .inspect(&vector, |mut store, root| {
-                    let (_, data) = object(&mut store, &root, &bridge.classes)?;
-                    let (_, owner) = object(&mut store, &data[4], &bridge.classes)?;
+                    let (_, data) = object(&mut store, &root, &bridge.core.classes)?;
+                    let (_, owner) = object(&mut store, &data[4], &bridge.core.classes)?;
                     let backing = array(&mut store, &owner[0])?;
                     let dense = reference(&backing[2])?
                         .as_array(&store)?
@@ -1353,11 +1698,11 @@ fn fields(
     let object = reference(value)?
         .as_struct(&*store)?
         .ok_or_else(|| error("Expected typed structure"))?;
-    let fields = object.fields(&mut *store)?.collect::<Vec<_>>();
-    if fields.len() != count {
+    // Reject foreign/wide layouts before rooting/copying their fields.
+    if object.ty(&*store)?.fields().len() != count {
         return Err(error("Unexpected structure layout"));
     }
-    Ok(fields)
+    Ok(object.fields(&mut *store)?.collect())
 }
 fn array(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Vec<Val>> {
     let array = reference(value)?
@@ -1467,6 +1812,9 @@ struct ReadCalls {
 struct Budget {
     display: Option<DisplayCalls>,
     include_metadata: bool,
+    // None for ordinary macro/display reads. Compiler source checks accumulate
+    // invariant mismatches without treating them as a new source certificate.
+    source_valid: Option<bool>,
     calls: Option<ReadCalls>,
     interrupt: std::sync::Arc<std::sync::atomic::AtomicBool>,
     active: Vec<Val>,
@@ -1588,6 +1936,12 @@ fn decode_datum_inner<T: DatumTarget>(
         let structure = reference
             .as_struct(&*store)?
             .ok_or_else(|| error("Unsupported macro value"))?;
+        // Scalar boxes and nominal objects have fixed ABI widths. Checking
+        // metadata first keeps hostile arbitrary-width structs off the copying
+        // path; this logical decoder does not admit other representations.
+        if !matches!(structure.ty(&*store)?.fields().len(), 1 | 4) {
+            return Err(error("Unexpected structure layout"));
+        }
         let values = structure.fields(&mut *store)?.collect::<Vec<_>>();
         if let [Val::F64(bits)] = values.as_slice() {
             DecodedKind::Plain(Kind::Number(f64::from_bits(*bits)))
@@ -1626,6 +1980,22 @@ fn decode_datum_inner<T: DatumTarget>(
                         Some(name(store, &data[0], budget)?)
                     };
                     let name = name(store, &data[1], budget)?;
+                    if budget.source_valid.is_some() {
+                        let fqn = text(store, &data[2], budget)?;
+                        let expected = namespace.as_deref().into_iter()
+                            .flat_map(|ns| ns.encode_utf16().chain(std::iter::once(b'/' as u16)))
+                            .chain(name.encode_utf16());
+                        let mut index = 0;
+                        let mut matches = true;
+                        for unit in expected {
+                            charge_read_work(store, 1, budget)?;
+                            if fqn.get(index) != Some(&unit) { matches = false; }
+                            index += 1;
+                        }
+                        charge_read_work(store, 1, budget)?;
+                        if index != fqn.len() { matches = false; }
+                        if !matches { budget.source_valid = Some(false); }
+                    }
                     if count == 5 {
                         DecodedKind::Plain(Kind::Symbol(suss_reader::Symbol { namespace, name }))
                     } else {
@@ -1678,10 +2048,27 @@ fn decode_datum_inner<T: DatumTarget>(
                         }
                         _ => return Err(error("Set needs a canonical persistent backing map")),
                     };
+                    if budget.source_valid.is_some() {
+                        charge_read_work(store, 1, budget)?;
+                        // The compiler's backing maps are constructed with nil
+                        // metadata, independently of the enclosing set metadata.
+                        if sentinel(store, &map_data[0])? != Some(0) {
+                            budget.source_valid = Some(false);
+                        }
+                    }
                     DecodedKind::Set(
                         entries
                             .chunks_exact(2)
                             .map(|pair| {
+                                if budget.source_valid.is_some() {
+                                    charge_read_work(store, 1, budget)?;
+                                    // Native source set construction stores nil
+                                    // values; logical set decoding otherwise
+                                    // visits only the keys of its backing map.
+                                    if sentinel(store, &pair[1])? != Some(0) {
+                                        budget.source_valid = Some(false);
+                                    }
+                                }
                                 decode_datum(store, &pair[0], classes, span, depth + 1, budget)
                             })
                             .collect::<wasmtime::Result<Vec<_>>>()?,

@@ -14,13 +14,24 @@ use crate::{
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, HashMap, VecDeque},
-    sync::{Arc, Weak},
+    sync::Arc,
 };
 use suss_reader::forms::{Form, Kind};
 
+#[path = "portable_macro_graph/raw_keys.rs"]
+mod raw_keys;
+mod source_facts;
+mod metadata_expectations;
+mod construction;
+mod private_placement;
+mod reuse;
+pub(crate) use reuse::DeclarationValues;
+#[path = "portable_macro_graph/occurrence_work.rs"]
+mod occurrence_work;
+use raw_keys::{Interner, KeyId, Plan};
+
 type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
-type DeclarationKey = (portable::resolve::Global, usize);
 
 fn charge_origin_work(
     session: &mut Session,
@@ -31,6 +42,26 @@ fn charge_origin_work(
         span,
         message: error.to_string(),
     })
+}
+
+// Reader APIs use Diagnostics, but metering errors keep their original typed
+// SessionError. Never relabel fuel/cancellation as a source syntax failure.
+fn preserve_source_error<T>(
+    span: std::ops::Range<usize>,
+    charge: &mut impl FnMut(u64) -> Result<()>,
+    operation: impl FnOnce(&mut dyn FnMut(u64) -> std::result::Result<(), portable::Diagnostic>)
+        -> std::result::Result<T, portable::Diagnostic>,
+) -> Result<T> {
+    let mut original = None;
+    let result = operation(&mut |units| charge(units).map_err(|error| {
+        let diagnostic = portable::Diagnostic { span: span.clone(), message: error.to_string() };
+        if original.is_none() { original = Some(error); }
+        diagnostic
+    }));
+    match original {
+        Some(error) => Err(error),
+        None => result.map_err(SessionError::Compile),
+    }
 }
 
 fn symbol_position(
@@ -109,20 +140,6 @@ impl Ord for NamespaceKey {
     }
 }
 
-/// Same-Store declaration metadata roots, owned by one compiled macro session.
-/// Weak source owners prevent dead revisions from accumulating or address reuse
-/// from mistaking a new declaration for an old one. Never an artifact cache.
-#[derive(Default)]
-pub(crate) struct DeclarationValues {
-    metadata: BTreeMap<DeclarationKey, (Weak<portable::resolve::DefinitionInfo>, SessionValue)>,
-}
-impl DeclarationValues {
-    fn prune(&mut self) {
-        self.metadata
-            .retain(|_, (source, _)| source.strong_count() != 0);
-    }
-}
-
 // Iterative validation keeps guest-facing reader forms off the Rust call stack.
 // Every visit, normalized metadata pass, and text unit is charged to the active
 // Session operation instead of a second per-form quota.
@@ -172,11 +189,9 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
             }
             // Normalize and clone metadata within the same graph work budget.
             charge(form.metadata.len() as u64)?;
-            let pairs = hir::reader_metadata_pairs_metered(form, &mut |work| {
-                charge(work).map_err(|error| portable::Diagnostic {
-                    span: form.span.clone(), message: error.to_string(),
-                })
-            }).map_err(SessionError::Compile)?;
+            let pairs = preserve_source_error(form.span.clone(), charge, |charge| {
+                hir::reader_metadata_pairs_metered(form, &mut |work| charge(work))
+            })?;
             let normalized = Form {
                 span: form.span.clone(),
                 metadata: vec![],
@@ -232,10 +247,12 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
 // remain distinct. Bare byte spans are not carried by FormBridge; source positions
 // remain in the actual reader metadata and separate compiler records. This is
 // local graph sharing, not a persisted artifact key.
+#[cfg(test)]
 fn form_key(form: &Form) -> Result<Vec<u8>> {
     form_key_metered(form, &mut |_| Ok(()))
 }
 
+#[cfg(test)]
 fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> Result<Vec<u8>> {
     enum Task<'a> {
         Form(&'a Form),
@@ -377,20 +394,17 @@ enum Task {
 }
 
 /// Memo tables own their source identities as well as the resulting GC roots.
-/// Graph memo tables live for one build. Only final declaration metadata roots
-/// may outlive it in the owning macro Store; no pointer is an artifact cache key.
+/// Recipe memo tables live for one build. Captured declaration metadata may be
+/// reused only through checked source/representation records after callbacks.
+/// An owned revision pointer is not an artifact cache key.
 pub struct AnalysisGraph<'a> {
     bridge: &'a FormBridge,
-    session: &'a mut Session,
     retained: Option<&'a mut DeclarationValues>,
-    metadata_roots: Vec<(
-        Value,
-        DeclarationKey,
-        Arc<portable::resolve::DefinitionInfo>,
-    )>,
+    session: &'a mut Session,
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
-    forms: BTreeMap<Vec<u8>, Value>,
+    raw_keys: Interner,
+    forms: Vec<Option<Value>>,
     maps: BTreeMap<Vec<(Value, Value)>, Value>,
     vectors: BTreeMap<Vec<Value>, Value>,
     declarations: BTreeMap<
@@ -405,11 +419,16 @@ pub struct AnalysisGraph<'a> {
     namespace_contents: BTreeMap<NamespaceKey, Value>,
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
+    metadata_sources: Vec<metadata_expectations::CapturedMetadata>,
     jobs: VecDeque<(Value, Task)>,
 }
 impl<'a> AnalysisGraph<'a> {
-    fn reader_key(&mut self, form: &Form) -> Result<Vec<u8>> {
-        form_key_metered(form, &mut |units| self.session.charge_host_work(units))
+    fn reader_key(&mut self, form: &Form) -> Result<KeyId> {
+        let mut plan = Plan::default();
+        let root = self.raw_keys.plan(form, &mut plan, &mut |units| {
+            self.session.charge_host_work(units)
+        })?;
+        Ok(plan.nodes[root].key)
     }
     fn clone_form(&mut self, form: &Form) -> Result<Form> {
         crate::portable::clone_form_metered(form, &mut |units| {
@@ -420,12 +439,12 @@ impl<'a> AnalysisGraph<'a> {
     pub fn new(bridge: &'a FormBridge, session: &'a mut Session) -> Self {
         Self {
             bridge,
-            session,
             retained: None,
-            metadata_roots: vec![],
+            session,
             keys: BTreeMap::new(),
             symbols: BTreeMap::new(),
-            forms: BTreeMap::new(),
+            raw_keys: Interner::default(),
+            forms: Vec::new(),
             maps: BTreeMap::new(),
             vectors: BTreeMap::new(),
             declarations: BTreeMap::new(),
@@ -437,18 +456,12 @@ impl<'a> AnalysisGraph<'a> {
             namespace_contents: BTreeMap::new(),
             asts: BTreeMap::new(),
             recipes: Vec::new(),
+            metadata_sources: Vec::new(),
             jobs: VecDeque::new(),
         }
     }
-    pub(crate) fn with_declaration_values(
-        bridge: &'a FormBridge,
-        session: &'a mut Session,
-        retained: &'a mut DeclarationValues,
-    ) -> Self {
-        retained.prune();
-        let mut graph = Self::new(bridge, session);
-        graph.retained = Some(retained);
-        graph
+    pub(crate) fn with_declaration_values(bridge: &'a FormBridge,session: &'a mut Session,values: &'a mut DeclarationValues)->Self {
+        let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
         self.charge(1)?;
@@ -463,7 +476,7 @@ impl<'a> AnalysisGraph<'a> {
         self.jobs.push_back((id, task));
         Ok(id)
     }
-    fn materialize(&mut self, root: Value) -> Result<SessionValue> {
+    fn finish_recipes(&mut self) -> Result<()> {
         while let Some((id, task)) = self.jobs.pop_front() {
             match task {
                 Task::Namespace(value) => self.namespace_record(id, &value, 0)?,
@@ -476,6 +489,19 @@ impl<'a> AnalysisGraph<'a> {
             };
             debug_assert!(self.recipes[id].is_some(), "task root was not finalized");
         }
+        Ok(())
+    }
+    fn materialize(&mut self,root:Value)->Result<SessionValue> {
+        if let Some(cache)=self.retained.take() {
+            let result=self.materialize_reusing(root,cache);
+            self.retained=Some(cache);result
+        } else {self.materialize_using(root,self.bridge)}
+    }
+    fn materialize_using(&mut self,root:Value,bridge:&FormBridge)->Result<SessionValue> {
+        self.materialize_controlled(root,bridge,None)
+    }
+    fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,mut control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
+        self.finish_recipes()?;
         fn dependencies(recipe: &Recipe) -> Vec<Value> {
             match recipe {
                 Recipe::Alias(value) => vec![*value],
@@ -519,6 +545,8 @@ impl<'a> AnalysisGraph<'a> {
         // callbacks: each occurrence and its reader ancestors must execute.
         let mut state = vec![0u8; self.recipes.len()];
         let mut repeat = vec![false; self.recipes.len()];
+        self.session.charge_host_work(self.recipes.len() as u64)?;
+        let mut postorder = Vec::with_capacity(self.recipes.len());
         let mut stack = vec![(root, false)];
         while let Some((id, finish)) = stack.pop() {
             if state[id] == 2 {
@@ -538,13 +566,13 @@ impl<'a> AnalysisGraph<'a> {
                 state[id] = 1;
                 stack.push((id, true));
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
-                let dependencies = dependencies(recipe);
+                let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
                 for dependency in dependencies.into_iter().rev() {
                     stack.push((dependency, false));
                 }
             } else {
-                let dependencies = dependencies(recipe);
-                self.session.charge_host_work(dependencies.len() as u64)?;
+                self.session.charge_host_work(dependency_count(recipe) as u64)?;
+                let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
                 repeat[id] = match recipe {
                     Recipe::ReaderMap(_) | Recipe::ReaderSet(_) => true,
                     Recipe::List(_) | Recipe::ReaderVector(_) | Recipe::Metadata { .. } => {
@@ -561,6 +589,7 @@ impl<'a> AnalysisGraph<'a> {
                     _ => false,
                 };
                 state[id] = 2;
+                postorder.push(id);
             }
         }
         struct Frame {
@@ -568,60 +597,45 @@ impl<'a> AnalysisGraph<'a> {
             dependencies: Vec<Value>,
             next: usize,
             inputs: Vec<SessionValue>,
+            tainted: bool,
+            input_taint: Vec<bool>,
         }
         impl Frame {
-            fn new(id: Value, recipe: &Recipe) -> Self {
+            fn new(id: Value, recipe: &Recipe,skip:bool) -> Self {
                 Self {
                     id,
-                    dependencies: dependencies(recipe),
+                    dependencies: if skip {vec![]} else {dependencies(recipe)},
                     next: 0,
                     inputs: vec![],
+                    tainted: false,
+                    input_taint: Vec::new(),
                 }
             }
         }
-        // Validate the same logical work as a cold graph before callbacks or
-        // retained-root reuse. Persistence must not turn an oversized graph into
-        // acceptable input; compiler sharing within this build still applies.
-        let mut logical_cached = vec![false; self.recipes.len()];
-        let root_recipe = self.recipes[root].as_ref().unwrap();
-        self.session
-            .charge_host_work(dependency_count(root_recipe) as u64)?;
-        let mut planned = vec![Frame::new(root, root_recipe)];
-        while let Some(frame) = planned.last_mut() {
-            if frame.next < frame.dependencies.len() {
-                self.charge(1)?;
-                let id = frame.dependencies[frame.next];
-                frame.next += 1;
-                if repeat[id] || !logical_cached[id] {
-                    let recipe = self.recipes[id].as_ref().unwrap();
-                    self.session
-                        .charge_host_work(dependency_count(recipe) as u64)?;
-                    planned.push(Frame::new(id, recipe));
-                }
-            } else {
-                self.charge(1)?;
-                let frame = planned.pop().unwrap();
-                if !repeat[frame.id] {
-                    logical_cached[frame.id] = true;
-                }
-            }
+        // Count logical frame work on the compact DAG before any callbacks.
+        // The actual traversal debits that work once; this planner debits only
+        // its own counting/copying work, never a hypothetical expanded walk.
+        let work = occurrence_work::count(
+            self.recipes.len(), root, &postorder, &repeat,
+            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {0}else{dependency_count(self.recipes[id].as_ref().unwrap())},
+            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]}else{dependencies(self.recipes[id].as_ref().unwrap())},
+            |units| self.session.charge_host_work(units),
+        )?;
+        let remaining = self.session.operation_fuel_remaining()?;
+        if work.is_none_or(|work| work > remaining) {
+            // Overflow proves that even a u64::MAX allowance cannot admit the
+            // traversal. Exhaust using the same typed Store-fuel mechanism.
+            self.session.charge_host_work(u64::MAX)?;
+            self.session.charge_host_work(1)?;
+            unreachable!("an insufficient or overflowing work count must exhaust fuel");
         }
         let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
-        if let Some(retained) = &self.retained {
-            for (id, key, source) in &self.metadata_roots {
-                if let Some((owner, value)) = retained.metadata.get(key)
-                    && owner
-                        .upgrade()
-                        .is_some_and(|owner| Arc::ptr_eq(&owner, source))
-                {
-                    cached[*id] = Some(value.clone());
-                }
-            }
-        }
+        self.session.charge_host_work(if control.is_some() {self.recipes.len() as u64}else{0})?;
+        let mut value_taint=if control.is_some() {vec![false;self.recipes.len()]}else{Vec::new()};
         let root_recipe = self.recipes[root].as_ref().unwrap();
         self.session
             .charge_host_work(dependency_count(root_recipe) as u64)?;
-        let mut frames = vec![Frame::new(root, root_recipe)];
+        let mut frames = vec![Frame::new(root, root_recipe, control.as_ref().is_some_and(|b|b.intercepts(root)))];
         // DAG storage remains bounded independently of occurrence execution.
         // Charge before descending or invoking callbacks; diamonds cannot expand
         // into unbounded work even when the distinct recipe count is small.
@@ -634,26 +648,39 @@ impl<'a> AnalysisGraph<'a> {
                 if !repeat[id]
                     && let Some(value) = &cached[id]
                 {
+                    if control.is_some() {
+                        frame.tainted |= value_taint[id];
+                        reuse::reserve(self.session, &mut frame.input_taint, 1)?;
+                        frame.input_taint.push(value_taint[id]);
+                    }
                     frame.inputs.push(value.clone());
                 } else {
                     let recipe = self.recipes[id].as_ref().unwrap();
                     self.session
                         .charge_host_work(dependency_count(recipe) as u64)?;
-                    frames.push(Frame::new(id, recipe));
+                    frames.push(Frame::new(id, recipe, control.as_ref().is_some_and(|b|b.intercepts(id))));
                 }
                 continue;
             }
             let frame = frames.pop().unwrap();
             self.charge(1)?;
-            let recipe = self.recipes[frame.id].as_ref().unwrap();
             let inputs = frame.inputs;
-            let value = match recipe {
-                Recipe::Scalar(value) => self.bridge.scalar(self.session, value)?,
+            if frame.tainted && !control.as_ref().is_some_and(|b| b.intercepts(frame.id)) {
+                for (value, tainted) in inputs.iter().zip(&frame.input_taint) {
+                    self.session.charge_host_work(1)?;
+                    if !tainted {control.as_mut().unwrap().cut(self.session, value)?;}
+                }
+            }
+            let active_bridge=if control.is_some() && !frame.tainted {self.bridge}else{bridge};
+            let value = if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+                control.as_mut().unwrap().produce(self,frame.id)?
+            } else {let recipe = self.recipes[frame.id].as_ref().unwrap();match recipe {
+                Recipe::Scalar(value) => active_bridge.scalar(self.session, value)?,
                 Recipe::Identifier {
                     namespace,
                     name,
                     keyword,
-                } => self.bridge.identifier(
+                } => active_bridge.identifier(
                     self.session,
                     namespace.as_deref(),
                     name,
@@ -665,17 +692,17 @@ impl<'a> AnalysisGraph<'a> {
                         charge_origin_work(self.session, form.span.clone(), units)
                     })
                     .map_err(SessionError::Compile)?;
-                    self.bridge.quote(self.session, form)?
+                    active_bridge.quote(self.session, form)?
                 }
                 Recipe::Alias(_) => inputs[0].clone(),
-                Recipe::List(_) => self.bridge.list_values(self.session, &inputs)?,
+                Recipe::List(_) => active_bridge.list_values(self.session, &inputs)?,
                 Recipe::Vector(_) | Recipe::ReaderVector(_) => {
-                    self.bridge.vector_values(self.session, &inputs)?
+                    active_bridge.vector_values(self.session, &inputs)?
                 }
                 Recipe::Set(_) | Recipe::ReaderSet(_) => {
-                    self.bridge.set_values(self.session, &inputs)?
+                    active_bridge.set_values(self.session, &inputs)?
                 }
-                Recipe::Map(_) | Recipe::ReaderMap(_) => self.bridge.map_values(
+                Recipe::Map(_) | Recipe::ReaderMap(_) => active_bridge.map_values(
                     self.session,
                     &inputs
                         .chunks_exact(2)
@@ -684,29 +711,29 @@ impl<'a> AnalysisGraph<'a> {
                 )?,
                 Recipe::Metadata {
                     shape, set_items, ..
-                } => self.bridge.with_form_metadata(
+                } => active_bridge.with_form_metadata(
                     self.session,
                     *shape,
                     &inputs[0],
                     inputs.last().unwrap(),
                     &inputs[1..1 + set_items.len()],
                 )?,
-            };
+            }};
+            let tainted=if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+                control.as_ref().unwrap().last_is_private(frame.id)
+            } else {frame.tainted};
+            if control.is_some() {value_taint[frame.id]=tainted;}
             if !repeat[frame.id] {
                 cached[frame.id] = Some(value.clone());
             }
             if let Some(parent) = frames.last_mut() {
+                parent.tainted |= tainted;
+                if control.is_some() {
+                    reuse::reserve(self.session, &mut parent.input_taint, 1)?;
+                    parent.input_taint.push(tainted);
+                }
                 parent.inputs.push(value);
             } else {
-                if let Some(retained) = &mut self.retained {
-                    for (id, key, source) in &self.metadata_roots {
-                        if let Some(value) = &cached[*id] {
-                            retained
-                                .metadata
-                                .insert(key.clone(), (Arc::downgrade(source), value.clone()));
-                        }
-                    }
-                }
                 return Ok(value);
             }
         }
@@ -720,7 +747,10 @@ impl<'a> AnalysisGraph<'a> {
             Literal::Nil => Kind::Nil,
             Literal::Bool(value) => Kind::Bool(*value),
             Literal::Number(value) => Kind::Number(*value),
-            Literal::String(value) => Kind::String(value.clone()),
+            Literal::String(value) => {
+                self.charge(value.len())?;
+                Kind::String(value.clone())
+            },
             Literal::Undefined => {
                 self.charge(0)?;
                 return self.recipe(Recipe::Scalar(value));
@@ -731,7 +761,8 @@ impl<'a> AnalysisGraph<'a> {
             metadata: vec![],
             kind,
         })?;
-        if let Some(value) = self.forms.get(&key) {
+        self.charge(1)?;
+        if let Some(value) = self.forms.get(key.0).and_then(Option::as_ref) {
             return Ok(*value);
         }
         self.charge(if let Literal::String(units) = &value {
@@ -837,10 +868,10 @@ impl<'a> AnalysisGraph<'a> {
         validate_form_data(form, &mut |units| self.session.charge_host_work(units))?;
         self.form_data(form, 0)
     }
-    fn store_form_key(&mut self, key: Vec<u8>, value: Value) -> Result<()> {
-        self.charge(key.len().saturating_add(1))?;
-        self.forms.insert(key, value);
-        Ok(())
+    fn store_form_key(&mut self, key: KeyId, value: Value) -> Result<()> {
+        raw_keys::bind(&mut self.forms, key, value, &mut |units| {
+            self.session.charge_host_work(units)
+        })
     }
     fn form_data(&mut self, form: &Form, _reader_depth: usize) -> Result<Value> {
         #[derive(Clone, Copy)]
@@ -851,10 +882,44 @@ impl<'a> AnalysisGraph<'a> {
             Map,
             Form,
         }
-        enum Work {
-            Visit(Form),
+        enum Input<'a> { Borrowed(&'a Form), Owned(Form) }
+        impl Input<'_> {
+            fn form(&self) -> &Form {
+                match self { Self::Borrowed(form) => form, Self::Owned(form) => form }
+            }
+            fn leaf(self, session: &mut Session) -> Result<Form> {
+                match self {
+                    Self::Owned(mut form) => {
+                        let kind = form.take_kind();
+                        Ok(Form { span: form.span.clone(), metadata: vec![], kind })
+                    }
+                    Self::Borrowed(form) => {
+                        let bytes = match &form.kind {
+                            Kind::String(v) => v.len().saturating_mul(2),
+                            Kind::Symbol(v) => v.name.len().saturating_add(v.namespace.as_ref().map_or(0, String::len)),
+                            Kind::Keyword(v) => v.name.len().saturating_add(v.namespace.as_ref().map_or(0, String::len)),
+                            _ => 0,
+                        };
+                        session.charge_host_work((bytes as u64).saturating_add(1))?;
+                        let kind = match &form.kind {
+                            Kind::Nil => Kind::Nil,
+                            Kind::Bool(v) => Kind::Bool(*v),
+                            Kind::Number(v) => Kind::Number(*v),
+                            Kind::String(v) => Kind::String(v.clone()),
+                            Kind::Symbol(v) => Kind::Symbol(v.clone()),
+                            Kind::Keyword(v) => Kind::Keyword(v.clone()),
+                            _ => return Err(SessionError::Host(wasmtime::Error::msg("Expected atomic native form"))),
+                        };
+                        Ok(Form { span: form.span.clone(), metadata: vec![], kind })
+                    }
+                }
+            }
+        }
+        enum Work<'a> {
+            Visit(Form, usize),
+            BorrowedVisit(&'a Form, usize),
             Finish {
-                key: Vec<u8>,
+                key: KeyId,
                 shape: Shape,
                 child_count: usize,
                 metadata_shape: Option<MetadataShape>,
@@ -863,137 +928,28 @@ impl<'a> AnalysisGraph<'a> {
             },
         }
 
-        let root = crate::portable::clone_form_metered(form, &mut |units| {
-            charge_origin_work(self.session, form.span.clone(), units)
-        })
-        .map_err(SessionError::Compile)?;
-        let mut work = vec![Work::Visit(root)];
+        // Identity planning is native-only. Raw metadata participates in keys,
+        // but only the existing normalized-metadata path builds guest recipes.
+        let mut plan = Plan::default();
+        let root_plan = self.raw_keys.plan(form, &mut plan, &mut |units| {
+            self.session.charge_host_work(units)
+        })?;
+        // A recipe hit needs no owned payload. Plan the exact borrowed key
+        // before copying, retaining full validation and source-data equality.
+        self.charge(1)?;
+        let root_key = plan.nodes[root_plan].key;
+        if let Some(value) = self.forms.get(root_key.0).and_then(Option::as_ref).copied() {
+            self.charge(1)?;
+            return Ok(value);
+        }
+        // Retain the existing owned-visit stack for generated metadata. Body
+        // visits borrow immutable inputs; no child arena or whole-tree copy.
+        let mut work = vec![Work::BorrowedVisit(form, root_plan)];
         let mut values = Vec::<Value>::new();
         while let Some(item) = work.pop() {
-            match item {
-                Work::Visit(mut form) => {
-                    let key = self.reader_key(&form)?;
-                    if let Some(value) = self.forms.get(&key).copied() {
-                        self.charge(1)?;
-                        values.push(value);
-                        continue;
-                    }
-                    let scalar = match &form.kind {
-                        Kind::Nil => Some(Literal::Nil),
-                        Kind::Bool(value) => Some(Literal::Bool(*value)),
-                        Kind::Number(value) => Some(Literal::Number(*value)),
-                        Kind::String(value) => Some(Literal::String(value.clone())),
-                        _ => None,
-                    };
-                    if let Some(scalar) = scalar {
-                        if !form.metadata.is_empty() {
-                            return Err(SessionError::Host(wasmtime::Error::msg(
-                                "Metadata requires a symbol or collection",
-                            )));
-                        }
-                        values.push(self.scalar(scalar)?);
-                        continue;
-                    }
-                    let metadata_shape = if form.metadata.is_empty() {
-                        None
-                    } else {
-                        Some(match &form.kind {
-                            Kind::Symbol(_) => MetadataShape::Symbol,
-                            Kind::List(items) => MetadataShape::List {
-                                empty: items.is_empty(),
-                            },
-                            Kind::Vector(_) => MetadataShape::Vector,
-                            Kind::Map(items) => MetadataShape::Map {
-                                large: items.len() > 16,
-                            },
-                            Kind::Set(_) => MetadataShape::Set,
-                            _ => {
-                                return Err(SessionError::Host(wasmtime::Error::msg(
-                                    "Metadata requires a symbol or collection",
-                                )));
-                            }
-                        })
-                    };
-                    let metadata_form = if metadata_shape.is_some() {
-                        let pairs =
-                            crate::portable_macro_data::normalized_reader_metadata(self.session, &form)?;
-                        Some(Form {
-                            span: form.span.clone(),
-                            metadata: vec![],
-                            kind: Kind::Map(pairs),
-                        })
-                    } else {
-                        None
-                    };
-                    let mut children = Vec::new();
-                    let mut base_value = None;
-                    let (shape, set_item_count) = match form.take_kind() {
-                        Kind::List(items) => {
-                            children = items;
-                            (Shape::List, 0)
-                        }
-                        Kind::Vector(items) => {
-                            children = items;
-                            (Shape::Vector, 0)
-                        }
-                        Kind::Set(items) => {
-                            let count = items.len();
-                            children = items;
-                            (Shape::Set, count)
-                        }
-                        Kind::Map(items) => {
-                            if items.len() % 2 != 0 {
-                                return Err(SessionError::Host(wasmtime::Error::msg(
-                                    "Macro form map requires paired entries",
-                                )));
-                            }
-                            children = items;
-                            (Shape::Map, 0)
-                        }
-                        Kind::Conditional(_)
-                        | Kind::SplicingConditional(_)
-                        | Kind::Discard(_)
-                        | Kind::Prefix { .. } => {
-                            return Err(SessionError::Host(wasmtime::Error::msg(
-                                "Native macro data requires resolved reader prefixes",
-                            )));
-                        }
-                        kind => {
-                            let data = Form {
-                                span: form.span.clone(),
-                                metadata: vec![],
-                                kind,
-                            };
-                            let value = self.recipe(Recipe::Form(data))?;
-                            if metadata_shape.is_none() {
-                                self.store_form_key(key, value)?;
-                                values.push(value);
-                                continue;
-                            }
-                            base_value = Some(value);
-                            (Shape::Form, 0)
-                        }
-                    };
-                    if let Some(metadata_form) = metadata_form {
-                        children.push(metadata_form);
-                    }
-                    let set_item_count = if matches!(shape, Shape::Set) {
-                        set_item_count
-                    } else {
-                        0
-                    };
-                    work.push(Work::Finish {
-                        key,
-                        shape,
-                        child_count: children.len(),
-                        metadata_shape,
-                        set_item_count,
-                        base_value,
-                    });
-                    for child in children.into_iter().rev() {
-                        work.push(Work::Visit(child));
-                    }
-                }
+            let (input, plan_id) = match item {
+                Work::BorrowedVisit(form, id) => (Input::Borrowed(form), id),
+                Work::Visit(form, id) => (Input::Owned(form), id),
                 Work::Finish {
                     key,
                     shape,
@@ -1047,7 +1003,107 @@ impl<'a> AnalysisGraph<'a> {
                     };
                     self.store_form_key(key, value)?;
                     values.push(value);
+                    continue;
                 }
+            };
+            self.charge(1)?;
+            let key = plan.nodes[plan_id].key;
+            if let Some(value) = self.forms.get(key.0).and_then(Option::as_ref).copied() {
+                self.charge(1)?;
+                values.push(value);
+                continue;
+            }
+            let form = input.form();
+            if matches!(&form.kind, Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_)) {
+                if !form.metadata.is_empty() {
+                    return Err(SessionError::Host(wasmtime::Error::msg("Metadata requires a symbol or collection")));
+                }
+                let mut leaf = input.leaf(self.session)?;
+                let literal = match leaf.take_kind() {
+                    Kind::Nil => Literal::Nil,
+                    Kind::Bool(v) => Literal::Bool(v),
+                    Kind::Number(v) => Literal::Number(v),
+                    Kind::String(v) => Literal::String(v),
+                    _ => unreachable!("scalar kind checked before ownership copy"),
+                };
+                let value = self.recipe(Recipe::Scalar(literal))?;
+                self.store_form_key(key, value)?;
+                values.push(value);
+                continue;
+            }
+            let metadata_shape = if form.metadata.is_empty() { None } else {
+                Some(match &form.kind {
+                    Kind::Symbol(_) => MetadataShape::Symbol,
+                    Kind::List(items) => MetadataShape::List { empty: items.is_empty() },
+                    Kind::Vector(_) => MetadataShape::Vector,
+                    Kind::Map(items) => MetadataShape::Map { large: items.len() > 16 },
+                    Kind::Set(_) => MetadataShape::Set,
+                    _ => return Err(SessionError::Host(wasmtime::Error::msg("Metadata requires a symbol or collection"))),
+                })
+            };
+            let metadata_form = if metadata_shape.is_some() {
+                let pairs = crate::portable_macro_data::normalized_reader_metadata(self.session, form)?;
+                Some(Form { span: form.span.clone(), metadata: vec![], kind: Kind::Map(pairs) })
+            } else { None };
+            let (shape, body_count) = match &form.kind {
+                Kind::List(items) => (Shape::List, items.len()),
+                Kind::Vector(items) => (Shape::Vector, items.len()),
+                Kind::Set(items) => (Shape::Set, items.len()),
+                Kind::Map(items) => {
+                    if items.len() % 2 != 0 {
+                        return Err(SessionError::Host(wasmtime::Error::msg("Macro form map requires paired entries")));
+                    }
+                    (Shape::Map, items.len())
+                }
+                Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+                    return Err(SessionError::Host(wasmtime::Error::msg("Native macro data requires resolved reader prefixes")));
+                }
+                _ => (Shape::Form, 0),
+            };
+            let mut base_value = None;
+            let body = if matches!(shape, Shape::Form) {
+                let data = input.leaf(self.session)?;
+                let value = self.recipe(Recipe::Form(data))?;
+                if metadata_shape.is_none() {
+                    self.store_form_key(key, value)?;
+                    values.push(value);
+                    continue;
+                }
+                base_value = Some(value);
+                None
+            } else { Some(input) };
+            let metadata_plan = if let Some(form) = metadata_form {
+                let id = self.raw_keys.plan(&form, &mut plan, &mut |units| self.session.charge_host_work(units))?;
+                Some((form, id))
+            } else { None };
+            work.push(Work::Finish {
+                key, shape, child_count: body_count + usize::from(metadata_plan.is_some()),
+                metadata_shape, set_item_count: if matches!(shape, Shape::Set) { body_count } else { 0 }, base_value,
+            });
+            // LIFO: push metadata first, then reversed body children, preserving
+            // textual body order followed by normalized metadata.
+            if let Some((form, id)) = metadata_plan { work.push(Work::Visit(form, id)); }
+            let offset = plan.nodes[plan_id].metadata_count;
+            match body {
+                Some(Input::Borrowed(form)) => {
+                    let items = match &form.kind {
+                        Kind::List(v) | Kind::Vector(v) | Kind::Set(v) | Kind::Map(v) => v,
+                        _ => unreachable!("collection shape checked above"),
+                    };
+                    for (index, child) in items.iter().enumerate().rev() {
+                        work.push(Work::BorrowedVisit(child, plan.nodes[plan_id].children[offset + index]));
+                    }
+                }
+                Some(Input::Owned(mut form)) => {
+                    let items = match form.take_kind() {
+                        Kind::List(v) | Kind::Vector(v) | Kind::Set(v) | Kind::Map(v) => v,
+                        _ => unreachable!("collection shape checked above"),
+                    };
+                    for (index, child) in items.into_iter().enumerate().rev() {
+                        work.push(Work::Visit(child, plan.nodes[plan_id].children[offset + index]));
+                    }
+                }
+                None => {}
             }
         }
         if values.len() != 1 {
@@ -1338,12 +1394,12 @@ impl<'a> AnalysisGraph<'a> {
             + namespace.renamed_macro_refers.len()
             + namespace.identities.len()
             + namespace.declarations.len();
-        self.charge(fact_count.saturating_add(namespace.namespace.len()).saturating_add(1))?;
         let key = Arc::as_ptr(namespace) as usize;
         self.charge(1)?;
         if let Some((_, value)) = self.namespaces.get(&key) {
             return Ok(value.clone());
         }
+        self.charge(fact_count.saturating_add(namespace.namespace.len()).saturating_add(1))?;
         let content_key = NamespaceKey::new(namespace);
         self.charge(fact_count.saturating_add(1))?;
         if let Some(value) = self.namespace_contents.get(&content_key) {
@@ -1481,6 +1537,14 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.declarations.get(&key) {
             return Ok(*value);
         }
+        let tracing = std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some();
+        let trace = |session: &Session, stage: &str| -> Result<()> {
+            if tracing {
+                eprintln!("metadata-declaration {}/{} {stage}: {}", global.namespace(), global.name(), session.operation_fuel_remaining()?);
+            }
+            Ok(())
+        };
+        trace(self.session, "start")?;
         let name = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
         let mut fields = vec![("name", name)];
         if let Some(info) = info {
@@ -1493,6 +1557,7 @@ impl<'a> AnalysisGraph<'a> {
             validate_form_data(&info.declaration, &mut |units| {
                 self.session.charge_host_work(units)
             })?;
+            trace(self.session, "guarded")?;
             let mut declaration = if let Some(origin) = &info.origin {
                 origin
                     .macro_form_data_metered(&info.declaration, &mut |units| {
@@ -1502,6 +1567,7 @@ impl<'a> AnalysisGraph<'a> {
             } else {
                 self.clone_form(&info.declaration)?
             };
+            trace(self.session, "declaration-origin")?;
             // declare adds semantic metadata to an original source symbol. Only
             // recover positions through the verified original declaration form,
             // never by trusting a generated symbol's reused byte span alone.
@@ -1602,12 +1668,16 @@ impl<'a> AnalysisGraph<'a> {
             } else if let Some(value) = property("meta") {
                 fields.push(("meta", self.form(value, depth + 1)?));
             }
+            trace(self.session, "metadata")?;
             if let Some(origin) = &info.origin {
-                let definition = origin
-                    .macro_form_data_metered(&info.definition_form, &mut |units| {
+                let (span, metadata) = origin
+                    .macro_form_root_metadata_metered(&info.definition_form, &mut |units| {
                         charge_origin_work(self.session, info.definition_form.span.clone(), units)
                     })
                     .map_err(SessionError::Compile)?;
+                // Normalization reads metadata only. This local carrier is not
+                // quoted or exposed as a replacement definition form.
+                let definition = Form { span, metadata, kind: Kind::Nil };
                 let position =
                     crate::portable_macro_data::normalized_reader_metadata(self.session, &definition)?;
                 for field in ["line", "column", "file"] {
@@ -1620,6 +1690,7 @@ impl<'a> AnalysisGraph<'a> {
                     }
                 }
             }
+            trace(self.session, "definition-origin")?;
             if global.namespace() == "suss.core" {
                 fields.retain(|(name, _)| *name != "file");
                 fields.push((
@@ -1891,15 +1962,22 @@ impl<'a> AnalysisGraph<'a> {
         }
         // Share the final metadata value of this captured declaration revision,
         // including a top-fn overlay. Reader occurrences remain independently
-        // constructed elsewhere; resolved var copies reuse this catalog value.
+        // constructed elsewhere; resolved var copies reuse this catalog value only
+        // within this build. Cross-build roots require the checked reuse path.
+        let mut metadata_recipe = None;
         if let Some((_, meta)) = fields.iter_mut().find(|(name, _)| *name == "meta") {
             self.charge(0)?;
             *meta = self.recipe(Recipe::Alias(*meta))?;
-            if let Some(info) = info {
-                self.metadata_roots.push((*meta, key.clone(), info.clone()));
-            }
+            metadata_recipe = Some(*meta);
         }
         let value = self.map(fields)?;
+        if let (Some(recipe), Some(revision)) = (metadata_recipe, info) {
+            // Capture only after the final declaration and overlaid metadata
+            // recipe exist. No guest storage is consulted or retained.
+            metadata_expectations::capture(self.session, &mut self.metadata_sources,
+                global, revision, recipe)?;
+        }
+        trace(self.session, "finished")?;
         self.declarations.insert(key, (info.cloned(), value));
         Ok(value)
     }
@@ -2881,6 +2959,119 @@ mod sharing_tests {
         }
     }
     #[test]
+    fn owned_normalized_metadata_fuel_failure_preserves_input_and_retry_recovers() {
+        const MARKER: &str = "owned-prefix-marker";
+        fn marker_emitted(graph: &AnalysisGraph<'_>) -> bool {
+            graph.recipes.iter().flatten().any(|recipe| {
+                matches!(recipe, Recipe::Form(Form { kind: Kind::Symbol(symbol), .. })
+                    if symbol.namespace.is_none() && symbol.name == MARKER)
+            })
+        }
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        // Marker exists only inside metadata. Raw-key planning and normalization
+        // do not emit Recipe::Form, so observing it witnesses owned Work::Visit.
+        let source = format!("^{{:owned [owned-prefix-marker {}]}} [17]",
+            (0..64).map(|n| format!("tail-{n}")).collect::<Vec<_>>().join(" "));
+        let form = suss_reader::forms::read_forms(&source).unwrap().remove(0);
+        let original = form.clone();
+        let full_cost = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let operation = graph.session.operation_budget_scope().unwrap();
+            let before = graph.session.operation_fuel_remaining().unwrap();
+            graph.form(&form, 0).unwrap();
+            assert!(marker_emitted(&graph));
+            let cost = before - graph.session.operation_fuel_remaining().unwrap();
+            drop(operation);
+            cost
+        };
+        // Find the first allowance at which the owned marker has been published.
+        // Traversal is native/deterministic; each probe has a fresh graph/interner.
+        // This avoids a slow unit-by-unit fuel sweep or timing-based IRQ injection.
+        let (mut low, mut high) = (0u64, full_cost);
+        while low < high {
+            let fuel = low + (high - low) / 2;
+            session.set_operation_fuel(fuel);
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let operation = graph.session.operation_budget_scope().unwrap();
+            if let Err(error) = graph.form(&form, 0) {
+                assert!(matches!(error, SessionError::Trap(ref error)
+                    if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))
+                    || matches!(error, SessionError::Compile(ref error)
+                        if error.message.contains("all fuel consumed")), "{error:?}");
+            }
+            let reached = marker_emitted(&graph);
+            drop(operation);
+            if reached { high = fuel; } else { low = fuel + 1; }
+        }
+        assert!(low < full_cost, "fixture needs owned work after its first marker");
+        session.set_operation_fuel(low);
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let operation = graph.session.operation_budget_scope().unwrap();
+        let error = graph.form(&form, 0).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert!(marker_emitted(&graph), "must reach owned normalized-metadata traversal");
+        assert_eq!(form, original, "failed import cannot consume borrowed source");
+        drop(operation);
+
+        graph.session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+        let retry_operation = graph.session.operation_budget_scope().unwrap();
+        let root = graph.form(&form, 0).unwrap();
+        assert_eq!(form, original);
+        let value = graph.materialize(root).unwrap();
+        drop(retry_operation);
+        graph.session.collect().unwrap();
+        let check = graph.session.eval(r#"
+          (fn [v] [(= (nth v 0) 17)
+                    (= (first (:owned (meta v))) 'owned-prefix-marker)
+                    (= (count (:owned (meta v))) 65)
+                    (= (last (:owned (meta v))) 'tail-63)])
+        "#).unwrap();
+        let result = graph.session.invoke(&check, &[&value]).unwrap();
+        assert_eq!(crate::portable_repl::display(graph.session, &result).unwrap(),
+            "[true true true true]");
+    }
+
+    #[test]
+    fn borrowed_body_and_owned_metadata_cold_utf16_leaves_are_independent_copies() {
+        fn plain(span: std::ops::Range<usize>, kind: Kind) -> Form {
+            Form { span, metadata: Vec::new(), kind }
+        }
+        let body_units = vec![0, 0xd800, 97, 0xdc00, 0xffff];
+        let metadata_units = vec![0xdc00, 0, 0xd800, 0xd83d, 0xde00];
+        let mut form = Form {
+            span: 10..90,
+            metadata: vec![plain(10..40, Kind::Map(vec![
+                plain(11..18, Kind::Keyword(suss_reader::Keyword::new("payload"))),
+                plain(19..39, Kind::String(metadata_units.clone())),
+            ]))],
+            kind: Kind::Vector(vec![plain(50..89, Kind::String(body_units.clone()))]),
+        };
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        // No priming: body is borrowed, normalized metadata is an owned form, and
+        // distinct strings ensure neither leaf can be substituted by the other's hit.
+        let root = graph.form(&form, 0).unwrap();
+        let Kind::Vector(body) = &mut form.kind else { unreachable!() };
+        let Kind::String(units) = &mut body[0].kind else { unreachable!() };
+        units.fill(88);
+        let Kind::Map(pairs) = &mut form.metadata[0].kind else { unreachable!() };
+        let Kind::String(units) = &mut pairs[1].kind else { unreachable!() };
+        units.fill(89);
+
+        let value = graph.materialize(root).unwrap();
+        graph.session.collect().unwrap();
+        let extract = graph.session.eval("(fn [v] [(nth v 0) (:payload (meta v))])").unwrap();
+        let result = graph.session.invoke(&extract, &[&value]).unwrap();
+        let decoded = bridge.read(graph.session, &result, 0..1).unwrap();
+        let Kind::Vector(items) = &decoded.kind else { panic!("string pair") };
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].kind, Kind::String(body_units));
+        assert_eq!(items[1].kind, Kind::String(metadata_units));
+    }
+    #[test]
     fn shared_dag_validation_charges_each_dependency_edge_once() {
         let mut session = Session::new_macro().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
@@ -2901,6 +3092,77 @@ mod sharing_tests {
         assert_eq!(values.len(), 2);
         assert!(values.iter().all(|value| value.kind == Kind::Number(42.0)));
     }
+    #[test]
+    fn exact_namespace_identity_hits_charge_lookup_not_snapshot_size() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def namespace-identity-revision-probe 17)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let snapshot = session.compilation_snapshot();
+        let mut small = SourceNamespace::capture(
+            &snapshot.environment, portable::resolve::Phase::Macro,
+        );
+        // Keep actual immutable namespace facts; change only ordinary aliases.
+        let mut large = small.clone();
+        for index in 0..128 {
+            large.aliases.insert(format!("identity-probe-{index}"), "identity.target".into());
+        }
+        // Keep namespace text equal so the comparison isolates fact count.
+        small.aliases.clear();
+        let small = Arc::new(small);
+        let large = Arc::new(large);
+        let equal_content = Arc::new(large.as_ref().clone());
+        let mut changed_revision = large.as_ref().clone();
+        let global = changed_revision.declarations.keys().next().unwrap().clone();
+        let definition = changed_revision.declarations[&global].clone();
+        changed_revision.declarations.insert(global, Arc::new(definition.as_ref().clone()));
+        let changed_revision = Arc::new(changed_revision);
+
+        let _request = session.operation_budget_scope().unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let small_root = graph.namespace(&small, 0).unwrap();
+        let large_root = graph.namespace(&large, 0).unwrap();
+        assert_ne!(small_root, large_root);
+        assert_eq!(large_root, graph.namespace(&equal_content, 0).unwrap());
+        assert_ne!(large_root, graph.namespace(&changed_revision, 0).unwrap());
+        // These caches are native recipe identities, not retained guest roots.
+        // Measure only repeated lookups after the initial recipe build.
+        let recipes = graph.recipes.len();
+        let jobs = graph.jobs.len();
+        let before = graph.session.operation_fuel_remaining().unwrap();
+        for _ in 0..16 {
+            assert_eq!(small_root, graph.namespace(&small, 0).unwrap());
+        }
+        let after_small = graph.session.operation_fuel_remaining().unwrap();
+        for _ in 0..16 {
+            assert_eq!(large_root, graph.namespace(&large, 0).unwrap());
+        }
+        let after_large = graph.session.operation_fuel_remaining().unwrap();
+        let small_cost = before - after_small;
+        let large_cost = after_small - after_large;
+        assert!(small_cost >= 16, "identity hits must still charge lookup work");
+        assert_eq!(large_cost, small_cost,
+            "exact identity hits must not charge traversal of namespace facts");
+        assert_eq!(graph.recipes.len(), recipes);
+        assert_eq!(graph.jobs.len(), jobs);
+
+        // Cancellation must be observed even on the already-populated fast path.
+        let interrupt = graph.session.host_work_interrupt();
+        interrupt.store(true, std::sync::atomic::Ordering::SeqCst);
+        let error = graph.namespace(&large, 0).unwrap_err();
+        assert!(error.is_interrupt());
+        assert_eq!(graph.session.operation_fuel_remaining().unwrap(), 0);
+        assert_eq!(graph.recipes.len(), recipes);
+        assert_eq!(graph.jobs.len(), jobs);
+        drop(graph);
+        drop(_request);
+
+        // A separate operation recovers with the default unchanged allowance.
+        let _request = session.operation_budget_scope().unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let root = graph.namespace(&large, 0).unwrap();
+        assert_eq!(root, graph.namespace(&large, 0).unwrap());
+    }
+
     #[test]
     fn namespace_snapshots_share_only_when_all_facts_and_declaration_revisions_match() {
         let mut session = Session::new_macro().unwrap();
@@ -3047,95 +3309,158 @@ mod sharing_tests {
         assert_eq!(graph.maps.len(), map_count);
     }
     #[test]
-    fn retained_declaration_metadata_keeps_cold_budgets_and_releases_dead_revisions() {
+    fn declaration_metadata_builds_do_not_reuse_guest_mutated_nested_storage() {
         let mut session = Session::new_macro().unwrap();
-        session
-            .eval("(def ^{:doc \"retained\"} review-retained 17)")
-            .unwrap();
+        session.eval("(def ^{:audit {:x 17}} review-poisoned-metadata 0)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let snapshot = session.compilation_snapshot();
-        let namespace =
-            SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
-        let (global, source) = namespace
-            .declarations
-            .iter()
-            .find(|(global, _)| global.name() == "review-retained")
-            .map(|(global, source)| (global.clone(), source.clone()))
-            .unwrap();
-        let mut retained = DeclarationValues::default();
-        {
-            let mut graph =
-                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+        let namespace = SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
+        let (global, source) = namespace.declarations.iter()
+            .find(|(global, _)| global.name() == "review-poisoned-metadata")
+            .map(|(global, source)| (global.clone(), source.clone())).unwrap();
+        let build = |session: &mut Session| {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, session);
             let root = graph.declaration(&global, Some(&source), 0).unwrap();
-            graph.materialize(root).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        let observe = session.eval("(fn [declaration] (get (get (get declaration :meta) :audit) :x))").unwrap();
+        let mutate = session.eval("(fn [declaration] (let [audit (get (get declaration :meta) :audit)] (aset (.-arr audit) 1 99) (get audit :x)))").unwrap();
+        let first = build(&mut session);
+        let value = session.invoke(&observe, &[&first]).unwrap();
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        let value = session.invoke(&mutate, &[&first]).unwrap();
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(99.0),
+            "witness backing-array mutation before testing a new build");
+        session.collect().unwrap();
+        for _ in 0..2 {
+            let fresh = build(&mut session);
+            let value = session.invoke(&observe, &[&fresh]).unwrap();
+            assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(17.0),
+                "the same source Arc must produce unpoisoned metadata on every build");
+            let value = session.invoke(&observe, &[&first]).unwrap();
+            assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(99.0),
+                "new builds must neither reuse nor repair the old guest root");
+            session.collect().unwrap();
         }
-        assert_eq!(retained.metadata.len(), 1);
+    }
+
+    #[test]
+    fn declaration_metadata_builds_keep_budgets_and_revision_independence() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:doc \"retained\"} review-retained 17)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let snapshot = session.compilation_snapshot();
+        let namespace = SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
+        let (global, source) = namespace.declarations.iter()
+            .find(|(global, _)| global.name() == "review-retained")
+            .map(|(global, source)| (global.clone(), source.clone())).unwrap();
+        let build = |session: &mut Session, source: &Arc<portable::resolve::DefinitionInfo>| {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, session);
+            let root = graph.declaration(&global, Some(source), 0).unwrap();
+            assert_eq!(root, graph.declaration(&global, Some(source), 0).unwrap(),
+                "same-revision recipe sharing remains local to a build");
+            graph.materialize(root).unwrap()
+        };
+        let left = build(&mut session, &source);
         session.collect().unwrap();
         session.set_operation_fuel(1);
         let graph_error = {
-            // Updating the configured allowance affects the next request;
-            // internal graph work must run inside that request's scope.
             let _request = session.operation_budget_scope().unwrap();
-            let mut graph =
-                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
             graph.declaration(&global, Some(&source), 0).unwrap_err()
         };
-        assert!(
-            graph_error.to_string().contains("fuel") || graph_error.to_string().contains("Fuel")
-        );
+        assert!(graph_error.to_string().to_lowercase().contains("fuel"));
+        // Repeated builds after success retain the same admission constraints.
+        for _ in 0..2 {
+            session.set_operation_fuel(10_000_000);
+            let materialization_error = {
+                let construction_request = session.operation_budget_scope().unwrap();
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.declaration(&global, Some(&source), 0).unwrap();
+                drop(construction_request);
+                graph.session.set_operation_fuel(1);
+                let _request = graph.session.operation_budget_scope().unwrap();
+                graph.materialize(root).unwrap_err()
+            };
+            assert!(materialization_error.to_string().to_lowercase().contains("fuel"));
+        }
         session.set_operation_fuel(10_000_000);
-        let materialization_error = {
-            let construction_request = session.operation_budget_scope().unwrap();
-            let mut graph =
-                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
-            let root = graph.declaration(&global, Some(&source), 0).unwrap();
-            drop(construction_request);
-            graph.session.set_operation_fuel(1);
-            let _request = graph.session.operation_budget_scope().unwrap();
-            graph.materialize(root).unwrap_err()
-        };
-        assert!(
-            materialization_error.to_string().contains("fuel")
-                || materialization_error.to_string().contains("Fuel")
-        );
-        session.set_operation_fuel(10_000_000);
-        // Equal source data in a distinct Arc is still a separate revision.
         let other = Arc::new(source.as_ref().clone());
         {
             let _request = session.operation_budget_scope().unwrap();
-            let mut graph =
-                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
-            let root = graph.declaration(&global, Some(&other), 0).unwrap();
-            graph.materialize(root).unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let original = graph.declaration(&global, Some(&source), 0).unwrap();
+            let distinct = graph.declaration(&global, Some(&other), 0).unwrap();
+            assert_ne!(original, distinct, "equal data in distinct source Arcs remains a separate revision");
         }
-        assert_eq!(retained.metadata.len(), 2);
-        let compare = session.eval("(fn [a b] (identical? a b))").unwrap();
-        let left = retained.metadata[&(global.clone(), Arc::as_ptr(&source) as usize)]
-            .1
-            .clone();
-        let right = retained.metadata[&(global.clone(), Arc::as_ptr(&other) as usize)]
-            .1
-            .clone();
+        let right = build(&mut session, &other);
+        let compare = session.eval("(fn [a b] (identical? (get a :meta) (get b :meta)))").unwrap();
         let result = session.invoke(&compare, &[&left, &right]).unwrap();
-        assert_eq!(
-            bridge.read(&mut session, &result, 0..1).unwrap().kind,
-            Kind::Bool(false)
-        );
-        drop(other);
-        retained.prune();
-        assert_eq!(retained.metadata.len(), 1);
-        {
-            let mut graph =
-                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
-            let root = graph.declaration(&global, Some(&source), 0).unwrap();
-            graph.materialize(root).unwrap();
+        assert_eq!(bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Bool(false));
+        let observe = session.eval("(fn [d] (get (get d :meta) :doc))").unwrap();
+        for root in [&left, &right] {
+            let value = session.invoke(&observe, &[root]).unwrap();
+            assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind,
+                Kind::String("retained".encode_utf16().collect()));
         }
+        drop(right);
+        drop(other);
+        session.collect().unwrap();
+        let fresh = build(&mut session, &source);
+        let value = session.invoke(&observe, &[&fresh]).unwrap();
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind,
+            Kind::String("retained".encode_utf16().collect()));
         let value = session.eval("review-retained").unwrap();
-        assert_eq!(
-            bridge.read(&mut session, &value, 0..1).unwrap().kind,
-            Kind::Number(17.0)
-        );
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(17.0));
     }
+
+    #[test]
+    fn declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def metadata-hash-log (array)) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (aset metadata-hash-log (alength metadata-hash-log) key) nil) (metadata-original-hash key))))").unwrap();
+        session.eval("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} review-callback-metadata 0)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let snapshot = session.compilation_snapshot();
+        let namespace = SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
+        let (global, source) = namespace.declarations.iter()
+            .find(|(global, _)| global.name() == "review-callback-metadata")
+            .map(|(global, source)| (global.clone(), source.clone())).unwrap();
+        let mut baseline: Option<Vec<f64>> = None;
+        for _ in 0..2 {
+            session.eval("(set! metadata-hash-log (array))").unwrap();
+            let value = {
+                let _request = session.operation_budget_scope().unwrap();
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.declaration(&global, Some(&source), 0).unwrap();
+                graph.materialize(root).unwrap()
+            };
+            session.collect().unwrap();
+            let log = session.eval("(seq metadata-hash-log)").unwrap();
+            let form = bridge.read(&mut session, &log, 0..1).unwrap();
+            let Kind::List(items) = &form.kind else { panic!("nonempty numeric hash callback log") };
+            let actual = items.iter().map(|item| {
+                let Kind::Number(value) = &item.kind else { panic!("numeric hash key") };
+                *value
+            }).collect::<Vec<_>>();
+            // A declaration can contain more than one reader occurrence. Each
+            // nine-item set occurrence must keep its complete textual order.
+            assert!(!actual.is_empty());
+            assert_eq!(actual.len() % 9, 0);
+            for occurrence in actual.chunks_exact(9) {
+                assert_eq!(occurrence, &[101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0]);
+            }
+            if let Some(expected) = &baseline {
+                assert_eq!(&actual, expected, "later builds must repeat callback count and order");
+            } else {
+                baseline = Some(actual);
+            }
+            drop(value);
+        }
+    }
+
     #[test]
     fn raw_splicing_forms_have_distinct_cache_identity_and_are_rejected_by_consumers() {
         let items = suss_reader::forms::read_forms("[:cljs [17]]").unwrap();
@@ -3175,6 +3500,111 @@ mod sharing_tests {
             .expect("raw splice must be rejected");
         assert!(error.to_string().contains("resolved reader prefixes"));
     }
+    #[test]
+    fn new_parent_of_interned_large_child_fits_finite_fuel_without_discarded_copy() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let child = Form { span: 0..0, metadata: vec![], kind: Kind::String(vec![120; 65536]) };
+        let parent = Form { span: 0..0, metadata: vec![], kind: Kind::Vector(vec![child.clone()]) };
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let operation = graph.session.operation_budget_scope().unwrap();
+        let child_value = graph.form(&child, 0).unwrap();
+        drop(operation);
+        graph.session.set_operation_fuel(1_000_000);
+        let operation = graph.session.operation_budget_scope().unwrap();
+        let before = graph.session.operation_fuel_remaining().unwrap();
+        let root = graph.form(&parent, 0).unwrap();
+        eprintln!("new parent of interned child fuel: {}", before - graph.session.operation_fuel_remaining().unwrap());
+        assert!(matches!(&graph.recipes[root], Some(Recipe::ReaderVector(values)) if values == &[child_value]));
+        assert!(matches!(&parent.kind, Kind::Vector(values) if values.len() == 1 && values[0].kind == child.kind));
+        drop(operation);
+        graph.session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+        let value = graph.materialize(root).unwrap();
+        graph.session.collect().unwrap();
+        let actual = bridge.read(graph.session, &value, 0..0).unwrap();
+        assert!(matches!(&actual.kind, Kind::Vector(values) if values.len() == 1 && values[0].kind == child.kind));
+    }
+    #[test]
+    fn interned_large_literal_import_fits_finite_fuel_without_discarded_copy() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let form = Form {span:0..0,metadata:vec![],kind:Kind::String(vec![120;65536])};
+        let first_operation = session.operation_budget_scope().unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let first = graph.form(&form,0).unwrap();
+        drop(first_operation);
+        graph.session.set_operation_fuel(1_000_000);
+        let _operation = graph.session.operation_budget_scope().unwrap();
+        let before = graph.session.operation_fuel_remaining().unwrap();
+        let repeated = graph.form(&form,0);
+        eprintln!("interned literal fuel spent: {}", before - graph.session.operation_fuel_remaining().unwrap());
+        assert_eq!(repeated.unwrap(),first);
+    }
+    #[test]
+    fn bottom_up_scalar_and_reader_forms_share_recipe_keys() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        for (literal, kind) in [
+            (Literal::Nil, Kind::Nil),
+            (Literal::Bool(true), Kind::Bool(true)),
+            (Literal::Number(-0.0), Kind::Number(-0.0)),
+            (Literal::Number(f64::from_bits(0x7ff8_0000_0000_0001)), Kind::Number(f64::from_bits(0x7ff8_0000_0000_0001))),
+            (Literal::String(vec![97, 0xd800]), Kind::String(vec![97, 0xd800])),
+        ] {
+            let scalar = graph.scalar(literal).unwrap();
+            let form = Form { span: 100..200, metadata: vec![], kind };
+            let count = graph.recipes.len();
+            assert_eq!(scalar, graph.form(&form, 0).unwrap());
+            assert_eq!(graph.recipes.len(), count);
+        }
+        let form = Form { span: 8..19, metadata: vec![], kind: Kind::String(vec![0xdc00, 98]) };
+        let recipe = graph.form(&form, 0).unwrap();
+        let count = graph.recipes.len();
+        assert_eq!(recipe, graph.scalar(Literal::String(vec![0xdc00, 98])).unwrap());
+        assert_eq!(graph.recipes.len(), count);
+        let plus_zero = graph.scalar(Literal::Number(0.0)).unwrap();
+        let minus_zero = graph.scalar(Literal::Number(-0.0)).unwrap();
+        assert_ne!(plus_zero, minus_zero);
+    }
+
+    #[test]
+    fn bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def raw-key-hash-calls 0) (def raw-key-original-hash suss.core/hash) (def hash (fn [key] (do (set! raw-key-hash-calls (+ raw-key-hash-calls 1)) (raw-key-original-hash key))))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let value = {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let form = suss_reader::forms::read_forms(
+                "^{:nested #{101 102 103 104 105 106 107 108 109}} #{1 2 3 4 5 6 7 8 9}"
+            ).unwrap().remove(0);
+            let occurrence = graph.form(&form, 0).unwrap();
+            assert_eq!(occurrence, graph.form(&form.clone(), 0).unwrap());
+            assert!(matches!(graph.recipes[occurrence].as_ref(), Some(Recipe::Metadata { shape: MetadataShape::Set, .. })));
+            // Same explicit sharing barrier as ast_record's quoted datum.
+            let alias = graph.recipe(Recipe::Alias(occurrence)).unwrap();
+            let root = graph.vector(&[occurrence, alias, alias]).unwrap();
+            let value = graph.materialize(root).unwrap();
+            assert!(matches!(graph.recipes[alias].as_ref(), Some(Recipe::Alias(target)) if *target == occurrence));
+            value
+        };
+        session.collect().unwrap();
+        let count = session.eval("raw-key-hash-calls").unwrap();
+        // Direct occurrence and first alias each construct two nine-item sets;
+        // the second alias reuses its result. Key interning executes no hashes.
+        assert_eq!(bridge.read(&mut session, &count, 0..1).unwrap().kind, Kind::Number(36.0));
+        let probe = session.eval("(fn [v] [(identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))])").unwrap();
+        let result = session.invoke(&probe, &[&value]).unwrap();
+        let result = bridge.read(&mut session, &result, 0..1).unwrap();
+        let Kind::Vector(items) = &result.kind else { panic!("identity projection") };
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].kind, Kind::Bool(false));
+        assert_eq!(items[1].kind, Kind::Bool(true));
+    }
+
     #[test]
     fn reader_data_identity_preserves_number_bits_metadata_and_order() {
         assert_ne!(
@@ -3366,6 +3796,43 @@ mod sharing_tests {
             let actual_probe = bitmaps(&mut session, &bridge, &probe, &actual);
             assert_eq!(actual_probe, expected_probe);
         }
+    }
+    #[test]
+    fn compact_diamond_admission_rejects_before_reader_callbacks() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def review-diamond-effects 0) (def hash (fn [key] (do (set! review-diamond-effects (+ review-diamond-effects 1)) key)))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let form = suss_reader::forms::read_forms("#{1 2 3 4 5 6 7 8 9}").unwrap().remove(0);
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let leaf = graph.form(&form, 0).unwrap();
+        let mut root = leaf;
+        for _ in 0..16 {
+            root = graph.recipe(Recipe::ReaderVector(vec![root, root])).unwrap();
+        }
+        // Fewer than 40 distinct recipes; validation and compact counting cost
+        // far less than 50k. Their expanded frame work alone exceeds 300k.
+        assert!(graph.recipes.len() < 40);
+        graph.session.set_operation_fuel(50_000);
+        let request = graph.session.operation_budget_scope().unwrap();
+        let error = graph.materialize(root).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert_eq!(graph.session.operation_fuel_remaining().unwrap(), 0);
+        drop(request);
+        drop(graph);
+        // The same allowance admits a genuinely small independent operation.
+        let effects = session.eval("review-diamond-effects").unwrap();
+        assert_eq!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0));
+        let small = {
+            let request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.scalar(Literal::Number(42.0)).unwrap();
+            let result = graph.materialize(root).unwrap();
+            drop(request);
+            result
+        };
+        assert_eq!(bridge.read(&mut session, &small, 0..1).unwrap().kind, Kind::Number(42.0));
     }
     #[test]
     fn reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery() {

@@ -3,6 +3,7 @@
 //! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
 mod function_names;
+pub(crate) mod metered_map;
 pub mod hir;
 pub mod ir;
 pub mod modules;

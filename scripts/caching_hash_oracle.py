@@ -17,9 +17,14 @@ def generate():
 if __name__ == '__main__':
     oracle.CORPUS = oracle.ROOT / 'tests/oracle/caching-hash-cases.json'
     oracle.OBSERVATIONS = oracle.ROOT / 'tests/oracle/out/caching-hash-observations.json'
-    if sys.argv[1:] == ['generate']:
+    arguments = sys.argv[1:]
+    if len(arguments) == 2 and arguments[1] == 'callable':
+        oracle.CORPUS = oracle.ROOT / 'tests/oracle/caching-hash-callable-case.json'
+        oracle.OBSERVATIONS = oracle.ROOT / 'tests/oracle/out/caching-hash-callable-observations.json'
+        arguments = arguments[:1]
+    if arguments == ['generate']:
         generate()
-    elif sys.argv[1:] == ['compare']:
+    elif arguments == ['compare']:
         oracle.compare()
     else:
-        raise SystemExit('usage: caching_hash_oracle.py generate|compare')
+        raise SystemExit('usage: caching_hash_oracle.py generate|compare [callable]')
