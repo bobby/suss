@@ -27843,3 +27843,58 @@ All payload hashes were read back verified. Source-only integration review
 passed; independent final artifact/committed-head review is requested. Next
 implementation remains explicit namespace provenance with pinned observations,
 then integration of the separately executed actual-env effect regression.
+
+### Memo-ledger cost diagnostic — 2026-10-16
+
+Isolated `portable/m4-memo-ledger-diagnostic` worktree copied the complete435-path
+combined snapshot, independently compared byte-for-byte with committed8fda18a.
+Own COW `memo-ledger-diagnostic-target`; no main target/source edits. Native
+counters changed no Watch/Ledger fields, roots, eligibility, publication paths,
+existing charge units or guest calls. Scope counters distinguish enrollment,
+protected/scoped stores and collection. Charge wrappers preserve original
+Results; observational fuel-read errors do not replace execution errors.
+
+Commands, jobs2/locked/no RUSTFLAGS:
+
+- `cargo check -p suss-compile --locked`: exit0,10.93s.
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  exit0,24.99s command.
+- `SUSS_MEMO_LEDGER_TRACE=1 SUSS_MACRO_FUEL_TRACE=1 SUSS_METADATA_FUEL_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_source_tags compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods -- --exact --nocapture --test-threads=1`:
+  exit101,0pass/1fuel-fail,39.27s test/59.70s command. Source unchanged.
+
+Macro-host ledger identity3:5 published registrations, all eligible=true
+(4Keyword,1PersistentArrayMap); eligible=false0, maximum live ledger length5.
+Enrollment10 sweep visits; protected154 stores/770 sweep visits/770 scans,
+616 eligible-site-identity filter matches but zero staged candidates. Scoped188
+stores, no active IHash scopes, no scans. No collection sweep observed.
+Instrumented direct ledger charges: enrollment1865, protected11396, scoped752;
+sum14013. The failing fifth &env interval adds protected30calls/150scans and2220
+measured direct units, with no new registrations. These are traced ledger-path
+charges, not an exhaustive whole-runtime, adapter or source-validation bill.
+
+Decoded balances8354757,6639177,4094597,1538479 and fifth start1538220 exactly
+match main's reported uninstrumented same-source stage trace60030. That raw
+reference log is owned by main; this archive retains our raw stage lines and
+numeric comparison, not a claim of independently comparing its complete file.
+Failure remains caller&env span388..413. Native logging/counters can perturb
+wall time and interrupt timing; no wall-time/IRQ-equivalence claim.
+
+Zero ineligible registrations rules out omitting their ledger publication as a
+remedy for this fixture. DO NOT implement that proposal from these results.
+Its independent conditional invariant review was not performance approval.
+Keep local Watch/domain/method obligations intact; no production optimization
+was made. Main chooses any next guest cold-hash/m3 diagnostic after review.
+
+Archive `docs/roadmap/evidence/m4-memo-ledger-cost-diagnostic-2026-10-16.tar.gz`,
+SHA2568047b35590576694ced67d6e796723bf958b0958f9cbe909117a47debbafd167:
+470 verified manifested payloads,436 diagnostic frozen paths, both-phase
+compiler/core/dependency/Wasm fingerprint checks true. Full source, raw failure,
+counters, stage comparison, runner and limitations retained. Supporting inputs
+were captured after execution, not independently frozen before it. No full
+baseline, conformance, source-tag acceptance or production-change claim.
+
+Main verified all470 archive payload hashes and exact diagnostic snapshots for
+every dirty/untracked source file before restoring production/tests/bootstrap
+to parent37991e3. Only this evidence and handoff are published; no diagnostic
+source shipped. Executed diagnostic base matched all435 paths of8fda18a before
+instrumentation; that implementation remains independently published there.
