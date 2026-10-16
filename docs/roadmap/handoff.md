@@ -27359,3 +27359,11 @@ All four focused suss-cli tests pass, source unchanged across424 frozen hashes:
 Commands: `cargo test -p suss-cli --locked --test TARGET NAME -- --test-threads=2 --nocapture`, exact target/name mapping in archived runner/receipt; jobs2/target-m4-prototype. These execute captured/shadowed initializer identity, variadic self, nested reader positions (including Unicode/CRLF), loaded filename and quoted argument-list metadata. They supplement public10; they do not replace the six failing source-transport corpora.
 
 Archive `m4-binding-location-107a736-2026-10-16.tar.gz`, SHA256 `e2112e0c0ac9a2029c1588220b4130a9d0838e5838176f0e3eabe4f092d3c33e`, six hashed payloads plus manifest, read back verified. No full workspace acceptance, terminal CI or issue closure claimed.
+
+### Terminal CI at scoped-store source107a736 (2026-10-16)
+
+Run38884636909 TERMINALfailure. Foundation369Rust pass executions/one explicit ignore,348Python tests pass33.149s. All eight integration partitions and aggregate fail. Seventeen failed test names are fuel exhaustion. The prior cold custom-map identity failure passes in public cumulative10/10 (111.28s); the formerly blocked partition reaches record-factory, whose fuel failure was already known locally. Of247 planned integration targets,31executed and216unexecuted. Known union remains18fuel failures, including the local global-reference test unexecuted by CI; this is not an exhaustive classification of unexecuted targets.
+
+Actual synthetic CI checkout88fdb7d052acd45e552ca51c37a6c075c517c887 has the complete Git tree identical107a736ffc5805aade486d826db7f42c7e6491b6. Read-only fetch/tree comparison only; no merge performed.
+
+Archive `m4-ci-107a736-2026-10-16.tar.gz`, SHA256 `def55916a196ce01edb21fb29430f32f92a3a30a60d4d373b2da0501a5c795ee`, 28 hashed payloads plus manifest, read back verified. Raw/ANSI-clean terminal logs, run/jobs metadata, collector/classifier, prior comparison and local global-reference raw receipt retained. No new workflow was started to replace this red result. No full-baseline or issue-completion claim. Next: resolve direct transport fuel gaps and isolated cold-leaf nested memo regression, then test the combined source.
