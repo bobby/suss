@@ -27381,3 +27381,33 @@ Independent committed-head review of7abc0e9 found no blockers: crates/runtime/Ca
 ### Foundation provenance refresh (2026-10-16)
 
 CI38871518498 foundation failed before Rust execution: Python test_exact_source_and_instruction_provenance rejected stale named-property ABI whole-file source hash after the property comparison optimization. Updated only source-file-sha256 to7b1b1e197e78cc8583e59970ec143448029fa46903145e9e841edda2482cba66. The separately pinned complete guard hash/algorithm/license remain unchanged. python3 scripts/check_record_macro_provenance.py exits0; python3 -m unittest discover -s scripts -p test_*.py passes348tests23.620s. Native/compiler/bootstrap unchanged, so ongoing regression freeze remains valid. Raw/clean CI log and local verification logs: docs/roadmap/evidence/m4-foundation-provenance-refresh-2026-10-16.tar.gz SHA256 02102bd996142cc5546b6228df820a6ae45b2ef1c7abc28138b8bfb589bc59ca. Other CI jobs still live/queued when inspected; no aggregate success inference.
+
+### Pinned Symbol/Keyword metadata memo reference (2026-10-16)
+
+Branch portable/m4-memo-leaf-oracle, native source base9f951b0. Development-only
+`sh scripts/probe-metadata-memo-leaf.sh` executes the pinned CLJS self-hosted
+analyzer at c4295f303100bbf5afac449242d30bca1126f1a1 with actual macro
+&env, resolve-var and analyzed-var observations. Final exit0:8 cases,
+144/144 parent/leaf identity observations true, declaration value17 preserved.
+Cases cross Symbol/Keyword, cold/explicit canonical warm, unconditional91
+write/nil-aware cached method. All initial leaf memos are nil. Cold custom
+methods write91; warm nil-aware methods retain the canonical memo; warm
+unconditional methods replace it with91. Each actual subject dispatch runs once.
+Methods are restored in finally; errors propagate.
+
+CLI1.12.1.1550/Clojure1.12.1/JRE21.0.8+9/Node26.8.2 are development tools
+from /home/bobby/.cache/suss-m4-oracle-tools. No shipped Java dependency.
+The shell runner verifies the exact clean upstream checkout and uses fresh
+analysis. Structured observations live in tests/oracle/metadata-memo-leaf-observations.json.
+Archive docs/roadmap/evidence/m4-metadata-memo-leaf-reference-2026-10-16.tar.gz
+SHA256 dd59c4c4fec3181732eb4cf6f8d1cbf0d69abedb982b0c76df672876591e8dc8
+contains22 hashed payloads plus manifest, read back and verified. Earlier failed
+probes are retained: incorrect physical receiver, incorrect typeof emission,
+and munged access to a hyphenated JavaScript result property. Their raw output
+is evidence of probe failures, not portable failures.
+
+This establishes CLJS reference behavior only. Matched native leaf cases are
+required next: FormBridge currently eagerly seeds identifier memos, and scoped
+store authorization currently accepts originally nil watches only. Preserve
+value/effect observations before changing either rule. No issue closure,
+full workspace acceptance or final-head CI is claimed here. Refs #257.
