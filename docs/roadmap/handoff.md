@@ -27900,3 +27900,66 @@ the separately reviewed keyword gate is supplemental and requires integration.
 Next diagnostic must identify actual remaining cold Keyword receivers via native
 field reads and nesting-aware counts without extra guest hashing. Do not infer
 literal origins from spelling or broaden warming from an unnamed cost sample.
+
+### Namespace-record literal-key observations — 2026-10-16
+
+Isolated branch `portable/m4-namespace-literal-origin`, base `be6a219`; no changes
+were made to main's combined/preservation targets or the diagnostic checkpoint.
+The namespace-record constructor now marks nine explicit pinned analyzer literal
+creation routes: `name`, `requires`, `renames`, `uses`, `require-macros`,
+`use-macros`, `rename-macros`, `excludes`, `defs`. Proof is analyzer.cljc at
+c4295f303100bbf5afac449242d30bca1126f1a1: ns-info map 3504–3517,
+require-info map 3588–3600, their compiler-state merge, and ensure-defs update
+path 5091 / parse-def assoc-in 2093. No spelling lookup infers provenance.
+Suss-only fields retain Cold origin; the separate membership projection,
+reader forms, dynamic symbols, metadata values, hash implementation, memo
+receipt eligibility and compiled constants are unchanged. Existing map storage
+charging accounts for the larger FieldKey representation.
+
+The native regression executes actual namespace materialization with a captured
+original Keyword IHash delegate and a live replacement. Both phases observed
+exactly nine callbacks in original construction order, each with nonnil memo;
+assertions check names/order, nine distinct cold same-text reader leaves and the
+Suss-only control before and after GC, then explicitly restore the original
+method. Carver independently reviewed graph SHA256
+fcf6af977c0838c0585ec8ed694b7f49d1b9b25b3089491de6f2f1e47770244a
+without blockers (source review, not performance/artifact certification).
+
+Dedicated `namespace-literal-origin-target`, jobs2, locked Cargo, no RUSTFLAGS:
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  exit0,34.81s command.
+- `cargo test -p suss-compile --locked --lib analyzer_literal -- --test-threads=2 --nocapture`:
+  6pass/0fail,64.95s test,103.33s command.
+- `cargo test -p suss-cli --locked --test compiled_macro_analyzer_literal_memos -- --test-threads=2 --nocapture`:
+  2pass/0fail,98.52s test,133.50s command; four ten-true env rows plus vector controls.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  0pass/2fuel-fail,53.52s test,54.95s command. Invocation span388..413 and
+  inference span324..356 still exhaust during caller &env transport.
+
+All433 frozen Rust/Suss/bootstrap paths remained unchanged. Archive
+`docs/roadmap/evidence/m4-namespace-literal-origin-focused-2026-10-16.tar.gz`
+SHA256 730e51ea259051acadbe51b12d868d7f53ece3bc9b6cfbb03ba2dbb387ba3cd6
+has489 manifested payloads with verified hashes; compiler/core/dependency/Wasm
+fingerprints recompute for both phases. Supporting fingerprint inputs were
+captured after execution, not independently frozen before tests. The nested
+six-field attempt preserves its exact433-path source/bootstrap snapshot,
+native6/env2 passes and both fuel failures. Its insufficient name/order checks
+and omitted three proved routes were corrected only after its producer ended.
+
+Supplemental local pinned six-key oracle executed actual parse-ns/ensure-defs:
+six reader controls nil, six actual namespace fields numeric,23 selected
+pre-delegation observations numeric. Missing-Java and two initial syntax failures
+are retained. No hand-installed namespace map supplies the observed keys.
+The separately owned full nine-key oracle
+`m4-namespace-key-oracle-2026-10-16.tar.gz`, SHA256
+e34cacfe993ca126e369747ed3a7d835f8f06b1457332b15b8a2ddb4010752ba,
+is referenced rather than duplicated: main reports two corrected identical runs,
+43 observations/99 calls, all nine selected pre-dispatch memos matching numeric
+values, twelve reader/source controls nil and new namespace Symbol nil.
+
+No matched uninstrumented cost comparison, source-tag acceptance, full baseline,
+Jank rerun, final CI or issue closure is claimed for this isolated snapshot.
+Both mandatory source-tag failures remain; further origin expansion requires
+independent creation-site evidence. Main owns combined integration and the
+separate oracle/effect evidence; do not duplicate those producers.
