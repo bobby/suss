@@ -27315,3 +27315,21 @@ Archive `docs/roadmap/evidence/m4-memo-call-boundary-reference-2026-10-16.tar.gz
 ### Rebase source-equivalence check (2026-10-16)
 
 Rebased the existing draft checkpoint from `e56bd6cb8d03191171d98bc9d97c7bcf6c2509f5` onto upstream `d58e693596d17eec424daf6cc2cd6d912d7bd295` in an isolated checkout, preserving original checkpoint history on `portable/m4-cumulative-before-main-sync`. Conflict resolution retained both documentation sides and the original tested bootstrap pairs. `git diff --name-only e56bd6cb8d03191171d98bc9d97c7bcf6c2509f5 445f51314ef90e91d267a8209b88f11a8b2ce7e7` contains only documentation/evidence paths; all421 frozen Rust/Suss/bootstrap paths compare byte-identically to the running baseline snapshot. No compiler, runtime, test, script, Cargo or shipped bootstrap bytes changed during this resolution. This equivalence check does not constitute new semantic execution or whole-issue acceptance.
+
+### Exact workspace baseline prefix and fuel failures (2026-10-16)
+
+`cargo test --workspace --locked -- --test-threads=2` with two Cargo jobs and task target directory exited101 after2913.03s: 81passed,2failed,0ignored within16 completed targets. Failures: `collection_source_nodes_retain_original_children_before_factory_lowering` and `unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order`, both Wasmtime fuel exhaustion. Cargo stopped at this binary: 237 planned harnesses and4 doctest targets did not execute; their assertions are not counted as passes or ignores. Full target classifications and raw metadata are retained.
+
+All421 frozen source/bootstrap paths stayed unchanged; rebased head209b5dd has identical executable/test source. Compiler fingerprint `9af3dde1329d86208890d16c90d9ce79374c6f0c2d4e4d50b2a7164eeb23aad0` independently recomputes using Rust path-component ordering. CI run38859477593 shard3 job116838250674 independently reproduces the same two failures (1pass/2fail in that target); other CI outcomes remain separate. No baseline success is claimed.
+
+Archive `docs/roadmap/evidence/m4-full-baseline-prefix-2026-10-16.tar.gz`, SHA-256 `49e008018ed3bca764fbb4c12b8f9a2d9416763d4c51b36e4509ce8eb42fddd7`, contains raw local and CI failures, target classification, compiler inputs and source snapshots. Initial verifier ordering mismatch is preserved as packaging setup, not a changed-input result. The archive was held until that CI run became terminal.
+
+CI checkout qualification: run38859477593 is associated with head209b5dd but checkout uses GitHub synthetic test-merge `cbb31d7ad13d09c07f12d16ab31284669c5c91db` into d58e693. Fetching `refs/pull/256/merge` and comparing Git trees proves it is byte-identical to209b5dd. This is ordinary PR merge-CI provenance, not a PR merge or a literal head checkout.
+
+### CI209b5dd execution boundary (2026-10-16)
+
+Run38859477593 completed failure. Foundation succeeded; all8 integration partitions and the required aggregate check failed. The partitions planned247 integration targets, executed26 and left221unexecuted after their first failing binary. There are17 distinct failing Rust tests:16fuel exhaustions and1cold custom-hash metadata identity failure. Combined with local focused evidence,17distinct fuel failures remain known (one record-factory target was not reached in CI).
+
+Seven additional fuel failures are in `compiled_public_records` (four), `compiled_macro_control_source_asts` (one), `compiled_macro_constructor_source_asts` (one) and `compiled_macro_core_environment` (one). Exact matching tests passed in the retained prior main-based exclusive baseline; the complete prior raw log is included, not inferred from issue status. Both local baseline and CI passing prefixes remain distinct from successful full commands. Existing explicit ignores in foundation are retained in raw logs and per-job execution counts; no blanket skip was introduced.
+
+CI source is GitHub synthetic merge cbb31d7, whose tree equals209b5dd. Raw ANSI logs and separately derived cleaned views, complete per-partition plans/outcomes and prior-pass comparison are in `docs/roadmap/evidence/m4-ci-209b5dd-2026-10-16.tar.gz`, SHA-256 `8a8739366f2e0ba0898bc8c910d8200b5419fde9acf96a6f23fd8dfcd1d3f0fc`. No milestone or issue completion follows from this failed workflow.
