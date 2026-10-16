@@ -27407,3 +27407,43 @@ Next: explicitly mark audited compiler-literal keyword construction provenance, 
 Run38908029824 is terminal failure: foundation393 Rust pass executions/1explicit ignore and348 Python passes (31.374s). All8 integration partitions and aggregate fail. All18 distinct failing names are fuel exhaustion and match the precedingf1 CI failure set; no newly failed name is observed among executed tests. Only30/249 integration targets executed;219 were unexecuted, not passing. The local global-reference and historical factory failures remain outside this CI execution prefix, so no exhaustive backlog success follows. The classifier explicitly carries the historical20 known fuel-failure names forward, separately from the18 observed here. Public cumulative10/10 passes (148.56s), source-location target10/10 passes (184.91s).
 
 Read-only fetch of actual CI synthetic checkout 3c65f71b9429c15e5600f1c8fcd400ca6917cb83 proves its complete tree 3603db2abfec601e670fefc0bae33b31aa227706 equals declared a3c158c. No merge was performed. Raw and cleaned logs for all10 jobs, classifier, prior comparison and checkout proof are retained in `docs/roadmap/evidence/m4-ci-a3c158c-2026-10-16.tar.gz`, SHA256 `8d272a596423082e4d76ba008ac9722a80622db72d4c3f63c3dbe1e8d9c768b4` (28 payloads). Foundation and passing-prefix evidence do not certify the complete workflow. Next: complete combined paged validation, investigate the cold source-tag regression using measured invocation work and pinned schema-key observations, then require issue-specific acceptance/full baseline/final-head CI.
+
+
+## Pinned namespace key initialization oracle — 2026-10-16
+
+Development-only pinned CLJS c4295f303100bbf5afac449242d30bca1126f1a1,
+using cached CLI/JRE and Node. No shipped Java dependency or production source
+change. `python3 runner.py` in the archived fixture performs two compile+Node
+runs, terminal0,38.71s/37.21s. Corrected executions produce identical43 ordered
+observations and99 pre-delegation dispatch rows each. Actual parsed namespace,
+ensure-defs, def and registered macro &env records are exercised, with dependency
+analysis and macro loading disabled for the bounded fixture. Synthetic observer
+macro registration is setup, not namespace provenance proof.
+
+Actual namespace-key memo observations:
+`:name`1843675177;`:requires`-1201390927;`:renames`343278368;
+`:uses`232664692;`:require-macros`707947416;`:use-macros`-905638393;
+`:rename-macros`1076432512;`:excludes`-1791725945;`:defs`1398449717.
+Selected pre-delegation entries match these numbers. Twelve reader/source
+controls remain nil; newly parsed namespace-name Symbol is nil. Preexisting
+cljs.user name is already warm, explicitly separate from that cold control.
+
+Wrappers read native JS fields/arrays before exact original delegation, with
+original this/argument, no extra hash/equality call or memo write. Printing is
+after capture. Prototype methods and NS_CACHE restore in finally. Corrected
+runs initialize empty-state/core cache before hooks: this removes variable
+setup activity from the observed interval, not filtering/reordering runtime
+traces. Earlier dispatch variability, failed ordered comparison and all raw
+attempts remain archived. Runtime observations plus pinned emitted constructors
+support this bounded namespace origin; spelling alone does not establish origin.
+
+Archive `docs/roadmap/evidence/m4-namespace-key-oracle-2026-10-16.tar.gz`
+SHA256 e34cacfe993ca126e369747ed3a7d835f8f06b1457332b15b8a2ddb4010752ba
+contains170 verified payloads, raw attempts, source, generated output closure,
+constructor excerpts and full pinned upstream analyzer/compiler/env files with
+licenses/notices. Toolchain/JRE/Maven cache remain external prerequisites, not
+an independently archived toolchain. Main verified all170 payload hashes before
+publication preparation. Independent artifact review requested. No Suss result,
+full baseline, final-head CI or #261 acceptance follows from this oracle alone.
+Next implementation: explicitly proved namespace constructor keys only, preserving
+Suss-only keys, dynamic symbols and reader controls cold; then exact execution.
