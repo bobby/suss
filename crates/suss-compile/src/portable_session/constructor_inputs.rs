@@ -146,11 +146,25 @@ impl Session {
         class: &SessionValue,
         arguments: &[&SessionValue],
     ) -> Result<(SessionValue, Option<ConstructorInputs>)> {
+        self.data_construct_with_inputs_policy(class, arguments, false)
+    }
+    pub(super) fn data_construct_private_with_inputs(
+        &mut self, class: &SessionValue, arguments: &[&SessionValue],
+    ) -> Result<(SessionValue, ConstructorInputs)> {
+        let (value, fact) = self.data_construct_with_inputs_policy(class, arguments, true)?;
+        Ok((value, fact.ok_or_else(|| invalid("Private constructor has no ordinary facts"))?))
+    }
+    fn data_construct_with_inputs_policy(
+        &mut self, class: &SessionValue, arguments: &[&SessionValue], private: bool,
+    ) -> Result<(SessionValue, Option<ConstructorInputs>)> {
         self.check(class)?;
         let _request = self.operation_budget_scope()?;
         self.check_data_input_owners(arguments)?;
         let (descriptor, plan) = self.data_constructor_plan(class)?;
         if !same(self, &descriptor, &plan)? {
+            if private {
+                return Err(invalid("Private analysis values require a callback-free constructor"));
+            }
             return Ok((self.data_construct_from_plan(&plan, arguments)?, None));
         }
         let schema = field(self, &descriptor, 1)?;
@@ -231,6 +245,44 @@ impl Session {
     }
 }
 impl ConstructorInputs {
+    pub(super) fn bind_native_inputs(
+        &mut self, session: &mut Session,
+        bindings: &super::deferred_factory::NativeBindings<'_>,
+    ) -> Result<()> {
+        // Schema inspection is a restriction only, never new constructor/source
+        // authority. Require the original immutable observation before reading it.
+        if !session.storage_matches(&self.schema, &self.schema_storage)? {
+            return Err(invalid("Deferred constructor schema changed"));
+        }
+        let names = names(session, &self.schema)?;
+        if names.len() != self.fields.len() {
+            return Err(invalid("Deferred constructor schema width changed"));
+        }
+        // Only pre-construction expected references change. No physical field
+        // value supplies an expectation, and every other captured fact remains.
+        let mut fields = Vec::new();
+        reserve(session, &mut fields, self.fields.len())?;
+        for (index, field) in self.fields.iter().enumerate() {
+            session.charge_host_work(2)?;
+            fields.push(match field {
+                Some(value) => {
+                    let bound = bindings.resolve(session, value)?;
+                    if !same(session, value, bound)? {
+                        // Length, at most six UTF16 comparisons, and selection.
+                        session.charge_host_work(8)?;
+                        if names[index].as_deref().is_some_and(|name|
+                            matches!(name, [95, 104, 97, 115, 104] | [95, 95, 104, 97, 115, 104])) {
+                            return Err(invalid("Deferred binding cannot replace a captured hash field"));
+                        }
+                    }
+                    Some(bound.clone())
+                },
+                None => None,
+            });
+        }
+        self.fields = fields;
+        Ok(())
+    }
     pub(super) fn matches_prototype_origin_audited(
         &self, session: &mut Session, audit: &mut super::certification_audit::CertificationAudit,
     ) -> Result<bool> {

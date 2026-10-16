@@ -28081,3 +28081,315 @@ are not completed-suite passes. Initial parser/retrieval failures and superseded
 classifications remain preserved and identified. No full baseline, complete
 all-target pass, current dirty-source CI coverage or acceptance conclusion is
 claimed. Each published head has independent execution evidence.
+
+
+## Native copy accounting bootstrap diagnostic (2026-10-16)
+
+Archive `evidence/m4-hir-cow-bootstrap-diagnostic-2026-10-16.tar.gz`,
+SHA256 `8ec12646aef142ff1a51e6185fefdafbf918fee47f4bb4f1ac98b30fd898bb43`,
+retains the diagnostic source snapshot, raw log, receipt, before/after freezes,
+exclusive debit summary and original failure log. Reproduce the recorded
+diagnostic from its exact source snapshot with `CARGO_BUILD_JOBS=2
+CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target
+SUSS_HIR_COW_TRACE=1 cargo run --profile test -p suss-cli --bin suss-bootstrap
+--locked -- /home/bobby/.cache/suss-m4-work/hir-cow-bootstrap-diagnostic/bootstrap-output`.
+
+One attempt exited1 in20.9567s during Runtime bootstrap generation, before
+Macro generation or Session proof tests. All448 frozen inputs were unchanged.
+The unchanged native-work allowance was10,000,000: accepted debits9,999,826,
+remaining174; the rejected request was192. Innermost-context form-copy debits
+were4,929,269 and HIR-copy debits1,647,187. Together these account for6,576,456
+accepted units; they are debit partitions, not elapsed time or guest instructions.
+Form-copy attribution does not distinguish capture-time from entry-revision
+copies. Diagnostic bookkeeping adds uncharged observer work; explicit production
+debits and allowance are unchanged. This evidence motivates eliminating actual
+immutable payload copies; it establishes neither a successful bootstrap nor
+passing downstream tests, and does not cover later source edits.
+
+## Pinned namespace callback observations (2026-10-16)
+
+Exact probe: /home/bobby/.cache/suss-m4-work/namespace-callback-oracle/src/suss_oracle/namespace_callback.cljs
+Command executed: python /home/bobby/.cache/suss-m4-work/namespace-callback-oracle/runner.py
+Receipt: namespace-callback-oracle/receipt.json; raw compile/run logs, per-command
+receipts, source freeze and run1/run2-observations.json reside beside the probe.
+Independent review verified the source observations, restoration checks and archive hashes.
+
+Clean pinned CLJS c4295f303100bbf5afac449242d30bca1126f1a1; compile0,
+two independent Node executions0, identical rows and ordered events. Per run:
+five isolated compiler states, ten actual macro invocations, five explicit IHash
+callbacks and55 events. Probe/runner/deps/run-script hashes stayed unchanged.
+Initial attempt compile0/run1 exit1 (counter shadowed count) remains under
+first-attempt with original source/generated probe JS/log/receipts. No complete
+observation result is claimed for that attempt.
+
+Output schemas:
+
+- Final JSON: {pin: string, rows: array, events: array, limits: string}.
+- Each live observation line: {observation: case-string, event: string,
+  value: pr-str-string}. It is emitted by record! for ten events per case.
+- Final events contain {case: string, event: string, value: pr-str-string};
+  the directly appended cache-restored event instead has a JSON boolean value
+  and occurs only in the final events array, not as a live observation line.
+- Each row: {case: string, hash-result: number, callback-count: number,
+  fresh-env: boolean, same-ns: boolean, same-owner: boolean,
+  same-storage: boolean, resolved-method-child-shared: boolean,
+  before: pr-str-string, captured-after: pr-str-string,
+  current-after: pr-str-string, compiler-after: pr-str-string}.
+  Hyphenated field names are literal JSON keys. Values rendered by pr-str are
+  strings, including numeric/boolean-looking values in events; do not coerce
+  them into native JSON values when comparing raw observations.
+
+Each case has exactly this ordered final event sequence:
+entry-capture("0"), exit-capture("0"), entry-invalidate("0"), hash-enter("1"),
+captured-during(poison), current-during(poison), compiler-during(poison),
+hash-exit("719"), restored("true"), exit-invalidate("1"), cache-restored(true).
+The callback count is local to each case; it does not count all analyzer hashes.
+The macro body explicitly calls hash on a dedicated reify IHash object once.
+No existing/global hash method is replaced, so this probe has no delegation or
+method-restoration claim. Callback returns719; it does not throw.
+
+Observed poison values (pr-str): namespace name=poisoned.namespace;
+defs watched entry={:poison 702}; raw declaration doc="poisoned-doc";
+nested metadata audit token=704; callable first parameter=poisoned-param.
+Original values: case-specific namespace symbol; complete raw watched map
+(retained verbatim in JSON); "original-doc";41;x, respectively.
+For every case, captured/current/compiler-after and the three during-callback
+views agree on poison. Fresh outer env=true; namespace/owner/storage identity=true.
+Resolved callable method-params identity is compared BEFORE the mutation; this
+is not a post-poison resolved-info reconstruction result. After-callback row
+values are captured before finally restores storage. The callback poison is
+restored explicitly by the probe before that second macro returns. Storage
+restoration checks original slot identity plus original semantic readback through
+captured/current/live compiler paths; cache restoration checks atom contents by
+identity. These are explicit probe cleanup checks, not native cache repair.
+
+Interpretation and native boundary:
+Pinned analyzer get-namespace retrieves actual compiler-state maps; macroexpand-1*
+passes the env directly to the macro. The observed physical storage mutation
+therefore contaminates both captured references and live compiler-owned data.
+This establishes host-object sharing and once-only explicit callback ordering;
+it does not establish immutable-source restoration/reconstruction semantics.
+Native #264 source-child poison tests, as described, check that NEW transport
+reflects independent immutable native facts while OLD guest objects retain
+witnessed mutations. Those are native integrity assertions, not an exact match
+to this CLJS physical compiler-storage poisoning. This oracle neither weakens
+that requirement nor licenses adopting guest poison as source authority.
+Supported unmutated relationships are shared persistent children with fresh
+outer maps; explicit macro hash callbacks must preserve their values/count/order.
+Automatic callbacks during native reconstruction, post-callback certification of
+all affected parents/shared exports, persistent poison across macro return,
+revision advancement, failure publication, GC/reset/foreign-owner and complete
+#264 acceptance remain unproven by this probe. No guest equality/hash/memo can
+be promoted to independent native source authority from these observations.
+
+Archive: `evidence/m4-namespace-callback-oracle-2026-10-16.tar.gz`
+SHA256 28882f11e168fa756b7d8b3933f70d8b012cc62675c7223e9969a65e164c0302
+160 checksum-verified payloads plus MANIFEST.json. The oracle producer changed
+no production/test/bootstrap source and ran no Cargo builds. Main retained this
+archive and interpretation after independent review; no native acceptance or
+issue-closure conclusion follows from these host observations.
+
+
+## Immutable binding payload native evidence (2026-10-16)
+
+Archive `evidence/m4-immutable-payload-native-2026-10-16.tar.gz`, SHA256
+`e24aa5fea11b3c1d8e759210cbcfd5ac341c49c4d39a72451bd181648d3bc98f`,
+retains909 manifested payloads: both exact448-path source snapshots, runner
+scripts, freezes, terminal commands/logs and the same-binary diagnostic receipt.
+The first `cargo test -p suss-compile --locked --lib --no-run` failed on two
+remaining Arc fixture construction mismatches; both were corrected explicitly.
+The second compile passed. Focused commands, with CARGO_BUILD_JOBS=2 and the
+owned analyzer-literal-key-target directory, were:
+
+```sh
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib metered_clone_preserves_compound_forms_and_checks_every_allocation_boundary -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+```
+
+Ownership7/7 and Form cloning1/1 passed. Bootstrap exited1 with native-work
+fuel exhaustion at111774..111791; no bootstrap outputs or448 frozen inputs
+changed. Deferred-factory and source-child Session proof stages were not run.
+Independent review found no source blockers for that exact immutable-payload
+snapshot; injected native budget failures do not establish Session IRQ behavior.
+The same compiled bootstrap binary, SHA256
+`ea4fb5ba61baae64a510e9941d31975019e178aba249dcc2b05c1560525b54a0`,
+was executed once with SUSS_HIR_COW_TRACE=1 against a separate output directory.
+It failed at the same location, with unchanged source and binary. Form-copy
+accepted5,404,966 and HIR-copy2,114,766. This later failure reaches different
+work from the previous diagnostic, so bucket differences are not matched-cost
+savings. Neither the eight native passes nor this trace covers subsequent
+initializer-sharing edits or proves a successful bootstrap/Session acceptance.
+
+
+Pinned constructor-triggered namespace invalidation observations (2026-10-16)
+
+Archive `evidence/m4-namespace-constructor-callback-oracle-2026-10-16.tar.gz`,
+SHA256 `ebc16ba4c7d964d461531f9ddd9a12cf9bf353c760ff32838881ad95b102cbe8`;
+163 payloads verified against MANIFEST.json, plus that manifest.
+Command: `python /home/bobby/.cache/suss-m4-work/namespace-constructor-callback-oracle/runner.py`.
+Exact source `src/suss_oracle/namespace_constructor_callback.cljs`; generated JS
+`out/cljs/suss_oracle/namespace_constructor_callback.js`, relative to archive root.
+`receipt.json`, `source-freeze.json`, per-command receipts, raw logs and both
+observation JSON files retain the execution evidence. Initial compilation exits1
+on an unmatched delimiter, with no cases executed; original source/log/full
+compiler report/receipt remain under `first-attempt/`. Delimiter correction did
+not change observation criteria. Corrected compilation exits0; two independent
+Node executions exit0 with identical rows and ordered events. Four frozen inputs
+(probe, runner, shell command and dependency specification) remain unchanged.
+Clean pinned CLJS `c4295f303100bbf5afac449242d30bca1126f1a1` verified by the
+runner and post-run receipt; development uses the existing cached CLI/JRE.
+
+Twelve independent compiler states per run, two actual macro invocations each:
+first captures the actual compiler-owned watched declaration and its nested
+`:meta/:audit` map `{:token 41}`; second executes one later construction route.
+The selected physical IHash receiver is exactly that retained audit map. Its
+PersistentArrayMap prototype method `cljs$core$IHash$_hash$arity$1` is wrapped
+before the second macro handoff. Only that receiver writes the earlier saved
+raw declaration's existing `:doc` slot to `"callback-poison"`; then it delegates
+`original.call(receiver, coll)` and returns the original value. Every selected
+call has physical `this` equal to subject and formal `coll` null, not subject.
+All other receivers delegate unchanged. A separate equal map supplies a canonical
+control through a direct original-method call outside the constructor window.
+There is no explicit `hash` call in the construction route. Each selected
+subject starts with a nil memo; every delegated result/memo is `124169561`.
+
+Source route labels and precise generated/executed construction APIs:
+
+| Raw route label | Source expression / actual route | Selected callbacks | Result count |
+| --- | --- | ---: | ---: |
+| env-only | No construction; later actual macro handoff | 0 | nil |
+| array-map-fromArray | PersistentArrayMap.fromArray([subject,17],true,true) | 0 | 1 |
+| hash-map-fromArray | PersistentHashMap.fromArray([subject,17],true) | 1 | 1 |
+| hash-map-fromArrays | PersistentHashMap.fromArrays([subject],[17]) | 1 | 1 |
+| hash-map-fn | Source `(hash-map subject 17)` macro-expands to PersistentHashMap.fromArrays | 1 | 1 |
+| set-fromArray-small | PersistentHashSet.fromArray([subject],true) | 0 | 1 |
+| set-fromArray-large | PersistentHashSet.fromArray([subject,:a..:h],true) | 1 | 9 |
+| hash-set-fn-large | Source `(hash-set subject :a..:h)` macro-expands to PersistentHashSet.createAsIfByAssoc | 1 | 9 |
+| literal-map-large | Nine-entry literal emits PersistentHashMap.fromArrays | 1 | 9 |
+| literal-set-large | Nine-item literal emits PersistentHashSet.createAsIfByAssoc | 1 | 9 |
+| reader-map-large | tools.reader duplicate-key set construction, then PersistentHashMap.fromArray | 2 | 9 |
+| reader-set-large | tools.reader set construction | 1 | 9 |
+
+The labels containing `-fn` do NOT establish runtime hash_map/hash_set function
+entry: generated JS proves macro expansion instead. Literal routes retain the
+compiler-selected key/item order in the saved JS; they must not be described as
+an independently proved textual callback sequence for all keys. Reader routes
+bind a tagged-reader handler returning the exact retained subject, without
+hashing it in that handler; ordinary source decoding does not recreate this
+host reference automatically. Reader and runtime constructor counts are distinct.
+Constructed collections preserve exact subject identity; result counts above
+are observed. Full arbitrary map-value projections were not recorded.
+
+Per-run total:24 macro entries,10 selected callbacks,126 ordered events. Every
+route reports zero selected callbacks before constructor-enter. Exact order:
+macro-entry-capture -> macro-exit-capture -> macro-entry-construct ->
+constructor-enter -> [selected-hash-enter -> poison-written ->
+selected-hash-return] repeated observed callback count -> constructor-return ->
+post-constructor-observation -> macro-exit-construct -> restoration.
+The live/final event schema is `{route,event,stage,selected-count,saved-doc,details}`;
+live lines wrap it in `{observation: event}`. Values are JSON numbers/booleans,
+not the earlier explicit-hash probe's pr-str event strings. Details retain
+physical/formal receiver facts, memo-before, delegated value/memo-after, result
+count or restoration flag. Final JSON is `{pin,rows,events,limits}`.
+
+All routes retain namespace/raw/subject identity while outer caller env maps
+are fresh. Triggering routes expose `"callback-poison"` through the saved raw
+map, current macro environment and live compiler lookup; controls keep
+`"original-doc"`. Poison remains visible at macro-exit-construct, before the
+probe's outer finally. After the second analyze returns (or throws), cleanup
+restores the exact IHash method descriptor/value, the declaration storage slot,
+subject memo and macro-cache atom contents. Checks compare method descriptor
+fields/value, original doc semantic readback, memo identity and cache contents
+identity; every restoration event is true. Unexpected errors are not swallowed;
+top-level finally emits partial observations. These are explicit probe cleanup
+checks, not evidence of automatic cache repair.
+
+Boundary and application to native transport:
+Pinned analyzer get-namespace retrieves compiler-state maps directly and
+macroexpand-1* passes those references to macro code. Thus physical storage
+poisoning contaminates both captured guest-visible references and live CLJS
+compiler-owned objects. Automatic construction-triggered invalidation is now
+observed without explicit macro-body hashing. Ordinary later macro env handoff,
+however, produces no selected callback in the env-only control; this does not
+establish native-style caller-env reconstruction in CLJS, nor prove absence of
+all possible hash callbacks in every compiler scenario.
+
+Native source-child poisoning checks a distinct integrity requirement: new
+transport reflects independent immutable native facts while old exposed guest
+objects retain witnessed mutations. This CLJS host-poisoning probe is not a
+reference showing clean immutable-source restoration. It neither authorizes
+trusting poisoned guest storage nor weakens that native requirement. The observed
+constructor API must retain its own selected callback values/counts/order;
+retries must not silently duplicate effects. Read-only native audit snapshots
+show Map/ReaderMap and Set/ReaderSet materialization can run later constructors
+after earlier child materialization; pre-callback validation alone therefore
+cannot establish final affected-child/parent/export validity. Those snapshots
+came from concurrently edited source and are audit context, not an executed
+candidate, coherent source freeze or CI source proof. No native post-callback
+certification/publication verdict follows from the oracle.
+
+Unproven here: native reconstruction-triggered callbacks for these exact source
+roots, final affected-parent/shared-export revalidation, unrelated revision
+advancement, fuel/IRQ, GC/reset/foreign-owner and complete issue264 acceptance.
+No quota/tariff/source reduction, production/test/bootstrap edits, Cargo execution,
+commit/push, CI mutation or issue/PR posting produced these observations.
+
+
+## Immutable source copy checkpoints (2026-10-16)
+
+Archive `evidence/m4-immutable-source-copy-series-2026-10-16.tar.gz`, SHA256
+`bad93a99503c32fc673ffdfcac6c3b0b5edadab0214801ffe38165ac5cc167d3`,
+retains496 manifested payloads. SOURCE-SNAPSHOTS.json maps1793 snapshot paths
+from four attempts to463 exact deduplicated source blobs. Raw compile errors,
+commands, stage receipts, freezes, passing native logs and bootstrap failures
+remain distinct; initial helper-test Literal qualification failure is retained.
+
+The final indexed-form-copy-checkpoint snapshot has449 unchanged source inputs.
+`cargo test -p suss-compile --locked --lib --no-run` passed. Focused ownership
+tests9/9 and all `portable::origin::form_metadata::tests::`17/17 passed using
+CARGO_BUILD_JOBS=2, the owned analyzer-literal-key-target directory and
+`-- --test-threads=2 --nocapture`. Indexed clone frames remove reference-child
+and completed-Form scratch buffers; finished children move into precharged
+parent storage. Source/executable initializer HIR shares actual immutable owners;
+this does not deduplicate guest evaluation or intern equal values.
+
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked --
+runtime/bootstrap` exited1 at214866..214870, native-work fuel exhausted. No
+bootstrap outputs changed. A same-binary trace reproduced that failure with
+unchanged source and binary. Earlier retained failures reach different work;
+no cross-attempt trace difference is a matched-cost metric. The unchanged
+allowance is10,000,000. No quota/tariff cut, metadata removal or fixture reduction
+was used. Constructor-callback, deferred-factory and source-child Session stages
+were not executed because bootstrap failed. The new callback test compiles but
+has no runtime verdict. No full workspace baseline or current-source Jank
+execution has run. The35-assertion pinned Jank selection is prospective coverage.
+
+The draft source checkpoint is drawn from those exact frozen Rust bytes, with
+later worktree edits excluded. Existing versioned bootstrap artifacts are stale
+for that source; no generated replacement or successful verification is claimed.
+Source-root retention/controller integration is partial and its helpers do not
+establish issue264 acceptance. This checkpoint is for review and continuation;
+readiness requires complete acceptance, independent final-source review and
+passing final-head CI.
+
+
+## Draft source publication input check (2026-10-16)
+
+Archive `evidence/m4-draft263-staged-source-2026-10-16.tar.gz`, SHA256 `0ff20ac7db29b3182bebdcc1ee949fb4c1cc1881fc79c27d1204efa4a7af31e2`,
+retains16 manifested payloads. Before publication, `git checkout-index`
+materialized index tree `22729340b261ec5bb4b7abdce49cdd6ebff4f5c2` in a separate task cache.
+This used the actual staged Rust source and HEAD bootstrap artifacts, rather than
+the dirty worktree's four different stale bootstrap files. Those four differences
+are retained verbatim; the other445 exact source inputs are in the preceding
+source-copy archive. No additional branch or PR was created.
+
+With the same focused commands and exclusive owned Cargo target/jobs2, actual
+staged inputs compiled successfully, ownership9/9 and provenance17/17 passed,
+and default bootstrap generation failed at214866..214870 with native-work
+fuel exhaustion. All449 input hashes stayed unchanged. This confirms the
+26 native passes for the source/artifact tuple intended for the draft checkpoint;
+it does not establish successful bootstrap, Session proofs, Jank or a full
+workspace baseline. Subsequent evidence/handoff additions change only the
+noncompiled part of this pre-commit tree. All later production edits remain
+outside the checkpoint and need their own verification.

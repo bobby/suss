@@ -89,16 +89,16 @@ impl ExpansionContext<'_> {
     /// shadows an identically named field, exactly as the existing &env graph.
     pub fn lexical_bindings(&self) -> BTreeMap<String, hir::SourceBinding> {
         let mut bindings = BTreeMap::new();
-        for (name, field) in self.fields {
+        for (name, field) in self.fields.iter() {
             bindings.insert(
                 name.clone(),
-                hir::SourceBinding::Field(Arc::new(field.clone())),
+                hir::SourceBinding::Field(field.clone()),
             );
         }
-        for (name, local) in self.locals {
+        for (name, local) in self.locals.iter() {
             bindings.insert(
                 name.clone(),
-                hir::SourceBinding::Local(Arc::new(local.clone())),
+                hir::SourceBinding::Local(local.clone()),
             );
         }
         bindings
@@ -116,10 +116,10 @@ impl ExpansionContext<'_> {
     ) -> Result<hir::SourceBinding, Diagnostic> {
         if include_locals && symbol.namespace.is_none() {
             if let Some(local) = self.locals.get(&symbol.name) {
-                return Ok(hir::SourceBinding::Local(Arc::new(local.clone())));
+                return Ok(hir::SourceBinding::Local(local.clone()));
             }
             if let Some(field) = self.fields.get(&symbol.name) {
-                return Ok(hir::SourceBinding::Field(Arc::new(field.clone())));
+                return Ok(hir::SourceBinding::Field(field.clone()));
             }
         }
         let binding = self.environment.resolve(self.phase, symbol, span)?;

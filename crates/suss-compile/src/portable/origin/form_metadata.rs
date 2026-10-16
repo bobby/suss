@@ -226,30 +226,136 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
     }
 }
 
-pub(crate) fn clone_form_metered(
-    form: &Form,
-    meter: &mut WorkMeter<'_>,
-) -> Result<Form, Diagnostic> {
-    let mut pending = vec![(form, false, 0usize)];
-    let mut completed = Vec::<Form>::new();
-    while let Some((node, finish, child_count)) = pending.pop() {
-        if !finish {
-            let children = all_children(node);
-            charge(
-                &mut *meter,
-                1usize
-                    .saturating_add(children.len())
-                    .saturating_add(form_text_bytes(node)),
-                &node.span,
-            )?;
-            pending.push((node, true, children.len()));
-            pending.extend(children.into_iter().rev().map(|child| (child, false, 0)));
-            continue;
-        }
-        let children = completed.split_off(completed.len() - child_count);
-        completed.push(rebuild_form(node, children));
+fn clone_work_size(count: usize, size: usize, span: &std::ops::Range<usize>) -> Result<usize, Diagnostic> {
+    count.checked_mul(size).ok_or_else(|| Diagnostic { span: span.clone(), message: "Form clone work overflow".into() })
+}
+fn clone_reserve<T>(values: &mut Vec<T>, additional: usize, meter: &mut WorkMeter<'_>, span: &std::ops::Range<usize>) -> Result<(), Diagnostic> {
+    let required = values.len().checked_add(additional).ok_or_else(|| Diagnostic { span: span.clone(), message: "Form clone capacity overflow".into() })?;
+    if required <= values.capacity() { return Ok(()); }
+    // Explicit growth: charge requested backing plus relocation before reserve.
+    let target = values.capacity().checked_mul(2).map(|n| n.max(required)).ok_or_else(|| Diagnostic { span: span.clone(), message: "Form clone capacity overflow".into() })?;
+    charge(meter, clone_work_size(target, std::mem::size_of::<T>(), span)?, span)?;
+    charge(meter, clone_work_size(values.len(), std::mem::size_of::<T>(), span)?, span)?;
+    values.try_reserve_exact(target - values.len()).map_err(|_| Diagnostic { span: span.clone(), message: "Unable to reserve form clone storage".into() })
+}
+fn clone_code_count(node: &Form) -> usize {
+    match &node.kind {
+        Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items)
+        | Kind::Conditional(items) | Kind::SplicingConditional(items) => items.len(),
+        Kind::Discard(_) => 1,
+        Kind::Prefix { .. } => 2,
+        _ => 0,
     }
-    Ok(completed.pop().expect("form clone produces a root"))
+}
+fn clone_source_child(node: &Form, index: usize) -> &Form {
+    if index < node.metadata.len() { return &node.metadata[index]; }
+    let index = index - node.metadata.len();
+    match &node.kind {
+        Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items)
+        | Kind::Conditional(items) | Kind::SplicingConditional(items) => &items[index],
+        Kind::Discard(item) => { assert_eq!(index, 0); item },
+        Kind::Prefix { operator, target } => if index == 0 { operator } else { assert_eq!(index, 1); target },
+        _ => unreachable!("atomic forms have no code children"),
+    }
+}
+struct FormCloneFrame<'a> {
+    node: &'a Form,
+    next: usize,
+    count: usize,
+    metadata: Vec<Form>,
+    values: Vec<Form>,
+}
+fn new_clone_frame<'a>(node: &'a Form, meter: &mut WorkMeter<'_>) -> Result<FormCloneFrame<'a>, Diagnostic> {
+    charge(meter, 1, &node.span)?;
+    charge(meter, form_text_bytes(node), &node.span)?;
+    let code_count = clone_code_count(node);
+    let count = node.metadata.len().checked_add(code_count).ok_or_else(|| Diagnostic {
+        span: node.span.clone(), message: "Form clone child count overflow".into(),
+    })?;
+    charge(meter, count, &node.span)?;
+    // These are the final output containers, not intermediate child storage.
+    let mut metadata = Vec::new();
+    clone_reserve(&mut metadata, node.metadata.len(), meter, &node.span)?;
+    let mut values = Vec::new();
+    clone_reserve(&mut values, code_count, meter, &node.span)?;
+    Ok(FormCloneFrame { node, next: 0, count, metadata, values })
+}
+fn finish_cloned_form(node: &Form, metadata: Vec<Form>, values: Vec<Form>, meter: &mut WorkMeter<'_>) -> Result<Form, Diagnostic> {
+    let kind = match &node.kind {
+        Kind::Nil => Kind::Nil,
+        Kind::Bool(value) => Kind::Bool(*value),
+        Kind::Number(value) => Kind::Number(*value),
+        Kind::String(value) => {
+            let mut copied = Vec::new();
+            clone_reserve(&mut copied, value.len(), meter, &node.span)?;
+            copied.extend_from_slice(value);
+            Kind::String(copied)
+        }
+        Kind::Symbol(value) => Kind::Symbol(value.clone()),
+        Kind::Keyword(value) => Kind::Keyword(value.clone()),
+        Kind::List(_) => Kind::List(values),
+        Kind::Vector(_) => Kind::Vector(values),
+        Kind::Map(_) => Kind::Map(values),
+        Kind::Set(_) => Kind::Set(values),
+        Kind::Conditional(_) => Kind::Conditional(values),
+        Kind::SplicingConditional(_) => Kind::SplicingConditional(values),
+        Kind::Discard(_) => {
+            charge(meter, std::mem::size_of::<Form>(), &node.span)?;
+            Kind::Discard(Box::new(values.into_iter().next().unwrap()))
+        },
+        Kind::Prefix { .. } => {
+            charge(meter, clone_work_size(2, std::mem::size_of::<Form>(), &node.span)?, &node.span)?;
+            let mut values = values.into_iter();
+            Kind::Prefix { operator: Box::new(values.next().unwrap()), target: Box::new(values.next().unwrap()) }
+        }
+    };
+    Ok(Form { span: node.span.clone(), metadata, kind })
+}
+fn clone_is_atomic(node: &Form) -> bool {
+    node.metadata.is_empty() && matches!(&node.kind,
+        Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) | Kind::Symbol(_) | Kind::Keyword(_))
+}
+fn clone_atomic(node: &Form, meter: &mut WorkMeter<'_>) -> Result<Form, Diagnostic> {
+    charge(meter, 1, &node.span)?;
+    charge(meter, form_text_bytes(node), &node.span)?;
+    finish_cloned_form(node, Vec::new(), Vec::new(), meter)
+}
+fn attach_clone(parent: &mut FormCloneFrame<'_>, child: Form) {
+    // next already advanced when this child was selected. Every push uses its
+    // parent's precharged final backing; no append can allocate or relocate.
+    if parent.next <= parent.node.metadata.len() { parent.metadata.push(child); }
+    else { parent.values.push(child); }
+}
+
+pub(crate) fn clone_form_metered(form: &Form, meter: &mut WorkMeter<'_>) -> Result<Form, Diagnostic> {
+    let _trace = crate::portable::hir::CowTraceScope::new("form_copy");
+    if clone_is_atomic(form) { return clone_atomic(form, meter); }
+    let root = new_clone_frame(form, meter)?;
+    let mut frames = Vec::new();
+    clone_reserve(&mut frames, 1, meter, &form.span)?;
+    frames.push(root);
+    loop {
+        let parent = frames.last_mut().expect("unfinished clone root");
+        if parent.next < parent.count {
+            // Index source children in metadata-then-code order. No Vec<&Form>
+            // is built, and finished Forms go directly to their parent's output.
+            let child = clone_source_child(parent.node, parent.next);
+            parent.next += 1;
+            if clone_is_atomic(child) {
+                let copied = clone_atomic(child, meter)?;
+                attach_clone(frames.last_mut().unwrap(), copied);
+            } else {
+                let frame = new_clone_frame(child, meter)?;
+                clone_reserve(&mut frames, 1, meter, &child.span)?;
+                frames.push(frame);
+            }
+        } else {
+            let frame = frames.pop().unwrap();
+            let copied = finish_cloned_form(frame.node, frame.metadata, frame.values, meter)?;
+            if let Some(parent) = frames.last_mut() { attach_clone(parent, copied); }
+            else { return Ok(copied); }
+        }
+    }
 }
 
 fn same(a: &Form, b: &Form, metadata: bool) -> bool {
@@ -815,6 +921,108 @@ impl SourceOrigin {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn atomic_and_reused_container_clones_preserve_values_and_error_boundaries() {
+        for source in ["nil", "true", "42", "\"A😀\"", "plain", "ns/name", ":plain", ":ns/name",
+            "[]", "[a 1 :k]", "(a b)", "{:a 1}", "#{:a :b}", "'(a b)", "^:tag [1 2]", "#?(:cljs [1 2])"]
+        {
+            let form = read_forms(source).unwrap().remove(0);
+            let expected = form.clone();
+            let mut charges = Vec::new();
+            let cloned = clone_form_metered(&form, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+            assert_eq!(cloned, expected, "{source}");
+            assert_eq!(cloned.span, expected.span);
+            assert_eq!(cloned.metadata, expected.metadata);
+            if source == "nil" { assert_eq!(charges, [1], "atomic nil has no scratch storage"); }
+            for stop in 0..charges.len() {
+                let mut call = 0;
+                let error = clone_form_metered(&form, &mut |_| {
+                    let current = call; call += 1;
+                    if current == stop { Err(Diagnostic { span: 0..0, message: "clone budget/interrupt".into() }) } else { Ok(()) }
+                }).unwrap_err();
+                assert_eq!(error.message, "clone budget/interrupt");
+                assert_eq!(form, expected, "failed clone changed source {source}");
+            }
+        }
+    }
+
+    #[test]
+    fn reconstruction_retains_final_metadata_and_code_allocations() {
+        for source in ["[a 1 :k]", "^:outer ^{:inner 1} [a 1 :k]"] {
+            let form = read_forms(source).unwrap().remove(0);
+            let Kind::Vector(children) = &form.kind else { unreachable!() };
+            let mut frame = new_clone_frame(&form, &mut |_| Ok(())).unwrap();
+            let metadata_allocation = frame.metadata.as_ptr();
+            let values_allocation = frame.values.as_ptr();
+            for metadata in &form.metadata { frame.metadata.push(metadata.clone()); }
+            for child in children { frame.values.push(child.clone()); }
+            let rebuilt = finish_cloned_form(&form, frame.metadata, frame.values,
+                &mut |_| panic!("final containers already own their backing and children")).unwrap();
+            assert_eq!(rebuilt, form);
+            assert_eq!(rebuilt.metadata.as_ptr(), metadata_allocation);
+            let Kind::Vector(values) = &rebuilt.kind else { unreachable!() };
+            assert_eq!(values.as_ptr(), values_allocation);
+        }
+    }
+
+    #[test]
+    fn streaming_clone_preserves_deep_wide_and_reader_only_children() {
+        let leaf = read_forms("leaf").unwrap().remove(0);
+        let operator = read_forms("quote").unwrap().remove(0);
+        let metadata = read_forms(":tag").unwrap().remove(0);
+        let mut deep = leaf.clone();
+        for depth in 0..128 {
+            deep = Form { span: depth..512, metadata: vec![metadata.clone()],
+                kind: Kind::Prefix { operator: Box::new(operator.clone()), target: Box::new(deep) } };
+        }
+        let discarded = Form { span: 5..19, metadata: vec![metadata.clone()], kind: Kind::Discard(Box::new(leaf.clone())) };
+        let conditional = Form { span: 4..20, metadata: vec![metadata.clone()],
+            kind: Kind::Conditional(vec![metadata.clone(), discarded]) };
+        let splice = Form { span: 3..21, metadata: vec![], kind: Kind::SplicingConditional(vec![metadata.clone(), conditional]) };
+        let wide = Form { span: 0..512, metadata: vec![metadata], kind: Kind::Vector(vec![leaf; 256]) };
+        for form in [deep, splice, wide] {
+            let expected = form.clone();
+            let mut calls = 0;
+            assert_eq!(clone_form_metered(&form, &mut |_| { calls += 1; Ok(()) }).unwrap(), expected);
+            for stop in [0, calls / 2, calls - 1] {
+                let mut call = 0;
+                assert!(clone_form_metered(&form, &mut |_| {
+                    let current = call; call += 1;
+                    if current == stop { Err(Diagnostic { span: 0..0, message: "stream interrupted".into() }) } else { Ok(()) }
+                }).is_err());
+                assert_eq!(form, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn metered_clone_preserves_compound_forms_and_checks_every_allocation_boundary() {
+        let form = read_forms("^{:audit [1 2 3]} [foo :bar \"text\" '(a b) #?(:cljs [4 5])]").unwrap().remove(0);
+        let mut charges = Vec::new();
+        let cloned = clone_form_metered(&form, &mut |units| { charges.push(units); Ok(()) }).unwrap();
+        assert_eq!(cloned, form);
+        assert_eq!(cloned.span, form.span);
+        assert_eq!(cloned.metadata, form.metadata);
+        for at in 0..charges.len() {
+            let mut count = 0;
+            let error = clone_form_metered(&form, &mut |_| {
+                let current = count; count += 1;
+                if current == at { Err(Diagnostic { span: 0..0, message: "clone interrupted".into() }) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "clone interrupted");
+            assert_eq!(clone_form_metered(&form, &mut |_| Ok(())).unwrap(), form);
+        }
+        let mut impossible = Vec::<u8>::new();
+        assert!(clone_reserve(&mut impossible, usize::MAX, &mut |_| Ok(()), &form.span).is_err());
+        assert!(impossible.is_empty());
+        let mut saw = None;
+        assert!(new_clone_frame(&form, &mut |units| {
+            saw = Some(units);
+            Err(Diagnostic { span: 0..0, message: "before child storage".into() })
+        }).is_err());
+        assert!(saw.unwrap() > 0);
+    }
 
     #[test]
     fn demand_caret_prefix_fallback_preserves_legacy_generated_span_selection() {

@@ -54,8 +54,8 @@ pub struct ExpansionContext<'a> {
     pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
     pub context: AnalysisContext,
-    pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
-    pub fields: &'a std::collections::HashMap<String, hir::FieldBinding>,
+    pub locals: &'a hir::SourceLocals,
+    pub fields: &'a hir::SourceFields,
     pub function_scopes: &'a [std::sync::Arc<hir::FunctionScope>],
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -333,19 +333,25 @@ impl<'a> ExpansionRequest<'a> {
     pub(crate) fn new(host: &'a mut dyn ExpansionHost, span: Range<usize>) -> Result<Self, Diagnostic> {
         host.begin_expansion_request(span)?;
         let remaining = host.expansion_work_fuel();
+        hir::cow_trace_reset(remaining);
         Ok(Self { host, remaining })
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
     fn expansion_work_fuel(&self) -> u64 { self.remaining }
     fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
-        self.host.charge_expansion_work(work, span.clone())?;
-        self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
-            span,
-            message: "Macro expansion native work fuel exhausted".into(),
-        })?;
-        Ok(())
+        let result = (|| {
+            self.host.charge_expansion_work(work, span.clone())?;
+            self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                span,
+                message: "Macro expansion native work fuel exhausted".into(),
+            })?;
+            Ok(())
+        })();
+        hir::cow_trace_charge(work, &result);
+        result
     }
+
     fn emit_fragment(
         &mut self, function: &ir::Function, phase: resolve::Phase,
         forms: &[suss_reader::forms::Form], origin: Option<&SourceOrigin>,

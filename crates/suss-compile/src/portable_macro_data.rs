@@ -248,8 +248,10 @@ struct BridgeCore {
 }
 pub struct FormBridge {
     core: Arc<BridgeCore>,
-    recording: Option<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>,
+    recording: Option<Arc<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>>,
     private_arguments: bool,
+    // Native facts captured before exposure; never enrolled while tokens remain.
+    deferred: Option<std::sync::Mutex<Vec<crate::portable_session::deferred_factory::DeferredFactory>>>,
     private_slots: Option<crate::portable_session::private_fixups::slot_log::SharedSlotLog>,
 }
 // Same pinned identifier mixing as hir::identifier_hash, streamed without its
@@ -304,7 +306,7 @@ impl FormBridge {
         session.charge_host_work(2)?; // Arc increment and pointer copy.
         Ok(Self {
             core: self.core.clone(),
-            recording: None, private_arguments: true, private_slots: None,
+            recording: None, private_arguments: true, deferred: None, private_slots: None,
         })
     }
     pub(crate) fn private_parent_bridge_with_slots(&self,session:&mut Session,log:&crate::portable_session::private_fixups::slot_log::SharedSlotLog)->Result<Self,SessionError>{
@@ -334,15 +336,77 @@ impl FormBridge {
             name: "SourceArray", constructor: None,
             descriptor: self.class_descriptor(session, Class::SourceArray)?.clone(),
         });
+        session.charge_host_work((std::mem::size_of::<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>() + 2 * std::mem::size_of::<usize>()) as u64)?;
         let mut records = crate::portable_session::construction_records::ConstructionRecords::with_bridge_classes(inputs);
         let valid = records.matches_class_schemas(session)?;
         records.note_class_precheck(valid);
         // Preserve the already-captured factory values and their capture time.
         Ok(Self {
             core: self.core.clone(),
-            recording: Some(std::sync::Mutex::new(records)),
-            private_arguments: false, private_slots: None,
+            recording: Some(Arc::new(std::sync::Mutex::new(records))),
+            private_arguments: false, deferred: None, private_slots: None,
         })
+    }
+    // Explicit source-controller route. This is NOT a normal recording fork:
+    // constructor/array facts remain private and unenrolled until the controller
+    // has proved source-edge bindings and performed authorized slot substitution.
+    pub(crate) fn deferred_private_bridge(
+        &self,
+        session: &mut Session,
+        log: &crate::portable_session::private_fixups::slot_log::SharedSlotLog,
+    ) -> Result<Self, SessionError> {
+        self.check(session)?;
+        if self.private_arguments {
+            return Err(SessionError::Host(error("Cannot fork a private recording")));
+        }
+        let records = self.recording.as_ref().ok_or_else(||
+            SessionError::Host(error("Deferred fork requires existing source recording")))?;
+        session.charge_host_work(4)?;
+        Ok(Self {
+            core: self.core.clone(), recording: Some(records.clone()),
+            private_arguments: true, private_slots: Some(log.clone()),
+            deferred: Some(std::sync::Mutex::new(Vec::new())),
+        })
+    }
+    pub(crate) fn into_deferred_records(self) -> Result<(
+        crate::portable_session::construction_records::ConstructionRecords,
+        Vec<crate::portable_session::deferred_factory::DeferredFactory>,
+    ), SessionError> {
+        let deferred = self.deferred.ok_or_else(|| SessionError::Host(error("Bridge has no deferred factories")))?
+            .into_inner().map_err(|_| SessionError::Host(error("Poisoned deferred factories")))?;
+        let records = self.recording.ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?;
+        let records = Arc::try_unwrap(records)
+            .map_err(|_| SessionError::Host(error("Source recording still has live factory forks")))?
+            .into_inner().map_err(|_| SessionError::Host(error("Poisoned construction records")))?;
+        Ok((records, deferred))
+    }
+    fn defer_factory(
+        &self,
+        session: &mut Session,
+        fact: crate::portable_session::deferred_factory::DeferredFactory,
+    ) -> Result<(), SessionError> {
+        let pending = self.deferred.as_ref().ok_or_else(||
+            SessionError::Host(error("Missing deferred factory context")))?;
+        let mut pending = pending.lock().map_err(|_|
+            SessionError::Host(error("Poisoned deferred factories")))?;
+        // Pure native reserve only; no runtime adapter while holding this lock.
+        if pending.len() == pending.capacity() {
+            let capacity = pending.capacity().max(4).checked_mul(2)
+                .ok_or_else(|| SessionError::Host(error("Deferred factory capacity overflow")))?;
+            let bytes = capacity.checked_mul(std::mem::size_of::<crate::portable_session::deferred_factory::DeferredFactory>())
+                .filter(|bytes| *bytes <= isize::MAX as usize)
+                .ok_or_else(|| SessionError::Host(error("Deferred factory allocation overflow")))?;
+            let live = pending.len().checked_mul(std::mem::size_of::<crate::portable_session::deferred_factory::DeferredFactory>())
+                .ok_or_else(|| SessionError::Host(error("Deferred factory relocation overflow")))?;
+            session.charge_host_work(bytes as u64)?;
+            session.charge_host_work(live as u64)?;
+            let additional = capacity - pending.len();
+            pending.try_reserve_exact(additional).map_err(|_|
+                SessionError::Host(error("Deferred factory allocation failed")))?;
+        }
+        session.charge_host_work(1)?;
+        pending.push(fact);
+        Ok(())
     }
     fn class_descriptor(&self, session: &mut Session, class: Class) -> Result<&SessionValue, SessionError> {
         session.charge_host_work(self.core.classes.len() as u64 + 1)?;
@@ -392,7 +456,13 @@ impl FormBridge {
         let class = &self.core.roots[self.core.constructors[&class]];
         if self.private_arguments {
             let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,arguments)?),None=>None};
-            let value=session.data_construct_without_guest_callbacks(class, arguments)?;
+            let value = if self.deferred.is_some() {
+                let (value, fact) = crate::portable_session::deferred_factory::DeferredFactory::constructor(session, class, arguments)?;
+                self.defer_factory(session, fact)?;
+                value
+            } else {
+                session.data_construct_without_guest_callbacks(class, arguments)?
+            };
             if let (Some(log),Some(selected))=(&self.private_slots,selected) {log.borrow_mut().capture_nominal(session,&value,&selected)?;}
             return Ok(value);
         }
@@ -417,6 +487,17 @@ impl FormBridge {
         session: &mut Session,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
+        if self.deferred.is_some() {
+            self.precheck_class(session, Class::SourceArray)?;
+            let selected = self.private_slots.as_ref().ok_or_else(||
+                SessionError::Host(error("Deferred factory requires slot log")))?
+                .borrow().inputs(session, values)?;
+            let (value, fact) = crate::portable_session::deferred_factory::DeferredFactory::array(session, values)?;
+            self.defer_factory(session, fact)?;
+            self.private_slots.as_ref().unwrap().borrow_mut()
+                .capture_dense(session, &value, values.len(), &selected)?;
+            return Ok(value);
+        }
         if self.recording.is_some() {
             self.precheck_class(session, Class::SourceArray)?;
             let (value, fact) = session.data_array_with_inputs(values)?;
@@ -458,8 +539,13 @@ impl FormBridge {
         self,
     ) -> Result<crate::portable_session::construction_records::ConstructionRecords, SessionError>
     {
-        self.recording
-            .ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?
+        if self.deferred.is_some() {
+            return Err(SessionError::Host(error("Deferred factories require source-bound finalization")));
+        }
+        let records = self.recording
+            .ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?;
+        Arc::try_unwrap(records)
+            .map_err(|_| SessionError::Host(error("Source recording still has live factory forks")))?
             .into_inner()
             .map_err(|_| SessionError::Host(error("Poisoned construction records")))
     }
@@ -553,7 +639,7 @@ impl FormBridge {
         Ok(Self {
             core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
             recording: None,
-            private_arguments: false, private_slots: None,
+            private_arguments: false, deferred: None, private_slots: None,
         })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {
@@ -1315,6 +1401,30 @@ fn error(message: &str) -> wasmtime::Error {
 mod identity_tests {
     use super::*;
 
+    #[test]
+    fn deferred_private_factory_slots_survive_metadata_copy_without_early_publication() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let log = crate::portable_session::private_fixups::slot_log::PrivateSlotLog::new(&mut session).unwrap();
+        let token = log.borrow_mut().token(&mut session, 0).unwrap();
+        let recording = bridge.recording(&mut session).unwrap();
+        let private = recording.deferred_private_bridge(&mut session, &log).unwrap();
+        let vector = private.vector_values(&mut session, &[token.clone(), token.clone()]).unwrap();
+        let metadata = bridge.map_values(&mut session, &[]).unwrap();
+        let copied = private.with_form_metadata(
+            &mut session, MetadataShape::Vector, &vector, &metadata, &[],
+        ).unwrap();
+        assert!(!private.deferred.as_ref().unwrap().lock().unwrap().is_empty());
+        // The ordinary publication API cannot discard pending native facts.
+        assert!(private.into_records().is_err());
+        session.collect().unwrap();
+        let target = bridge.scalar(&mut session, &crate::portable::hir::Literal::Number(17.0)).unwrap();
+        log.borrow().apply(&mut session, &copied, &[(&token, &target)]).unwrap();
+        let inspect = session.eval("(fn [v] (and (= 17 (nth v 0)) (= 17 (nth v 1))))").unwrap();
+        let result = session.invoke(&inspect, &[&copied]).unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &result).unwrap(), "true");
+    }
     #[test]
     fn analyzer_literal_stream_hash_matches_constants_and_recovers_after_fuel_irq() {
         let mut session = Session::new_macro().unwrap();

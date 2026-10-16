@@ -149,8 +149,10 @@ pub(crate) struct BridgeClassInput {
     pub constructor: Option<SessionValue>,
     pub descriptor: SessionValue,
 }
+struct ChildBinding { value: SessionValue }
 pub(crate) struct ConstructionRecords {
     domain: std::sync::Arc<super::write_domain::WriteDomain>,
+    children: Vec<ChildBinding>,
     records: Vec<Record>,
     bridge_classes: Vec<BridgeClassInput>,
     class_prechecks_valid: bool,
@@ -159,6 +161,7 @@ impl ConstructionRecords {
     pub(crate) fn with_bridge_classes(bridge_classes: Vec<BridgeClassInput>) -> Self {
         Self {
             domain: super::write_domain::WriteDomain::new(),
+            children: Vec::new(),
             records: Vec::new(),
             bridge_classes,
             class_prechecks_valid: true,
@@ -330,12 +333,26 @@ impl ConstructionRecords {
             match &record.fact {
                 Fact::Array(fact) => {
                     for value in fact.inputs() {
-                        valid &= meter.contains(index, collisions, &self.records, value)?;
+                        let mut member=meter.contains(index, collisions, &self.records, value)?;
+                        if !member {
+                            for child in &self.children {
+                                meter.charge(1)?;
+                                if meter.same(value,&child.value)? {member=true;break;}
+                            }
+                        }
+                        valid &= member;
                     }
                 }
                 Fact::Constructor(fact) => {
                     for value in fact.inputs() {
-                        valid &= meter.contains(index, collisions, &self.records, value)?;
+                        let mut member=meter.contains(index, collisions, &self.records, value)?;
+                        if !member {
+                            for child in &self.children {
+                                meter.charge(1)?;
+                                if meter.same(value,&child.value)? {member=true;break;}
+                            }
+                        }
+                        valid &= member;
                     }
                 }
                 Fact::ExternalSeed(_) => valid = false,
@@ -344,6 +361,28 @@ impl ConstructionRecords {
             }
         }
         Ok(valid)
+    }
+    pub(crate) fn attach_source_child(
+        &mut self, session:&mut Session,
+        child:&crate::portable_macro_graph::source_roots::CheckedChild,
+    )->Result<(),SessionError> {
+        session.check(child.value())?;
+        if self.children.len()==self.children.capacity() {
+            let count=self.children.len().checked_mul(2).unwrap_or(usize::MAX).max(4);
+            let bytes=count.checked_add(self.children.len()).and_then(|n|n.checked_mul(std::mem::size_of::<ChildBinding>()))
+                .ok_or_else(||SessionError::Host(wasmtime::Error::msg("Source-child capacity overflow")))?;
+            session.charge_host_work(bytes as u64)?;
+            self.children.try_reserve_exact(count-self.children.len())
+                .map_err(|_|SessionError::Host(wasmtime::Error::msg("Source-child allocation failed")))?;
+        }
+        // A failed domain attachment publishes no closure membership.
+        session.charge_host_work(1)?;
+        self.domain.attach_child(session,child)?;
+        self.children.push(ChildBinding {value:child.value().clone()});
+        Ok(())
+    }
+    pub(crate) fn seal_source_domain(&self, session:&mut Session)->Result<(),SessionError> {
+        self.domain.seal(session)
     }
     pub(crate) fn write_domain(&self)->std::sync::Arc<super::write_domain::WriteDomain> {self.domain.clone()}
     pub(crate) fn push(&mut self,session:&mut Session,value:SessionValue,fact:Fact)->Result<(),SessionError> {
@@ -740,5 +779,5 @@ mod tests {
 }
 
 impl Default for ConstructionRecords {
- fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),records:Vec::new(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
+ fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:Vec::new(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
 }

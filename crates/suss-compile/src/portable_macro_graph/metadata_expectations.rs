@@ -286,7 +286,7 @@ fn finish(
     };
     Ok(Some(plain(kind)))
 }
-fn project(session: &mut Session, recipes: &[Option<Recipe>], root: Value) -> Result<Option<Form>> {
+pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: Value) -> Result<Option<Form>> {
     let mut frames = Vec::new();
     let first = frame(session, recipes, root, &frames)?;
     push(session, &mut frames, first)?;

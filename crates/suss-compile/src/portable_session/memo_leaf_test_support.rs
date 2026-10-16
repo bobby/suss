@@ -43,6 +43,27 @@ impl Method {
             implementation,
         })
     }
+    pub(crate) fn is_current(
+        &self,
+        session: &mut Session,
+        owner: &str,
+    ) -> Result<bool, SessionError> {
+        let current = Self::capture(session, owner)?;
+        session.charge_host_work(3)?;
+        let mut scope = RootScope::new(&mut session.store);
+        for (expected, actual) in [
+            (&self.descriptor, &current.descriptor),
+            (&self.key, &current.key),
+            (&self.implementation, &current.implementation),
+        ] {
+            let expected = expected.value.to_rooted(&mut scope);
+            let actual = actual.value.to_rooted(&mut scope);
+            if !wasmtime::Rooted::ref_eq(&scope, &expected, &actual)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
     pub(crate) fn bind_delegate(&self, session: &mut Session) -> Result<(), SessionError> {
         let bind = session.eval("(fn [f] (set! leaf-original-method f))")?;
         session.invoke(&bind, &[&self.implementation])?;

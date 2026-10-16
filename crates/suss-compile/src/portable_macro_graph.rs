@@ -25,6 +25,7 @@ mod initializer_plan;
 mod plan_scratch_tests;
 mod source_facts;
 mod metadata_expectations;
+pub(crate) mod source_roots;
 mod construction;
 mod private_placement;
 mod reuse;
@@ -408,8 +409,8 @@ enum Recipe {
 }
 enum Task {
     Namespace(Arc<SourceNamespace>),
-    Local(LocalBinding),
-    Field(FieldBinding),
+    Local(Arc<LocalBinding>),
+    Field(Arc<FieldBinding>),
     Scope(Arc<FunctionScope>),
     Callable(Arc<hir::SourceCallable>),
     Ast(Hir),
@@ -436,8 +437,8 @@ pub struct AnalysisGraph<'a> {
         (portable::resolve::Global, usize),
         (Option<Arc<portable::resolve::DefinitionInfo>>, Value),
     >,
-    locals: BTreeMap<(usize, usize, String), (LocalBinding, Value)>,
-    fields: BTreeMap<usize, (FieldBinding, Value)>,
+    locals: BTreeMap<(usize, usize, String), (Arc<LocalBinding>, Value)>,
+    fields: BTreeMap<usize, (Arc<FieldBinding>, Value)>,
     scopes: BTreeMap<usize, (Arc<FunctionScope>, Value)>,
     callables: BTreeMap<usize, (Arc<hir::SourceCallable>, Value)>,
     namespaces: BTreeMap<usize, (Arc<SourceNamespace>, Value)>,
@@ -445,6 +446,8 @@ pub struct AnalysisGraph<'a> {
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
     metadata_sources: Vec<metadata_expectations::CapturedMetadata>,
+    source_roots: source_roots::Captures,
+    capture_roots: bool,
     jobs: VecDeque<(Value, Task)>,
 }
 impl<'a> AnalysisGraph<'a> {
@@ -483,11 +486,13 @@ impl<'a> AnalysisGraph<'a> {
             asts: BTreeMap::new(),
             recipes: Vec::new(),
             metadata_sources: Vec::new(),
+            source_roots: source_roots::Captures::default(),
+            capture_roots: false,
             jobs: VecDeque::new(),
         }
     }
     pub(crate) fn with_declaration_values(bridge: &'a FormBridge,session: &'a mut Session,values: &'a mut DeclarationValues)->Self {
-        let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph
+        let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph.capture_roots=true;graph
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
         self.charge(1)?;
@@ -526,8 +531,19 @@ impl<'a> AnalysisGraph<'a> {
     fn materialize_using(&mut self,root:Value,bridge:&FormBridge)->Result<SessionValue> {
         self.materialize_controlled(root,bridge,None)
     }
-    fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,mut control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
+    fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
+        self.materialize_with_inputs(root, bridge, control, None)
+    }
+    fn materialize_with_inputs(
+        &mut self, root: Value, bridge: &FormBridge,
+        mut control: Option<&mut reuse::Build<'_>>,
+        source: Option<(&source_roots::SourceInputs, &FormBridge)>,
+    ) -> Result<SessionValue> {
         self.finish_recipes()?;
+        if source.is_some() && control.is_some() {
+            return Err(SessionError::Host(wasmtime::Error::msg("Source and legacy metadata controllers cannot overlap")));
+        }
+        let has_inputs = control.is_some() || source.is_some();
         fn dependencies(recipe: &Recipe) -> Vec<Value> {
             match recipe {
                 Recipe::Alias(value) => vec![*value],
@@ -592,13 +608,13 @@ impl<'a> AnalysisGraph<'a> {
                 state[id] = 1;
                 stack.push((id, true));
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
-                let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
+                let dependencies = if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]} else {dependencies(recipe)};
                 for dependency in dependencies.into_iter().rev() {
                     stack.push((dependency, false));
                 }
             } else {
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
-                let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
+                let dependencies = if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]} else {dependencies(recipe)};
                 repeat[id] = match recipe {
                     Recipe::ReaderMap(_) | Recipe::ReaderSet(_) => true,
                     Recipe::List(_) | Recipe::ReaderVector(_) | Recipe::Metadata { .. } => {
@@ -643,8 +659,8 @@ impl<'a> AnalysisGraph<'a> {
         // its own counting/copying work, never a hypothetical expanded walk.
         let work = occurrence_work::count(
             self.recipes.len(), root, &postorder, &repeat,
-            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {0}else{dependency_count(self.recipes[id].as_ref().unwrap())},
-            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]}else{dependencies(self.recipes[id].as_ref().unwrap())},
+            |id| if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {0}else{dependency_count(self.recipes[id].as_ref().unwrap())},
+            |id| if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]}else{dependencies(self.recipes[id].as_ref().unwrap())},
             |units| self.session.charge_host_work(units),
         )?;
         let remaining = self.session.operation_fuel_remaining()?;
@@ -656,12 +672,12 @@ impl<'a> AnalysisGraph<'a> {
             unreachable!("an insufficient or overflowing work count must exhaust fuel");
         }
         let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
-        self.session.charge_host_work(if control.is_some() {self.recipes.len() as u64}else{0})?;
-        let mut value_taint=if control.is_some() {vec![false;self.recipes.len()]}else{Vec::new()};
+        self.session.charge_host_work(if has_inputs {self.recipes.len() as u64}else{0})?;
+        let mut value_taint=if has_inputs {vec![false;self.recipes.len()]}else{Vec::new()};
         let root_recipe = self.recipes[root].as_ref().unwrap();
         self.session
             .charge_host_work(dependency_count(root_recipe) as u64)?;
-        let mut frames = vec![Frame::new(root, root_recipe, control.as_ref().is_some_and(|b|b.intercepts(root)))];
+        let mut frames = vec![Frame::new(root, root_recipe, (control.as_ref().is_some_and(|b|b.intercepts(root)) || source.is_some_and(|(inputs,_)|inputs.intercepts(root))))];
         // DAG storage remains bounded independently of occurrence execution.
         // Charge before descending or invoking callbacks; diamonds cannot expand
         // into unbounded work even when the distinct recipe count is small.
@@ -674,7 +690,7 @@ impl<'a> AnalysisGraph<'a> {
                 if !repeat[id]
                     && let Some(value) = &cached[id]
                 {
-                    if control.is_some() {
+                    if has_inputs {
                         frame.tainted |= value_taint[id];
                         reuse::reserve(self.session, &mut frame.input_taint, 1)?;
                         frame.input_taint.push(value_taint[id]);
@@ -684,20 +700,20 @@ impl<'a> AnalysisGraph<'a> {
                     let recipe = self.recipes[id].as_ref().unwrap();
                     self.session
                         .charge_host_work(dependency_count(recipe) as u64)?;
-                    frames.push(Frame::new(id, recipe, control.as_ref().is_some_and(|b|b.intercepts(id))));
+                    frames.push(Frame::new(id, recipe, (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id)))));
                 }
                 continue;
             }
             let frame = frames.pop().unwrap();
             self.charge(1)?;
             let inputs = frame.inputs;
-            if frame.tainted && !control.as_ref().is_some_and(|b| b.intercepts(frame.id)) {
+            if control.is_some() && frame.tainted && !(control.as_ref().is_some_and(|b| b.intercepts(frame.id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id))) {
                 for (value, tainted) in inputs.iter().zip(&frame.input_taint) {
                     self.session.charge_host_work(1)?;
                     if !tainted {control.as_mut().unwrap().cut(self.session, value)?;}
                 }
             }
-            if frame.tainted && !control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+            if control.is_some() && frame.tainted && !(control.as_ref().is_some_and(|b|b.intercepts(frame.id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id))) {
                 // Exhaustive route decision BEFORE construction, never an error retry.
                 // All allocating collection routes funnel through array/construct;
                 // aliases allocate nothing. Leaves cannot carry incoming tokens.
@@ -709,8 +725,13 @@ impl<'a> AnalysisGraph<'a> {
                 };
                 control.as_mut().unwrap().note_slot_route(self.session,covered)?;
             }
-            let active_bridge=if control.is_some() && !frame.tainted {self.bridge}else{bridge};
-            let value = if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+            let active_bridge = if !frame.tainted && has_inputs {
+                source.map_or(self.bridge, |(_, normal)| normal)
+            } else { bridge };
+            let value = if let Some((inputs, _)) = source.filter(|(inputs,_)| inputs.intercepts(frame.id)) {
+                self.session.charge_host_work(1)?;
+                inputs.selected(self.session, frame.id)?.ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Missing selected source input")))?.clone()
+            } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_mut().unwrap().produce(self,frame.id)?
             } else {let recipe = self.recipes[frame.id].as_ref().unwrap();match recipe {
                 Recipe::Scalar(value) => active_bridge.scalar(self.session, value)?,
@@ -760,16 +781,18 @@ impl<'a> AnalysisGraph<'a> {
                     &inputs[1..1 + set_items.len()],
                 )?,
             }};
-            let tainted=if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+            let tainted=if source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id)) {
+                true
+            } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_ref().unwrap().last_is_private(frame.id)
             } else {frame.tainted};
-            if control.is_some() {value_taint[frame.id]=tainted;}
+            if has_inputs {value_taint[frame.id]=tainted;}
             if !repeat[frame.id] {
                 cached[frame.id] = Some(value.clone());
             }
             if let Some(parent) = frames.last_mut() {
                 parent.tainted |= tainted;
-                if control.is_some() {
+                if has_inputs {
                     reuse::reserve(self.session, &mut parent.input_taint, 1)?;
                     parent.input_taint.push(tainted);
                 }
@@ -1388,8 +1411,8 @@ impl<'a> AnalysisGraph<'a> {
         &mut self,
         namespace: &Arc<SourceNamespace>,
         catalog: &Arc<SourceNamespace>,
-        locals: &HashMap<String, LocalBinding>,
-        fields: &HashMap<String, FieldBinding>,
+        locals: &hir::SourceLocals,
+        fields: &hir::SourceFields,
         scopes: &[Arc<FunctionScope>],
         context: portable::AnalysisContext,
         depth: usize,
@@ -1400,8 +1423,8 @@ impl<'a> AnalysisGraph<'a> {
         &mut self,
         namespace: &Arc<SourceNamespace>,
         catalog: &Arc<SourceNamespace>,
-        locals: &HashMap<String, LocalBinding>,
-        fields: &HashMap<String, FieldBinding>,
+        locals: &hir::SourceLocals,
+        fields: &hir::SourceFields,
         scopes: &[Arc<FunctionScope>],
         context: portable::AnalysisContext,
         depth: usize,
@@ -1421,7 +1444,8 @@ impl<'a> AnalysisGraph<'a> {
             .into_iter()
             .map(|(name, value)| Ok((self.symbol(&name)?, value)))
             .collect::<Result<Vec<_>>>()?;
-        let locals = self.map_values(entries)?;
+        let locals_recipe = self.map_values(entries)?;
+        let locals = self.source_boundary(source_roots::Owner::Locals(locals.clone(), fields.clone()), locals_recipe)?;
         let scopes = scopes
             .iter()
             .map(|scope| self.scope(scope, depth + 1))
@@ -1491,16 +1515,17 @@ impl<'a> AnalysisGraph<'a> {
         self.charge(fact_count.saturating_add(namespace.namespace.len()).saturating_add(1))?;
         let content_key = NamespaceKey::new(namespace);
         self.charge(fact_count.saturating_add(1))?;
-        if let Some(value) = self.namespace_contents.get(&content_key) {
+        if !self.capture_roots && let Some(value) = self.namespace_contents.get(&content_key) {
             let value = *value;
             // The content key owns a snapshot, keeping declaration Arc addresses
             // live for this graph's entire lifetime without cloning its maps.
             self.namespaces.insert(key, (namespace.clone(), value));
             return Ok(value);
         }
-        let value = self.task(Task::Namespace(namespace.clone()))?;
+        let native = self.task(Task::Namespace(namespace.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Namespace(namespace.clone()), native)?;
         self.namespaces.insert(key, (namespace.clone(), value));
-        self.namespace_contents.insert(content_key, value);
+        if !self.capture_roots { self.namespace_contents.insert(content_key, value); }
         Ok(value)
     }
     // The pinned namespace contract retains nil for unused ordinary requires,
@@ -1581,6 +1606,7 @@ impl<'a> AnalysisGraph<'a> {
             declarations.push((short, record));
         }
         let declarations = self.map_values(declarations)?;
+        let declarations = self.source_boundary(source_roots::Owner::Defs(namespace.clone()), declarations)?;
         // Literal creation sites, pinned analyzer.cljc c4295f3:
         // ns-info 3504-3517 / require-info 3588-3600 are merged into
         // compiler namespace state. :defs is created by ensure-defs 5091
@@ -2071,7 +2097,17 @@ impl<'a> AnalysisGraph<'a> {
             *meta = self.recipe(Recipe::Alias(*meta))?;
             metadata_recipe = Some(*meta);
         }
-        let value = self.map(fields)?;
+        if self.capture_roots && let Some(revision) = info {
+            for (slot, (_, value)) in fields.iter_mut().enumerate() {
+                self.session.charge_host_work((global.namespace().len()+global.name().len()) as u64+2)?;
+                *value = self.source_boundary(source_roots::Owner::DeclarationField(
+                    global.clone(), revision.clone(), slot), *value)?;
+            }
+        }
+        let native = self.map(fields)?;
+        let value = if let Some(revision) = info {
+            self.source_boundary(source_roots::Owner::Declaration(global.clone(), revision.clone()), native)?
+        } else { native };
         if let (Some(recipe), Some(revision)) = (metadata_recipe, info) {
             // Capture only after the final declaration and overlaid metadata
             // recipe exist. No guest storage is consulted or retained.
@@ -2082,7 +2118,7 @@ impl<'a> AnalysisGraph<'a> {
         self.declarations.insert(key, (info.cloned(), value));
         Ok(value)
     }
-    fn local(&mut self, binding: &LocalBinding, depth: usize) -> Result<Value> {
+    fn local(&mut self, binding: &Arc<LocalBinding>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
         // Same declaration can have distinct receiver/argument roles or lowered
         // IDs. Keep that adaptation in the key; retain the identity owner.
@@ -2099,12 +2135,13 @@ impl<'a> AnalysisGraph<'a> {
             SourceRole::MethodArgument { index, rest } => format!("method-arg:{index}:{rest}"),
             SourceRole::MethodThis { .. } => "method-this".into(),
         };
-        let key = (Arc::as_ptr(&binding.identity) as usize, binding.id.0, role);
+        let key = (Arc::as_ptr(binding) as usize, binding.id.0, role);
         self.charge(key.2.len().saturating_add(1))?;
         if let Some((_, value)) = self.locals.get(&key) {
             return Ok(value.clone());
         }
-        let value = self.task(Task::Local(binding.clone()))?;
+        let native = self.task(Task::Local(binding.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Local(binding.clone()), native)?;
         self.locals.insert(key, (binding.clone(), value));
         Ok(value)
     }
@@ -2239,14 +2276,15 @@ impl<'a> AnalysisGraph<'a> {
         entries.push((FieldKey::Cold("suss/declaration-context"), context));
         self.map_in_task_slot(slot, entries)
     }
-    fn field(&mut self, field: &FieldBinding, depth: usize) -> Result<Value> {
+    fn field(&mut self, field: &Arc<FieldBinding>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
-        let key = Arc::as_ptr(&field.identity) as usize;
+        let key = Arc::as_ptr(field) as usize;
         self.charge(1)?;
         if let Some((_, value)) = self.fields.get(&key) {
             return Ok(value.clone());
         }
-        let value = self.task(Task::Field(field.clone()))?;
+        let native = self.task(Task::Field(field.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Field(field.clone()), native)?;
         self.fields.insert(key, (field.clone(), value));
         Ok(value)
     }
@@ -2308,7 +2346,8 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.scopes.get(&key) {
             return Ok(value.clone());
         }
-        let value = self.task(Task::Scope(scope.clone()))?;
+        let native = self.task(Task::Scope(scope.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Scope(scope.clone()), native)?;
         self.scopes.insert(key, (scope.clone(), value));
         Ok(value)
     }
@@ -2387,7 +2426,8 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.asts.get(&key) {
             return Ok(value.clone());
         }
-        let value = self.task(Task::Ast(hir.clone()))?;
+        let native = self.task(Task::Ast(hir.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Ast(source.clone()), native)?;
         self.asts.insert(key, (source.clone(), value));
         Ok(value)
     }
@@ -2397,7 +2437,8 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.callables.get(&key) {
             return Ok(*value);
         }
-        let value = self.task(Task::Callable(callable.clone()))?;
+        let native = self.task(Task::Callable(callable.clone()))?;
+        let value = self.source_boundary(source_roots::Owner::Callable(callable.clone()), native)?;
         self.callables.insert(key, (callable.clone(), value));
         Ok(value)
     }
@@ -2832,6 +2873,9 @@ impl<'a> AnalysisGraph<'a> {
             // overrides these resolved identity fields. The catalog stays
             // untouched, including any raw :name/:ns metadata in that record.
             let declaration = self.declaration(global, declaration.as_ref(), depth + 1)?;
+            // Source identity/retention alias is separate from the native map
+            // whose selected fields resolve-var copies before its own overlay.
+            let declaration = self.source_roots.native(self.session, declaration)?;
             let Some(Recipe::Map(entries)) = self.recipes.get(declaration).and_then(Option::as_ref)
             else {
                 return Err(SessionError::Host(wasmtime::Error::msg(
@@ -3001,7 +3045,7 @@ impl<'a> AnalysisGraph<'a> {
                 "let",
                 bindings
                     .iter()
-                    .map(|binding| &binding.value)
+                    .map(|binding| binding.value.as_ref())
                     .chain(std::iter::once(body.as_ref()))
                     .collect(),
             ),
@@ -3009,7 +3053,7 @@ impl<'a> AnalysisGraph<'a> {
                 "loop",
                 bindings
                     .iter()
-                    .map(|binding| &binding.value)
+                    .map(|binding| binding.value.as_ref())
                     .chain(std::iter::once(body.as_ref()))
                     .collect(),
             ),

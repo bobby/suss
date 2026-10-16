@@ -63,11 +63,11 @@ impl Analyzer<'_> {
     ) -> Result<Hir, Diagnostic> {
         // Match member-call ordering: owner and method lookup precede all entries.
         let owner = self.collection_class(form, class)?;
-        let owner_binding = self.fresh_binding(form, owner);
+        let owner_binding = self.fresh_binding(form, owner)?;
         let owner_read = self.local(form, owner_binding.id);
         let key = self.literal_form(form, Literal::String(property.encode_utf16().collect()));
         let lookup = self.nominal(form, Nominal::NamedGet, vec![owner_read.clone(), key]);
-        let method_binding = self.fresh_binding(form, lookup);
+        let method_binding = self.fresh_binding(form, lookup)?;
         let mut operands = vec![self.local(form, method_binding.id), owner_read];
         operands.extend(arguments);
         let body = self.nominal(form, Nominal::ObjectInvoke, operands);
@@ -157,11 +157,11 @@ impl Analyzer<'_> {
             let mut values = Vec::new();
             for entry in items.chunks_exact(2) {
                 let key = lowered.next().expect("paired map key");
-                let key = self.fresh_binding(&entry[0], key);
+                let key = self.fresh_binding(&entry[0], key)?;
                 keys.push(self.local(&entry[0], key.id));
                 entries.push(key);
                 let value = lowered.next().expect("paired map value");
-                let value = self.fresh_binding(&entry[1], value);
+                let value = self.fresh_binding(&entry[1], value)?;
                 values.push(self.local(&entry[1], value.id));
                 entries.push(value);
             }

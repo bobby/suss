@@ -1,7 +1,8 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
+pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
+pub(crate) use local_bindings::{CowTraceScope, cow_trace_charge, cow_trace_reset};
 mod function_parameters;
 mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
@@ -409,7 +410,8 @@ pub struct Binding {
     pub name: String,
     pub metadata: Vec<Form>,
     pub span: Range<usize>,
-    pub value: Hir,
+    /// Immutable analyzed initializer shared with source binding facts.
+    pub value: std::sync::Arc<Hir>,
 }
 #[derive(Debug, Clone)]
 pub struct Parameter {
@@ -512,8 +514,8 @@ pub struct SourceCallable {
 pub struct SourceMethodEnvironment {
     pub scope: std::sync::Arc<SourceNamespace>,
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
-    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
-    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub locals: SourceLocals,
+    pub fields: SourceFields,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     pub context: super::AnalysisContext,
 }
@@ -521,7 +523,7 @@ pub struct SourceMethodEnvironment {
 pub struct SourceMethod {
     pub form: Form,
     pub environment: SourceMethodEnvironment,
-    pub declarations: Vec<LocalBinding>,
+    pub declarations: Vec<std::sync::Arc<LocalBinding>>,
     pub parameters: Vec<Parameter>,
     pub variadic: bool,
     /// Whether analysis accepted a recur targeting this method (nil otherwise).
@@ -565,7 +567,7 @@ pub enum SourceNode {
     },
     Bindings {
         is_loop: bool,
-        bindings: std::sync::Arc<[LocalBinding]>,
+        bindings: std::sync::Arc<[std::sync::Arc<LocalBinding>]>,
         body: std::sync::Arc<Hir>,
     },
     Recur(std::sync::Arc<[Hir]>),
@@ -608,8 +610,8 @@ pub struct SourceAnalysis {
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
     pub callable: Option<std::sync::Arc<SourceCallable>>,
     pub node: Option<std::sync::Arc<SourceNode>>,
-    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
-    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub locals: SourceLocals,
+    pub fields: SourceFields,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     pub context: super::AnalysisContext,
     pub phase: Phase,
@@ -781,8 +783,8 @@ struct Analyzer<'a> {
     origin: Option<super::SourceOrigin>,
     environment: Environment,
     phase: Phase,
-    locals: HashMap<String, LocalBinding>,
-    fields: HashMap<String, FieldBinding>,
+    locals: SourceLocals,
+    fields: SourceFields,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>)>,
     function_scopes: Vec<std::sync::Arc<FunctionScope>>,
@@ -1081,8 +1083,8 @@ impl Analyzer<'_> {
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         let scope = self.capture_source_namespace();
-        let locals = std::sync::Arc::new(self.locals.clone());
-        let fields = std::sync::Arc::new(self.fields.clone());
+        let locals = self.locals.clone();
+        let fields = self.fields.clone();
         let function_scopes = self.function_scopes.clone().into();
         let symbol = match &form.kind {
             Kind::Symbol(symbol) => Some(symbol),
@@ -1098,10 +1100,10 @@ impl Analyzer<'_> {
         let resolved = symbol.and_then(|symbol| {
             if symbol.namespace.is_none() || symbol.namespace.as_deref() == Some("js") {
                 if let Some(binding) = self.locals.get(&symbol.name) {
-                    return Some(SourceBinding::Local(std::sync::Arc::new(binding.clone())));
+                    return Some(SourceBinding::Local(binding.clone()));
                 }
                 if let Some(field) = self.fields.get(&symbol.name) {
-                    return Some(SourceBinding::Field(std::sync::Arc::new(field.clone())));
+                    return Some(SourceBinding::Field(field.clone()));
                 }
             }
             self.environment
@@ -1135,13 +1137,16 @@ impl Analyzer<'_> {
             // analyzed node. Preserve that record instead of attributing the
             // original macro call to the expanded expression.
             if expression.source.is_none() {
-                let tags = source_tags::source_tags_metered(
+                let tags = {
+                    let _trace = CowTraceScope::new("source_tags");
+                    source_tags::source_tags_metered(
                     form,
                     resolved.as_ref(),
                     callable.as_deref(),
                     &expression,
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-                )?;
+                    )?
+                };
                 let mut source = SourceAnalysis {
                     is_body: false,
                     tags,
@@ -1178,10 +1183,13 @@ impl Analyzer<'_> {
                     child.context = super::AnalysisContext::Expression;
                     child.node = inner.clone();
                     value.source = Some(std::sync::Arc::new(child));
-                    source.tags = source_tags::metadata_wrapper_tags_metered(
+                    source.tags = {
+                        let _trace = CowTraceScope::new("metadata_tags");
+                        source_tags::metadata_wrapper_tags_metered(
                         form,
                         &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-                    )?;
+                        )?
+                    };
                     source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
                         expression: std::sync::Arc::new(value),
                         metadata: metadata.clone(),
@@ -1516,7 +1524,7 @@ impl Analyzer<'_> {
             .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
-            self.enter_function_scope(form, name_hint, None);
+            self.enter_function_scope(form, name_hint, None)?;
             let (function, source_method) = self.fixed_function(form, args, bootstrap_macro)?;
             *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
                 name: None,
@@ -1538,7 +1546,7 @@ impl Analyzer<'_> {
             }
             let id = BindingId(self.next);
             self.next += 1;
-            self.insert_local(&args[0], id, Type::Value, LocalKind::FunctionName, None);
+            self.insert_local(&args[0], id, Type::Value, LocalKind::FunctionName, None)?;
             (
                 Some(Parameter {
                     id,
@@ -1562,7 +1570,7 @@ impl Analyzer<'_> {
             } else {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
-            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
+            self.local_revision_mut(&parameter.name)?.source_role = SourceRole::FunctionName {
                 variadic,
                 methods: None,
             };
@@ -1575,13 +1583,11 @@ impl Analyzer<'_> {
         let local = self_binding
             .as_ref()
             .map(|binding| self.locals[&binding.name].clone());
-        self.enter_function_scope(form, declaration, local);
+        self.enter_function_scope(form, declaration, local)?;
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
-            self.locals
-                .get_mut(&parameter.name)
-                .expect("self binding")
+            self.local_revision_mut(&parameter.name)?
                 .source_role = SourceRole::FunctionName {
                 variadic,
                 methods: Some(staged),
@@ -1844,8 +1850,8 @@ impl Analyzer<'_> {
                 .as_ref()
                 .expect("top-level source snapshot")
                 .clone(),
-            locals: std::sync::Arc::new(self.locals.clone()),
-            fields: std::sync::Arc::new(self.fields.clone()),
+            locals: self.locals.clone(),
+            fields: self.fields.clone(),
             function_scopes: self.function_scopes.clone().into(),
             context: *self
                 .analysis_contexts
@@ -1865,20 +1871,18 @@ impl Analyzer<'_> {
         for parameter in parameters.iter().skip(usize::from(object_method)) {
             let id = BindingId(self.next);
             self.next += 1;
+            let value = self.capture_local_access(Hir {
+                source: None, span: parameter.span.clone(), metadata: Vec::new(),
+                ty: Type::Value, kind: Expression::Local(parameter.id),
+            })?;
             bindings.push(Binding {
                 id,
                 name: parameter.name.clone(),
                 metadata: parameter.metadata.clone(),
                 span: parameter.span.clone(),
-                value: Hir {
-                    source: None,
-                    span: parameter.span.clone(),
-                    metadata: Vec::new(),
-                    ty: Type::Value,
-                    kind: Expression::Local(parameter.id),
-                },
+                value,
             });
-            self.remap_local(&parameter.name, id, Type::Value);
+            self.remap_local(&parameter.name, id, Type::Value)?;
         }
         if !fields.is_empty() {
             let receiver = parameters
@@ -1903,7 +1907,7 @@ impl Analyzer<'_> {
                     .iter()
                     .any(|parameter| parameter.name == symbol.name);
                 if !parameter {
-                    self.locals.remove(&symbol.name);
+                    self.remove_local(&symbol.name, field.span.clone())?;
                 }
                 let value = if object_method {
                     let key = self
@@ -1920,7 +1924,7 @@ impl Analyzer<'_> {
                         vec![self.local(field, receiver)],
                     )
                 };
-                let record = FieldBinding {
+                let record = std::sync::Arc::new(FieldBinding {
                     identity: std::sync::Arc::new(()),
                     declaration: field.clone(),
                     origin: self.origin.clone(),
@@ -1929,13 +1933,13 @@ impl Analyzer<'_> {
                     index: source_index,
                     mutable: Self::field_mutable(field)?,
                     access: value,
-                };
+                });
                 if parameter {
-                    let binding = self.locals.get_mut(&symbol.name).expect("method parameter");
+                    let binding = self.local_revision_mut(&symbol.name)?;
                     binding.shadow = None;
-                    binding.shadow_field = Some(std::sync::Arc::new(record.clone()));
+                    binding.shadow_field = Some(record.clone());
                 }
-                self.fields.insert(symbol.name.clone(), record);
+                self.insert_field(&symbol.name, record, field.span.clone())?;
             }
         }
         // Retain the visible argument before this-as anchors the receiver.
@@ -1954,7 +1958,7 @@ impl Analyzer<'_> {
                 .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
             // The pin anchors a method's physical receiver across recur. The
             // first recur operand still evaluates, but does not replace `this`.
-            self.remap_local(&parameter.name, parameter.id, Type::Value);
+            self.remap_local(&parameter.name, parameter.id, Type::Value)?;
         }
         if let Some(receiver_type) = receiver_type {
             self.record_method_roles(
@@ -1963,7 +1967,8 @@ impl Analyzer<'_> {
                 receiver_type,
                 object_method,
                 receiver_argument,
-            );
+                declarations[0].declaration.clone(),
+            )?;
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
@@ -2081,15 +2086,17 @@ impl Analyzer<'_> {
             }
             let outer = self.locals.clone();
             let current = self.nominal(form, Nominal::CurrentThis, Vec::new());
+            let current = self.capture_local_access(current)?;
             let id = BindingId(self.next);
             self.next += 1;
+            let source_initializer = current.clone();
             self.insert_local(
                 &args[0],
                 id,
                 Type::Value,
                 LocalKind::Let,
-                Some(current.clone()),
-            );
+                Some(source_initializer),
+            )?;
             let source_binding = self.locals[&name.name].clone();
             let body = self.analyzed_body(
                 &args[1..],
@@ -2347,12 +2354,12 @@ impl Analyzer<'_> {
             };
             let key = Self::object_method_name(form, &symbol.name[1..])?;
             let owner_value = self.form(owner)?;
-            let owner_binding = self.fresh_binding(owner, owner_value);
+            let owner_binding = self.fresh_binding(owner, owner_value)?;
             let owner_read = self.local(owner, owner_binding.id);
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
             let lookup =
                 self.callable_named_get(form, owner_read.clone(), key, &symbol.name[1..])?;
-            let method_binding = self.fresh_binding(form, lookup);
+            let method_binding = self.fresh_binding(form, lookup)?;
             let mut arguments = vec![self.local(form, method_binding.id), owner_read];
             for arg in &args[1..] {
                 arguments.push(self.form(arg)?);
@@ -2499,7 +2506,8 @@ impl Analyzer<'_> {
             }
             if let Kind::Symbol(name) = &args[0].kind {
                 if name.namespace.is_none() && !self.locals.contains_key(&name.name) {
-                    if let Some(mut field) = self.fields.get(&name.name).cloned() {
+                    if let Some(field) = self.fields.get(&name.name).cloned() {
+                        let mut access = self.clone_local_hir(&field.access)?;
                         if !field.mutable {
                             return Err(fail(
                                 args[0].span.clone(),
@@ -2509,7 +2517,7 @@ impl Analyzer<'_> {
                         let Expression::Nominal {
                             operation,
                             mut arguments,
-                        } = field.access.take_kind()
+                        } = access.take_kind()
                         else {
                             unreachable!()
                         };
@@ -2740,6 +2748,8 @@ impl Analyzer<'_> {
                         self.next += 1;
                         id
                     };
+                    let value = self.capture_local_access(value)?;
+                    let source_initializer = value.clone();
                     self.insert_local(
                         &pair[0],
                         id,
@@ -2751,15 +2761,13 @@ impl Analyzer<'_> {
                         } else {
                             LocalKind::Let
                         },
-                        Some(value.clone()),
-                    );
+                        Some(source_initializer),
+                    )?;
                     if let Some(hidden) = &alias {
-                        self.locals
-                            .get_mut(&name.name)
-                            .expect("catch alias")
-                            .source_role = SourceRole::CatchBinding {
-                            hidden: hidden.clone(),
-                            access: self.local(&pair[1], hidden.id),
+                        let source_access = self.local(&pair[1], hidden.id);
+                        let source_access = self.capture_local_access(source_access)?;
+                        self.local_revision_mut(&name.name)?.source_role = SourceRole::CatchBinding {
+                            hidden: hidden.clone(), access: source_access,
                         };
                     }
                     source_bindings.push(self.locals[&name.name].clone());
@@ -3007,8 +3015,8 @@ pub(crate) fn prepare_with_origin(
         origin: origin.cloned(),
         environment: environment.clone(),
         phase,
-        locals: HashMap::new(),
-        fields: HashMap::new(),
+        locals: SourceLocals::default(),
+        fields: SourceFields::default(),
         type_body_fields: Vec::new(),
         function_scopes: Vec::new(),
         next: 0,

@@ -254,7 +254,7 @@ impl Analyzer<'_> {
             return Ok(value);
         }
         let empty = self.map_values(form, &[], vec![])?;
-        let mut result = self.fresh_binding(form, empty);
+        let mut result = self.fresh_binding(form, empty)?;
         let mut bindings = vec![result.clone()];
         let mut retained = reader_data;
         // Reader-data merging precedes construction. Actual source -assoc
@@ -267,7 +267,7 @@ impl Analyzer<'_> {
             let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
             let previous = self.local(form, result.id);
             let next = self.data_core_call(form, "-assoc", vec![previous, key, item])?;
-            result = self.fresh_binding(form, next);
+            result = self.fresh_binding(form, next)?;
             bindings.push(result.clone());
             retained = true;
         }

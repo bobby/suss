@@ -93,7 +93,7 @@ fn analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles()
     let bridge = FormBridge::new(&mut session).unwrap();
     let mut binding = LocalBinding {
         identity: Arc::new(()), id: hir::BindingId(0), ty: hir::Type::Value,
-        declaration: suss_reader::forms::read_forms("p").unwrap().remove(0),
+        declaration: Arc::new(suss_reader::forms::read_forms("p").unwrap().remove(0)),
         origin: None, kind: hir::LocalKind::Let,
         declaration_context: portable::AnalysisContext::Expression,
         source_role: SourceRole::Plain, initializer: None, shadow: None, shadow_field: None,
@@ -113,7 +113,7 @@ fn analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles()
     let access=Hir{source:None,span:0..1,metadata:vec![],ty:hir::Type::Value,kind:Expression::Literal(Literal::Nil)};
     binding.source_role=SourceRole::MethodThis{
         type_declaration:binding.declaration.clone(),namespace:"user".into(),protocol_receiver:false,
-        receiver_declaration:binding.declaration.clone(),argument:None,access,
+        receiver_declaration:binding.declaration.clone(),argument:None,access:Arc::new(access),
     };
     assert_eq!(binding.source_kind(),hir::LocalKind::Let);
     assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
@@ -126,14 +126,14 @@ fn analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_valu
     let bridge=FormBridge::new(&mut session).unwrap();
     let binding=LocalBinding{
         identity:Arc::new(()),id:hir::BindingId(1),ty:hir::Type::Value,
-        declaration:suss_reader::forms::read_forms("^{:audit :source-leaf} p").unwrap().remove(0),
+        declaration:Arc::new(suss_reader::forms::read_forms("^{:audit :source-leaf} p").unwrap().remove(0)),
         origin:None,kind:hir::LocalKind::Argument{index:0,rest:false},
         declaration_context:portable::AnalysisContext::Expression,
         source_role:SourceRole::Plain,initializer:None,shadow:None,shadow_field:None,
     };
     let value={
         let mut graph=AnalysisGraph::new(&bridge,&mut session);
-        let id=graph.local(&binding,0).unwrap();
+        let id=graph.local(&Arc::new(binding),0).unwrap();
         graph.finish_recipes().unwrap();
         let entries=match graph.recipes[id].as_ref().unwrap(){Recipe::Map(entries)=>entries,_=>panic!("actual parameter recipe must be a map")};
         for name in ["form","local","binding-form?","arg-id","shadow","info"] {

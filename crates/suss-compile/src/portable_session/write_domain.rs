@@ -23,9 +23,15 @@ struct Node {
     edges: Vec<SessionValue>,
     watch: Option<Weak<Watch>>,
 }
+struct ChildDomain {
+    value: SessionValue,
+    domain: Arc<WriteDomain>,
+}
 struct State {
     valid: bool,
     nodes: Vec<Node>,
+    children: Vec<ChildDomain>,
+    sealed: bool,
 }
 pub(crate) struct WriteDomain {
     state: Mutex<State>,
@@ -37,9 +43,41 @@ impl WriteDomain {
             state: Mutex::new(State {
                 valid: true,
                 nodes: Vec::new(),
+                children: Vec::new(),
+                sealed: false,
             }),
             handles: Arc::new(AtomicUsize::new(0)),
         })
+    }
+    pub(crate) fn seal(&self, session: &mut Session) -> Result<()> {
+        session.charge_host_work(1)?;
+        registry_lock(&self.state).sealed=true;
+        Ok(())
+    }
+    pub(crate) fn attach_child(
+        &self, session: &mut Session,
+        child: &crate::portable_macro_graph::source_roots::CheckedChild,
+    )->Result<()> {
+        session.check(child.value())?;
+        session.charge_host_work(3)?;
+        let domain=child.domain();
+        if std::ptr::eq(self,domain.as_ref()) {return Err(wasmtime::Error::msg("Self child domain").into());}
+        // The child link set is immutable before linking. Together with the
+        // unsealed-parent requirement this prevents cycles by construction.
+        if !registry_lock(&domain.state).sealed {return Err(wasmtime::Error::msg("Unsealed child domain").into());}
+        let mut state=registry_lock(&self.state);
+        if state.sealed {return Err(wasmtime::Error::msg("Sealed parent domain").into());}
+        if state.children.len()==state.children.capacity() {
+            let count=state.children.len().checked_mul(2).unwrap_or(usize::MAX).max(4);
+            let bytes=count.checked_add(state.children.len()).and_then(|n|n.checked_mul(std::mem::size_of::<ChildDomain>()))
+                .ok_or_else(||wasmtime::Error::msg("Child domain capacity overflow"))?;
+            session.charge_host_work(bytes as u64)?;
+            let extra=count-state.children.len();
+            state.children.try_reserve_exact(extra).map_err(|_|wasmtime::Error::msg("Child domain allocation failed"))?;
+        }
+        session.charge_host_work(2)?;
+        state.children.push(ChildDomain {value:child.value().clone(),domain});
+        Ok(())
     }
     pub(super) fn invalidate(&self) {
         registry_lock(&self.state).valid = false;
@@ -102,6 +140,7 @@ impl WriteDomain {
             None
         };
         let mut state = registry_lock(&self.state);
+        if state.sealed { return Err(wasmtime::Error::msg("Source domain is sealed").into()); }
         if state.nodes.len() == state.nodes.capacity() {
             let capacity = state
                 .nodes
@@ -142,6 +181,61 @@ impl WriteDomain {
         target: &Watch,
         receivers: &[Val],
     ) -> Result<bool> {
+        // Clone only typed immutable domain links under each brief lock. All
+        // authority adapters and payload inspections run after those locks end.
+        Session::consume_host_work(store.as_context_mut(),1,irq)?;
+        if registry_lock(&self.state).children.is_empty() {
+            return self.matches_local(store,runtime,identity,irq,methods,prototype,staged,target,receivers,true);
+        }
+        let mut pending: Vec<Arc<WriteDomain>>=Vec::new();
+        let mut domains: Vec<Arc<WriteDomain>>=Vec::new();
+        let mut seen: Vec<usize>=Vec::new();
+        reserve_context(store.as_context_mut(),irq,&mut seen,1)?;
+        seen.push(self as *const Self as usize);
+        self.queue_children(store.as_context_mut(),irq,&mut pending)?;
+        while let Some(current)=pending.pop() {
+            Session::consume_host_work(store.as_context_mut(),3,irq)?;
+            let pointer=Arc::as_ptr(&current) as usize;
+            let mut duplicate=false;
+            for old in &seen {Session::consume_host_work(store.as_context_mut(),1,irq)?;if *old==pointer {duplicate=true;break;}}
+            if duplicate {continue;}
+            if !registry_lock(&current.state).sealed {return Err(wasmtime::Error::msg("Unsealed certified domain dependency").into());}
+            reserve_context(store.as_context_mut(),irq,&mut seen,1)?;
+            seen.push(pointer);
+            current.queue_children(store.as_context_mut(),irq,&mut pending)?;
+            reserve_context(store.as_context_mut(),irq,&mut domains,1)?;
+            domains.push(current);
+        }
+        let mut valid=self.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,staged,target,receivers,true)?;
+        for domain in domains {
+            Session::consume_host_work(store.as_context_mut(),1,irq)?;
+            // A parent's staged receipt can never excuse a child's storage slot.
+            valid &= domain.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,None,target,receivers,false)?;
+        }
+        Ok(valid)
+    }
+    fn queue_children(&self, mut store:StoreContextMut<'_,()>,irq:&AtomicBool,domains:&mut Vec<Arc<WriteDomain>>)->Result<()> {
+        let state=registry_lock(&self.state);
+        reserve_context(store.as_context_mut(),irq,domains,state.children.len())?;
+        for child in &state.children {
+            Session::consume_host_work(store.as_context_mut(),1,irq)?;
+            domains.push(child.domain.clone());
+        }
+        Ok(())
+    }
+    fn matches_local(
+        &self,
+        mut store: StoreContextMut<'_, ()>,
+        runtime: wasmtime::Instance,
+        identity: u64,
+        irq: &AtomicBool,
+        methods: &CanonicalMethods,
+        prototype: &Authority,
+        staged: Option<(&Watch, &Receipt)>,
+        target: &Watch,
+        receivers: &[Val],
+        require_target: bool,
+    ) -> Result<bool> {
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
         let watches = {
@@ -172,7 +266,7 @@ impl WriteDomain {
             Session::consume_host_work(store.as_context_mut(), 1, irq)?;
             if std::ptr::eq(watch.as_ref(), target) { member = true; break; }
         }
-        if !member { return Ok(false); }
+        if require_target && !member { return Ok(false); }
         let bytes = receivers.len().checked_mul(std::mem::size_of::<Val>())
             .and_then(|n| u64::try_from(n).ok())
             .ok_or_else(|| wasmtime::Error::msg("Memo layout context overflow"))?;
@@ -275,11 +369,30 @@ impl WriteDomain {
                         }
                     }
                 }
+                if !member {
+                    for child in &state.children {
+                        Session::consume_host_work(scope.as_context_mut(),1,irq)?;
+                        let root=child.value.value.to_rooted(&mut scope);
+                        if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
+                    }
+                }
                 valid &= member;
             }
         }
         Ok(valid)
     }
+}
+
+fn reserve_context<T>(mut store:StoreContextMut<'_,()>,irq:&AtomicBool,values:&mut Vec<T>,extra:usize)->Result<()> {
+    Session::consume_host_work(store.as_context_mut(),1,irq)?;
+    if extra<=values.capacity()-values.len() {return Ok(());}
+    let needed=values.len().checked_add(extra).ok_or_else(||wasmtime::Error::msg("Domain traversal capacity overflow"))?;
+    let count=values.capacity().checked_mul(2).unwrap_or(needed).max(needed).max(4);
+    let bytes=count.checked_add(values.len()).and_then(|n|n.checked_mul(std::mem::size_of::<T>()))
+        .ok_or_else(||wasmtime::Error::msg("Domain traversal byte overflow"))?;
+    Session::consume_host_work(store.as_context_mut(),bytes as u64,irq)?;
+    values.try_reserve_exact(count-values.len()).map_err(|_|wasmtime::Error::msg("Domain traversal allocation failed"))?;
+    Ok(())
 }
 
 #[cfg(test)]

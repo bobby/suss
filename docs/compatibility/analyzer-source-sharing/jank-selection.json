@@ -1,0 +1,310 @@
+{
+  "schema": 1,
+  "issue": 264,
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "reference": "tests/oracle/clojure-test-suite-observations.json",
+  "reference-sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+  "selected-tests": [
+    "clojure.core-test.identical-qmark/test-identical?",
+    "clojure.core-test.hash-map/test-hash-map",
+    "clojure.core-test.hash-set/test-hash-set",
+    "clojure.core-test.when-let/test-when-let"
+  ],
+  "source-sha256": {
+    "LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "test/clojure/core_test/identical_qmark.cljc": "442e1f2d04ed95d8e680794a5a4cfd09c436f049e21e7ff08f1c702da49e9d95",
+    "test/clojure/core_test/hash_map.cljc": "dec05682d79fe7517fe00f2696d4a6807bef94b10af10306f2cd1ad20f5f666d",
+    "test/clojure/core_test/hash_set.cljc": "89d0bafa1c7a628a1854a4d77defaf2b54e2c1ed278f57ebf856d81f3439d521",
+    "test/clojure/core_test/when_let.cljc": "c327a0a82f0122dfbfe2b49e6d171925be6b69ed85dae2b633d52c92b8c94718"
+  },
+  "rationale": {
+    "clojure.core-test.identical-qmark/test-identical?": "Equal persistent values need not share identity; immutable native owner sharing must not introduce value interning. Execute every original assertion.",
+    "clojure.core-test.hash-map/test-hash-map": "Persistent map construction, nested values, duplicate keys and malformed arities regress the transport collection foundations.",
+    "clojure.core-test.hash-set/test-hash-set": "Persistent set construction, equality and duplicates regress the transport collection foundations.",
+    "clojure.core-test.when-let/test-when-let": "Lexical initialization, lazy demand and repeated body effects must retain source evaluation order when executable/source initializer HIR becomes shared."
+  },
+  "coverage-limit": "The pinned suite does not inspect analyzer namespace/declaration references, source certificates, construction callbacks, storage poisoning or Session cancellation. Dedicated pinned ClojureScript observers and both-phase native acceptance tests establish those boundaries. This selection is supplementary regression coverage, not evidence those criteria pass.",
+  "classification": "Selection only; not an execution result. Execute the original unchanged tests on the integrated source, classify with scripts/clojure_test_suite.py compare, and retain every failure, unknown, namespace-load failure and unexecuted assertion. No known-failure baseline or upstream fixture may be weakened to obtain a pass. Prior-head outcomes are not current-source evidence.",
+  "assertions": [
+    {
+      "id": "clojure.core-test.identical-qmark/test-identical?#1",
+      "test": "clojure.core-test.identical-qmark/test-identical?",
+      "ordinal": 1,
+      "form": "(= x y)",
+      "line": 13,
+      "column": 10
+    },
+    {
+      "id": "clojure.core-test.identical-qmark/test-identical?#2",
+      "test": "clojure.core-test.identical-qmark/test-identical?",
+      "ordinal": 2,
+      "form": "(not (identical? x y))",
+      "line": 14,
+      "column": 10
+    },
+    {
+      "id": "clojure.core-test.identical-qmark/test-identical?#3",
+      "test": "clojure.core-test.identical-qmark/test-identical?",
+      "ordinal": 3,
+      "form": "(identical? x x)",
+      "line": 16,
+      "column": 10
+    },
+    {
+      "id": "clojure.core-test.identical-qmark/test-identical?#4",
+      "test": "clojure.core-test.identical-qmark/test-identical?",
+      "ordinal": 4,
+      "form": "(identical? y y)",
+      "line": 17,
+      "column": 10
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#1",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 1,
+      "form": "(= [0 1 2 3 4] (when-let [x [0 1 2 3 4]] x))",
+      "line": 8,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#2",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 2,
+      "form": "(not (nil? (when-let [x [nil]] x)))",
+      "line": 9,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#3",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 3,
+      "form": "(= [] (when-let [x []] x))",
+      "line": 10,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#4",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 4,
+      "form": "(nil? (when-let [x nil] x))",
+      "line": 11,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#5",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 5,
+      "form": "(= (quote (0 1 2 3 4)) (when-let [x (range 5)] x))",
+      "line": 13,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#6",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 6,
+      "form": "(= (quote (1 1 1 1 1)) (when-let [x s] x))",
+      "line": 20,
+      "column": 28
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#7",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 7,
+      "form": "(= (clojure.core/deref calls) 5)",
+      "line": 21,
+      "column": 28
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#8",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 8,
+      "form": "(nil? (when-let [_x nil]))",
+      "line": 23,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#9",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 9,
+      "form": "(nil? (when-let [_x [false]]))",
+      "line": 24,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#10",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 10,
+      "form": "(nil? (when-let [_x [true]]))",
+      "line": 25,
+      "column": 26
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#11",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 11,
+      "form": "(= :bar (when-let [_x (range 5)] (swap! counter inc) (swap! counter inc) (swap! counter inc) :bar))",
+      "line": 28,
+      "column": 28
+    },
+    {
+      "id": "clojure.core-test.when-let/test-when-let#12",
+      "test": "clojure.core-test.when-let/test-when-let",
+      "ordinal": 12,
+      "form": "(= 3 (clojure.core/deref counter))",
+      "line": 33,
+      "column": 28
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#1",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 1,
+      "form": "(= {} (hash-map))",
+      "line": 8,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#2",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 2,
+      "form": "(= {:a 1} (hash-map :a 1))",
+      "line": 9,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#3",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 3,
+      "form": "(= {:a 2} (hash-map :a 1 :a 2))",
+      "line": 10,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#4",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 4,
+      "form": "(= {:a 1, :b \"2\"} (hash-map :a 1 :b \"2\"))",
+      "line": 11,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#5",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 5,
+      "form": "(= {\"a\" 1, [:b :c] \"2\", \"d\" nil} (hash-map \"a\" 1 [:b :c] \"2\" \"d\" nil))",
+      "line": 12,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#6",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 6,
+      "form": "(= {\"a\" {}} (hash-map \"a\" (hash-map)))",
+      "line": 13,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#7",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 7,
+      "form": "(= {:a {:b {:c 1}, :d 2}} (hash-map :a (hash-map :b (hash-map :c 1) :d 2)))",
+      "line": 14,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-map/test-hash-map#8",
+      "test": "clojure.core-test.hash-map/test-hash-map",
+      "ordinal": 8,
+      "form": "(p/thrown? (hash-map :a))",
+      "line": null,
+      "column": null
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#1",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 1,
+      "form": "(= #{} (hash-set))",
+      "line": 8,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#2",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 2,
+      "form": "(= #{:a} (hash-set :a))",
+      "line": 9,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#3",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 3,
+      "form": "(= #{\"a\"} (hash-set \"a\"))",
+      "line": 10,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#4",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 4,
+      "form": "(= #{1} (hash-set 1 1))",
+      "line": 11,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#5",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 5,
+      "form": "(= #{nil} (hash-set nil))",
+      "line": 12,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#6",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 6,
+      "form": "(= #{\" \"} (hash-set \" \"))",
+      "line": 13,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#7",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 7,
+      "form": "(= #{(quote ())} (hash-set (quote ())))",
+      "line": 14,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#8",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 8,
+      "form": "(= #{[]} (hash-set []))",
+      "line": 15,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#9",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 9,
+      "form": "(= #{(quote (1 2 3))} (hash-set (quote (1 2 3))))",
+      "line": 16,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#10",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 10,
+      "form": "(= #{[1 2 3]} (hash-set [1 2 3]))",
+      "line": 17,
+      "column": 11
+    },
+    {
+      "id": "clojure.core-test.hash-set/test-hash-set#11",
+      "test": "clojure.core-test.hash-set/test-hash-set",
+      "ordinal": 11,
+      "form": "(= #{nil #{}} (hash-set nil (hash-set)))",
+      "line": 18,
+      "column": 11
+    }
+  ]
+}

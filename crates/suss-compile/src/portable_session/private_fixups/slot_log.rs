@@ -6,6 +6,25 @@ pub(crate) type SharedSlotLog = Rc<RefCell<PrivateSlotLog>>;
 struct Token {
     id: usize,
     value: SessionValue,
+    factory: super::super::source_array_inputs::SourceArrayInputs,
+}
+// Only this log can mint the handle, after rechecking the original native
+// empty SourceArray factory facts. The log stays owned by the binding context.
+pub(crate) struct PrivateToken {
+    id: usize,
+    value: SessionValue,
+    owner: *const PrivateSlotLog,
+}
+impl PrivateToken {
+    pub(crate) fn value(&self) -> &SessionValue {
+        &self.value
+    }
+    pub(crate) fn id(&self) -> usize {
+        self.id
+    }
+    pub(crate) fn belongs_to(&self, log: &PrivateSlotLog) -> bool {
+        std::ptr::eq(self.owner, log)
+    }
 }
 struct Slot {
     array: SessionValue,
@@ -209,8 +228,8 @@ impl PrivateSlotLog {
     }
     pub(crate) fn token(&mut self, s: &mut Session, id: usize) -> Result<SessionValue> {
         self.check_session(s)?;
-        let value = s.data_array(&[])?;
-        self.register_created(s, id, &value)?;
+        let (value, factory) = s.data_array_with_inputs(&[])?;
+        self.register_created(s, id, &value, factory)?;
         Ok(value)
     }
     fn check_session(&self, s: &mut Session) -> Result<()> {
@@ -220,7 +239,13 @@ impl PrivateSlotLog {
         }
         Ok(())
     }
-    fn register_created(&mut self, s: &mut Session, id: usize, value: &SessionValue) -> Result<()> {
+    fn register_created(
+        &mut self,
+        s: &mut Session,
+        id: usize,
+        value: &SessionValue,
+        factory: super::super::source_array_inputs::SourceArrayInputs,
+    ) -> Result<()> {
         s.check(value)?;
         let irq = s.host_work_interrupt();
         let mut scope = RootScope::new(&mut s.store);
@@ -241,8 +266,30 @@ impl PrivateSlotLog {
         self.tokens.push(Token {
             id,
             value: value.clone(),
+            factory,
         });
         Ok(())
+    }
+    pub(crate) fn token_handle(&self, s: &mut Session, id: usize) -> Result<PrivateToken> {
+        self.check_session(s)?;
+        for token in &self.tokens {
+            s.charge_host_work(1)?;
+            if token.id == id {
+                if !token.factory.matches(s, &token.value)? {
+                    return Err(invalid("Private token no longer matches its fresh factory"));
+                }
+                s.charge_host_work(2)?;
+                return Ok(PrivateToken {
+                    id,
+                    value: token.value.clone(),
+                    owner: self as *const Self,
+                });
+            }
+        }
+        Err(invalid("Unknown private token handle"))
+    }
+    pub(crate) fn binding_owner(&self, s: &mut Session) -> Result<()> {
+        self.check_session(s)
     }
     pub(crate) fn inputs(
         &self,

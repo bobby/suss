@@ -33,9 +33,10 @@ mod canonical_methods;
 mod canonical_seeds;
 mod memo_bridge;
 mod dispatch_observer;
-mod write_domain;
+pub(crate) mod write_domain;
 mod prototype_origin;
 pub(crate) mod private_fixups;
+pub(crate) mod deferred_factory;
 mod constructor_inputs;
 pub(crate) use constructor_inputs::ConstructorInputs;
 mod source_array_inputs;
@@ -3742,3 +3743,5 @@ mod tests {
 
 #[cfg(test)]
 pub(crate) mod memo_leaf_test_support;
+#[cfg(test)]
+mod constructor_callback_tests;

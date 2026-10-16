@@ -87,6 +87,23 @@ impl Session {
     }
 }
 impl SourceArrayInputs {
+    pub(super) fn bind_native_inputs(
+        &mut self, session: &mut Session,
+        bindings: &super::deferred_factory::NativeBindings<'_>,
+    ) -> Result<()> {
+        let bytes = self.values.len().checked_mul(std::mem::size_of::<SessionValue>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Deferred array inputs overflow"))?;
+        session.charge_host_work(bytes + 1)?;
+        let mut values = Vec::new();
+        values.try_reserve_exact(self.values.len()).map_err(|_| invalid("Deferred array inputs allocation failed"))?;
+        for value in &self.values {
+            session.charge_host_work(1)?;
+            values.push(bindings.resolve(session, value)?.clone());
+        }
+        self.values = values;
+        Ok(())
+    }
     pub(super) fn inputs(&self) -> impl Iterator<Item = &SessionValue> {
         self.values.iter()
     }
