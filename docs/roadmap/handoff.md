@@ -27743,3 +27743,90 @@ Isolated combined branch froma182b98 applied107a736→84eba2f delta. Source file
 Focused run-combined-cold-focused.py TERMINALdriver0 with all eight command exits0: scoped13, matched leaf4/all48rows, raw keys15, initializer-native3, direct identifier1, public cumulative10, cross-invocation2 and pinned map1. Total49pass executions/0fail/0ignored, source unchanged across430Rust/source/bootstrap hashes. Explicit pinned comparator:69ordered IDs,62host-decided/seven guest-judged, no failed/skipped/unexecuted assertions. This preserves the original complete map declaration/default allowance, not a full workspace claim.
 
 Archive m4-combined-cold-memo-focused-2026-10-16.tar.gz SHA256 0c54460bf50b07f94f375f103931cd366b89b6ac14fdb13cc559694522b2b06a, 25hashed payloads plus manifest, read back verified. Commands use combined-acceptance-target/jobs2/test-threads2; no quota changes. Previous six direct transport fuel failures remain recorded at a182b98; they were not rerun by this cohort. Next: integrate reviewed source-location optimization, then target the remaining fuel regressions. Full workspace baseline/final-head CI and independent committed-head integration review remain required. No issue closure/merge.
+
+
+### 2026-10-16 — source-tags causal isolation and insufficient arithmetic/invoke experiments
+
+Evidence-only checkpoint over4ce5ddb; no production candidate integrated. Main's
+frozen producers and standalone reader worktree were not modified. Own targets,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS assignment. Exact commands/exit receipts and
+source freezes are archived; quotas, tariffs and fixtures remain unchanged.
+
+Clean107a736 exact compiled_macro_source_tags target:1pass1fuel-fail218.73s,
+exit101, handle51745, source unchanged/clean. Inference already fails at107;
+invocation-tags passes there. Exact clean4ce:0pass2fuel-fail108.28s, exit101,
+handle42397, source unchanged/clean. Both fail during caller &env input transport.
+The test file is identical. Prior-main raw log lines554/556 record both passes
+(64.90s target); earlier unexecuted CI targets cannot be counted as failures/passes.
+
+Exact a182b986cf6b793428c0df0e836ff1837e4cc089 invocation-tags-only with
+SUSS_MACRO_FUEL_TRACE=1 passes1/1 in286.16s, handle26485, unchanged/clean. Its
+second caller's last decoded fuel3440486. This rules out the four transport
+optimizations in107..a182 as the introduction point. Trace-only107 also passes;
+trace-only4ce fails its fifth invocation during caller-environment transport.
+The a182 raw trace, full freeze, receipt and runner are preserved, not inferred
+from an unrelated source lineage. A later unchanged a182 metadata trace passes
+and shows private fixups already consume626588/685219 fuel at invocations3/4;
+cold4ce consumes635224/685331 there. Those similar costs do not explain the
+roughly1.1–1.2million additional fuel per caller environment.
+
+Diagnostic cold-only variant removes ancestor authorization while retaining
+cold identifiers on the same4ce base. It and full-ancestor variant have exactly
+matching macro-stage fuel and direct host-debit buckets, both exit101 and frozen.
+Memo bridge direct debits3470/3330/3700/3700 and zero write_domain debits reject
+ledger/domain scans as the cause in this fixture. Charges through charge_host_work
+are grouped under portable_session.rs, not attributed to their outer source caller.
+These are diagnostic observations, not a universal absence of memo proof costs.
+
+A separate actual-IHash method diagnostic sums4766760 INCLUSIVE fuel over643
+calls with descriptor98.450calls costing186 are inferred warm, not observed memo
+states. Nested guest/host work can double-count. Diagnostic rooting shifts fifth
+expansion fuel by6022 and final backtrace; do not claim exact uninstrumented cost
+from that sum. User-relayed independent Carver diagnostic review and these limits
+are retained. No public method wrapper or guest callback substitution was used.
+
+Nesting-aware epoch stack probe (handle91764): bootstrap0; invocation101,
+0pass1fuel-fail43.66s, source unchanged. All stage-fuel readings exactly match
+clean4ce.128samples counted once at the innermost observed frame, with full stacks
+retained:75invoke,16macro-memo-field-set,9property-key-equal; others are sparse.
+Epoch checks bias samples toward function entries/loop heads, so these are NOT
+exclusive fuel percentages or proof that invoke dominates execution time. Debug
+names identify surrounding Murmur/hash source frames. A source-derived Macro
+runtime export map resolves indices; the ordinary Runtime map is not used for
+later Macro indices. Auxiliary mapping utility had two E0583 setup failures
+(first summary only; second raw log) before corrected static extraction; these
+were not guest execution results. Runtime mapping adds no new profiling run.
+
+One ToInt32 experiment retains live coerce-number once and takes an i64-truncate/
+i32-wrap shortcut for abs(x)<2^63; endpoints/larger/nonfinite values retain the
+old path. Extended existing ABI boundary/random/string/sentinel test passes1/1
+2.35s; user-relayed Carver review found no source blockers. Bootstrap0. Source-tags
+still0pass2fuel-fail97.92s (handle6342), frozen. Decoded fuel after invocations1–4:
+4ce8037827/6007903/3157598/249588; candidate8095315/6122815/3338006/495492.
+Cumulative saving245904 is insufficient. Exact source/patch/bootstrap and review
+are preserved; this is not a regression fix or acceptance claim.
+
+One distinct generic-invoke read-reuse experiment caches each value at its first
+original read using local.tee, rather than the old853088e upfront local.set pattern
+that saved zero. Original Closure/ARGS guards/errors, min-before-max inspection,
+live environment validation, actual argument array, coercions and selected tail
+call remain. No overridable call is removed. User-relayed independent Carver
+source review found no blockers and assumed no fuel benefit.
+Handle6818: closure5pass4.74s; arithmetic1pass0.97s; nominal errors1pass1.08s;
+bootstrap0; coercion effects2pass49.84s; source-tags0pass2fuel-fail59.18s, exit101,
+source unchanged. Decoded fuel8046281/6024778/3184652/286821 gives cumulative
+savings8454/16875/27054/37233 versus4ce. It was not combined with ToInt32.
+Insufficient: no further invoke iterations. Candidate production/bootstrap restored
+to4ce after archiving exact tested snapshots. Separate cold-keyword provenance
+oracle/fix work belongs to main/Epicurus; no spelling-based prewarming or reader
+cold-state change is inferred or applied here.
+
+Archive docs/roadmap/evidence/m4-source-tags-cold-cost-2026-10-16.tar.gz SHA256
+67359cbfcad918c915879b0078ca53b8e4d9133c6ab64e5e78d923047e898f44,
+117entries including manifest,116payload hashes read back. Includes original
+causal runs, full/cold-only/method diagnostics, exact a182 pass evidence, stack
+probe source/results/mapping, both insufficient candidates and bootstrap snapshots,
+raw negative results, freezes, runners, comparisons and review summaries. Previous
+standalone insufficient archive22d02fd4b6ab9a498a5a59274a0f0ad2b4af2ce11db4d74a6063fbb50604f4b8
+is retained in cache; its contents are included in this archive. No full baseline,
+final-head CI, issue acceptance, source-fix integration or merge claim.
