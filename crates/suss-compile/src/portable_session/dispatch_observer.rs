@@ -284,7 +284,6 @@ pub(super) fn install(
             // method, re-evaluate arguments, translate exceptions, or restore dynamic
             // state here. Raw Wasmtime errors/pending exceptions pass to the caller.
             let function = if route == 1 { native_invoke } else { invoke };
-            let _hash_samples=super::hash_profile::HashScope::new(active);
             function.call(&mut caller, &arguments[..2], results)
         },
     );

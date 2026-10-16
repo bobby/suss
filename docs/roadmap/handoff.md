@@ -27986,3 +27986,9 @@ reconstructed ABI, original raw samples/log/receipt and verification report.
 Before restoration all436 snapshots match tested9b22bf5 and current source bytes;
 all495 original payload hashes and all original raw/cache bytes verify. Original
 archive and diagnostic commit remain immutable. No further guest execution.
+
+After the verified immutable snapshots/supplement, restored all diagnostic crate
+source and both bootstrap artifacts exactly to8fda18a in a follow-up commit.
+Final branch tree contains only evidence archives and this factual handoff delta;
+9b22bf5 retains exact tested instrumentation, and its archive includes all frozen
+source/bootstrap bytes. Restoration does not claim another executed test pass.
