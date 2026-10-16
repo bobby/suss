@@ -27899,3 +27899,11 @@ callback-effect evidence, source-tag fuel acceptance, full baseline or final-hea
 CI. No production/bootstrap changes, compatibility skips, quota changes, PR or
 integration. Next step is independent review of this exact test/evidence delta
 before integrating the gate; Epicurus owns literal-origin implementation work.
+
+### Final single pinned keyword gate evidence (2026-10-16)
+
+The complete unchanged pinned clojure.core-test.keyword/test-keyword body executes and independently compares all60 ordered assertions as host passes, with0guest judgments/failures/missing/skips/namespace or test failures. The retained single gate terminally passes at default operation limits with two Cargo jobs/two test threads (90.43s command wall time). All433 frozen Rust/Suss/bootstrap hashes remain unchanged. No production/bootstrap delta fromec0eea2 exists.
+
+The first main run selected a separately named equivalent gate while an earlier gate was also present. Only the selected gate executed. After terminal, the duplicate was removed and the retained single gate rerun. Both receipts and raw observations/comparator outputs are retained, together with the earlier agent run. The initial dual-gate test source is reconstructed byte-exact from its committed base and inserted helper; its hash equals the execution freeze. Independent source review found no gate blockers. This cleanup is not treated as extra unique conformance coverage.
+
+Archive `docs/roadmap/evidence/m4-pinned-keyword-conformance-2026-10-16.tar.gz`, SHA256 `52243104855d9af22c0a1b3da001f718f579e81c5718f77db22b1fa0cd8e18ab` (470 payloads), retains final snapshots, all raw runs, comparator results, exact pinned body/reference and limits. Supporting scripts/oracle/Cargo inputs were captured after execution; they are not separately execution-frozen. This proves supplemental keyword values, not memo-state/effects, source-tag fuel acceptance, full baseline or final-head CI. Next: independent artifact review and use the gate on the final issue-resolving implementation; #261 remains open.

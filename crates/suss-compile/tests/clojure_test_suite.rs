@@ -886,3 +886,4 @@ assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
         String::from_utf8_lossy(&compared.stderr));
     println!("PINNED_KEYWORD_CONFORMANCE {}", String::from_utf8_lossy(&compared.stdout));
 }
+
