@@ -21,6 +21,8 @@ use suss_reader::forms::{Form, Kind};
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
 mod initializer_plan;
+#[cfg(test)]
+mod plan_scratch_tests;
 mod source_facts;
 mod metadata_expectations;
 mod construction;
@@ -405,6 +407,8 @@ pub struct AnalysisGraph<'a> {
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     raw_keys: Interner,
+    // Invocation-local empty storage only: no live keys, nodes or form references.
+    form_plan: Plan,
     forms: Vec<Option<Value>>,
     maps: BTreeMap<Vec<(Value, Value)>, Value>,
     vectors: BTreeMap<Vec<Value>, Value>,
@@ -445,6 +449,7 @@ impl<'a> AnalysisGraph<'a> {
             keys: BTreeMap::new(),
             symbols: BTreeMap::new(),
             raw_keys: Interner::default(),
+            form_plan: Plan::default(),
             forms: Vec::new(),
             maps: BTreeMap::new(),
             vectors: BTreeMap::new(),
@@ -898,8 +903,24 @@ impl<'a> AnalysisGraph<'a> {
         Ok((value, child))
     }
     fn form_data_selected(
-        &mut self, form: &Form, _reader_depth: usize, selected: Option<usize>,
+        &mut self, form: &Form, reader_depth: usize, selected: Option<usize>,
         child_key: &mut Option<KeyId>,
+    ) -> Result<Value> {
+        self.charge(8)?;
+        let mut plan = std::mem::take(&mut self.form_plan);
+        debug_assert!(plan.nodes.is_empty());
+        // All early returns remain inside the original builder. A failed build
+        // or failed reset drops its local Plan normally, retaining no entries
+        // and preserving the original build error without fallible cleanup.
+        let value = self.form_data_planned(form, reader_depth, selected, child_key, &mut plan)?;
+        plan.clear_metered(&mut |units| self.session.charge_host_work(units))?;
+        self.charge(8)?;
+        self.form_plan = plan;
+        Ok(value)
+    }
+    fn form_data_planned(
+        &mut self, form: &Form, _reader_depth: usize, selected: Option<usize>,
+        child_key: &mut Option<KeyId>, plan: &mut Plan,
     ) -> Result<Value> {
         #[derive(Clone, Copy)]
         enum Shape {
@@ -957,8 +978,7 @@ impl<'a> AnalysisGraph<'a> {
 
         // Identity planning is native-only. Raw metadata participates in keys,
         // but only the existing normalized-metadata path builds guest recipes.
-        let mut plan = Plan::default();
-        let root_plan = self.raw_keys.plan(form, &mut plan, &mut |units| {
+        let root_plan = self.raw_keys.plan(form, plan, &mut |units| {
             self.session.charge_host_work(units)
         })?;
         if let Some(index) = selected {
@@ -1106,7 +1126,7 @@ impl<'a> AnalysisGraph<'a> {
                 None
             } else { Some(input) };
             let metadata_plan = if let Some(form) = metadata_form {
-                let id = self.raw_keys.plan(&form, &mut plan, &mut |units| self.session.charge_host_work(units))?;
+                let id = self.raw_keys.plan(&form, plan, &mut |units| self.session.charge_host_work(units))?;
                 Some((form, id))
             } else { None };
             work.push(Work::Finish {

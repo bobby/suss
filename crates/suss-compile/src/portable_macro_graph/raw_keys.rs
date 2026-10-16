@@ -15,6 +15,20 @@ pub(super) struct Node {
 pub(super) struct Plan {
     pub(super) nodes: Vec<Node>,
 }
+impl Plan {
+    /// Drop all live nodes/child buffers, retaining only empty node capacity.
+    /// Poll before each bounded drop. On error the caller discards this Plan.
+    pub(super) fn clear_metered<E>(
+        &mut self, charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<(), E> {
+        while !self.nodes.is_empty() {
+            // Length check, pop, child-buffer drop and loop bookkeeping.
+            charge(4)?;
+            self.nodes.pop();
+        }
+        charge(0)
+    }
+}
 #[derive(Default)]
 pub(super) struct Interner {
     heads: RawHeads,
