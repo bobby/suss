@@ -150,3 +150,69 @@ fn analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_valu
     assert_eq!(memo(&mut session,&bridge,&leaf),Kind::Nil);
     assert!(matches!(bridge.read(&mut session,&leaf,0..1).unwrap().kind,Kind::Keyword(ref k) if k.name=="source-leaf"));
 }
+
+
+#[test]
+fn analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch() {
+    use crate::portable_session::memo_leaf_test_support::Method;
+    for mut session in [Session::new_macro().unwrap(), Session::new_repl().unwrap()] {
+        session.eval("(def leaf-original-method nil) (def namespace-literal-log [])").unwrap();
+        let original = Method::capture(&mut session, "Keyword").unwrap();
+        original.bind_delegate(&mut session).unwrap();
+        session.eval(r#"(extend-type Keyword IHash
+          (-hash [self]
+            (do (if (or (= (.-name self) "name") (= (.-name self) "requires")
+                        (= (.-name self) "renames") (= (.-name self) "uses") (= (.-name self) "require-macros")
+                        (= (.-name self) "use-macros") (= (.-name self) "rename-macros")
+                        (= (.-name self) "excludes") (= (.-name self) "defs"))
+                    (set! namespace-literal-log
+                      (conj namespace-literal-log [(.-name self) (nil? (.-_hash self))])))
+                (leaf-original-method self))))"#).unwrap();
+        let bridge=FormBridge::new(&mut session).unwrap();
+        let namespace=Arc::new(SourceNamespace {
+            namespace:"user".into(),aliases:Default::default(),refers:Default::default(),
+            used_refers:Default::default(),renamed_refers:Default::default(),excluded_core:Default::default(),
+            macro_aliases:Default::default(),macro_refers:Default::default(),used_macro_refers:Default::default(),
+            renamed_macro_refers:Default::default(),declarations:Default::default(),identities:vec![],
+        });
+        let (value, controls)={
+            let mut graph=AnalysisGraph::new(&bridge,&mut session);
+            let root=graph.namespace(&namespace,0).unwrap();
+            graph.finish_recipes().unwrap();
+            let entries=match graph.recipes[root].as_ref().unwrap() {Recipe::Map(entries)=>entries.clone(),_=>panic!("namespace task must finish as actual map")};
+            for name in ["name","requires","uses","renames","require-macros","use-macros","rename-macros","excludes","defs"] {
+                assert!(entries.iter().any(|(key,_)|matches!(graph.recipes[*key].as_ref(),Some(Recipe::Identifier{name:n,literal:Some(_),..}) if n==name)),"{name}");
+            }
+            let refers=entries.iter().find_map(|(key,_)|match graph.recipes[*key].as_ref().unwrap() {
+                Recipe::Identifier{namespace:Some(ns),name,literal:None,..} if ns=="suss" && name=="refers"=>Some(*key),_=>None
+            }).expect("Suss-only field remains cold");
+            let mut controls=vec![graph.materialize(refers).unwrap()];
+            for text in [":name",":requires",":renames",":require-macros",":rename-macros",":use-macros",":excludes",":uses",":defs"] {
+                let form=suss_reader::forms::read_forms(text).unwrap().remove(0);
+                let id=graph.form(&form,0).unwrap();
+                controls.push(graph.materialize(id).unwrap());
+            }
+            for control in &controls {assert_eq!(memo(graph.session,&bridge,control),Kind::Nil);}
+            let value=graph.materialize(root).unwrap();
+            (value,controls)
+        };
+        session.collect().unwrap();
+        // Distinct reader leaves stay cold even after the same-text map keys hash.
+        for control in &controls {assert_eq!(memo(&mut session,&bridge,control),Kind::Nil);}
+        let log=session.eval("namespace-literal-log").unwrap();
+        let log=bridge.read(&mut session,&log,0..1).unwrap();
+        eprintln!("namespace-literal-dispatch {:?}",log.kind);
+        let Kind::Vector(rows)=&log.kind else {panic!("dispatch vector")};
+        let expected_names=["name","requires","uses","renames","require-macros","use-macros","rename-macros","excludes","defs"];
+        assert_eq!(rows.len(),expected_names.len(),"every selected key still invokes the actual replacement exactly once");
+        for (row, expected) in rows.iter().zip(expected_names) {
+            let Kind::Vector(fields)=&row.kind else {panic!("event")};
+            assert_eq!(fields.len(),2);
+            assert_eq!(fields[0].kind,Kind::String(expected.encode_utf16().collect()),"actual callback order and key identity by text");
+            assert_eq!(fields[1].kind,Kind::Bool(false));
+        }
+        let decoded=bridge.read(&mut session,&value,0..1).unwrap();
+        assert!(matches!(decoded.kind,Kind::Map(_)));
+        original.restore(&mut session).unwrap();
+    }
+}

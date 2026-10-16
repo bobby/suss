@@ -1569,19 +1569,24 @@ impl<'a> AnalysisGraph<'a> {
             declarations.push((short, record));
         }
         let declarations = self.map_values(declarations)?;
+        // Literal creation sites, pinned analyzer.cljc c4295f3:
+        // ns-info 3504-3517 / require-info 3588-3600 are merged into
+        // compiler namespace state. :defs is created by ensure-defs 5091
+        // (also parse :def assoc-in 2093), not inferred from lookup spelling.
+        // This proof applies only to this namespace-record constructor.
         self.map_in_task_slot(
             slot,
             vec![
-                ("name", name),
-                ("requires", aliases),
-                ("suss/refers", refers),
-                ("uses", uses),
-                ("renames", renames),
-                ("require-macros", macro_aliases),
-                ("use-macros", macro_uses),
-                ("rename-macros", macro_renames),
-                ("excludes", exclusions),
-                ("defs", declarations),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("requires")), aliases),
+                (FieldKey::Cold("suss/refers"), refers),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("uses")), uses),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("renames")), renames),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("require-macros")), macro_aliases),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("use-macros")), macro_uses),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("rename-macros")), macro_renames),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("excludes")), exclusions),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("defs")), declarations),
             ],
         )
     }

@@ -27843,3 +27843,59 @@ All payload hashes were read back verified. Source-only integration review
 passed; independent final artifact/committed-head review is requested. Next
 implementation remains explicit namespace provenance with pinned observations,
 then integration of the separately executed actual-env effect regression.
+
+
+## Combined nine namespace origins and actual-env effects — 2026-10-16
+
+Current37991e3-based integration applies exact reviewed483f26a namespace source
+and c4bcd64 actual-env test-only changes. Independent source review confirms
+nine-route graph/test hashes match components, effect module/registration match
+c4, all other crate source unchanged, current paged entries/source authority
+retained. Source and bootstrap remain frozen435 paths across all commands.
+Dedicated analyzer-literal-key-target, jobs2, locked Cargo, no RUSTFLAGS:
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  exit0,30.16s command.
+- `cargo test -p suss-compile --locked --lib analyzer_literal -- --test-threads=2 --nocapture`:
+  7pass/0fail,107.82s test/131.14s command. Includes actual-env custom/restored
+  stages, both caller phases after GC, plus exact nine namespace callbacks and
+  cold same-text reader/Suss controls.
+- `cargo test -p suss-cli --locked --test compiled_macro_analyzer_literal_memos -- --test-threads=2 --nocapture`:
+  2pass/0fail,102.72s test/125.50s command.
+- `cargo test -p suss-compile --locked --test clojure_test_suite pinned_keyword_namespace_keeps_values -- --test-threads=2 --nocapture`:
+  1pass,49.70s test/89.17s command; unchanged complete pinned body60ordered
+  assertions independently host-decided,0guest/fail/missing/skips/test/ns errors.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  0pass/2default-fuel failures,41.20s test/62.59s command.
+- `cargo test -p suss-compile --lib --locked scoped_memo_stores -- --test-threads=2 --nocapture`:
+  13pass/0fail,20.80s test/45.19s command, preserving wrong-slot/domain/unregistered
+  ancestor, publication-before-unwind, post-store exhaustion/recovery controls.
+
+Same source/bootstrap invocation-tag replay enables existing
+SUSS_MACRO_FUEL_TRACE=1 and SUSS_METADATA_FUEL_TRACE=1, command as above but
+selects compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods
+with --exact --nocapture --test-threads=1. Exit101,0pass/1fuel-fail,42.45s test/
+42.96s command. Five invocation starts; four decoded remaining-fuel observations
+[8354757,6639177,4094597,1538479]; fifth starts1538220 and exhausts during caller
+&env transport at the unchanged invocation span. These are inclusive stage
+breadcrumbs, not exclusive callee costs or additive nested charges. No new
+receiver instrumentation/guest hash call, quota increase or tariff cut. No
+single-change savings claim; same failure boundary as untraced execution.
+
+Archive `docs/roadmap/evidence/m4-combined-namespace-focused-2026-10-16.tar.gz`
+SHA2561453dc4c83533d8fc10df0d691a5f2b8fc63b2884c5b1e058dbc50e1083676c1
+contains476 manifested payloads,435 complete frozen snapshots, raw focused/
+scoped/trace logs, trace summary, keyword operands/comparison and runners. Both
+phases' compiler/core/dependency/Wasm fingerprints recompute true; all payloads
+read back verified. Supporting inputs captured after tests, not independently
+pre-frozen. Parent archive65808533...5fc0adb remains separately referenced.
+
+The six direct preservation corpora and map body were NOT rerun on this exact
+source; parent failures/passes are not promoted into current results. Original
+collection boundaries, nominal records, lifecycle, reduction and sharing still
+need current acceptance evidence. Full workspace baseline and final-head CI
+unexecuted here. Source integration review passed; final artifact/committed-head
+review requested. Next measurement: actual memo-ledger enrollment/sweep/store
+work on this source before selecting a further optimization. Preserve local
+method/source obligations and all originally-nil receipt restrictions; do not
+infer broad warming from remaining cold-key cost.
