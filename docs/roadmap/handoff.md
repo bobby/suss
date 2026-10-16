@@ -27240,3 +27240,13 @@ Native receipts: 7 passed. Cumulative target: 9 passed, 1 retained cold-custom-h
 Regenerated bootstrap with `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`. Initial manifest mismatch and test-setup E0308 are preserved separately from semantic execution. Independent delta review found no concrete blockers in the inspected paths; final committed-head review and full workspace baseline/final-head CI remain required.
 
 Raw logs, exact patch against `1c7af16b0b8ece0cfdb326b4d5735ae3cc36c242`, reproduction and hash manifest: `docs/roadmap/evidence/m4-past-memo-method-replacement-2026-10-16.tar.gz`, SHA-256 `865f70c393daa8cab3252de9b45130b6c805360efbef586beef2cc10f53521cf`. No acceptance or merge readiness is claimed.
+
+### Pinned custom memo write boundary (2026-10-16)
+
+Command: `PATH=/home/bobby/.cache/suss-m4-oracle-tools/bin:/home/bobby/.cache/suss-m4-oracle-tools/jdk-21.0.8+9-jre/bin:$PATH scripts/probe-metadata-memo-boundary.sh`, exit 0. Pinned CLJS `c4295f303100bbf5afac449242d30bca1126f1a1`; Node v26.8.2. The existing cached Clojure CLI/JRE were sufficient; no new download required.
+
+Five fresh-state cases exercise custom IHash memo91, direct memo991, poison/custom/restore, poison/direct/restore, and unrestored poison through actual compiled macro invocations and analyzer projections. All 90 metadata/audit identity observations are true. Custom writes dispatch exactly once; direct writes dispatch zero times. Canonical control hash is 1217894065. Restored cases next observe x17; unrestored poison next observes x99. Independent source controls before and after still analyze declaration value17 and metadata x17.
+
+CLJS itself retains forged/poisoned metadata. This is reference evidence for user hash effects, not authority to weaken Suss immutable-source integrity or numeric memo forgery rejection. Nested callback writes, exceptions, recursion and cancellation are unexecuted by this probe. No Suss acceptance result is implied. Initial external runner failed Node module resolution after successful compilation; both that failure and successful corrected/reproducible runs are preserved.
+
+Archive: `docs/roadmap/evidence/m4-metadata-memo-boundary-reference-2026-10-16.tar.gz`, SHA-256 `604f35d8587eddd2b0601a9db7aafa1aa35c9d96c8e7eb451735e87f163e1e5e`. Source/runner hashes and observations are in `tests/oracle/metadata-memo-boundary-observations.json`.
