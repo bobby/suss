@@ -20,6 +20,9 @@ use suss_reader::forms::{Form, Kind};
 
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
+mod initializer_plan;
+#[cfg(test)]
+mod plan_scratch_tests;
 mod source_facts;
 mod metadata_expectations;
 mod construction;
@@ -404,6 +407,8 @@ pub struct AnalysisGraph<'a> {
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     raw_keys: Interner,
+    // Invocation-local empty storage only: no live keys, nodes or form references.
+    form_plan: Plan,
     forms: Vec<Option<Value>>,
     maps: BTreeMap<Vec<(Value, Value)>, Value>,
     vectors: BTreeMap<Vec<Value>, Value>,
@@ -444,6 +449,7 @@ impl<'a> AnalysisGraph<'a> {
             keys: BTreeMap::new(),
             symbols: BTreeMap::new(),
             raw_keys: Interner::default(),
+            form_plan: Plan::default(),
             forms: Vec::new(),
             maps: BTreeMap::new(),
             vectors: BTreeMap::new(),
@@ -873,7 +879,49 @@ impl<'a> AnalysisGraph<'a> {
             self.session.charge_host_work(units)
         })
     }
-    fn form_data(&mut self, form: &Form, _reader_depth: usize) -> Result<Value> {
+    fn form_data(&mut self, form: &Form, reader_depth: usize) -> Result<Value> {
+        self.form_data_selected(form, reader_depth, None, &mut None)
+    }
+    fn definition_with_initializer(
+        &mut self, definition: &Form, initializer: Option<&Form>, depth: usize,
+    ) -> Result<(Value, Option<Value>)> {
+        // Exactly the existing full definition guard, before any correspondence
+        // or recipe lookup. It also validates the candidate child and metadata.
+        validate_form_data(definition, &mut |units| self.session.charge_host_work(units))?;
+        let selected = match (&definition.kind, initializer) {
+            (Kind::List(items), Some(initializer)) if !items.is_empty() => {
+                if initializer_plan::same(self.session, items.last().unwrap(), initializer)? {
+                    Some(items.len() - 1)
+                } else { None }
+            }
+            _ => None,
+        };
+        let mut child_key = None;
+        let value = self.form_data_selected(definition, depth, selected, &mut child_key)?;
+        self.charge(1)?;
+        let child = child_key.and_then(|key| self.forms.get(key.0).and_then(Option::as_ref).copied());
+        Ok((value, child))
+    }
+    fn form_data_selected(
+        &mut self, form: &Form, reader_depth: usize, selected: Option<usize>,
+        child_key: &mut Option<KeyId>,
+    ) -> Result<Value> {
+        self.charge(8)?;
+        let mut plan = std::mem::take(&mut self.form_plan);
+        debug_assert!(plan.nodes.is_empty());
+        // All early returns remain inside the original builder. A failed build
+        // or failed reset drops its local Plan normally, retaining no entries
+        // and preserving the original build error without fallible cleanup.
+        let value = self.form_data_planned(form, reader_depth, selected, child_key, &mut plan)?;
+        plan.clear_metered(&mut |units| self.session.charge_host_work(units))?;
+        self.charge(8)?;
+        self.form_plan = plan;
+        Ok(value)
+    }
+    fn form_data_planned(
+        &mut self, form: &Form, _reader_depth: usize, selected: Option<usize>,
+        child_key: &mut Option<KeyId>, plan: &mut Plan,
+    ) -> Result<Value> {
         #[derive(Clone, Copy)]
         enum Shape {
             List,
@@ -930,10 +978,15 @@ impl<'a> AnalysisGraph<'a> {
 
         // Identity planning is native-only. Raw metadata participates in keys,
         // but only the existing normalized-metadata path builds guest recipes.
-        let mut plan = Plan::default();
-        let root_plan = self.raw_keys.plan(form, &mut plan, &mut |units| {
+        let root_plan = self.raw_keys.plan(form, plan, &mut |units| {
             self.session.charge_host_work(units)
         })?;
+        if let Some(index) = selected {
+            self.charge(2)?;
+            let node = &plan.nodes[root_plan];
+            *child_key = node.children.get(node.metadata_count + index)
+                .map(|id| plan.nodes[*id].key);
+        }
         // A recipe hit needs no owned payload. Plan the exact borrowed key
         // before copying, retaining full validation and source-data equality.
         self.charge(1)?;
@@ -1073,7 +1126,7 @@ impl<'a> AnalysisGraph<'a> {
                 None
             } else { Some(input) };
             let metadata_plan = if let Some(form) = metadata_form {
-                let id = self.raw_keys.plan(&form, &mut plan, &mut |units| self.session.charge_host_work(units))?;
+                let id = self.raw_keys.plan(&form, plan, &mut |units| self.session.charge_host_work(units))?;
                 Some((form, id))
             } else { None };
             work.push(Work::Finish {
@@ -1732,10 +1785,13 @@ impl<'a> AnalysisGraph<'a> {
                 hir::declaration_tag(info)
                     .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
             };
-            fields.push((
-                "suss/definition-form",
-                self.form(&info.definition_form, depth + 1)?,
-            ));
+            let (definition, initializer_recipe) = self.definition_with_initializer(
+                &info.definition_form, info.initializer_form.as_ref(), depth + 1,
+            )?;
+            if tracing && info.initializer_form.is_some() {
+                eprintln!("metadata-initializer {}/{} reused={}", global.namespace(), global.name(), initializer_recipe.is_some());
+            }
+            fields.push(("suss/definition-form", definition));
             fields.push((
                 "suss/analysis-completed",
                 self.flag(info.analysis_completed)?,
@@ -1743,7 +1799,11 @@ impl<'a> AnalysisGraph<'a> {
             fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
             fields.push(("suss/defonce", self.flag(info.once)?));
             if let Some(form) = &info.initializer_form {
-                fields.push(("suss/initializer-form", self.form(form, depth + 1)?));
+                let value = match initializer_recipe {
+                    Some(value) => value,
+                    None => self.form(form, depth + 1)?,
+                };
+                fields.push(("suss/initializer-form", value));
             }
             fields.push((
                 "suss/initializer-recorded",

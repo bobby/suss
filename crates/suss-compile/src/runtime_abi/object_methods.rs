@@ -52,8 +52,10 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     get(&mut body, 0, DESCRIPTOR, 2);
     body.push(LocalSet(2));
     guard(&mut body, 2, ARGS);
+    // No callback occurs during name lookup. Retain the checked table and its
+    // immutable array length for this invocation; later calls reload live data.
     array(&mut body, 2);
-    body.extend([ArrayLen, I32Const(1), I32And, If(BlockType::Empty)]);
+    body.extend([LocalTee(8), ArrayLen, LocalTee(7), I32Const(1), I32And, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.extend([
         End,
@@ -66,9 +68,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         Loop(BlockType::Empty),
         LocalGet(3),
     ]);
-    array(&mut body, 2);
-    body.extend([ArrayLen, I32GeU, BrIf(1)]);
-    array(&mut body, 2);
+    body.extend([LocalGet(7), I32GeU, BrIf(1), LocalGet(8)]);
     body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(4)]);
     guard(&mut body, 4, DESCRIPTOR);
     get(&mut body, 4, DESCRIPTOR, 3);
@@ -105,7 +105,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         "object-method-key",
         &[VALUE, VALUE],
         &[VALUE],
-        &[(1, VALUE), (1, ValType::I32), (3, VALUE)],
+        &[(1, VALUE), (1, ValType::I32), (3, VALUE), (1, ValType::I32), (1, reference(ARGS))],
         &body,
     );
 

@@ -15,6 +15,20 @@ pub(super) struct Node {
 pub(super) struct Plan {
     pub(super) nodes: Vec<Node>,
 }
+impl Plan {
+    /// Drop all live nodes/child buffers, retaining only empty node capacity.
+    /// Poll before each bounded drop. On error the caller discards this Plan.
+    pub(super) fn clear_metered<E>(
+        &mut self, charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<(), E> {
+        while !self.nodes.is_empty() {
+            // Length check, pop, child-buffer drop and loop bookkeeping.
+            charge(4)?;
+            self.nodes.pop();
+        }
+        charge(0)
+    }
+}
 #[derive(Default)]
 pub(super) struct Interner {
     heads: RawHeads,
@@ -81,7 +95,22 @@ fn size<E>(
     value: usize,
     charge: &mut impl FnMut(u64) -> Result<(), E>,
 ) -> Result<(), E> {
-    append(out, &(value as u64).to_le_bytes(), charge)
+    // Canonical unsigned LEB128 keeps small lengths and child IDs compact.
+    // Keys are graph-local; no persisted format or source fact changes. Each
+    // integer is self-delimiting, so adjacent IDs retain exact boundaries.
+    let mut remaining = value as u64;
+    let mut encoded = [0u8; 10];
+    let mut length = 0;
+    loop {
+        // Prepay the mask, shift, continuation test, byte write and cursor work.
+        charge(6)?;
+        let byte = (remaining & 0x7f) as u8;
+        remaining >>= 7;
+        encoded[length] = byte | if remaining == 0 { 0 } else { 0x80 };
+        length += 1;
+        if remaining == 0 { break; }
+    }
+    append(out, &encoded[..length], charge)
 }
 fn text<E>(
     out: &mut Vec<u8>,
@@ -540,6 +569,34 @@ mod tests {
         plan.nodes[root].key
     }
     #[test]
+    fn compact_sizes_keep_adjacent_integer_boundaries_exact() {
+        for (value, expected) in [
+            (0, vec![0]), (127, vec![127]), (128, vec![128, 1]),
+            (16383, vec![255, 127]), (16384, vec![128, 128, 1]),
+        ] {
+            let mut actual = Vec::new();
+            size(&mut actual, value, &mut |_| Ok::<_, ()>(())).unwrap();
+            assert_eq!(actual, expected);
+        }
+        let mut pair = Vec::new();
+        size(&mut pair, 1, &mut |_| Ok::<_, ()>(())).unwrap();
+        size(&mut pair, 128, &mut |_| Ok::<_, ()>(())).unwrap();
+        let mut other = Vec::new();
+        size(&mut other, 129, &mut |_| Ok::<_, ()>(())).unwrap();
+        size(&mut other, 0, &mut |_| Ok::<_, ()>(())).unwrap();
+        assert_ne!(pair, other);
+        let mut maximum = Vec::new();
+        size(&mut maximum, usize::MAX, &mut |_| Ok::<_, ()>(())).unwrap();
+        assert_eq!(maximum.len(), (usize::BITS as usize).div_ceil(7));
+        assert!(maximum[..maximum.len()-1].iter().all(|byte| byte & 128 != 0));
+        assert!(maximum[maximum.len()-1] < 128);
+        let mut expected = vec![255; (usize::BITS as usize).div_ceil(7)];
+        let last = expected.len() - 1;
+        expected[last] = (usize::MAX >> (last * 7)) as u8;
+        assert_eq!(maximum, expected);
+    }
+
+    #[test]
     fn raw_ids_match_legacy_exact_equivalence_pairwise() {
         let mut interner = Interner::default();
         let corpus = corpus();
@@ -741,10 +798,11 @@ mod tests {
                 .sum::<usize>(),
             256
         );
-        // Empty metadata length (8), tag (1), collection count (8), child ID (8).
+        // Nil uses metadata count (1) and tag (1). Each vector adds those
+        // plus collection count (1) and child ID (1 below128, otherwise2).
         // No descendant payload is embedded in parent keys.
         assert_eq!(interner.keys.len(), 257);
-        assert_eq!(interner.key_bytes, 9 + 256 * 25);
+        assert_eq!(interner.key_bytes, 2 + 128 * 4 + 128 * 5);
         let mut legacy_bytes = 0;
         let mut cursor = &value;
         loop {
@@ -756,7 +814,7 @@ mod tests {
             }
         }
         assert_eq!(legacy_bytes, 561_545);
-        assert_eq!(interner.key_bytes, 6_409);
+        assert_eq!(interner.key_bytes, 1_154);
         let bytes_before = interner.key_bytes;
         let mut warm = Plan::default();
         let old = key(&mut interner, &value);
