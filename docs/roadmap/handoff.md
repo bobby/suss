@@ -28038,3 +28038,46 @@ freezes, commands, raw failures and observations. Current testSHA256
 No production/bootstrap edits or quota changes produced these before results.
 No passing implementation, broad Jank, full baseline or final-source CI evidence
 is claimed by these observations. Issue264 holds the semantic acceptance criteria.
+
+
+## Analyzer identity CI execution evidence (2026-10-16)
+
+Archive `evidence/m4-analyzer-identity-ci-2026-10-16.tar.gz`, SHA256 `c3fbe6ee56c492cdc27af924dd4f35e968aedc2e9e7667a5aabffb5ee9d06631`;
+174 original cache files verified against the retained cache manifest;
+178 payloads verified against archive MANIFEST.json (plus the manifest).
+Packaging command: `python /home/bobby/.cache/suss-m4-work/package-analyzer-identity-ci.py`.
+Cached read-only watcher/classifier/source-proof scripts, job origins, raw logs,
+plans, terminal metadata and failed-assertion evidence are included. No local
+build/test, source/test/bootstrap edit, commit or push was performed for packaging.
+
+Run38971935949, head4ab8a76a48469b1138bba1dc14ad7deff5afcad6, cancelled:
+integration252 planned =29 completed +1 unfinished +222 unexecuted targets;
+completed summaries116 pass/16 fail/0 ignored. Unfinished compiled_export_metadata
+announced5:3 explicit passes/2 unknown, no suite summary. Cancelled foundation:
+completed summaries31/0/0 across4 harness records; unfinished suss_compile
+announced340:198 explicit passes/142 unknown. Partial outcomes remain separate.
+
+Run38973362610, heade55c0e2bd58a20cf01efa8f82808c981839d2b91, failure:
+integration253 planned =29 completed +0 unfinished +224 unexecuted;
+completed summaries106 pass/14 fail/0 ignored. Successful foundation403 Rust
+execution passes/0 fail/1 ignored includes verifier repeats, not distinct tests.
+An interleaved example/Doc-tests line has unconfirmed per-target summary
+association; current classification retains this qualification. Both runs and
+all jobs are terminal; no unfinished foundation claim follows from that ambiguity.
+
+Checkout/API proofs: synthetic ce45a0143e39f84a0a50ce118fd64d64d52d680d
+tree950f652685246897469b93832ee34fb5dd641977 equals4ab head tree; synthetic
+bb34147f070ba2e49aa861126772bd6a9ad76224
+tree1229f664ad6339a291e8d3be400793cd0aaf7c1b equalse55 head tree.
+Runner-image Commit lines are not checkout proof. No dirty worktree source was
+snapshotted as CI source.
+
+Newly observed constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc
+and quote_and_literal_child_records_match_pinned_without_datum_analysis failures
+were previously unexecuted targets. Four absent public_record* failures are
+currently unexecuted, not fixed; the archive lists every exact name and target
+comparison. Plan252->253 changes shard coverage. Cancelled partial test counts
+are not completed-suite passes. Initial parser/retrieval failures and superseded
+classifications remain preserved and identified. No full baseline, complete
+all-target pass, current dirty-source CI coverage or acceptance conclusion is
+claimed. Each published head has independent execution evidence.
