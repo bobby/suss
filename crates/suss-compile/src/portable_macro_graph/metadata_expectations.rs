@@ -229,6 +229,8 @@ fn finish(
             namespace,
             name,
             keyword,
+            // Origin changes private initial storage, not logical Form syntax.
+            literal: _,
         } => {
             let namespace = namespace
                 .as_ref()

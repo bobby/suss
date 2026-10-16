@@ -27762,3 +27762,101 @@ Applied the reviewed `3055a56..65b565f` source delta to `4ce5ddb` and regenerate
 The complete unchanged pinned Jank map body produced69 ordered assertions: independent comparison62 host passes,7 guest judgments,0fail/missing/skipped/namespace/test failures. All 431 frozen Rust/Suss/bootstrap paths remained unchanged. The initial standalone comparator import lacked the scripts search path; the corrected invocation used the unchanged comparator and observations.
 
 Commands, terminal stage receipts, raw failures, observations, comparison and source snapshots are in `docs/roadmap/evidence/m4-combined-demand-origin-focused-2026-10-16.tar.gz`, SHA-256 `7db2b7088683a43fdee98dc05645cdb2ce14a9a4beeed268f7d484abd586b436` (450 payloads). This is focused transport evidence, not milestone completion. Next unblocked work: repair the cold-identifier source-tag fuel regression and measure the separate paged-entry storage experiment; require issue acceptance, independent review and final-head CI before readiness.
+
+### 2026-10-16 — explicit analyzer literal-key memo provenance (Refs #261, #241, #257)
+
+Isolated `portable/m4-analyzer-literal-key-memos` starts at exact `f1ab36c`;
+main/combined/#260 and paged experiment worktrees remain untouched. Private
+native tokens mark eight audited analyzer field-key literals (`op`, `name`,
+`ns`, `tag`, `env`, `context`, `locals`, `fn-scope`) at explicit construction
+sites. The token is not derived from spelling/namespace/span. Other operation
+values/schema keys, Suss-only fields, reader/source Forms and every dynamic
+symbol remain cold. Keyword caches are separated by origin. Logical Form
+projection ignores the private memo initialization distinction; construction
+facts still capture actual numeric inputs and originally-nil eligibility is
+unchanged. No public Form metadata or global mutable origin flag is added.
+
+A dedicated bridge entry initializes only a private literal token's keyword
+memo. It preserves all live constructors/prechecks and map/set IHash calls.
+The pinned mixing streams UTF16 without a temporary Vec: iterator/decode and
+control steps are prepaid, then word mixing/finalization primitive blocks.
+Compiled-constant `hir/quotes.rs` is byte-identical to f1; independent native
+comparisons include all eight pinned field values and Unicode consistency
+controls (the latter are not independent oracle observations). Field-key tag
+storage and extra origin lookup work are charged. No quota/tariff changes.
+
+Lagrange initially found a P2: common AST env/op markings also covered
+Suss-only future/await. This was corrected before the successful freeze: the
+op route uses a closed supported-node match; env uses proved SourceNode,
+scalar and quote routes, with unknown/future/await cold. Therefore `None` is
+not universally cold. Re-review relayed by main found no remaining route
+blocker at graph SHA256 d1e1a97c519341b67a7034a4ae5477b6b3ac0441bb0adadd4ca09cb2ac60c705
+and data SHA256 473cf55b19f939618789a49fe0798c4c9826e2d02977bfb2ca1566c90fa5b0a3.
+Call-site audit records source positions/pinned constructor references; it
+explicitly does not claim complete analyzer literal coverage.
+
+All commands use a dedicated analyzer-literal-key-target, jobs2, locked Cargo,
+test-threads2, no RUSTFLAGS. Bootstrap60220 terminal0 after scoped-fixture fixes.
+Corrected producer75300 TERMINALdriver0, 433 frozen Rust/Suss/bootstrap paths
+unchanged; subprocess stages preserve explicit exits:
+
+- `cargo test -p suss-compile --locked --lib analyzer_literal`: 3pass/0fail,
+  53.12s test (81.27s wrapper). Same-text cold/literal recipe separation, cold
+  reader keywords/symbols/dynamic symbols/Suss-only default, GC/restoration,
+  actual nine-entry map under delegated live custom IHash in both Stores,
+  exact callback rows `[false false false false false false false false true]`,
+  constant-hash comparisons/all insufficient fuel allowances/IRQ recovery;
+  and numeric literal clear/rewarm cannot gain nil-transition receipt authority.
+- `cargo test -p suss-cli --locked --test compiled_macro_analyzer_literal_memos`:
+  1pass,98.73s test/128.32s wrapper. Both caller phases, before/after GC and
+  repeat invocation: four rows of ten true values, including actual root
+  :locals and initializer-AST :env/:op/:tag memos, reader source arguments,
+  metadata value and initializer17. A missing field emits key diagnostics
+  instead of silently dropping coverage or accessing a nil receiver.
+- Both UNCHANGED `compiled_macro_source_tags` tests: 0pass/2fuel-fail,
+  100.61s test/101.99s wrapper. Invocation span388..413 and inference324..356
+  still exhaust during caller-&env transport at the default cumulative budget.
+  No detailed charged-stage/dispatch-class trace was collected in this cohort.
+
+Unchanged before f1 production/bootstrap runs the exact final CLI fixture
+SHA256 c0ec932dcffd76d4ff8ce6f95d2c66727b82ab51093eb24617d305c40225e5ca
+in a separate detached worktree/target. Producer98326 terminal101,0pass1fail,
+117.46s: runtime and Macro stage0 each emit
+`[false,true,false,true,true,true,true,true,true,true]`. Root :locals and
+initializer-AST :env memo values differ; other flags, including cold reader
+controls, pass. Stage1 before is unexecuted after each stage0 assertion failure.
+This is the valid semantic red comparison. Earlier missing-descriptor :env
+fixture threw language exceptions with ZERO memo rows and is not semantic
+red proof. Before unchanged source-tags also0pass/2fuel-fail67.27s.
+
+Preserved attempts include initial compile/type failures, moved Form.kind
+fixture error, the original native1pass2fail freeze and corrected fixture
+causes (raw helper retry lacked a fresh scope after IRQ; one-entry ArrayMap
+legitimately does not hash keys). No production callback was forced or skipped
+to repair those fixtures. An additional actual-&env custom-effect draft was
+compiled into a bootstrap but NOT executed; its source/artifacts are retained
+outside the candidate as receipts. Candidate source/artifacts were restored
+byte-for-byte to the actually executed433-path freeze before this checkpoint.
+
+Archive `docs/roadmap/evidence/m4-analyzer-literal-key-memos-focused-2026-10-16.tar.gz`
+SHA256 f2a243e222f67d7aad54be2d05cee51f64d061f0e02d97755fb3c18ae6f6c5d4:
+1391 manifested payloads, complete before431/first-failed433/after433 snapshots,
+raw positives/negatives, fixture/source hashes, rows, runners, failed attempts,
+call-site audit and opaque unchanged22-payload oracle archive. All payloads
+read back verified; compiler/core/dependency/Wasm fingerprints recomputed true
+for both phases of all three snapshots. Supporting inputs captured after
+execution, not independently frozen before tests. Carver oracle review relayed
+by main: no blockers,51 ordered identical observations,40 selected keyword
+pre-dispatch nonnil/source first symbol nil; capture does not hash and printing
+is after capture; wrapper adds no delegate warming. Limits: observation-time
+states plus selected generated files, not a standalone dependency closure.
+
+This is a semantic candidate, NOT #261 acceptance: both source-tag fuel failures
+remain; dedicated actual-&env custom-effect execution, selected unchanged
+Jank/comparator gates, full authority negatives, full workspace baseline and
+final-head CI/independent review remain. No partial PR, issue closure, push or
+integration claim. Next measurement, after outcome review: actual remaining
+source-tag charged stages and nesting-aware cold/nonnil Keyword versus Symbol
+receiver dispatches, using native fields without additional guest calls. Do not
+infer literal eligibility from the old unnamed193-dispatch diagnostic or expand
+warming without explicit pinned constructor provenance.
