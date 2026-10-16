@@ -27324,3 +27324,27 @@ Primary9f951b0 unchanged pinned_map_declaration_executes_without_transport_loss 
 Separately executed captured_global_declarations_supply_var_ast_fields_without_catalog_mutation on9f951b0 TERMINAL101,0pass1fail42.71s duringcaller&envtransport,sourceunchanged. Exact prior-main passing line retained. This test was unexecuted by stopped full baseline/CI; confirmedalsooncompactbase8fa byinitializerworker. Knownfailureunion isnow18distinctfuel+1coldidentity, not an exhaustive classification of unexecuted targets. No claim the initializer optimization introduced it.
 
 Commands use primarytarget/buildjobs2: cargo test -p suss-compile --locked --test clojure_test_suite pinned_map_declaration_executes_without_transport_loss -- --test-threads=2 --nocapture (SUSS_CLOJURE_TEST_SUITE_CAPTURE taskcache/map-current9f); cargo test -p suss-cli --locked --test compiled_macro_global_reference_asts captured_global_declarations_supply_var_ast_fields_without_catalog_mutation -- --test-threads=2 --nocapture. Full rawlogs/freezes/runners/selectedreference/observations/comparison/prior-mainlog/manifest: docs/roadmap/evidence/m4-current-map-global-reference-2026-10-16.tar.gz SHA256 ae40be9fcb6cc80c2b54c5e0e0012d99a26b5ae21c59a307aec191d737a7f1a2.
+
+### Fresh pinned map at scoped-store source107a736 (2026-10-16)
+
+Primary draft branch advanced by fast-forward to independently reviewed107a736,
+pushed with source/bootstrap unchanged from the reviewed scoped-store checkpoint.
+`cargo test -p suss-compile --locked --test clojure_test_suite pinned_map_declaration_executes_without_transport_loss -- --test-threads=2 --nocapture`
+with jobs2/target-m4-prototype: exit0,1pass115.37s test duration. The original
+pinned declaration bytes remain unchanged. Explicit comparator against selected
+95d4a9112cfc5fe6629be3d14bb99080ea00af2f reference: all69ordered IDs match,
+62host-decided passes/seven guest-judged, zero failures/skips/not-executed or
+namespace failures. All424 frozen crates Rust/source and bootstrap hashes
+remain unchanged. This is a component of#241 evidence, not full acceptance.
+
+Archive docs/roadmap/evidence/m4-pinned-map-107a736-2026-10-16.tar.gz SHA256
+314637821d9626f36cddd0274f9e461bac1ac1172c68f19b9f3e5f0f8ed1228e
+contains raw test log, runner, frozen-hash/exit receipt, original Suss observations,
+selected reference and comparison. Supporting repository inputs beyond that
+freeze are not represented as frozen by this receipt. Initial ad-hoc comparator
+import failed because scripts/ was absent from sys.path; corrected import ran
+the unchanged comparator successfully without rerunning or changing observations.
+
+CI38884636909 is live on107a736; no result is implied. No current-head full
+baseline yet. Remaining child/binding/location evidence gaps require explicit
+reconciliation, and Symbol/Keyword native parity is under investigation.
