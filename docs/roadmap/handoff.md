@@ -27311,3 +27311,7 @@ Three fresh-state cases cover nested callback memo91, healthy memo91 write then 
 These synchronous reference observations do not establish Suss acceptance or relax numeric-forgery/source-integrity checks. They do not cover recursion, cancellation, concurrency, different receivers or return/memo mismatch. No direct-body-only or normal-return-only authorization rule follows from these observations.
 
 Archive `docs/roadmap/evidence/m4-memo-call-boundary-reference-2026-10-16.tar.gz`, SHA-256 `aa402dec0d83fa57ea4f511a97666cec89cb45a34d682b6355f06baafcb32fe0`, includes both raw successful runs, exact source/runner and hashes.
+
+### Rebase source-equivalence check (2026-10-16)
+
+Rebased the existing draft checkpoint from `e56bd6cb8d03191171d98bc9d97c7bcf6c2509f5` onto upstream `d58e693596d17eec424daf6cc2cd6d912d7bd295` in an isolated checkout, preserving original checkpoint history on `portable/m4-cumulative-before-main-sync`. Conflict resolution retained both documentation sides and the original tested bootstrap pairs. `git diff --name-only e56bd6cb8d03191171d98bc9d97c7bcf6c2509f5 445f51314ef90e91d267a8209b88f11a8b2ce7e7` contains only documentation/evidence paths; all421 frozen Rust/Suss/bootstrap paths compare byte-identically to the running baseline snapshot. No compiler, runtime, test, script, Cargo or shipped bootstrap bytes changed during this resolution. This equivalence check does not constitute new semantic execution or whole-issue acceptance.
