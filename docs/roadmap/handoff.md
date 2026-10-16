@@ -27997,3 +27997,44 @@ and classifications. Run failure is not a full workspace baseline or exhaustive
 failure inventory; this CI says nothing about dirty slot-log changes. Raw unknowns
 remain available. Both archives are ready for independent Carver review before
 main commits/pushes; final-head CI remains a separate requirement.
+
+### Namespace/declaration identity observations (2026-10-16)
+
+Pinned CLJS c4295f303100bbf5afac449242d30bca1126f1a1 namespace-sharing
+probe runs twice, both exit0, five actual macro invocations each. Actual references
+are retained before WeakMap identity projection. Captured ns/defs and unchanged
+raw declarations/callable children share identity; live containers advance after
+unrelated def; resolved outer info is fresh. Captured lexical objects remain
+shared within the same scope and are absent in the final fresh scope. This does
+not authorize equal-content interning or guest storage trust. Selected metadata
+numbers101..109 hash once during reading/analysis, with no later selected-number
+hashes; general counts include observer work, not a complete constructor stream.
+Hash/cache restoration uses finally but is not independently asserted afterward.
+
+Oracle archive `evidence/m4-namespace-sharing-oracle-2026-10-16.tar.gz`,
+SHA2560cf31e4a2f52d5360bf27e3401c8690d04b3dcee7d381d3ea4a7cf550781741a,
+143 independently verified payloads. Probe sourceSHA256
+99086f61ba83d6eb66cd853df2c3a8e2ef4f8175c2fb414cadf238d4cf15d657.
+
+Before native commands on4ab8a76 plus new test: `cargo test -p suss-cli
+--locked --test compiled_macro_namespace_identity FILTER -- --exact
+--test-threads=2 --nocapture`, with jobs2, owned analyzer-literal-key-target,
+default allowances, and SUSS_NAMESPACE_IDENTITY_OUTPUT captured independently.
+FILTER=compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations
+exits101 in84.21s: both phases exhaust caller-env fuel at fourth call post-def-2;
+no complete projection or full semantic mismatch verdict. FILTER=
+resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations
+exits101 in105.63s: all six rows execute/decode; calls2/3 lose saved raw declaration
+and method-params identity in both phases. Fresh outer info, within-call aliases,
+metadata sharing and values remain correct. Native fresh let-initializers replace
+unavailable analyzer re-resolution; this is a disclosed observational relationship
+check, not identical observer operations or a complete schema match.
+
+Native before archive `evidence/m4-native-namespace-identity-before-2026-10-16.tar.gz`,
+SHA2562cb13267f841fe83163740cc32de74be23f40ad4051b4a34883ccf82ac596d09,
+23 independently verified payloads: exact per-run fixtures, both unchanged439-path
+freezes, commands, raw failures and observations. Current testSHA256
+050cc78653c6810651fe0a7568e5109589a750f57986dad63a26b9347568b831.
+No production/bootstrap edits or quota changes produced these before results.
+No passing implementation, broad Jank, full baseline or final-source CI evidence
+is claimed by these observations. Issue264 holds the semantic acceptance criteria.
