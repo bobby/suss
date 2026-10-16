@@ -81,6 +81,34 @@ impl Drop for Scope {
     }
 }
 impl Observer {
+    // Snapshot actual IHash receivers only. No guest execution under the mutex;
+    // the caller's RootScope keeps these references alive across native proof.
+    // This is dynamic context, not an authorization or persistent allowlist.
+    pub(super) fn receivers(&self, mut store: wasmtime::StoreContextMut<'_, ()>, irq: &AtomicBool)
+        -> wasmtime::Result<Vec<Val>> {
+        Session::consume_host_work(store.as_context_mut(), 2, irq)?;
+        let state = registry_lock(&self.state);
+        let mut count = 0usize;
+        for frame in &state.frames {
+            Session::consume_host_work(store.as_context_mut(), 1, irq)?;
+            if frame.active { count += 1; }
+        }
+        let bytes = count.checked_mul(std::mem::size_of::<Val>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| wasmtime::Error::msg("Dispatch proof context overflow"))?;
+        Session::consume_host_work(store.as_context_mut(), bytes, irq)?;
+        let mut receivers = Vec::new();
+        receivers.try_reserve_exact(count)
+            .map_err(|_| wasmtime::Error::msg("Dispatch proof context allocation failed"))?;
+        for frame in &state.frames {
+            Session::consume_host_work(store.as_context_mut(), 2, irq)?;
+            if frame.active {
+                receivers.push(Val::AnyRef(Some(frame._receiver.value.to_rooted(&mut store))));
+            }
+        }
+        Ok(receivers)
+    }
+
     pub(super) fn has_scope(&self) -> bool {
         registry_lock(&self.state).nearest_ihash().is_some()
     }

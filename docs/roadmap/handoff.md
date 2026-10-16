@@ -27606,3 +27606,83 @@ nil after checking source canonical hash support, rerun the same cases without
 changing eligible_transition. A nil-captured watch followed by canonical warming
 may already support warm custom writes via its authenticated current receipt.
 No acceptance, full baseline, final-head CI or new-PR claim; this child is unpushed.
+
+
+### 2026-10-16 — isolated cold identifier and nested memo proof checkpoint (Refs #257, #260)
+
+Worktree suss-m4-cold-memo-leaves, branch portable/m4-cold-memo-leaves,
+base10fb544; own COW cold-memo-leaf-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS
+assignment. This is independent from main's standalone cold-reader branch.
+FormBridge.identifier now supplies nil to Symbol/Keyword memo fields, matching
+pinned CLJS69d74d0 initial state. The live core hash methods compute unchanged
+canonical numbers; compiled constant lowering remains unchanged. Receipt
+eligible_transition is unchanged, including its captured-original-nil condition.
+Explicit warm cases acquire canonical receipts before later custom writes.
+
+Initialization-only matched native groups passed4/4, but public cumulative
+validation failed9pass/1fail: source_metadata_keeps_identity_with_a_replaced_hash_method
+lost identity on the next invocation (not a fuel failure). Preserve that entire
+run and426-file freeze/source snapshot. A targeted native trace reproduced:
+custom Map -> canonical cold Keyword -> domain sees replaced Map -> child
+source_safe=false -> parent rejects unauthenticated child. The original numeric
+hash was correct1217894065. Diagnostic native failure and raw trace are retained;
+its driver subsequently raised AttributeError in final exit after writing its
+stage receipt/source archive. Neither failure is reclassified as success.
+
+The domain fix snapshots rooted actual IHash receiver frames with charged
+enumeration/allocation, without guest calls under the observer mutex. Each
+proof accepts a descriptor for live-layout inspection only after an exact live
+watch receiver/descriptor/storage match in this same recorded domain. Target
+membership is also required. Other descriptors stay canonical. This transient
+proof changes no payload/edge/schema/constructor/prototype or authenticated-child
+requirements. Nearest actual receiver plus exact physical storage/slot remains
+the write authorization boundary; descriptor-sharing never authorizes sibling
+writes. Canonical child setters retain their canonical method guards. Full
+pre/post proof and staged publication remain before guest resumes/throws; old
+unsafe receipts are never retroactively upgraded. Generic stores neither mint
+receipts nor erase an older authentic exact-reference receipt.
+
+Ancestor focused runner79882: regenerated bootstrap exit0; scoped13/13 pass22.69s.
+Positive canonical cold child/custom parent, nested throw/fuel cases, poison at
+child write versus restore before write, foreign-domain/unregistered ancestors,
+and existing wrong-slot/receiver/unrelated-descriptor/GC cases execute. The
+subsequent new direct identifier fixture failed compile E0308 (unwrap_f64 already
+returns f64); preserve original source/log. Correct only that test decoder.
+No production changes followed the successful scoped run.
+
+Final runner66619 TERMINAL0, cold-memo-final-result.json: all13 stages exit0,
+source_unchanged=true. Commands are recorded verbatim in the archived runner and
+receipt; Cargo commands use --locked and --test-threads=2. Test times exclude
+compilation unless explicitly marked wrapper:
+
+- direct FormBridge cold/canonical/GC identifier fixture1pass66.23s;
+- matched native_memo_leaf_ groups4pass313.18s,48/48 exact complete rows;
+- compiled_macro_cumulative_fuel10pass305.94s, including cold custom Map,
+  warm replacement, and poisoned-at-write rejection, unchanged budgets;
+- compiled_macro_cross_invocation_identity_probe2pass117.61s: existing captured
+  declaration test unchanged (both phases/revisions/reset/GC), plus actual
+  metadata and nested nine-entry hash maps across invocations/GC;
+- pinned identifier corpus1pass40.75s, decoder2pass19.61s;
+- receipt_tests8pass37.07s, write_domain tests2pass27.56s;
+- forged identifier FQN after GC1pass51.50s;
+- FormBridge identity_tests9pass120.64s;
+- dispatch observer4pass20.18s, canonical error tests2pass36.03s;
+- provenance checker exit0.
+
+The new identifier fixture pins the four warm oracle values; extra namespaced
+Unicode comparisons are native consistency controls, not independent oracle
+observations. Native matched leaf views remain &env metadata/leaf only, unlike
+the separate pinned CLJS six-view144 observations. No aggregate unique count.
+No captured-original-nonnil eligibility broadening, no tariff/quota changes,
+no unsupported nominal aset support, no full workspace/final CI or #257/#260
+acceptance claim. The next gate is independent committed-head review before any
+integration/push; main owns its standalone reader fix and final CI.
+
+Evidence docs/roadmap/evidence/m4-cold-memo-ancestors-2026-10-16.tar.gz:
+SHA256 e18655b49232e5075ee10f10920321a880938c9fd84a6339f52796df526d2a1f,
+62entries including manifest,61payload hashes read back. Contains initialization-only
+success/failure logs and source snapshot, failing diagnostic trace/source,
+focused bootstrap/scoped results and failed E0308 fixture, final raw logs/48rows,
+source/bootstrap snapshots, implementation diff, runners, freezes/exit receipts.
+Before-fix48row archive e5c908e4 remains unchanged in base10fb544. Oracle JSON
+5835f6b0 remains unchanged; oracle execution was main's, not rerun here.
