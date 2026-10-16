@@ -27344,3 +27344,63 @@ run-demand-origin.py records the complete425-path source/bootstrap freeze unchan
 Raw source-preserving diagnostic before this change split3052826cold enrichment into originalparse347767+selection42154, indexedreader1780424, originalindex83917, locatedindex798007, match/copy557. Existing1150fuel trace lines remained identical under observation; original3055source/artifacts restored before production branch. Key scratch allocation candidate measured524273allocation+relocation upper bucket, therefore was not implemented. Actual demand saving above supersedes the larger2578431eager-work gross estimate. Standalone python3 scripts/core_import.py --check exits0.
 
 Evidence docs/roadmap/evidence/m4-demand-located-origin-focused-2026-10-16.tar.gz SHA2562ed890744ec26625a37db8a56f4821c0c8c6647889b212fa5b62dcfb9a9c503a:495hashed payloads plus manifest,425-path final source/bootstrap freeze, native/runtime raw logs, failures, source-preserving diagnostic snapshots/restoration and matched profile analysis. Payload/freeze hashes and both compiler/core/dependency/Wasm fingerprints verified. Supporting inputs captured after execution, not independently frozen beforehand. The packager initially reused the prior archive filename; that attempt is preserved outside repo and the prior tracked archive was restored byte-for-byte before corrected packaging. No source edits during the frozen cohort, no full baseline/final-head CI/acceptance claim. Local checkpoint for independent source/evidence review before any push; no PR or merge.
+
+### 2026-10-16 — isolated paged canonical-entry experiment (Refs #241, #252)
+
+Branch `portable/m4-paged-canonical-entries` starts at exact `65b565f`.
+Only native canonical-entry storage changes: append-only 128-entry pages,
+initial small-page growth and a charged directory. Key IDs, insertion/collision
+order, hash, encoding, exact equality and RawHeads are unchanged. All page,
+directory, access, staging and publication work is charged before logical
+publication. Capacity-only reserves may survive failure, as with the old Vec;
+allocator OOM remains unrecoverable and native capacity overflow explicit.
+No guest/source authority cache or Form references are retained. Main/f94 and
+combined/#260 worktrees were not changed.
+
+Commands used `CARGO_BUILD_JOBS=2`, a dedicated
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/paged-canonical-entries-target`,
+no RUSTFLAGS, and `-- --test-threads=2 --nocapture`:
+
+- `cargo test -p suss-compile --locked --lib portable_macro_graph::raw_keys`:
+  before 15 pass; after 19 pass, 0 fail (5.65s), including page/directory
+  boundaries, forced collisions and every insufficient-fuel/IRQ cut/recovery.
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  before/after terminal 0. Full Rust/Suss/bootstrap freezes cover 425/426 paths.
+- Unchanged `compiled_macro_declaration_metadata::declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer`:
+  before and after terminal 101, same caller-&env fuel trap; after test 68.56s.
+- Unchanged `compiled_macro_core_environment`:
+  before and after terminal 101, same caller-&env fuel trap; after test 61.63s.
+- After `portable_macro_graph::sharing_tests`: 20 pass (36.98s test time;
+  75.92s runner including compilation). After `paired_source`: 3 pass
+  (47.57s test time; 48.41s runner). All after sources unchanged through cohort.
+
+The observational before instrumentation reproduces all 1,669 declaration and
+1,123 core existing fuel-trace lines exactly against the original65 logs.
+Matched after `->RecordIter finished` remaining fuel increases by 241,672;
+after `BitmapIndexedNode definition-origin` it increases by 612,860 in BOTH
+fixtures (declaration 39,562 -> 652,422; core 39,744 -> 652,604). Both now finish
+BitmapIndexedNode and exhaust later while planning EmptyList, before graph
+materialization. Total remaining budget deficit is still unknown.
+
+At identical 20,480 calls / 4,119 entries, net entry-storage saving is 668,036.
+At identical 26,112 calls / 4,774 entries, before -> after successful charges:
+allocation 655,200 -> 199,520; relocation 327,520 -> 4,960; directory
+allocation/relocation 0 -> 2,976/1,440; access 42,676 -> 128,028; staging
+0 -> 38,232; publication 14,322 -> 52,514. Net saving is **612,048**, including
+85,352 extra access charges and every other added arena bucket. At these
+matched counters comparison/head-lookup/head-insert charges are identical,
+and total interner delta equals net storage delta. Buckets count successful
+charge requests only; rejected/partially consumed requests are not silently
+counted as completed work. Matched runtime remaining fuel is separate evidence.
+
+Archive `docs/roadmap/evidence/m4-paged-canonical-entries-focused-2026-10-16.tar.gz`
+SHA256 `5158c12b92b5e342e49d8c97c479af2a12e85a3220be5cba5d6eff821e2d7180`:
+918 manifested payloads, complete before/after freezes, raw logs, runners,
+algorithm-byte equivalence checks, net analysis, production source and Carver's
+source-review verdict relayed by main. Every payload hash and compiler/core/
+dependency/Wasm fingerprints for both phases and snapshots recomputed true.
+Supporting fingerprint inputs were captured after tests, not separately frozen
+before them; this limitation is recorded in the archive. Carver found no source
+blockers but did not independently validate performance. No full baseline,
+acceptance, push or integration claim; no follow-on experimental changes before
+main reviews this outcome.
