@@ -1,8 +1,11 @@
 //! Graph-local exact raw reader-data identities. No guest objects or callbacks.
+#[cfg(test)]
 use std::cmp::Ordering;
 use suss_reader::forms::{Form, Kind};
 mod raw_heads;
 use raw_heads::RawHeads;
+mod raw_view;
+use raw_view::View;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct KeyId(pub(super) usize);
@@ -112,6 +115,7 @@ fn size<E>(
     }
     append(out, &encoded[..length], charge)
 }
+#[cfg(test)]
 fn text<E>(
     out: &mut Vec<u8>,
     value: &str,
@@ -120,6 +124,7 @@ fn text<E>(
     size(out, value.len(), charge)?;
     append(out, value.as_bytes(), charge)
 }
+#[cfg(test)]
 fn hash_bytes<E>(key: &[u8], charge: &mut impl FnMut(u64) -> Result<(), E>) -> Result<u64, E> {
     charge(1)?;
     let mut hash = 0xcbf29ce484222325u64;
@@ -134,6 +139,7 @@ fn hash_bytes<E>(key: &[u8], charge: &mut impl FnMut(u64) -> Result<(), E>) -> R
 }
 // Every inspected byte of both inputs is billed before reading it. Lengths are
 // immutable and compared only after the common prefix. No native slice cmp.
+#[cfg(test)]
 fn compare_bytes<E>(
     left: &[u8],
     right: &[u8],
@@ -183,6 +189,7 @@ fn sort_groups<E>(
 }
 
 impl Interner {
+    #[cfg(test)]
     fn intern<E>(
         &mut self,
         key: Vec<u8>,
@@ -208,6 +215,7 @@ impl Interner {
         }
         result
     }
+    #[cfg(test)]
     fn intern_bucket<E>(
         &mut self,
         key: Vec<u8>,
@@ -242,6 +250,12 @@ impl Interner {
             tail = Some(index);
             cursor = entry.next;
         }
+        self.publish(key, hash, head, tail, charge)
+    }
+    fn publish<E>(
+        &mut self, key: Vec<u8>, hash: u64, head: Option<usize>, tail: Option<usize>,
+        charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<KeyId, E> {
         reserve(&mut self.keys, 1, charge)?;
         charge(3)?;
         let index = self.keys.len();
@@ -263,6 +277,42 @@ impl Interner {
             self.keys[tail].next = Some(index);
         }
         Ok(KeyId(index))
+    }
+    fn intern_view<E>(&mut self, view: &View<'_>, charge: &mut impl FnMut(u64) -> Result<(), E>) -> Result<KeyId, E> {
+        let mut work=0u64;
+        let mut comparison=0u64;
+        let mut counted=|units| {charge(units)?; work=work.saturating_add(units); Ok(())};
+        let result=(|| {
+            let hash=view.hash(&mut counted)?;
+            self.intern_view_bucket(view,hash,&mut counted,&mut comparison)
+        })();
+        self.profile_calls=self.profile_calls.saturating_add(1);
+        // Unlike the old temporary-byte route, this includes miss encoding.
+        self.profile_work=self.profile_work.saturating_add(work);
+        self.profile_comparison_work=self.profile_comparison_work.saturating_add(comparison);
+        if (self.profile_calls.is_multiple_of(128)||result.is_err()) && std::env::var_os("SUSS_RAW_KEY_TRACE").is_some() {
+            eprintln!("raw-key-profile calls={} entries={} intern={} comparison={} head_lookup={} head_insert={}",self.profile_calls,self.keys.len(),self.profile_work,self.profile_comparison_work,self.profile_head_lookup_work,self.profile_head_insert_work);
+        }
+        result
+    }
+    fn intern_view_bucket<E>(&mut self, view:&View<'_>, hash:u64,
+        charge:&mut impl FnMut(u64)->Result<(),E>, comparison:&mut u64) -> Result<KeyId,E> {
+        let head={let work=&mut self.profile_head_lookup_work;
+            self.heads.get(hash,&mut |units| {charge(units)?;*work=work.saturating_add(units);Ok(())})?};
+        let mut cursor=head;
+        let mut tail=None;
+        while let Some(index)=cursor {
+            charge(2)?;
+            let entry=&self.keys[index];
+            if view.matches(&entry.key,&mut |units| {charge(units)?;*comparison=comparison.saturating_add(units);Ok(())})? {
+                return Ok(KeyId(index));
+            }
+            tail=Some(index); cursor=entry.next;
+        }
+        // No temporary key exists on a hit. Encode immutable canonical bytes
+        // only after the entire exact collision chain has rejected the view.
+        let key=view.encode(charge)?;
+        self.publish(key,hash,head,tail,charge)
     }
     pub(super) fn plan<E>(
         &mut self,
@@ -341,90 +391,24 @@ impl Interner {
                         }
                     }
                     Work::Finish(form, id) => {
-                        let mut key = Vec::new();
-                        let node = &plan.nodes[id];
-                        size(&mut key, node.metadata_count, charge)?;
-                        for child in &node.children[..node.metadata_count] {
-                            charge(1)?;
-                            size(&mut key, plan.nodes[*child].key.0, charge)?;
-                        }
-                        let tag = match &form.kind {
-                            Kind::Nil => 0,
-                            Kind::Bool(_) => 1,
-                            Kind::Number(_) => 2,
-                            Kind::String(_) => 3,
-                            Kind::Symbol(_) => 4,
-                            Kind::Keyword(_) => 5,
-                            Kind::List(_) => 6,
-                            Kind::Vector(_) => 7,
-                            Kind::Set(_) => 8,
-                            Kind::Map(_) => 9,
-                            Kind::Conditional(_) => 10,
-                            Kind::Discard(_) => 11,
-                            Kind::Prefix { .. } => 12,
-                            Kind::SplicingConditional(_) => 13,
-                        };
-                        append(&mut key, &[tag], charge)?;
-                        match &form.kind {
-                            Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
-                            Kind::Number(v) => {
-                                append(&mut key, &v.to_bits().to_le_bytes(), charge)?
-                            }
-                            Kind::String(v) => {
-                                size(&mut key, v.len(), charge)?;
-                                // The UTF-16 payload length is known. Allocate
-                                // once rather than repeatedly relocating bytes.
-                                reserve(&mut key, v.len().saturating_mul(2), charge)?;
-                                for unit in v {
-                                    append(&mut key, &unit.to_le_bytes(), charge)?;
-                                }
-                            }
-                            Kind::Symbol(v) => {
-                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
-                                if let Some(ns) = &v.namespace {
-                                    text(&mut key, ns, charge)?;
-                                }
-                                text(&mut key, &v.name, charge)?;
-                            }
-                            Kind::Keyword(v) => {
-                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
-                                if let Some(ns) = &v.namespace {
-                                    text(&mut key, ns, charge)?;
-                                }
-                                text(&mut key, &v.name, charge)?;
-                            }
-                            Kind::List(v)
-                            | Kind::Vector(v)
-                            | Kind::Map(v)
-                            | Kind::Set(v)
-                            | Kind::Conditional(v)
-                            | Kind::SplicingConditional(v) => size(&mut key, v.len(), charge)?,
-                            _ => {}
-                        }
-                        let children = &node.children[node.metadata_count..];
-                        if unordered && matches!(form.kind, Kind::Map(_) | Kind::Set(_)) {
-                            let paired = matches!(form.kind, Kind::Map(_));
-                            let stride = if paired { 2 } else { 1 };
+                        let node=&plan.nodes[id];
+                        let children=&node.children[node.metadata_count..];
+                        let mut groups=Vec::new();
+                        let unordered_collection=unordered && matches!(form.kind,Kind::Map(_)|Kind::Set(_));
+                        if unordered_collection {
+                            let paired=matches!(form.kind,Kind::Map(_));
+                            let stride=if paired {2} else {1};
                             debug_assert!(children.len().is_multiple_of(stride));
-                            let mut groups = Vec::new();
-                            reserve(&mut groups, children.len() / stride, charge)?;
+                            reserve(&mut groups,children.len()/stride,charge)?;
                             for group in children.chunks_exact(stride) {
                                 charge(stride as u64)?;
                                 groups.push((plan.nodes[group[0]].key.0,
-                                    if paired { plan.nodes[group[1]].key.0 } else { 0 }));
+                                    if paired {plan.nodes[group[1]].key.0} else {0}));
                             }
-                            sort_groups(&mut groups, charge)?;
-                            for (first, second) in groups {
-                                size(&mut key, first, charge)?;
-                                if paired { size(&mut key, second, charge)?; }
-                            }
-                        } else {
-                            for child in children {
-                                charge(1)?;
-                                size(&mut key, plan.nodes[*child].key.0, charge)?;
-                            }
+                            sort_groups(&mut groups,charge)?;
                         }
-                        let canonical = self.intern(key, charge)?;
+                        let view=View {form,node,nodes:&plan.nodes,groups:unordered_collection.then_some(groups.as_slice())};
+                        let canonical=self.intern_view(&view,charge)?;
                         plan.nodes[id].key = canonical;
                     }
                 }
@@ -879,4 +863,307 @@ mod tests {
         assert_eq!(values[99], None);
         assert_eq!(values[100], Some(42));
     }
+
+    // Exact pre-view planner, retained only for differential/cost tests.
+    fn legacy_plan<E>(
+        table: &mut Interner,
+        form: &Form,
+        plan: &mut Plan,
+        unordered: bool,
+        charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<usize, E> {
+        enum Work<'a> {
+            Enter(&'a Form, Option<usize>),
+            Finish(&'a Form, usize),
+        }
+        let root = plan.nodes.len();
+        let result = (|| {
+            let mut pending = Vec::new();
+            push(&mut pending, Work::Enter(form, None), charge)?;
+            while let Some(work) = pending.pop() {
+                charge(1)?;
+                match work {
+                    Work::Enter(form, parent) => {
+                        let id = plan.nodes.len();
+                        push(
+                            &mut plan.nodes,
+                            Node {
+                                key: KeyId(0),
+                                metadata_count: form.metadata.len(),
+                                children: Vec::new(),
+                            },
+                            charge,
+                        )?;
+                        if let Some(parent) = parent {
+                            push(&mut plan.nodes[parent].children, id, charge)?;
+                        }
+                        push(&mut pending, Work::Finish(form, id), charge)?;
+                        // Push in reverse: metadata visits precede kind children.
+                        match &form.kind {
+                            Kind::List(v)
+                            | Kind::Vector(v)
+                            | Kind::Map(v)
+                            | Kind::Set(v)
+                            | Kind::Conditional(v)
+                            | Kind::SplicingConditional(v) => {
+                                for child in v.iter().rev() {
+                                    push(&mut pending, Work::Enter(child, Some(id)), charge)?;
+                                }
+                            }
+                            Kind::Discard(child) => {
+                                push(&mut pending, Work::Enter(child, Some(id)), charge)?
+                            }
+                            Kind::Prefix { operator, target } => {
+                                push(&mut pending, Work::Enter(target, Some(id)), charge)?;
+                                push(&mut pending, Work::Enter(operator, Some(id)), charge)?;
+                            }
+                            _ => {}
+                        }
+                        for child in form.metadata.iter().rev() {
+                            push(&mut pending, Work::Enter(child, Some(id)), charge)?;
+                        }
+                    }
+                    Work::Finish(form, id) => {
+                        let mut key = Vec::new();
+                        let node = &plan.nodes[id];
+                        size(&mut key, node.metadata_count, charge)?;
+                        for child in &node.children[..node.metadata_count] {
+                            charge(1)?;
+                            size(&mut key, plan.nodes[*child].key.0, charge)?;
+                        }
+                        let tag = match &form.kind {
+                            Kind::Nil => 0,
+                            Kind::Bool(_) => 1,
+                            Kind::Number(_) => 2,
+                            Kind::String(_) => 3,
+                            Kind::Symbol(_) => 4,
+                            Kind::Keyword(_) => 5,
+                            Kind::List(_) => 6,
+                            Kind::Vector(_) => 7,
+                            Kind::Set(_) => 8,
+                            Kind::Map(_) => 9,
+                            Kind::Conditional(_) => 10,
+                            Kind::Discard(_) => 11,
+                            Kind::Prefix { .. } => 12,
+                            Kind::SplicingConditional(_) => 13,
+                        };
+                        append(&mut key, &[tag], charge)?;
+                        match &form.kind {
+                            Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
+                            Kind::Number(v) => {
+                                append(&mut key, &v.to_bits().to_le_bytes(), charge)?
+                            }
+                            Kind::String(v) => {
+                                size(&mut key, v.len(), charge)?;
+                                // The UTF-16 payload length is known. Allocate
+                                // once rather than repeatedly relocating bytes.
+                                reserve(&mut key, v.len().saturating_mul(2), charge)?;
+                                for unit in v {
+                                    append(&mut key, &unit.to_le_bytes(), charge)?;
+                                }
+                            }
+                            Kind::Symbol(v) => {
+                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                                if let Some(ns) = &v.namespace {
+                                    text(&mut key, ns, charge)?;
+                                }
+                                text(&mut key, &v.name, charge)?;
+                            }
+                            Kind::Keyword(v) => {
+                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                                if let Some(ns) = &v.namespace {
+                                    text(&mut key, ns, charge)?;
+                                }
+                                text(&mut key, &v.name, charge)?;
+                            }
+                            Kind::List(v)
+                            | Kind::Vector(v)
+                            | Kind::Map(v)
+                            | Kind::Set(v)
+                            | Kind::Conditional(v)
+                            | Kind::SplicingConditional(v) => size(&mut key, v.len(), charge)?,
+                            _ => {}
+                        }
+                        let children = &node.children[node.metadata_count..];
+                        if unordered && matches!(form.kind, Kind::Map(_) | Kind::Set(_)) {
+                            let paired = matches!(form.kind, Kind::Map(_));
+                            let stride = if paired { 2 } else { 1 };
+                            debug_assert!(children.len().is_multiple_of(stride));
+                            let mut groups = Vec::new();
+                            reserve(&mut groups, children.len() / stride, charge)?;
+                            for group in children.chunks_exact(stride) {
+                                charge(stride as u64)?;
+                                groups.push((plan.nodes[group[0]].key.0,
+                                    if paired { plan.nodes[group[1]].key.0 } else { 0 }));
+                            }
+                            sort_groups(&mut groups, charge)?;
+                            for (first, second) in groups {
+                                size(&mut key, first, charge)?;
+                                if paired { size(&mut key, second, charge)?; }
+                            }
+                        } else {
+                            for child in children {
+                                charge(1)?;
+                                size(&mut key, plan.nodes[*child].key.0, charge)?;
+                            }
+                        }
+                        let canonical = table.intern(key, charge)?;
+                        plan.nodes[id].key = canonical;
+                    }
+                }
+            }
+            Ok(root)
+        })();
+        // Completed child keys remain valid canonical entries. Incomplete plan
+        // nodes are private scratch and must not escape a failed build.
+        if result.is_err() {
+            plan.nodes.truncate(root);
+        }
+        result
+    }
+    #[test]
+    fn borrowed_view_matches_previous_plan_bytes_ids_and_unordered_equivalence() {
+        for unordered in [false,true] {
+            let mut direct=Interner::default();
+            let mut previous=Interner::default();
+            for value in corpus() {
+                // The legacy raw corpus deliberately includes malformed odd
+                // maps. Their existing raw ordered treatment is preserved.
+                if unordered && matches!(&value.kind,Kind::Map(v) if v.len()%2!=0) {continue}
+                let mut plan=Plan::default();let mut old=Plan::default();
+                let root=direct.plan_with_order(&value,&mut plan,unordered,&mut |_|Ok::<_,Error>(())).unwrap();
+                let old_root=legacy_plan(&mut previous,&value,&mut old,unordered,&mut |_|Ok::<_,Error>(())).unwrap();
+                assert_eq!(root,old_root);
+                assert_eq!(plan.nodes.iter().map(|n|n.key).collect::<Vec<_>>(),old.nodes.iter().map(|n|n.key).collect::<Vec<_>>());
+                assert_eq!(direct.keys.iter().map(|e|&e.key).collect::<Vec<_>>(),previous.keys.iter().map(|e|&e.key).collect::<Vec<_>>());
+                let mut warm=Plan::default();
+                let warm_root=direct.plan_with_order(&value,&mut warm,unordered,&mut |_|Ok::<_,Error>(())).unwrap();
+                assert_eq!(warm.nodes[warm_root].key,plan.nodes[root].key);
+            }
+        }
+    }
+    fn leaf_view(value:&Form)->(Node,Plan) {
+        (Node {key:KeyId(0),metadata_count:value.metadata.len(),children:vec![]},Plan::default())
+    }
+    fn bucket_leaf(table:&mut Interner,value:&Form,bucket:u64,charge:&mut impl FnMut(u64)->Result<(),Error>)->Result<KeyId,Error> {
+        assert!(value.metadata.is_empty());
+        let (node,plan)=leaf_view(value);
+        let view=View {form:value,node:&node,nodes:&plan.nodes,groups:None};
+        table.intern_view_bucket(&view,bucket,charge,&mut 0)
+    }
+    fn prime_borrowed()->Interner {
+        let mut table=Interner::default();
+        for i in 0..4 {
+            let value=form(Kind::String(vec![97,i]));
+            assert_eq!(bucket_leaf(&mut table,&value,u64::from(i/2),&mut |_|Ok(())),Ok(KeyId(i as usize)));
+        }
+        assert_eq!(table.keys.len(),table.keys.capacity());
+        table
+    }
+    fn borrowed_state(table:&mut Interner)->(Vec<(Vec<u8>,Option<usize>)>,Vec<Option<usize>>) {
+        (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),(0..3).map(|h|table.heads.get(h,&mut |_|Ok::<_,Error>(())).unwrap()).collect())
+    }
+    #[test]
+    fn borrowed_collision_hit_growth_and_every_fuel_irq_cut_are_atomic_and_recover() {
+        let candidate=form(Kind::String(vec![97,4]));
+        for (value,bucket,is_new) in [(&candidate,0,true),(&candidate,2,true),(&form(Kind::String(vec![97,1])),0,false)] {
+            let mut baseline=prime_borrowed();
+            let mut total=0;let mut calls=0;
+            let expected=bucket_leaf(&mut baseline,value,bucket,&mut |n| {total+=n;calls+=1;Ok(())}).unwrap();
+            for fuel in 0..total {
+                let mut table=prime_borrowed();let before=borrowed_state(&mut table);let mut remaining=fuel;
+                assert_eq!(bucket_leaf(&mut table,value,bucket,&mut |n| {remaining=remaining.checked_sub(n).ok_or(Error::Fuel)?;Ok(())}),Err(Error::Fuel),"fuel {fuel}/{total} bucket {bucket}");
+                assert_eq!(borrowed_state(&mut table),before);
+                assert_eq!(bucket_leaf(&mut table,value,bucket,&mut |_|Ok(())),Ok(expected));
+                assert_eq!(bucket_leaf(&mut table,value,bucket,&mut |_|Ok(())),Ok(expected));
+                assert_eq!(table.keys.len(),4+usize::from(is_new));
+                for i in 0..4 {assert_eq!(bucket_leaf(&mut table,&form(Kind::String(vec![97,i])),u64::from(i/2),&mut |_|Ok(())),Ok(KeyId(i as usize)));}
+            }
+            for cut in 1..=calls {
+                let mut table=prime_borrowed();let before=borrowed_state(&mut table);let mut call=0;
+                assert_eq!(bucket_leaf(&mut table,value,bucket,&mut |_| {call+=1;if call==cut {Err(Error::Cancel)} else {Ok(())}}),Err(Error::Cancel));
+                assert_eq!(borrowed_state(&mut table),before);
+                assert_eq!(bucket_leaf(&mut table,value,bucket,&mut |_|Ok(())),Ok(expected));
+            }
+        }
+        // A colliding large value must actually enter exact comparison work.
+        let mut table=prime_borrowed();let (node,plan)=leaf_view(&candidate);
+        let view=View {form:&candidate,node:&node,nodes:&plan.nodes,groups:None};
+        let mut compared=0;
+        table.intern_view_bucket(&view,0,&mut |_|Ok::<_,Error>(()),&mut compared).unwrap();
+        assert!(compared>0);
+    }
+    #[test]
+    fn borrowed_warm_plan_avoids_real_encoding_work_at_the_same_allowance() {
+        let value=form(Kind::Vector((0..128).map(|i|form(Kind::Symbol(suss_reader::Symbol {namespace:Some("suss.core".into()),name:format!("long-source-definition-{i}")}))).collect()));
+        let mut direct=Interner::default();let mut previous=Interner::default();
+        direct.plan(&value,&mut Plan::default(),&mut |_|Ok::<_,Error>(())).unwrap();
+        legacy_plan(&mut previous,&value,&mut Plan::default(),false,&mut |_|Ok::<_,Error>(())).unwrap();
+        let mut new_plan=Plan::default();let mut old_plan=Plan::default();
+        // Equal retained node capacities on both sides, including reset fees.
+        direct.plan(&value,&mut new_plan,&mut |_|Ok::<_,Error>(())).unwrap();new_plan.clear_metered(&mut |_|Ok::<_,Error>(())).unwrap();
+        legacy_plan(&mut previous,&value,&mut old_plan,false,&mut |_|Ok::<_,Error>(())).unwrap();old_plan.clear_metered(&mut |_|Ok::<_,Error>(())).unwrap();
+        let old_keys=direct.keys.iter().map(|e|e.key.clone()).collect::<Vec<_>>();
+        let mut optimized=0;let mut legacy=0;
+        direct.plan(&value,&mut new_plan,&mut |n| {optimized+=n;Ok::<_,Error>(())}).unwrap();
+        legacy_plan(&mut previous,&value,&mut old_plan,false,&mut |n| {legacy+=n;Ok::<_,Error>(())}).unwrap();
+        assert!(optimized<legacy,"optimized={optimized} legacy={legacy}");
+        assert_eq!(direct.keys.iter().map(|e|e.key.clone()).collect::<Vec<_>>(),old_keys);
+        new_plan.clear_metered(&mut |_|Ok::<_,Error>(())).unwrap();old_plan.clear_metered(&mut |_|Ok::<_,Error>(())).unwrap();
+        let mut remaining=optimized;
+        direct.plan(&value,&mut new_plan,&mut |n| {remaining=remaining.checked_sub(n).ok_or(Error::Fuel)?;Ok::<_,Error>(())}).unwrap();
+        let mut remaining=optimized;
+        assert_eq!(legacy_plan(&mut previous,&value,&mut old_plan,false,&mut |n| {remaining=remaining.checked_sub(n).ok_or(Error::Fuel)?;Ok(())}),Err(Error::Fuel));
+        eprintln!("raw-view-warm optimized={optimized} legacy={legacy} same-allowance={optimized}");
+    }
+
+    #[test]
+    fn borrowed_exact_scalar_collisions_reject_every_changed_stored_byte() {
+        let mut table=Interner::default();
+        let mut reference=Interner::default();
+        let mut expected=std::collections::BTreeMap::<Vec<u8>,KeyId>::new();
+        for value in corpus().into_iter().filter(|v|v.metadata.is_empty() && matches!(v.kind,Kind::Nil|Kind::Bool(_)|Kind::Number(_)|Kind::String(_)|Kind::Symbol(_)|Kind::Keyword(_))) {
+            let (node,plan)=leaf_view(&value);
+            let view=View {form:&value,node:&node,nodes:&plan.nodes,groups:None};
+            let encoded=view.encode(&mut |_|Ok::<_,Error>(())).unwrap();
+            let mut old=Plan::default();
+            let root=legacy_plan(&mut reference,&value,&mut old,false,&mut |_|Ok::<_,Error>(())).unwrap();
+            assert_eq!(encoded,reference.keys[old.nodes[root].key.0].key);
+            let next=KeyId(expected.len());
+            let wanted=*expected.entry(encoded.clone()).or_insert(next);
+            assert_eq!(table.intern_view_bucket(&view,0,&mut |_|Ok::<_,Error>(()),&mut 0),Ok(wanted));
+            assert!(view.matches(&encoded,&mut |_|Ok::<_,Error>(())).unwrap());
+            for i in 0..encoded.len() {
+                let mut changed=encoded.clone();changed[i]^=1;
+                assert!(!view.matches(&changed,&mut |_|Ok::<_,Error>(())).unwrap());
+            }
+            for end in 0..encoded.len() {assert!(!view.matches(&encoded[..end],&mut |_|Ok::<_,Error>(())).unwrap());}
+            let mut extra=encoded.clone();extra.push(0);
+            assert!(!view.matches(&extra,&mut |_|Ok::<_,Error>(())).unwrap());
+        }
+        assert_eq!(table.keys.len(),expected.len());
+    }
+    #[test]
+    fn borrowed_size_decoder_preserves_canonical_boundaries_and_native_maximum() {
+        // Synthetic canonical child IDs exercise the pure raw-key codec beyond
+        // feasible graph allocation sizes; no source/runtime authority involved.
+        let value=form(Kind::Vector(vec![form(Kind::Nil)]));
+        for child in [0,127,128,16383,16384,usize::MAX] {
+            let nodes=vec![Node {key:KeyId(0),metadata_count:0,children:vec![1]},Node {key:KeyId(child),metadata_count:0,children:vec![]}];
+            let view=View {form:&value,node:&nodes[0],nodes:&nodes,groups:None};
+            let encoded=view.encode(&mut |_|Ok::<_,Error>(())).unwrap();
+            let mut expected=vec![0,7,1];size(&mut expected,child,&mut |_|Ok::<_,Error>(())).unwrap();
+            assert_eq!(encoded,expected);
+            assert!(view.matches(&encoded,&mut |_|Ok::<_,Error>(())).unwrap());
+            for i in 0..encoded.len() {
+                let mut changed=encoded.clone();changed[i]^=128;
+                assert!(!view.matches(&changed,&mut |_|Ok::<_,Error>(())).unwrap());
+            }
+            let mut overlong=encoded.clone();*overlong.last_mut().unwrap()|=128;overlong.push(0);
+            assert!(!view.matches(&overlong,&mut |_|Ok::<_,Error>(())).unwrap());
+            let mut overflow=vec![0,7,1];overflow.extend([255;10]);overflow.push(1);
+            assert!(!view.matches(&overflow,&mut |_|Ok::<_,Error>(())).unwrap());
+        }
+    }
+
 }
