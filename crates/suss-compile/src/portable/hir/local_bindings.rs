@@ -58,7 +58,7 @@ pub struct FunctionScope {
     /// Actual function syntax before any method body expansion or lowering.
     pub function_form: Form,
     pub declaration: Form,
-    pub origin: Option<super::super::SourceOrigin>,
+    pub origin: Option<Arc<super::super::SourceOrigin>>,
     pub namespace: String,
     pub declaration_context: super::super::AnalysisContext,
     /// Actual declaration environment, before the new self name is installed.
@@ -78,7 +78,7 @@ pub struct FieldBinding {
     /// Shared declaration identity across immutable snapshot clones.
     pub identity: Arc<()>,
     pub declaration: Form,
-    pub origin: Option<super::super::SourceOrigin>,
+    pub origin: Option<Arc<super::super::SourceOrigin>>,
     pub index: usize,
     pub mutable: bool,
     /// Actual lowered access expression; inspecting it does not read the field.
@@ -94,7 +94,7 @@ pub struct LocalBinding {
     pub ty: Type,
     /// Reader or expansion declaration, preserving source/call-site span and metadata.
     pub declaration: Arc<Form>,
-    pub origin: Option<super::super::SourceOrigin>,
+    pub origin: Option<Arc<super::super::SourceOrigin>>,
     pub kind: LocalKind,
     pub declaration_context: super::super::AnalysisContext,
     pub source_role: SourceRole,
@@ -362,6 +362,12 @@ impl Analyzer<'_> {
         cow_insert(&mut self.fields, name, field, &mut |work| expander.charge_expansion_work(work, span.clone()))?;
         Ok(())
     }
+    pub(super) fn clone_origin_value(&mut self, span: Range<usize>) -> Result<Option<super::super::SourceOrigin>, Diagnostic> {
+        let mut meter = |work| self.expander.charge_expansion_work(work, span.clone());
+        meter(1)?;
+        if let Some(origin) = &self.origin { origin_value_work(origin, &mut meter)?; }
+        Ok(self.origin.as_deref().cloned())
+    }
     pub(super) fn clone_local_form(&mut self, form: &Form) -> Result<Form, Diagnostic> {
         super::super::clone_form_metered(form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))
     }
@@ -483,9 +489,6 @@ fn cow_forms(forms: &[Form], meter: &mut CowMeter<'_>) -> Result<Vec<Form>, Diag
     for form in forms { result.push(super::super::clone_form_metered(form, meter)?); }
     Ok(result)
 }
-// SourceOrigin owns only its optional PathBuf. Text, line indexes, metadata
-// cache (including any cached String), and reader overlays are all Arc-backed;
-// cloning them does not traverse or copy their payloads.
 /// Capture syntax once; binding revisions retain this immutable payload owner.
 fn cow_shared_form(form: &Form, meter: &mut CowMeter<'_>) -> Result<Arc<Form>, Diagnostic> {
     let copied = super::super::clone_form_metered(form, meter)?;
@@ -493,13 +496,43 @@ fn cow_shared_form(form: &Form, meter: &mut CowMeter<'_>) -> Result<Arc<Form>, D
     cow_charge(meter, 2, std::mem::size_of::<usize>())?;
     Ok(Arc::new(copied))
 }
-fn cow_origin(origin: &Option<super::super::SourceOrigin>, meter: &mut CowMeter<'_>) -> Result<Option<super::super::SourceOrigin>, Diagnostic> {
+// A borrowed API origin is copied once into the Analyzer's immutable owner.
+// Text, line indexes, metadata cache and reader overlays are Arc-backed; only
+// the optional PathBuf has variable-sized owned contents to copy here.
+fn origin_value_work(origin: &super::super::SourceOrigin, meter: &mut CowMeter<'_>) -> Result<(), Diagnostic> {
     let _trace = CowTraceScope::new("origin_copy");
     cow_charge(meter, 1, std::mem::size_of::<super::super::SourceOrigin>())?;
-    if let Some(path) = origin.as_ref().and_then(|origin| origin.path()) {
+    if let Some(path) = origin.path() {
         cow_charge(meter, path.as_os_str().as_encoded_bytes().len(), 1)?;
     }
+    Ok(())
+}
+pub(super) fn capture_origin_owner(origin: Option<&super::super::SourceOrigin>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<super::super::SourceOrigin>>, Diagnostic> {
+    meter(1)?;
+    let Some(origin) = origin else { return Ok(None) };
+    origin_value_work(origin, meter)?;
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+    Ok(Some(Arc::new(origin.clone())))
+}
+fn cow_origin(origin: &Option<Arc<super::super::SourceOrigin>>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<super::super::SourceOrigin>>, Diagnostic> {
+    let _trace = CowTraceScope::new("origin_share");
+    meter(1)?; // bounded shared-owner clone; no Origin struct or PathBuf copy
     Ok(origin.clone())
+}
+pub(super) fn derive_reader_origin(origin: Option<&super::super::SourceOrigin>, lowered: Form, reader: Form, meter: &mut CowMeter<'_>) -> Result<Arc<super::super::SourceOrigin>, Diagnostic> {
+    let empty;
+    let origin = if let Some(origin) = origin { origin } else {
+        // Empty provenance has one line-index element and no source text.
+        cow_charge(meter, 1, std::mem::size_of::<super::super::SourceOrigin>())?;
+        cow_charge(meter, 1, std::mem::size_of::<usize>())?;
+        empty = super::super::SourceOrigin::new("", None);
+        &empty
+    };
+    origin_value_work(origin, meter)?; // with_reader_expansion copies this value
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?; // new Origin Arc header
+    cow_charge(meter, 2, std::mem::size_of::<Form>())?; // moved reader correspondence
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?; // correspondence Arc header
+    Ok(Arc::new(origin.with_reader_expansion(lowered, reader)))
 }
 fn cow_global(global: &Global, meter: &mut CowMeter<'_>) -> Result<Global, Diagnostic> {
     cow_charge(meter, global.namespace().len(), 1)?;
@@ -1063,6 +1096,53 @@ mod ownership_tests {
         assert!(matches!(saved["x"].source_role, SourceRole::CatchBinding { .. }));
         assert!(!Arc::ptr_eq(&saved["x"], &changed["x"]));
         assert!(Arc::ptr_eq(&saved["x"].identity, &changed["x"].identity));
+    }
+
+    #[test]
+    fn captured_origin_owner_is_shared_by_scopes_revisions_and_source_facts() {
+        let source = "(let* [x (fn* local-function [a] a)] (inspect-owner) (let* [y x] (inspect-owner)) (inspect-owner))";
+        let origin = crate::portable::SourceOrigin::new(source, Some(std::path::PathBuf::from("owned/source.cljc")));
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut host = Observe::default();
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            prepare_with_origin(&forms, 0..source.len(), &Environment::default(), phase, &mut host, Some(&origin)).unwrap();
+            assert_eq!(host.0.len(), 3);
+            let first = host.0[0].0["x"].origin.as_ref().unwrap();
+            assert_eq!(first.text(), source);
+            assert_eq!(first.path(), origin.path());
+            for (locals, _) in &host.0 {
+                assert!(Arc::ptr_eq(first, locals["x"].origin.as_ref().unwrap()));
+            }
+            assert!(Arc::ptr_eq(first, host.0[1].0["y"].origin.as_ref().unwrap()));
+            let initializer = host.0[0].0["x"].initializer.as_ref().unwrap();
+            let source_fact = initializer.source.as_ref().unwrap();
+            assert!(Arc::ptr_eq(first, source_fact.origin.as_ref().unwrap()));
+            let scope = source_fact.callable.as_ref().unwrap().name.as_ref().unwrap();
+            assert!(Arc::ptr_eq(first, scope.origin.as_ref().unwrap()));
+            let mut revised = host.0[0].0.clone();
+            local_revision_mut(&mut revised, "x", &mut |_| Ok(())).unwrap().id = BindingId(999);
+            assert!(Arc::ptr_eq(first, revised["x"].origin.as_ref().unwrap()));
+            assert_ne!(revised["x"].id, host.0[0].0["x"].id);
+        }
+        let mut calls = 0;
+        let owner = capture_origin_owner(Some(&origin), &mut |_| { calls += 1; Ok(()) }).unwrap().unwrap();
+        for stop in 0..calls {
+            let mut call = 0;
+            assert!(capture_origin_owner(Some(&origin), &mut |_| {
+                let current = call; call += 1;
+                if current == stop { Err(fail(7..13, "origin capture interrupted")) } else { Ok(()) }
+            }).is_err());
+            assert_eq!(owner.text(), source);
+            assert_eq!(owner.path(), origin.path());
+        }
+        let lowered = suss_reader::forms::read_forms("lowered").unwrap().remove(0);
+        let reader = suss_reader::forms::read_forms("reader").unwrap().remove(0);
+        let derived = derive_reader_origin(Some(&owner), lowered.clone(), reader.clone(), &mut |_| Ok(())).unwrap();
+        assert!(!Arc::ptr_eq(&owner, &derived));
+        assert_eq!(derived.text(), owner.text());
+        assert_eq!(derived.path(), owner.path());
+        assert_eq!(derived.macro_form_data_metered(&lowered, &mut |_| Ok(())).unwrap(), reader);
+        assert_eq!(owner.text(), source);
     }
 
 }

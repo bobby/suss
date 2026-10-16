@@ -616,7 +616,7 @@ pub struct SourceAnalysis {
     pub context: super::AnalysisContext,
     pub phase: Phase,
     pub namespace: String,
-    pub origin: Option<super::SourceOrigin>,
+    pub origin: Option<std::sync::Arc<super::SourceOrigin>>,
 }
 #[derive(Debug)]
 pub struct Hir {
@@ -780,7 +780,7 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 struct Analyzer<'a> {
     suspendable: bool,
     expander: &'a mut dyn super::ExpansionHost,
-    origin: Option<super::SourceOrigin>,
+    origin: Option<std::sync::Arc<super::SourceOrigin>>,
     environment: Environment,
     phase: Phase,
     locals: SourceLocals,
@@ -923,7 +923,7 @@ impl Analyzer<'_> {
                 form,
                 &self.environment,
                 self.phase,
-                self.origin.as_ref(),
+                self.origin.as_deref(),
                 &mut meter,
             )?;
             // Replay the same initial counter against verified indexing data;
@@ -942,12 +942,8 @@ impl Analyzer<'_> {
                 ));
             }
             let lowered = super::syntax_quote::lower_generated_metered(&raw, &mut meter)?;
-            let origin = self
-                .origin
-                .clone()
-                .unwrap_or_else(|| super::SourceOrigin::new("", None));
             let lowered_source = super::clone_form_metered(&lowered, &mut meter)?;
-            self.origin = Some(origin.with_reader_expansion(lowered_source, located));
+            self.origin = Some(local_bindings::derive_reader_origin(self.origin.as_deref(), lowered_source, located, &mut meter)?);
             self.environment.reader_state = reader;
             Some(lowered)
         } else {
@@ -993,7 +989,7 @@ impl Analyzer<'_> {
                             .namespace_snapshot
                             .as_ref()
                             .expect("top-level source snapshot"),
-                        origin: self.origin.as_ref(),
+                        origin: self.origin.as_deref(),
                         phase: self.phase,
                         context,
                         locals: &self.locals,
@@ -1034,7 +1030,7 @@ impl Analyzer<'_> {
         let coerced = {
             let expander = &mut *self.expander;
             super::syntax_quote::reader_sequence_initializer(
-                form, &self.environment, self.phase, self.origin.as_ref(),
+                form, &self.environment, self.phase, self.origin.as_deref(),
                 &mut |work| expander.charge_expansion_work(work, form.span.clone()),
             )?
         };
@@ -1433,7 +1429,7 @@ impl Analyzer<'_> {
             } else {
                 None
             },
-            origin: self.origin.clone(),
+            origin: self.clone_origin_value(form.span.clone())?,
             initializer_form: init.cloned(),
             initializer: None,
             type_fields: None,
@@ -3009,10 +3005,11 @@ pub(crate) fn prepare_with_origin(
     expander: &mut dyn super::ExpansionHost,
     origin: Option<&super::SourceOrigin>,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    let origin = local_bindings::capture_origin_owner(origin, &mut |work| expander.charge_expansion_work(work, span.clone()))?;
     let mut analyzer = Analyzer {
         suspendable: false,
         expander,
-        origin: origin.cloned(),
+        origin,
         environment: environment.clone(),
         phase,
         locals: SourceLocals::default(),

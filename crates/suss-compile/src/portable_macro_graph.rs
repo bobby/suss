@@ -1846,7 +1846,7 @@ impl<'a> AnalysisGraph<'a> {
                         kind: Kind::Symbol(suss_reader::Symbol::new("any")),
                     })
                 } else {
-                    source.and_then(|source| source.tags.inferred.clone())
+                    source.and_then(|source| source.tags.inferred_ref().cloned())
                 }
             } else {
                 hir::declaration_tag(info)

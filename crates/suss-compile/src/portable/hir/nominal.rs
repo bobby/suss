@@ -495,7 +495,7 @@ impl Analyzer<'_> {
             vec![Form { kind: Kind::Map(metadata), span: 0..0, metadata: vec![] }]
         };
         type_info.definition_form = form.clone();
-        type_info.origin = self.origin.clone();
+        type_info.origin = self.clone_origin_value(form.span.clone())?;
         type_info.type_fields = Some(declared_fields);
         type_info.type_is_record = record;
         type_info.analysis_completed = true;

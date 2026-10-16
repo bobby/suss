@@ -30,6 +30,9 @@ impl Context<Key> for Meter<'_> {
 }
 #[derive(Default)]
 pub(crate) struct DeclarationValues {
+    // The source controller is staged separately from legacy metadata reuse;
+    // it must wholly own metadata exports when activated, never interleave them.
+    pub(super) roots: super::source_roots::RootCache,
     metadata: TryOrderedMap<Key, Option<Rc<RecordedMetadata>>>,
 }
 pub(super) fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Result<()> {

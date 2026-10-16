@@ -41,6 +41,16 @@ fn with_default_budget<T>(
     f(&mut meter)
 }
 
+/// Local inference can reuse this record's actual tag without another Form.
+/// Explicit metadata remains independently owned; no equality/interning is used.
+#[derive(Debug, Clone, Default)]
+enum InferredTag {
+    #[default]
+    None,
+    FromTag,
+    Explicit(Form),
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct SourceTags {
     /// Absence is distinct from a known portable tag (including any).
@@ -51,7 +61,16 @@ pub struct SourceTags {
     /// None: field absent. Some(None): field present, unknown return tag.
     pub inferred_return: Option<Option<Form>>,
     /// Supported source inference result, after metadata's get-tag precedence.
-    pub inferred: Option<Form>,
+    inferred: InferredTag,
+}
+impl SourceTags {
+    pub fn inferred_ref(&self) -> Option<&Form> {
+        match &self.inferred {
+            InferredTag::None => None,
+            InferredTag::FromTag => self.tag.as_ref(),
+            InferredTag::Explicit(form) => Some(form),
+        }
+    }
 }
 
 fn named(name: &str) -> Form {
@@ -702,8 +721,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
         if let Some(source) = &current.source {
             return source
                 .tags
-                .inferred
-                .as_ref()
+                .inferred_ref()
                 .map(|tag| crate::portable::clone_form_metered(tag, meter))
                 .transpose();
         }
@@ -925,11 +943,9 @@ pub(super) fn source_tags_metered(
     // get-tag/infer-tag use if-some. A present nil AST tag remains present
     // in the source view, but does not become an inferred return type.
     let inferred = match hint(form, meter)? {
-        Some(hint) => Some(hint),
-        None => match tag.as_ref().filter(|tag| !matches!(tag.kind, Kind::Nil)) {
-            Some(tag) => Some(crate::portable::clone_form_metered(tag, meter)?),
-            None => None,
-        },
+        Some(hint) => InferredTag::Explicit(hint),
+        None if tag.as_ref().is_some_and(|tag| !matches!(tag.kind, Kind::Nil)) => InferredTag::FromTag,
+        None => InferredTag::None,
     };
     Ok(SourceTags {
         tag,
@@ -951,6 +967,68 @@ mod quoted_tag_tests {
             ty: Type::Value,
             kind,
         }
+    }
+
+    #[test]
+    fn inferred_relation_reuses_tag_and_preserves_explicit_nil_and_false_rules() {
+        let form = suss_reader::forms::read_forms("42").unwrap().remove(0);
+        let literal = hir(Expression::Literal(Literal::Number(42.0)));
+        let tags = source_tags_metered(&form, None, None, &literal, &mut |_| Ok(())).unwrap();
+        assert!(std::ptr::eq(tags.tag.as_ref().unwrap(), tags.inferred_ref().unwrap()));
+        assert!(is_named(tags.inferred_ref().unwrap(), "number"));
+        let copied = tags.clone();
+        assert!(std::ptr::eq(copied.tag.as_ref().unwrap(), copied.inferred_ref().unwrap()));
+        let hinted = hir(Expression::Do(vec![hir(Expression::Literal(Literal::Number(42.0)))]));
+        for (source, expected) in [("^string (do 42)", named("string")),
+            ("^{:tag false} (do 42)", Form { kind: Kind::Bool(false), span: 0..0, metadata: vec![] })]
+        {
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            let tags = source_tags_metered(&form, None, None, &hinted, &mut |_| Ok(())).unwrap();
+            assert!(matches!(tags.inferred, InferredTag::Explicit(_)));
+            assert!(!std::ptr::eq(tags.tag.as_ref().unwrap(), tags.inferred_ref().unwrap()));
+            assert!(same(tags.inferred_ref(), Some(&expected), &mut |_| Ok(())).unwrap());
+            assert!(is_named(tags.tag.as_ref().unwrap(), "number"));
+        }
+        for phase in [Phase::Runtime, Phase::Macro] {
+            for (source, nil) in [("(def ^{:tag nil} f (fn* [x] x)) f", true),
+                ("(def ^{:tag false} f (fn* [x] x)) f", false)]
+            {
+                let analyzed = crate::portable::analyze_in(source, &Environment::default(), phase).unwrap();
+                let Expression::Do(items) = &analyzed.kind else { unreachable!() };
+                let tags = &items.last().unwrap().source.as_ref().unwrap().tags;
+                assert!(matches!(tags.tag.as_ref().unwrap().kind, Kind::Nil) == nil);
+                if nil { assert!(tags.inferred_ref().is_none()); }
+                else {
+                    assert!(matches!(tags.inferred_ref().unwrap().kind, Kind::Bool(false)));
+                    assert!(std::ptr::eq(tags.tag.as_ref().unwrap(), tags.inferred_ref().unwrap()));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn inferred_relation_keeps_required_hint_and_parent_copy_meter_errors() {
+        let form = suss_reader::forms::read_forms("^string (do 42)").unwrap().remove(0);
+        let expected = form.clone();
+        let literal = hir(Expression::Do(vec![hir(Expression::Literal(Literal::Number(42.0)))]));
+        let mut count = 0;
+        source_tags_metered(&form, None, None, &literal, &mut |_| { count += 1; Ok(()) }).unwrap();
+        for stop in 0..count {
+            let mut call = 0;
+            let error = source_tags_metered(&form, None, None, &literal, &mut |_| {
+                let current = call; call += 1;
+                if current == stop { Err(fail(0..0, "tag interrupted")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "tag interrupted");
+            assert_eq!(form, expected);
+        }
+        // Reading a child's retained inferred tag still makes a real owned
+        // propagation copy and must not bypass the existing meter.
+        let analyzed = crate::portable::analyze("42").unwrap();
+        let Expression::Do(items) = &analyzed.kind else { unreachable!() };
+        let error = inferred(&items[0], &mut |_| Err(fail(0..0, "parent interrupted"))).unwrap_err();
+        assert_eq!(error.message, "parent interrupted");
+        assert!(is_named(&inferred(&items[0], &mut |_| Ok(())).unwrap().unwrap(), "number"));
     }
 
     #[test]
@@ -1137,7 +1215,7 @@ pub(super) fn metadata_wrapper_tags_metered(
     meter: &mut WorkMeter<'_>,
 ) -> Result<SourceTags, Diagnostic> {
     Ok(SourceTags {
-        inferred: hint(form, meter)?,
+        inferred: hint(form, meter)?.map_or(InferredTag::None, InferredTag::Explicit),
         ..Default::default()
     })
 }

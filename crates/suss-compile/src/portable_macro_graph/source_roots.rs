@@ -66,6 +66,67 @@ impl Owner {
         })
     }
 }
+// Retention owns the source revision as part of each certificate. Pointer keys
+// are indexes only; every lookup independently checks the current expectation.
+#[derive(Default)]
+pub(super) struct RootCache {
+    entries: crate::portable::metered_map::TryOrderedMap<Key, Option<Rc<Certificate>>>,
+}
+struct KeyMeter<'a>(&'a mut Session);
+impl crate::portable::metered_map::Context<Key> for KeyMeter<'_> {
+    type Error = SessionError;
+    fn charge(&mut self, units: u64) -> Result<()> {
+        self.0.charge_host_work(units)
+    }
+    fn compare(&mut self, a: &Key, b: &Key) -> Result<std::cmp::Ordering> {
+        self.0.charge_host_work(key_comparison_work(a, b))?;
+        Ok(a.cmp(b))
+    }
+}
+impl RootCache {
+    fn lookup(
+        &self,
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        expected: &Rc<Expectation>,
+    ) -> Result<Option<CheckedChild>> {
+        let _request = session.operation_budget_scope()?;
+        let key = expected.owner.key(session)?;
+        session.charge_host_work(1)?;
+        let candidate = self
+            .entries
+            .get(&key, &mut KeyMeter(session))?
+            .and_then(|entry| entry.as_ref())
+            .cloned();
+        match candidate {
+            Some(certificate) => Certificate::checked(session, bridge, &certificate, expected),
+            None => Ok(None),
+        }
+    }
+    // Called only in the callback-free final publication interval. Errors are
+    // propagated, and an invalid entry explicitly invalidates its old cache slot.
+    // Each inserted Some is already a COMPLETE independently checked certificate;
+    // an allocation trap cannot expose a partly initialized certificate.
+    fn publish(
+        &mut self,
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        expected: &Rc<Expectation>,
+        certificate: &Rc<Certificate>,
+    ) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        let checked = Certificate::checked(session, bridge, certificate, expected)?;
+        let key = expected.owner.key(session)?;
+        let valid = checked.is_some();
+        session.charge_host_work(1)?;
+        self.entries.insert(
+            key,
+            checked.map(|child| child.certificate),
+            &mut KeyMeter(session),
+        )?;
+        Ok(valid)
+    }
+}
 pub(super) struct Capture {
     pub(super) owner: Owner,
     pub(super) native: Value,
@@ -938,6 +999,19 @@ mod tests {
             let parent = Certificate::finish_bound(graph.session, graph.bridge, bound)
                 .unwrap()
                 .unwrap();
+            let mut cache = RootCache::default();
+            let expected = graph.source_root_expectation(root).unwrap().unwrap();
+            assert!(
+                cache
+                    .publish(graph.session, graph.bridge, &expected, &parent)
+                    .unwrap()
+            );
+            graph.session.collect().unwrap();
+            let hit = cache
+                .lookup(graph.session, graph.bridge, &expected)
+                .unwrap()
+                .unwrap();
+            assert!(Rc::ptr_eq(&hit.certificate, &parent));
             invoke(graph.session, "(fn [parent] (hash parent))", &parent.value);
             assert!(Certificate::validate(graph.session, graph.bridge, &parent).unwrap());
             drop(
@@ -975,6 +1049,23 @@ mod tests {
                 "[1 false]"
             );
             assert!(!Certificate::validate(graph.session, graph.bridge, &parent).unwrap());
+            assert!(
+                cache
+                    .lookup(graph.session, graph.bridge, &expected)
+                    .unwrap()
+                    .is_none()
+            );
+            assert!(
+                !cache
+                    .publish(graph.session, graph.bridge, &expected, &parent)
+                    .unwrap()
+            );
+            assert!(
+                cache
+                    .lookup(graph.session, graph.bridge, &expected)
+                    .unwrap()
+                    .is_none()
+            );
         }
     }
     #[test]

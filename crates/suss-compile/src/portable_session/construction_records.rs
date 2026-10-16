@@ -7,6 +7,9 @@ use crate::portable::metered_map::Context;
 use std::{cmp::Ordering, collections::hash_map::DefaultHasher, hash::Hasher};
 use wasmtime::{AnyRef, RootScope, Rooted};
 
+mod projection;
+pub(crate) use projection::FactoryProjection;
+
 // Invocation-local native identity-hash heads. No guest allocation or adapter
 // call may occur while this table is live. Exact GC references decide membership.
 #[derive(Default)]
@@ -91,28 +94,28 @@ impl InputIndex<'_> {
         let b = b.value.to_rooted(&mut scope);
         Ok(Rooted::<AnyRef>::ref_eq(&scope, &a, &b)?)
     }
-    fn contains_explicit(
+    fn contains_explicit<R: AsRef<Record>>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[Record],
+        records: &[R],
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         let hash = self.hash(value)?;
         let mut cursor = index.get(hash, self)?;
         while let Some(id) = cursor {
-            if self.same(value, &records[id].value)? {
+            if self.same(value, &records[id].as_ref().value)? {
                 return Ok(true);
             }
             cursor = collisions[id];
         }
         Ok(false)
     }
-    fn contains(
+    fn contains<R: AsRef<Record>>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[Record],
+        records: &[R],
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         if self.contains_explicit(index, collisions, records, value)? {
@@ -123,7 +126,7 @@ impl InputIndex<'_> {
         // Membership alone is not validation: direct seed checks remain required.
         for record in records {
             self.charge(1)?;
-            if let Fact::CanonicalSeed(seed) = &record.fact {
+            if let Fact::CanonicalSeed(seed) = &record.as_ref().fact {
                 if seed.contains_initial_reference(self.session, value)? {
                     return Ok(true);
                 }
@@ -143,6 +146,9 @@ pub(crate) enum Fact {
 pub(crate) struct Record {
     pub value: SessionValue,
     pub fact: Fact,
+}
+impl AsRef<Record> for Record {
+    fn as_ref(&self) -> &Record { self }
 }
 pub(crate) struct BridgeClassInput {
     pub name: &'static str,
@@ -276,32 +282,37 @@ impl ConstructionRecords {
         root: &SessionValue,
         hash_mask: u64,
     ) -> Result<bool, SessionError> {
+        Self::check_selected_inputs(session, root, hash_mask, &self.records, &self.children)
+    }
+    fn check_selected_inputs<R: AsRef<Record>>(
+        session: &mut Session, root: &SessionValue, hash_mask: u64,
+        records: &[R], children: &[ChildBinding],
+    ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut meter = InputIndex { session, hash_mask };
         let tracing = std::env::var_os("SUSS_INPUT_INDEX_TRACE").is_some();
         let trace = |meter: &InputIndex<'_>, stage: &str| {
             if tracing { eprintln!("input-index records={} stage={stage} fuel={:?}",
-                self.records.len(), meter.session.operation_fuel_remaining()); }
+                records.len(), meter.session.operation_fuel_remaining()); }
         };
         trace(&meter, "start");
-        let mut index = InputHeads::new(self.records.len(), &mut meter)?;
-        let bytes = self
-            .records
+        let mut index = InputHeads::new(records.len(), &mut meter)?;
+        let bytes = records
             .len()
             .checked_mul(std::mem::size_of::<Option<usize>>())
             .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Input index overflow")))?;
         meter.charge(bytes as u64)?;
         let mut collisions = Vec::new();
         collisions
-            .try_reserve_exact(self.records.len())
+            .try_reserve_exact(records.len())
             .map_err(|_| {
                 SessionError::Host(wasmtime::Error::msg("Input index allocation failed"))
             })?;
         trace(&meter, "reserved");
         // No guest execution or guest allocation occurs while this ephemeral
         // identity-hash index is live. Collision chains always use ref_eq.
-        for (id, record) in self.records.iter().enumerate() {
-            let hash = meter.hash(&record.value)?;
+        for (id, record) in records.iter().enumerate() {
+            let hash = meter.hash(&record.as_ref().value)?;
             // insert returns the previous head from the same charged probe.
             // Collision capacity was reserved above, so publication needs no
             // fallible work between updating the head and recording its link.
@@ -309,13 +320,13 @@ impl ConstructionRecords {
             collisions.push(prior);
             if tracing && (id + 1).is_multiple_of(64) {
                 eprintln!("input-index indexed={} records={} fuel={:?}", id + 1,
-                    self.records.len(), meter.session.operation_fuel_remaining());
+                    records.len(), meter.session.operation_fuel_remaining());
             }
         }
         trace(&meter, "built");
-        let mut valid = meter.contains_explicit(&index, &collisions, &self.records, root)?;
+        let mut valid = meter.contains_explicit(&index, &collisions, records, root)?;
         trace(&meter, "root");
-        let edges = self.check_input_edges(&mut meter, &index, &collisions);
+        let edges = Self::check_selected_edges(&mut meter, &index, &collisions, records, children);
         trace(&meter, "edges-return");
         if tracing { eprintln!("input-index edge-result={:?}", edges.as_ref().map_err(|e| e.to_string())); }
         valid &= edges?;
@@ -327,15 +338,22 @@ impl ConstructionRecords {
         index: &InputHeads,
         collisions: &[Option<usize>],
     ) -> Result<bool, SessionError> {
+        Self::check_selected_edges(meter, index, collisions, &self.records, &self.children)
+    }
+    fn check_selected_edges<R: AsRef<Record>>(
+        meter: &mut InputIndex<'_>, index: &InputHeads, collisions: &[Option<usize>],
+        records: &[R], children: &[ChildBinding],
+    ) -> Result<bool, SessionError> {
         let mut valid = true;
-        for record in &self.records {
+        for record in records {
             meter.charge(1)?;
+            let record = record.as_ref();
             match &record.fact {
                 Fact::Array(fact) => {
                     for value in fact.inputs() {
-                        let mut member=meter.contains(index, collisions, &self.records, value)?;
+                        let mut member=meter.contains(index, collisions, records, value)?;
                         if !member {
-                            for child in &self.children {
+                            for child in children {
                                 meter.charge(1)?;
                                 if meter.same(value,&child.value)? {member=true;break;}
                             }
@@ -345,9 +363,9 @@ impl ConstructionRecords {
                 }
                 Fact::Constructor(fact) => {
                     for value in fact.inputs() {
-                        let mut member=meter.contains(index, collisions, &self.records, value)?;
+                        let mut member=meter.contains(index, collisions, records, value)?;
                         if !member {
-                            for child in &self.children {
+                            for child in children {
                                 meter.charge(1)?;
                                 if meter.same(value,&child.value)? {member=true;break;}
                             }

@@ -28393,3 +28393,72 @@ it does not establish successful bootstrap, Session proofs, Jank or a full
 workspace baseline. Subsequent evidence/handoff additions change only the
 noncompiled part of this pre-commit tree. All later production edits remain
 outside the checkpoint and need their own verification.
+
+
+## Origin owner sharing follow-up execution (2026-10-16)
+
+After source checkpoint d311f70, the uncommitted Origin-owner changes were
+compiled and tested from the449-input freeze at
+`/home/bobby/.cache/suss-m4-work/origin-owner-sharing-checkpoint`. Runner:
+`python /home/bobby/.cache/suss-m4-work/run-origin-owner-sharing-checkpoint.py`.
+With CARGO_BUILD_JOBS=2 and the same owned target, compile0, ownership10/10 and
+all Origin/provenance17/17 passed. The new Origin-owner test covers retained
+immutable owner identity; these27 passes do not change d311f70's26-pass scope.
+Default bootstrap generation exited1 at226631..226818 with native-work fuel
+exhaustion. All449 inputs stayed unchanged. Constructor-callback, deferred
+factory and source-child Session stages were unexecuted. A separate same-binary
+trace failed at the same reported outer location (inner Form failure228215..228257);
+its binary and source hashes stayed unchanged. This is additional uncommitted
+source evidence, not a published bootstrap or acceptance result.
+
+Final-head API inspection for d311f70 found zero Actions runs/checks; there was
+no live CI job to monitor. The workflow trigger and commit message explain no
+missing-event cause. Historical failed e55 CI is not final-head verification.
+Raw API receipts remain in `/home/bobby/.cache/suss-m4-work/pr263-d311-final-head-ci`.
+
+
+## Origin and inferred-tag source publication check (2026-10-16)
+
+Archive `evidence/m4-origin-inference-source-checkpoint-2026-10-16.tar.gz`,
+SHA256 `4ea7b30b21d6f6aaf31a4dfdddf004b4d7999ae31aff09b7b9062f0843a8817f`, retains499 manifested payloads.
+SOURCE-SNAPSHOTS.json maps1797 paths from four attempts to exact
+content-addressed source blobs. Raw commands, initial failures, successful focused
+logs, unchanged-input freezes and the actual staged index entries are retained.
+
+The first inferred-tag attempt compiled and passed ownership10/provenance17,
+but its two new fixtures failed to parse: metadata was incorrectly attached to
+a numeric literal. Those raw errors and original source remain retained. The
+fixtures now annotate `(do 42)` with corresponding analyzed Do HIR, preserving
+all hint/nil/false and error/retry assertions. The isolated corrected snapshot
+passed43 focused tests; its older Graph snapshot is distinguished explicitly.
+
+The publication gate then overlaid the actual staged Rust bytes and HEAD
+bootstrap artifacts in `/home/bobby/.cache/suss-m4-work/frozen-compiler-inputs`.
+Pre-evidence index tree: `e621810fe6083ea5402ee443a0ae429c4fb3257c`.
+All450 input hashes match the staged candidate. With CARGO_BUILD_JOBS=2 and
+the owned analyzer-literal-key-target directory, commands were:
+
+```sh
+cargo test -p suss-compile --locked --lib --no-run
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::origin::form_metadata::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::source_tags::quoted_tag_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_collection_source_analysis --test portable_constructor_source_analysis -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+```
+
+Compile passed. Ownership10, provenance17, source-tags7 and collection/constructor
+source-analysis4+5 all passed:43 focused test executions. Bootstrap exited1 at
+226830..226850 with unchanged native-work allowance and no output/input changes.
+Constructor-callback, deferred-factory and source-child Session stages remain
+unexecuted, as do current-source Jank and the full workspace baseline. No native
+Session IRQ or source-certificate publication success follows from these tests.
+
+Shared Origin ownership removes actual immutable value copies. Inferred tags
+refer to an AST's retained tag when applicable; explicit metadata hints remain
+owned and nil/false distinctions are preserved. Factory-ledger projections and
+root-cache scaffolding compile but remain partial: the controller is inactive,
+source-edge-bound imports, target-reachable memo-domain validation, final
+callback revalidation/publication and eviction remain unwired. This is a partial
+draft checkpoint, not issue acceptance or readiness. Later primary worktree edits
+and four stale generated bootstrap files are excluded from the candidate.
