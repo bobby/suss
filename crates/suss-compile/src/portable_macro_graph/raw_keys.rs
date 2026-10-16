@@ -3,6 +3,8 @@ use std::cmp::Ordering;
 use suss_reader::forms::{Form, Kind};
 mod raw_heads;
 use raw_heads::RawHeads;
+mod canonical_entries;
+use canonical_entries::Entries;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct KeyId(pub(super) usize);
@@ -32,7 +34,8 @@ impl Plan {
 #[derive(Default)]
 pub(super) struct Interner {
     heads: RawHeads,
-    keys: Vec<Entry>,
+    keys: Entries,
+    entry_stats: EntryStats,
     profile_calls: u64,
     profile_work: u64,
     profile_comparison_work: u64,
@@ -45,6 +48,12 @@ pub(super) struct Interner {
 struct Entry {
     key: Vec<u8>,
     next: Option<usize>,
+}
+// Observational subtotals of accepted existing charges, not new budget work.
+#[derive(Default, Debug, Clone, Copy)]
+struct EntryStats {
+    allocation: u64, relocation: u64, directory_allocation: u64,
+    directory_relocation: u64, access: u64, staging: u64, publication: u64,
 }
 fn bytes<T>(count: usize) -> u64 {
     (count as u64).saturating_mul(std::mem::size_of::<T>() as u64)
@@ -205,6 +214,8 @@ impl Interner {
         if (self.profile_calls.is_multiple_of(128) || result.is_err())
             && std::env::var_os("SUSS_RAW_KEY_TRACE").is_some() {
             eprintln!("raw-key-profile calls={} entries={} intern={} comparison={} head_lookup={} head_insert={}", self.profile_calls, self.keys.len(), self.profile_work, self.profile_comparison_work, self.profile_head_lookup_work, self.profile_head_insert_work);
+            let st=&self.entry_stats;
+            eprintln!("raw-entry-storage calls={} entries={} capacity={} alloc={} reloc={} dir_alloc={} dir_reloc={} access={} staging={} publication={}",self.profile_calls,self.keys.len(),self.keys.capacity(),st.allocation,st.relocation,st.directory_allocation,st.directory_relocation,st.access,st.staging,st.publication);
         }
         result
     }
@@ -231,7 +242,8 @@ impl Interner {
         let mut tail = None;
         while let Some(index) = cursor {
             charge(2)?;
-            let entry = &self.keys[index];
+            self.entry_stats.access=self.entry_stats.access.saturating_add(2);
+            let entry = self.keys.get(index,charge,&mut self.entry_stats)?;
             if compare_bytes(&key, &entry.key, &mut |work| {
                 charge(work)?;
                 *comparison_work = comparison_work.saturating_add(work);
@@ -242,9 +254,13 @@ impl Interner {
             tail = Some(index);
             cursor = entry.next;
         }
-        reserve(&mut self.keys, 1, charge)?;
+        let prepared=self.keys.prepare(charge,&mut self.entry_stats)?;
         charge(3)?;
+        self.entry_stats.publication=self.entry_stats.publication.saturating_add(3);
         let index = self.keys.len();
+        let tail_location=if let Some(tail)=tail {
+            Some(self.keys.prepare_link(tail,charge,&mut self.entry_stats)?)
+        } else {None};
         // All fallible work precedes publication. A failed bucket insertion
         // can change capacity, but cannot consume an ID or publish an entry.
         if head.is_none() {
@@ -258,9 +274,9 @@ impl Interner {
         }
         #[cfg(test)]
         { self.key_bytes += key.len(); }
-        self.keys.push(Entry { key, next: None });
-        if let Some(tail) = tail {
-            self.keys[tail].next = Some(index);
+        self.keys.publish(prepared,Entry { key, next: None });
+        if let Some(location) = tail_location {
+            self.keys.link(location,index);
         }
         Ok(KeyId(index))
     }
@@ -879,4 +895,39 @@ mod tests {
         assert_eq!(values[99], None);
         assert_eq!(values[100], Some(42));
     }
+    #[test]
+    fn paged_entry_boundary_collision_publication_is_atomic_at_all_fuel_irq_cuts() {
+        fn primed()->Interner {
+            let mut table=Interner::default();
+            for i in 0..128usize {
+                let bucket=if i<4 {7} else {1000+i as u64};
+                assert_eq!(table.intern_bucket((i as u64).to_le_bytes().to_vec(),bucket,&mut |_|Ok::<_,Error>(()),&mut 0),Ok(KeyId(i)));
+            }
+            table
+        }
+        fn state(table:&mut Interner)->(Vec<(Vec<u8>,Option<usize>)>,Option<usize>,Option<usize>) {
+            (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),table.heads.get(7,&mut |_|Ok::<_,Error>(())).unwrap(),table.heads.get(2000,&mut |_|Ok::<_,Error>(())).unwrap())
+        }
+        let candidate=128u64.to_le_bytes().to_vec();
+        for bucket in [7,2000] {
+            let mut measured=primed();let mut work=0;let mut calls=0;
+            assert_eq!(measured.intern_bucket(candidate.clone(),bucket,&mut |n|{work+=n;calls+=1;Ok::<_,Error>(())},&mut 0),Ok(KeyId(128)));
+            for fuel in 0..work {
+                let mut table=primed();let before=state(&mut table);let mut remaining=fuel;
+                assert_eq!(table.intern_bucket(candidate.clone(),bucket,&mut |n|{remaining=remaining.checked_sub(n).ok_or(Error::Fuel)?;Ok(())},&mut 0),Err(Error::Fuel));
+                assert_eq!(state(&mut table),before);
+                assert_eq!(table.intern_bucket(candidate.clone(),bucket,&mut |_|Ok::<_,Error>(()),&mut 0),Ok(KeyId(128)));
+                assert_eq!(table.intern_bucket(candidate.clone(),bucket,&mut |_|Ok::<_,Error>(()),&mut 0),Ok(KeyId(128)));
+                assert_eq!(state(&mut table),state(&mut measured));
+            }
+            for stop in 1..=calls {
+                let mut table=primed();let before=state(&mut table);let mut call=0;
+                assert_eq!(table.intern_bucket(candidate.clone(),bucket,&mut |_|{call+=1;if call==stop {Err(Error::Cancel)} else {Ok(())}},&mut 0),Err(Error::Cancel));
+                assert_eq!(state(&mut table),before);
+                assert_eq!(table.intern_bucket(candidate.clone(),bucket,&mut |_|Ok::<_,Error>(()),&mut 0),Ok(KeyId(128)));
+                assert_eq!(state(&mut table),state(&mut measured));
+            }
+        }
+    }
+
 }
