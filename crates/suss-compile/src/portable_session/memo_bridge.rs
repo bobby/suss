@@ -118,11 +118,21 @@ impl Watch {
         Ok(same(&store, value, &expected)? &&
             bits(store.as_context_mut(), value, &self.number_type)? == Some(receipt.bits))
     }
-    pub(super) fn canonical(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
+    pub(super) fn canonical(&self, store: StoreContextMut<'_, ()>, runtime: Instance,
         authority: &CanonicalMethods, irq: &AtomicBool) -> wasmtime::Result<bool> {
+        self.method_valid(store, runtime, authority, irq, true)
+    }
+    fn method_valid(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
+        authority: &CanonicalMethods, irq: &AtomicBool, require_initial: bool,
+    ) -> wasmtime::Result<bool> {
         let descriptor = Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)));
-        match authority.matches_in_context(InspectionContext { store, identity: self.identity,
-            runtime, interrupt: irq }, self.owner, descriptor) {
+        let context = InspectionContext { store, identity: self.identity, runtime, interrupt: irq };
+        let result = if require_initial {
+            authority.matches_in_context(context, self.owner, descriptor)
+        } else {
+            authority.method_layout_in_context(context, self.owner, descriptor)
+        };
+        match result {
             Ok(valid) => Ok(valid),
             // A malformed protocol table is failed inspection, not an extra
             // guest setter exception. Fuel/cancellation/host errors still escape.
@@ -146,7 +156,9 @@ impl Watch {
         let irq = session.host_work_interrupt();
         let runtime = session.runtime;
         let mut scope = RootScope::new(&mut session.store);
-        if !self.canonical(scope.as_context_mut(), runtime, &authority, &irq)? { return Ok(false) }
+        // Authenticate the existing transition independently of a later valid
+        // method replacement. New receipts still require canonical write sites.
+        if !self.method_valid(scope.as_context_mut(), runtime, &authority, &irq, false)? { return Ok(false) }
         let receiver = Val::AnyRef(Some(self.receiver.value.to_rooted(&mut scope)));
         let Some(current) = self.current(scope.as_context_mut(), &receiver, &irq)? else { return Ok(false) };
         Ok(self.authenticated(scope.as_context_mut(), &current, &irq)?)
@@ -511,7 +523,7 @@ mod receipt_tests {
         }
     }
     #[test]
-    fn memo_receipts_reject_generic_writes_and_replaced_hash_methods() {
+    fn memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes() {
         let mut session = Session::new_macro().unwrap();
         let (forged, forged_inputs) = registered_list(&mut session);
         write(&mut session, &forged);
@@ -523,7 +535,36 @@ mod receipt_tests {
         session.eval("(extend-type List IHash (-hash [_] 91))").unwrap();
         session.enter_namespace("user").unwrap();
         session.collect().unwrap();
+        assert!(inputs.matches(&mut session, &warmed).unwrap());
+        let before = session.data_fields(&warmed).unwrap().remove(4);
+        let function = session.eval("(fn [x] (hash x))").unwrap();
+        let result = session.invoke(&function, &[&warmed]).unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &result).unwrap(), "91");
+        let after = session.data_fields(&warmed).unwrap().remove(4);
+        assert!(session.inspect(&after, |mut store, value| {
+            let expected = before.value.to_rooted(&mut store);
+            Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &expected)
+        }).unwrap(), "replacement dispatch must preserve the authenticated memo reference");
+        assert!(inputs.matches(&mut session, &warmed).unwrap());
+        session.with_operation_budget(|session| {
+            session.store.set_fuel(0).unwrap();
+            assert!(matches!(inputs.matches(session, &warmed), Err(SessionError::Trap(ref error))
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+            Ok(())
+        }).unwrap();
+        assert!(inputs.matches(&mut session, &warmed).unwrap());
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            assert!(inputs.matches(session, &warmed).unwrap_err().is_interrupt());
+            Ok(())
+        }).unwrap();
+        assert!(inputs.matches(&mut session, &warmed).unwrap());
+        write(&mut session, &warmed);
         assert!(!inputs.matches(&mut session, &warmed).unwrap());
+        let (cold, cold_inputs) = registered_list(&mut session);
+        hash(&mut session, &cold);
+        assert!(cold_inputs.memo_watch().unwrap().receipt.lock().unwrap().is_none(),
+            "replacement cannot mint canonical receipts");
     }
     #[test]
     fn memo_receipts_reject_numeric_replacement_and_release_dead_watch_roots() {
@@ -570,6 +611,85 @@ mod receipt_tests {
         session.reset().unwrap();
         assert!(inputs.matches(&mut session, &value).is_err());
     }
+
+#[test]
+fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
+    for damage in ["missing", "nonclosure", "odd", "wrong-type"] {
+        let mut session = Session::new_macro().unwrap();
+        let (value, inputs) = registered_list(&mut session);
+        hash(&mut session, &value);
+        let watch = inputs.memo_watch().unwrap();
+        assert!(registry_lock(&watch.receipt).is_some());
+        assert!(inputs.matches(&mut session, &value).unwrap());
+        session.eval("(extend-type List IHash (-hash [_] 91))").unwrap();
+        session.collect().unwrap();
+        assert!(watch.matches(&mut session).unwrap(), "past receipt / {damage}");
+        assert!(inputs.matches(&mut session, &value).unwrap());
+        // The replacement is acceptable ONLY for an existing receipt. Minting
+        // checks continue to require the actual initial canonical installation.
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        session.with_operation_budget(|session| {
+            let mut scope = RootScope::new(&mut session.store);
+            assert!(!watch.canonical(scope.as_context_mut(), runtime, &authority, &irq)?);
+            Ok(())
+        }).unwrap();
+
+        let handles = session.handles.clone();
+        let identity = session.identity;
+        // Retain the replacement's real table for restoration across GC.
+        let original_table = session.inspect(&watch.descriptor, |store, descriptor| {
+            let mut store = RootScope::new(store);
+            let object = descriptor.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let table = object.field(&mut store, 2)?;
+            own(&mut store, table, identity, &handles)
+                .map_err(|e| wasmtime::Error::msg(e.to_string()))
+        }).unwrap();
+        let key_name = format!("key-{}", "suss.core/IHash/-hash/1".as_bytes()
+            .iter().map(|b| format!("{b:02x}")).collect::<String>());
+        let key = super::super::canonical_methods::binding(
+            &mut session, "suss.internal.protocol-keys", &key_name, &handles).unwrap();
+        let nonclosure = session.eval("991").unwrap();
+        session.inspect(&watch.descriptor, |mut store, descriptor| {
+            let object = descriptor.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let bad = nonclosure.value.to_rooted(&mut store);
+            if damage == "wrong-type" {
+                object.set_field(&mut store, 2, Val::AnyRef(Some(bad)))?;
+                return Ok(());
+            }
+            let old = object.field(&mut store, 2)?.unwrap_anyref().unwrap()
+                .as_array(&store)?.unwrap();
+            let ty = old.ty(&store)?;
+            let allocator = wasmtime::ArrayRefPre::new(&mut store, ty);
+            let count = match damage { "missing" => 0, "odd" => 1, _ => 2 };
+            let table = wasmtime::ArrayRef::new(&mut store, &allocator,
+                &Val::AnyRef(None), count)?;
+            if count > 0 {
+                let key = key.value.to_rooted(&mut store);
+                table.set(&mut store, 0, Val::AnyRef(Some(key)))?;
+            }
+            if count > 1 { table.set(&mut store, 1, Val::AnyRef(Some(bad)))?; }
+            object.set_field(&mut store, 2, Val::AnyRef(Some(table.to_anyref())))?;
+            Ok(())
+        }).unwrap();
+        session.collect().unwrap();
+        // Require false, not just is_err(): malformed lookup language errors
+        // must be converted by Watch::method_valid into failed inspection.
+        assert!(!watch.matches(&mut session).unwrap(), "{damage}");
+        assert!(!inputs.matches(&mut session, &value).unwrap(), "{damage}");
+        assert!(registry_lock(&watch.receipt).is_some(), "no receipt replacement");
+        session.inspect(&watch.descriptor, |mut store, descriptor| {
+            let object = descriptor.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let table = original_table.value.to_rooted(&mut store);
+            object.set_field(&mut store, 2, Val::AnyRef(Some(table)))
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(watch.matches(&mut session).unwrap(), "restored / {damage}");
+        assert!(inputs.matches(&mut session, &value).unwrap());
+    }
+}
+
 
     #[test]
     fn memo_receipts_store_before_fuel_failure_does_not_publish_a_receipt() {

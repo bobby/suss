@@ -27228,3 +27228,15 @@ The production cohort ran focused compiler, cumulative fuel, identity, declarati
 Warm-before command: `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel source_metadata_keeps_canonically_warmed_identity_after_hash_replacement -- --test-threads=2 --nocapture` (task target directory and two Cargo jobs).
 
 Additional raw failures and current regression source: `docs/roadmap/evidence/m4-warm-before-checkpoint-2026-10-15.tar.gz`, SHA-256 `c46ae87d28f912eefdc474c06ccc45a09b4553a502018c78bbd22528347d7ff6`. Full production cohort: `m4-raw-heads-public-verified-2026-10-15.tar.gz`, SHA-256 `dd6c0bec48525c9cb1f58260e5cd6572b5d4e54595e7774803f5da955c1214cf`. Next unblocked work is the authenticated past-memo identity regression, followed by remaining fuel regressions and the required full baseline.
+
+### Authenticated past memo and live method replacement (2026-10-16)
+
+Existing authenticated memo validation now checks the live method layout without requiring the original implementation identity. New receipt minting and write-domain checks still require the initial canonical implementation. Descriptor/key/table/schema and exact memo reference/bits checks remain. No replacement method is invoked during inspection.
+
+Focused commands: `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`; `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture`; `cargo test -p suss-cli --locked --test compiled_macro_cross_invocation_identity_probe -- --test-threads=2`. Task target directory and two Cargo jobs used.
+
+Native receipts: 7 passed. Cumulative target: 9 passed, 1 retained cold-custom-hash identity failure. Warm-before replacement now passes both caller phases and both replacement variants; forgery, poison, fuel, interruption and malformed protocol recovery checks pass. Unchanged cross-invocation identity result: {'name': 'identity', 'command': ['cargo', 'test', '-p', 'suss-cli', '--locked', '--test', 'compiled_macro_cross_invocation_identity_probe', '--', '--test-threads=2'], 'exit': 0, 'seconds': 106.64803385734558} . Source hashes unchanged across focused execution.
+
+Regenerated bootstrap with `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`. Initial manifest mismatch and test-setup E0308 are preserved separately from semantic execution. Independent delta review found no concrete blockers in the inspected paths; final committed-head review and full workspace baseline/final-head CI remain required.
+
+Raw logs, exact patch against `1c7af16b0b8ece0cfdb326b4d5735ae3cc36c242`, reproduction and hash manifest: `docs/roadmap/evidence/m4-past-memo-method-replacement-2026-10-16.tar.gz`, SHA-256 `865f70c393daa8cab3252de9b45130b6c805360efbef586beef2cc10f53521cf`. No acceptance or merge readiness is claimed.

@@ -465,10 +465,20 @@ impl CanonicalMethods {
 
     /// No budget scope/refill: host callbacks debit their active caller Store.
     pub(super) fn matches_in_context(
-        &self,
-        context: InspectionContext<'_>,
-        owner: &str,
-        descriptor: Val,
+        &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
+    ) -> Result<bool> {
+        self.inspect_method_in_context(context, owner, descriptor, true)
+    }
+    // A past authenticated memo does not require today's method to be the one
+    // which computed it. Keep the same checked live table/key/schema inspection.
+    pub(super) fn method_layout_in_context(
+        &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
+    ) -> Result<bool> {
+        self.inspect_method_in_context(context, owner, descriptor, false)
+    }
+    fn inspect_method_in_context(
+        &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
+        require_initial: bool,
     ) -> Result<bool> {
         if context.identity != self.identity {
             return Err(SessionError::ForeignValue);
@@ -514,16 +524,26 @@ impl CanonicalMethods {
         Session::consume_host_work(scope.as_context_mut(), 1, context.interrupt)?;
         let current = current.value.to_rooted(&mut scope);
         let expected = method.implementation.value.to_rooted(&mut scope);
-        if !Rooted::<AnyRef>::ref_eq(&scope, &current, &expected)? {
-            return Ok(false);
-        }
-        if !method.closure.matches_in_context(
-            scope.as_context_mut(),
-            Val::AnyRef(Some(current)),
-            context.identity,
-            context.interrupt,
-        )? {
-            return Ok(false);
+        if require_initial {
+            if !Rooted::<AnyRef>::ref_eq(&scope, &current, &expected)? {
+                return Ok(false);
+            }
+            if !method.closure.matches_in_context(
+                scope.as_context_mut(),
+                Val::AnyRef(Some(current)),
+                context.identity,
+                context.interrupt,
+            )? {
+                return Ok(false);
+            }
+        } else {
+            Session::consume_host_work(scope.as_context_mut(), 4, context.interrupt)?;
+            let Some(current) = current.as_struct(&scope)? else { return Ok(false); };
+            let expected = expected.as_struct(&scope)?
+                .ok_or_else(|| invalid("Initial hash implementation requires closure storage"))?;
+            if !wasmtime::StructType::eq(&current.ty(&scope)?, &expected.ty(&scope)?) {
+                return Ok(false);
+            }
         }
         Session::consume_host_work(scope.as_context_mut(), 12, context.interrupt)?;
         let fields = schema_value(&mut scope, descriptor, method.slot)?;
