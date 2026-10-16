@@ -615,6 +615,9 @@ impl Session {
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let memo_ledger = memo_bridge::Ledger::new(identity);
         memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone())?;
+        if let Some(observer) = &dispatch_observer {
+            memo_bridge::install_scoped(&mut store, runtime, interrupt.clone(), memo_ledger.clone(), observer.clone())?;
+        }
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
         let bindings = portable::core_bindings::compile(phase).map_err(SessionError::Compile)?;
@@ -1272,7 +1275,7 @@ impl Session {
                 if import.module() == "suss.runtime" && matches!(import.name(), "prototype-origin-begin" | "prototype-origin-seal") {
                     return Err(SessionError::Host(wasmtime::Error::msg("Prototype origin lifecycle is host-only")));
                 }
-                if import.module() == "suss.runtime" && import.name() == "macro-dispatch-observer-install" {
+                if import.module() == "suss.runtime" && matches!(import.name(), "macro-dispatch-observer-install" | "macro-memo-store-install" | "macro-memo-array-store" | "macro-memo-field-set") {
                     return Err(SessionError::Host(wasmtime::Error::msg("Dispatch observer installation is host-only")));
                 }
                 if import.module() == portable::bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE

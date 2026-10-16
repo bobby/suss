@@ -139,6 +139,7 @@ impl WriteDomain {
         methods: &CanonicalMethods,
         prototype: &Authority,
         staged: Option<(&Watch, &Receipt)>,
+        layout_descriptor: Option<&Val>,
     ) -> Result<bool> {
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
@@ -164,7 +165,7 @@ impl WriteDomain {
         };
         let mut canonical = true;
         for watch in &watches {
-            canonical &= watch.canonical(store.as_context_mut(), runtime, methods, irq)?;
+            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, layout_descriptor)?;
         }
         let classes = methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),

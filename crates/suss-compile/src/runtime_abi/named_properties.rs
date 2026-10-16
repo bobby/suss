@@ -942,7 +942,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         array(&mut body, payload);
         body.push(LocalGet(slot));
         if writing {
-            body.extend([LocalGet(2), ArraySet(ARGS), LocalGet(2), Return]);
+            body.push(LocalGet(2));
+            dispatch_observer::store(b, &mut body);
+            body.extend([LocalGet(2), Return]);
         } else {
             body.extend([ArrayGet(ARGS), Return]);
         }

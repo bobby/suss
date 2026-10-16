@@ -253,7 +253,13 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {
-            body.extend([LocalGet(2), ArraySet(ARGS)]);
+            body.push(LocalGet(2));
+            if b.dispatch_observer.is_some() {
+                let mut raw = body.clone();
+                raw.push(ArraySet(ARGS));
+                b.function_with_locals("macro-memo-field-set", &[VALUE, ValType::I32, VALUE], &[], &[(1, VALUE)], &raw);
+            }
+            dispatch_observer::store(b, &mut body);
         } else {
             body.push(ArrayGet(ARGS));
         }

@@ -81,6 +81,15 @@ impl Drop for Scope {
     }
 }
 impl Observer {
+    pub(super) fn has_scope(&self) -> bool {
+        registry_lock(&self.state).nearest_ihash().is_some()
+    }
+    // Returned root belongs to the caller's active Wasmtime rooting scope.
+    pub(super) fn receiver(&self, mut store: wasmtime::StoreContextMut<'_, ()>) -> Option<Val> {
+        registry_lock(&self.state).nearest_ihash().map(|frame|
+            Val::AnyRef(Some(frame._receiver.value.to_rooted(&mut store))))
+    }
+
     pub(super) fn seal(&self, authority: Arc<CanonicalMethods>) -> Result<(), SessionError> {
         let mut state = registry_lock(&self.state);
         if state.authority.is_some() {

@@ -141,6 +141,14 @@ impl Watch {
             Err(other) => Err(wasmtime::Error::msg(other.to_string())),
         }
     }
+    pub(super) fn domain_method(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
+        authority: &CanonicalMethods, irq: &AtomicBool, layout_descriptor: Option<&Val>,
+    ) -> wasmtime::Result<bool> {
+        Session::consume_host_work(store.as_context_mut(), 1, irq)?;
+        let descriptor = Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)));
+        let relaxed = if let Some(active) = layout_descriptor { same(&store, &descriptor, active)? } else { false };
+        self.method_valid(store, runtime, authority, irq, !relaxed)
+    }
     pub(super) fn slot(&self) -> usize { self.slot }
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool, SessionError> {
         session.check(&self.receiver)?;
@@ -238,7 +246,8 @@ pub(super) fn install(
     store: &mut Store<()>, linker: &mut Linker<()>, runtime: Instance,
     interrupt: Arc<AtomicBool>, ledger: Arc<Ledger>,
 ) -> wasmtime::Result<()> {
-    let setter = runtime.get_func(&mut *store, "object-field-set")
+    let setter = runtime.get_func(&mut *store, "macro-memo-field-set")
+        .or_else(|| runtime.get_func(&mut *store, "object-field-set"))
         .ok_or_else(|| wasmtime::Error::msg("Missing canonical memo setter"))?;
     let ty = FuncType::new(store.engine(), [ValType::Ref(RefType::EQREF), ValType::I32,
         ValType::Ref(RefType::EQREF)], []);
@@ -831,8 +840,100 @@ impl Watch {
  fn domain_matches(&self,store:StoreContextMut<'_,()>,runtime:Instance,authority:&CanonicalMethods,prototype:&super::prototype_origin::Authority,irq:&AtomicBool,staged:Option<&Receipt>)->wasmtime::Result<bool> {
   let domain=registry_lock(&self.source_domain).as_ref().and_then(Weak::upgrade);
   let Some(domain)=domain else{return Ok(false)};
-  match domain.matches(store,runtime,self.identity,irq,authority,prototype,staged.map(|receipt|(self,receipt))) {
+  match domain.matches(store,runtime,self.identity,irq,authority,prototype,staged.map(|receipt|(self,receipt)),None) {
    Ok(valid)=>Ok(valid),Err(SessionError::Language(_))=>Ok(false),Err(SessionError::Host(error)|SessionError::Trap(error))=>Err(error),Err(error)=>Err(wasmtime::Error::msg(error.to_string()))
   }
  }
 }
+
+// Actual physical nominal stores in a recognized IHash dynamic extent. No
+// candidate is staged without exact receiver/storage/slot and recorded facts.
+pub(super) fn install_scoped(
+    store: &mut Store<()>, runtime: Instance, interrupt: Arc<AtomicBool>,
+    ledger: Arc<Ledger>, observer: Arc<super::dispatch_observer::Observer>,
+) -> wasmtime::Result<()> {
+    let raw_store = runtime.get_func(&mut *store, "macro-memo-array-store").unwrap();
+    let installer = runtime.get_func(&mut *store, "macro-memo-store-install").unwrap();
+    let parameter = installer.ty(&*store).params().next().unwrap();
+    let wasmtime::HeapType::ConcreteFunc(ty) = parameter.unwrap_ref().heap_type() else {
+        return Err(wasmtime::Error::msg("Invalid physical store callback type"));
+    };
+    let hook = Func::new(&mut *store, ty.clone(), move |mut caller, arguments, _| {
+        Session::consume_host_work(caller.as_context_mut(), 4, &interrupt)?;
+        let mut scope = RootScope::new(&mut caller);
+        let mut candidates = Vec::new();
+        if observer.has_scope() {
+            let (authority, prototype, count) = {
+                let entries = registry_lock(&ledger.entries);
+                (entries.authority.clone(), entries.prototype.clone(), entries.watches.len())
+            };
+            if let (Some(authority), Some(prototype)) = (authority, prototype) {
+                for index in 0..count {
+                    Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                    let watch = { registry_lock(&ledger.entries).watches[index].upgrade() };
+                    let Some(watch) = watch else { continue };
+                    if !watch.eligible_transition || watch.identity != ledger.identity { continue }
+                    if !watch.is_slot(scope.as_context_mut(), &arguments[0], arguments[1].unwrap_i32() as u32, &interrupt)? { continue }
+                    // Do not materialize a receiver root before a physical slot matches.
+                    let Some(receiver) = observer.receiver(scope.as_context_mut()) else { continue };
+                    let Some(current) = watch.current(scope.as_context_mut(), &receiver, &interrupt)? else { continue };
+                    if !(nil(&scope.as_context_mut(), &current)? || watch.authenticated(scope.as_context_mut(), &current, &interrupt)?) { continue }
+                    let Some(bits) = bits(scope.as_context_mut(), &arguments[2], &watch.number_type)? else { continue };
+                    // A mere watch or numeric store is not source authority.
+                    let domain = registry_lock(&watch.source_domain).as_ref().and_then(Weak::upgrade);
+                    let Some(domain) = domain else { continue };
+                    let descriptor = Val::AnyRef(Some(watch.descriptor.value.to_rooted(&mut scope)));
+                    if !watch.domain_method(scope.as_context_mut(), runtime, &authority, &interrupt, Some(&descriptor))? { continue }
+                    if !scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, None, &descriptor)? { continue }
+                    reserve_candidate(scope.as_context_mut(), &mut candidates, &interrupt)?;
+                    Session::consume_host_work(scope.as_context_mut(), std::mem::size_of::<Receipt>() as u64 + 1, &interrupt)?;
+                    let value = own(&mut scope, arguments[2].clone(), ledger.identity, &ledger.handles)
+                        .map_err(scoped_error)?;
+                    candidates.push((watch, Receipt { value, bits, source_safe: true }, false));
+                }
+                // Exact original instruction: no recursion, no exception translation.
+                raw_store.call(&mut scope, arguments, &mut [])?;
+                for (watch, receipt, valid) in &mut candidates {
+                    Session::consume_host_work(scope.as_context_mut(), 8, &interrupt)?;
+                    let Some(receiver) = observer.receiver(scope.as_context_mut()) else { continue };
+                    let Some(current) = watch.current(scope.as_context_mut(), &receiver, &interrupt)? else { continue };
+                    if !watch.matches_receipt(scope.as_context_mut(), &current, receipt, &interrupt)? { continue }
+                    let domain = registry_lock(&watch.source_domain).as_ref().and_then(Weak::upgrade);
+                    let Some(domain) = domain else { continue };
+                    let descriptor = Val::AnyRef(Some(watch.descriptor.value.to_rooted(&mut scope)));
+                    *valid = watch.domain_method(scope.as_context_mut(), runtime, &authority, &interrupt, Some(&descriptor))?
+                        && scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, Some((watch, receipt)), &descriptor)?;
+                }
+                // No fallible work after the first publication. No outside write
+                // clears an old receipt: exact reference/domain checks decide reuse.
+                for (watch, receipt, valid) in candidates {
+                    if valid { *registry_lock(&watch.receipt) = Some(receipt); }
+                }
+                return Ok(());
+            }
+        }
+        raw_store.call(&mut scope, arguments, &mut [])
+    });
+    installer.call(store, &[Val::FuncRef(Some(hook))], &mut [])
+}
+fn scoped_error(error: SessionError) -> wasmtime::Error {
+    match error {
+        SessionError::Host(error) | SessionError::Trap(error) => error,
+        other => wasmtime::Error::msg(other.to_string()),
+    }
+}
+fn scoped_domain(
+    domain: &super::write_domain::WriteDomain, store: StoreContextMut<'_, ()>,
+    runtime: Instance, ledger: &Ledger, authority: &CanonicalMethods,
+    prototype: &super::prototype_origin::Authority, irq: &AtomicBool,
+    staged: Option<(&Watch, &Receipt)>, descriptor: &Val,
+) -> wasmtime::Result<bool> {
+    match domain.matches(store, runtime, ledger.identity, irq, authority, prototype, staged, Some(descriptor)) {
+        Ok(valid) => Ok(valid),
+        Err(SessionError::Language(_)) => Ok(false),
+        Err(error) => Err(scoped_error(error)),
+    }
+}
+
+#[cfg(test)]
+mod scoped_tests;

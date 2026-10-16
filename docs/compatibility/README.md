@@ -1189,3 +1189,26 @@ overrides that receiver until return, exception or fuel trap. These scopes
 grant no memo-write authorization and publish no receipts. Physical store
 observation and independent write-time source-domain authentication remain
 necessary for cold custom-IHash metadata identity (#257).
+
+## Scoped Macro memo stores (2026-10-16)
+
+A bounded source-fact witness now covers originally-nil nominal memo stores in
+an actual IHash dispatch scope. Physical field/named stores match the nearest
+actual receiver, captured storage and slot, with full source-domain proof before
+and after the store. The active exact descriptor permits a valid live method
+layout (including same-descriptor siblings); other descriptors retain canonical
+method obligations. Generic outside-scope stores do not mint or erase receipts.
+Existing receipt validation still requires the exact authenticated Number
+reference/bits and healthy source facts. Canonical bootstrap writes keep their
+independent checked setter and publication policy.
+
+Focused execution passes ten new native regressions, including nested protocol
+callbacks, original thrown-object identity, forced GC, source poison/restore and
+post-store fuel failure. The existing public compiled_macro_cumulative_fuel
+selection passes10/10, including cold Map identity that failed on observer-only
+3485718. This does not establish all #257 criteria, full workspace results or
+final-head CI. Original-nonnil Symbol/Keyword memo transitions remain unsupported
+by this new path. Pinned CLJS cold leaves start with nil, while the native bridge
+currently precomputes their memo; that possible eager-warming semantic gap needs
+matched value/effect tests before any receipt-only extension. No unsupported
+nominal aset behavior was added. See the scoped-store handoff and evidence.
