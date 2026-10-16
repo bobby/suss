@@ -241,7 +241,7 @@ fn captures_use_lexical_identity_and_retain_parameter_metadata() {
     use portable::hir::Expression;
     let source = "(let [unused 1 x 2] (fn [^:argument a] (fn [] (if a x 3))))";
     let hir = portable::analyze(source).unwrap();
-    let Expression::Do(top) = hir.kind else {
+    let Expression::Do(top) = &hir.kind else {
         panic!()
     };
     let Expression::Let { bindings, body } = &top[0].kind else {

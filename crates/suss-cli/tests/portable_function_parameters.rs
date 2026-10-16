@@ -129,7 +129,7 @@ fn destructured_callable_sole_host_handle_retains_default_captures_after_gc() {
             session.collect().unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-            let suss_reader::forms::Kind::Vector(items) = decoded.kind else {
+            let suss_reader::forms::Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("source vector result")
             };
             assert_eq!(items.len(), 3);

@@ -110,7 +110,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     body.push(LocalSet(2));
     guard(&mut body, 2, ARGS);
     array(&mut body, 2);
-    body.push(ArrayLen);
+    body.extend([ArrayLen, LocalTee(10)]);
     array(&mut body, 1);
     body.extend([ArrayLen, I32Ne, If(BlockType::Empty)]);
     error(&mut body);
@@ -119,27 +119,27 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     // Equal source-munged field names receive the last argument, as in the
     // pinned JS constructor's duplicate parameter/assignment spelling.
     copy_array(&mut body, 1, 3);
-    body.extend([I32Const(0), LocalSet(4), Block(BlockType::Empty), Loop(BlockType::Empty)]);
+    // The schema and STRING lengths cannot change within this callback-free
+    // normalization. Read them once, but keep every field/unit load live on
+    // each object construction; descriptor schemas are externally mutable.
+    body.extend([I32Const(0), LocalSet(4), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(10), LocalGet(4), I32LeU, BrIf(1)]);
     array(&mut body, 2);
-    body.extend([ArrayLen, LocalGet(4), I32LeU, BrIf(1)]);
+    body.extend([LocalGet(4), ArrayGet(ARGS), LocalSet(6),
+        LocalGet(6), RefTestNonNull(HeapType::Concrete(STRING)), If(BlockType::Empty),
+        LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, LocalSet(11),
+        LocalGet(4), I32Const(1), I32Add, LocalSet(5),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(10), LocalGet(5), I32LeU, BrIf(1)]);
     array(&mut body, 2);
-    body.extend([LocalGet(4), ArrayGet(ARGS), LocalSet(6)]);
-    body.extend([LocalGet(4), I32Const(1), I32Add, LocalSet(5),
-        Block(BlockType::Empty), Loop(BlockType::Empty)]);
-    array(&mut body, 2);
-    body.extend([ArrayLen, LocalGet(5), I32LeU, BrIf(1)]);
-    array(&mut body, 2);
-    body.extend([LocalGet(5), ArrayGet(ARGS), LocalSet(7)]);
-    body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(STRING)),
-        LocalGet(7), RefTestNonNull(HeapType::Concrete(STRING)), I32And,
-        If(BlockType::Empty)]);
-    body.extend([LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen,
+    body.extend([LocalGet(5), ArrayGet(ARGS), LocalSet(7),
+        LocalGet(7), RefTestNonNull(HeapType::Concrete(STRING)), If(BlockType::Empty),
+        LocalGet(11),
         LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, I32Eq,
         LocalSet(9), I32Const(0), LocalSet(8),
         Block(BlockType::Empty), Loop(BlockType::Empty),
         LocalGet(9), I32Eqz, BrIf(1),
-        LocalGet(8), LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen,
-        I32GeU, BrIf(1),
+        LocalGet(8), LocalGet(11), I32GeU, BrIf(1),
         LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
         LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
         I32Eq, LocalSet(9), LocalGet(8), I32Const(1), I32Add, LocalSet(8), Br(0), End, End,
@@ -148,7 +148,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     body.push(LocalGet(4));
     array(&mut body, 1);
     body.extend([LocalGet(5), ArrayGet(ARGS), ArraySet(ARGS), End, End,
-        LocalGet(5), I32Const(1), I32Add, LocalSet(5), Br(0), End, End,
+        LocalGet(5), I32Const(1), I32Add, LocalSet(5), Br(0), End, End, End,
         LocalGet(4), I32Const(1), I32Add, LocalSet(4), Br(0), End, End]);
     body.extend([
         LocalGet(0),
@@ -169,7 +169,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         "object-new",
         &[VALUE, VALUE],
         &[VALUE],
-        &[(2, VALUE), (2, ValType::I32), (2, VALUE), (2, ValType::I32)],
+        &[(2, VALUE), (2, ValType::I32), (2, VALUE), (4, ValType::I32)],
         &body,
     );
 
@@ -253,7 +253,13 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {
-            body.extend([LocalGet(2), ArraySet(ARGS)]);
+            body.push(LocalGet(2));
+            if b.dispatch_observer.is_some() {
+                let mut raw = body.clone();
+                raw.push(ArraySet(ARGS));
+                b.function_with_locals("macro-memo-field-set", &[VALUE, ValType::I32, VALUE], &[], &[(1, VALUE)], &raw);
+            }
+            dispatch_observer::store(b, &mut body);
         } else {
             body.push(ArrayGet(ARGS));
         }
@@ -283,6 +289,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let table = index + 1;
         let fresh = index + 2;
         let length = table + if writing { 2 } else { 1 };
+        let typed_table = length + 1;
         let mut body = vec![];
         guard(&mut body, 0, DESCRIPTOR);
         guard(&mut body, 1, DESCRIPTOR);
@@ -311,25 +318,47 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         get(&mut body, 0, DESCRIPTOR, 2);
         body.push(LocalSet(table));
         guard(&mut body, table, ARGS);
+        // Retain the checked array in a typed local for this call only. No
+        // callback occurs during lookup; later calls still load the live table.
+        body.extend([LocalGet(table), RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(typed_table)]);
         // Reject malformed odd-length tables before pair indexing.
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([ArrayLen, LocalTee(length), I32Const(1), I32And, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
         if !writing {
-            // Check the first four pairs in order without loop transfers. This
-            // preserves first-match semantics, including duplicate-key tables.
-            for offset in [0, 2, 4, 6] {
+            fn pair(body: &mut Vec<Instruction<'static>>, table: u32, key: u32, offset: i32) {
+                body.extend([LocalGet(table), I32Const(offset), ArrayGet(ARGS),
+                    LocalGet(key), RefEq, If(BlockType::Empty), LocalGet(table),
+                    I32Const(offset + 1), ArrayGet(ARGS), Return, End]);
+            }
+            fn exhausted(body: &mut Vec<Instruction<'static>>, length: u32, offset: i32) {
                 body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
                     I32Const(0), RefI31, Return, End]);
-                array(&mut body, table);
-                body.extend([I32Const(offset), ArrayGet(ARGS), LocalGet(1), RefEq, If(BlockType::Empty)]);
-                array(&mut body, table);
-                body.extend([I32Const(offset + 1), ArrayGet(ARGS), Return, End]);
+            }
+            // Preserve the original short-table/early-hit path exactly. Later
+            // complete groups share bounds checks; partial groups still check
+            // each remaining pair in order, without a variable-index loop.
+            for offset in (0..8).step_by(2) {
+                exhausted(&mut body, length, offset);
+                pair(&mut body, typed_table, 1, offset);
+            }
+            for group in (8..32).step_by(8) {
+                exhausted(&mut body, length, group);
+                body.extend([LocalGet(length), I32Const(group + 8), I32LtU, If(BlockType::Empty)]);
+                for offset in (group..group + 8).step_by(2) {
+                    if offset != group { exhausted(&mut body, length, offset); }
+                    pair(&mut body, typed_table, 1, offset);
+                }
+                body.extend([I32Const(0), RefI31, Return, Else]);
+                for offset in (group..group + 8).step_by(2) {
+                    pair(&mut body, typed_table, 1, offset);
+                }
+                body.push(End);
             }
         }
         body.extend([
-            I32Const(if writing { 0 } else { 8 }),
+            I32Const(if writing { 0 } else { 32 }),
             LocalSet(index),
             Block(BlockType::Empty),
             Loop(BlockType::Empty),
@@ -338,7 +367,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         // No callback occurs during this table walk. Its GC array length is
         // immutable even when an existing slot is replaced, so read it once.
         body.extend([LocalGet(length), I32GeU, BrIf(1)]);
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([
             LocalGet(index),
             ArrayGet(ARGS),
@@ -346,7 +375,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             RefEq,
             If(BlockType::Empty),
         ]);
-        array(&mut body, table);
+        body.push(LocalGet(typed_table));
         body.extend([LocalGet(index), I32Const(1), I32Add]);
         if writing {
             body.extend([LocalGet(2), ArraySet(ARGS), Return]);
@@ -381,7 +410,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             ]);
             array(&mut body, fresh);
             body.push(I32Const(0));
-            array(&mut body, table);
+            body.push(LocalGet(typed_table));
             body.push(I32Const(0));
             body.extend([
                 LocalGet(length),
@@ -422,7 +451,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                 &[VALUE, VALUE]
             },
             if writing { &[] } else { &[VALUE] },
-            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE), (1, ValType::I32)],
+            &[(1, ValType::I32), (if writing { 2 } else { 1 }, VALUE), (1, ValType::I32), (1, reference(ARGS))],
             &body,
         );
         if !writing {
@@ -447,7 +476,9 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         LocalSet(2),
     ];
     guard(&mut dispatch_body, 2, 4);
-    dispatch_body.extend([LocalGet(2), LocalGet(1), Call(generic_invoke)]);
+    dispatch_body.extend([LocalGet(2), LocalGet(1)]);
+    dispatch_observer::emit(b, &mut dispatch_body, 0,
+        &[LocalGet(1), I32Const(0), ArrayGet(ARGS)], 2, generic_invoke);
     let dispatcher = invoke_body_with_locals(b, &[(1, VALUE)], &dispatch_body);
     for (name, callback, minimum) in [
         ("constructor-new", constructor, 0),
@@ -685,12 +716,23 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             GlobalGet(SENTINEL_GLOBAL),
         ],
     );
+    // The compiler bridge may use a validated descriptor plan instead of
+    // allocating a closure. Share the exact padding/copying/normalization body.
+    b.function_with_locals(
+        "nominal-source-object-new", &[VALUE, reference(ARGS)], &[VALUE],
+        &[(2, ValType::I32), (1, VALUE)], &body,
+    );
     let source_constructor = invoke_body_with_locals(b, &[(2, ValType::I32), (1, VALUE)], &body);
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
     get(&mut body, 0, DESCRIPTOR, 1);
     body.push(LocalSet(1));
     guard(&mut body, 1, ARGS);
+    let mut plan = body.clone();
+    plan.push(LocalGet(0));
+    b.function_with_locals(
+        "nominal-source-constructor-plan", &[VALUE], &[VALUE], &[(1, VALUE)], &plan,
+    );
     body.extend([
         LocalGet(0),
         RefFunc(source_constructor),

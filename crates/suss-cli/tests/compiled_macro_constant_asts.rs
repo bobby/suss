@@ -122,7 +122,7 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(rows) = decoded.kind else {
+        let Kind::Vector(rows) = decoded.into_parts().2 else {
             panic!("scalar AST rows")
         };
         assert_eq!(rows.len(), 5);
@@ -135,7 +135,7 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
                 matches!(&fields[0].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == "const")
             );
             assert!(
-                matches!(fields[1].kind, Kind::Bool(true)),
+                matches!(&fields[1].kind, Kind::Bool(true)),
                 "val is present, even for nonfinite source numbers"
             );
         }
@@ -148,7 +148,7 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
             let Kind::Vector(fields) = &row.kind else {
                 unreachable!()
             };
-            let Kind::Number(number) = fields[2].kind else {
+            let Kind::Number(number) = &fields[2].kind else {
                 panic!("binary64 AST value")
             };
             assert_eq!(number.to_bits(), bits);
@@ -190,7 +190,7 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(rows) = decoded.kind else {
+        let Kind::Vector(rows) = decoded.into_parts().2 else {
             panic!("source AST rows")
         };
         assert_eq!(rows.len(), 5);
@@ -198,17 +198,17 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
             let Kind::Vector(fields) = &row.kind else {
                 panic!("source fields")
             };
-            assert!(matches!(fields[0].kind, Kind::Bool(true)));
+            assert!(matches!(&fields[0].kind, Kind::Bool(true)));
             assert!(
                 matches!(&fields[1].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == "const")
             );
-            assert!(matches!(fields[2].kind, Kind::Bool(true)));
+            assert!(matches!(&fields[2].kind, Kind::Bool(true)));
             assert_eq!(
                 fields[3].kind, fields[4].kind,
                 "val retains the source form rather than physical lowering"
             );
             assert!(
-                matches!(fields[5].kind, Kind::Bool(true)),
+                matches!(&fields[5].kind, Kind::Bool(true)),
                 "native lowering remains separately present"
             );
         }
@@ -227,11 +227,11 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
                 panic!("nonconstant fields")
             };
             if index == 0 {
-                assert!(matches!(fields[0].kind, Kind::Bool(true)));
+                assert!(matches!(&fields[0].kind, Kind::Bool(true)));
                 assert!(matches!(&fields[1].kind, Kind::Keyword(k)
                     if k.namespace.is_none() && k.name == "local"));
             } else {
-                assert!(matches!(fields[0].kind, Kind::Bool(true)));
+                assert!(matches!(&fields[0].kind, Kind::Bool(true)));
                 assert!(matches!(&fields[1].kind, Kind::Keyword(k)
                     if k.namespace.is_none() && k.name == "invoke"));
                 let Kind::Vector(children) = &fields[6].kind else {
@@ -246,14 +246,14 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
                     if s.namespace.is_none() && s.name == "+"));
                 assert!(matches!(&fields[8].kind, Kind::Symbol(s)
                     if s.namespace.is_none() && s.name == "observed"));
-                assert!(matches!(fields[9].kind, Kind::Number(0.0)));
+                assert!(matches!(&fields[9].kind, Kind::Number(0.0)));
             }
             assert!(
-                matches!(fields[2].kind, Kind::Bool(false)),
+                matches!(&fields[2].kind, Kind::Bool(false)),
                 "a scalar runtime result does not fabricate a source constant"
             );
-            assert!(matches!(fields[3].kind, Kind::Nil));
-            assert!(matches!(fields[5].kind, Kind::Bool(true)));
+            assert!(matches!(&fields[3].kind, Kind::Nil));
+            assert!(matches!(&fields[5].kind, Kind::Bool(true)));
         }
     }
 }

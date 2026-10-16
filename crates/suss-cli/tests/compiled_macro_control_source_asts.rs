@@ -217,7 +217,7 @@ fn check_source_cases() {
         session.collect().unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
         assert!(
-            matches!(actual.kind, Kind::Number(value) if value.to_bits() == 2.0_f64.to_bits()),
+            matches!(&actual.kind, Kind::Number(value) if value.to_bits() == 2.0_f64.to_bits()),
             "cleanup state: {actual:?}"
         );
     }

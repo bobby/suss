@@ -100,7 +100,7 @@ fn record_iterator_survives_with_only_host_handle_and_mutates_across_fragments()
             session.collect().unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-            let Kind::Number(actual) = decoded.kind else {
+            let Kind::Number(actual) = decoded.into_parts().2 else {
                 panic!("numeric record field")
             };
             assert_eq!(actual.to_bits(), expected.to_bits());

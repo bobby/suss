@@ -115,7 +115,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
                     .source
                     .as_ref()
                     .unwrap();
-                assert!(matches!(facts.form.kind, Kind::Number(value) if value == expected));
+                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == expected));
             }
             let facts = body.source.as_ref().unwrap();
             assert!(facts.is_body);
@@ -141,7 +141,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
 }
 
 #[test]
-fn generated_body_capture_keeps_source_and_macro_recursion_bounded() {
+fn generated_body_accepts_deep_finite_syntax_and_host_budget_bounds_reexpansion() {
     struct Generate(Option<Form>);
     impl portable::ExpansionHost for Generate {
         fn expand(
@@ -158,13 +158,27 @@ fn generated_body_capture_keeps_source_and_macro_recursion_bounded() {
             }
         }
     }
-    struct Repeat;
+    struct Repeat(u64);
     impl portable::ExpansionHost for Repeat {
+        fn charge_expansion_work(&mut self, work: u64, span: std::ops::Range<usize>) -> Result<(), portable::Diagnostic> {
+            self.0 = self.0.checked_sub(work).ok_or_else(|| portable::Diagnostic {
+                span,
+                message: "Test host computation budget exhausted".into(),
+            })?;
+            Ok(())
+        }
         fn expand(
             &mut self,
             form: &Form,
             _: portable::ExpansionContext<'_>,
         ) -> Result<Option<Form>, portable::Diagnostic> {
+            Ok(Some(form.clone()))
+        }
+    }
+    struct DefaultAccountingRepeat;
+    impl portable::ExpansionHost for DefaultAccountingRepeat {
+        fn expansion_work_fuel(&self) -> u64 { 32 }
+        fn expand(&mut self, form: &Form, _: portable::ExpansionContext<'_>) -> Result<Option<Form>, portable::Diagnostic> {
             Ok(Some(form.clone()))
         }
     }
@@ -190,33 +204,33 @@ fn generated_body_capture_keeps_source_and_macro_recursion_bounded() {
             items[2] = generated;
             generated = outer;
         }
-        let error = portable::prepare_fragment_forms_with_expander(
+        portable::prepare_fragment_forms_with_expander(
             read_forms(source).unwrap(),
             0..source.len(),
             &Environment::default(),
             phase,
             &mut Generate(Some(generated)),
         )
-        .err()
-        .expect("deep source must be bounded");
-        assert!(
-            error.message.contains("Bootstrap analysis expansion limit"),
-            "{error:?}"
-        );
-        assert!(error.span.start < error.span.end && error.span.end <= source.len());
+        .expect("deep finite generated syntax must compile");
         let error = portable::prepare_fragment_forms_with_expander(
             read_forms("(again)").unwrap(),
             0..7,
             &Environment::default(),
             phase,
-            &mut Repeat,
+            &mut Repeat(32),
         )
         .err()
         .expect("recursive macro expansion must be bounded");
         assert!(
-            error.message.contains("Bootstrap analysis expansion limit"),
+            error.message.contains("computation budget exhausted"),
             "{error:?}"
         );
+        assert_eq!(error.span, 0..7);
+        let error = portable::prepare_fragment_forms_with_expander(
+            read_forms("(again)").unwrap(), 0..7, &Environment::default(), phase,
+            &mut DefaultAccountingRepeat,
+        ).err().expect("default no-op accounting must still exhaust request fuel");
+        assert!(error.message.contains("native work fuel exhausted"), "{error:?}");
         assert_eq!(error.span, 0..7);
     }
 }
@@ -277,7 +291,7 @@ fn recur_children_are_original_operands_analyzed_once() {
         assert_eq!(arguments.len(), 2);
         for (argument, number) in arguments.iter().zip([0.0, 1.0]) {
             assert!(
-                matches!(argument.source.as_ref().unwrap().form.kind, Kind::Number(value) if value == number)
+                matches!(&argument.source.as_ref().unwrap().form.kind, Kind::Number(value) if *value == number)
             );
         }
     }
@@ -318,14 +332,14 @@ fn source_if_retains_each_analyzed_operand_once_in_both_phases() {
             for (child, number) in [(condition, 0.0), (consequent, 1.0)] {
                 let facts = child.source.as_ref().unwrap();
                 assert_eq!(facts.phase, phase);
-                assert!(matches!(facts.form.kind, Kind::Number(value) if value == number));
+                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == number));
             }
             let facts = otherwise.source.as_ref().unwrap();
             assert_eq!(facts.phase, phase);
             if alternative {
-                assert!(matches!(facts.form.kind, Kind::Number(value) if value == 2.0));
+                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == 2.0));
             } else {
-                assert!(matches!(facts.form.kind, Kind::Nil));
+                assert!(matches!(&facts.form.kind, Kind::Nil));
                 assert!(
                     matches!(&facts.tags.tag.as_ref().unwrap().kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "clj-nil")
                 );
@@ -370,7 +384,7 @@ fn function_methods_retain_original_declarations_and_once_analyzed_bodies() {
                 assert_eq!(method.parameters.len(), method.declarations.len());
                 if callable.methods.len() == 2 {
                     let original = read_forms(&source).unwrap().remove(0);
-                    let Kind::List(outer) = original.kind else {
+                    let Kind::List(outer) = original.into_parts().2 else {
                         unreachable!()
                     };
                     let Kind::Vector(bindings) = &outer[1].kind else {
@@ -384,7 +398,7 @@ fn function_methods_retain_original_declarations_and_once_analyzed_bodies() {
                 let Kind::List(parts) = &method.form.kind else {
                     panic!("original method form required")
                 };
-                assert!(matches!(parts[0].kind, Kind::Vector(_)));
+                assert!(matches!(&parts[0].kind, Kind::Vector(_)));
                 let body = method
                     .body
                     .source
@@ -444,7 +458,7 @@ fn throw_operand_retains_original_analysis_without_reexpansion() {
             panic!("throw must retain source exception operand")
         };
         let facts = exception.source.as_ref().unwrap();
-        assert!(matches!(facts.form.kind, Kind::Number(value) if value == 42.0));
+        assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == 42.0));
         assert_eq!(facts.context, portable::AnalysisContext::Expression);
     }
 }

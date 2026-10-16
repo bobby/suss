@@ -455,7 +455,7 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
                 &self.endpoints[index].request.args[0],
                 0..0,
             )?;
-            match form.kind {
+            match form.into_parts().2 {
                 Kind::String(units) => String::from_utf16(&units)
                     .map_err(|_| "suss.io/read-byte path contains invalid UTF-16".to_owned()),
                 _ => {

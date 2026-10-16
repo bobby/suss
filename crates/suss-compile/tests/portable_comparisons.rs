@@ -74,12 +74,23 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
 }
 
 #[test]
-fn comparison_macro_resource_limit_is_located_before_recursive_expansion() {
-    let source = format!(
-        "(< {})",
-        std::iter::repeat_n("1", 257).collect::<Vec<_>>().join(" ")
-    );
-    let error = portable::compile(&source).unwrap_err();
-    assert!(error.message.contains("expansion limit"));
-    assert_eq!(error.span, 0..source.len());
+fn wide_finite_comparison_executes_without_a_fixed_arity_resource_cap() {
+    use suss_compile::portable_session::Session;
+    for mut session in [Session::new().unwrap(), Session::new_macro().unwrap()] {
+        for (values, expected) in [
+            ((0..257).map(|n| n.to_string()).collect::<Vec<_>>(), 42.0_f64),
+            (std::iter::repeat_n("1".to_owned(), 257).collect::<Vec<_>>(), 0.0_f64),
+        ] {
+            let source = format!("(if (< {}) 42 0)", values.join(" "));
+            let result = session.eval(&source).unwrap();
+            let bits = session.inspect(&result, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let wasmtime::Val::F64(bits) = object.field(&mut store, 0)? else {
+                    return Err(wasmtime::Error::msg("Expected portable Number storage"));
+                };
+                Ok(bits)
+            }).unwrap();
+            assert_eq!(bits, expected.to_bits());
+        }
+    }
 }

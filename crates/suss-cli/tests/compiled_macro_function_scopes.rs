@@ -182,13 +182,13 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
             let value = session.eval(call).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let Kind::Vector(items) = decoded.kind else {
+            let Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("actual result vector");
             };
             let names: Vec<_> = items
                 .into_iter()
                 .map(|item| {
-                    let Kind::String(units) = item.kind else {
+                    let Kind::String(units) = item.into_parts().2 else {
                         panic!("actual result string");
                     };
                     String::from_utf16(&units).unwrap()
@@ -304,7 +304,7 @@ fn function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_
             let value = session.eval(call).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let Kind::Vector(items) = decoded.kind else {
+            let Kind::Vector(items) = decoded.into_parts().2 else {
                 panic!("executed scope vector")
             };
             assert_eq!(items.len(), 1);

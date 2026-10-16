@@ -133,7 +133,7 @@ fn public_realization_matches_actual_pinned_value_and_effect_observations() {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             let form = bridge.read(&mut session, &value, 0..source.len()).unwrap();
-            let Kind::List(items) = form.kind else {
+            let Kind::List(items) = form.into_parts().2 else {
                 panic!("Expected actual sequence observations")
             };
             assert_eq!(items.len(), width);

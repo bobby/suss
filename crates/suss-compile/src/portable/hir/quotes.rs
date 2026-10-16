@@ -73,9 +73,17 @@ impl Analyzer<'_> {
         depth: usize,
         reader_data: bool,
     ) -> Result<Hir, Diagnostic> {
-        if depth >= 64 {
-            return Err(fail(form.span.clone(), "Quoted data nesting exceeds 64"));
-        }
+        self.expander.charge_expansion_work(1, form.span.clone())?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            self.quote_data_inner(form, depth, reader_data)
+        })
+    }
+    fn quote_data_inner(
+        &mut self,
+        form: &Form,
+        depth: usize,
+        reader_data: bool,
+    ) -> Result<Hir, Diagnostic> {
         if !form.metadata.is_empty() {
             if !matches!(
                 form.kind,
@@ -127,7 +135,8 @@ impl Analyzer<'_> {
                 self.map_values(form, items, entries)
             }
             Kind::Set(items) => {
-                let entries = items.iter()
+                let entries = items
+                    .iter()
                     .map(|item| self.quote_data_impl(item, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 self.set_values(form, items, entries)
@@ -203,7 +212,9 @@ impl Analyzer<'_> {
         // Ordinary vector/map/set metadata is an expression, analyzed in the
         // surrounding lexical environment (pinned analyze-wrap-meta). Reader
         // prefix merging happens before analysis: discarded values never run.
-        let entries = merged_metadata_pairs(form, false)?;
+        let entries = merged_metadata_pairs_metered(form, false, &mut |work| {
+            self.expander.charge_expansion_work(work, form.span.clone())
+        })?;
         if entries.is_empty() {
             return Ok(value);
         }
@@ -248,7 +259,9 @@ impl Analyzer<'_> {
         let mut retained = reader_data;
         // Reader-data merging precedes construction. Actual source -assoc
         // supplies equality of the resulting compiled runtime keys.
-        let entries = merged_metadata_pairs(form, reader_data)?;
+        let entries = merged_metadata_pairs_metered(form, reader_data, &mut |work| {
+            self.expander.charge_expansion_work(work, form.span.clone())
+        })?;
         for pair in entries.chunks_exact(2) {
             let key = self.quote_data_impl(&pair[0], depth + 2, reader_data)?;
             let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
@@ -280,25 +293,38 @@ impl Analyzer<'_> {
 /// Normalize reader metadata as data, using the same bounded key comparison
 /// and prefix precedence as compiled quote-form lowering.
 pub fn reader_metadata_pairs(form: &Form) -> Result<Vec<Form>, Diagnostic> {
-    merged_metadata_pairs(form, true)
+    reader_metadata_pairs_metered(form, &mut |_| Ok(()))
 }
 /// Analyzed metadata pairs, eliding reader-position keys the way the pinned
 /// analyzer's elide-reader-meta path does before using form metadata as data.
+pub fn reader_metadata_pairs_metered(
+    form: &Form,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<Form>, Diagnostic> {
+    merged_metadata_pairs_metered(form, true, meter)
+}
 pub fn analyzed_metadata_pairs(form: &Form) -> Result<Vec<Form>, Diagnostic> {
     merged_metadata_pairs(form, false)
 }
 fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Diagnostic> {
+    merged_metadata_pairs_metered(form, reader_data, &mut |_| Ok(()))
+}
+fn merged_metadata_pairs_metered(
+    form: &Form,
+    reader_data: bool,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<Form>, Diagnostic> {
     let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
-    let mut comparisons = 1_048_576;
     for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
-        let pairs = metadata_pairs(prefix)?;
+        meter(1)?;
+        let pairs = metadata_pairs_metered(prefix, meter)?;
         for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
             if !reader_data && irrelevant_metadata_key(&pair[0]) {
                 continue;
             }
             let mut previous = None;
             for (index, (key, _, _)) in entries.iter().enumerate() {
-                if reader_key_equal(key, &pair[0], 0, &mut comparisons)? {
+                if reader_key_equal_metered(key, &pair[0], 0, meter)? {
                     previous = Some(index);
                     break;
                 }
@@ -307,15 +333,23 @@ fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Di
             if let Some(index) = previous {
                 // Pinned tools.reader merges inner first. Association keeps
                 // the existing key object and replaces only its value.
-                entries[index].1 = pair[1].clone();
+                entries[index].1 = super::super::clone_form_metered(&pair[1], meter)?;
                 entries[index].2 = order;
             } else {
-                entries.push((pair[0].clone(), pair[1].clone(), order));
+                entries.push((
+                    super::super::clone_form_metered(&pair[0], meter)?,
+                    super::super::clone_form_metered(&pair[1], meter)?,
+                    order,
+                ));
             }
         }
     }
     // Use the accepted textual order for surviving metadata entries, even
     // when the pinned reader's hash iteration incidentally reorders them.
+    meter(
+        (entries.len() as u64)
+            .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())),
+    )?;
     entries.sort_by_key(|(_, _, order)| *order);
     Ok(entries
         .into_iter()
@@ -327,19 +361,47 @@ fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Di
 // syntax before evaluation, not equality of evaluated metadata keys. Reader
 // locations/metadata do not participate; lists/vectors share sequential data
 // equality, and maps/sets compare without an iteration-order dependency.
+#[cfg(test)]
 fn reader_key_equal(
     a: &Form,
     b: &Form,
     depth: usize,
-    work: &mut usize,
+    remaining: &mut usize,
 ) -> Result<bool, Diagnostic> {
-    if depth >= 64 || *work == 0 {
-        return Err(fail(
-            a.span.clone(),
-            "Metadata key normalization exceeds traversal bounds",
-        ));
-    }
-    *work -= 1;
+    reader_key_equal_metered(a, b, depth, &mut |work| {
+        *remaining = remaining
+            .checked_sub(usize::try_from(work).unwrap_or(usize::MAX))
+            .ok_or_else(|| fail(a.span.clone(), "Metadata key computation fuel exhausted"))?;
+        Ok(())
+    })
+}
+fn reader_key_equal_metered(
+    a: &Form,
+    b: &Form,
+    depth: usize,
+    work: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<bool, Diagnostic> {
+    let units = |form: &Form| match &form.kind {
+        Kind::String(units) => units.len() as u64,
+        Kind::Symbol(name) => {
+            (name.name.len() + name.namespace.as_ref().map_or(0, String::len)) as u64
+        }
+        Kind::Keyword(name) => {
+            (name.name.len() + name.namespace.as_ref().map_or(0, String::len)) as u64
+        }
+        _ => 0,
+    };
+    work(1u64.saturating_add(units(a)).saturating_add(units(b)))?;
+    stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        reader_key_equal_inner(a, b, depth, work)
+    })
+}
+fn reader_key_equal_inner(
+    a: &Form,
+    b: &Form,
+    depth: usize,
+    work: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<bool, Diagnostic> {
     Ok(match (&a.kind, &b.kind) {
         (Kind::Nil, Kind::Nil) => true,
         (Kind::Bool(a), Kind::Bool(b)) => a == b,
@@ -352,7 +414,7 @@ fn reader_key_equal(
                 return Ok(false);
             }
             for (a, b) in a.iter().zip(b) {
-                if !reader_key_equal(a, b, depth + 1, work)? {
+                if !reader_key_equal_metered(a, b, depth + 1, work)? {
                     return Ok(false);
                 }
             }
@@ -367,7 +429,7 @@ fn reader_key_equal(
             for a in a {
                 let mut found = false;
                 for b in &b {
-                    if reader_key_equal(a, b, depth + 1, work)? {
+                    if reader_key_equal_metered(a, b, depth + 1, work)? {
                         found = true;
                         break;
                     }
@@ -387,8 +449,8 @@ fn reader_key_equal(
             for a in a {
                 let mut found = false;
                 for b in &b {
-                    if reader_key_equal(a.0, b.0, depth + 1, work)? {
-                        if !reader_key_equal(a.1, b.1, depth + 1, work)? {
+                    if reader_key_equal_metered(a.0, b.0, depth + 1, work)? {
+                        if !reader_key_equal_metered(a.1, b.1, depth + 1, work)? {
                             return Ok(false);
                         }
                         found = true;
@@ -410,7 +472,7 @@ fn reader_key_equal(
 fn reader_map_entries<'a>(
     items: &'a [Form],
     depth: usize,
-    work: &mut usize,
+    work: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<(&'a Form, &'a Form)>, Diagnostic> {
     if items.len() % 2 != 0 {
         return Err(fail(
@@ -422,7 +484,7 @@ fn reader_map_entries<'a>(
     for pair in items.chunks_exact(2) {
         let mut previous = None;
         for (index, entry) in entries.iter().enumerate() {
-            if reader_key_equal(entry.0, &pair[0], depth, work)? {
+            if reader_key_equal_metered(entry.0, &pair[0], depth, work)? {
                 previous = Some(index);
                 break;
             }
@@ -438,13 +500,13 @@ fn reader_map_entries<'a>(
 fn reader_set_members<'a>(
     items: &'a [Form],
     depth: usize,
-    work: &mut usize,
+    work: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<&'a Form>, Diagnostic> {
     let mut entries: Vec<&Form> = Vec::new();
     for item in items {
         let mut present = false;
         for previous in &entries {
-            if reader_key_equal(previous, item, depth, work)? {
+            if reader_key_equal_metered(previous, item, depth, work)? {
                 present = true;
                 break;
             }
@@ -461,11 +523,17 @@ fn irrelevant_metadata_key(form: &Form) -> bool {
         (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
         || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"))
 }
-fn metadata_pairs(prefix: &Form) -> Result<Vec<Form>, Diagnostic> {
+fn metadata_pairs_metered(
+    prefix: &Form,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<Form>, Diagnostic> {
     Ok(match &prefix.kind {
-        Kind::Map(entries) if entries.len() % 2 == 0 => entries.clone(),
+        Kind::Map(entries) if entries.len() % 2 == 0 => entries
+            .iter()
+            .map(|entry| super::super::clone_form_metered(entry, meter))
+            .collect::<Result<Vec<_>, _>>()?,
         Kind::Keyword(_) => vec![
-            prefix.clone(),
+            super::super::clone_form_metered(prefix, meter)?,
             Form {
                 span: prefix.span.clone(),
                 metadata: vec![],
@@ -481,7 +549,7 @@ fn metadata_pairs(prefix: &Form) -> Result<Vec<Form>, Diagnostic> {
                     name: "tag".into(),
                 }),
             },
-            prefix.clone(),
+            super::super::clone_form_metered(prefix, meter)?,
         ],
         _ => {
             return Err(fail(
@@ -540,6 +608,28 @@ pub fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i3
 #[cfg(test)]
 mod metadata_reader_tests {
     use super::*;
+
+    #[test]
+    fn deep_metadata_keys_preserve_precedence_and_exhaust_meter_without_a_depth_cap() {
+        let mut key = Form { span: 0..1, metadata: vec![], kind: Kind::Number(42.0) };
+        for _ in 0..128 {
+            key = Form { span: 0..1, metadata: vec![], kind: Kind::Vector(vec![key]) };
+        }
+        let mut form = suss_reader::forms::read_forms("value").unwrap().remove(0);
+        form.metadata = [17.0, 19.0].into_iter().map(|value| Form {
+            span: 0..1, metadata: vec![],
+            kind: Kind::Map(vec![key.clone(), Form { span: 0..1, metadata: vec![], kind: Kind::Number(value) }]),
+        }).collect();
+        let mut charged = 0;
+        let pairs = reader_metadata_pairs_metered(&form, &mut |work| { charged += work; Ok(()) }).unwrap();
+        assert!(charged > 128);
+        assert_eq!(pairs.len(), 2);
+        assert_eq!(pairs[0], key);
+        assert_eq!(pairs[1].kind, Kind::Number(17.0), "outer prefix replaces only the existing value");
+        let error = reader_metadata_pairs_metered(&form, &mut |_| Err(fail(0..1, "test fuel exhausted"))).unwrap_err();
+        assert!(error.message.contains("fuel exhausted"));
+        assert_eq!(reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap(), pairs);
+    }
     #[test]
     fn metadata_reader_keys_compare_canonical_duplicate_map_and_set_data() {
         for (a, b, equal) in [
@@ -558,6 +648,6 @@ mod metadata_reader_tests {
         }
         let value = suss_reader::forms::read_forms("#{1 1}").unwrap().remove(0);
         assert!(reader_key_equal(&value, &value, 0, &mut 1).is_err());
-        assert!(reader_key_equal(&value, &value, 64, &mut 1_048_576).is_err());
+        assert!(reader_key_equal(&value, &value, 64, &mut 1_048_576).unwrap());
     }
 }

@@ -27,10 +27,10 @@ fn row(form: &Form) -> Value {
     let Kind::String(label) = &fields[0].kind else {
         panic!("Expected label")
     };
-    let Kind::Bool(tag_present) = fields[1].kind else {
+    let Kind::Bool(tag_present) = &fields[1].kind else {
         panic!("Expected tag presence")
     };
-    let Kind::Bool(return_present) = fields[3].kind else {
+    let Kind::Bool(return_present) = &fields[3].kind else {
         panic!("Expected return presence")
     };
     json!([

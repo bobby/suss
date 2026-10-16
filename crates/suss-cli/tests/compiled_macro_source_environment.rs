@@ -78,7 +78,7 @@ fn compiled_source_macro_environment_retains_lexical_initializer_and_shadow_with
           result"#, &mut macros).unwrap();
         let result = read(&mut session, &value);
         assert_shared("lexical", &result);
-        let Kind::Vector(items) = result.kind else { panic!("executed source environment facts") };
+        let Kind::Vector(items) = result.into_parts().2 else { panic!("executed source environment facts") };
         assert_eq!(items.len(), 7);
         for (index, name) in [(0, "binding"), (1, "let"), (4, "let"), (5, "return")] {
             assert!(matches!(&items[index].kind, Kind::Keyword(keyword) if keyword.name == name));
@@ -86,9 +86,9 @@ fn compiled_source_macro_environment_retains_lexical_initializer_and_shadow_with
         for index in [2, 6] {
             assert!(matches!(&items[index].kind, Kind::Symbol(symbol) if symbol.name == "x"));
         }
-        assert!(matches!(items[3].kind, Kind::Number(9.0)));
+        assert!(matches!(&items[3].kind, Kind::Number(9.0)));
         let effects = session.eval("effects").unwrap();
-        assert!(matches!(read(&mut session, &effects).kind, Kind::Number(1.0)));
+        assert!(matches!(&read(&mut session, &effects).kind, Kind::Number(1.0)));
     }
 }
 
@@ -111,20 +111,20 @@ fn compiled_source_macro_environment_tracks_function_scopes_and_implicit_argumen
         let value = session.eval_with_macros("(def function (fn [x] (scope-facts))) (function 17)", &mut macros).unwrap();
         let result = read(&mut session, &value);
         assert_shared("function", &result);
-        let Kind::Vector(items) = result.kind else { panic!("function facts") };
+        let Kind::Vector(items) = result.into_parts().2 else { panic!("function facts") };
         assert_eq!(items.len(), 3);
         assert!(matches!(&items[0].kind, Kind::Keyword(keyword) if keyword.name == "return"));
-        assert!(matches!(items[1].kind, Kind::Number(1.0)));
+        assert!(matches!(&items[1].kind, Kind::Number(1.0)));
         assert!(matches!(&items[2].kind, Kind::Keyword(keyword) if keyword.name == "arg"));
         let value = session.eval_with_macros("(let [x 7] (scope-facts x a b))", &mut macros).unwrap();
         let result = read(&mut session, &value);
         assert_shared("variadic", &result);
-        let Kind::Vector(items) = result.kind else { panic!("variadic facts") };
+        let Kind::Vector(items) = result.into_parts().2 else { panic!("variadic facts") };
         assert_eq!(items.len(), 4);
         assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "suss-oracle.source-environment-runner"));
         assert!(matches!(&items[1].kind, Kind::Keyword(keyword) if keyword.name == "let"));
-        assert!(matches!(items[2].kind, Kind::Number(2.0)));
-        assert!(matches!(items[3].kind, Kind::Number(4.0)));
+        assert!(matches!(&items[2].kind, Kind::Number(2.0)));
+        assert!(matches!(&items[3].kind, Kind::Number(4.0)));
     }
 }
 
@@ -146,11 +146,11 @@ fn compiled_source_macro_environment_keeps_snapshot_documents_separate_from_stag
         let second = session.eval_with_macros("(def tracked \"second\" (snapshot-facts))", &mut macros).unwrap();
         let after = session.eval_with_macros("(snapshot-facts)", &mut macros).unwrap();
         for (index, value) in [&first, &second, &after].into_iter().enumerate() {
-            let Kind::Vector(items) = read(&mut session, value).kind else { panic!("snapshot facts") };
+            let Kind::Vector(items) = read(&mut session, value).into_parts().2 else { panic!("snapshot facts") };
             assert_eq!(items.len(), 4);
-            assert!(matches!(items[0].kind, Kind::Bool(present) if present == (index != 0)));
+            assert!(matches!(&items[0].kind, Kind::Bool(present) if *present == (index != 0)));
             if index == 0 {
-                assert!(matches!(items[1].kind, Kind::Nil));
+                assert!(matches!(&items[1].kind, Kind::Nil));
             } else {
                 let expected: Vec<u16> = if index == 1 { "first" } else { "second" }.encode_utf16().collect();
                 assert!(matches!(&items[1].kind, Kind::String(units) if units == &expected));
@@ -160,12 +160,12 @@ fn compiled_source_macro_environment_keeps_snapshot_documents_separate_from_stag
             // Independently executed declaration-metadata-review-probe.clj
             // observes nil during both initializers, then the completed doc.
             if index < 2 {
-                assert!(matches!(items[2].kind, Kind::Nil));
+                assert!(matches!(&items[2].kind, Kind::Nil));
             } else {
                 let expected: Vec<u16> = "second".encode_utf16().collect();
                 assert!(matches!(&items[2].kind, Kind::String(units) if units == &expected));
             }
-            assert!(matches!(items[3].kind, Kind::Bool(completed) if completed == (index == 2)));
+            assert!(matches!(&items[3].kind, Kind::Bool(completed) if *completed == (index == 2)));
         }
     }
 }

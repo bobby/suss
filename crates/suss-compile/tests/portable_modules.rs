@@ -528,19 +528,22 @@ fn bootstrap_core_aliases_are_explicit_provided_identities_and_body_refs_execute
 }
 
 #[test]
-fn dependency_nesting_is_bounded_with_a_located_diagnostic() {
+fn finite_dependency_chain_beyond_old_limit_compiles_and_executes() {
     let root = tempfile::tempdir().unwrap();
     for index in 0..65 {
         let source = if index == 64 {
-            format!("(ns n{index})")
+            format!("(ns n{index}) (def value 42)")
         } else {
-            format!("(ns n{index} (:require n{}))", index + 1)
+            format!("(ns n{index} (:require n{})) (def value n{}/value)", index + 1, index + 1)
         };
         file(root.path(), &format!("n{index}.sus"), &source);
     }
-    let host = Host::new();
-    let error = host.plan("n0", &[root.path()], Phase::Runtime).unwrap_err();
-    assert!(error.message.contains("nesting exceeds 64"));
-    assert!(error.source_path.unwrap().ends_with("n63.sus"));
-    assert!(error.span.start < error.span.end);
+    let mut host = Host::new();
+    let plan = host.plan("n0", &[root.path()], Phase::Runtime).unwrap();
+    assert_eq!(plan.modules.len(), 65);
+    for (module, index) in plan.modules.iter().zip((0..65).rev()) {
+        assert_eq!(module.identity.namespace(), format!("n{index}"));
+    }
+    let value = host.run(plan).unwrap().pop().unwrap();
+    assert_eq!(host.bits(&value), 42.0f64.to_bits());
 }

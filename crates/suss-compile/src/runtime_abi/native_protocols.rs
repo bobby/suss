@@ -320,11 +320,18 @@ pub(super) fn functions(
         Else,
         LocalGet(1),
         End,
-        Call(invoke),
-        Return,
-        End,
-        End,
     ]);
+    if b.dispatch_observer.is_some() {
+        // IFn keeps its original invoke and prepared argument array. Ordinary
+        // protocol methods are observed only after live method selection.
+        body.extend([LocalSet(6), Drop]);
+        cast_array(&mut body, 0);
+        body.extend([ArrayLen, I32Const(3), I32Eq, If(BlockType::Result(VALUE)),
+            LocalGet(3), LocalGet(6), Call(invoke), Else, LocalGet(3), LocalGet(6)]);
+        dispatch_observer::emit(b, &mut body, 0, &[LocalGet(2)], 0, invoke);
+        body.push(End);
+    } else { body.push(Call(invoke)); }
+    body.extend([Return, End, End]);
     key(&mut body, 1);
     body.extend([
         Call(b.names["binding-get"]),
@@ -355,10 +362,22 @@ pub(super) fn functions(
         If(BlockType::Empty),
     ]);
     error(&mut body);
-    body.extend([End, LocalGet(3), LocalGet(1), Call(native_invoke)]);
+    body.extend([End, LocalGet(3), LocalGet(1)]);
+    // IFn native fallback also retains its original adapter without observation.
+    if b.dispatch_observer.is_some() {
+        body.extend([LocalSet(6), Drop]);
+        cast_array(&mut body, 0);
+        body.extend([ArrayLen, I32Const(3), I32Eq, If(BlockType::Result(VALUE)),
+            LocalGet(3), LocalGet(6), Call(native_invoke), Else, LocalGet(3), LocalGet(6)]);
+        dispatch_observer::emit(b, &mut body, 0, &[LocalGet(2)], 1, native_invoke);
+        body.push(End);
+    } else { body.push(Call(native_invoke)); }
     let dispatch = b.count;
     b.functions.function(INVOKE);
-    let mut function = Function::new([(4, VALUE)]);
+    let locals = if b.dispatch_observer.is_some() {
+        vec![(4, VALUE), (1, reference(ARGS))]
+    } else { vec![(4, VALUE)] };
+    let mut function = Function::new(locals);
     for instruction in &body {
         function.instruction(instruction);
     }

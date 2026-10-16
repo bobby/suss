@@ -40,7 +40,7 @@ fn native_macro_data_construction_keeps_captured_classes_after_core_redefinition
                 .unwrap_or_else(|error| panic!("{source}: {error}"));
             assert_eq!(decoded.metadata.len(), 1, "{source}");
             if source.contains("same") || source.contains(":a 1") {
-                assert!(matches!(decoded.kind, Kind::Map(ref pairs) if pairs.len() == 2), "{source}");
+                assert!(matches!(&decoded.kind, Kind::Map(pairs) if pairs.len() == 2), "{source}");
             }
         }
     }
@@ -64,18 +64,18 @@ fn native_macro_maps_preserve_collisions_deep_hash_paths_and_utf16_keys() {
         let map = bridge.map_values(&mut session, &entries).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &map, 0..1).unwrap();
-        assert!(matches!(decoded.kind, Kind::Map(ref pairs) if pairs.len() == 24));
+        assert!(matches!(&decoded.kind, Kind::Map(pairs) if pairs.len() == 24));
         for (index, (key, _)) in entries.iter().enumerate() {
             let value = session.invoke(&lookup, &[&map, key]).unwrap();
             let expected = if index <= 1 { 1 } else if index == 10 { 13 } else { index };
-            assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(value) if value == expected as f64), "key {index}");
+            assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2, Kind::Number(value) if *value == expected as f64), "key {index}");
         }
         // Array-map insertion order includes nil at its original position.
         let nil = bridge.scalar(&mut session, &Literal::Nil).unwrap();
         let map = bridge.map_values(&mut session, &[(nil.clone(), entries[0].1.clone()), entries[2].clone(), (nil, entries[1].1.clone())]).unwrap();
-        let Kind::Map(pairs) = bridge.read(&mut session, &map, 0..1).unwrap().kind else { panic!("array map") };
-        assert!(matches!(pairs[0].kind, Kind::Nil));
-        assert!(matches!(pairs[1].kind, Kind::Number(1.0)));
+        let Kind::Map(pairs) = bridge.read(&mut session, &map, 0..1).unwrap().into_parts().2 else { panic!("array map") };
+        assert!(matches!(&pairs[0].kind, Kind::Nil));
+        assert!(matches!(&pairs[1].kind, Kind::Number(1.0)));
     }
 }
 
@@ -94,15 +94,15 @@ fn native_macro_maps_keep_custom_hash_coercion_and_array_map_hash_effects() {
         let small = bridge.map_values(&mut session, &entries[..8]).unwrap();
         session.collect().unwrap();
         let effects = session.eval("hash-effects").unwrap();
-        assert!(matches!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0)));
+        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0)));
         drop(small);
         let large = bridge.map_values(&mut session, &entries).unwrap();
         session.collect().unwrap();
         let effects = session.eval("hash-effects").unwrap();
-        assert!(matches!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(9.0)));
+        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(9.0)));
         for (index, (key, _)) in entries.iter().enumerate() {
             let value = session.invoke(&lookup, &[&large, key]).unwrap();
-            assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(value) if value == index as f64), "custom key {index}");
+            assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2, Kind::Number(value) if *value == index as f64), "custom key {index}");
         }
     }
 }
@@ -137,12 +137,12 @@ fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_r
         let map = bridge.map_values(&mut session, &entries).unwrap();
         for (index, (key, _)) in entries.iter().enumerate() {
             assert!(
-                matches!(bridge.read(&mut session, key, 0..1).unwrap().kind, Kind::Keyword(key) if key.name == format!("key{index}"))
+                matches!(&bridge.read(&mut session, key, 0..1).unwrap().kind, Kind::Keyword(key) if key.name == format!("key{index}"))
             );
         }
         let size = session.invoke(&count, &[&map]).unwrap();
         assert!(
-            matches!(bridge.read(&mut session, &size, 0..1).unwrap().kind, Kind::Number(size) if size == 17.0)
+            matches!(&bridge.read(&mut session, &size, 0..1).unwrap().kind, Kind::Number(size) if *size == 17.0)
         );
         let shared = bridge
             .vector_values(&mut session, &[map.clone(), map.clone()])
@@ -197,7 +197,7 @@ fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_r
             4
         );
         let decoded = bridge.read(&mut session, &map, 0..1).unwrap();
-        let Kind::Map(values) = decoded.kind else {
+        let Kind::Map(values) = decoded.into_parts().2 else {
             panic!("canonical hash map")
         };
         assert_eq!(values.len(), 34);
@@ -207,7 +207,7 @@ fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_r
             .unwrap();
         assert!(matches!(&first[1].kind, Kind::String(value) if *value == units));
         assert!(
-            matches!(bridge.read(&mut session, &list, 0..1).unwrap().kind, Kind::List(values) if values.len() == 2)
+            matches!(&bridge.read(&mut session, &list, 0..1).unwrap().kind, Kind::List(values) if values.len() == 2)
         );
         let decoded = bridge.read(&mut session, &symbol, 0..1).unwrap();
         assert!(
@@ -282,14 +282,14 @@ fn native_macro_data_maps_use_last_equal_key_and_vectors_cross_tree_boundaries()
             let map = bridge.map_values(&mut session, &entries).unwrap();
             session.collect().unwrap();
             assert!(
-                matches!(bridge.read(&mut session, &map, 0..1).unwrap().kind, Kind::Map(values) if values.len() == 2)
+                matches!(&bridge.read(&mut session, &map, 0..1).unwrap().into_parts().2, Kind::Map(values) if values.len() == 2)
             );
             let key = bridge
                 .identifier(&mut session, None, "same", true, None)
                 .unwrap();
             let value = session.invoke(&lookup, &[&map, &key]).unwrap();
             assert!(
-                matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(value) if value == (length - 1) as f64)
+                matches!(&bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2, Kind::Number(value) if *value == (length - 1) as f64)
             );
         }
         for length in [0, 1, 31, 32, 33, 1056, 1057] {
@@ -302,13 +302,13 @@ fn native_macro_data_maps_use_last_equal_key_and_vectors_cross_tree_boundaries()
                 .collect::<Vec<_>>();
             let vector = bridge.vector_values(&mut session, &items).unwrap();
             session.collect().unwrap();
-            let Kind::Vector(values) = bridge.read(&mut session, &vector, 0..1).unwrap().kind
+            let Kind::Vector(values) = bridge.read(&mut session, &vector, 0..1).unwrap().into_parts().2
             else {
                 panic!("canonical vector")
             };
             assert_eq!(values.len(), length);
             for (index, value) in values.iter().enumerate() {
-                assert!(matches!(value.kind, Kind::Number(number) if number == index as f64));
+                assert!(matches!(&value.kind, Kind::Number(number) if *number == index as f64));
             }
         }
         assert_eq!(
@@ -335,23 +335,23 @@ fn native_macro_form_transport_is_bounded_data_and_adds_no_resident_code() {
         for _ in 0..8 {
             let value = bridge.quote(&mut session, input.clone()).unwrap();
             session.collect().unwrap();
-            let form = bridge.read(&mut session, &value, 100..120).unwrap();
-            let Kind::List(items) = form.kind else {
+            let mut form = bridge.read(&mut session, &value, 100..120).unwrap();
+            let Kind::List(items) = form.take_kind() else {
                 panic!("source data")
             };
             assert!(matches!(&items[0].kind, Kind::Symbol(name) if name.name == "unresolved"));
             assert_eq!(items[1].metadata.len(), 1);
             assert!(
-                matches!(&items[3].kind, Kind::Map(entries) if entries.len() == 2 && matches!(entries[1].kind, Kind::Number(4.0)))
+                matches!(&items[3].kind, Kind::Map(entries) if entries.len() == 2 && matches!(&entries[1].kind, Kind::Number(4.0)))
             );
             let Kind::Map(metadata) = &form.metadata[0].kind else {
                 panic!("reader metadata")
             };
-            assert!(matches!(metadata[1].kind, Kind::Number(7.0)));
+            assert!(matches!(&metadata[1].kind, Kind::Number(7.0)));
         }
         let value = session.invoke(&effects, &[]).unwrap();
         assert!(matches!(
-            bridge.read(&mut session, &value, 0..1).unwrap().kind,
+            bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2,
             Kind::Number(0.0)
         ));
         drop(value);
@@ -391,7 +391,7 @@ fn native_macro_form_transport_is_bounded_data_and_adds_no_resident_code() {
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &empty_set, 100..120).unwrap();
         assert_eq!(decoded.span, 100..120);
-        assert!(matches!(decoded.kind, Kind::Set(items) if items.is_empty()));
+        assert!(matches!(&decoded.kind, Kind::Set(items) if items.is_empty()));
         drop(empty_set);
         session.collect().unwrap();
         assert_eq!(

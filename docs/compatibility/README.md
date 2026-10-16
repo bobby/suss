@@ -1176,3 +1176,61 @@ rooted descriptor and owner-type comparisons verify the concrete input classes.
 The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
 is an uncommitted-source execution snapshot; it does not establish a new full
 workspace baseline, committed-head review, CI, or whole-suite conformance.
+
+
+## Macro IHash dispatch observation infrastructure
+
+Macro sessions privately observe already-selected protocol methods with their
+prepared arguments. The public dispatcher closure and live bindings remain
+unchanged; Runtime/AOT ABI modules have no observer callback or new imports.
+Exact sealed IHash key storage identifies an observation scope. Unrelated
+protocol callbacks inherit its nearest receiver; nested actual IHash dispatch
+overrides that receiver until return, exception or fuel trap. These scopes
+grant no memo-write authorization and publish no receipts. Physical store
+observation and independent write-time source-domain authentication remain
+necessary for cold custom-IHash metadata identity (#257).
+
+## Scoped Macro memo stores (2026-10-16)
+
+A bounded source-fact witness now covers originally-nil nominal memo stores in
+an actual IHash dispatch scope. Physical field/named stores match the nearest
+actual receiver, captured storage and slot, with full source-domain proof before
+and after the store. The active exact descriptor permits a valid live method
+layout (including same-descriptor siblings); other descriptors retain canonical
+method obligations. Generic outside-scope stores do not mint or erase receipts.
+Existing receipt validation still requires the exact authenticated Number
+reference/bits and healthy source facts. Canonical bootstrap writes keep their
+independent checked setter and publication policy.
+
+Focused execution passes ten new native regressions, including nested protocol
+callbacks, original thrown-object identity, forced GC, source poison/restore and
+post-store fuel failure. The existing public compiled_macro_cumulative_fuel
+selection passes10/10, including cold Map identity that failed on observer-only
+3485718. This does not establish all #257 criteria, full workspace results or
+final-head CI. Original-nonnil captured memo transitions remain unsupported
+by this new path. At that checkpoint the native bridge precomputed identifier
+memos, unlike pinned CLJS cold leaves; the matched investigation below addresses
+that eager-warming difference. No unsupported
+nominal aset behavior was added. See the scoped-store handoff and evidence.
+
+Matched native leaf evidence now preserves an expected-red8case comparison in
+both caller phases: initial native identifier memo precomputation differs from
+pinned CLJS nil and changes cold nil-aware callback writes/results. Force writes
+also lose later identity. All48native windows complete; the four grouped tests
+failed in the preserved before-fix run. Warm canonical numbers match. That evidence added no initialization
+or receipt-eligibility fix and observes only &env identity, not resolve/AST views.
+See the dated native memo-leaf handoff/archive for exact results and limitations.
+
+The isolated cold-leaf/ancestor checkpoint now initializes FormBridge identifiers
+with nil, preserving live canonical hashing and its actual callback effects.
+All48 matched native windows pass without broadening receipt eligibility. Full
+pre/post source-domain proofs permit live method layout for descriptors anchored
+by actual IHash receiver frames with exact watches in the same domain; unrelated
+descriptors retain canonical obligations. This supports a cold canonical child
+hash inside a custom parent method without upgrading a prior unsafe receipt.
+Exact nearest receiver/storage/slot still gates physical-store authorization.
+Focused scoped tests13, public cumulative10, and cross-invocation tests2 pass;
+the latter includes actual metadata hash maps over eight entries. Preserved
+initialization-only public failure and diagnostic trace explain why initialization
+alone was insufficient. No full baseline, final CI, all-view oracle conformance,
+or whole-issue acceptance claim; see the cold-memo-ancestor handoff/archive.

@@ -105,20 +105,20 @@ fn source_export_metadata_matches_macro_snapshots_in_both_phases() {
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {
             panic!("compiled provisional facts")
         };
-        assert!(matches!(items[0].kind, Kind::Nil));
-        assert!(matches!(items[1].kind, Kind::Nil));
+        assert!(matches!(&items[0].kind, Kind::Nil));
+        assert!(matches!(&items[1].kind, Kind::Nil));
         let value = session
             .eval_with_macros("(inspect-export staged)", &mut macros)
             .unwrap();
         session.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {
             panic!("compiled completed facts")
         };
-        assert!(matches!(items[0].kind, Kind::Bool(true)));
-        assert!(matches!(items[1].kind, Kind::Bool(true)));
+        assert!(matches!(&items[0].kind, Kind::Bool(true)));
+        assert!(matches!(&items[1].kind, Kind::Bool(true)));
         let value = session
             .eval_with_macros(
                 "(def ^{:export false} ^:export disabled 1) (inspect-export disabled)",
@@ -126,11 +126,11 @@ fn source_export_metadata_matches_macro_snapshots_in_both_phases() {
             )
             .unwrap();
         session.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {
             panic!("metadata precedence")
         };
-        assert!(matches!(items[0].kind, Kind::Bool(false)));
-        assert!(matches!(items[1].kind, Kind::Bool(false)));
+        assert!(matches!(&items[0].kind, Kind::Bool(false)));
+        assert!(matches!(&items[1].kind, Kind::Bool(false)));
     }
 }
 
