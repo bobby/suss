@@ -27555,3 +27555,54 @@ blindly allow nonnil numeric seeds, or treat receipt-only broadening as sufficie
 Next: matched native leaf cold/warm cases with actual computed originals and exact
 oracle values/effects, then separately review initialization and scoped-eligibility
 changes. The current nil-only eligibility remains intact.
+
+### Matched native memo-leaf evidence before initialization fix (2026-10-16)
+
+Evidence child portable/m4-native-memo-leaf-evidence of107a736; no changes to the
+scoped-store branch under review. Fixtures in portable_macros/memo_leaf_tests.rs
+execute all8 pinned cases (Symbol/Keyword × warm/cold × force/nil-aware) in both
+Runtime/Macro callers, with3 actual macro invocations each. Test-only
+portable_session/memo_leaf_test_support.rs captures the initial IHash closure for
+exact delegation on nonsubject receivers and restores the method afterward.
+Production eligibility/initialization are unchanged. Native views are &env
+metadata and leaf identity only; CLJS resolve/AST views are unexecuted natively.
+Subject writes are counted by a native branch counter; expected counts follow the
+pinned callback branch and memo observations, not an independent oracle write counter.
+
+Pinned input: oracle worktree commit69d74d0cd18aeaecfaee158b53ad55de5e4977cf,
+CLJS c4295f303100bbf5afac449242d30bca1126f1a1. Structured JSON SHA256
+5835f6b0cacd7c30b93a599762f154c2705abab4529df58a322c1dd581ee7324;
+source SHA256 e605cfae08a5d8636dc3f5ffd2b4064e4f1e987b2b9c7a836a881c655c60fb24.
+The oracle was executed by main, not rerun here. Its reference8cases/144identity
+observations are not native conformance claims.
+
+Own COW target native-memo-leaf-target, jobs2, no RUSTFLAGS assignment.
+`cargo test -p suss-compile --lib --locked native_memo_leaf_ --no-run`:exit0,43.58s.
+Bootstrap regeneration via cargo run --profile test -p suss-cli --bin
+suss-bootstrap --locked -- runtime/bootstrap:exit0,50.95s wrapper. Only test
+module registrations/source were added; regenerated bootstrap tracks the changed
+compiler source fingerprint, not a runtime semantic fix.
+`cargo test -p suss-compile --lib --locked native_memo_leaf_ -- --test-threads=2 --nocapture`:
+TERMINAL101,0pass4fail0ignored111.59s (130.08s wrapper), all48rows complete,
+source_unchanged=true. Tool8298 exits101; it is expected-red evidence, not success.
+
+All48rows differ in initial memo: native precomputed Numbers versus pinned nil.
+Warm canonical hashes match exactly (force Symbol1454146648/Keyword-24028250;
+nil-aware Symbol94864730/Keyword43176044). Cold nil-aware callbacks dispatch once
+but write zero times and return precomputed hashes rather than91;4hash-result
+mismatches across kinds/caller phases. Force-write91 executes once, but restored
+method/next invocation loses metadata and leaf identity in8cases (8differences
+for each native identity view). Unchanged declaration controls17 are checked.
+No assertion aborts later completed observations; execution errors are reported
+as errors, never reclassified as successful comparisons.
+
+Raw48rows, full failures, freeze/exit receipts, fixtures, bootstrap and initial
+FormBridge source: docs/roadmap/evidence/m4-native-memo-leaf-before-2026-10-16.tar.gz
+SHA256 e5c908e4d400cf878f528193b376c824b4aeb7eee2609412d46c2ad8ddd2e99a,
+20entries including manifest;19payload hashes read back. Cache native-memo-leaf-
+result.json/observations.json/differences.json and raw native log are retained.
+Next authorized isolated child: change only FormBridge.identifier cold memo to
+nil after checking source canonical hash support, rerun the same cases without
+changing eligible_transition. A nil-captured watch followed by canonical warming
+may already support warm custom writes via its authenticated current receipt.
+No acceptance, full baseline, final-head CI or new-PR claim; this child is unpushed.

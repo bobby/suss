@@ -3739,3 +3739,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+pub(crate) mod memo_leaf_test_support;

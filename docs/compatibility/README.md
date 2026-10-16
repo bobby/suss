@@ -1212,3 +1212,11 @@ by this new path. Pinned CLJS cold leaves start with nil, while the native bridg
 currently precomputes their memo; that possible eager-warming semantic gap needs
 matched value/effect tests before any receipt-only extension. No unsupported
 nominal aset behavior was added. See the scoped-store handoff and evidence.
+
+Matched native leaf evidence now preserves an expected-red8case comparison in
+both caller phases: initial native identifier memo precomputation differs from
+pinned CLJS nil and changes cold nil-aware callback writes/results. Force writes
+also lose later identity. All48native windows complete; the four grouped tests
+remain failing. Warm canonical numbers match. This evidence adds no initialization
+or receipt-eligibility fix and observes only &env identity, not resolve/AST views.
+See the dated native memo-leaf handoff/archive for exact results and limitations.
