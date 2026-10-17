@@ -29265,3 +29265,54 @@ Compiler-only diagnostic remains11,022,010, as expected for a Session-level
 change; it is not a runtime saving. Remaining focused source/core/map checks
 are live, not inferred successful. No native full baseline or new-head CI success
 is claimed. No quota/tariff reduction or merge.
+
+### Closed-pass descriptor inspection reuse (2026-10-17)
+
+Parent d21 run completes17stages with86 Rust pass executions/5failures/0ignored;
+five new cache tests also run within constructor10. All2,915inputs match d21.
+Archive m4-checked-schema-retirement-2026-10-17.tar.gz, SHA256
+4df125826007ee1da92246b55f28447290872df99bc3d99a647705c5d62c0b22,
+independently verifies2,957payloads/2,958members. Five tuples retain3attempts,
+E0499, interrupted bootstrap's two-output delta, final raw results and qualified
+foundation13success. It does not establish full baseline, CI or issue acceptance.
+
+Memo method validation now reuses successful exact inspections only inside one
+canonical-loop invocation. A private helper owns the mutable Store borrow and
+fixed runtime/authority/IRQ/layouts/watch slice. Every watch still selects its
+layout mode; hits require equal Watch identity, owner, mode and actual rooted GC
+descriptor. False disables reuse, errors escape and later watches remain checked.
+Only representative indices are retained; watches keep roots alive across GC.
+The helper ends before class/prototype/receiver/storage checks or any write.
+Actual live IHash calls and constructor callbacks remain unchanged. The audited
+private getter is read-only; the common wrapper's idempotent array-join-active
+restoration is disclosed, not claimed absent. No cross-pass authority is cached.
+
+Fresh run-native-method-pass-candidate.py completes16stages:110 Rust pass
+executions/5failures/0ignored, all2,915inputs unchanged. New5 regressions also run
+within memo-bridge28; canonical methods11, write domains4, snapshots18, cumulative10,
+CORE17, graph reuse5 and bitwise6 pass. Tests cover GC, exact identity/owner/descriptor,
+fresh-pass method replacement, fuel/IRQ, receiver poison without new receipts and
+actual-wrapper late errors after an earlier false result. Python348/all13foundation
+commands pass. Source changes and test delta independently approved.
+
+Runtime0 materialization falls1,675,953→1,526,649:149,304 net saved. The24canonical
+loops fall208,608→59,304;696real inspections become96 (29→4 each). Gross removed
+inspection207,216→36,048 saves171,168, offset by21,864 lookup/staging work. All
+other measured intervals are unchanged. Runtime4 enters materialization with
+1,840,295fuel, completes it with331,324, and finishes invalid-coverage rejection
+with330,818. All5Runtime coverage variants now complete; the unchanged test then
+exhausts fuel at physical-child checks, source_roots.rs1648. Remaining physical,
+final-parent and Macro-phase paths remain unexecuted; no issue closure inferred.
+Global-reference1pass/1fail, control4pass/1fail, constructor1pass/1fail and map0/1
+retain fuel failures. Map still0assertions/69unexecuted; no new full baseline/CI
+success claim. Broader native accounting gaps remain open; no quota/tariff cut.
+
+Independent unchanged d21 map trace uses the existing200M allowance and existing
+SUSS_MACRO_FUEL_TRACE flag:143 starts/142 completions. Completed phase deltas are
+provenance4,443,389, arguments35,395,261, invocation81,955,510, decode61,581,173;
+the terminal is invocation starts after arguments with1,250,230remaining and fails.
+Implicit form/env nil stages cost1 each. Decode includes60,531,220 in3,799lazy
+calls; this is nested work, not an additional total. Source confirms live .sval
+and ordinary nonrecording datum arguments. Domain-proof savings must not be
+credited as the map bottleneck. Allraw failures and both current/parent source
+captures remain retained for the next terminal archive.

@@ -365,13 +365,9 @@ impl WriteDomain {
                 }
             }
         }
-        let canonical = domain_observed!("canonical-loop", (|| -> Result<bool> {
-            let mut canonical = true;
-            for watch in &watches {
-                canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
-            }
-            Ok(canonical)
-        })())?;
+        let canonical = domain_observed!("canonical-loop",
+            super::memo_bridge::inspect_domain_methods(store.as_context_mut(), runtime,
+                methods, irq, &layouts, &watches).map_err(SessionError::from))?;
         let classes = domain_observed!("source-classes", methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
