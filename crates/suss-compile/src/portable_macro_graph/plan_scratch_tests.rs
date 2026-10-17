@@ -4,6 +4,99 @@ fn read(source: &str) -> Form {
     suss_reader::forms::read_forms(source).unwrap().remove(0)
 }
 
+fn indexed_value(graph: &mut AnalysisGraph<'_>, root: Value, bridge: &FormBridge,
+    sparse: bool) -> Result<SessionValue> {
+    graph.finish_recipes()?;
+    if sparse {
+        graph.session.charge_host_work(std::mem::size_of::<materialization_index::Sparse>() as u64 + 2)?;
+        graph.materialize_indexed(root, bridge, None, None,
+            materialization_index::Sparse::default(), false)
+    } else {
+        graph.materialize_indexed(root, bridge, None, None,
+            materialization_index::Dense, false)
+    }
+}
+
+#[test]
+fn dense_and_sparse_materialization_preserve_reader_effects_metadata_sharing_and_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def workspace-hash-log []) (def workspace-original-hash suss.core/hash)").unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        session.eval("(def hash (fn [key] (do (set! user/workspace-hash-log (conj user/workspace-hash-log key)) (user/workspace-original-hash key))))").unwrap();
+        session.enter_namespace("user").unwrap();
+        let inspect = session.eval("(fn [v] [(identical? (nth v 2) (nth v 3)) (identical? (nth v 0) (nth v 1))])").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut observations = Vec::new();
+        let mut costs = Vec::new();
+        for route in 0..3 {
+            session.eval("(set! workspace-hash-log [])").unwrap();
+            let value = session.with_operation_budget(|session| {
+                let mut graph = AnalysisGraph::new(&bridge, session);
+                let reader = graph.form(&read("^{:mark 17} {:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9}"), 0)?;
+                let key = graph.keyword("payload")?;
+                let number = graph.number(17)?;
+                let shared = graph.recipe(Recipe::Map(vec![(key, number)]))?;
+                let root = graph.recipe(Recipe::Vector(vec![reader, reader, shared, shared]))?;
+                // Unreachable recipes cannot change reader occurrences or the
+                // shared compiler map, but used to size all temporary arrays.
+                for _ in 0..materialization_index::SPARSE_THRESHOLD + 1 {
+                    graph.recipe(Recipe::Scalar(Literal::Nil))?;
+                }
+                graph.finish_recipes()?;
+                let before = graph.session.operation_fuel_remaining()?;
+                let result = if route == 2 { graph.materialize(root)? }
+                    else { indexed_value(&mut graph, root, &bridge, route == 1)? };
+                costs.push(before - graph.session.operation_fuel_remaining()?);
+                Ok(result)
+            }).unwrap();
+            session.collect().unwrap();
+            let count = session.eval("(count workspace-hash-log)").unwrap();
+            assert_eq!(bridge.read(&mut session, &count, 0..1).unwrap().kind, Kind::Number(18.0));
+            let effects = session.eval("workspace-hash-log").unwrap();
+            let effects = bridge.read(&mut session, &effects, 0..1).unwrap();
+            let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+            let Kind::Vector(items) = &decoded.kind else { panic!("vector root"); };
+            assert!(!items[0].metadata.is_empty());
+            let aliases = session.invoke(&inspect, &[&value]).unwrap();
+            let aliases = bridge.read(&mut session, &aliases, 0..1).unwrap();
+            let Kind::Vector(flags) = &aliases.kind else { panic!("alias flags"); };
+            assert_eq!(flags.iter().map(|v| &v.kind).collect::<Vec<_>>(),
+                vec![&Kind::Bool(true), &Kind::Bool(false)]);
+            observations.push((decoded, effects));
+        }
+        assert_eq!(observations[0], observations[1]);
+        assert_eq!(observations[0], observations[2]);
+        assert!(costs[2] < costs[0], "production sparse choice: {costs:?}");
+        assert!(costs[1] < costs[0], "reachable scratch must remove actual work: {costs:?}");
+    }
+}
+
+#[test]
+fn dense_and_sparse_materialization_reject_cycles_and_recover_after_interrupts() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for sparse in [false, true] {
+            let scope = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.recipes.len();
+            graph.recipe(Recipe::Alias(root)).unwrap();
+            let error = indexed_value(&mut graph, root, &bridge, sparse).unwrap_err();
+            assert!(error.to_string().contains("Cyclic compiler analysis graph"));
+            drop(scope);
+            graph.recipes[root] = Some(Recipe::Scalar(Literal::Number(23.0)));
+            let scope = graph.session.operation_budget_scope().unwrap();
+            graph.session.interrupt_handle().interrupt();
+            assert!(indexed_value(&mut graph, root, &bridge, sparse).unwrap_err().is_interrupt());
+            drop(scope);
+            let scope = graph.session.operation_budget_scope().unwrap();
+            let value = indexed_value(&mut graph, root, &bridge, sparse).unwrap();
+            graph.session.collect().unwrap();
+            assert_eq!(bridge.read(graph.session, &value, 0..1).unwrap().kind, Kind::Number(23.0));
+            drop(scope);
+        }
+    }
+}
+
 #[test]
 fn empty_plan_capacity_preserves_keys_metadata_and_failed_build_recovery() {
     let mut session = Session::new_macro().unwrap();

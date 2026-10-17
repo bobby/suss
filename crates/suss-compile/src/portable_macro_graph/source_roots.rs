@@ -1195,6 +1195,13 @@ mod tests {
     }
     #[test]
     fn source_parent_lineage_keeps_selected_identity_and_rechecks_after_real_hash_callback() {
+        source_parent_lineage_case(0);
+    }
+    #[test]
+    fn source_parent_lineage_sparse_workspace_keeps_identity_and_rechecks_callback() {
+        source_parent_lineage_case(super::super::materialization_index::SPARSE_THRESHOLD + 1);
+    }
+    fn source_parent_lineage_case(padding: usize) {
         for source_phase in [Phase::Runtime, Phase::Macro] {
             let mut source = match source_phase {
                 Phase::Runtime => Session::new_repl().unwrap(),
@@ -1251,6 +1258,11 @@ mod tests {
                 entries.len() > 8,
                 "the real parent factory must invoke captured public hash"
             );
+            // The extra recipes are unreachable. Native IDs for any queued
+            // source tasks may now have large gaps; source aliases remain global.
+            for _ in 0..padding {
+                graph.recipe(Recipe::Scalar(crate::portable::hir::Literal::Nil)).unwrap();
+            }
             let layout = graph.source_root_children().unwrap();
             let mut certificates = Vec::new();
             for child in &layout[root] {
