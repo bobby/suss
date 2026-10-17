@@ -29114,3 +29114,33 @@ and all13foundation commands exit0 on the unchanged2,915-input tuple. Remaining
 focused execution and net cost measurement are live; no new acceptance/full
 baseline/CI success is inferred. Independent actual source review found no
 blocker. No quota/tariff reduction, issue closure or merge.
+
+Shared-map terminal cohort:154 Rust passes,6 failures,0 ignored; all2,915
+frozen inputs unchanged. Python348/all13foundation commands pass. Diagnostic
+compiler-only30M preparation falls11,423,481→11,333,063 (net90,418): prefix
+666,846, preparation excluding verification9,475,244, verification1,190,973.
+Disjoint primary bucket deltas: map_copy−9,935, shared-full copy−44,661,
+shared-full growth−36,467, insertion+645. New performed lookup work is retained.
+Default core still rejects in ir_build;16 other core tests remain filtered.
+All10cumulative tests pass; both self/method tests remain CORE-setup failures,
+bitwise primaryCORE fails with5otherpasses. Source-child66phase/fuel lines match
+receiver-facts parent exactly: Runtime0–3finish,4exhausts; Macro and validation
+tails remain unexecuted. Full pinned map0assertions/69unexecuted with independent
+namespace-failure comparison. No full baseline/new-head CI acceptance inferred.
+
+Archive m4-shared-full-map-staging-2026-10-17.tar.gz, SHA256
+406f87f5a48e69e5cf855149be0249f956b098cbebb225791ee41730e447ae7b,
+retains both pilot and revised input bytes/commands/results, targeted-stop
+receipt and matched parent std replacement control. Source2462d5c independently
+approved; archive correspondence review is separate. Next measured native
+candidate shares async lowering payloads and eliminates unused AST HIR copies.
+Known arbitrary-HIR-copy accounting gaps remain open.
+
+Isolated diagnostic array census is published atbb4410576bcd87c1cf8d242241db2359ee9fbe5d
+on diagnostic/m4-snapshot-array-census. Compile/bootstrap/snapshot18pass; source-child
+retains Runtime4fuel failure. Completed captures contain12,540I16 and7,180ref
+elements across multiple captures, not unique objects or one operation. No
+packing/saving claim. Its archive SHA256
+d72f4e992c4d8c68edb936d2568262102ee8ee953810897a19c6a144c7387c58
+and all2,915committed inputs were independently verified. Diagnostic target is
+released; caller-phase/full validation gates remain unchanged.
