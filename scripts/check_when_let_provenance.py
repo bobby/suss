@@ -68,10 +68,32 @@ def main():
     assert (ROOT / 'tests/oracle/when-let-validation-observations.json').read_bytes() == (oracle / 'validation1-observations.json').read_bytes()
     positive_inputs = json.loads((oracle / 'provenance-inputs.json').read_text())
     positive_fixture = 'crates/suss-cli/tests/compiled_when_let.rs'
-    assert record['files'][positive_fixture] == positive_inputs['files'][positive_fixture]
-    positive_guest = re.findall(r'observe\(&mut session, &mut macros, r#"(.*?)"#\)',
-                                (ROOT / positive_fixture).read_text(), re.S)[0]
-    assert (oracle / 'guest.cljs').read_text() == positive_guest
+    rebinding = record['integration_fixture_rebinding']
+    assert rebinding['historical_fixture'] == (
+        'docs/compatibility/when-let/integration-provenance/'
+        'compiled_when_let-before-stage-diagnostic.rs')
+    assert rebinding['current_fixture'] == positive_fixture
+    historical = (ROOT / rebinding['historical_fixture']).read_bytes()
+    current = (ROOT / positive_fixture).read_bytes()
+    assert digest(historical) == rebinding['historical_fixture_sha256']
+    assert digest(historical) == positive_inputs['files'][positive_fixture]
+    assert digest(current) == rebinding['current_fixture_sha256']
+    assert digest(current) == record['files'][positive_fixture]
+    assert rebinding['replacement'] == {
+        'old': 'Compiled macro expansion failed: Uncaught language exception',
+        'new': 'Compiled macro expansion failed during compiled macro invocation: Uncaught language exception',
+        'count': 1,
+    }
+    old_phrase = rebinding['replacement']['old'].encode()
+    new_phrase = rebinding['replacement']['new'].encode()
+    assert historical.count(old_phrase) == 1
+    assert current.count(old_phrase) == 0 and current.count(new_phrase) == 1
+    assert historical.replace(old_phrase, new_phrase, 1) == current
+    pattern = r'observe\(&mut session, &mut macros, r#"(.*?)"#\)'
+    historical_guest = re.findall(pattern, historical.decode(), re.S)[0].encode()
+    positive_guest = re.findall(pattern, current.decode(), re.S)[0].encode()
+    assert positive_guest == historical_guest == (oracle / 'guest.cljs').read_bytes()
+    assert digest(positive_guest) == positive_inputs['guest_sha256']
     direct = DIRECTORY / 'direct-let-oracle'
     direct_inputs = json.loads((direct / 'inputs.json').read_text())
     fixture = direct_inputs['native_fixture']

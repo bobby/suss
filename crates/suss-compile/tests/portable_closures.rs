@@ -656,3 +656,47 @@ fn verified_variadic_entries_require_class_and_valid_persistent_rest_shape() {
         assert!(portable::compile_ir(&broken).is_err());
     }
 }
+
+
+#[test]
+fn raw_closure_arity_metadata_preserves_unsigned_bounds_and_variadic_sentinel() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", runtime).unwrap();
+    let environment = portable::resolve::Environment::default();
+    let source = fragment(&mut store, &linker, "(fn [] 17)", &environment);
+    let base = call(&mut store, source, "eval", &[]);
+    let callback = base.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap()
+        .field(&mut store, 1).unwrap();
+    let raw_environment = call(&mut store, runtime, "closure-environment", &[base.clone()]);
+    let caught = load_catcher(&mut store, &linker, catcher(2, "suss.runtime", "invoke"));
+    // Bits 0..3 are explicit accepted argument counts. Negative non-sentinel
+    // metadata retains the existing unsigned ABI behavior, not a new source
+    // language guarantee. The callback ignores arguments and returns 17.
+    let cases: &[(i32, i32, u8)] = &[
+        (0, 0, 0b0001), (1, 1, 0b0010), (1, 2, 0b0110),
+        (0, 3, 0b1111), (0, -1, 0b1111), (2, -1, 0b1100),
+        (0, -2, 0b1111), (2, -2, 0b1100),
+        (0, i32::MIN, 0b1111), (0, i32::MAX, 0b1111),
+        (3, 1, 0b0000), (-1, -1, 0b0000),
+        (i32::MIN, -1, 0b0000),
+    ];
+    for &(minimum, maximum, accepted) in cases {
+        let closure = call(&mut store, runtime, "closure-new", &[
+            raw_environment.clone(), callback.clone(), Val::I32(minimum), Val::I32(maximum),
+        ]);
+        for argc in 0..=3 {
+            let args = call(&mut store, runtime, "args-new", &[Val::I32(argc)]);
+            store.gc(None).unwrap();
+            let result = call(&mut store, caught, "call", &[closure.clone(), args]);
+            if accepted & (1 << argc) != 0 {
+                assert_eq!(bits(&mut store, &result), 17.0f64.to_bits(),
+                    "min={minimum} max={maximum} argc={argc}");
+            } else {
+                exception(&mut store, &result, 1, "Wrong arity");
+            }
+        }
+    }
+}

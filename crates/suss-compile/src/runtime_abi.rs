@@ -524,14 +524,9 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
             field_index: 2,
         },
         I32LtU,
-        LocalGet(0),
-        RefCastNonNull(closure),
-        StructGet {
-            struct_type_index: 4,
-            field_index: 3,
-        },
-        I32Const(-1),
-        I32Ne,
+        // Unsigned len > max already rejects no length when max is -1
+        // (u32::MAX). The sentinel test and its conjunction are redundant,
+        // including for every other raw i32 metadata bit pattern.
         LocalGet(1),
         RefCastNonNull(args),
         ArrayLen,
@@ -542,7 +537,6 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
             field_index: 3,
         },
         I32GtU,
-        I32And,
         I32Or,
         If(BlockType::Empty),
         GlobalGet(0),
