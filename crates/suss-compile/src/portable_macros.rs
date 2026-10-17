@@ -571,12 +571,21 @@ impl ExpansionHost for CompiledMacros {
         self.session.options().fuel_per_operation
     }
     fn begin_expansion_request(&mut self, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
-        self.session.begin_operation_budget().map_err(|error| Diagnostic {
+        let result = self.session.begin_operation_budget().map_err(|error| Diagnostic {
             span,
             message: format!("Unable to start macro expansion budget: {error}"),
-        })
+        });
+        if result.is_ok() && std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
+            eprintln!("macro-request-budget event=begin remaining={:?}",
+                self.session.operation_fuel_remaining());
+        }
+        result
     }
     fn end_expansion_request(&mut self) {
+        if std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
+            eprintln!("macro-request-budget event=end remaining={:?}",
+                self.session.operation_fuel_remaining());
+        }
         self.session.end_operation_budget();
     }
 
