@@ -116,6 +116,27 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
     return 4
 
 
+# Independent closed identities for the reviewed generic/typed generators and
+# complete property-find route. Not derived from refreshable manifest values.
+EXPECTED_NAMED_PROPERTY_SCOPES = {'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5', 'checked': 'f0921a18ef812393034fcd0bcfeee1e0246af391806fb39f536dbe5c926cbc49', 'typed-route': '27262c39b427e37946231fed80c4ce091533b4602d4ef4937262e99feb5dc7f8'}
+
+
+def named_property_guard_scopes(raw):
+    anchor = b'    // Named instance access must not mistake raw source names for munged fields.\n'
+    boundary = b'    // Stride one is a field schema, stride two a mixed native/name table.\n'
+    end = b'    for writing in [false, true] {\n'
+    if raw.count(anchor) != 2 or raw.count(boundary) != 1 or raw.count(end) != 1:
+        raise ValueError('named-property ABI guard boundaries must occur exactly twice/once')
+    first = raw.index(anchor)
+    second = raw.index(anchor, first + len(anchor))
+    last = raw.index(boundary)
+    finish = raw.index(end)
+    if not first < second < last < finish:
+        raise ValueError('named-property ABI guard scope order mismatch')
+    return {'checked': raw[first:second], 'generic': raw[second:last],
+            'typed-route': raw[last:finish]}
+
+
 def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
     """Pin the complete ASCII guard and reserved dispatch, not runtime execution."""
     path = 'docs/compatibility/record-macro-foundations/abi-adaptations.json'
@@ -132,24 +153,25 @@ def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
         raise ValueError('named-property ABI ASCII whitelist mismatch')
     if provenance.get('algorithm') != 'ascii-masks-lowercase-fastpath-reserved-dispatch':
         raise ValueError('named-property ABI algorithm mismatch')
-    anchor = '    // Named instance access must not mistake raw source names for munged fields.\n'
-    boundary = '    // Stride one is a field schema, stride two a mixed native/name table.\n'
-    if provenance.get('guard-location') != anchor.strip()[3:]:
-        raise ValueError('named-property ABI guard location mismatch')
-    # Independent of the manifest's refreshable whole-file hash: include setup,
-    # all instructions, whitelist construction, reserved names and registration.
-    # Keep exact bytes (including comments identifying the pinned upstream).
-    expected_guard_hash = 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5'
-    if provenance.get('guard-sha256') != expected_guard_hash:
-        raise ValueError('named-property ABI guard identity mismatch')
+    scopes = named_property_guard_scopes(
+        repository_file(ROOT, expected_path).read_bytes() if source_bytes is None else source_bytes)
     raw = repository_file(ROOT, expected_path).read_bytes() if source_bytes is None else source_bytes
     if provenance.get('source-file-sha256') != digest(raw):
         raise ValueError('stale named-property ABI source hash')
-    first, last = anchor.encode(), boundary.encode()
-    if raw.count(first) != 1 or raw.count(last) != 1:
-        raise ValueError('named-property ABI guard boundaries must occur exactly once')
-    start, end = raw.index(first), raw.index(last)
-    if end <= start or digest(raw[start:end]) != expected_guard_hash:
+    if provenance.get('guard-location') != 'Named instance access must not mistake raw source names for munged fields.':
+        raise ValueError('named-property ABI guard location mismatch')
+    # Closed reviewed algorithms: refreshing manifest hashes cannot authorize
+    # changed instructions. Generic preserves the earlier canonical guard;
+    # checked is the reviewed non-null STRING specialization, not a new policy.
+    expected = EXPECTED_NAMED_PROPERTY_SCOPES
+    if provenance.get('guard-sha256') != expected['generic-canonical'] or provenance.get('route-sha256') != expected['typed-route'] or provenance.get('checked-guard-sha256') != expected['checked']:
+        raise ValueError('named-property ABI guard identity mismatch')
+    if provenance.get('typed-precondition') != 'property-find guards each entry as STRING before checked validation; query STRING guarded before typed equality; full scan including late entries':
+        raise ValueError('named-property ABI typed precondition mismatch')
+    normalized = scopes['generic'].replace(b'let _field_supported =', b'let field_supported =')
+    if (digest(normalized) != expected['generic-canonical'] or
+            digest(scopes['checked']) != expected['checked'] or
+            digest(scopes['typed-route']) != expected['typed-route']):
         raise ValueError('named-property ABI complete guard differs from its recorded algorithm')
     return 1
 

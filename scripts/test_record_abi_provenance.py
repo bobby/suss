@@ -3,7 +3,7 @@ import hashlib
 import json
 import unittest
 
-from check_record_macro_provenance import ROOT, verify_named_property_abi_adaptation
+from check_record_macro_provenance import ROOT, verify_named_property_abi_adaptation, named_property_guard_scopes
 
 
 class RecordAbiProvenance(unittest.TestCase):
@@ -66,26 +66,63 @@ class RecordAbiProvenance(unittest.TestCase):
                 b'LocalGet(3),\n        I32Eqz,\n        If(BlockType::Empty),\n        I32Const(1),',
                 b'LocalGet(3),\n        I32Eqz,\n        If(BlockType::Empty),\n        I32Const(0),'),
         }
-        for name, (old, new) in mutations.items():
-            with self.subTest(mutation=name):
-                self.assertEqual(source.count(old), 1)
-                # Leave the original tokens as a decoy outside the guard.
-                mutated = source.replace(old, new, 1) + b'\n/* Decoy: ' + old + b' */\n'
+        scopes = named_property_guard_scopes(source)
+        for route in ['generic', 'checked']:
+            for name, (old, new) in mutations.items():
+                with self.subTest(route=route, mutation=name):
+                    scope = scopes[route]
+                    self.assertEqual(scope.count(old), 1)
+                    # Mutate only this actual generator; retain the other valid
+                    # route and append decoy original tokens outside both scopes.
+                    mutated = source.replace(scope, scope.replace(old, new, 1), 1)
+                    mutated += b'\n/* Decoy: ' + old + b' */\n'
+                    changed = copy.deepcopy(self.data)
+                    changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                    with self.assertRaisesRegex(ValueError, 'complete guard differs'):
+                        verify_named_property_abi_adaptation(changed, mutated)
+
+    def test_checked_route_bypasses_rejected_with_refreshed_hash_and_decoys(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        route = named_property_guard_scopes(source)['typed-route']
+        for old, new in [
+            (b'    guard(&mut body, 4, STRING);', b'    // entry guard removed'),
+            (b'Call(field_supported_checked),', b'I32Const(1),'),
+            (b'Call(equal_checked),', b'I32Const(1),'),
+            (b'        Br(0),', b'        Br(1),'),
+        ]:
+            with self.subTest(bypass=old):
+                self.assertIn(old, route)
+                changed_route = route.replace(old, new, 1)
+                mutated = source.replace(route, changed_route, 1) + b'\n/* Decoy: ' + old + b' */\n'
                 changed = copy.deepcopy(self.data)
                 changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'complete guard differs'):
                     verify_named_property_abi_adaptation(changed, mutated)
+                changed['route-sha256'] = hashlib.sha256(changed_route).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
 
     def test_refreshed_guard_hash_cannot_authorize_new_algorithm(self):
         source = (ROOT / self.data['source']).read_bytes()
-        mutated = source.replace(b'I32Const(128),', b'I32Const(256),', 1)
-        start = mutated.index(b'    // Named instance access must not mistake')
-        end = mutated.index(b'    // Stride one is a field schema')
-        changed = copy.deepcopy(self.data)
-        changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
-        changed['guard-sha256'] = hashlib.sha256(mutated[start:end]).hexdigest()
-        with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
-            verify_named_property_abi_adaptation(changed, mutated)
+        scopes = named_property_guard_scopes(source)
+        for route, field in [('generic', 'guard-sha256'),
+                             ('checked', 'checked-guard-sha256')]:
+            with self.subTest(route=route):
+                scope = scopes[route]
+                self.assertEqual(scope.count(b'I32Const(128),'), 1)
+                mutated = source.replace(scope, scope.replace(
+                    b'I32Const(128),', b'I32Const(256),', 1), 1)
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                actual_scope = named_property_guard_scopes(mutated)[route]
+                if route == 'generic':
+                    # The generic manifest binds the original canonical spelling.
+                    actual_scope = actual_scope.replace(
+                        b'let _field_supported =', b'let field_supported =')
+                changed[field] = hashlib.sha256(actual_scope).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
 
 
 if __name__ == '__main__':
