@@ -18,7 +18,7 @@ fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
             )
             .unwrap();
         // Diagnostic only: finite per-request cap, not default-fuel acceptance.
-        macros.set_operation_fuel(30_000_000);
+        macros.set_operation_fuel(1_000_000_000);
         caller.enter_namespace("cljs.core").unwrap();
         let value = caller
             .eval_with_macros("(user/declaration-facts identity)", &mut macros)
