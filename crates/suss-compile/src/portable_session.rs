@@ -23,6 +23,7 @@ use wasmtime::{
     ValType,
 };
 
+pub(crate) mod hash_profile;
 mod frontend;
 pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
@@ -82,7 +83,8 @@ impl InterruptHandle {
 fn install_interrupt(store: &mut Store<()>, requested: &Arc<AtomicBool>) {
     let requested = requested.clone();
     store.set_epoch_deadline(1);
-    store.epoch_deadline_callback(move |_| {
+    store.epoch_deadline_callback(move |context| {
+        hash_profile::sample(&context);
         if requested.swap(false, Ordering::SeqCst) {
             Err(wasmtime::Trap::Interrupt.into())
         } else {
@@ -319,7 +321,12 @@ fn engine() -> Result<Engine, SessionError> {
                 .wasm_exceptions(true)
                 .consume_fuel(true)
                 .epoch_interruption(true);
-            Engine::new(&config).map_err(|error| error.to_string())
+            let engine=Engine::new(&config).map_err(|error|error.to_string())?;
+            if hash_profile::enabled() {
+                let sampled=engine.clone();
+                std::thread::spawn(move || loop {std::thread::sleep(std::time::Duration::from_micros(100));sampled.increment_epoch();});
+            }
+            Ok(engine)
         })
         .clone()
         .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))
