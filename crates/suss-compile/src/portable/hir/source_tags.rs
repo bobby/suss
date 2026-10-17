@@ -462,21 +462,49 @@ pub(crate) fn local_tag_metered(
 fn truthy(form: &Form) -> bool {
     !matches!(form.kind, Kind::Nil | Kind::Bool(false))
 }
+// Each calculation retains one normalized view of this exact immutable
+// declaration. Initialization is lazy so existing short-circuit paths keep
+// their first metadata validation point; nothing survives the calculation.
+struct DeclarationMetadata<'a> {
+    form: &'a Form,
+    view: std::cell::OnceCell<Vec<super::quotes::MetadataEntry<'a>>>,
+}
+impl<'a> DeclarationMetadata<'a> {
+    fn new(form: &'a Form) -> Self { Self { form, view: std::cell::OnceCell::new() } }
+    fn get(&self, name: &str, meter: &mut WorkMeter<'_>) -> Result<Option<&Form>, Diagnostic> {
+        if self.view.get().is_none() {
+            let view = super::quotes::reader_metadata_view_metered(self.form, meter)?;
+            // This local view is inaccessible to meter callbacks; no other
+            // path can initialize it while normalization is in progress.
+            if self.view.set(view).is_err() { unreachable!("single declaration calculation") }
+        }
+        for pair in self.view.get().expect("initialized declaration metadata") {
+            charge(meter, 1 + name.len(), &self.form.span)?;
+            if matches!(&pair.key.as_ref().kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name) {
+                return Ok(Some(pair.value.as_ref()));
+            }
+        }
+        Ok(None)
+    }
+}
+fn owned_metadata_value(value: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagnostic> {
+    value.map(|value| crate::portable::clone_form_metered(value, meter)).transpose()
+}
 fn provisional(
     info: &super::super::resolve::DefinitionInfo,
+    metadata: &DeclarationMetadata<'_>,
     meter: &mut WorkMeter<'_>,
 ) -> Result<bool, Diagnostic> {
     Ok(!info.analysis_completed
         || (info.initializer_form.is_some()
-            && metadata(&info.declaration, "declared", meter)?
-                .as_ref()
-                .is_some_and(truthy)))
+            && metadata.get("declared", meter)?.is_some_and(truthy)))
 }
 fn completed_callable<'a>(
     info: &'a super::super::resolve::DefinitionInfo,
+    metadata: &DeclarationMetadata<'_>,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Option<&'a SourceCallable>, Diagnostic> {
-    Ok(if provisional(info, meter)? {
+    Ok(if provisional(info, metadata, meter)? {
         None
     } else {
         info.initializer.as_ref().and_then(|init| callable(init))
@@ -485,12 +513,12 @@ fn completed_callable<'a>(
 // Pinned analyzer.cljc2092–2175 merges raw metadata before callable top-fn
 // overlays and computed return fields. Original Rust policy; never treat a
 // provisional initializer as a published callable declaration.
-fn top_function_property(
-    info: &super::super::resolve::DefinitionInfo,
+fn top_function_property<'a>(
+    metadata: &'a DeclarationMetadata<'_>,
     name: &str,
     meter: &mut WorkMeter<'_>,
-) -> Result<Option<Form>, Diagnostic> {
-    let Some(top) = metadata(&info.declaration, "top-fn", meter)? else {
+) -> Result<Option<&'a Form>, Diagnostic> {
+    let Some(top) = metadata.get("top-fn", meter)? else {
         return Ok(None);
     };
     let pairs = match &top.kind {
@@ -510,7 +538,7 @@ fn top_function_property(
         charge(meter, name.len() + 1, &top.span)?;
         if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name)
         {
-            return crate::portable::clone_form_metered(&pair[1], meter).map(Some);
+            return Ok(Some(&pair[1]));
         }
     }
     Ok(None)
@@ -527,27 +555,25 @@ pub(crate) fn declaration_tag_metered(
     info: &super::super::resolve::DefinitionInfo,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Option<Form>, Diagnostic> {
-    let raw = metadata(&info.declaration, "tag", meter)?;
+    let metadata = DeclarationMetadata::new(&info.declaration);
+    let raw = metadata.get("tag", meter)?;
     // parse-type merges source metadata over its default function tag,
     // including explicit nil/false. Type declarations precede method analysis.
     if info.type_fields.is_some() {
-        return Ok(raw.or_else(|| Some(named("function"))));
+        return match raw { Some(_) => owned_metadata_value(raw, meter), None => Ok(Some(named("function"))) };
     }
-    if provisional(info, meter)? {
-        return Ok(raw);
+    if provisional(info, &metadata, meter)? {
+        return owned_metadata_value(raw, meter);
     }
     // Function vars retain their raw/overlaid tag, including present nil and
     // false. Dynamic affects scalar inference, not function var-reference tags.
-    if completed_callable(info, meter)?.is_some() {
-        return Ok(top_function_property(info, "tag", meter)?.or(raw));
+    if completed_callable(info, &metadata, meter)?.is_some() {
+        return owned_metadata_value(top_function_property(&metadata, "tag", meter)?.or(raw), meter);
     }
-    if raw.as_ref().is_some_and(truthy) {
-        return Ok(raw);
+    if raw.is_some_and(truthy) {
+        return owned_metadata_value(raw, meter);
     }
-    if metadata(&info.declaration, "dynamic", meter)?
-        .as_ref()
-        .is_some_and(truthy)
-    {
+    if metadata.get("dynamic", meter)?.is_some_and(truthy) {
         return Ok(Some(named("any")));
     }
     let computed = info
@@ -556,47 +582,39 @@ pub(crate) fn declaration_tag_metered(
         .map(|init| inferred(init, meter))
         .transpose()?
         .flatten();
-    Ok(computed.or(raw))
+    match computed { Some(tag) => Ok(Some(tag)), None => owned_metadata_value(raw, meter) }
 }
 fn declaration_return_tag(
     info: &super::super::resolve::DefinitionInfo,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Option<Form>, Diagnostic> {
-    let methods = completed_callable(info, meter)?;
+    let metadata = DeclarationMetadata::new(&info.declaration);
+    let methods = completed_callable(info, &metadata, meter)?;
     let fn_var = if methods.is_some() {
-        top_function_property(info, "fn-var", meter)?
-            .as_ref()
-            .map_or(
-                !metadata(&info.declaration, "macro", meter)?
-                    .as_ref()
-                    .is_some_and(truthy),
-                truthy,
-            )
+        // Keep map_or's eager :macro default query even when top-fn supplies
+        // fn-var. These lookups can still validate or exhaust the operation.
+        top_function_property(&metadata, "fn-var", meter)?
+            .map_or(!metadata.get("macro", meter)?.is_some_and(truthy), truthy)
     } else {
-        metadata(&info.declaration, "fn-var", meter)?
-            .as_ref()
-            .is_some_and(truthy)
-            || (!provisional(info, meter)?
-                && metadata(&info.declaration, "declared", meter)?
-                    .as_ref()
-                    .is_some_and(truthy)
-                && metadata(&info.declaration, "arglists", meter)?
-                    .as_ref()
-                    .is_some_and(truthy))
+        metadata.get("fn-var", meter)?.is_some_and(truthy)
+            || (!provisional(info, &metadata, meter)?
+                && metadata.get("declared", meter)?.is_some_and(truthy)
+                && metadata.get("arglists", meter)?.is_some_and(truthy))
     };
     if !fn_var {
         return Ok(None);
     }
-    let raw = metadata(&info.declaration, "ret-tag", meter)?;
+    let raw = metadata.get("ret-tag", meter)?;
     let tag = if let Some(methods) = methods {
-        let computed = metadata(&info.declaration, "tag", meter)?
-            .filter(truthy)
-            .or(return_tag(methods, meter)?);
-        computed
-            .or(top_function_property(info, "ret-tag", meter)?)
-            .or(raw)
+        let hint = metadata.get("tag", meter)?.filter(|tag| truthy(tag));
+        // Preserve both original eager .or(...) evaluations and their order.
+        let computed = return_tag(methods, meter)?;
+        let overlay = top_function_property(&metadata, "ret-tag", meter)?;
+        if hint.is_some() { owned_metadata_value(hint, meter)? }
+        else if computed.is_some() { computed }
+        else { owned_metadata_value(overlay.or(raw), meter)? }
     } else {
-        raw
+        owned_metadata_value(raw, meter)?
     };
     // infer-invoke uses if-some, preserving false but falling through nil.
     Ok(tag.filter(|tag| !matches!(tag.kind, Kind::Nil)))
@@ -966,6 +984,102 @@ mod quoted_tag_tests {
             metadata: vec![],
             ty: Type::Value,
             kind,
+        }
+    }
+
+    fn callable_declaration_fixture() -> super::super::super::resolve::DefinitionInfo {
+        let source = "(def subject (fn* [x] x))";
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let (_, environment) = super::super::prepare(&forms, 0..source.len(), &Environment::default(), Phase::Runtime).unwrap();
+        let binding = environment.resolve(Phase::Runtime, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
+        environment.definition_info(binding.global()).unwrap().clone()
+    }
+
+    #[test]
+    fn declaration_metadata_reuses_one_view_and_retains_each_query_charge() {
+        let mut form = suss_reader::forms::read_forms("^string ^:private ^{:declared false :dynamic false :macro false :arglists [x] :ret-tag number} subject").unwrap().remove(0);
+        form.span = 0..150;
+        let names = ["declared", "declared", "dynamic", "macro", "arglists", "ret-tag", "tag", "top-fn"];
+        let shared = DeclarationMetadata::new(&form);
+        let mut shared_work = 0;
+        let mut separate_work = 0;
+        for name in names {
+            let result = shared.get(name, &mut |work| { shared_work += work; Ok(()) }).unwrap();
+            let separate = DeclarationMetadata::new(&form);
+            let expected = separate.get(name, &mut |work| { separate_work += work; Ok(()) }).unwrap();
+            assert_eq!(result, expected);
+        }
+        assert!(shared_work < separate_work, "actual repeated normalization/allocation is eliminated");
+        let entries = shared.view.get().unwrap();
+        let expected_query_work = entries.iter().take_while(|entry| !matches!(&entry.key.as_ref().kind,
+            Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")).count() + 1;
+        let owner = entries.as_ptr();
+        let mut repeat_work = 0;
+        let value = shared.get("tag", &mut |work| { repeat_work += work; Ok(()) }).unwrap().unwrap();
+        assert_eq!(repeat_work, expected_query_work as u64 * 4);
+        assert_eq!(shared.view.get().unwrap().as_ptr(), owner);
+        assert!(matches!(&value.kind, Kind::Symbol(symbol) if symbol.name == "string"));
+    }
+
+    #[test]
+    fn declaration_query_reuse_preserves_lazy_validation_late_invalid_prefix_and_top_fn_errors() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut info = callable_declaration_fixture();
+        info.declaration.metadata = vec![read("42"), read("{:tag number :fn-var true}")];
+        info.analysis_completed = false;
+        let view = DeclarationMetadata::new(&info.declaration);
+        assert!(provisional(&info, &view, &mut |_| panic!("provisional short circuit must not normalize metadata")).unwrap());
+        assert!(view.view.get().is_none());
+        for return_tag in [false, true] {
+            let error = if return_tag { declaration_return_tag(&info, &mut |_| Ok(())).unwrap_err() }
+                else { declaration_tag_metered(&info, &mut |_| Ok(())).unwrap_err() };
+            assert_eq!(error.message, "Invalid metadata: expected a map, keyword, symbol or string");
+            assert_eq!(error.span, info.declaration.metadata[0].span);
+        }
+        info.analysis_completed = true;
+        info.declaration.metadata = vec![read("{:top-fn 42 :tag number}")];
+        for return_tag in [false, true] {
+            let error = if return_tag { declaration_return_tag(&info, &mut |_| Ok(())).unwrap_err() }
+                else { declaration_tag_metered(&info, &mut |_| Ok(())).unwrap_err() };
+            assert_eq!(error.message, "Function declaration top-fn requires mergeable reader data");
+            let Kind::Map(pairs) = &info.declaration.metadata[0].kind else { unreachable!() };
+            assert_eq!(error.span, pairs[1].span);
+        }
+    }
+
+    #[test]
+    fn declaration_query_reuse_returns_fresh_overlaid_tags_and_keeps_failure_retry_and_presence() {
+        let read = |text: &str| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut info = callable_declaration_fixture();
+        info.declaration.metadata = vec![read("{:tag raw :top-fn {:tag \"overlaid\" :fn-var false :ret-tag ignored} :macro true}")];
+        let original = info.declaration.clone();
+        let mut calls = 0;
+        let selected = declaration_tag_metered(&info, &mut |_| { calls += 1; Ok(()) }).unwrap().unwrap();
+        let view = DeclarationMetadata::new(&info.declaration);
+        let expected = top_function_property(&view, "tag", &mut |_| Ok(())).unwrap().unwrap();
+        assert_eq!(&selected, expected);
+        let (Kind::String(copy), Kind::String(source)) = (&selected.kind, &expected.kind) else { unreachable!() };
+        assert_ne!(copy.as_ptr(), source.as_ptr());
+        assert!(declaration_return_tag(&info, &mut |_| Ok(())).unwrap().is_none(), "present false fn-var must survive");
+        for stop in 0..calls {
+            let mut current = 0;
+            let error = declaration_tag_metered(&info, &mut |_| {
+                let call = current; current += 1;
+                if call == stop { Err(fail(0..0, "declaration query cancelled")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "declaration query cancelled");
+            assert_eq!(info.declaration, original);
+            assert_eq!(declaration_tag_metered(&info, &mut |_| Ok(())).unwrap().unwrap(), selected);
+        }
+        // Presence is distinct from truthiness for provisional/type tags.
+        for literal in ["nil", "false"] {
+            let mut info = callable_declaration_fixture();
+            info.analysis_completed = false;
+            info.declaration.metadata = vec![read(&format!("{{:tag {literal}}}"))];
+            let Kind::Map(pairs) = &info.declaration.metadata[0].kind else { unreachable!() };
+            assert_eq!(declaration_tag_metered(&info, &mut |_| Ok(())).unwrap().as_ref(), Some(&pairs[1]));
+            info.type_fields = Some(0);
+            assert_eq!(declaration_tag_metered(&info, &mut |_| Ok(())).unwrap().as_ref(), Some(&pairs[1]));
         }
     }
 

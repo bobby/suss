@@ -4,14 +4,13 @@
 mod portable_decode;
 
 use portable_decode::{Decoder, Observation};
-use std::collections::HashMap;
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
-use suss_compile::portable::{self, hir::FieldBinding};
+use suss_compile::portable::{self, hir::SourceFields};
 use suss_reader::forms::{Form, Kind};
 
 #[derive(Default)]
 struct Fields {
-    observed: Vec<(String, usize, bool, HashMap<String, FieldBinding>)>,
+    observed: Vec<(String, usize, bool, SourceFields)>,
 }
 
 impl portable::ExpansionHost for Fields {

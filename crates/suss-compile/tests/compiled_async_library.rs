@@ -1,9 +1,9 @@
 //! Library loading and compiled expansion prerequisites, independent of suspension.
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use suss_compile::{
     portable::{
         AnalysisContext, ExpansionContext, ExpansionHost,
-        hir::SourceNamespace,
+        hir::{SourceFields, SourceLocals, SourceNamespace},
         resolve::{Environment, Phase},
     },
     portable_macros::CompiledMacros,
@@ -25,8 +25,8 @@ fn bundled_async_library_loads_and_compiled_macros_preserve_ordered_body_forms()
         )
         .unwrap();
     let namespace = Arc::new(SourceNamespace::capture(&environment, Phase::Runtime));
-    let locals = HashMap::new();
-    let fields = HashMap::new();
+    let locals = SourceLocals::default();
+    let fields = SourceFields::default();
     for (source, marker, expected) in [
         ("(suss.async/future 17 42)", "future*", vec![17.0f64, 42.0f64]),
         ("(suss.async/await 42)", "await*", vec![42.0f64]),

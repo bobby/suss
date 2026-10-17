@@ -412,16 +412,21 @@ impl AnalysisGraph<'_> {
         let mut checked = Vec::new();
         reserve(self.session, &mut checked, children.len())?;
         let mut valid = true;
+        let mut done = Vec::new();
+        let mut audit =
+            crate::portable_session::certification_audit::CertificationAudit::new(self.session)?;
         for (ordinal, child) in children.into_iter().enumerate() {
             self.session.charge_host_work(2)?;
             let child_expected = self
                 .source_root_expectation_with_layout(layout[id][ordinal], &layout)?
                 .ok_or_else(|| invalid("Unsupported source-edge expectation"))?;
-            match Certificate::checked(
+            match Certificate::checked_into(
                 self.session,
                 self.bridge,
                 &child.certificate,
                 &child_expected,
+                &mut done,
+                &mut audit,
             )? {
                 Some(child) => checked.push(Some((child, child_expected))),
                 None => {
@@ -430,6 +435,8 @@ impl AnalysisGraph<'_> {
                 }
             }
         }
+        drop(audit);
+        drop(done);
         if !valid {
             return Ok(None);
         }
@@ -500,20 +507,18 @@ impl AnalysisGraph<'_> {
         let mut valid = true;
         // All ordinary construction callbacks have finished. Even children that
         // were checked before construction must now be independently rechecked.
-        for input in &inputs.inputs {
+        let batch = Certificate::checked_batch(
+            self.session,
+            self.bridge,
+            inputs
+                .inputs
+                .iter()
+                .map(|input| (&input.child.certificate, &input.expected)),
+        )?;
+        for child in batch {
             self.session.charge_host_work(2)?;
-            match Certificate::checked(
-                self.session,
-                self.bridge,
-                &input.child.certificate,
-                &input.expected,
-            )? {
-                Some(child) => checked.push(Some(child)),
-                None => {
-                    valid = false;
-                    checked.push(None);
-                }
-            }
+            valid &= child.is_some();
+            checked.push(child);
         }
         // Class authority is not inferred from successful native construction.
         valid &= records.matches_class_schemas(self.session)?;
@@ -694,7 +699,45 @@ impl Certificate {
         certificate: &Rc<Self>,
         expected: &Rc<Expectation>,
     ) -> Result<Option<CheckedChild>> {
+        let mut result =
+            Self::checked_batch(session, bridge, std::iter::once((certificate, expected)))?;
+        Ok(result.pop().unwrap())
+    }
+    // The caller must not invoke guest code during this entire batch. All state
+    // is owned here and dropped before returning, including on errors.
+    fn checked_batch<'a>(
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        inputs: impl IntoIterator<Item = (&'a Rc<Self>, &'a Rc<Expectation>)>,
+    ) -> Result<Vec<Option<CheckedChild>>> {
         let _request = session.operation_budget_scope()?;
+        let mut done = Vec::new();
+        let mut audit =
+            crate::portable_session::certification_audit::CertificationAudit::new(session)?;
+        let mut results = Vec::new();
+        for (certificate, expected) in inputs {
+            reserve(session, &mut results, 1)?;
+            let result = Self::checked_into(
+                session,
+                bridge,
+                certificate,
+                expected,
+                &mut done,
+                &mut audit,
+            )?;
+            session.charge_host_work(1)?;
+            results.push(result);
+        }
+        Ok(results)
+    }
+    fn checked_into(
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        certificate: &Rc<Self>,
+        expected: &Rc<Expectation>,
+        done: &mut Vec<(Rc<Self>, bool)>,
+        audit: &mut crate::portable_session::certification_audit::CertificationAudit,
+    ) -> Result<Option<CheckedChild>> {
         session.charge_host_work(2)?;
         session.inspect(&certificate.value, |_, _| Ok(()))?;
         let owner = expected.owner.key(session)?;
@@ -702,7 +745,7 @@ impl Certificate {
         // logical equivalence cannot substitute for a source-owner mismatch.
         session.charge_host_work(key_comparison_work(&owner, &certificate.source.key))?;
         let same = owner == certificate.source.key;
-        let valid = Self::validate(session, bridge, certificate)?;
+        let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
         let current =
             expected
                 .witness
@@ -721,22 +764,31 @@ impl Certificate {
         root: &Rc<Self>,
     ) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
+        let mut done = Vec::new();
+        let mut audit =
+            crate::portable_session::certification_audit::CertificationAudit::new(session)?;
+        Self::validate_into(session, bridge, root, &mut done, &mut audit)
+    }
+    fn validate_into(
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        root: &Rc<Self>,
+        done: &mut Vec<(Rc<Self>, bool)>,
+        audit: &mut crate::portable_session::certification_audit::CertificationAudit,
+    ) -> Result<bool> {
         let mut stack = Vec::new();
-        let mut done: Vec<(*const Self, bool)> = Vec::new();
         reserve(session, &mut stack, 1)?;
         session.charge_host_work(1)?;
         stack.push((root.clone(), false));
-        let mut audit =
-            crate::portable_session::certification_audit::CertificationAudit::new(session)?;
         while let Some((certificate, exit)) = stack.pop() {
             session.charge_host_work(3)?;
             // Ownership precedes any invocation-local validation reuse.
             session.inspect(&certificate.value, |_, _| Ok(()))?;
             let pointer = Rc::as_ptr(&certificate);
             let mut seen = false;
-            for (old, _) in &done {
+            for (old, _) in done.iter() {
                 session.charge_host_work(1)?;
-                if *old == pointer {
+                if Rc::as_ptr(old) == pointer {
                     seen = true;
                     break;
                 }
@@ -768,9 +820,9 @@ impl Certificate {
                 session.charge_host_work(1)?;
                 let child_ptr = Rc::as_ptr(child);
                 let mut found = None;
-                for (old, result) in &done {
+                for (old, result) in done.iter() {
                     session.charge_host_work(1)?;
-                    if *old == child_ptr {
+                    if Rc::as_ptr(old) == child_ptr {
                         found = Some(*result);
                         break;
                     }
@@ -789,17 +841,22 @@ impl Certificate {
                 .matches_recorded_inputs(session, &certificate.value)?;
             valid &= certificate
                 .records
-                .matches_class_schemas_audited(session, &mut audit)?;
+                .matches_class_schemas_audited(session, audit)?;
             valid &= certificate
                 .records
-                .matches_prototype_origins_audited(session, &mut audit)?;
-            reserve(session, &mut done, 1)?;
+                .matches_prototype_origins_audited(session, audit)?;
+            reserve(session, done, 1)?;
             session.charge_host_work(1)?;
-            done.push((pointer, valid));
+            done.push((certificate.clone(), valid));
         }
-        Ok(done
-            .last()
-            .is_some_and(|(pointer, result)| *pointer == Rc::as_ptr(root) && *result))
+        // A previously completed root need not be the last completed entry.
+        for (pointer, result) in done.iter() {
+            session.charge_host_work(1)?;
+            if Rc::ptr_eq(pointer, root) {
+                return Ok(*result);
+            }
+        }
+        Err(invalid("Unvalidated source root"))
     }
 }
 fn key_comparison_work(a: &Key, b: &Key) -> u64 {
@@ -971,6 +1028,120 @@ mod tests {
         drop(s.invoke(&f, &[value]).unwrap());
     }
     #[test]
+    fn checked_batch_rechecks_expected_source_and_releases_state_after_errors() {
+        let mut session = Session::new_macro().unwrap();
+        session
+            .eval("(def ^{:audit {:x 17}} batch-a 1) (def ^{:audit {:x 17}} batch-b 1)")
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (certificate, wrong) = {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let (_, a, _) = declaration(&mut graph, "batch-a");
+            let (_, b, _) = declaration(&mut graph, "batch-b");
+            let certificate = standalone(&mut graph, a);
+            let wrong = graph.source_root_expectation(b).unwrap().unwrap();
+            (certificate, wrong)
+        };
+        session.collect().unwrap();
+        // Repeating the same genuine root exercises a completed-root hit; its
+        // independent expected owner must still be checked on every occurrence.
+        let result = Certificate::checked_batch(
+            &mut session,
+            &bridge,
+            [
+                (&certificate, &certificate.source),
+                (&certificate, &wrong),
+                (&certificate, &certificate.source),
+            ],
+        )
+        .unwrap();
+        assert!(result[0].is_some());
+        assert!(result[1].is_none());
+        assert!(result[2].is_some());
+        drop(result);
+        // A later error is not hidden by the earlier false result. Inject the
+        // interrupt between inputs, not before the initial source mismatch.
+        let interrupt = session.interrupt_handle();
+        let mut index = 0;
+        let inputs = std::iter::from_fn(|| {
+            index += 1;
+            match index {
+                1 => Some((&certificate, &wrong)),
+                2 => {
+                    interrupt.interrupt();
+                    Some((&certificate, &certificate.source))
+                }
+                _ => None,
+            }
+        });
+        match Certificate::checked_batch(&mut session, &bridge, inputs) {
+            Err(error) => assert!(error.is_interrupt()),
+            Ok(_) => panic!("later interrupt must propagate after false"),
+        }
+        assert!(
+            Certificate::checked(&mut session, &bridge, &certificate, &certificate.source)
+                .unwrap()
+                .is_some()
+        );
+        // Exercise a later fuel failure with exactly the same internal batch
+        // state, without replenishing any enclosing operation budget.
+        session
+            .with_operation_budget(|session| {
+                let mut done = Vec::new();
+                let mut audit =
+                    crate::portable_session::certification_audit::CertificationAudit::new(session)?;
+                assert!(
+                    Certificate::checked_into(
+                        session,
+                        &bridge,
+                        &certificate,
+                        &wrong,
+                        &mut done,
+                        &mut audit
+                    )?
+                    .is_none()
+                );
+                let remaining = session.operation_fuel_remaining()?;
+                session.charge_host_work(remaining)?;
+                assert!(matches!(
+                    Certificate::checked_into(
+                        session,
+                        &bridge,
+                        &certificate,
+                        &certificate.source,
+                        &mut done,
+                        &mut audit
+                    ),
+                    Err(SessionError::Trap(_))
+                ));
+                Ok(())
+            })
+            .unwrap();
+        assert!(
+            Certificate::checked(&mut session, &bridge, &certificate, &certificate.source)
+                .unwrap()
+                .is_some()
+        );
+        // A different store cannot use even a valid, live completed certificate.
+        let mut foreign = Session::new_macro().unwrap();
+        let foreign_bridge = FormBridge::new(&mut foreign).unwrap();
+        assert!(matches!(
+            Certificate::checked_batch(
+                &mut foreign,
+                &foreign_bridge,
+                [(&certificate, &certificate.source)]
+            ),
+            Err(SessionError::ForeignValue)
+        ));
+        session.collect().unwrap();
+        assert!(
+            Certificate::checked(&mut session, &bridge, &certificate, &certificate.source)
+                .unwrap()
+                .is_some()
+        );
+    }
+    #[test]
     fn runtime_keyword_warming_does_not_authenticate_source_factory_facts() {
         let mut session = Session::new_repl().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
@@ -1088,6 +1259,47 @@ mod tests {
             let parent = Certificate::finish_bound(graph.session, graph.bridge, bound)
                 .unwrap()
                 .unwrap();
+            // The real parent and its exported metadata certificate share a
+            // descendant. Complete validation must reuse only within this
+            // callback-free interval; an independent expected witness still runs.
+            {
+                let mut done = Vec::new();
+                let mut audit =
+                    crate::portable_session::certification_audit::CertificationAudit::new(
+                        graph.session,
+                    )
+                    .unwrap();
+                assert!(
+                    Certificate::checked_into(
+                        graph.session,
+                        graph.bridge,
+                        &parent,
+                        &parent.source,
+                        &mut done,
+                        &mut audit
+                    )
+                    .unwrap()
+                    .is_some()
+                );
+                let completed = done.len();
+                assert!(
+                    Certificate::checked_into(
+                        graph.session,
+                        graph.bridge,
+                        &certificates[meta_slot],
+                        &certificates[meta_slot].source,
+                        &mut done,
+                        &mut audit
+                    )
+                    .unwrap()
+                    .is_some()
+                );
+                assert_eq!(
+                    done.len(),
+                    completed,
+                    "shared descendant was already completely validated"
+                );
+            }
             let mut cache = RootCache::default();
             let expected = graph.source_root_expectation(root).unwrap().unwrap();
             assert!(
@@ -1272,25 +1484,20 @@ mod tests {
                 });
             }
             for variant in 0..5 {
-                let mut supplied = Vec::new();
-                for (slot, boundary) in layout[a].iter().enumerate() {
+                let selected = layout[a].iter().enumerate().map(|(slot, boundary)| {
                     let certificate = if *boundary == ad && variant == 0 {
-                        wrong_doc.clone()
+                        &wrong_doc
                     } else {
-                        common[slot].clone()
+                        &common[slot]
                     };
-                    let own_source = certificate.source.clone();
-                    supplied.push(
-                        Certificate::checked(
-                            graph.session,
-                            graph.bridge,
-                            &certificate,
-                            &own_source,
-                        )
+                    (certificate, &certificate.source)
+                });
+                let mut supplied: Vec<_> =
+                    Certificate::checked_batch(graph.session, graph.bridge, selected)
                         .unwrap()
-                        .unwrap(),
-                    );
-                }
+                        .into_iter()
+                        .map(|child| child.unwrap())
+                        .collect();
                 match variant {
                     1 => {
                         supplied.pop().unwrap();

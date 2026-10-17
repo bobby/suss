@@ -28677,3 +28677,60 @@ trigger, commands, permissions and separate concurrency groups. Actual head
 push CI must be checked after publication; this does not establish why previous
 PR runs were absent or replace merge compatibility checks. No issue acceptance,
 quota/tariff change, metadata stripping or merge is claimed by these commands.
+
+
+## Declaration queries and callback-free certificate batches (2026-10-16)
+
+Archive `evidence/m4-declaration-child-batch-2026-10-16.tar.gz`, SHA256
+`35b895854a753c1f868fb83e819a67b4bd9e4599123075e7e393f2b09ed6a26e`, retains 3658 original paths in 521 content-addressed
+blobs, with 522 manifested payloads. Read PATHS.json to recover
+original names; verify MANIFEST.json and each blob digest. Exact before/after
+450-input snapshots, commands, receipts, raw failures and packaging script are
+included. The final baseline capture can be partial; its receipt records this.
+
+Declaration tag/return calculations lazily retain one normalized immutable
+metadata view per calculation. Truthiness checks borrow terms; selected returned
+tags remain freshly owned and metered. Validation timing, eager fallback queries,
+short-circuit order, nil/false presence and invalid top-fn diagnostics remain.
+Three added regressions cover accounting reuse, invalid metadata, ownership,
+cancellation and retry. The initial fixture lifetime compile failure is retained.
+
+Source certificates share completed intrinsic validation and a certification audit
+only inside callback-free intervals. Each input still checks ownership and its
+independent current expected witness; false does not suppress later errors.
+Completed entries retain Rc roots, with storage and probes charged. All batch
+state ends before ordinary construction; postcallback checks start fresh.
+The new regression covers repeated roots under different expected owners, GC,
+foreign stores, later interrupt/fuel errors and recovery. Existing lineage
+checks exercise shared descendants and mutation between batches. All five
+invalid-inventory variants and the single request budget remain unchanged.
+An initial private-field access in a test failed compilation; the correction
+uses existing remaining-fuel/debit APIs, preserving the trap assertion.
+
+`run-declaration-and-child-batch-check-2.py` compiled successfully and recorded
+73 analysis passes, default both-phase bootstrap generation success, core import
+0pass/17 shared-setup failures, and source-child4pass/1Wasm-fuel failure.
+The core failures still occur in loaded()->Session.eval(CORE), native79593..79610;
+they are not17 reached semantic assertions. Offsets are not cost comparisons.
+`run-declaration-and-child-batch-bootstrap-verifier.py` passed two byte-identical
+reproductions, compiled identity checks and4 execution tests with Java/Node absent
+from PATH. These scoped cohorts total81 passes/18 failures. No budget, tariff,
+metadata, fixture or validation reduction is included.
+
+Actual209eadd push CI exposed stale test-helper types after shared ownership
+changes. Eight test files now use SourceLocals/SourceFields, Arc-owned forms and
+COW fixture mutation; their assertions and guest fixtures remain unchanged.
+Independent review approved production changes and all eight migrations.
+The required `cargo test --workspace --locked -- --test-threads=2` first failed
+compilation in compiled_async_library (raw52-second run retained). That helper
+and an additional field-snapshot helper were corrected; an exact450-input rerun
+was started using `run-declaration-and-child-batch-final-baseline-2.py`.
+At archive capture it was still compiling: no workspace pass is claimed.
+The final snapshot includes all eight migrated helpers; earlier focused snapshots
+retain their original test-helper bytes and the same production/bootstrap inputs.
+
+Next evidence command: inspect the final baseline receipt/log and exact pushed-head
+CI before interpreting unexecuted suites. The remaining source-child fuel failure
+and default core-import setup failure require diagnosis under unchanged budgets.
+No current-source Jank, issue acceptance, complete workspace baseline, passing CI
+or merge-readiness conclusion follows from this checkpoint.
