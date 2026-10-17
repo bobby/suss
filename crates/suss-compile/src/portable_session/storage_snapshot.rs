@@ -162,6 +162,9 @@ fn room<T>(values: &mut Vec<T>, meter: &mut Meter<'_>) -> Result<()> {
 
 struct Cut { value: SessionValue, collision: Option<usize> }
 const LINEAR_INDEX_LIMIT: usize = 8;
+// Small cut lists stay borrowed during this callback-free native capture.
+// This selects a search strategy; larger valid inputs use the indexed route.
+const BORROWED_CUT_LIMIT: usize = 32;
 
 trait IndexedRoot {
     fn root(&self) -> &SessionValue;
@@ -258,15 +261,16 @@ fn promote<T: IndexedRoot>(
     Ok(())
 }
 
-struct Capture {
+struct Capture<'cuts> {
     owner: u64,
     handles: Arc<AtomicUsize>,
     nodes: Vec<Node>,
     index: Option<TryOrderedMap<u64, usize>>,
     cuts: Vec<Cut>,
     cut_index: Option<TryOrderedMap<u64, usize>>,
+    borrowed_cuts: Option<&'cuts [&'cuts SessionValue]>,
 }
-impl Capture {
+impl<'cuts> Capture<'cuts> {
     fn hash(reference: &Rooted<AnyRef>, meter: &mut Meter<'_>) -> Result<u64> {
         meter.work(1)?;
         let mut hash = DefaultHasher::new();
@@ -276,6 +280,26 @@ impl Capture {
         let hash = if meter.force_hash_collision { 0 } else { hash };
         Ok(hash)
     }
+    fn prepare_cuts(&mut self, cuts: &'cuts [&'cuts SessionValue], root: &Val, meter: &mut Meter<'_>) -> Result<()> {
+        debug_assert!(self.borrowed_cuts.is_none() && self.cuts.is_empty());
+        if cuts.len() <= BORROWED_CUT_LIMIT {
+            // Validate every supplied cut, including duplicates, immediates and
+            // unused entries. Root rejection precedes any atom traversal.
+            for cut in cuts {
+                meter.work(2)?;
+                let reference = cut.value.to_rooted(&mut meter.store);
+                if let Some(root) = root.anyref().flatten() {
+                    if Rooted::<AnyRef>::ref_eq(&meter.store, root, &reference)? {
+                        return Err(invalid("Storage snapshot root cannot be cut"));
+                    }
+                }
+            }
+            self.borrowed_cuts = Some(cuts);
+            return Ok(());
+        }
+        self.add_cuts(cuts, root, meter)
+    }
+
     fn add_cuts(&mut self, cuts: &[&SessionValue], root: &Val, meter: &mut Meter<'_>) -> Result<()> {
         // Session checked owners before one RootScope. No guest call/allocation
         // or GC while either ephemeral identity index lives.
@@ -333,7 +357,27 @@ impl Capture {
                 // No guest execution or guest heap allocation occurs in this
                 // traversal. The ephemeral index is discarded before returning;
                 // later checks use rooted ref_eq, not pre-GC reference hashes.
-                if !self.cuts.is_empty() {
+                if let Some(cuts) = self.borrowed_cuts {
+                    if !cuts.is_empty() {
+                    meter.work(1)?;
+                    for cut in cuts {
+                        meter.work(1)?;
+                        let expected = cut.value.to_rooted(&mut meter.store);
+                        if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &expected)? {
+                            meter.work(1)?;
+                            // Retain only observed opaque leaves, using the
+                            // snapshot's accounting counter, not the caller's.
+                            let value = cut.value.clone();
+                            self.handles.fetch_add(1, AtomicOrdering::Relaxed);
+                            return Ok(Atom::Opaque(SessionValue {
+                                identity: self.owner,
+                                value,
+                                handles: self.handles.clone(),
+                            }));
+                        }
+                    }
+                    }
+                } else if !self.cuts.is_empty() {
                     let (_, _, found) = snapshot_observed!(meter, "cut-lookup", self.cuts.len(), lookup(&self.cuts, &self.cut_index, &reference, meter))?;
                     if let Some(id) = found {
                         meter.work(1)?;
@@ -673,13 +717,21 @@ impl Session {
         let mut scope = RootScope::new(&mut self.store);
         let root = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
         let mut meter = Meter::new(scope.as_context_mut(), &interrupt);
+        // Prepay the additional borrowed-slice metadata and its bounded
+        // selection/publication/retirement controls before initialization.
+        meter.work(size_of::<Option<&[&SessionValue]>>() as u64 + 3)?;
         let mut capture = Capture { owner: self.identity, handles,
             nodes: Vec::new(), index: None,
-            cuts: Vec::new(), cut_index: None };
-        let added = snapshot_observed!(meter, "add-cuts", cuts.len(), capture.add_cuts(cuts, &root, &mut meter));
+            cuts: Vec::new(), cut_index: None, borrowed_cuts: None };
+        let added = snapshot_observed!(meter, "add-cuts", cuts.len(), capture.prepare_cuts(cuts, &root, &mut meter));
         if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
-            eprintln!("source-snapshot-cuts input={} dedup={} complete={} remaining={:?}",
-                cuts.len(), capture.cuts.len(), added.is_ok(), meter.store.get_fuel().ok());
+            if cuts.len() <= BORROWED_CUT_LIMIT {
+                eprintln!("source-snapshot-cuts input={} mode=borrowed complete={} remaining={:?}",
+                    cuts.len(), added.is_ok(), meter.store.get_fuel().ok());
+            } else {
+                eprintln!("source-snapshot-cuts input={} mode=owned dedup={} complete={} remaining={:?}",
+                    cuts.len(), capture.cuts.len(), added.is_ok(), meter.store.get_fuel().ok());
+            }
         }
         added?;
         let result = snapshot_observed!(meter, "finish", cuts.len(), capture.finish(root, &mut meter));
@@ -829,7 +881,7 @@ mod tests {
                 nodes: Vec::new(),
                 index: None,
             cuts: Vec::new(),
-            cut_index: None,
+            cut_index: None, borrowed_cuts: None,
             }
             .finish(value, &mut meter)
             .unwrap()
@@ -1195,7 +1247,7 @@ mod tests {
                     nodes: Vec::new(),
                     index: None,
             cuts: Vec::new(),
-            cut_index: None,
+            cut_index: None, borrowed_cuts: None,
                 }
                 .finish(root_value, &mut meter)
                 .unwrap_err()
@@ -1327,7 +1379,7 @@ mod tests {
             meter.force_hash_collision = true;
             let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
                 nodes: Vec::new(), index: None, cuts: Vec::new(),
-                cut_index: None };
+                cut_index: None, borrowed_cuts: None };
             capture.add_cuts(&[&a, &b, &a, &nil], &value, &mut meter).unwrap();
             capture.finish(value, &mut meter).unwrap()
         };
@@ -1373,7 +1425,7 @@ mod tests {
             } else {
                 let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
                     nodes: Vec::new(), index: None, cuts: Vec::new(),
-                    cut_index: None };
+                    cut_index: None, borrowed_cuts: None };
                 capture.add_cuts(&[&child], &value, &mut meter)
                     .and_then(|()| capture.finish(value, &mut meter)).unwrap_err()
             };
@@ -1413,11 +1465,17 @@ mod tests {
             index: indexed.then(TryOrderedMap::default),
             cuts: Vec::new(),
             cut_index: indexed.then(TryOrderedMap::default),
+            borrowed_cuts: None,
         };
-        capture.add_cuts(cuts, &value, &mut meter).unwrap();
+        if indexed {
+            capture.add_cuts(cuts, &value, &mut meter).unwrap();
+        } else {
+            capture.prepare_cuts(cuts, &value, &mut meter).unwrap();
+            assert_eq!(capture.borrowed_cuts.is_some(), cuts.len() <= BORROWED_CUT_LIMIT);
+        }
         assert_eq!(
             capture.cut_index.is_some(),
-            indexed || capture.cuts.len() > LINEAR_INDEX_LIMIT
+            indexed || (cuts.len() > BORROWED_CUT_LIMIT && capture.cuts.len() > LINEAR_INDEX_LIMIT)
         );
         capture.finish(value, &mut meter).unwrap()
     }
@@ -1426,7 +1484,7 @@ mod tests {
     fn adaptive_indexes_boundary_cycles_duplicates_and_wide_collisions_match_bfs() {
         let mut session = Session::new().unwrap();
         let nil = session.data_scalar(&Literal::Nil).unwrap();
-        for count in [7, 8, 9, 17] {
+        for count in [7, 8, 9, 17, 31, 32, 33] {
             let leaves: Vec<_> = (0..count).map(|_| raw_array(&mut session, &[])).collect();
             let refs: Vec<_> = leaves.iter().collect();
             let root = raw_array(&mut session, &refs);
@@ -1449,7 +1507,8 @@ mod tests {
             assert!(!session.storage_matches(&root, &adaptive).unwrap());
             assert!(!session.storage_matches(&root, &indexed).unwrap());
 
-            // Independently exercise cut promotion, including a duplicate at8.
+            // Compare borrowed32 / owned33 supplied-cut boundaries against the
+            // forced indexed implementation, including a duplicate at8.
             let mut cuts = refs.clone();
             cuts.insert(count.min(8), &leaves[0]);
             let root = raw_array(&mut session, &refs);
@@ -1461,6 +1520,90 @@ mod tests {
             set_array(&mut session, &root, 0, &leaves[1]);
             assert!(!session.storage_matches(&root, &a).unwrap());
             assert!(!session.storage_matches(&root, &b).unwrap());
+        }
+    }
+
+    #[test]
+    fn borrowed_cuts_keep_snapshot_handle_accounting_and_owned_leaves_after_inputs_drop() {
+        eprintln!("borrowed-cut-layout slice={} node={} cut={} snapshot={}",
+            size_of::<Option<&[&SessionValue]>>(), size_of::<Node>(), size_of::<Cut>(), size_of::<StorageSnapshot>());
+        for phase in [crate::portable::resolve::Phase::Runtime, crate::portable::resolve::Phase::Macro] {
+            let mut session = match phase {
+                crate::portable::resolve::Phase::Runtime => Session::new().unwrap(),
+                _ => Session::new_macro().unwrap(),
+            };
+            let nil = session.data_scalar(&Literal::Nil).unwrap();
+            let child = raw_array(&mut session, &[&nil]);
+            let root = raw_array(&mut session, &[&child, &child, &nil]);
+            let external = session.stats().external_value_handles;
+            let handles = Arc::new(AtomicUsize::new(0));
+            let snapshot = session.capture_storage_cut_accounted(
+                &root, &[&child, &nil, &child], handles.clone(),
+            ).unwrap();
+            // One array root and two opaque child occurrences belong to the
+            // proof counter. The caller's root counter must not increase.
+            assert_eq!(snapshot.nodes.len(), 1);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 3);
+            assert_eq!(session.stats().external_value_handles, external);
+            drop(child);
+            session.collect().unwrap();
+            assert!(session.storage_matches(&root, &snapshot).unwrap());
+            set_array(&mut session, &root, 1, &nil);
+            assert!(!session.storage_matches(&root, &snapshot).unwrap());
+            drop(root);
+            session.collect().unwrap();
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 3);
+            drop(snapshot);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            assert_eq!(session.stats().external_value_handles, external - 2);
+        }
+    }
+
+    #[test]
+    fn borrowed_cut_boundaries_fuel_irq_unused_foreign_and_root_rejection_recover() {
+        let mut session = Session::new().unwrap();
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        let child = raw_array(&mut session, &[&nil]);
+        let root = raw_array(&mut session, &[&child]);
+        let mut foreign = Session::new().unwrap();
+        let unused_foreign = raw_array(&mut foreign, &[]);
+        let handles = Arc::new(AtomicUsize::new(0));
+        for count in [BORROWED_CUT_LIMIT, BORROWED_CUT_LIMIT + 1] {
+            let cuts = vec![&child; count];
+            let cost = {
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.store.get_fuel().unwrap();
+                drop(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap());
+                let cost = before - session.store.get_fuel().unwrap();
+                drop(request);
+                cost
+            };
+            let external = session.stats().external_value_handles;
+            for allowance in 0..cost {
+                let request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(allowance).unwrap();
+                exhausted(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap_err(), wasmtime::Trap::OutOfFuel);
+                assert_eq!(handles.load(AtomicOrdering::Relaxed), 0, "count={count} allowance={allowance}");
+                assert_eq!(session.stats().external_value_handles, external);
+                drop(request);
+            }
+            let request = session.operation_budget_scope().unwrap();
+            session.interrupt_handle().interrupt();
+            assert!(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap_err().is_interrupt());
+            drop(request);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            let snapshot = session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap();
+            assert!(session.storage_matches(&root, &snapshot).unwrap());
+            drop(snapshot);
+            let mut malformed = cuts.clone();
+            malformed[count - 1] = &unused_foreign;
+            assert!(matches!(session.capture_storage_cut_accounted(&root, &malformed, handles.clone()), Err(SessionError::ForeignValue)));
+            malformed[count - 1] = &root;
+            assert!(matches!(session.capture_storage_cut_accounted(&root, &malformed, handles.clone()), Err(SessionError::Host(_))));
+            let immediate_root = vec![&nil; count];
+            assert!(matches!(session.capture_storage_cut_accounted(&nil, &immediate_root, handles.clone()), Err(SessionError::Host(_))));
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            assert_eq!(session.stats().external_value_handles, external);
         }
     }
 
@@ -1485,7 +1628,7 @@ mod tests {
                     nodes: Vec::new(),
                     index: None,
                     cuts: Vec::new(),
-                    cut_index: None,
+                    cut_index: None, borrowed_cuts: None,
                 };
                 if cuts {
                     capture
