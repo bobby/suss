@@ -29184,3 +29184,41 @@ Both bootstrap noncustom section sequences equal e85. Broader source/negative
 cohort, fresh full-core revalidation, foundation commands and final-head CI are
 pending at this checkpoint. No full baseline, #270 closure or merge is claimed.
 Independent reviews approve production ownership/copy changes and fixture fixes.
+
+## Constructor schema validation diagnostic (Refs #270)
+
+Isolated diagnostic/m4-constructor-validation-cost starts atcd20a98. Compatibility
+inspection found constructor_inputs/write_domain/source_roots unchanged from
+previous audit. One-file opt-in observer wraps original schema capture,
+postconstructor matches and nested schema matches exactly once without changing
+charges, guard short-circuiting, operation order or Result propagation. Existing
+WriteDomain direct-fact markers identify enrollment validation. Source SHA256
+92968c26985c24d2f4ebc32223153bdae75f37df02c269d1640bd7a95f56ea90.
+
+cache/run-native-constructor-validation-cost.py used idle/exclusive
+m4-cost-diagnostic-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS override. Compile
+--lib --no-run exit0; bootstrap exit0 (only4allowed outputs changed; both Wasm
+noncustom section sequences equal parent). Only actual test executed was
+portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo,
+--exact --test-threads=2 --nocapture, with SOURCE_CHILD_FUEL_TRACE and
+SOURCE_MATERIALIZE_FUEL_TRACE opt-ins (both prefixed SUSS_). Terminal101,
+0pass/1fuel-fail, Runtime/Some(4)/materialize; raw receipt/log supplies actual
+elapsed values. All2,915inputs unchanged after
+accepted bootstrap regeneration. No broad suites, cost probe or optimization.
+
+Actual Runtime/Some(0):33completed ordinary constructors. Schema capture102,461;
+postconstructor matches2,087 (nested schema1,584); enrollment matches2,117
+(nested schema1,584). Gross constructor/native-fact interval213,570 is NOT
+repeated validation cost. Runtime/Some(4) reached26complete constructors:
+schema capture84,304; postconstructor matches1,636 (nested schema1,238);
+enrollment matches1,662 (nested schema1,238). Next schema capture failed after
+1,691units. Parent/nested intervals overlap and must not be added. Parser keeps
+other-context schema checks separate and reports no open intervals/fuel increases.
+Later cases/Macro phase unexecuted. Small repeated validation does not justify
+prioritizing a checked handoff; no guards, source facts or cuts were removed.
+
+Archive docs/roadmap/evidence/m4-constructor-schema-cost-cd20a98-2026-10-17.tar.gz
+SHA2568d856b95ff0ddd14c7804850980b01a1366eac18329de129cabad6ab60efceea,
+21payloads with raw logs/receipt, parser/event rows, exact2915freeze manifests,
+source before/after/patch, command plan/runner and4bootstrap outputs. Diagnostic
+publication only; no acceptance, fullbaseline/CI, issue closure, PR or merge claim.

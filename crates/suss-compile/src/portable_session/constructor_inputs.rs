@@ -8,6 +8,25 @@ use wasmtime::{AnyRef, ArrayType, AsContextMut, RootScope, Rooted, Val};
 
 type Result<T> = std::result::Result<T, SessionError>;
 
+// Opt-in diagnostic intervals only. The original Result is evaluated exactly
+// once; no charge, guard, guest call or fallible-operation ordering changes.
+macro_rules! constructor_observed {
+    ($session:expr, $phase:literal, $operation:expr, $summary:expr) => {{
+        let trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if trace {
+            eprintln!("source-constructor-fact phase={} event=before remaining={:?}",
+                $phase, $session.operation_fuel_remaining().ok());
+        }
+        let result = $operation;
+        if trace {
+            eprintln!("source-constructor-fact phase={} event=after result={:?} remaining={:?}",
+                $phase, result.as_ref().map($summary).map_err(|error| error.to_string()),
+                $session.operation_fuel_remaining().ok());
+        }
+        result
+    }};
+}
+
 #[derive(Debug)]
 pub(crate) struct ConstructorInputs {
     descriptor: SessionValue,
@@ -168,7 +187,7 @@ impl Session {
             return Ok((self.data_construct_from_plan(&plan, arguments)?, None));
         }
         let schema = field(self, &descriptor, 1)?;
-        let schema_storage = self.capture_storage(&schema)?;
+        let schema_storage = constructor_observed!(self, "schema-capture", self.capture_storage(&schema), |_| ())?;
         let names = names(self, &schema)?;
         let mut fields = Vec::new();
         reserve(self, &mut fields, names.len())?;
@@ -231,7 +250,7 @@ impl Session {
             prototype_origin,
             memo_watch: None,
         };
-        if !inputs.matches(self, &value)? {
+        if !constructor_observed!(self, "postconstructor-matches", inputs.matches(self, &value), |valid: &bool| *valid)? {
             return Err(invalid(
                 "Ordinary constructor did not preserve its input fields",
             ));
@@ -305,7 +324,7 @@ impl ConstructorInputs {
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
         if !same(session, value, &self.receiver)?
-            || !session.storage_matches(&self.schema, &self.schema_storage)?
+            || !constructor_observed!(session, "schema-matches", session.storage_matches(&self.schema, &self.schema_storage), |valid: &bool| *valid)?
         {
             return Ok(false);
         }
