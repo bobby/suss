@@ -16,12 +16,23 @@ use std::sync::{
 };
 use wasmtime::{AnyRef, AsContextMut, RootScope, Rooted, StoreContextMut, Val};
 type Result<T> = std::result::Result<T, SessionError>;
-struct Node {
+struct ComplexNode {
     value: SessionValue,
     snapshot: Option<StorageSnapshot>,
     seed: Option<Arc<CanonicalSeed>>,
     edges: Vec<SessionValue>,
     watch: Option<Weak<Watch>>,
+}
+// Inline domain slots retain only immutable scalar facts or one complex owner.
+// The scalar case is constructed ONLY after the supplied root passed direct facts.
+enum Node { Scalar(Arc<super::ScalarInputs>), Complex(Box<ComplexNode>) }
+impl Node {
+    fn value(&self) -> &SessionValue { match self { Self::Scalar(f) => f.receiver(), Self::Complex(n) => &n.value } }
+    fn complex(&self) -> Option<&ComplexNode> { match self { Self::Scalar(_) => None, Self::Complex(n) => Some(n) } }
+    fn watch(&self) -> Option<&Weak<Watch>> { self.complex().and_then(|n| n.watch.as_ref()) }
+    fn seed(&self) -> Option<&Arc<CanonicalSeed>> { self.complex().and_then(|n| n.seed.as_ref()) }
+    fn snapshot(&self) -> Option<&StorageSnapshot> { self.complex().and_then(|n| n.snapshot.as_ref()) }
+    fn edges(&self) -> &[SessionValue] { self.complex().map_or(&[], |n| n.edges.as_slice()) }
 }
 struct ChildDomain {
     value: SessionValue,
@@ -158,6 +169,15 @@ impl WriteDomain {
         if !own {
             self.invalidate();
         }
+        let node = if own && matches!(fact, Fact::Scalar(_)) {
+            let Fact::Scalar(facts) = fact else { unreachable!() };
+            // Bounded retain/publication/drop; no generic edges, cuts, graph
+            // capture, extra receiver root, or full Record owner is created.
+            session.charge_host_work(std::mem::size_of::<Node>() as u64 + 4)?;
+            record_skipped!("edges-cuts", "typed-scalar-no-reference-fields");
+            record_skipped!("snapshot-capture", "typed-scalar-physical-witness");
+            Node::Scalar(Arc::clone(facts))
+        } else {
         let (edges, cuts, seed) = record_observed!("edges-cuts", (|| -> Result<_> {
         let upper = match fact {
             Fact::Constructor(f) => f.inputs().size_hint().1.unwrap_or(0),
@@ -166,7 +186,7 @@ impl WriteDomain {
         };
         session.charge_host_work(
             (upper as u64 + 4).saturating_mul((3 * std::mem::size_of::<SessionValue>()) as u64)
-                + std::mem::size_of::<Node>() as u64,
+                + std::mem::size_of::<ComplexNode>() as u64 + std::mem::size_of::<Node>() as u64 + 3,
         )?;
         let mut edges = Vec::new();
         edges.try_reserve_exact(upper).map_err(|_| {
@@ -196,6 +216,13 @@ impl WriteDomain {
             else { record_skipped!("snapshot-capture", "seed-has-existing-witness"); }
             None
         };
+        // The payload charge above now pays an actual Box (including invalid
+        // scalar facts); value is always the ORIGINAL supplied root here.
+        Node::Complex(Box::new(ComplexNode {
+            value: value.clone(), snapshot, seed, edges,
+            watch: watch.as_ref().map(Arc::downgrade),
+        }))
+        };
         let mut state = registry_lock(&self.state);
         record_observed!("node-growth", (|| -> Result<()> {
         if state.sealed { return Err(wasmtime::Error::msg("Source domain is sealed").into()); }
@@ -223,13 +250,7 @@ impl WriteDomain {
         Ok(())
         })(), |_| ())?;
         record_observed!("node-publication", (|| -> Result<()> {
-        state.nodes.push(Node {
-            value: value.clone(),
-            snapshot,
-            seed,
-            edges,
-            watch: watch.as_ref().map(Arc::downgrade),
-        });
+        state.nodes.push(node);
         Ok(())
         })(), |_| ())
     }
@@ -332,7 +353,7 @@ impl WriteDomain {
             })?;
             for node in &state.nodes {
                 Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-                if let Some(watch) = node.watch.as_ref().and_then(Weak::upgrade) {
+                if let Some(watch) = node.watch().and_then(Weak::upgrade) {
                     watches.push(watch);
                 }
             }
@@ -391,30 +412,34 @@ impl WriteDomain {
                         // Presence flags only: no extra Weak upgrade or guest
                         // reference inspection is performed for diagnostics.
                         eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=before remaining={:?}",
-                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            self, staged.is_some(), node.watch().is_some(), node.seed().is_some(), node.snapshot().is_some(),
                             $phase, scope.as_context_mut().get_fuel().ok());
                     }
                     let result = $operation;
                     if fuel_trace {
                         eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=after result={:?} remaining={:?}",
-                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            self, staged.is_some(), node.watch().is_some(), node.seed().is_some(), node.snapshot().is_some(),
                             $phase, result.as_ref().map_err(|error| error.to_string()), scope.as_context_mut().get_fuel().ok());
                     }
                     result
                 }};
             }
             Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
-            let root = Val::AnyRef(Some(node.value.value.to_rooted(&mut scope)));
+            // Do not attempt to root a foreign scalar owner before rejecting it.
+            if let Node::Scalar(facts) = node { facts.check_owner(identity)?; }
+            let root = Val::AnyRef(Some(node.value().value.to_rooted(&mut scope)));
             let storage_valid = node_observed!("snapshot", (|| -> Result<bool> {
-            if let Some(seed) = &node.seed {
+            if let Node::Scalar(facts) = node {
+                facts.matches_in_context(scope.as_context_mut(), root, identity, irq, false)
+            } else if let Some(seed) = node.seed() {
                 Ok(seed.write_storage().matches_in_context(
                     scope.as_context_mut(),
                     root,
                     identity,
                     irq,
                 )?)
-            } else if let Some(snapshot) = &node.snapshot {
-                let watch = node.watch.as_ref().and_then(Weak::upgrade);
+            } else if let Some(snapshot) = node.snapshot() {
+                let watch = node.watch().and_then(Weak::upgrade);
                 Ok(snapshot.matches_in_context_with_slots(
                     scope.as_context_mut(),
                     root,
@@ -445,7 +470,7 @@ impl WriteDomain {
             })())?;
             valid &= storage_valid;
             node_observed!("edge-membership", (|| -> Result<()> {
-            for edge in &node.edges {
+            for edge in node.edges() {
                 Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                 let edge = edge.value.to_rooted(&mut scope);
                 let mut member = edge.as_i31(&scope)?.is_some();
@@ -454,7 +479,7 @@ impl WriteDomain {
                 }
                 for other in &state.nodes {
                     Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
-                    let other_root = other.value.value.to_rooted(&mut scope);
+                    let other_root = other.value().value.to_rooted(&mut scope);
                     member |= Rooted::<AnyRef>::ref_eq(&scope, &edge, &other_root)?;
                     if member {
                         break;
@@ -474,7 +499,7 @@ impl WriteDomain {
                 if !member {
                     for other in &state.nodes {
                         Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
-                        if let Some(seed) = &other.seed {
+                        if let Some(seed) = other.seed() {
                             member |= seed.write_storage().contains_reference_in_context(
                                 scope.as_context_mut(),
                                 Val::AnyRef(Some(edge)),
@@ -524,7 +549,7 @@ mod tests {
         let records = bridge.into_records().unwrap();
         let domain = records.write_domain();
         let watch = registry_lock(&domain.state).nodes.iter()
-            .find_map(|node| node.watch.as_ref().and_then(Weak::upgrade)).unwrap();
+            .find_map(|node| node.watch().and_then(Weak::upgrade)).unwrap();
         (records, domain, watch, seed, interior)
     }
     fn domain_valid(session: &mut Session, domain: &WriteDomain, target: &Watch) -> Result<bool> {
@@ -543,6 +568,167 @@ mod tests {
         value
     }
     #[test]
+    fn scalar_domain_mixed_growth_and_record_drop_orders_keep_only_scalar_owners() {
+        eprintln!("typed-scalar-layout Node={} ComplexNode={} ScalarInputs={} Fact={}",
+            std::mem::size_of::<Node>(), std::mem::size_of::<ComplexNode>(),
+            std::mem::size_of::<super::super::ScalarInputs>(), std::mem::size_of::<Fact>());
+        use crate::portable::resolve::Phase;
+        for phase in [Phase::Runtime, Phase::Macro] {
+            for records_first in [false, true] {
+                let mut session = match phase { Phase::Runtime => Session::new_repl().unwrap(), Phase::Macro => Session::new_macro().unwrap() };
+                let bridge = FormBridge::new(&mut session).unwrap().recording(&mut session).unwrap();
+                // Each vector contributes genuine complex constructor/array
+                // facts alongside a distinct immutable scalar factory owner.
+                for index in 0..20 {
+                    let value = bridge.scalar(&mut session, &Literal::Number(index as f64)).unwrap();
+                    drop(bridge.vector_values(&mut session, &[value]).unwrap());
+                }
+                let records = bridge.into_records().unwrap();
+                let domain = records.write_domain();
+                let mut scalar_owners = Vec::new();
+                let mut watch_owners = Vec::new();
+                let (scalars, complex) = {
+                    let state = registry_lock(&domain.state);
+                    let mut scalars = 0; let mut complex = 0;
+                    for node in &state.nodes {
+                        match node {
+                            Node::Scalar(facts) => {
+                                scalars += 1;
+                                scalar_owners.push(Arc::downgrade(facts));
+                            }
+                            Node::Complex(node) => {
+                                complex += 1;
+                                if let Some(watch) = &node.watch { watch_owners.push(watch.clone()); }
+                            }
+                        }
+                    }
+                    // Distinct mixed owners span multiple geometric growth
+                    // boundaries; do not assume allocator capacity is exact.
+                    assert!(state.nodes.len() > 32);
+                    (scalars, complex)
+                };
+                // At least the twenty explicit inputs, plus the bridge's own
+                // count/shift/nil scalar facts; do not depend on that encoding.
+                assert!(scalars >= 20);
+                assert!(complex >= 20);
+                if phase == Phase::Macro { assert!(!watch_owners.is_empty()); }
+                assert!(watch_owners.iter().all(|owner| owner.strong_count() > 0));
+                session.collect().unwrap();
+                assert!(records.matches_direct_facts(&mut session).unwrap());
+                if records_first {
+                    drop(records);
+                    // Only native scalar facts are retained strongly by the
+                    // domain. Constructor Watches must die with their facts.
+                    assert!(watch_owners.iter().all(|owner| owner.strong_count() == 0));
+                    session.collect().unwrap();
+                    for weak in &scalar_owners {
+                        let facts = weak.upgrade().expect("domain lost its scalar owner");
+                        assert_eq!(Arc::strong_count(&facts), 2); // domain + this local
+                        assert!(facts.matches(&mut session, facts.receiver()).unwrap());
+                    }
+                    drop(domain);
+                } else {
+                    // Records themselves own the domain. Releasing our domain
+                    // reference first must keep both fact sets alive until the
+                    // records' final owner is dropped; no artificial cycle.
+                    drop(domain);
+                    assert!(scalar_owners.iter().all(|owner| owner.strong_count() > 0));
+                    assert!(watch_owners.iter().all(|owner| owner.strong_count() > 0));
+                    assert!(records.matches_direct_facts(&mut session).unwrap());
+                    drop(records);
+                }
+                session.collect().unwrap();
+                assert!(scalar_owners.iter().all(|owner| owner.upgrade().is_none()));
+                assert!(watch_owners.iter().all(|owner| owner.upgrade().is_none()));
+            }
+        }
+    }
+    #[test]
+    fn scalar_domain_shares_only_valid_fact_and_preserves_wrong_supplied_root_and_late_error() {
+        for phase in [crate::portable::resolve::Phase::Runtime, crate::portable::resolve::Phase::Macro] {
+            let mut session = match phase { crate::portable::resolve::Phase::Runtime => Session::new_repl().unwrap(), _ => Session::new_macro().unwrap() };
+            let (_records, _fixture_domain, target, _seed, _interior) = membership_fixture(&mut session);
+            // Exercise a minimal no-edge domain so an intentionally foreign
+            // later test entry is never rooted by an earlier membership scan.
+            let domain = WriteDomain::new();
+            fn check(session: &mut Session, domain: &WriteDomain, target: &Watch) -> Result<bool> {
+                let _request = session.operation_budget_scope()?;
+                let methods = session.canonical_methods.clone().unwrap();
+                let prototype = session.prototype_origin.clone().unwrap();
+                let identity = session.identity; let runtime = session.runtime;
+                let irq = session.host_work_interrupt();
+                domain.matches_local(session.store.as_context_mut(), runtime, identity, &irq,
+                    &methods, &prototype, None, target, &[], false)
+            }
+            let (value, facts) = session.data_scalar_with_inputs(&Literal::Number(17.0)).unwrap();
+            domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap();
+            {
+                let state = registry_lock(&domain.state);
+                let Some(Node::Scalar(retained)) = state.nodes.last() else { panic!("valid scalar did not specialize") };
+                assert!(Arc::ptr_eq(retained, &facts));
+            }
+            let wrong = session.data_scalar(&Literal::Number(17.0)).unwrap();
+            domain.record(&mut session, &wrong, &Fact::Scalar(facts.clone())).unwrap();
+            {
+                let state = registry_lock(&domain.state);
+                assert!(!state.valid);
+                let Some(Node::Complex(node)) = state.nodes.last() else { panic!("wrong root specialized") };
+                assert!(node.snapshot.is_none());
+                session.inspect(&wrong, |mut store, root| {
+                    let retained = node.value.value.to_rooted(&mut store);
+                    assert!(Rooted::<AnyRef>::ref_eq(&store, root.unwrap_anyref().unwrap(), &retained)?);
+                    let original = facts.receiver().value.to_rooted(&mut store);
+                    assert!(!Rooted::<AnyRef>::ref_eq(&store, &retained, &original)?);
+                    Ok(())
+                }).unwrap();
+            }
+            session.collect().unwrap();
+            assert!(!check(&mut session, &domain, &target).unwrap());
+            // Test-only malformed later entry: even an already-invalid domain
+            // must run its later physical checks and propagate owner errors.
+            let mut foreign = Session::new_macro().unwrap();
+            let (_, foreign_facts) = foreign.data_scalar_with_inputs(&Literal::Nil).unwrap();
+            registry_lock(&domain.state).nodes.push(Node::Scalar(foreign_facts));
+            assert!(matches!(check(&mut session, &domain, &target), Err(SessionError::ForeignValue)));
+        }
+    }
+    #[test]
+    fn scalar_domain_publication_fuel_irq_sweep_preserves_owners_and_recovers() {
+        let mut session = Session::new_macro().unwrap();
+        let (value, facts) = session.data_scalar_with_inputs(&Literal::String(vec![0, 0xd800, 17])).unwrap();
+        let cost = {
+            let domain = WriteDomain::new();
+            let request = session.operation_budget_scope().unwrap();
+            let before = session.store.get_fuel().unwrap();
+            domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap();
+            let cost = before - session.store.get_fuel().unwrap();
+            drop(request); cost
+        };
+        let handles = session.stats().external_value_handles;
+        let owners = Arc::strong_count(&facts);
+        for allowance in 0..cost {
+            let domain = WriteDomain::new();
+            let request = session.operation_budget_scope().unwrap();
+            session.store.set_fuel(allowance).unwrap();
+            let error = domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap_err();
+            assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "allowance={allowance}: {error:?}");
+            assert!(registry_lock(&domain.state).nodes.is_empty());
+            assert_eq!(Arc::strong_count(&facts), owners);
+            assert_eq!(session.stats().external_value_handles, handles);
+            drop(request);
+            domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap();
+            assert_eq!(registry_lock(&domain.state).nodes.len(), 1);
+        }
+        let domain = WriteDomain::new();
+        let request = session.operation_budget_scope().unwrap();
+        session.interrupt_handle().interrupt();
+        assert!(domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap_err().is_interrupt());
+        assert!(registry_lock(&domain.state).nodes.is_empty());
+        drop(request);
+        domain.record(&mut session, &value, &Fact::Scalar(facts.clone())).unwrap();
+        assert_eq!(registry_lock(&domain.state).nodes.len(), 1);
+    }
+    #[test]
     fn direct_membership_and_seed_interior_preserve_exact_closed_domain_and_seed_checks() {
         let mut session = Session::new_macro().unwrap();
         let (_records, domain, target, seed, interior) = membership_fixture(&mut session);
@@ -552,7 +738,7 @@ mod tests {
             let state = registry_lock(&domain.state);
             session.inspect(&interior, |mut store, value| {
                 for node in &state.nodes {
-                    let root = node.value.value.to_rooted(&mut store);
+                    let root = node.value().value.to_rooted(&mut store);
                     assert!(!Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &root)?);
                 }
                 Ok(())
