@@ -26492,3 +26492,31 @@ its unfinished result is not a pass. The priorfull baseline/CI at896b9bc retain
 stale-guard failures andpartial/unexecuted coverage separately. This checkpoint
 requires terminal Jank comparison, a newfull workspace baseline andfinal-head CI
 before readiness. No implementation/bootstrap bytes change inthis reconciliation.
+
+### Exact when-let expectation reconciliation (2026-10-16)
+
+The original four ignored destructuring tests pass unchanged with
+`cargo test -p suss-compile --locked --test compile_expr destructuring -- --ignored --test-threads=2`.
+Only their ignore attributes and four stale unsupported rows were removed;
+original bodies and assertions remain byte-identical. The four exact tests and
+remaining unsupported guard then pass five executions with1,846 frozen inputs
+unchanged. The known-failure catalog removes only the obsolete when-let namespace
+load error, backed by all12 complete unchanged Jank body assertions in order.
+
+`cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2 --nocapture`
+passes the full reviewed-failure comparison (568.51s test time). Raw results are
+943 pass,21 fail,17 guest-judged,188 failed namespaces,4,873 unexecuted and0 skipped.
+Those retained gaps do not become successes. The historical runner receipt names
+896b9bc; source correspondence proves its exact two-file candidate tuple matches
+all1,846 inputs committed at1a85c8d. Handoff is outside that frozen set.
+
+The previous required baseline was explicitly stopped after those concrete
+stale-test fixes were validated. It retains117 passes,0 failures/ignores across
+26 completed summaries; interrupted definitions and later targets remain
+unexecuted. SIGINT reached only its verified owned Cargo/child; exit-2 is not a
+baseline pass or timeout. All1,846 old inputs remained unchanged. Raw commands,
+source bytes, comparisons and stop receipts are in
+`m4-when-let-reconciliation-2026-10-16.tar.gz`; manifest maps deduplicated exact
+source bytes to each frozen path. The corrected1a85 baseline has started using
+`CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, with no
+RUSTFLAGS override. Its terminal result and final-head CI remain required.
