@@ -118,7 +118,7 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
 
 # Independent closed identities for the reviewed generic/typed generators and
 # complete property-find route. Not derived from refreshable manifest values.
-EXPECTED_NAMED_PROPERTY_SCOPES = {'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5', 'checked': '681f78d0a14c6d46a52b0c7b19eeb1f73ed7c3932292fa1b559e15cc7e3b9d82', 'typed-route': '248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63'}
+EXPECTED_NAMED_PROPERTY_SCOPES = {'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5', 'checked': '3cd41759266b4a8890da3ff09783563bf76b28b2f1a1bfc98dc711661f270aa9', 'typed-route': '248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63'}
 
 
 def named_property_guard_scopes(raw):

@@ -70,6 +70,13 @@ class RecordAbiProvenance(unittest.TestCase):
         for route in ['generic', 'checked']:
             route_mutations = mutations.copy()
             if route == 'checked':
+                # Character-template lines move inside a closure; reserved and
+                # equality generator lines keep their original indentation.
+                for key in ['non_ascii_comparison', 'mask_word_selection',
+                            'mask_bit_test', 'lowercase_bypass_reserved']:
+                    old, new = route_mutations[key]
+                    route_mutations[key] = (old.replace(b'\n', b'\n    '),
+                                            new.replace(b'\n', b'\n    '))
                 # Same twelve algorithm boundaries in the fused generator;
                 # successful validation exits a block rather than returning true.
                 route_mutations['reserved_rejection'] = (
@@ -130,6 +137,34 @@ class RecordAbiProvenance(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'complete guard differs'):
                     verify_named_property_abi_adaptation(changed, mutated)
                 changed['checked-guard-sha256'] = hashlib.sha256(mutated_scope).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
+    def test_checked_prefix_cannot_skip_unit_or_reserved_validation(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        checked = named_property_guard_scopes(source)['checked']
+        for old, new in [
+            (b'    body.push(Block(BlockType::Empty));\n    for index in 0..4 {',
+             b'    body.push(Block(BlockType::Empty));\n    for index in 0..3 {'),
+            (b'If(BlockType::Empty), Br(1), End,',
+             b'If(BlockType::Empty), I32Const(1), Return, End,'),
+            (b'I32Const(4), LocalSet(3), Block(BlockType::Empty), Loop(BlockType::Empty),',
+             b'I32Const(5), LocalSet(3), Block(BlockType::Empty), Loop(BlockType::Empty),'),
+            (b'        emit_unit_guard(&mut body);', b'        // prefix unit check removed'),
+            (b'\n    emit_unit_guard(&mut body);\n', b'\n    // fallback unit check removed\n'),
+            (b'LocalGet(3), LocalGet(5), I32GeU, BrIf(1),',
+             b'LocalGet(3), LocalGet(5), I32GtU, BrIf(1),'),
+        ]:
+            with self.subTest(bypass=old):
+                self.assertIn(old, checked)
+                changed_scope = checked.replace(old, new, 1)
+                mutated = source.replace(checked, changed_scope, 1)
+                mutated += b'\n/* Decoy: ' + old + b' */\n'
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'complete guard differs'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+                changed['checked-guard-sha256'] = hashlib.sha256(changed_scope).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
                     verify_named_property_abi_adaptation(changed, mutated)
 

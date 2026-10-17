@@ -9308,6 +9308,71 @@ mod checked_field_loop_regression {
         assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 1);
     }
     #[test]
+    fn runtime_abi_checked_field_prefix_lengths_and_reserved_boundary() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(&mut store,
+            &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let query = key(&mut store, runtime, "a");
+        for length in 0..=6 {
+            let field = text(&mut store, runtime, &vec![u16::from(b'a'); length]);
+            let schema = array(&mut store, runtime, &[field.clone()]);
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(),
+                       if length == 1 { 0 } else { -1 });
+            for index in 0..length {
+                for unit in [0, 45, 64, 128, 256, 0x7fff, 0xd800, 0xffff] {
+                    field.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+                        .set(&mut store, index as u32, Val::I32(unit)).unwrap();
+                    let error = find(&mut store, runtime, &schema, &query, 1).unwrap_err();
+                    language_error(&mut store, error);
+                    field.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+                        .set(&mut store, index as u32, Val::I32(i32::from(b'a'))).unwrap();
+                }
+            }
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(),
+                       if length == 1 { 0 } else { -1 });
+        }
+        // Length3/4 short-prefix exits must not skip reserved dispatch;
+        // length5 also exercises the first fallback character.
+        for name in ["for", "null", "while", "constructor"] {
+            let field = key(&mut store, runtime, name);
+            let schema = array(&mut store, runtime, &[field.clone()]);
+            let error = find(&mut store, runtime, &schema, &field, 1).unwrap_err();
+            language_error(&mut store, error);
+        }
+        store.gc(None).unwrap();
+    }
+
+    #[test]
+    fn runtime_abi_checked_field_prefix_and_fallback_validate_every_utf16_unit() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(&mut store,
+            &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let query = key(&mut store, runtime, "a");
+        let field = key(&mut store, runtime, "aaaaaa");
+        let schema = array(&mut store, runtime, &[field.clone()]);
+        for index in [3, 4] {
+            for unit in 0..=u16::MAX {
+                field.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+                    .set(&mut store, index, Val::I32(i32::from(unit))).unwrap();
+                let supported = unit <= 127 && ((unit as u8).is_ascii_alphanumeric()
+                    || unit == u16::from(b'_') || unit == u16::from(b'$'));
+                let result = find(&mut store, runtime, &schema, &query, 1);
+                if supported {
+                    assert_eq!(result.unwrap(), -1, "index={index} unit={unit}");
+                } else {
+                    language_error(&mut store, result.unwrap_err());
+                }
+                if unit % 4096 == 0 { store.gc(None).unwrap(); }
+            }
+            field.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+                .set(&mut store, index, Val::I32(i32::from(b'a'))).unwrap();
+        }
+        assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), -1);
+    }
+
+    #[test]
     fn runtime_abi_checked_field_loop_fuel_cuts_recover_and_print_matched_costs() {
         let mut config = wasmtime::Config::new();
         config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)

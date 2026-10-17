@@ -237,74 +237,73 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Private typed operands: field0/query1/query-length2; index3/unit4/field-length5.
     // Validate the entire field before any equality/length-mismatch return.
     let mut body = vec![Block(BlockType::Empty)];
-    // Length is immutable and no callback occurs during this validation.
-    body.extend([
-        LocalGet(0),
-        ArrayLen,
-        LocalSet(5),
-        I32Const(0),
-        LocalSet(3),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
-        LocalGet(5),
-        I32GeU,
-        BrIf(1),
-        LocalGet(0),
-        LocalGet(3),
-        ArrayGetU(STRING),
-        LocalSet(4),
-    ]);
-    // Exactly the existing ASCII whitelist, represented by two word masks.
-    // Reject all non-ASCII units before Wasm's modulo-64 shift semantics apply.
+    // Capture the field length once for all character checks and equality.
+    body.extend([LocalGet(0), ArrayLen, LocalSet(5)]);
     let mut allowed = [0_u64; 2];
     for unit in b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$" {
         allowed[usize::from(*unit) / 64] |= 1_u64 << (*unit % 64);
     }
+    // This is the complete original unit guard, shared by prefix and fallback.
+    let emit_unit_guard = |body: &mut Vec<Instruction<'static>>| {
+        body.extend([
+            // Lowercase letters dominate source field names. This only skips the
+            // equivalent character mask, never the later reserved-spelling check.
+            LocalGet(4),
+            I32Const(i32::from(b'a')),
+            I32Sub,
+            I32Const(25),
+            I32LeU,
+            If(BlockType::Empty),
+            Else,
+            LocalGet(4),
+            I32Const(128),
+            I32GeU,
+            If(BlockType::Empty),
+        ]);
+        nominal::error(body);
+        body.extend([
+            End,
+            I64Const(allowed[0] as i64),
+            I64Const(allowed[1] as i64),
+            LocalGet(4),
+            I32Const(64),
+            I32LtU,
+            Select,
+            LocalGet(4),
+            I64ExtendI32U,
+            I64ShrU,
+            I64Const(1),
+            I64And,
+            I64Eqz,
+            If(BlockType::Empty),
+        ]);
+        nominal::error(body);
+        body.extend([
+            End,
+            End,
+        ]);
+    };
+    // A short name exits only the character block, then enters reserved checks.
+    body.push(Block(BlockType::Empty));
+    for index in 0..4 {
+        body.extend([
+            LocalGet(5), I32Const(index), I32LeU,
+            If(BlockType::Empty), Br(1), End,
+            LocalGet(0), I32Const(index), ArrayGetU(STRING), LocalSet(4),
+        ]);
+        emit_unit_guard(&mut body);
+    }
+    // Every remaining unit is checked by the original index-controlled loop.
     body.extend([
-        // Lowercase letters dominate source field names. This only skips the
-        // equivalent character mask, never the later reserved-spelling check.
-        LocalGet(4),
-        I32Const(i32::from(b'a')),
-        I32Sub,
-        I32Const(25),
-        I32LeU,
-        If(BlockType::Empty),
-        Else,
-        LocalGet(4),
-        I32Const(128),
-        I32GeU,
-        If(BlockType::Empty),
+        I32Const(4), LocalSet(3), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), LocalGet(5), I32GeU, BrIf(1),
+        LocalGet(0), LocalGet(3), ArrayGetU(STRING), LocalSet(4),
     ]);
-    nominal::error(&mut body);
+    emit_unit_guard(&mut body);
     body.extend([
-        End,
-        I64Const(allowed[0] as i64),
-        I64Const(allowed[1] as i64),
-        LocalGet(4),
-        I32Const(64),
-        I32LtU,
-        Select,
-        LocalGet(4),
-        I64ExtendI32U,
-        I64ShrU,
-        I64Const(1),
-        I64And,
-        I64Eqz,
-        If(BlockType::Empty),
+        LocalGet(3), I32Const(1), I32Add, LocalSet(3), Br(0), End, End,
     ]);
-    nominal::error(&mut body);
-    body.extend([
-        End,
-        End,
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
-        Br(0),
-        End,
-        End,
-    ]);
+    body.push(End); // only character validation is complete; reserved checks follow.
     let reserved_names = [
         "arguments",
         "abstract",
