@@ -29082,3 +29082,35 @@ layout-probe source/executable. Source review confirmed committed4d0c488.
 Archive correspondence review and new-head CI remain separate gates. No full
 native-branch baseline or issue closure is established. Next measured candidates
 are single-table shared-full insertion and exact primitive-array census.
+
+### Shared-full map staging and replacement accounting (2026-10-17)
+
+Shared, nonempty, absent-key full insertions reserve one final table before
+copying keys/retaining values. The existing conservative final-capacity charge
+remains; eliminated intermediate-table and rehash work is removed. Weak map
+owners follow the same COW path. Empty/private/nongrowing insertion paths stay
+on their existing routes. Publication follows every fallible staged operation.
+
+An initial new control incorrectly required capacity equality on full-map
+replacement: pilot ownership21pass/1fail. Standalone parent-path std execution
+confirms3→7capacity despite replacing an existing key. Corrected controls check
+key/value/owner semantics. This also exposed an inherited unprecharged implicit
+growth path; replacement now prepays its existing-slot lookup and uses get_mut
+plus mem::replace, avoiding HashMap::insert growth while returning the old Arc.
+New private/shared regressions check actual no-growth, captured values, every
+shared charge cancellation and retry. Private cancellation is not separately
+exercised by this new replacement regression.
+
+Pilot cache/native-map-staging-candidate retains raw logs/source tuples and
+targeted-stop-receipt.json: verified driver/group155657 SIGINT, terminal130,
+empty remaining group and2,915 unchanged inputs. Stop was for the concrete new
+test correction; later pilot coverage remains unexecuted. Parent std control
+source/results live in cache/full-map-replacement-std-control.
+
+Fresh frozen runner run-native-map-staging-repaired-candidate.py compiles and
+regenerates only4bootstrap outputs. Both noncustom Wasm section sequences equal
+2936205. Ownership23/23, trace4/4, Global8/8 and Int32 ABI1/1 pass. Python348
+and all13foundation commands exit0 on the unchanged2,915-input tuple. Remaining
+focused execution and net cost measurement are live; no new acceptance/full
+baseline/CI success is inferred. Independent actual source review found no
+blocker. No quota/tariff reduction, issue closure or merge.

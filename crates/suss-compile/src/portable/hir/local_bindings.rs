@@ -973,14 +973,26 @@ fn cow_table<T>(capacity: usize, meter: &mut CowMeter<'_>) -> Result<(), Diagnos
     cow_charge(meter, 4, std::mem::size_of::<usize>())
 }
 /// Stage a shared map copy; publish only once every key has been copied.
-fn cow_map_copy<T>(map: &mut Arc<HashMap<String, Arc<T>>>, meter: &mut CowMeter<'_>) -> Result<Option<HashMap<String, Arc<T>>>, Diagnostic> {
+fn cow_map_copy<T>(map: &mut Arc<HashMap<String, Arc<T>>>, pending_growth: Option<usize>, meter: &mut CowMeter<'_>) -> Result<Option<HashMap<String, Arc<T>>>, Diagnostic> {
     let _trace = CowTraceScope::new("map_copy");
     meter(1)?;
     if Arc::get_mut(map).is_some() { return Ok(None); }
-    cow_table::<T>(map.capacity(), meter)?;
+    // A shared nonempty full insertion builds its final table directly. Keep
+    // the existing conservative final-capacity charge, but allocate no old
+    // table and perform no subsequent relocation/rehash pass.
+    let reserve = if let Some(capacity) = pending_growth {
+        let reserve = map.len().checked_add(1)
+            .ok_or_else(|| fail(0..0, "Source ownership capacity overflow"))?;
+        let _trace = CowTraceScope::new("map_growth_prepare");
+        cow_table::<T>(capacity, meter)?;
+        reserve
+    } else {
+        cow_table::<T>(map.capacity(), meter)?;
+        map.capacity()
+    };
     cow_charge(meter, 1, std::mem::size_of::<HashMap<String, Arc<T>>>())?;
     let mut staged = HashMap::with_hasher(map.hasher().clone());
-    staged.try_reserve(map.capacity()).map_err(|_| fail(0..0, "Unable to reserve source ownership map"))?;
+    staged.try_reserve(reserve).map_err(|_| fail(0..0, "Unable to reserve source ownership map"))?;
     for (key, value) in map.iter() {
         meter(1)?;
         let key = cow_text(key, meter)?;
@@ -989,7 +1001,7 @@ fn cow_map_copy<T>(map: &mut Arc<HashMap<String, Arc<T>>>, meter: &mut CowMeter<
     Ok(Some(staged))
 }
 fn cow_map<T>(map: &mut Arc<HashMap<String, Arc<T>>>, meter: &mut CowMeter<'_>) -> Result<(), Diagnostic> {
-    if let Some(staged) = cow_map_copy(map, meter)? { *map = Arc::new(staged); }
+    if let Some(staged) = cow_map_copy(map, None, meter)? { *map = Arc::new(staged); }
     Ok(())
 }
 fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<T>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<T>>, Diagnostic> {
@@ -997,9 +1009,16 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
     // Charge lookup/hash/copy and potential growth before publishing the entry.
     meter(1)?;
     let key = cow_text(name, meter)?;
-    let growing = !map.contains_key(name) && map.len() == map.capacity();
+    let replacing = map.contains_key(name);
+    let growing = !replacing && map.len() == map.capacity();
     let trace_insert = CowTraceMapInsert::new(map, growing);
-    if growing {
+    // get_mut includes weak owners; do not mutate a captured/weak-owned map.
+    let shared_growth = growing && !map.is_empty() && Arc::get_mut(map).is_none();
+    let final_capacity = if shared_growth {
+        Some(map.capacity().checked_mul(2).and_then(|n| n.checked_add(4))
+            .ok_or_else(|| fail(0..0, "Source ownership capacity overflow"))?)
+    } else { None };
+    if growing && !shared_growth {
         let _trace = CowTraceScope::new("map_growth_prepare");
         let capacity = map.capacity().checked_mul(2).and_then(|n| n.checked_add(4))
             .ok_or_else(|| fail(0..0, "Source ownership capacity overflow"))?;
@@ -1012,18 +1031,32 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
             cow_charge(meter, existing.len(), 1)?;
         }
     }
-    let mut staged = cow_map_copy(map, meter)?;
+    let mut staged = cow_map_copy(map, final_capacity, meter)?;
     trace_insert.copy_ready(staged.as_ref());
+    if let Some(capacity) = final_capacity {
+        trace_insert.growth_charge_capacity(capacity);
+        trace_insert.growth_ready(staged.as_ref().expect("shared insertion stage").capacity());
+    }
+    // HashMap::insert can grow a full table even for replacement. Retain the
+    // existing slot directly; prepay its lookup before any map publication.
+    if replacing {
+        meter(1)?;
+        cow_charge(meter, name.len(), 1)?;
+    }
     let previous = {
         let target = match staged.as_mut() {
             Some(staged) => staged,
             None => Arc::get_mut(map).expect("private source map"),
         };
-        if growing {
+        if growing && !shared_growth {
             target.try_reserve(1).map_err(|_| fail(0..0, "Unable to grow source ownership map"))?;
             trace_insert.growth_ready(target.capacity());
         }
-        target.insert(key, value)
+        if replacing {
+            Some(std::mem::replace(target.get_mut(name).expect("existing source entry"), value))
+        } else {
+            target.insert(key, value)
+        }
     };
     if let Some(staged) = staged { *map = Arc::new(staged); }
     Ok(previous)
@@ -1206,8 +1239,8 @@ mod cow_trace_tests {
             let state = state.borrow();
             assert_eq!(state.events["map_insert_shared_full"], (1, 0));
             assert_eq!(state.events["shared_full_old_capacity"], (1, old_capacity as u64));
-            assert_eq!(state.events["shared_full_copy_completed"], (1, old_capacity as u64));
-            assert_eq!(state.events["shared_full_nonempty_copy_table"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_copy_completed"], (1, map.capacity() as u64));
+            assert_eq!(state.events["shared_full_nonempty_copy_table"], (1, map.capacity() as u64));
             assert_eq!(state.events["shared_full_growth_completed"], (1, map.capacity() as u64));
             assert!(state.totals["map_copy:shared_full"].1 > 0);
             assert!(state.totals["map_growth_prepare:shared_full"].1 > 0);
@@ -1930,6 +1963,130 @@ mod ownership_tests {
         assert_eq!(saved["x"].id, BindingId(0));
         attempt = saved.clone();
         assert!(Arc::ptr_eq(&attempt, &saved));
+    }
+
+    #[test]
+    fn shared_full_final_table_staging_is_atomic_for_strong_and_weak_owners() {
+        let full = || {
+            let mut map = HashMap::new();
+            map.try_reserve(3).unwrap();
+            for i in 0..map.capacity() { map.insert(format!("key-{i}"), Arc::new(i)); }
+            Arc::new(map)
+        };
+        for weak_only in [false, true] {
+            let seed = full();
+            let original_keys: Vec<_> = seed.iter().map(|(k,v)| (k.clone(),v.clone())).collect();
+            let make = || {
+                let map = Arc::new(seed.as_ref().clone());
+                let weak = Arc::downgrade(&map);
+                let strong = (!weak_only).then(|| map.clone());
+                (map, weak, strong)
+            };
+            let (mut measured, _, _) = make();
+            // Keep the weak owner alive explicitly through the operation.
+            let measured_weak = Arc::downgrade(&measured);
+            let mut count = 0;
+            cow_insert(&mut measured, "new-key", Arc::new(99), &mut |_| { count += 1; Ok(()) }).unwrap();
+            drop(measured_weak);
+            for cancel in 0..count {
+                let (mut map, weak, strong) = make();
+                let pointer = Arc::as_ptr(&map);
+                let hasher_before = std::hash::BuildHasher::hash_one(map.hasher(), "same-key");
+                let mut call = 0;
+                let error = cow_insert(&mut map, "new-key", Arc::new(99), &mut |_| {
+                    let current = call; call += 1;
+                    if current == cancel { Err(fail(11..19, "map stage interrupted")) } else { Ok(()) }
+                }).unwrap_err();
+                assert_eq!(error.message, "map stage interrupted");
+                assert_eq!(Arc::as_ptr(&map), pointer);
+                assert_eq!(Arc::as_ptr(&weak.upgrade().unwrap()), pointer);
+                assert!(!map.contains_key("new-key"));
+                for (key, value) in &original_keys { assert!(Arc::ptr_eq(&map[key], value)); }
+                cow_insert(&mut map, "new-key", Arc::new(99), &mut |_| Ok(())).unwrap();
+                assert_ne!(Arc::as_ptr(&map), pointer);
+                assert_eq!(std::hash::BuildHasher::hash_one(map.hasher(), "same-key"), hasher_before);
+                for (key, value) in &original_keys { assert!(Arc::ptr_eq(&map[key], value)); }
+                if let Some(old) = &strong { assert!(!old.contains_key("new-key")); }
+                if weak_only { assert!(weak.upgrade().is_none()); }
+            }
+        }
+        let mut map = full();
+        let saved = map.clone();
+        let capacity_charge = map.capacity().checked_mul(2).unwrap().checked_add(4).unwrap();
+        let mut staged = cow_map_copy(&mut map, Some(capacity_charge), &mut |_| Ok(())).unwrap().unwrap();
+        let final_capacity = staged.capacity();
+        assert!(final_capacity > saved.len());
+        staged.insert("new-key".into(), Arc::new(99));
+        assert_eq!(staged.capacity(), final_capacity, "no growth after the copy");
+        assert!(Arc::ptr_eq(&map, &saved), "private staging has not published");
+    }
+
+    #[test]
+    fn map_staging_preserves_private_empty_and_replacement_controls() {
+        let mut private = HashMap::new();
+        private.try_reserve(3).unwrap();
+        for i in 0..private.capacity() { private.insert(format!("key-{i}"), Arc::new(i)); }
+        let mut private = Arc::new(private);
+        let owner = Arc::as_ptr(&private);
+        cow_insert(&mut private, "new-key", Arc::new(99), &mut |_| Ok(())).unwrap();
+        assert_eq!(Arc::as_ptr(&private), owner);
+        let mut empty = Arc::new(HashMap::<String, Arc<usize>>::new());
+        let saved_empty = empty.clone();
+        cow_insert(&mut empty, "first", Arc::new(1), &mut |_| Ok(())).unwrap();
+        assert!(saved_empty.is_empty());
+        assert_eq!(empty.len(), 1);
+        // Replacement on a full shared map must not take the absent-key path.
+        let mut replacement = HashMap::new();
+        replacement.try_reserve(3).unwrap();
+        for i in 0..replacement.capacity() { replacement.insert(format!("key-{i}"), Arc::new(i)); }
+        let mut private = Arc::new(replacement);
+        let saved = private.clone();
+        let old = saved["key-0"].clone();
+        let previous = cow_insert(&mut private, "key-0", Arc::new(42), &mut |_| Ok(())).unwrap().unwrap();
+        assert!(Arc::ptr_eq(&previous, &old));
+        assert!(Arc::ptr_eq(&saved["key-0"], &old));
+        assert_eq!(private.len(), saved.len());
+        assert!(private.keys().all(|key| saved.contains_key(key)));
+        for (key, value) in saved.iter().filter(|(key, _)| key.as_str() != "key-0") {
+            assert!(Arc::ptr_eq(&private[key], value));
+        }
+        assert_eq!(*private["key-0"], 42);
+    }
+
+    #[test]
+    fn full_map_replacement_avoids_hidden_growth_and_cancels_before_publication() {
+        let mut raw = HashMap::new();
+        raw.try_reserve(3).unwrap();
+        for i in 0..raw.capacity() { raw.insert(format!("key-{i}"), Arc::new(i)); }
+        let capacity = raw.capacity();
+        let mut private = Arc::new(raw);
+        let owner = Arc::as_ptr(&private);
+        let old = private["key-0"].clone();
+        let previous = cow_insert(&mut private, "key-0", Arc::new(42), &mut |_| Ok(())).unwrap().unwrap();
+        assert!(Arc::ptr_eq(&previous, &old));
+        assert_eq!(private.capacity(), capacity);
+        assert_eq!(Arc::as_ptr(&private), owner);
+        let saved = private;
+        let mut revised = saved.clone();
+        let mut charges = vec![];
+        cow_insert(&mut revised, "key-0", Arc::new(99), &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(revised.capacity(), capacity);
+        assert_eq!(*saved["key-0"], 42);
+        assert_eq!(*revised["key-0"], 99);
+        for cancel in 0..charges.len() {
+            let mut map = saved.clone();
+            let mut call = 0;
+            assert!(cow_insert(&mut map, "key-0", Arc::new(99), &mut |_| {
+                let current = call; call += 1;
+                if current == cancel { Err(fail(0..0, "replacement interrupted")) } else { Ok(()) }
+            }).is_err());
+            assert!(Arc::ptr_eq(&map, &saved));
+            for (key, value) in saved.iter() { assert!(Arc::ptr_eq(&map[key], value)); }
+            let previous = cow_insert(&mut map, "key-0", Arc::new(99), &mut |_| Ok(())).unwrap().unwrap();
+            assert!(Arc::ptr_eq(&previous, &saved["key-0"]));
+            assert_eq!(map.capacity(), capacity);
+            assert_eq!(*map["key-0"], 99);
+        }
     }
 
     #[test]
