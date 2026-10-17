@@ -28821,3 +28821,38 @@ oracle JSON is separately captured after execution and matched to parent bytes;
 it was not independently frozen by the first cohort. The initial provenance
 precheck failed because the new worktree CLJS submodule was uninitialized; after
 pinned initialization all checkers pass. No fresh CLJS oracle run is claimed.
+
+
+### Second allocation candidates and complete metered cost probe (2026-10-16)
+
+An explicitly experimental tuple adds a shared owned Definition syntax payload,
+32-slot append-only construction-record pages and the reviewed finite ToInt32
+shortcut. Compilation/bootstrap generation succeed. Focused int32 boundaries1,
+ownership16, definitions14, ledger/projection15 and bitwise5 pass:51 Rust passes,
+four fuel failures, zero ignored. The bitwise primary case fails common core
+setup before observations; core-import, source-child and the map gate also retain
+fuel failures. All459 declared inputs remain unchanged. New functional boundary,
+collision, GC, poison and failure/retry tests pass, not complete source authority.
+
+Owned syntax HIR shrinks200→184 bytes but complete pre-IR cost INCREASES102,180:
+166,064 capture/copy saving is outweighed by268,244 newly charged syntax copies
+and owner allocation. This strategy is not a demonstrated default-budget repair.
+Its full source and failed results are retained while existing immutable
+provisional declaration ownership is evaluated. No earlier failure is hidden.
+
+The first temporary cost probe changes Session execution fuel to30M but plain
+NoExpansion preparation retains its10M compiler fallback; it fails at the same
+native boundary. This scope mismatch does not establish a30M native failure.
+A corrected explicit ExpansionHost probe retains the same reader/conditional,
+source-copy, default Environment and provided namespace steps. One initial
+ModuleIdentity import compile error is retained. Corrected preparation completes
+at30M with12,985,647 metered units:prefix666,846, other preparation11,127,828,
+IR verification1,190,973. Complete IR construction is2,006,192; recurrence126,072.
+The preparation probe executes no Store/user program and earns no acceptance
+credit. Native work before emission totals11,794,674; default core still fails.
+
+Archive m4-native-second-candidates-2026-10-16.tar.gz retains the unsuccessful
+owned-payload strategy, all commands/receipts/source freezes, scope-mismatch and
+compiler-only probe sources/logs, and map comparison (zero assertions/all69
+unexecuted). No full baseline, final CI, issue closure or performance success is
+claimed for this experimental tuple. Later source changes require fresh gates.
