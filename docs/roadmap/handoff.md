@@ -26520,3 +26520,29 @@ source bytes, comparisons and stop receipts are in
 source bytes to each frozen path. The corrected1a85 baseline has started using
 `CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, with no
 RUSTFLAGS override. Its terminal result and final-head CI remain required.
+
+### When-let local baseline timeout investigation (2026-10-17)
+
+Required `CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`
+at corrected source1a85 (all1,846 inputs match published76a7971) terminated101:
+342pass/4fail/0ignored across75 summaries. Integration coverage is72/246targets;
+174 remain unexecuted. Four native_repl_async_io tests timed out after60seconds
+waiting for their first output (7001 or9001), with empty stdout/stderr, before
+their async semantic checks. Host resource observations are context, not proof
+of cause. The failed baseline remains a failure.
+
+Unchanged `cargo test -p suss-cli --locked --test native_repl_async_io --
+--test-threads=2` then passes8/8 in245.25seconds, same60-second wait deadlines,
+same1,846-input tuple. All four exact tests also pass in76a final-head
+CI39003344698 (all10checks green). Neither result replaces a full local baseline.
+A fresh exact workspace command is live with jobs2 and RAYON_NUM_THREADS=2 to
+bound compiler workers; testthreads2, deadlines and fuel allowances are unchanged.
+Its terminal result is not included in this checkpoint. No RUSTFLAGS set by drivers.
+
+Archive m4-when-let-local-timeouts-rerun-ci-2026-10-17.tar.gz, SHA256
+f1c6ef12c2d4a99dc2d6e86f0555d35eff123acf3be98cbbfb99cc0dd47a82b1,
+retains raw failed baseline, unchanged rerun, source bytes, CI logs/checkout proof,
+resource observations and launch-only new-run evidence. Independent criterion
+review found no additional focused-evidence gap; full local baseline acceptance
+remains unproven. Source/fixture/provenance bytes are unchanged by this documentation
+checkpoint; new documentation-head CI and archive review are separate gates.
