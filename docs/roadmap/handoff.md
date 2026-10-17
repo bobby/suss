@@ -29822,3 +29822,26 @@ Parent3a terminal CI has foundation green and 14 known integration fuel failures
 it is not candidate CI. Candidate full baseline/final-head CI remain separate.
 The next source-supported early work target is declaration metadata ownership;
 its 714,710-unit normalization/recipe region is not a removable-copy estimate.
+
+## Borrowed metadata validation: commands and results
+
+
+Borrowed metadata validator source `bb22757b18c7f4cb3fb5af83095ba16615583454`: normal bootstrap exit0;
+focused26 pass/4 fuel failures; preservation 89 passing executions, zero failures or ignored; no duplicate CoreEnv diagnostic; combined
+119 unique selected tests: 115 pass, 4 fuel failures, zero ignored. Run commands and exact selections are in the retained
+focused/preservation driver receipts. Sourcechild all220 ordered results match,
+both default10M requests end Ok131281, actual1528 removed each versus parent.
+CoreEnv still fails before criteria, despite146154 common-prefix units removed;
+record/reduction failures retained. No whole-CoreEnv savings inferred.
+
+Archive `m4-borrowed-metadata-validation-2026-10-17.tar.gz` is thin and requires
+all three exact 71/3a/0acd projection archives listed in its report/manifest.
+All 2,989 candidate inputs match committed source bb22757b18c7f4cb3fb5af83095ba16615583454. Exact parent 3a full-workspace baseline: {"pass": 88, "fail": 2, "ignore": 0}; 240 integration targets unexecuted. Not a candidate baseline.
+No current-head full baseline/CI/acceptance claim. The next measurement is inside definition_with_initializer: separate validation,
+initializer correspondence, key planning and recipe construction.
+
+Separate diagnostic c75e70eb0ca9ec0fe24afe518d654edbe63405f8: normal bootstrap0, default CoreEnv1 fuel failure, zero additional acceptance credit. All777 prior ordered labels and balances exactly match 0acd control. Across131 completed declarations, completed-tag -> definition-form totals5,243,100 units within definition_with_initializer. This includes guard/correspondence/planning/recipe work, not established cloning-only cost. Full2988 source closure and initial-symbolic-binding correction history are retained.
+
+Exact parent0acd CI39064392448 terminal FAILURE: foundation528 Rust pass/0 fail/1 ignored and351 Python; integration111 pass/14 same3a failures;30 of255 targets completed,225 unexecuted; all10 logs and9 checkout proofs retained. This is not candidate CI.
+
+Evidence: [report](evidence/m4-borrowed-metadata-validation-2026-10-17.md) and [thin archive](evidence/m4-borrowed-metadata-validation-2026-10-17.tar.gz), SHA256 `35b071eca3a9100f0b66341200a95eec5ff6acde91d6dab28a9c91a7b41e9e13`. The report lists all three exact dependency archives.
