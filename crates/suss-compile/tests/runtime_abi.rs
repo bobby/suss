@@ -9276,6 +9276,38 @@ mod checked_field_loop_regression {
         assert_eq!(find(&mut store, runtime, &schema, &again, 1).unwrap(), 2);
     }
     #[test]
+    fn runtime_abi_combined_field_match_validates_before_length_or_equality_return() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(&mut store,
+            &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let query = key(&mut store, runtime, "fn");
+        let valid = key(&mut store, runtime, "fn");
+        let tail = key(&mut store, runtime, "ordinary");
+        let schema = array(&mut store, runtime, &[valid.clone(), tail.clone()]);
+        for invalid in [key(&mut store, runtime, "constructor"),
+                        key(&mut store, runtime, "bad-name"),
+                        text(&mut store, runtime, &[0xd800])] {
+            // Earlier match and a different-length invalid tail must still throw.
+            set(&mut store, &schema, 1, invalid);
+            let error = find(&mut store, runtime, &schema, &query, 1).unwrap_err();
+            language_error(&mut store, error);
+            set(&mut store, &schema, 1, tail.clone());
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 0);
+        }
+        let empty = key(&mut store, runtime, "");
+        set(&mut store, &schema, 1, empty.clone());
+        assert_eq!(find(&mut store, runtime, &schema, &empty, 1).unwrap(), 1);
+        // An exact reserved-name query cannot turn a reserved field into a match.
+        let reserved = key(&mut store, runtime, "constructor");
+        set(&mut store, &schema, 1, reserved.clone());
+        let error = find(&mut store, runtime, &schema, &reserved, 1).unwrap_err();
+        language_error(&mut store, error);
+        set(&mut store, &schema, 1, valid);
+        store.gc(None).unwrap();
+        assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 1);
+    }
+    #[test]
     fn runtime_abi_checked_field_loop_fuel_cuts_recover_and_print_matched_costs() {
         let mut config = wasmtime::Config::new();
         config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)

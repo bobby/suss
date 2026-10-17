@@ -118,7 +118,7 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
 
 # Independent closed identities for the reviewed generic/typed generators and
 # complete property-find route. Not derived from refreshable manifest values.
-EXPECTED_NAMED_PROPERTY_SCOPES = {'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5', 'checked': 'f0921a18ef812393034fcd0bcfeee1e0246af391806fb39f536dbe5c926cbc49', 'typed-route': '27262c39b427e37946231fed80c4ce091533b4602d4ef4937262e99feb5dc7f8'}
+EXPECTED_NAMED_PROPERTY_SCOPES = {'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5', 'checked': '681f78d0a14c6d46a52b0c7b19eeb1f73ed7c3932292fa1b559e15cc7e3b9d82', 'typed-route': '248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63'}
 
 
 def named_property_guard_scopes(raw):
@@ -162,11 +162,12 @@ def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
         raise ValueError('named-property ABI guard location mismatch')
     # Closed reviewed algorithms: refreshing manifest hashes cannot authorize
     # changed instructions. Generic preserves the earlier canonical guard;
-    # checked is the reviewed non-null STRING specialization, not a new policy.
+    # checked is the reviewed full-validation-then-equality non-null STRING
+    # specialization; invalid fields throw the existing nominal language error.
     expected = EXPECTED_NAMED_PROPERTY_SCOPES
     if provenance.get('guard-sha256') != expected['generic-canonical'] or provenance.get('route-sha256') != expected['typed-route'] or provenance.get('checked-guard-sha256') != expected['checked']:
         raise ValueError('named-property ABI guard identity mismatch')
-    if provenance.get('typed-precondition') != 'property-find guards each entry as STRING before checked validation; query STRING guarded before typed equality; full scan including late entries':
+    if provenance.get('typed-precondition') != 'property-find guards each entry and query as STRING; combined private helper fully validates each field before equality, throwing nominal language error on invalid field; full scan including late entries':
         raise ValueError('named-property ABI typed precondition mismatch')
     normalized = scopes['generic'].replace(b'let _field_supported =', b'let field_supported =')
     if (digest(normalized) != expected['generic-canonical'] or

@@ -84,62 +84,6 @@ fn checked_function(
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
-    // Checked equality keeps the existing short-name and live-unit algorithm.
-    // The third operand is the same immutable right-array length for this call.
-    let mut body = Vec::new();
-    body.extend([LocalGet(0), ArrayLen, LocalTee(4), LocalGet(2)]);
-    body.extend([
-        I32Ne,
-        If(BlockType::Empty),
-        I32Const(0),
-        Return,
-        End,
-    ]);
-    // Short property names avoid loop bookkeeping. Both operand guards and the
-    // length comparison above still run before any unit access; no callback
-    // occurs, and longer strings continue through the original live-unit loop.
-    for index in 0..4 {
-        body.extend([LocalGet(4), I32Const(index), I32LeU, If(BlockType::Empty), I32Const(1), Return, End]);
-        for local in [0, 1] {
-            body.extend([LocalGet(local), I32Const(index), ArrayGetU(STRING)]);
-        }
-        body.extend([I32Ne, If(BlockType::Empty), I32Const(0), Return, End]);
-    }
-    body.extend([
-        I32Const(4),
-        LocalSet(3),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
-        LocalGet(4),
-        I32GeU,
-        BrIf(1),
-    ]);
-    for local in [0, 1] {
-        body.extend([
-            LocalGet(local),
-            LocalGet(3),
-            ArrayGetU(STRING),
-        ]);
-    }
-    body.extend([
-        I32Ne,
-        If(BlockType::Empty),
-        I32Const(0),
-        Return,
-        End,
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
-        Br(0),
-        End,
-        End,
-        I32Const(1),
-    ]);
-    let equal_checked = checked_function(b,
-        &[reference(STRING), reference(STRING), ValType::I32], &[ValType::I32],
-        &[(2, ValType::I32)], &body);
     // UTF-16 equality stays separate from the explicit native-name normalization.
     let mut body = vec![
         LocalGet(0),
@@ -290,24 +234,26 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Boundary spellings checked against cljs/analyzer.cljc js-reserved (line190)
     // and cljs/compiler.cljc munge at the pinned c4295f303100bbf5afac449242d30bca1126f1a1.
     // This original guard rejects the unsupported adaptation instead of porting it.
-    let mut body = vec![];
+    // Private typed operands: field0/query1/query-length2; index3/unit4/field-length5.
+    // Validate the entire field before any equality/length-mismatch return.
+    let mut body = vec![Block(BlockType::Empty)];
     // Length is immutable and no callback occurs during this validation.
     body.extend([
         LocalGet(0),
         ArrayLen,
-        LocalSet(3),
+        LocalSet(5),
         I32Const(0),
-        LocalSet(1),
+        LocalSet(3),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
-        LocalGet(1),
         LocalGet(3),
+        LocalGet(5),
         I32GeU,
         BrIf(1),
         LocalGet(0),
-        LocalGet(1),
+        LocalGet(3),
         ArrayGetU(STRING),
-        LocalSet(2),
+        LocalSet(4),
     ]);
     // Exactly the existing ASCII whitelist, represented by two word masks.
     // Reject all non-ASCII units before Wasm's modulo-64 shift semantics apply.
@@ -318,41 +264,43 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([
         // Lowercase letters dominate source field names. This only skips the
         // equivalent character mask, never the later reserved-spelling check.
-        LocalGet(2),
+        LocalGet(4),
         I32Const(i32::from(b'a')),
         I32Sub,
         I32Const(25),
         I32LeU,
         If(BlockType::Empty),
         Else,
-        LocalGet(2),
+        LocalGet(4),
         I32Const(128),
         I32GeU,
         If(BlockType::Empty),
-        I32Const(0),
-        Return,
+    ]);
+    nominal::error(&mut body);
+    body.extend([
         End,
         I64Const(allowed[0] as i64),
         I64Const(allowed[1] as i64),
-        LocalGet(2),
+        LocalGet(4),
         I32Const(64),
         I32LtU,
         Select,
-        LocalGet(2),
+        LocalGet(4),
         I64ExtendI32U,
         I64ShrU,
         I64Const(1),
         I64And,
         I64Eqz,
         If(BlockType::Empty),
-        I32Const(0),
-        Return,
+    ]);
+    nominal::error(&mut body);
+    body.extend([
         End,
         End,
-        LocalGet(1),
+        LocalGet(3),
         I32Const(1),
         I32Add,
-        LocalSet(1),
+        LocalSet(3),
         Br(0),
         End,
         End,
@@ -431,20 +379,19 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         by_length.entry(reserved.len()).or_default().push(reserved);
     }
     body.extend([
-        LocalGet(3),
+        LocalGet(5),
         I32Eqz,
         If(BlockType::Empty),
-        I32Const(1),
-        Return,
+        Br(1),
         End,
         LocalGet(0),
         I32Const(0),
         ArrayGetU(STRING),
-        LocalSet(2),
+        LocalSet(4),
     ]);
     for (length, names) in by_length {
         body.extend([
-            LocalGet(3),
+            LocalGet(5),
             I32Const(length as i32),
             I32Eq,
             If(BlockType::Empty),
@@ -458,7 +405,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         }
         for (first, spellings) in by_first {
             body.extend([
-                LocalGet(2),
+                LocalGet(4),
                 I32Const(i32::from(first)),
                 I32Eq,
                 If(BlockType::Empty),
@@ -475,17 +422,71 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32And,
                     ]);
                 }
-                body.extend([If(BlockType::Empty), I32Const(0), Return, End]);
+                body.push(If(BlockType::Empty));
+                nominal::error(&mut body);
+                body.push(End);
             }
             body.push(End);
         }
         // Length buckets are disjoint. After every reserved spelling in this
         // bucket has failed, no later bucket can reject this fully checked name.
-        body.extend([I32Const(1), Return, End]);
+        body.extend([Br(1), End]);
     }
-    body.push(I32Const(1));
-    let field_supported_checked = checked_function(b,
-        &[reference(STRING)], &[ValType::I32], &[(3, ValType::I32)], &body);
+    body.push(End); // successful validation exits this block, never the function.
+    // Equality follows full validation and reuses the captured field length.
+    body.extend([LocalGet(5), LocalGet(2)]);
+    body.extend([
+        I32Ne,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
+    ]);
+    // Short property names avoid comparison-loop bookkeeping. Caller guards,
+    // full field validation and length comparison precede comparison reads.
+    // Longer strings continue through the original live-unit comparison loop.
+    for index in 0..4 {
+        body.extend([LocalGet(5), I32Const(index), I32LeU, If(BlockType::Empty), I32Const(1), Return, End]);
+        for local in [0, 1] {
+            body.extend([LocalGet(local), I32Const(index), ArrayGetU(STRING)]);
+        }
+        body.extend([I32Ne, If(BlockType::Empty), I32Const(0), Return, End]);
+    }
+    body.extend([
+        I32Const(4),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(5),
+        I32GeU,
+        BrIf(1),
+    ]);
+    for local in [0, 1] {
+        body.extend([
+            LocalGet(local),
+            LocalGet(3),
+            ArrayGetU(STRING),
+        ]);
+    }
+    body.extend([
+        I32Ne,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        I32Const(1),
+    ]);
+    let field_match_checked = checked_function(b,
+        &[reference(STRING), reference(STRING), ValType::I32], &[ValType::I32],
+        &[(3, ValType::I32)], &body);
     // Named instance access must not mistake raw source names for munged fields.
     // Boundary spellings checked against cljs/analyzer.cljc js-reserved (line190)
     // and cljs/compiler.cljc munge at the pinned c4295f303100bbf5afac449242d30bca1126f1a1.
@@ -768,16 +769,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(4)]);
     guard(&mut body, 4, STRING);
     body.extend([
-        LocalGet(4), RefCastNonNull(HeapType::Concrete(STRING)), LocalTee(9),
-        Call(field_supported_checked),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    nominal::error(&mut body);
-    body.extend([
-        End,
-        LocalGet(9), LocalGet(8), LocalGet(10),
-        Call(equal_checked),
+        LocalGet(4), RefCastNonNull(HeapType::Concrete(STRING)),
+        LocalGet(8), LocalGet(10),
+        Call(field_match_checked),
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(5),

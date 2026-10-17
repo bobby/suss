@@ -1,16 +1,16 @@
 {
   "schema": 1,
   "source": "crates/suss-compile/src/runtime_abi/named_properties.rs",
-  "source-file-sha256": "e74e6aee93b2ef2481a10ee81410db9f5fdfccb061e1856d3e01b878f6e0ae43",
+  "source-file-sha256": "62279e26c7e86a92172dafd81a8c1e34d41c9f914517e45df231b41002e25c8d",
   "license": "MIT OR Apache-2.0",
   "scope": "public generic and private checked named-property ASCII guards, reserved dispatch, and complete typed property-find caller",
-  "adaptation": "Accept exactly ASCII letters, digits, underscore and dollar via two u64 masks, with an equivalent wrapping-subtraction lowercase fast path. Reject non-ASCII UTF-16 units before modulo-64 shifts. Validate every unit before rejecting pinned reserved spellings through length/first-unit dispatch; empty names remain accepted. After the matching reserved-length bucket is exhausted, return accepted without testing disjoint lengths. This original checked guard rejects unsupported munging rather than porting upstream code; provenance does not establish execution. The public generic body remains canonical. A private non-null STRING specialization removes only already-proven type casts and its entry guard. Its complete closed generator and complete property-find caller are independently pinned; each table entry is guarded before checked validation, and malformed late entries still reject. No public ABI or cross-call cache is introduced.",
+  "adaptation": "Accept exactly ASCII letters, digits, underscore and dollar via two u64 masks, with an equivalent wrapping-subtraction lowercase fast path. Reject non-ASCII UTF-16 units before modulo-64 shifts. Validate every unit before rejecting pinned reserved spellings through length/first-unit dispatch; empty names remain accepted. After the matching reserved-length bucket is exhausted, return accepted without testing disjoint lengths. This original checked guard rejects unsupported munging rather than porting upstream code; provenance does not establish execution. The public generic body remains canonical. A private non-null STRING specialization removes only already-proven type casts and its entry guard. Its complete closed generator and complete property-find caller are independently pinned; each table entry is guarded before checked validation, and malformed late entries still reject. No public ABI or cross-call cache is introduced. The combined private checked helper validates the complete field then compares UTF-16 units using its captured length. Invalid fields directly throw the existing nominal language error instead of returning false to the former caller-side throw. Public generic bodies remain byte-identical source generators.",
   "guard-location": "Named instance access must not mistake raw source names for munged fields.",
   "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
   "algorithm": "ascii-masks-lowercase-fastpath-reserved-dispatch",
   "allowed-ascii": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$",
   "guard-sha256": "ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5",
-  "checked-guard-sha256": "f0921a18ef812393034fcd0bcfeee1e0246af391806fb39f536dbe5c926cbc49",
-  "route-sha256": "27262c39b427e37946231fed80c4ce091533b4602d4ef4937262e99feb5dc7f8",
-  "typed-precondition": "property-find guards each entry as STRING before checked validation; query STRING guarded before typed equality; full scan including late entries"
+  "checked-guard-sha256": "681f78d0a14c6d46a52b0c7b19eeb1f73ed7c3932292fa1b559e15cc7e3b9d82",
+  "route-sha256": "248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63",
+  "typed-precondition": "property-find guards each entry and query as STRING; combined private helper fully validates each field before equality, throwing nominal language error on invalid field; full scan including late entries"
 }

@@ -68,12 +68,22 @@ class RecordAbiProvenance(unittest.TestCase):
         }
         scopes = named_property_guard_scopes(source)
         for route in ['generic', 'checked']:
-            for name, (old, new) in mutations.items():
+            route_mutations = mutations.copy()
+            if route == 'checked':
+                # Same twelve algorithm boundaries in the fused generator;
+                # successful validation exits a block rather than returning true.
+                route_mutations['reserved_rejection'] = (
+                    b'                nominal::error(&mut body);',
+                    b'                body.extend([I32Const(0), Return]);')
+                route_mutations['reserved_length_bucket_acceptance'] = (
+                    b'body.extend([Br(1), End]);', b'body.extend([Br(0), End]);')
+                route_mutations['empty_name_acceptance'] = (
+                    b'LocalGet(5),\n        I32Eqz,\n        If(BlockType::Empty),\n        Br(1),',
+                    b'LocalGet(5),\n        I32Eqz,\n        If(BlockType::Empty),\n        Br(0),')
+            for name, (old, new) in route_mutations.items():
                 with self.subTest(route=route, mutation=name):
                     scope = scopes[route]
                     self.assertEqual(scope.count(old), 1)
-                    # Mutate only this actual generator; retain the other valid
-                    # route and append decoy original tokens outside both scopes.
                     mutated = source.replace(scope, scope.replace(old, new, 1), 1)
                     mutated += b'\n/* Decoy: ' + old + b' */\n'
                     changed = copy.deepcopy(self.data)
@@ -86,8 +96,7 @@ class RecordAbiProvenance(unittest.TestCase):
         route = named_property_guard_scopes(source)['typed-route']
         for old, new in [
             (b'    guard(&mut body, 4, STRING);', b'    // entry guard removed'),
-            (b'Call(field_supported_checked),', b'I32Const(1),'),
-            (b'Call(equal_checked),', b'I32Const(1),'),
+            (b'Call(field_match_checked),', b'I32Const(1),'),
             (b'        Br(0),', b'        Br(1),'),
         ]:
             with self.subTest(bypass=old):
@@ -99,6 +108,28 @@ class RecordAbiProvenance(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'complete guard differs'):
                     verify_named_property_abi_adaptation(changed, mutated)
                 changed['route-sha256'] = hashlib.sha256(changed_route).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
+    def test_combined_comparator_and_throw_cannot_be_bypassed(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        scope = named_property_guard_scopes(source)['checked']
+        for old, new in [
+            (b'body.extend([LocalGet(5), LocalGet(2)]);', b'body.extend([LocalGet(5), LocalGet(5)]);'),
+            (b'            ArrayGetU(STRING),', b'            ArrayLen,'),
+            (b'    nominal::error(&mut body);', b'    body.extend([I32Const(0), Return]);'),
+            (b'    body.push(End); // successful validation exits this block, never the function.',
+             b'    body.extend([End, I32Const(1), Return]);'),
+        ]:
+            with self.subTest(bypass=old):
+                self.assertIn(old, scope)
+                mutated_scope = scope.replace(old, new, 1)
+                mutated = source.replace(scope, mutated_scope, 1)
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'complete guard differs'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+                changed['checked-guard-sha256'] = hashlib.sha256(mutated_scope).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
                     verify_named_property_abi_adaptation(changed, mutated)
 
