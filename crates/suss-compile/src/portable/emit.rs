@@ -1,5 +1,6 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
+mod integer_bits;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -108,18 +109,37 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
 }
 /// The caller must verify this exact immutable graph before entry.
 pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
-    emit_options(ir, None)
+    emit_with_plan_budget(ir, None)
+}
+
+pub(super) fn emit_verified_metered(
+    ir: &IrFunction, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    emit_options(ir, None, meter)
+}
+
+fn emit_with_plan_budget(
+    ir: &IrFunction, memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+) -> Result<Vec<u8>, Diagnostic> {
+    let mut remaining = super::DEFAULT_OPERATION_FUEL;
+    emit_options(ir, memos, &mut |work| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: ir.span.clone(), message: "Integer SSA planning fuel exhausted".into(),
+        })?;
+        Ok(())
+    })
 }
 
 pub(super) fn emit_memo_plan(plan: &super::bootstrap::VerifiedMemoPlan<'_>) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(plan.root())?;
     let mut emission = plan.emission();
-    let bytes = emit_options(plan.root(), Some(&mut emission))?;
+    let bytes = emit_with_plan_budget(plan.root(), Some(&mut emission))?;
     emission.finish()?;
     Ok(bytes)
 }
 
-fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>) -> Result<Vec<u8>, Diagnostic> {
+fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -187,6 +207,9 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     }
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
+                        if integer_bits::integer(*operation) {
+                            names.extend(["coerce-int32", "number-box"]);
+                        }
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -389,6 +412,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" | "string-char-code-at-method" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "coerce-int32" => (vec![VALUE], vec![ValType::I32]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
@@ -459,7 +483,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None, memos.as_deref_mut(),
+        &futures, None, memos.as_deref_mut(), meter,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -470,7 +494,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None, memos.as_deref_mut(),
+            &futures, None, memos.as_deref_mut(), meter,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -480,7 +504,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut())?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut(), meter)?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -708,8 +732,11 @@ fn emit_function(
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
     mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
     let primitive_strings = PrimitiveStringKeys::new(ir);
+    // Continuation spill/resume retains the original all-GC SSA representation.
+    let integer_plan = integer_bits::Plan::new(ir, continuation.is_none(), meter)?;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -734,7 +761,14 @@ fn emit_function(
     // resumable states and all branch/backedge functions on the dispatcher.
     let straight_line = continuation.is_none() && ir.blocks.len() == 1
         && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
-    let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
+    let raw_base = pc.checked_add(1).ok_or_else(|| fail("Too many integer SSA locals"))?;
+    let temporary = raw_base.checked_add(integer_plan.count).ok_or_else(|| fail("Too many integer SSA locals"))?;
+    let extra_integer_locals = if integer_plan.count == 0 { 0 } else {
+        integer_plan.count.checked_add(2).ok_or_else(|| fail("Too many integer SSA locals"))?
+    };
+    let integer_locals = extra_integer_locals.checked_add(1).ok_or_else(|| fail("Too many integer SSA locals"))?;
+    pc.checked_add(integer_locals).ok_or_else(|| fail("Too many integer SSA locals"))?;
+    let mut function = Function::new([(count + 14, VALUE), (integer_locals, ValType::I32)]);
     use Instruction::*;
     if continuation.is_none() {
     if let Some(capture_count) = capture_count {
@@ -1044,12 +1078,18 @@ fn emit_function(
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    if integer_bits::integer(*operation) && (integer_plan.slot(inst.result).is_some()
+                        || arguments.iter().any(|argument| integer_plan.slot(*argument).is_some())) {
+                        integer_bits::emit(&mut function, &integer_plan, *operation, arguments,
+                            inst.result, offset, raw_base, temporary, &index);
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Comparison {
                     operation,

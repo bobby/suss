@@ -5,6 +5,52 @@ use suss_compile::portable::{
 };
 
 #[test]
+fn integer_chain_emission_omits_the_unobserved_intermediate_number_box() {
+    let number = |value| Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Literal(Literal::Number(value)),
+    };
+    let inner = Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Bitwise { operation: Bitwise::Int, arguments: vec![number(7.0)] },
+    };
+    let chain = Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Bitwise { operation: Bitwise::Xor, arguments: vec![inner, number(3.0)] },
+    };
+    let wasm = portable::compile_ir(&portable::ir::lower(&chain).unwrap()).unwrap();
+    let mut function_imports = 0;
+    let mut number_box = None;
+    let mut boxes = 0;
+    for payload in wasmparser::Parser::new(0).parse_all(&wasm) {
+        match payload.unwrap() {
+            wasmparser::Payload::ImportSection(imports) => {
+                for import in imports.into_imports() {
+                    let import = import.unwrap();
+                    if matches!(import.ty, wasmparser::TypeRef::Func(_)) {
+                        if import.name == "number-box" { number_box = Some(function_imports); }
+                        function_imports += 1;
+                    }
+                }
+            }
+            wasmparser::Payload::CodeSectionEntry(body) => {
+                for operator in body.get_operators_reader().unwrap() {
+                    if let wasmparser::Operator::Call { function_index } = operator.unwrap() {
+                        if Some(function_index) == number_box { boxes += 1; }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    assert!(number_box.is_some());
+    // Two source literals and the exposed final result require boxes. The
+    // intermediate Int result must stay in integer scratch, rather than adding
+    // a fourth allocation. Runtime value/effect tests execute this same route.
+    assert_eq!(boxes, 3);
+}
+
+#[test]
 fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
     let make = |count, ty| Hir {
         source: None,
