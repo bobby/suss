@@ -37,6 +37,20 @@ fn array_fields(store: &mut StoreContextMut<'_, ()>, value: &Val, count: usize, 
     }
     Ok(Some(result))
 }
+// Opt-in intervals only: each original expression is evaluated exactly once.
+// Nested phases are inclusive and must not be added to their parent interval.
+macro_rules! prototype_observed {
+    ($session:expr, $phase:literal, $body:expr) => {{
+        let trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if trace { eprintln!("source-prototype phase={} event=before remaining={:?}",
+            $phase, $session.operation_fuel_remaining().ok()); }
+        let result = $body;
+        if trace { eprintln!("source-prototype phase={} event=after result={:?} remaining={:?}",
+            $phase, result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+            $session.operation_fuel_remaining().ok()); }
+        result
+    }};
+}
 impl Session {
     pub(super) fn begin_prototype_origins(&mut self) -> Result<()> {
         if self.bootstrap_core || self.prototype_origin.is_some() { return Err(invalid("Prototype provisioning already finished")); }
@@ -82,8 +96,9 @@ impl Session {
         let _request = self.operation_budget_scope()?;
         let Some(authority) = self.prototype_origin.clone() else { return Ok(None); };
         let Some(methods) = self.canonical_methods.clone() else { return Ok(None); };
-        if !methods.source_constructor_matches(self, constructor, descriptor)? { return Ok(None); }
-        let witness = runtime(self, "prototype-origin-query", &[constructor, descriptor, prototype], &authority.handles)?;
+        if !prototype_observed!(self, "input-authority", methods.source_constructor_matches(self, constructor, descriptor))? { return Ok(None); }
+        let witness = prototype_observed!(self, "input-query", runtime(self, "prototype-origin-query", &[constructor, descriptor, prototype], &authority.handles))?;
+        prototype_observed!(self, "input-materialization", (|| -> Result<Option<PrototypeInputs>> {
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
@@ -96,6 +111,7 @@ impl Session {
             fields.push(own(&mut scope, value, self.identity, &authority.handles)?);
         }
         Ok(Some(PrototypeInputs { fields }))
+        })())
     }
 }
 impl PrototypeInputs {
@@ -104,11 +120,14 @@ impl PrototypeInputs {
         let _request = session.operation_budget_scope()?;
         let Some(authority) = session.prototype_origin.clone() else { return Ok(false); };
         // Fresh query checks the existing cache and latest bounded private slot.
-        let Some(current) = session.prototype_origin_inputs(&self.fields[0], &self.fields[1], &self.fields[2])? else { return Ok(false); };
+        let Some(current) = prototype_observed!(session, "repeat-query", session.prototype_origin_inputs(&self.fields[0], &self.fields[1], &self.fields[2]))? else { return Ok(false); };
         let interrupt = session.host_work_interrupt();
         session.charge_host_work((24 * std::mem::size_of::<Val>()) as u64)?;
         let mut scope = RootScope::new(&mut session.store);
         let mut f = Vec::with_capacity(12);
+        let trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if trace { eprintln!("source-prototype phase=twelve-field-comparison event=before remaining={:?}", scope.as_context_mut().get_fuel().ok()); }
+        let compared = (|| -> Result<bool> {
         for (old, new) in self.fields.iter().zip(&current.fields) {
             Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
             let old = Val::AnyRef(Some(old.value.to_rooted(&mut scope)));
@@ -116,6 +135,12 @@ impl PrototypeInputs {
             if !same(&scope.as_context_mut(), &old, &new)? { return Ok(false); }
             f.push(old);
         }
+        Ok(true)
+        })();
+        if trace { eprintln!("source-prototype phase=twelve-field-comparison event=after result={:?} remaining={:?}", compared.as_ref().map_err(|error| error.to_string()), scope.as_context_mut().get_fuel().ok()); }
+        if !compared? { return Ok(false); }
+        if trace { eprintln!("source-prototype phase=structure-key event=before remaining={:?}", scope.as_context_mut().get_fuel().ok()); }
+        let structured = (|| -> Result<bool> {
         let prototype = f[2].unwrap_anyref().unwrap().as_struct(&scope)?.ok_or_else(|| invalid("Prototype witness needs object"))?;
         Session::consume_host_work(scope.as_context_mut(), 4, &interrupt)?;
         let tag = prototype.field(&mut scope, 0)?;
@@ -146,11 +171,15 @@ impl PrototypeInputs {
         }
         let initial_parent = Val::AnyRef(Some(authority.parent.value.to_rooted(&mut scope)));
         if !same(&scope.as_context_mut(), &f[6], &initial_parent)? { return Ok(false); }
+        Ok(true)
+        })();
+        if trace { eprintln!("source-prototype phase=structure-key event=after result={:?} remaining={:?}", structured.as_ref().map_err(|error| error.to_string()), scope.as_context_mut().get_fuel().ok()); }
+        if !structured? { return Ok(false); }
         drop(scope);
         // This complete snapshot was made ONLY inside initial provisioning. It
         // conservatively rejects default Object-prototype mutations, not source
         // descriptor protocol changes behind the constructor backlink cut above.
-        session.storage_matches(&authority.parent, &authority.parent_storage)
+        prototype_observed!(session, "parent-matches", session.storage_matches(&authority.parent, &authority.parent_storage))
     }
 }
 

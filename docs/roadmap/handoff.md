@@ -29316,3 +29316,22 @@ calls; this is nested work, not an additional total. Source confirms live .sval
 and ordinary nonrecording datum arguments. Domain-proof savings must not be
 credited as the map bottleneck. Allraw failures and both current/parent source
 captures remain retained for the next terminal archive.
+
+
+### Prototype provenance query cost diagnostic (2026-10-17)
+
+Diagnostic branch based on `ce88795e8174937e64de3a8457266d29e8520950`; no production optimization or issue acceptance claim. The only Rust change adds opt-in `SUSS_SOURCE_MATERIALIZE_FUEL_TRACE` intervals in `portable_session/prototype_origin.rs` (SHA256 `d98e98fd3039b1e5b4a9d1669b14ac144b8e1e4c41e71bed810cad3f9f42fe68`). Charges, validation order and original results remain; no witness-layout fields or cache are added. Carver independently approved this exact observer before the fresh source-child execution, as relayed by main.
+
+Commands used `CARGO_BUILD_JOBS=2`, `RAYON_NUM_THREADS=2`, the isolated `m4-cost-diagnostic-target`, and no RUSTFLAGS override:
+
+- `cargo test -p suss-compile --locked --lib --no-run`
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`
+- `SUSS_SOURCE_CHILD_FUEL_TRACE=1 SUSS_SOURCE_MATERIALIZE_FUEL_TRACE=1 cargo test -p suss-compile --locked --lib portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo -- --exact --test-threads=2 --nocapture`
+
+Attempt 1: compile exit101 (four E0599 observer RootScope fuel-read errors), 2915 inputs unchanged; bootstrap/test unexecuted. Attempt 2 corrected only those reads; compile0, bootstrap0 regenerated four artifacts. This attempt was started before independent review, then explicitly interrupted to enforce the review gate: source-child Cargo SIGINT (-2), no completed tests. The historical PGID was not recorded, and no group-empty claim is made for that attempt; exact PID and later target-process/lock checks are retained. After review, all2915 inputs exactly matched the successful post-bootstrap freeze, so a fresh receipt ran ONLY the source-child command, with no unnecessary bootstrap repeat.
+
+Approved execution: exit101, 0pass/1fail/0ignored, 60.4156s command wall time (includes Cargo test preparation); 2915 inputs unchanged. Runtime variants0–4 each materialize and finish; the later physical-child-check tail fails at `source_roots.rs:1648` with WebAssembly fuel exhaustion, before Macro execution. All69 source-child phase/fuel rows exactly equal the parent method-pass trace. Native query observers have no demonstrated stage-fuel perturbation here; this is not a general no-overhead claim. Recorded driver PGID660018 is empty after termination; target lock is available.
+
+For EACH Runtime variant0–4 (33 constructor origins), enrollment prototype cost122577 splits into repeated provenance query43146 (nested initial-constructor checks6277 + native query10304 + twelve-root materialization26565), twelve-field reference comparison396, first structural/key/default-parent-identity checks5841, first complete parent-storage match54186, and existing precomparison backing precharge19008. Nested costs must not be added again to43146. The repeated query is only a measured gross candidate ceiling before any handoff cost/effect proof, not a safe removable-cost claim. Structure and parent checks were not previously established at construction; no authority follows merely from a fresh snapshot. No optimization is implemented.
+
+Evidence: `docs/roadmap/evidence/m4-prototype-query-cost-ce88795-2026-10-17.tar.gz`, SHA256 `33f1ee9832b1e0577072a60227c7fba60dd5682af3301c1587e79d03413bf88f`, 48 payloads with verified payload hashes. Includes exact source, commands/runners, all attempt receipts/freezes/raw logs, stop qualifications, parser/intervals/census/reconciliation and four generated artifacts. Both bootstrap ordered noncustom section sequences equal ce88795. Diagnostic publication only: no broader suites, Macro-tail result, baseline, final-head CI, issue closure or production readiness is asserted.
