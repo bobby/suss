@@ -26473,3 +26473,22 @@ The required full baseline started atd1c3c1e inwhen-let-d1-full-baseline with
 CARGO_BUILD_JOBS=2 andthe unchanged command above; its receipt is nonterminal.
 This evidence-only follow-up changes no declared baseline input. Full baseline
 andfinal-head CI outcomes remain pending; no merge or issue closure is claimed.
+
+
+### Executed reconciliation of obsolete destructuring failures (2026-10-16)
+
+CI at896b9bc passes foundation but exposes two obsolete expected-failure guards.
+The four original ignored let-destructuring tests execute unchanged at896b9bc:
+4passes/0fail/0ignore with1846 unchanged inputs. Only after that proof, four
+ignore attributes and their four obsolete unsupported rows are removed; original
+bodies/expected values remain byte-identical. All four re-enabled tests pass,
+andthe remaining unsupported-feature guard passes. Independent review confirms
+exactlythose changes. The known-failures JSON removes only thewhen-let namespace
+error, justified bythe prior12 ordered host comparisons andCI's sole namespace
+delta. No other unknown or failure is converted into success.
+
+The complete Jank baseline comparison is still running inwhen-let-reconcile-after;
+its unfinished result is not a pass. The priorfull baseline/CI at896b9bc retain
+stale-guard failures andpartial/unexecuted coverage separately. This checkpoint
+requires terminal Jank comparison, a newfull workspace baseline andfinal-head CI
+before readiness. No implementation/bootstrap bytes change inthis reconciliation.
