@@ -674,6 +674,14 @@ impl Environment {
         self.source_changed();
         self.definitions.insert(global, std::sync::Arc::new(info));
     }
+    /// Publish and retain this exact immutable revision without a second lookup.
+    /// The caller meters the allocation and retained reference before calling.
+    pub(crate) fn record_definition_shared(&mut self, global: Global, info: DefinitionInfo) -> std::sync::Arc<DefinitionInfo> {
+        let owner = std::sync::Arc::new(info);
+        self.source_changed();
+        self.definitions.insert(global, owner.clone());
+        owner
+    }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
         self.namespaces

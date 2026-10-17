@@ -52,11 +52,45 @@ pub enum SourceRole {
     },
 }
 
+/// Immutable syntax owner. Definition reuse retains only the provisional
+/// record captured before analysis, never the completed initializer graph.
+#[derive(Debug, Clone)]
+pub struct FunctionForm {
+    owner: FunctionFormOwner,
+}
+#[derive(Debug, Clone)]
+enum FunctionFormOwner {
+    DefinitionInitializer(Arc<super::super::resolve::DefinitionInfo>),
+    Owned(Arc<Form>),
+}
+impl FunctionForm {
+    pub fn as_form(&self) -> &Form {
+        match &self.owner {
+            FunctionFormOwner::DefinitionInitializer(owner) => owner.initializer_form.as_ref().expect("captured definition initializer"),
+            FunctionFormOwner::Owned(form) => form,
+        }
+    }
+
+    fn capture(form: &Form, initializer: Option<&DefinitionInitializer<'_>>, meter: &mut CowMeter<'_>) -> Result<Self, Diagnostic> {
+        if let Some(initializer) = initializer.filter(|candidate| std::ptr::eq(candidate.input, form)
+            && candidate.owner.initializer_form.is_some()
+            && !candidate.owner.analysis_completed && candidate.owner.initializer.is_none()) {
+            let _trace = CowTraceScope::new("function_form_reuse");
+            meter(1)?; // actual owner reference retention, no syntax allocation
+            return Ok(Self { owner: FunctionFormOwner::DefinitionInitializer(initializer.owner.clone()) });
+        }
+        let form = super::super::clone_form_metered(form, meter)?;
+        cow_charge(meter, 1, std::mem::size_of::<Form>())?;
+        cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+        Ok(Self { owner: FunctionFormOwner::Owned(Arc::new(form)) })
+    }
+}
+
 /// Named source function scope; a definition hint does not create a lexical ID.
 #[derive(Debug, Clone)]
 pub struct FunctionScope {
     /// Actual function syntax before any method body expansion or lowering.
-    pub function_form: Form,
+    pub function_form: FunctionForm,
     pub declaration: Form,
     pub origin: Option<Arc<super::super::SourceOrigin>>,
     pub namespace: String,
@@ -243,6 +277,7 @@ impl Analyzer<'_> {
         function_form: &Form,
         declaration: Option<&Form>,
         self_binding: Option<Arc<LocalBinding>>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<(), Diagnostic> {
         let _trace = CowTraceScope::new("function_capture");
         let Some(declaration) = declaration else {
@@ -274,7 +309,7 @@ impl Analyzer<'_> {
         }
         let function_form_copy = {
             let _trace = CowTraceScope::new("function_form");
-            super::super::clone_form_metered(function_form, &mut meter)?
+            FunctionForm::capture(function_form, initializer, &mut meter)?
         };
         let declaration_copy = {
             let _trace = CowTraceScope::new("function_name");
@@ -774,6 +809,149 @@ mod ownership_tests {
                 return Ok(Some(Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] }));
             }
             Ok(None)
+        }
+    }
+
+    fn function_owner_global(environment: &Environment, phase: Phase, namespace: &str, name: &str) -> Global {
+        environment.resolve(phase, &suss_reader::Symbol {
+            namespace: Some(namespace.to_owned()), name: name.to_owned(),
+        }, 0..0).expect("existing definition binding").global().clone()
+    }
+
+    #[derive(Default)]
+    struct ObserveFunctionOwner {
+        snapshots: Vec<(Vec<Arc<FunctionScope>>, Arc<super::super::super::resolve::DefinitionInfo>)>,
+        replace_function_once: bool,
+    }
+    impl crate::portable::ExpansionHost for ObserveFunctionOwner {
+        fn expand(&mut self, form: &Form, context: crate::portable::ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
+            let Kind::List(items) = &form.kind else { return Ok(None) };
+            let Some(Form { kind: Kind::Symbol(name), .. }) = items.first() else { return Ok(None) };
+            if self.replace_function_once && matches!(name.name.as_str(), "fn" | "fn*") {
+                self.replace_function_once = false;
+                return Ok(Some(form.clone())); // equal syntax is a distinct input
+            }
+            if name.name == "fail-function-owner" {
+                return Err(fail(form.span.clone(), "injected function owner failure"));
+            }
+            if name.name == "inspect-function-owner" {
+                let scope = context.function_scopes.last().expect("named function scope");
+                let Kind::Symbol(name) = &scope.declaration.kind else { unreachable!() };
+                let global = function_owner_global(context.environment, context.phase, &scope.namespace, &name.name);
+                let current = context.environment.shared_definition_info(&global).expect("published provisional definition").clone();
+                self.snapshots.push((context.function_scopes.to_vec(), current));
+                return Ok(Some(Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] }));
+            }
+            Ok(None)
+        }
+    }
+
+    #[test]
+    fn direct_definition_function_retains_actual_provisional_owner_and_nested_def_restores_parent() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            // A nested definition deliberately replaces the SAME global. The
+            // resumed outer function must keep its earlier provisional owner.
+            let source = "(def outer (fn [x] (inspect-function-owner) (def outer (fn* [] (inspect-function-owner))) (inspect-function-owner)))";
+            let mut host = ObserveFunctionOwner::default();
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let (_, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut host).unwrap();
+            assert_eq!(host.snapshots.len(), 3);
+            let outer = &host.snapshots[0].0[0];
+            let FunctionFormOwner::DefinitionInitializer(owner) = &outer.function_form.owner else { panic!("direct bootstrap fn must reuse") };
+            assert!(Arc::ptr_eq(owner, &host.snapshots[0].1));
+            assert!(std::ptr::eq(outer.function_form.as_form(), owner.initializer_form.as_ref().unwrap()));
+            let Kind::List(definition_items) = &forms[0].kind else { unreachable!() };
+            assert_eq!(format!("{:?}", outer.function_form.as_form()), format!("{:?}", &definition_items[2]));
+            assert!(!owner.analysis_completed);
+            assert!(owner.initializer.is_none());
+            let nested = host.snapshots[1].0.last().unwrap();
+            let FunctionFormOwner::DefinitionInitializer(nested_owner) = &nested.function_form.owner else { panic!("nested definition owns its exact input") };
+            assert!(Arc::ptr_eq(nested_owner, &host.snapshots[1].1));
+            assert!(!Arc::ptr_eq(owner, nested_owner));
+            assert!(Arc::ptr_eq(outer, &host.snapshots[2].0[0]));
+            assert!(!Arc::ptr_eq(owner, &host.snapshots[2].1));
+            let global = function_owner_global(&environment, phase, &outer.namespace, "outer");
+            let completed = environment.shared_definition_info(&global).unwrap();
+            assert!(completed.analysis_completed && completed.initializer.is_some());
+            assert!(!Arc::ptr_eq(owner, completed));
+            assert!(owner.initializer.is_none());
+        }
+    }
+
+    #[test]
+    fn replaced_equal_function_and_nested_function_use_owned_fallback_defonce_reuses_actual_owner() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def outer (fn* [] (inspect-function-owner)))";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let mut generated = ObserveFunctionOwner { replace_function_once: true, ..Default::default() };
+            prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut generated).unwrap();
+            let scope = &generated.snapshots[0].0[0];
+            assert!(matches!(scope.function_form.owner, FunctionFormOwner::Owned(_)));
+            assert_eq!(scope.function_form.as_form().span, generated.snapshots[0].1.initializer_form.as_ref().unwrap().span);
+            assert!(!std::ptr::eq(scope.function_form.as_form(), generated.snapshots[0].1.initializer_form.as_ref().unwrap()));
+
+            // A named nested function has no definition-input authority, even
+            // when its declaration has the same spelling as the outer def.
+            let source = "(defonce outer (fn* [] (fn* outer [] (inspect-function-owner)) (inspect-function-owner)))";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let mut host = ObserveFunctionOwner::default();
+            let (_, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut host).unwrap();
+            assert_eq!(host.snapshots.len(), 2);
+            assert_eq!(host.snapshots[0].0.len(), 2);
+            assert!(matches!(host.snapshots[0].0[1].function_form.owner, FunctionFormOwner::Owned(_)));
+            let FunctionFormOwner::DefinitionInitializer(owner) = &host.snapshots[1].0[0].function_form.owner else { panic!("defonce actual initializer") };
+            assert!(owner.once && owner.initializer.is_none());
+            assert!(Arc::ptr_eq(owner, &host.snapshots[1].1));
+
+            // Preserving a declared def has no initializer and must not lend
+            // an earlier revision to a later standalone named function.
+            let preserved = "(def ^:declared outer) (fn* outer [] (inspect-function-owner))";
+            let forms = suss_reader::forms::read_forms(preserved).unwrap();
+            let namespace = host.snapshots[1].0[0].namespace.clone();
+            let mut host = ObserveFunctionOwner::default();
+            let old = environment.shared_definition_info(&function_owner_global(&environment, phase, &namespace, "outer")).unwrap().clone();
+            let (_, revised) = prepare_with_expander(&forms, 0..preserved.len(), &environment, phase, &mut host).unwrap();
+            assert!(matches!(host.snapshots[0].0[0].function_form.owner, FunctionFormOwner::Owned(_)));
+            assert!(Arc::ptr_eq(&old, revised.shared_definition_info(&function_owner_global(&revised, phase, &host.snapshots[0].0[0].namespace, "outer")).unwrap()));
+        }
+    }
+
+    #[test]
+    fn function_owner_capture_failure_keeps_prior_revision_and_equal_copy_cannot_reuse() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def outer (fn* [] (inspect-function-owner) (fail-function-owner)))";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let mut host = ObserveFunctionOwner::default();
+            let error = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut host).unwrap_err();
+            assert_eq!(error.message, "injected function owner failure");
+            assert_eq!(&source[error.span], "(fail-function-owner)");
+            let scope = &host.snapshots[0].0[0];
+            let FunctionFormOwner::DefinitionInitializer(owner) = &scope.function_form.owner else { panic!("retained failed analysis owner") };
+            assert!(owner.initializer.is_none());
+            let input = owner.initializer_form.as_ref().unwrap();
+            let candidate = DefinitionInitializer { input, owner };
+            let error = FunctionForm::capture(input, Some(&candidate), &mut |_| Err(fail(7..9, "capture cancelled"))).unwrap_err();
+            assert_eq!(error.message, "capture cancelled");
+            let captured = FunctionForm::capture(input, Some(&candidate), &mut |_| Ok(())).unwrap();
+            let FunctionFormOwner::DefinitionInitializer(retry) = captured.owner else { unreachable!() };
+            assert!(Arc::ptr_eq(owner, &retry));
+            let equal = input.clone();
+            let mut calls = 0;
+            let fallback = FunctionForm::capture(&equal, Some(&candidate), &mut |_| { calls += 1; Ok(()) }).unwrap();
+            assert!(matches!(fallback.owner, FunctionFormOwner::Owned(_)));
+            // Every fallible clone/owner staging boundary rejects cleanly;
+            // retained provisional syntax is unchanged and a retry succeeds.
+            for stop in 0..calls {
+                let mut current = 0;
+                let error = FunctionForm::capture(&equal, Some(&candidate), &mut |_| {
+                    let call = current; current += 1;
+                    if call == stop { Err(fail(7..9, "fallback cancelled")) } else { Ok(()) }
+                }).unwrap_err();
+                assert_eq!(error.message, "fallback cancelled");
+                assert!(owner.initializer.is_none());
+            }
+            assert!(matches!(FunctionForm::capture(&equal, Some(&candidate), &mut |_| Ok(())).unwrap().owner, FunctionFormOwner::Owned(_)));
+            assert!(owner.initializer.is_none());
         }
     }
 

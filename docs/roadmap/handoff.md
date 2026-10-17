@@ -28462,3 +28462,70 @@ source-edge-bound imports, target-reachable memo-domain validation, final
 callback revalidation/publication and eviction remain unwired. This is a partial
 draft checkpoint, not issue acceptance or readiness. Later primary worktree edits
 and four stale generated bootstrap files are excluded from the candidate.
+
+
+## Function syntax ownership and metadata-copy execution (2026-10-16)
+
+Archive `evidence/m4-function-form-owner-bootstrap-2026-10-16.tar.gz`, SHA256
+`a21900a0388f46ab6451959db5796146c09f316fbd3faab41345c08b386ad3c0`,
+retains563 manifested payloads and1800 snapshot paths in456 source blobs.
+The actual450 post-bootstrap input hashes match the staged candidate. Later
+unstaged source_roots diagnostics are excluded.
+
+Function scopes retain the actual provisional definition owner for the same
+live initializer input. Borrowed provenance stays on the call stack; expansions,
+rewrites and nested functions use the metered owned fallback. Publishing the
+provisional owner now charges its allocation/header/reference retention without
+a second catalog lookup. Existing deep DefinitionInfo clones remain separate
+unresolved work. Valid metadata maps now expose a borrowed intermediate view;
+final merged keys/values remain owned, metered and complete. Precedence,
+first-key retention, source order and reader filtering are unchanged.
+
+The first compile failed on four new test-only private Global constructions.
+Tests now resolve genuine globals through the existing Environment API; privacy
+and assertions remain intact. That corrected snapshot compiled and passed58
+focused tests but bootstrap still exhausted fuel at205896..205904. Same-binary
+trace recorded298 actual function-owner reuses; it does not establish matched
+before/after performance savings. Raw failures and exact source are archived.
+
+After removing the metadata intermediate copy, commands ran from the frozen
+compiler-input cache with CARGO_BUILD_JOBS=2 and the owned target:
+
+```sh
+cargo test -p suss-compile --locked --lib --no-run
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::origin::form_metadata::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::quotes::metadata_reader_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::source_tags::quoted_tag_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_collection_source_analysis --test portable_constructor_source_analysis -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_control_source_analysis -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --locked --lib portable_session::constructor_callback_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_session::deferred_factory::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_session::construction_records::projection::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_macro_graph::source_roots::tests:: -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --test-threads=2 --nocapture
+```
+
+Compile and62 source-analysis executions passed. Default bootstrap generation
+passed for both phases; only four allowed artifact files changed. On that tuple,
+constructor callback1, deferred5 and projection6 passed. Source-child tests
+reported1pass/2fail: unexpected finish_bound rejection and a Wasm fuel trap.
+The controller remains inactive; physical closure is not causal source authority,
+and selected projection domains still cover the whole ledger.
+
+The bootstrap verifier passed two byte-identical reproductions, identity checks
+and4 execution tests with Java/Node absent from PATH. Default source tags retain
+1pass/1fuel failure. Namespace identity retains0pass/2fail: the five-call probe
+cannot finish at default fuel, while callable rows2/3 lose declaration/method
+child identity in both phases. All450 final inputs remained unchanged. These
+separate executed cohorts total80pass/5fail, not general acceptance. No quota,
+tariff, fixture or expectation changes were used. Current Jank results, full
+workspace baseline and final-head CI require separate evidence.
+
+Read-only CI diagnosis for preceding9d14186 retained zero runs/checks and missing
+PR263 merge ref/unknown mergeability despite its actual base being an ancestor.
+Actions and the unchanged workflow are enabled. No configuration defect or
+cause for missing trigger processing is established by those API observations.

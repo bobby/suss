@@ -2386,7 +2386,7 @@ impl<'a> AnalysisGraph<'a> {
             (FieldKey::Literal(AnalyzerLiteralKeyword("fn-scope")), parents),
             (FieldKey::Cold("suss/explicit-self"), explicit),
             (FieldKey::Cold("suss/function-form"),
-                self.form(&scope.function_form, depth + 1)?,
+                self.form(scope.function_form.as_form(), depth + 1)?,
             ),
             (FieldKey::Cold("suss/phase"), phase),
         ];

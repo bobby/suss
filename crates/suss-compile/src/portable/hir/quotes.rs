@@ -13,6 +13,7 @@
 //! retained core.cljs m3-hash-unencoded-chars/hash-symbol/hash-keyword (EPL-1.0).
 //! This is original Rust lowering; the source-backed core owns the actual types.
 use super::*;
+use std::borrow::Cow;
 
 impl Analyzer<'_> {
     pub(super) fn identifier_literal(
@@ -523,24 +524,24 @@ fn irrelevant_metadata_key(form: &Form) -> bool {
         (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
         || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"))
 }
-fn metadata_pairs_metered(
-    prefix: &Form,
+fn metadata_pairs_metered<'a>(
+    prefix: &'a Form,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
-) -> Result<Vec<Form>, Diagnostic> {
+) -> Result<Cow<'a, [Form]>, Diagnostic> {
     Ok(match &prefix.kind {
-        Kind::Map(entries) if entries.len() % 2 == 0 => entries
-            .iter()
-            .map(|entry| super::super::clone_form_metered(entry, meter))
-            .collect::<Result<Vec<_>, _>>()?,
-        Kind::Keyword(_) => vec![
+        // This is a view of genuine reader metadata. The merge below owns
+        // and meters each retained key/value clone; an intermediate deep copy
+        // neither contributes source facts nor changes association semantics.
+        Kind::Map(entries) if entries.len() % 2 == 0 => Cow::Borrowed(entries.as_slice()),
+        Kind::Keyword(_) => Cow::Owned(vec![
             super::super::clone_form_metered(prefix, meter)?,
             Form {
                 span: prefix.span.clone(),
                 metadata: vec![],
                 kind: Kind::Bool(true),
             },
-        ],
-        Kind::Symbol(_) | Kind::String(_) => vec![
+        ]),
+        Kind::Symbol(_) | Kind::String(_) => Cow::Owned(vec![
             Form {
                 span: prefix.span.clone(),
                 metadata: vec![],
@@ -550,7 +551,7 @@ fn metadata_pairs_metered(
                 }),
             },
             super::super::clone_form_metered(prefix, meter)?,
-        ],
+        ]),
         _ => {
             return Err(fail(
                 prefix.span.clone(),
@@ -608,6 +609,68 @@ pub fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i3
 #[cfg(test)]
 mod metadata_reader_tests {
     use super::*;
+
+    #[test]
+    fn map_metadata_view_borrows_exact_entries_without_copy_or_charge() {
+        let prefix = suss_reader::forms::read_forms("{:tag [a {:nested [b c]}] :private true}").unwrap().remove(0);
+        let Kind::Map(entries) = &prefix.kind else { unreachable!() };
+        let view = metadata_pairs_metered(&prefix, &mut |_| panic!("borrowed view does no copy work")).unwrap();
+        assert!(matches!(&view, Cow::Borrowed(_)));
+        assert!(std::ptr::eq(view.as_ref(), entries.as_slice()));
+        assert!(std::ptr::eq(&view[1], &entries[1]));
+        for shorthand in [":private", "string", "\"custom\""] {
+            let prefix = suss_reader::forms::read_forms(shorthand).unwrap().remove(0);
+            let mut charged = 0;
+            let pairs = metadata_pairs_metered(&prefix, &mut |work| { charged += work; Ok(()) }).unwrap();
+            assert!(matches!(pairs, Cow::Owned(_)));
+            assert_eq!(pairs.len(), 2);
+            assert!(charged > 0, "shorthand's real syntax clone remains metered");
+        }
+        let invalid = Form { kind: Kind::Map(vec![entries[0].clone()]), span: 19..23, metadata: vec![] };
+        let error = metadata_pairs_metered(&invalid, &mut |_| panic!("invalid map does not clone")).unwrap_err();
+        assert_eq!(error.span, 19..23);
+        assert_eq!(error.message, "Invalid metadata: expected a map, keyword, symbol or string");
+    }
+
+    #[test]
+    fn borrowed_map_merge_preserves_nested_metadata_collision_key_order_and_retry() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut outer_key = read(":same");
+        outer_key.span = 3..8;
+        let mut inner_key = read(":same");
+        inner_key.span = 70..75;
+        inner_key.metadata.push(read(":original-key"));
+        let mut outer_value = Form { kind: Kind::String(vec![65; 2048]), span: 10..2060, metadata: vec![read("{:leaf true}")] };
+        for _ in 0..12 {
+            outer_value = Form { kind: Kind::Vector(vec![outer_value]), span: 10..2060, metadata: vec![read(":nested")] };
+        }
+        let outer = Form { kind: Kind::Map(vec![outer_key, outer_value.clone(), read(":other"), read("17")]), span: 1..2100, metadata: vec![] };
+        let inner = Form { kind: Kind::Map(vec![inner_key.clone(), read("{:discarded [1 2 3]}"), read(":line"), read("91")]), span: 69..100, metadata: vec![] };
+        let mut form = read("value");
+        form.metadata = vec![outer, inner];
+        let original = form.clone();
+        let mut calls = 0;
+        let mut charged = 0;
+        let output = reader_metadata_pairs_metered(&form, &mut |work| { calls += 1; charged += work; Ok(()) }).unwrap();
+        assert!(charged > 2048, "actual retained payload clone remains charged");
+        assert_eq!(output, vec![inner_key.clone(), outer_value.clone(), read(":other"), read("17"), read(":line"), read("91")]);
+        // Reader equality ignores locations/key metadata, but association must
+        // retain the first key object including its complete source metadata.
+        assert_eq!(output[0].span, inner_key.span);
+        assert_eq!(output[0].metadata, inner_key.metadata);
+        assert_eq!(output[1].metadata, outer_value.metadata);
+        assert_eq!(merged_metadata_pairs_metered(&form, false, &mut |_| Ok(())).unwrap(), output[..4]);
+        for stop in [0, calls / 2, calls - 1] {
+            let mut current = 0;
+            let error = reader_metadata_pairs_metered(&form, &mut |_| {
+                let call = current; current += 1;
+                if call == stop { Err(fail(4..9, "metadata merge cancelled")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "metadata merge cancelled");
+            assert_eq!(form, original);
+            assert_eq!(reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap(), output);
+        }
+    }
 
     #[test]
     fn deep_metadata_keys_preserve_precedence_and_exhaust_meter_without_a_depth_cap() {

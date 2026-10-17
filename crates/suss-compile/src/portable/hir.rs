@@ -1,7 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
+pub use local_bindings::{FieldBinding, FunctionForm, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
 pub(crate) use local_bindings::{CowTraceScope, cow_trace_charge, cow_trace_reset};
 mod function_parameters;
 mod destructuring;
@@ -29,6 +29,14 @@ use std::{
     ops::Range,
 };
 use suss_reader::forms::{Form, Kind};
+
+// Call-stack-only provenance. The borrowed input remains alive throughout this
+// invocation; no address is stored in retained compiler facts. Re-expansion and
+// recursive child analysis deliberately start without this token.
+struct DefinitionInitializer<'a> {
+    input: &'a Form,
+    owner: &'a std::sync::Arc<super::resolve::DefinitionInfo>,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -883,7 +891,7 @@ impl Analyzer<'_> {
         };
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(&body_form, context, tail, None)
+            self.expand_or_analyze(&body_form, context, tail, None, None)
         });
         self.analysis_contexts.pop();
         result.map(|mut body| {
@@ -906,6 +914,16 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+    ) -> Result<Hir, Diagnostic> {
+        self.form_in_named_with_initializer(form, context, tail, name_hint, None)
+    }
+    fn form_in_named_with_initializer(
+        &mut self,
+        form: &Form,
+        context: super::AnalysisContext,
+        tail: bool,
+        name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         // Recursive re-expansion consumes the enclosing request budget. The
         // growable stack below protects native analysis without imposing a
@@ -959,7 +977,7 @@ impl Analyzer<'_> {
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(form, context, tail, name_hint)
+            self.expand_or_analyze(form, context, tail, name_hint, initializer)
         });
         self.analysis_depth -= 1;
         self.analysis_contexts.pop();
@@ -972,6 +990,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         if let Kind::List(items) = &form.kind {
             if let Some(Form {
@@ -1021,7 +1040,7 @@ impl Analyzer<'_> {
                         // The fixed primitive rewrite is analyzed in this
                         // frame; it cannot form a recursive bootstrap chain.
                         return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.expand_or_analyze(&expanded, context, tail, name_hint)
+                            self.expand_or_analyze(&expanded, context, tail, name_hint, None)
                         });
                     }
                 }
@@ -1122,7 +1141,7 @@ impl Analyzer<'_> {
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
         self.source_nodes.push(None);
-        let result = self.form_inner(form, context, tail, name_hint);
+        let result = self.form_inner(form, context, tail, name_hint, initializer);
         let callable = self
             .source_callables
             .pop()
@@ -1203,6 +1222,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
@@ -1271,7 +1291,7 @@ impl Analyzer<'_> {
                 });
             }
             Kind::List(items) if !items.is_empty() => {
-                return self.list(form, items, context, tail, name_hint);
+                return self.list(form, items, context, tail, name_hint, initializer);
             }
             _ => {
                 return Err(fail(
@@ -1436,17 +1456,31 @@ impl Analyzer<'_> {
             type_is_record: false,
             once,
         };
-        if !preserve_declaration {
-            self.environment
-                .record_definition(global.clone(), definition.clone());
-        }
+        // Publish and retain the actual provisional revision before any
+        // initializer callback. No second environment lookup or completed
+        // initializer graph is involved. Existing owned DefinitionInfo clones
+        // below remain separate work; this charge covers the published owner
+        // allocation/header and reference retention, not those deep copies.
+        let provisional = if !preserve_declaration {
+            let owner_work = std::mem::size_of::<super::resolve::DefinitionInfo>()
+                .checked_add(2 * std::mem::size_of::<usize>())
+                .and_then(|work| work.checked_add(1))
+                .and_then(|work| u64::try_from(work).ok())
+                .ok_or_else(|| fail(form.span.clone(), "Definition owner work overflow"))?;
+            self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            Some(self.environment.record_definition_shared(global.clone(), definition.clone()))
+        } else {
+            None
+        };
         let initializer = init
             .map(|init| {
-                self.form_in_named(
+                let provenance = provisional.as_ref().map(|owner| DefinitionInitializer { input: init, owner });
+                self.form_in_named_with_initializer(
                     init,
                     super::AnalysisContext::Expression,
                     false,
                     Some(&args[0]),
+                    provenance.as_ref(),
                 )
                 .map(Box::new)
             })
@@ -1487,6 +1521,7 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let expanded;
         let args = if bootstrap_macro {
@@ -1497,7 +1532,7 @@ impl Analyzer<'_> {
         };
         let outer_scope_count = self.function_scopes.len();
         let suspendable = std::mem::replace(&mut self.suspendable, false);
-        let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        let result = self.function_inner(form, args, bootstrap_macro, name_hint, initializer);
         self.suspendable = suspendable;
         if result.is_ok() {
             let name = self.function_scopes.get(outer_scope_count).cloned();
@@ -1514,13 +1549,14 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         if args
             .first()
             .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
-            self.enter_function_scope(form, name_hint, None)?;
+            self.enter_function_scope(form, name_hint, None, initializer)?;
             let (function, source_method) = self.fixed_function(form, args, bootstrap_macro)?;
             *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
                 name: None,
@@ -1579,7 +1615,7 @@ impl Analyzer<'_> {
         let local = self_binding
             .as_ref()
             .map(|binding| self.locals[&binding.name].clone());
-        self.enter_function_scope(form, declaration, local)?;
+        self.enter_function_scope(form, declaration, local, initializer)?;
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
@@ -2060,6 +2096,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
@@ -2396,7 +2433,7 @@ impl Analyzer<'_> {
             // This fixed rewrite cannot recurse through another trailing dot;
             // preserve the existing source-depth bound like let/loop rewrites.
             return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                self.expand_or_analyze(&expanded, context, tail, name_hint)
+                self.expand_or_analyze(&expanded, context, tail, name_hint, None)
             });
         }
         if bare && symbol.name == "new" {
@@ -2633,6 +2670,7 @@ impl Analyzer<'_> {
                 args,
                 matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
                 name_hint,
+                initializer,
             )?;
             return self.attach_literal_metadata(form, value);
         }
