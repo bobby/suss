@@ -27762,3 +27762,11 @@ Applied the reviewed `3055a56..65b565f` source delta to `4ce5ddb` and regenerate
 The complete unchanged pinned Jank map body produced69 ordered assertions: independent comparison62 host passes,7 guest judgments,0fail/missing/skipped/namespace/test failures. All 431 frozen Rust/Suss/bootstrap paths remained unchanged. The initial standalone comparator import lacked the scripts search path; the corrected invocation used the unchanged comparator and observations.
 
 Commands, terminal stage receipts, raw failures, observations, comparison and source snapshots are in `docs/roadmap/evidence/m4-combined-demand-origin-focused-2026-10-16.tar.gz`, SHA-256 `7db2b7088683a43fdee98dc05645cdb2ce14a9a4beeed268f7d484abd586b436` (450 payloads). This is focused transport evidence, not milestone completion. Next unblocked work: repair the cold-identifier source-tag fuel regression and measure the separate paged-entry storage experiment; require issue acceptance, independent review and final-head CI before readiness.
+
+
+### Publication of local experiment snapshot (2026-10-16)
+
+Branch diagnostic/m4-analyzer-literal-before preserves the existing source, test and artifact bytes
+from this isolated worktree. Publication adds no new execution result. Existing
+raw failures and limitations remain applicable; this snapshot is not an issue
+acceptance result. No additional Cargo command was run for publication.
