@@ -1,7 +1,8 @@
 //! Append-only canonical entries. Stable IDs index fixed pages, never addresses.
 //! Allocation keeps the parent's infallible Vec policy; overflow is explicit,
 //! while allocator OOM is not newly recoverable through generic charge errors.
-use super::{Entry, EntryStats};
+use super::{Entry, EntryStats, HeadIndex};
+use std::num::NonZeroUsize;
 const PAGE: usize = 128;
 #[derive(Default)]
 pub(super) struct Entries {
@@ -17,10 +18,18 @@ pub(super) struct Location {
 pub(super) struct Prepared {
     location: Location,
     index: usize,
-    next_len: usize,
+    next_len: NonZeroUsize,
     next_capacity: usize,
     new_page: Option<Vec<Entry>>,
 }
+impl Prepared {
+    pub(super) fn head_index<E>(&self, charge: &mut impl FnMut(u64) -> Result<(), E>,
+        stats: &mut EntryStats) -> Result<HeadIndex, E> {
+        pay(charge, &mut stats.staging, 1)?; // read/copy the already checked encoded index
+        Ok(HeadIndex(self.next_len))
+    }
+}
+
 fn extent<T>(capacity: usize) -> usize {
     let bytes = capacity
         .checked_mul(std::mem::size_of::<T>())
@@ -100,6 +109,9 @@ impl Entries {
             .checked_add(1)
             .expect("Canonical entry length overflow");
         extent::<Entry>(next_len);
+        // The checked extent above proves the actual canonical index fits.
+        pay(charge, &mut stats.staging, 1)?;
+        let next_len = NonZeroUsize::new(next_len).expect("Prepared canonical length is nonzero");
         let location = Location {
             page: self.len / PAGE,
             offset: self.len % PAGE,
@@ -164,6 +176,7 @@ impl Entries {
         };
         // No fallible call is permitted after the head insertion succeeds.
         pay(charge, &mut stats.publication, 8)?; // directory/entry push and len/capacity publication
+        pay(charge, &mut stats.publication, 1)?; // next_len.get() at infallible publication
         Ok(Prepared {
             location,
             index: self.len,
@@ -181,7 +194,7 @@ impl Entries {
         debug_assert_eq!(page.len(), prepared.location.offset);
         debug_assert!(page.len() < page.capacity());
         page.push(entry);
-        self.len = prepared.next_len;
+        self.len = prepared.next_len.get();
         self.capacity = prepared.next_capacity;
     }
     pub(super) fn link(&mut self, location: Location, index: usize) {
@@ -260,7 +273,7 @@ mod tests {
         assert_eq!(stats.relocation, extent::<Entry>(124) as u64);
         assert_eq!(stats.directory_allocation, extent::<Vec<Entry>>(124) as u64);
         assert_eq!(stats.directory_relocation, extent::<Vec<Entry>>(60) as u64);
-        assert_eq!(stats.publication, 4097 * 8);
+        assert_eq!(stats.publication, 4097 * (8 + 1));
     }
     #[test]
     fn every_prepare_fuel_irq_cut_preserves_logical_entries_and_retry() {
@@ -341,5 +354,45 @@ mod tests {
         );
         assert_eq!(entries.len(), usize::MAX);
         assert!(entries.pages.is_empty());
+        // The maximal encodable head is NOT permission to create an oversized
+        // canonical owner. Extent must pass before constructing its typed head.
+        let maximum_next_len=(isize::MAX as usize)/std::mem::size_of::<Entry>();
+        assert!(extent::<Entry>(maximum_next_len)<=isize::MAX as usize);
+        assert!(std::panic::catch_unwind(||extent::<Entry>(maximum_next_len+1)).is_err());
+        entries.len=usize::MAX-1;
+        assert!(std::panic::catch_unwind(std::panic::AssertUnwindSafe(||
+            entries.prepare(&mut |_|Ok::<_,Stop>(()),&mut EntryStats::default())
+        )).is_err());
+        assert_eq!(entries.len(),usize::MAX-1);
+        assert!(entries.pages.is_empty());
     }
+    #[test]
+    fn prepared_heads_preserve_actual_owner_index_and_cancel_before_publication() {
+        let mut entries=Entries::default();
+        let mut stats=EntryStats::default();
+        for index in 0..130 {
+            let prepared=entries.prepare(&mut |_|Ok::<_,Stop>(()),&mut stats).unwrap();
+            let before=snapshot(&entries);
+            let staging=stats.staging;
+            for irq in [false,true] {
+                let result=prepared.head_index(&mut |_|Err::<(),_>(if irq {Stop::Irq} else {Stop::Fuel}),&mut stats);
+                match result {
+                    Err(Stop::Irq) if irq => {},
+                    Err(Stop::Fuel) if !irq => {},
+                    other => panic!("typed preparation cancellation: {other:?}"),
+                }
+                assert_eq!(stats.staging,staging,"rejected charge not included in accepted-work subtotal");
+                assert_eq!(entries.len(),index);
+                assert_eq!(snapshot(&entries),before);
+            }
+            let head=prepared.head_index(&mut |_|Ok::<_,Stop>(()),&mut stats).unwrap();
+            assert_eq!(head.index(),index);
+            assert_eq!(stats.staging,staging+1);
+            assert_eq!(prepared.next_len.get(),index+1);
+            entries.publish(prepared,entry(index));
+            assert_eq!(entries.len(),index+1);
+            assert_eq!(entries.get(head.index(),&mut |_|Ok::<_,Stop>(()),&mut stats).unwrap().key,(index as u64).to_le_bytes());
+        }
+    }
+
 }
