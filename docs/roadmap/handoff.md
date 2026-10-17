@@ -29184,3 +29184,46 @@ Both bootstrap noncustom section sequences equal e85. Broader source/negative
 cohort, fresh full-core revalidation, foundation commands and final-head CI are
 pending at this checkpoint. No full baseline, #270 closure or merge is claimed.
 Independent reviews approve production ownership/copy changes and fixture fixes.
+
+### Async ownership terminal execution and checked-schema measurement (2026-10-17)
+
+Final run-native-async-payload-macro-session-candidate.py completes34stages:
+218 Rust pass executions/5 failures/0ignored. One selected core test is also in
+the full17-test core suite, so these are executions, not unique tests. All2,915
+inputs byte-match committedcd20, including pinned submodules; no final changes.
+All17 unchanged core imports and both self/method tests pass at default budgets.
+Bitwise6/6, graph reuse5, ledger15, snapshots18, domains4 and cumulative10 pass.
+Python348/all13foundation commands pass. Both bootstrap noncustom sequences equal
+e85; independent source review approves all7changed source files.
+
+Global-reference1pass/1fail, control-source4pass/1fail and constructor-source
+1pass/1fail retain fuel failures. Control and constructor failures also occur in
+e85 CI. Global-reference is first exact-lineage local coverage found; prior CI
+stopped before it, so no prior pass or new regression is established. Raw matched
+names/spans/stages are retained. Source-child0/1 fails at RuntimeSome4 materialize;
+all66phase/fuel lines exactly match e85, later Macro/negative tails unexecuted.
+Pinned map0/1 reaches compiled macro invocation at239..5926 then exhausts fuel:
+0assertions,69unexecuted. Default core restoration is not full map acceptance.
+Diagnostic compiler-only30M preparation11,022,010 saves311,053 versus e85;
+this probe executes no user Store program and is not default-budget acceptance.
+
+Archive m4-async-try-payload-ownership-2026-10-17.tar.gz, SHA256
+b81133ed161482cb2ec00501fc3f805dcad308c4edb25ff9957afea8b2810155,
+retains9exact input tuples across5attempts, both foundation runs, all failed
+fixtures/E0423, explicit stop proofs, terminal raw results and committed-source
+binding. Archive contains3,124members, including its manifest. Current
+cd20 CI39012155164 separately terminates with560Rust pass executions/15failures;
+those counts overlap local coverage and are not additional acceptance. Later CI
+targets remain unexecuted after failed binaries. Full baseline and passing CI
+remain required. Broader arbitrary-HIR-copy accounting gaps remain explicit.
+
+Independent diagnostic139458f (diagnostic/m4-constructor-validation-cost) preserves
+actual ordering and all2,915inputs. RuntimeSome4 has26successful schema captures
+costing84,304; postconstructor and enrollment schema validation each cost1,238.
+These checks nest in parent intervals; do not sum both levels. Next capture fails
+after1,691units; later/Macro coverage is unexecuted. Archive SHA256
+8d856b95ff0ddd14c7804850980b01a1366eac18329de129cabad6ab60efceea.
+A checked shared schema-witness candidate is source-reviewed but uncompiled;
+repetition/hits and net savings are unproved. Focused execution must preserve full
+storage validation, constructor callbacks, exact roots, failure rollback, GC and
+current guard suites before any performance/acceptance claim.
