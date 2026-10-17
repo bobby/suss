@@ -1,0 +1,44 @@
+{
+  "verdict": "APPROVED Git-resolved archive, concise final report/handoff and complete-scope PR body for incremental draft268 publication; final evidence commit scope remains",
+  "source_commit": "4a5919da8b1a0c5d98f99fdc84fbc0b911b3affe",
+  "archive_sha256": "9e8d0ed946c79f82347112c0d8eba4bd408443e322ae8a65f03cf649a4663fbd",
+  "members": 134,
+  "verified_payloads": 133,
+  "verified_exact_Git_bindings": 2993,
+  "verified_freeze_maps": 5,
+  "inputs_per_map": 2989,
+  "raw_counts": {
+    "focused": [
+      47,
+      4,
+      0
+    ],
+    "preservation": [
+      76,
+      0,
+      0
+    ],
+    "distinct": [
+      123,
+      4,
+      0
+    ]
+  },
+  "sourcechild": "220orderedlabels/results; complete882unitsremoved perphase only",
+  "CoreEnv": "228930common-prefix gain;150vs136complete; stillfailed, notwholecost",
+  "fixture": "24to16actualslots;762356to748317boundedtablework includesadapter, notsource saving",
+  "source_approval": "ThreeRust approvedb851fd9f plusfourboots verifiedcommitted4a5919d matchterminalfreeze inearliercheck",
+  "publication_limits": [
+    "Four criterionfuel failures remain; no readiness/acceptance/closure/merge approval.",
+    "Parent4cCI and earlier3a baseline remain distinct source tuples.",
+    "Both rejected flat-edge experiments excluded; no preservation credit fromthem.",
+    "Archive requires exactGitobjects/pin; notstandalonesource.",
+    "Replace SOURCE_COMMIT/EVIDENCE_URL placeholders in PR body beforeposting."
+  ],
+  "approved_doc_sha256": {
+    "evidence.final.md": "0c8878c6d1df7be231b7a94663836393e97ceb5601a5444558bd00b676884148",
+    "handoff.final.md": "6cd9c34b0fbec765667eb8d95c3680593c25f90ac52bc3b470635205f7dd6ac7",
+    "prbody.final.md": "9bde2248ea43d12decdffc93b7eaaadea1c6252a6b0f2fec381200bccb51da5e"
+  },
+  "review_actions": "Read-only archive/Git/log/doc review; no Cargo/guest rerun/source/index edits; external cache receipt saved"
+}

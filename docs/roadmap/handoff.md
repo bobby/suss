@@ -29845,3 +29845,26 @@ Separate diagnostic c75e70eb0ca9ec0fe24afe518d654edbe63405f8: normal bootstrap0,
 Exact parent0acd CI39064392448 terminal FAILURE: foundation528 Rust pass/0 fail/1 ignored and351 Python; integration111 pass/14 same3a failures;30 of255 targets completed,225 unexecuted; all10 logs and9 checkout proofs retained. This is not candidate CI.
 
 Evidence: [report](evidence/m4-borrowed-metadata-validation-2026-10-17.md) and [thin archive](evidence/m4-borrowed-metadata-validation-2026-10-17.tar.gz), SHA256 `35b071eca3a9100f0b66341200a95eec5ff6acde91d6dab28a9c91a7b41e9e13`. The report lists all three exact dependency archives.
+
+## Compact canonical head storage: commands and evidence
+
+Source `4a5919da8b1a0c5d98f99fdc84fbc0b911b3affe` compacts native canonical hash heads using checked nonzero
+indices, preserving full hashes, canonical IDs, collisions and staged publication.
+Captured drivers run normal bootstrap, focused51 then preservation76 with
+jobs1/Rayon1 and inherited RUSTFLAGS. Results:123 distinct passes/four fuel
+failures across127 tests; all2,989 inputs match committed source.
+
+Slots measure24→16 bytes. The isolated table fixture charges762356→748317.
+Complete source-child retains all220 ordered outcomes and finishes132163 versus
+131281 per phase:882 units removed per unchanged10M request. CoreEnv retains
+228930 more units at a common checkpoint and completes150 versus136 declarations,
+but still fails; record/reduction observations remain unexecuted after fuel failure.
+Pinned map69 retains62 host passes/seven guest judgments; core17, bitwise and
+analysis-graph11 pass. Parent4c CI531 Rust/one ignored+351 Python and111/14
+integration with225 targets unexecuted stays separate; no current baseline/CI pass.
+
+[Report](evidence/m4-compact-canonical-heads-2026-10-17.md) and [Git-resolved archive](evidence/m4-compact-canonical-heads-2026-10-17.tar.gz),
+SHA256 `9e8d0ed946c79f82347112c0d8eba4bd408443e322ae8a65f03cf649a4663fbd`, require the exact Git objects listed in the source-resolution
+manifest. Rejected flat-edge trials and the unexecuted76-plan correction stay
+separate. The remaining task is to resolve actual default-budget failures,
+retain their value/effect evidence, then complete full baseline and final-head CI.
