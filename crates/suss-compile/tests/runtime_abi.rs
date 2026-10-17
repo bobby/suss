@@ -9188,3 +9188,212 @@ fn runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries(
         expect(&mut store, runtime, &descriptor, &missing, None);
     }
 }
+
+// Checked field-schema validation, live-storage and cumulative fuel regressions.
+mod checked_field_loop_regression {
+    use super::*;
+    fn text(store: &mut Store<()>, runtime: Instance, units: &[u16]) -> Val {
+        let value = nominal_value(store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+        let array = value.unwrap_anyref().unwrap().as_array(&*store).unwrap().unwrap();
+        for (i, unit) in units.iter().enumerate() {
+            array.set(&mut *store, i as u32, Val::I32(i32::from(*unit))).unwrap();
+        }
+        value
+    }
+    fn key(store: &mut Store<()>, runtime: Instance, name: &str) -> Val {
+        text(store, runtime, &name.encode_utf16().collect::<Vec<_>>())
+    }
+    fn array(store: &mut Store<()>, runtime: Instance, entries: &[Val]) -> Val {
+        let value = nominal_value(store, runtime, "args-new", &[Val::I32(entries.len() as i32)]);
+        for (i, entry) in entries.iter().enumerate() { set(store, &value, i as u32, entry.clone()); }
+        value
+    }
+    fn set(store: &mut Store<()>, value: &Val, index: u32, entry: Val) {
+        value.unwrap_anyref().unwrap().as_array(&*store).unwrap().unwrap()
+            .set(store, index, entry).unwrap();
+    }
+    fn find(store: &mut Store<()>, runtime: Instance, table: &Val, query: &Val, stride: i32) -> wasmtime::Result<i32> {
+        let mut result = [Val::I32(-1)];
+        runtime.get_func(&mut *store, "property-find").unwrap()
+            .call(&mut *store, &[table.clone(), query.clone(), Val::I32(stride)], &mut result)?;
+        Ok(result[0].unwrap_i32())
+    }
+    fn language_error(store: &mut Store<()>, error: wasmtime::Error) {
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    #[test]
+    fn runtime_abi_checked_field_loop_validates_late_entries_duplicates_and_live_changes() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let first = key(&mut store, runtime, "fn");
+        let second = key(&mut store, runtime, "s");
+        let duplicate = key(&mut store, runtime, "fn");
+        let last = key(&mut store, runtime, "__hash");
+        let query = key(&mut store, runtime, "fn");
+        let schema = array(&mut store, runtime, &[first.clone(), second, duplicate.clone(), last.clone()]);
+        store.gc(None).unwrap();
+        assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 2);
+        let nil = nominal_value(&mut store, runtime, "nil", &[]);
+        let invalids = [nil.clone(), key(&mut store, runtime, "constructor"),
+            key(&mut store, runtime, "bad-name"), text(&mut store, runtime, &[0xd800])];
+        for invalid in invalids {
+            set(&mut store, &schema, 3, invalid);
+            let error = find(&mut store, runtime, &schema, &query, 1).unwrap_err();
+            language_error(&mut store, error);
+            set(&mut store, &schema, 3, last.clone());
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 2);
+        }
+        // The typed local is invocation-local; live units and table slots reload.
+        duplicate.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+            .set(&mut store, 1, Val::I32(i32::from(b'x'))).unwrap();
+        assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 0);
+        duplicate.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+            .set(&mut store, 1, Val::I32(i32::from(b'n'))).unwrap();
+        assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 2);
+        let mixed = array(&mut store, runtime, &[first.clone(), nil.clone(), duplicate, nil.clone()]);
+        assert_eq!(find(&mut store, runtime, &mixed, &query, 2).unwrap(), 0);
+        let invalid_native = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(10).unwrap())));
+        set(&mut store, &mixed, 2, invalid_native);
+        let error = find(&mut store, runtime, &mixed, &query, 2).unwrap_err();
+        language_error(&mut store, error);
+        let odd = array(&mut store, runtime, &[first.clone(), nil.clone(), first]);
+        let error = find(&mut store, runtime, &odd, &query, 2).unwrap_err();
+        language_error(&mut store, error);
+        // Guarded generic export still rejects left before looking at right.
+        let equal = runtime.get_func(&mut store, "property-key-equal").unwrap();
+        let mut result = [Val::I32(-1)];
+        equal.call(&mut store, &[nil.clone(), nil.clone()], &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), 0);
+        let error = equal.call(&mut store, &[query, nil.clone()], &mut result).unwrap_err();
+        language_error(&mut store, error);
+        let error = runtime.get_func(&mut store, "property-field-name-supported").unwrap()
+            .call(&mut store, &[nil], &mut result).unwrap_err();
+        language_error(&mut store, error);
+        let again = key(&mut store, runtime, "fn");
+        assert_eq!(find(&mut store, runtime, &schema, &again, 1).unwrap(), 2);
+    }
+    #[test]
+    fn runtime_abi_checked_field_loop_fuel_cuts_recover_and_print_matched_costs() {
+        let mut config = wasmtime::Config::new();
+        config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)
+            .wasm_exceptions(true).consume_fuel(true).cranelift_opt_level(wasmtime::OptLevel::None);
+        let engine = wasmtime::Engine::new(&config).unwrap();
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(10_000_000).unwrap();
+        let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let fields = ["meta", "fn", "s", "__hash"].iter().map(|name| key(&mut store, runtime, name)).collect::<Vec<_>>();
+        let schema = array(&mut store, runtime, &fields);
+        let query = key(&mut store, runtime, "fn");
+        let mut cost = 0;
+        // Observed debit is not assumed to be the minimum successful allowance.
+        // Capture cold/warm evidence BEFORE the sweep or any fuel-induced trap.
+        for sample in 0..4 {
+            store.set_fuel(10_000_000).unwrap();
+            let before = store.get_fuel().unwrap();
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 1);
+            let after = store.get_fuel().unwrap();
+            let spent = before - after;
+            cost = cost.max(spent);
+            eprintln!("checked-field-single sample={sample} before={before} after={after} delta={spent}");
+        }
+        assert!(cost > 0);
+        for calls in [100, 200] {
+            store.set_fuel(10_000_000).unwrap();
+            let before = store.get_fuel().unwrap();
+            for _ in 0..calls { assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 1); }
+            let after = store.get_fuel().unwrap();
+            eprintln!("checked-field-pre-sweep name=fn calls={calls} before={before} after={after} delta={}", before-after);
+        }
+        let mut traps = 0;
+        let mut successes = 0;
+        let mut lowest_success = None;
+        let mut completed_at_zero = 0;
+        for allowance in 0..=cost {
+            store.set_fuel(allowance).unwrap();
+            let result = find(&mut store, runtime, &schema, &query, 1);
+            let after = store.get_fuel().unwrap();
+            eprintln!("checked-field-cut allowance={allowance} observed_single_max={cost} after={after} success={} result={:?}",
+                result.is_ok(), result.as_ref().map_err(|e| e.to_string()));
+            assert!(after <= allowance);
+            match result {
+                Ok(slot) => {
+                    assert_eq!(slot, 1);
+                    assert_ne!(allowance, 0, "zero fuel must not execute the lookup");
+                    successes += 1;
+                    lowest_success.get_or_insert(allowance);
+                    if after == 0 {
+                        completed_at_zero += 1;
+                        // Do NOT set/refill fuel here: the next real function
+                        // entry must observe exhaustion from the completed tail.
+                        let next = find(&mut store, runtime, &schema, &query, 1);
+                        eprintln!("checked-field-zero-continuation allowance={allowance} remaining={} result={:?}",
+                            store.get_fuel().unwrap(), next.as_ref().map_err(|e|e.to_string()));
+                        let error = next.unwrap_err();
+                        assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
+                        assert_eq!(store.get_fuel().unwrap(), 0);
+                    }
+                }
+                Err(error) => {
+                    assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
+                    traps += 1;
+                }
+            }
+            // A valid returned result is not waived; ALL outcomes must leave
+            // actual schema references intact, with a real successful retry.
+            let backing = schema.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+            for (i, expected) in fields.iter().enumerate() {
+                let actual = backing.get(&mut store, i as u32).unwrap();
+                assert!(wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(&store,
+                    actual.unwrap_anyref().unwrap(), expected.unwrap_anyref().unwrap()).unwrap());
+            }
+            store.set_fuel(10_000_000).unwrap();
+            assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), 1);
+        }
+        assert!(traps > 0);
+        assert!(successes > 0, "sweep must exercise a completed lookup, not only traps");
+        eprintln!("checked-field-cut-summary max_allowance={cost} traps={traps} successes={successes} completed_at_zero={completed_at_zero} lowest_success={lowest_success:?}");
+
+        for name in ["fn", "s", "__hash", "absent"] {
+            store.set_fuel(10_000_000).unwrap();
+            let query = key(&mut store, runtime, name);
+            let expected = match name { "fn" => 1, "s" => 2, "__hash" => 3, _ => -1 };
+            for calls in [100, 200] {
+                // Each row is a standalone10M request; no refill inside its loop.
+                store.set_fuel(10_000_000).unwrap();
+                let before = store.get_fuel().unwrap();
+                for _ in 0..calls { assert_eq!(find(&mut store, runtime, &schema, &query, 1).unwrap(), expected); }
+                let after = store.get_fuel().unwrap();
+                eprintln!("checked-field-cost name={name} calls={calls} before={before} after={after} delta={}", before-after);
+            }
+        }
+        for name in ["", "fn", "s", "meta", "__hash"] {
+            store.set_fuel(10_000_000).unwrap();
+            let left = key(&mut store, runtime, name);
+            let right = key(&mut store, runtime, name);
+            let mut miss_units = name.encode_utf16().collect::<Vec<_>>();
+            miss_units.push(120);
+            let miss = text(&mut store, runtime, &miss_units);
+            for (label, export, arguments, expected) in [
+                ("supported", "property-field-name-supported", vec![left.clone()], 1),
+                ("equal", "property-key-equal", vec![left.clone(), right], 1),
+                ("length-miss", "property-key-equal", vec![left, miss], 0),
+            ] {
+                let function = runtime.get_func(&mut store, export).unwrap();
+                for calls in [100, 200] {
+                    store.set_fuel(10_000_000).unwrap();
+                    let before = store.get_fuel().unwrap();
+                    let mut result = [Val::I32(-1)];
+                    for _ in 0..calls {
+                        function.call(&mut store, &arguments, &mut result).unwrap();
+                        assert_eq!(result[0].unwrap_i32(), expected);
+                    }
+                    let after = store.get_fuel().unwrap();
+                    eprintln!("checked-field-generic name={name:?} case={label} calls={calls} before={before} after={after} delta={}", before-after);
+                }
+            }
+        }
+    }
+}
