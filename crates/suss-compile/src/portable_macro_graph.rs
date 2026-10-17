@@ -2277,20 +2277,17 @@ impl<'a> AnalysisGraph<'a> {
             entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("env")), self.map(env)?));
             entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("info"))?, info));
         }
-        if let SourceRole::MethodThis {
-            type_declaration,
-            namespace,
-            protocol_receiver,
-            argument,
-            access,
-            ..
-        } = &binding.source_role
-        {
+        if let SourceRole::MethodThis { facts } = &binding.source_role {
+            let type_declaration = &facts.type_declaration;
+            let namespace = &facts.namespace;
+            let protocol_receiver = facts.protocol_receiver;
+            let argument = &facts.argument;
+            let access = &facts.access;
             entries.push((FieldKey::Cold("suss/type-declaration"),
                 self.form(type_declaration, depth + 1)?,
             ));
             entries.push((FieldKey::Cold("suss/declaration-namespace"), self.symbol(namespace)?));
-            entries.push((FieldKey::Cold("suss/protocol-receiver"), self.flag(*protocol_receiver)?));
+            entries.push((FieldKey::Cold("suss/protocol-receiver"), self.flag(protocol_receiver)?));
             entries.push((FieldKey::Cold("suss/receiver-access"), self.lowering(access, depth + 1)?));
             if let Some(argument) = argument {
                 entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(argument, depth + 1)?));

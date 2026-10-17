@@ -111,10 +111,8 @@ fn analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles()
     binding.kind=hir::LocalKind::FunctionName;
     assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
     let access=Hir{source:None,span:0..1,metadata:vec![],ty:hir::Type::Value,kind:Expression::Literal(Literal::Nil)};
-    binding.source_role=SourceRole::MethodThis{
-        type_declaration:binding.declaration.clone(),namespace:"user".into(),protocol_receiver:false,
-        receiver_declaration:binding.declaration.clone(),argument:None,access:Arc::new(access),
-    };
+    binding.source_role=SourceRole::method_this(binding.declaration.clone(),"user".into(),false,
+        binding.declaration.clone(),None,Arc::new(access),&mut |_| Ok(())).unwrap();
     assert_eq!(binding.source_kind(),hir::LocalKind::Let);
     assert!(matches!(graph.binding_literal_key(&binding,AnalyzerLiteralKeyword("form")).unwrap(),FieldKey::Cold("form")));
     drop(operation);

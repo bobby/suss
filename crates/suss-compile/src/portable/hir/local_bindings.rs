@@ -39,17 +39,34 @@ pub enum SourceRole {
         index: usize,
         rest: bool,
     },
-    MethodThis {
-        type_declaration: Arc<Form>,
-        namespace: String,
-        protocol_receiver: bool,
-        /// Actual source receiver form, independent of a same-named last formal.
-        receiver_declaration: Arc<Form>,
-        /// Visible source argument shadow; Object receivers may shadow a user arg.
-        argument: Option<Arc<LocalBinding>>,
-        /// Actual lowered receiver access; inspecting it does not read a value.
-        access: Arc<Hir>,
-    },
+    MethodThis { facts: Arc<MethodThisFacts> },
+}
+
+/// Immutable facts owned by one actual method-role construction. Binding
+/// revisions retain this owner; equal facts from separate constructions do not.
+#[derive(Debug, Clone)]
+pub struct MethodThisFacts {
+    pub type_declaration: Arc<Form>,
+    pub namespace: String,
+    pub protocol_receiver: bool,
+    /// Actual source receiver, independent of a same-named last formal.
+    pub receiver_declaration: Arc<Form>,
+    /// Visible source argument shadow, including Object receiver adaptation.
+    pub argument: Option<Arc<LocalBinding>>,
+    pub access: Arc<Hir>,
+}
+impl SourceRole {
+    pub(crate) fn method_this(
+        type_declaration: Arc<Form>, namespace: String, protocol_receiver: bool,
+        receiver_declaration: Arc<Form>, argument: Option<Arc<LocalBinding>>,
+        access: Arc<Hir>, meter: &mut CowMeter<'_>,
+    ) -> Result<Self, Diagnostic> {
+        cow_charge(meter, 1, std::mem::size_of::<MethodThisFacts>())?;
+        cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+        Ok(Self::MethodThis { facts: Arc::new(MethodThisFacts {
+            type_declaration, namespace, protocol_receiver, receiver_declaration, argument, access,
+        }) })
+    }
 }
 
 /// Immutable syntax owner. Definition reuse retains only the provisional
@@ -256,18 +273,15 @@ impl Analyzer<'_> {
             None
         };
         let mut meter = |work| self.expander.charge_expansion_work(work, declarations[0].span.clone());
-        let role = SourceRole::MethodThis {
-            type_declaration: cow_shared_form(type_declaration, &mut meter)?,
-            namespace: cow_text(self.environment.current_namespace(self.phase), &mut meter)?,
-            protocol_receiver: !object_method,
-            receiver_declaration,
-            argument,
-            access: {
-                cow_charge(&mut meter, 1, std::mem::size_of::<Hir>())?;
-                cow_charge(&mut meter, 2, std::mem::size_of::<usize>())?;
-                Arc::new(self.local(&declarations[0], receiver.id))
-            },
-        };
+        let type_declaration = cow_shared_form(type_declaration, &mut meter)?;
+        let namespace = cow_text(self.environment.current_namespace(self.phase), &mut meter)?;
+        cow_charge(&mut meter, 1, std::mem::size_of::<Hir>())?;
+        cow_charge(&mut meter, 2, std::mem::size_of::<usize>())?;
+        drop(meter);
+        let access = Arc::new(self.local(&declarations[0], receiver.id));
+        let mut meter = |work| self.expander.charge_expansion_work(work, declarations[0].span.clone());
+        let role = SourceRole::method_this(type_declaration, namespace, !object_method,
+            receiver_declaration, argument, access, &mut meter)?;
         self.local_revision_mut(&receiver.name)?.source_role = role;
         Ok(())
     }
@@ -929,11 +943,10 @@ fn cow_role(role: &SourceRole, meter: &mut CowMeter<'_>) -> Result<SourceRole, D
     Ok(match role {
         SourceRole::CatchBinding { hidden, access } => SourceRole::CatchBinding {
             hidden: hidden.clone(), access: access.clone() },
-        SourceRole::MethodThis { type_declaration, namespace, protocol_receiver, receiver_declaration, argument, access } => SourceRole::MethodThis {
-            type_declaration: type_declaration.clone(),
-            namespace: cow_text(namespace, meter)?, protocol_receiver: *protocol_receiver,
-            receiver_declaration: receiver_declaration.clone(),
-            argument: argument.clone(), access: access.clone() },
+        SourceRole::MethodThis { facts } => {
+            meter(1)?;
+            SourceRole::MethodThis { facts: facts.clone() }
+        },
         SourceRole::Plain => SourceRole::Plain,
         SourceRole::FunctionName { variadic, methods } => SourceRole::FunctionName { variadic: *variadic, methods: methods.clone() },
         SourceRole::PrivateCatch { anchor } => SourceRole::PrivateCatch { anchor: anchor.clone() },
@@ -1768,13 +1781,83 @@ mod ownership_tests {
             identity: Arc::new(()), id: BindingId(0), ty: Type::Value,
             declaration: declaration.clone(), origin: None, kind: LocalKind::Let,
             declaration_context: crate::portable::AnalysisContext::Expression,
-            source_role: SourceRole::MethodThis {
-                type_declaration: declaration.clone(), namespace: "owned.namespace".into(),
-                protocol_receiver: true, receiver_declaration: declaration,
-                argument: None, access: Arc::new(access),
-            }, initializer: None, shadow: None, shadow_field: None,
+            source_role: SourceRole::method_this(declaration.clone(), "owned.namespace".into(),
+                true, declaration, None, Arc::new(access), &mut |_| Ok(())).unwrap(), initializer: None, shadow: None, shadow_field: None,
         });
         Arc::new(HashMap::from([("x".into(), binding.clone()), ("untouched".into(), binding)]))
+    }
+
+    #[test]
+    fn method_this_facts_share_revisions_but_equal_constructions_and_replacements_are_distinct() {
+        let saved = copy_fixture();
+        let SourceRole::MethodThis { facts: original } = &saved["x"].source_role else { unreachable!() };
+        let mut retain_charges = vec![];
+        let retained = cow_role(&saved["x"].source_role, &mut |work| { retain_charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(retain_charges, [1]);
+        let SourceRole::MethodThis { facts: retained } = retained else { unreachable!() };
+        assert!(Arc::ptr_eq(original, &retained));
+        let distinct = SourceRole::method_this(original.type_declaration.clone(), original.namespace.clone(),
+            original.protocol_receiver, original.receiver_declaration.clone(), original.argument.clone(),
+            original.access.clone(), &mut |_| Ok(())).unwrap();
+        let SourceRole::MethodThis { facts: distinct } = &distinct else { unreachable!() };
+        assert!(!Arc::ptr_eq(original, distinct));
+        assert_eq!(format!("{original:?}"), format!("{distinct:?}"));
+        let mut revised = saved.clone();
+        let revision = local_revision_mut(&mut revised, "x", &mut |_| Ok(())).unwrap();
+        assert!(Arc::ptr_eq(&revision.identity, &saved["x"].identity));
+        revision.source_role = SourceRole::MethodThis { facts: distinct.clone() };
+        assert!(!Arc::ptr_eq(&revised["x"], &saved["x"]));
+        let SourceRole::MethodThis { facts: still_original } = &saved["x"].source_role else { unreachable!() };
+        assert!(Arc::ptr_eq(still_original, original));
+        assert!(Arc::ptr_eq(&distinct.type_declaration, &original.type_declaration));
+        assert!(Arc::ptr_eq(&distinct.receiver_declaration, &original.receiver_declaration));
+        assert!(Arc::ptr_eq(&distinct.access, &original.access));
+        assert_eq!(distinct.namespace, original.namespace);
+        assert_eq!(distinct.protocol_receiver, original.protocol_receiver);
+        assert_eq!(distinct.argument.is_some(), original.argument.is_some());
+    }
+
+    #[test]
+    fn method_this_facts_construction_and_publication_cancel_at_each_charge_then_retry() {
+        let saved = copy_fixture();
+        let SourceRole::MethodThis { facts: original } = &saved["x"].source_role else { unreachable!() };
+        let stage = |map: &mut SourceLocals, meter: &mut CowMeter<'_>| -> Result<(), Diagnostic> {
+            let namespace = cow_text("replacement.namespace", meter)?;
+            let role = SourceRole::method_this(original.type_declaration.clone(), namespace, false,
+                original.receiver_declaration.clone(), Some(saved["untouched"].clone()), original.access.clone(), meter)?;
+            local_revision_mut(map, "x", meter)?.source_role = role;
+            Ok(())
+        };
+        let mut complete = saved.clone();
+        let mut charges = vec![];
+        stage(&mut complete, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(&charges[..3], &["replacement.namespace".len() as u64,
+            std::mem::size_of::<MethodThisFacts>() as u64, (2 * std::mem::size_of::<usize>()) as u64]);
+        for cancel in 0..charges.len() {
+            let mut map = saved.clone();
+            let mut call = 0;
+            let before = Arc::strong_count(original);
+            let error = stage(&mut map, &mut |_| {
+                let current = call; call += 1;
+                if current == cancel { Err(fail(11..19, "method facts interrupted")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "method facts interrupted");
+            assert!(Arc::ptr_eq(&map, &saved));
+            assert!(Arc::ptr_eq(&map["x"], &saved["x"]));
+            assert_eq!(Arc::strong_count(original), before);
+            stage(&mut map, &mut |_| Ok(())).unwrap();
+            let SourceRole::MethodThis { facts } = &map["x"].source_role else { unreachable!() };
+            assert!(!Arc::ptr_eq(facts, original));
+            assert_eq!(facts.namespace, "replacement.namespace");
+            assert!(!facts.protocol_receiver);
+            assert!(Arc::ptr_eq(facts.argument.as_ref().unwrap(), &saved["untouched"]));
+            assert!(Arc::ptr_eq(&facts.type_declaration, &original.type_declaration));
+            assert!(Arc::ptr_eq(&facts.receiver_declaration, &original.receiver_declaration));
+            assert!(Arc::ptr_eq(&facts.access, &original.access));
+        }
+        let before = Arc::strong_count(original);
+        assert!(cow_role(&saved["x"].source_role, &mut |_| Err(fail(0..0, "retain interrupted"))).is_err());
+        assert_eq!(Arc::strong_count(original), before);
     }
 
     #[test]
@@ -1785,11 +1868,12 @@ mod ownership_tests {
         let copied = local_revision_mut(&mut attempt, "x", &mut |units| { charges.push(units); Ok(()) }).unwrap();
         assert_eq!(format!("{copied:?}"), format!("{:?}", saved["x"]));
         assert!(Arc::ptr_eq(&copied.declaration, &saved["x"].declaration));
-        let SourceRole::MethodThis { type_declaration: old_type, receiver_declaration: old_receiver, access: old_access, .. } = &saved["x"].source_role else { unreachable!() };
-        let SourceRole::MethodThis { type_declaration: new_type, receiver_declaration: new_receiver, access: new_access, .. } = &copied.source_role else { unreachable!() };
-        assert!(Arc::ptr_eq(old_type, new_type));
-        assert!(Arc::ptr_eq(old_receiver, new_receiver));
-        assert!(Arc::ptr_eq(old_access, new_access));
+        let SourceRole::MethodThis { facts: old } = &saved["x"].source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts: new } = &copied.source_role else { unreachable!() };
+        assert!(Arc::ptr_eq(old, new));
+        assert!(Arc::ptr_eq(&old.type_declaration, &new.type_declaration));
+        assert!(Arc::ptr_eq(&old.receiver_declaration, &new.receiver_declaration));
+        assert!(Arc::ptr_eq(&old.access, &new.access));
         copied.id = BindingId(9);
         assert!(!Arc::ptr_eq(&attempt, &saved));
         assert!(Arc::ptr_eq(&attempt["untouched"], &saved["untouched"]));
@@ -1798,7 +1882,8 @@ mod ownership_tests {
         // clone errors. HIR/map charges retain the injected diagnostic span.
         let mut allowed_spans = vec![11..19];
         let mut forms = vec![saved["x"].declaration.as_ref()];
-        let SourceRole::MethodThis { type_declaration, receiver_declaration, access, .. } = &saved["x"].source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts } = &saved["x"].source_role else { unreachable!() };
+        let MethodThisFacts { type_declaration, receiver_declaration, access, .. } = facts.as_ref();
         forms.extend([type_declaration.as_ref(), receiver_declaration.as_ref()]);
         let Expression::Call { callee, arguments } = &access.kind else { unreachable!() };
         forms.extend(access.metadata.iter());
@@ -1938,11 +2023,8 @@ mod ownership_tests {
             ty: Type::String, kind: Expression::Literal(Literal::String(vec![66; 20_000])) });
         let binding = Arc::make_mut(Arc::get_mut(&mut saved).unwrap().get_mut("x").unwrap());
         binding.declaration = payload.clone();
-        binding.source_role = SourceRole::MethodThis {
-            type_declaration: payload.clone(), receiver_declaration: payload.clone(),
-            namespace: "owned.namespace".into(), protocol_receiver: true,
-            argument: None, access: access.clone(),
-        };
+        binding.source_role = SourceRole::method_this(payload.clone(), "owned.namespace".into(),
+            true, payload.clone(), None, access.clone(), &mut |_| Ok(())).unwrap();
         let mut changed = saved.clone();
         let mut remaining = 10_000u64; // far smaller than either immutable payload
         let revision = local_revision_mut(&mut changed, "x", &mut |units| {
@@ -1950,7 +2032,8 @@ mod ownership_tests {
             Ok(())
         }).unwrap();
         assert!(Arc::ptr_eq(&revision.declaration, &payload));
-        let SourceRole::MethodThis { type_declaration, receiver_declaration, access: revised_access, .. } = &revision.source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts } = &revision.source_role else { unreachable!() };
+        let MethodThisFacts { type_declaration, receiver_declaration, access: revised_access, .. } = facts.as_ref();
         assert!(Arc::ptr_eq(type_declaration, &payload));
         assert!(Arc::ptr_eq(receiver_declaration, &payload));
         assert!(Arc::ptr_eq(revised_access, &access));
@@ -2005,8 +2088,8 @@ mod ownership_tests {
     fn catch_role_revision_preserves_payload_owners_and_isolates_fact_changes() {
         let mut saved = copy_fixture();
         let hidden = saved["untouched"].clone();
-        let SourceRole::MethodThis { access, .. } = &saved["x"].source_role else { unreachable!() };
-        let access = access.clone();
+        let SourceRole::MethodThis { facts } = &saved["x"].source_role else { unreachable!() };
+        let access = facts.access.clone();
         let binding = Arc::make_mut(Arc::get_mut(&mut saved).unwrap().get_mut("x").unwrap());
         binding.source_role = SourceRole::CatchBinding { hidden: hidden.clone(), access: access.clone() };
         let mut changed = saved.clone();

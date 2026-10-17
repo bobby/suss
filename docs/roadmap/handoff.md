@@ -29026,3 +29026,30 @@ m4-bootstrap-selection-snapshot-indexes-2026-10-17.tar.gz, SHA256
 8acb3b1e5ece081ca00c869de91c388b7cd8b5b36cfc219cfc300aaea9fe885d.
 The manifest maps every declared input to exact bytes and preserves every
 observed failure. No full workspace or new-head CI result is claimed here.
+
+### Shared method-receiver facts (2026-10-17)
+
+MethodThis now owns all six existing receiver facts through one immutable Arc.
+Each genuine construction/replacement creates a distinct owner after charging
+its payload and Arc header; binding revision copies charge one retain. Local
+binding revision identities and graph projection order/keys remain unchanged.
+Existing CLI method-role assertions are migrated without removing observations.
+Independent source review found no blocker; public fields still rely on the
+existing immutable-owner discipline and Debug gains a facts wrapper.
+
+Frozen-input focused runner: /home/bobby/.cache/suss-m4-work/
+run-native-method-this-candidate.py, CARGO_BUILD_JOBS=2, target
+memo-proof-cost-target, no RUSTFLAGS. Compiler no-run and bootstrap generation
+pass; only the four bootstrap outputs changed. Both bootstrap noncustom Wasm
+section sequences match parent682d2b8 exactly. Binding ownership20/20, Global
+ownership8/8, receiver roles2/2 and Int32 ABI1/1 pass. Ownership includes new
+sharing/equal-distinct/replacement and fail-each-charge/retry regressions.
+The remaining focused cohort, diagnostic net-cost measurement and Python/
+provenance commands are running at this checkpoint; no additional pass, net
+saving, complete baseline or final-head CI success is claimed.
+
+Existing default-core/source-child/map acceptance failures remain unresolved
+until the unchanged tests execute successfully. Direct all-six-field guest
+identity coverage is not established by the native role tests. The next action
+is to retain terminal cohort results, measure total cost including new owners,
+and review committed source/evidence correspondence. No issue closure/merge.
