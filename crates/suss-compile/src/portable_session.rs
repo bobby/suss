@@ -424,13 +424,35 @@ fn call<C: AsContextMut<Data = ()>>(
     identity: u64,
     handles: &Arc<AtomicUsize>,
 ) -> Result<SessionValue, SessionError> {
+    let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=checkpoint:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+    }
     let checkpoint = dynamic_checkpoint(scope, runtime)?;
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=checkpoint:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+    }
     let mut result = [Val::null_any_ref()];
-    let outcome = match function.call(&mut *scope, args, &mut result) {
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=raw-call:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+    }
+    let raw_result = function.call(&mut *scope, args, &mut result);
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=raw-call:after ok={} remaining={:?}", raw_result.is_ok(), scope.as_context_mut().get_fuel().ok());
+    }
+    let outcome = match raw_result {
         Ok(()) => own(scope, result[0].clone(), identity, handles),
         Err(error) => Err(execution_error(scope, runtime, error, identity, handles)),
     };
-    restore_dynamic(scope, runtime, &checkpoint)?;
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=conversion:after ok={} remaining={:?}", outcome.is_ok(), scope.as_context_mut().get_fuel().ok());
+        eprintln!("session-call-fuel stage=restore:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+    }
+    let restoration = restore_dynamic(scope, runtime, &checkpoint);
+    if fuel_trace {
+        eprintln!("session-call-fuel stage=restore:after ok={} remaining={:?}", restoration.is_ok(), scope.as_context_mut().get_fuel().ok());
+    }
+    restoration?;
     outcome
 }
 fn execution_error<C: AsContextMut<Data = ()>>(
@@ -1926,14 +1948,27 @@ impl Session {
             SessionError::Host(wasmtime::Error::msg("Too many invocation arguments"))
         })?;
         self.budget()?;
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=owners:before remaining={:?}", self.store.get_fuel().ok());
+        }
         self.check_data_input_owners(arguments)?;
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=owners:after remaining={:?}", self.store.get_fuel().ok());
+        }
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         let mut result = [Val::null_any_ref()];
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=args-new:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+        }
         self.runtime
             .get_func(&mut scope, "args-new")
             .unwrap()
             .call(&mut scope, &[Val::I32(length)], &mut result)?;
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=args-new:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+        }
         let array = result[0]
             .unwrap_anyref()
             .unwrap()
@@ -1944,8 +1979,14 @@ impl Session {
             let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=native-args:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+        }
         let function = Val::AnyRef(Some(function.value.to_rooted(&mut scope)));
         let invoke = self.runtime.get_func(&mut scope, "invoke").unwrap();
+        if fuel_trace {
+            eprintln!("session-invoke-fuel stage=final-call:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+        }
         call(
             &mut scope,
             self.runtime,

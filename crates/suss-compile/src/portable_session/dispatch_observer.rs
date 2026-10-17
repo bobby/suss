@@ -166,6 +166,10 @@ pub(super) fn install(
         &mut *store,
         ty.clone(),
         move |mut caller, arguments, results| {
+            let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+            if fuel_trace {
+                eprintln!("dispatch-observer-fuel stage=entry remaining={:?}", caller.as_context_mut().get_fuel().ok());
+            }
             // Charge common host bookkeeping even before bootstrap seals authority.
             // This covers route validation, locks, and the optional authority clone;
             // key inspection and frame/root allocation are charged separately below.
@@ -194,6 +198,9 @@ pub(super) fn install(
                 false
             };
             let needs_frame = active || registry_lock(&state.state).nearest_ihash().is_some();
+            if fuel_trace {
+                eprintln!("dispatch-observer-fuel stage=native-validation:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
+            }
             let _scope = if needs_frame {
                 Session::consume_host_work(
                     caller.as_context_mut(),
@@ -280,11 +287,21 @@ pub(super) fn install(
             } else {
                 None
             };
+            if fuel_trace {
+                eprintln!("dispatch-observer-fuel stage=frame-staging:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
+            }
             // These are invocation primitives, not dispatchers. Do not reselect a
             // method, re-evaluate arguments, translate exceptions, or restore dynamic
             // state here. Raw Wasmtime errors/pending exceptions pass to the caller.
             let function = if route == 1 { native_invoke } else { invoke };
-            function.call(&mut caller, &arguments[..2], results)
+            if fuel_trace {
+                eprintln!("dispatch-observer-fuel stage=selected-call:before remaining={:?}", caller.as_context_mut().get_fuel().ok());
+            }
+            let outcome = function.call(&mut caller, &arguments[..2], results);
+            if fuel_trace {
+                eprintln!("dispatch-observer-fuel stage=selected-call:after ok={} remaining={:?}", outcome.is_ok(), caller.as_context_mut().get_fuel().ok());
+            }
+            outcome
         },
     );
     setter.call(&mut *store, &[Val::FuncRef(Some(hook))], &mut [])?;
