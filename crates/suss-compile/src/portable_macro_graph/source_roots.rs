@@ -400,14 +400,14 @@ impl AnalysisGraph<'_> {
         children: Vec<CheckedChild>,
     ) -> Result<Option<SourceInputs>> {
         let _request = self.session.operation_budget_scope()?;
-        let Some(expected) = self.source_root_expectation(id)? else {
+        let layout = self.source_root_children()?;
+        let Some(expected) = self.source_root_expectation_with_layout(id, &layout)? else {
             return Ok(None);
         };
         self.session.charge_host_work(2)?;
         if children.len() != expected.children.len() {
             return Ok(None);
         }
-        let layout = self.source_root_children()?;
         // Fully recheck every child after callbacks before minting ANY token.
         let mut checked = Vec::new();
         reserve(self.session, &mut checked, children.len())?;
@@ -415,7 +415,7 @@ impl AnalysisGraph<'_> {
         for (ordinal, child) in children.into_iter().enumerate() {
             self.session.charge_host_work(2)?;
             let child_expected = self
-                .source_root_expectation(layout[id][ordinal])?
+                .source_root_expectation_with_layout(layout[id][ordinal], &layout)?
                 .ok_or_else(|| invalid("Unsupported source-edge expectation"))?;
             match Certificate::checked(
                 self.session,
@@ -557,6 +557,17 @@ impl AnalysisGraph<'_> {
     }
     pub(super) fn source_root_expectation(&mut self, id: usize) -> Result<Option<Rc<Expectation>>> {
         let layout = self.source_root_children()?;
+        self.source_root_expectation_with_layout(id, &layout)
+    }
+    // Invocation-local native plan only. Callers compute this layout after
+    // finish_recipes and do not add captures/recipes while borrowing it. Guest
+    // callbacks cannot mutate these owned native recipes. Witness construction
+    // and every current Certificate check remain independent and fallible.
+    fn source_root_expectation_with_layout(
+        &mut self,
+        id: usize,
+        layout: &[Vec<usize>],
+    ) -> Result<Option<Rc<Expectation>>> {
         self.session.charge_host_work(2)?;
         let mut children = Vec::new();
         let selected = layout
@@ -815,7 +826,18 @@ mod tests {
         name: &str,
     ) -> (usize, usize, Vec<(Value, Value)>) {
         let snapshot = graph.session.compilation_snapshot();
-        let ns = hir::SourceNamespace::capture(&snapshot.environment, graph.session.phase());
+        let source_phase = graph.session.phase();
+        declaration_from_source(graph, &snapshot.environment, source_phase, name)
+    }
+    // Only immutable analyzed source facts cross this boundary. Guest values
+    // always belong to the independent Macro transport store.
+    fn declaration_from_source(
+        graph: &mut AnalysisGraph<'_>,
+        environment: &crate::portable::resolve::Environment,
+        source_phase: Phase,
+        name: &str,
+    ) -> (usize, usize, Vec<(Value, Value)>) {
+        let ns = hir::SourceNamespace::capture(environment, source_phase);
         let (global, revision) = ns
             .declarations
             .iter()
@@ -829,6 +851,17 @@ mod tests {
             .index(graph.session, root)
             .unwrap()
             .unwrap();
+        let Owner::Declaration(retained_global, retained_revision) =
+            &graph.source_roots.roots[id].owner
+        else {
+            panic!("declaration capture must retain a declaration owner");
+        };
+        assert_eq!(retained_global.phase(), source_phase);
+        assert_eq!(retained_global, global);
+        assert!(
+            Arc::ptr_eq(retained_revision, revision),
+            "transport must retain the supplied native source revision, not its local duplicate"
+        );
         let native = graph.source_roots.native(graph.session, root).unwrap();
         let entries = match graph.recipes[native].as_ref().unwrap() {
             Recipe::Map(entries) => entries.clone(),
@@ -844,7 +877,18 @@ mod tests {
         (id, meta_id, entries)
     }
     fn standalone(graph: &mut AnalysisGraph<'_>, id: usize) -> Rc<Certificate> {
-        let expected = graph.source_root_expectation(id).unwrap().unwrap();
+        let layout = graph.source_root_children().unwrap();
+        standalone_with_layout(graph, id, &layout)
+    }
+    fn standalone_with_layout(
+        graph: &mut AnalysisGraph<'_>,
+        id: usize,
+        layout: &[Vec<usize>],
+    ) -> Rc<Certificate> {
+        let expected = graph
+            .source_root_expectation_with_layout(id, layout)
+            .unwrap()
+            .unwrap();
         let root = graph.source_roots.roots[id].alias;
         let recording = graph.bridge.recording(graph.session).unwrap();
         let value = graph.materialize_using(root, &recording).unwrap();
@@ -873,9 +917,12 @@ mod tests {
             let certificate = if *boundary == child_id {
                 child.clone()
             } else {
-                standalone(graph, *boundary)
+                standalone_with_layout(graph, *boundary, &layout)
             };
-            let expected = graph.source_root_expectation(*boundary).unwrap().unwrap();
+            let expected = graph
+                .source_root_expectation_with_layout(*boundary, &layout)
+                .unwrap()
+                .unwrap();
             supplied.push(
                 Certificate::checked(graph.session, graph.bridge, &certificate, &expected)
                     .unwrap()
@@ -904,7 +951,10 @@ mod tests {
                 .unwrap(),
             "an unrecorded child is not an arbitrary external seed"
         );
-        let expected = graph.source_root_expectation(id).unwrap().unwrap();
+        let expected = graph
+            .source_root_expectation_with_layout(id, &layout)
+            .unwrap()
+            .unwrap();
         Certificate::finish(
             graph.session,
             graph.bridge,
@@ -921,8 +971,42 @@ mod tests {
         drop(s.invoke(&f, &[value]).unwrap());
     }
     #[test]
+    fn runtime_keyword_warming_does_not_authenticate_source_factory_facts() {
+        let mut session = Session::new_repl().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let hash = session.eval("(fn [key] (hash key))").unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let recording = bridge.recording(&mut session).unwrap();
+        let mut graph = AnalysisGraph::new(&recording, &mut session);
+        // Reader keyword, not an analyzer-literal prehashed keyword.
+        let form = suss_reader::forms::read_forms(":runtime-source-memo")
+            .unwrap()
+            .remove(0);
+        let recipe = graph.form(&form, 0).unwrap();
+        graph.finish_recipes().unwrap();
+        let value = graph.materialize_using(recipe, &recording).unwrap();
+        drop(graph);
+        let records = recording.into_records().unwrap();
+        assert!(records.matches_direct_facts(&mut session).unwrap());
+        drop(session.invoke(&hash, &[&value]).unwrap());
+        session.collect().unwrap();
+        assert!(
+            !records.matches_direct_facts(&mut session).unwrap(),
+            "Runtime cache writes have no Macro protected-store receipt"
+        );
+    }
+    #[test]
     fn source_parent_lineage_keeps_selected_identity_and_rechecks_after_real_hash_callback() {
-        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source_phase in [Phase::Runtime, Phase::Macro] {
+            let mut source = match source_phase {
+                Phase::Runtime => Session::new_repl().unwrap(),
+                Phase::Macro => Session::new_macro().unwrap(),
+            };
+            source
+                .eval("(def ^{:audit {:x 17}} lineage-source 1)")
+                .unwrap();
+            let source_snapshot = source.compilation_snapshot();
+            let mut session = Session::new_macro().unwrap();
             session
                 .eval(
                     r#"
@@ -959,7 +1043,12 @@ mod tests {
                 .unwrap();
             let _request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
-            let (root, meta, entries) = declaration(&mut graph, "lineage-source");
+            let (root, meta, entries) = declaration_from_source(
+                &mut graph,
+                &source_snapshot.environment,
+                source_phase,
+                "lineage-source",
+            );
             assert!(
                 entries.len() > 8,
                 "the real parent factory must invoke captured public hash"
@@ -967,7 +1056,7 @@ mod tests {
             let layout = graph.source_root_children().unwrap();
             let mut certificates = Vec::new();
             for child in &layout[root] {
-                certificates.push(standalone(&mut graph, *child));
+                certificates.push(standalone_with_layout(&mut graph, *child, &layout));
             }
             let meta_slot = layout[root].iter().position(|id| *id == meta).unwrap();
             let children = certificates
@@ -1110,7 +1199,14 @@ mod tests {
     }
     #[test]
     fn source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo() {
-        for mut s in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source_phase in [Phase::Runtime, Phase::Macro] {
+            let mut source = match source_phase {
+                Phase::Runtime => Session::new_repl().unwrap(),
+                Phase::Macro => Session::new_macro().unwrap(),
+            };
+            source.eval("(def ^{:doc \"same\"} source-child-a 1) (def ^{:doc \"same\"} source-child-b 1)").unwrap();
+            let source_snapshot = source.compilation_snapshot();
+            let mut s = Session::new_macro().unwrap();
             s.eval(
                 "(def ^{:doc \"same\"} source-child-a 1) (def ^{:doc \"same\"} source-child-b 1)",
             )
@@ -1118,8 +1214,18 @@ mod tests {
             let bridge = FormBridge::new(&mut s).unwrap();
             let _op = s.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut s);
-            let (a, am, entries) = declaration(&mut graph, "source-child-a");
-            let (b, _, bentries) = declaration(&mut graph, "source-child-b");
+            let (a, am, entries) = declaration_from_source(
+                &mut graph,
+                &source_snapshot.environment,
+                source_phase,
+                "source-child-a",
+            );
+            let (b, _, bentries) = declaration_from_source(
+                &mut graph,
+                &source_snapshot.environment,
+                source_phase,
+                "source-child-b",
+            );
             let doc_key = graph.keyword("doc").unwrap();
             let a_doc = entries.iter().find(|(key, _)| *key == doc_key).unwrap().1;
             let b_doc = bentries.iter().find(|(key, _)| *key == doc_key).unwrap().1;
@@ -1133,8 +1239,12 @@ mod tests {
                 .index(graph.session, b_doc)
                 .unwrap()
                 .unwrap();
-            let child_doc = standalone(&mut graph, ad);
-            let wrong = graph.source_root_expectation(bd).unwrap().unwrap();
+            let layout = graph.source_root_children().unwrap();
+            let child_doc = standalone_with_layout(&mut graph, ad, &layout);
+            let wrong = graph
+                .source_root_expectation_with_layout(bd, &layout)
+                .unwrap()
+                .unwrap();
             assert!(
                 wrong
                     .witness
@@ -1149,15 +1259,25 @@ mod tests {
             );
             // A child authenticated against ITS OWN source must still be
             // rejected at a different parent's native boundary ordinal.
-            let wrong_doc = standalone(&mut graph, bd);
-            let layout = graph.source_root_children().unwrap();
+            let wrong_doc = standalone_with_layout(&mut graph, bd, &layout);
+            // Keep the genuine factory certificates, not validation booleans.
+            // Every variant below performs complete current validation again.
+            // This remains ONE unchanged operation budget for the entire test.
+            let mut common = Vec::new();
+            for boundary in &layout[a] {
+                common.push(if *boundary == ad {
+                    child_doc.clone()
+                } else {
+                    standalone_with_layout(&mut graph, *boundary, &layout)
+                });
+            }
             for variant in 0..5 {
                 let mut supplied = Vec::new();
-                for boundary in &layout[a] {
+                for (slot, boundary) in layout[a].iter().enumerate() {
                     let certificate = if *boundary == ad && variant == 0 {
                         wrong_doc.clone()
                     } else {
-                        standalone(&mut graph, *boundary)
+                        common[slot].clone()
                     };
                     let own_source = certificate.source.clone();
                     supplied.push(
@@ -1208,7 +1328,10 @@ mod tests {
                     }
                     _ => {}
                 }
-                let expected = graph.source_root_expectation(a).unwrap().unwrap();
+                let expected = graph
+                    .source_root_expectation_with_layout(a, &layout)
+                    .unwrap()
+                    .unwrap();
                 let recording = graph.bridge.recording(graph.session).unwrap();
                 let alias = graph.source_roots.roots[a].alias;
                 let value = graph.materialize_using(alias, &recording).unwrap();
@@ -1230,11 +1353,10 @@ mod tests {
             // tokens, then deliberately patch the doc slot with the equal-valued
             // wrong-owner child. Correct child inventory cannot bless that slot.
             let mut supplied = Vec::new();
-            for boundary in &layout[a] {
-                let certificate = standalone(&mut graph, *boundary);
+            for certificate in &common {
                 let expected = certificate.source.clone();
                 supplied.push(
-                    Certificate::checked(graph.session, graph.bridge, &certificate, &expected)
+                    Certificate::checked(graph.session, graph.bridge, certificate, &expected)
                         .unwrap()
                         .unwrap(),
                 );
@@ -1287,7 +1409,8 @@ mod tests {
                 rejected,
                 "valid inventory cannot authorize an equal-content wrong physical child"
             );
-            let child_meta = standalone(&mut graph, am);
+            let meta_slot = layout[a].iter().position(|id| *id == am).unwrap();
+            let child_meta = common[meta_slot].clone();
             let parent = parent(&mut graph, a, am, entries, &child_meta);
             invoke(
                 graph.session,

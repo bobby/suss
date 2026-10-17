@@ -331,12 +331,12 @@ fn metadata(
     name: &str,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Option<Form>, Diagnostic> {
-    let mut pairs = reader_metadata_pairs_metered(form, meter)?;
-    for index in (0..pairs.len()).step_by(2) {
+    let pairs = super::quotes::reader_metadata_view_metered(form, meter)?;
+    for pair in pairs {
         charge(meter, 1 + name.len(), &form.span)?;
-        if matches!(&pairs[index].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name)
+        if matches!(&pair.key.as_ref().kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name)
         {
-            return Ok(Some(pairs.swap_remove(index + 1)));
+            return Ok(Some(super::super::clone_form_metered(pair.value.as_ref(), meter)?));
         }
     }
     Ok(None)
@@ -966,6 +966,84 @@ mod quoted_tag_tests {
             metadata: vec![],
             ty: Type::Value,
             kind,
+        }
+    }
+
+    #[test]
+    fn metadata_lookup_clones_only_selected_winner_and_returns_fresh_owned_value() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let build = |size| {
+            let mut form = read("value");
+            form.metadata = vec![Form { span: 2..30, metadata: vec![], kind: Kind::Map(vec![
+                read(":tag"), read("\"selected\""), read(":unrelated"),
+                Form { span: 9..20, metadata: vec![read(":nested")], kind: Kind::String(vec![65; size]) },
+            ]) }];
+            form
+        };
+        let mut totals = Vec::new();
+        for size in [32, 32768] {
+            let form = build(size);
+            let mut work = 0;
+            let mut selected = metadata(&form, "tag", &mut |units| { work += units; Ok(()) }).unwrap().unwrap();
+            let Kind::Map(pairs) = &form.metadata[0].kind else { unreachable!() };
+            let (Kind::String(copy), Kind::String(original)) = (&selected.kind, &pairs[1].kind) else { unreachable!() };
+            assert_eq!(copy, original);
+            assert_ne!(copy.as_ptr(), original.as_ptr());
+            if let Kind::String(value) = &mut selected.kind { value[0] = 66; }
+            assert_eq!(pairs[1], read("\"selected\""));
+            totals.push(work);
+        }
+        assert_eq!(totals[0], totals[1], "unselected value bytes are never copied or traversed as keys");
+    }
+
+    #[test]
+    fn metadata_lookup_validates_all_prefixes_and_arbitrary_keys_before_selecting() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("value");
+        // Reversed prefix processing first sees a perfectly valid :tag. The
+        // later invalid prefix must still reject lookup of that existing tag.
+        form.metadata = vec![read("42"), read("{:tag number}")];
+        let error = metadata(&form, "tag", &mut |_| Ok(())).unwrap_err();
+        let owned_error = reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap_err();
+        assert_eq!(error.message, "Invalid metadata: expected a map, keyword, symbol or string");
+        assert_eq!(error.message, owned_error.message);
+        assert_eq!(error.span, owned_error.span);
+        let malformed_key = Form { span: 51..60, metadata: vec![], kind: Kind::Map(vec![read(":unpaired")]) };
+        form.metadata = vec![Form { span: 1..80, metadata: vec![], kind: Kind::Map(vec![
+            read(":tag"), read("number"), malformed_key.clone(), read("1"), malformed_key, read("2"),
+        ]) }];
+        let error = metadata(&form, "tag", &mut |_| Ok(())).unwrap_err();
+        let owned_error = reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap_err();
+        assert_eq!(error.message, "Metadata key map requires paired entries");
+        assert_eq!(error.message, owned_error.message);
+        assert_eq!(error.span, owned_error.span);
+    }
+
+    #[test]
+    fn metadata_lookup_completes_structural_dedup_and_retries_every_fallible_boundary() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("value");
+        // List/vector reader-data equality and canonical duplicate map/set
+        // contents must be normalized even when looking up a different key.
+        form.metadata = vec![read("{:tag [winning {:nested true}] [1 2] 17 {:a #{1}} 23}"),
+            read("{:tag discarded (1 2) 19 {:a #{1 1}} 29}")];
+        let original = form.clone();
+        let mut calls = 0;
+        let selected = metadata(&form, "tag", &mut |_| { calls += 1; Ok(()) }).unwrap().unwrap();
+        // Compare against the actual winning source node, including every
+        // nested span; separately reading its text starts locations at zero.
+        let Kind::Map(outer_pairs) = &form.metadata[0].kind else { unreachable!() };
+        assert_eq!(selected, outer_pairs[1]);
+        assert_eq!(super::super::quotes::reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap().len(), 3);
+        for stop in 0..calls {
+            let mut current = 0;
+            let error = metadata(&form, "tag", &mut |_| {
+                let call = current; current += 1;
+                if call == stop { Err(Diagnostic { span: 5..8, message: "metadata lookup cancelled".into() }) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "metadata lookup cancelled");
+            assert_eq!(form, original);
+            assert_eq!(metadata(&form, "tag", &mut |_| Ok(())).unwrap().unwrap(), selected);
         }
     }
 

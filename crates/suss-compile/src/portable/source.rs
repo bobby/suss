@@ -358,14 +358,15 @@ pub(crate) fn dependencies(
         message: "Source module requires a leading ns declaration".into(),
     })
 }
-/// Consume a leading source declaration using a private compilation snapshot.
+/// Apply a leading source declaration to a private compilation snapshot.
+/// Syntax is retained unchanged for emission; the caller stages its nil analysis head.
 pub(crate) fn namespace(
-    forms: &mut [Form],
+    forms: &[Form],
     env: &mut Environment,
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<Option<Form>, Diagnostic> {
-    let Some(form) = forms.first_mut() else {
+    let Some(form) = forms.first() else {
         return Ok(None);
     };
     let Some(header) = header_with_phases(form, expander.supports_macro_imports())? else {
@@ -453,9 +454,7 @@ pub(crate) fn namespace(
             }
         }
     }
-    let directive = form.clone();
-    form.kind = Kind::Nil;
-    Ok(Some(directive))
+    Ok(Some(super::clone_form_metered(form, &mut |work| expander.charge_expansion_work(work, form.span.clone()))?))
 }
 
 /// Discover namespace edges without treating a Macro dependency as a Runtime

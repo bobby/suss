@@ -28610,3 +28610,70 @@ same operation budget/full negative cases remain; actual certificate reuse in
 test setup did not eliminate the fuel failure. Full workspace baseline and
 passing final-head CI remain separate gates. Post-push817 API inspection found
 zero matching Actions runs/checks.
+
+
+## Borrowed inputs, source phases and metadata views (2026-10-16)
+
+Archive `evidence/m4-borrowed-input-and-source-phases-2026-10-16.tar.gz`,
+SHA256 `6390e6ac489e4ef2a270068913c0d3699a5f87e91bd323561613750e77c646f4`,
+retains563 manifested payloads and4586 paths mapped to561 blobs. Exact450
+post-bootstrap inputs match the staged checkpoint. Later declaration-query
+reuse and child-batch edits are excluded.
+
+The original runtime import verifier initially rejected an upstream symlink
+escaping checkout containment. An actual owned pinned checkout repaired setup;
+no guard was relaxed. Provenance checks passed, but all17 unchanged runtime
+tests failed in loaded()->Session.eval(CORE), native fuel126881..126889.
+The fixtures/core.sus match the historically passing #262 baseline. This is
+one blocked setup, not17 witnessed semantic defects.1523 inputs stayed fixed.
+
+Analysis now borrows original selected syntax instead of deep-copying the whole
+input. Namespace effects retain their order; one metered nil analysis head
+preserves original position/span/metadata/context while emission retains the
+untouched namespace directive. Three regressions cover actual input identity,
+error/retry, retained source ownership and cumulative accounting. The first
+borrowed-input snapshot passed65 focused tests and default bootstrap generation,
+but runtime import still failed later and source-child tests reported3pass/1fail.
+
+A field trace established the earlier lineage rejection:11 Runtime Keyword
+hash fields changed from nil to numbers without Macro authentication. Actual
+compiled-macro transport uses a Macro Store for either caller source phase.
+Tests now independently capture actual Runtime/Macro source revisions and prove
+their exact owner Arcs while transporting through Macro stores. The explicit
+Runtime hash operation must succeed, then unreceipted source facts reject.
+Identity/callback/GC/poison assertions and all five invalid-inventory cases stay.
+The full native recipe layout is computed once within immutable planning
+intervals; every current guest certificate and source witness is still checked.
+
+Metadata normalization retains all prefix and arbitrary-key validation,
+structural equality/deduplication, precedence, first-key identity and source
+order. Query lookup clones only the winning value; full-output consumers still
+receive complete owned pairs. One initial regression compared correct retained
+spans with a freshly parsed zero-based expected subtree; only its expectation
+now comes from the independent winning input, preserving full equality.
+The fat-view snapshot passed69 focused tests but regressed default bootstrap
+fuel. It is preserved separately. Thin borrowed-or-boxed terms use smaller actual
+storage, with Box/Vec backing and relocation charged before allocation.
+
+Exact final source commands/outputs are archived from
+`run-thin-metadata-input-check.py` and `run-thin-metadata-bootstrap-verifier.py`.
+With CARGO_BUILD_JOBS=2 and the owned target, compile passed; borrowed-input3,
+ownership13, provenance17, metadata6, source-tags10, source-analysis4+5 and
+control-analysis12 passed:70 executions. Both bootstrap phases regenerated.
+`sh scripts/verify-core-import.sh` then reported0pass/17setupfail at native
+248742..248744; all source/provenance stages passed. Source-child tests reported
+3pass/1Wasmfuel fail under the unchanged single request budget. No diagnostic
+observer was enabled. Later optimizations do not alter these recorded outcomes.
+
+`sh scripts/verify-bootstrap.sh` on the same450-input tuple passed two exact
+reproductions, identity checks and4execution tests with Java/Node absent from
+PATH. Across these separately scoped final cohorts:77pass/18fail. There is no
+workspace-baseline or current-source Jank claim. Existing trace bucket events
+can repeat through nested ExpansionRequests and are not unique work totals or
+matched performance evidence.
+
+One reviewed workflow line adds `portable/**` push coverage, retaining the PR
+trigger, commands, permissions and separate concurrency groups. Actual head
+push CI must be checked after publication; this does not establish why previous
+PR runs were absent or replace merge compatibility checks. No issue acceptance,
+quota/tariff change, metadata stripping or merge is claimed by these commands.

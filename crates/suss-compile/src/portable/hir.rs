@@ -834,12 +834,23 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
+        self.body_with_first_override(forms, span, context, tail, None)
+    }
+    fn body_with_first_override(
+        &mut self,
+        forms: &[Form],
+        span: Range<usize>,
+        context: super::AnalysisContext,
+        tail: bool,
+        first_override: Option<&Form>,
+    ) -> Result<Hir, Diagnostic> {
         // Intermediate forms discard their result; only the final form inherits
         // its caller context. A fragment itself is a sequence of statements.
         let items = forms
             .iter()
             .enumerate()
             .map(|(index, form)| {
+                let form = if index == 0 { first_override.unwrap_or(form) } else { form };
                 self.form_in(
                     form,
                     if index + 1 < forms.len() {
@@ -3043,6 +3054,20 @@ pub(crate) fn prepare_with_origin(
     expander: &mut dyn super::ExpansionHost,
     origin: Option<&super::SourceOrigin>,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    prepare_with_origin_and_first_override(forms, span, environment, phase, expander, origin, None)
+}
+/// Preserve the original top-level position/context of a consumed namespace
+/// declaration while borrowing every other actual input Form. No borrowed
+/// syntax escapes: HIR and source facts capture their own immutable owners.
+pub(crate) fn prepare_with_origin_and_first_override(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
+    origin: Option<&super::SourceOrigin>,
+    first_override: Option<&Form>,
+) -> Result<(Hir, Environment), Diagnostic> {
     let origin = local_bindings::capture_origin_owner(origin, &mut |work| expander.charge_expansion_work(work, span.clone()))?;
     let mut analyzer = Analyzer {
         suspendable: false,
@@ -3067,7 +3092,7 @@ pub(crate) fn prepare_with_origin(
         target: None,
         method_recurrence: Vec::new(),
     };
-    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    let mut hir = analyzer.body_with_first_override(forms, span, super::AnalysisContext::Statement, false, first_override)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

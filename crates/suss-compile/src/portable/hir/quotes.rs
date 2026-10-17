@@ -315,47 +315,129 @@ fn merged_metadata_pairs_metered(
     reader_data: bool,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<Form>, Diagnostic> {
-    let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
-    for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
-        meter(1)?;
-        let pairs = metadata_pairs_metered(prefix, meter)?;
-        for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
-            if !reader_data && irrelevant_metadata_key(&pair[0]) {
-                continue;
-            }
-            let mut previous = None;
-            for (index, (key, _, _)) in entries.iter().enumerate() {
-                if reader_key_equal_metered(key, &pair[0], 0, meter)? {
-                    previous = Some(index);
-                    break;
-                }
-            }
-            let order = (prefix_index, pair_index);
-            if let Some(index) = previous {
-                // Pinned tools.reader merges inner first. Association keeps
-                // the existing key object and replaces only its value.
-                entries[index].1 = super::super::clone_form_metered(&pair[1], meter)?;
-                entries[index].2 = order;
-            } else {
-                entries.push((
-                    super::super::clone_form_metered(&pair[0], meter)?,
-                    super::super::clone_form_metered(&pair[1], meter)?,
-                    order,
-                ));
+    let entries = merged_metadata_view_metered(form, reader_data, meter)?;
+    let len = entries.len().checked_mul(2)
+        .ok_or_else(|| fail(form.span.clone(), "Metadata output capacity overflow"))?;
+    let mut output = Vec::new();
+    metadata_reserve(&mut output, len, meter, &form.span)?;
+    for entry in entries {
+        output.push(super::super::clone_form_metered(entry.key.as_ref(), meter)?);
+        output.push(super::super::clone_form_metered(entry.value.as_ref(), meter)?);
+    }
+    Ok(output)
+}
+
+/// Genuine reader syntax remains borrowed. Only shorthand-generated syntax is
+/// owned here; callers explicitly materialize whichever normalized values they
+/// need. Order and the retained first key object are part of normalization.
+pub(super) enum MetadataForm<'a> {
+    Borrowed(&'a Form),
+    Synthesized(Box<Form>),
+}
+impl MetadataForm<'_> {
+    pub(super) fn as_ref(&self) -> &Form {
+        match self { Self::Borrowed(form) => form, Self::Synthesized(form) => form }
+    }
+    fn synthesized(form: Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        let bytes = u64::try_from(std::mem::size_of::<Form>())
+            .map_err(|_| fail(form.span.clone(), "Metadata synthesized owner work overflow"))?;
+        meter(bytes)?;
+        Ok(Self::Synthesized(Box::new(form)))
+    }
+}
+pub(super) struct MetadataEntry<'a> {
+    pub key: MetadataForm<'a>,
+    pub value: MetadataForm<'a>,
+    order: (usize, usize),
+}
+
+fn metadata_reserve<T>(
+    values: &mut Vec<T>, additional: usize,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, span: &Range<usize>,
+) -> Result<(), Diagnostic> {
+    let needed = values.len().checked_add(additional)
+        .ok_or_else(|| fail(span.clone(), "Metadata capacity overflow"))?;
+    if needed <= values.capacity() { return Ok(()) }
+    // Charge the requested new backing and relocation before fallible reserve.
+    let capacity = values.capacity().checked_mul(2).unwrap_or(needed).max(needed);
+    let bytes = capacity.checked_add(values.len())
+        .and_then(|count| count.checked_mul(std::mem::size_of::<T>()))
+        .and_then(|bytes| u64::try_from(bytes).ok())
+        .ok_or_else(|| fail(span.clone(), "Metadata allocation work overflow"))?;
+    meter(bytes)?;
+    values.try_reserve_exact(capacity - values.len())
+        .map_err(|_| fail(span.clone(), "Unable to reserve metadata view"))
+}
+
+pub(super) fn reader_metadata_view_metered<'a>(
+    form: &'a Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<MetadataEntry<'a>>, Diagnostic> {
+    merged_metadata_view_metered(form, true, meter)
+}
+
+fn merged_metadata_view_metered<'a>(
+    form: &'a Form, reader_data: bool,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<MetadataEntry<'a>>, Diagnostic> {
+    fn associate<'a>(
+        entries: &mut Vec<MetadataEntry<'a>>, key: MetadataForm<'a>, value: MetadataForm<'a>,
+        order: (usize, usize), reader_data: bool,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, span: &Range<usize>,
+    ) -> Result<(), Diagnostic> {
+        if !reader_data && irrelevant_metadata_key(key.as_ref()) { return Ok(()) }
+        let mut previous = None;
+        for (index, entry) in entries.iter().enumerate() {
+            if reader_key_equal_metered(entry.key.as_ref(), key.as_ref(), 0, meter)? {
+                previous = Some(index);
+                break;
             }
         }
+        if let Some(index) = previous {
+            // Inner prefix's actual key survives; outer association replaces
+            // only the value and the winning textual position.
+            entries[index].value = value;
+            entries[index].order = order;
+        } else {
+            metadata_reserve(entries, 1, meter, span)?;
+            entries.push(MetadataEntry { key, value, order });
+        }
+        Ok(())
     }
-    // Use the accepted textual order for surviving metadata entries, even
-    // when the pinned reader's hash iteration incidentally reorders them.
-    meter(
-        (entries.len() as u64)
-            .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())),
-    )?;
-    entries.sort_by_key(|(_, _, order)| *order);
-    Ok(entries
-        .into_iter()
-        .flat_map(|(key, value, _)| [key, value])
-        .collect())
+    let mut entries = Vec::new();
+    for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
+        meter(1)?;
+        match &prefix.kind {
+            Kind::Map(pairs) if pairs.len() % 2 == 0 => {
+                let Cow::Borrowed(pairs) = metadata_pairs_metered(prefix, meter)? else {
+                    unreachable!("valid map metadata is a borrowed slice")
+                };
+                for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
+                    associate(&mut entries, MetadataForm::Borrowed(&pair[0]), MetadataForm::Borrowed(&pair[1]),
+                        (prefix_index, pair_index), reader_data, meter, &prefix.span)?;
+                }
+            }
+            Kind::Keyword(_) => {
+                let value = Form { span: prefix.span.clone(), metadata: vec![], kind: Kind::Bool(true) };
+                associate(&mut entries, MetadataForm::Borrowed(prefix), MetadataForm::synthesized(value, meter)?,
+                    (prefix_index, 0), reader_data, meter, &prefix.span)?;
+            }
+            Kind::Symbol(_) | Kind::String(_) => {
+                meter(3)?; // actual allocated bytes of the synthetic tag name
+                let key = Form { span: prefix.span.clone(), metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword {
+                    namespace: None, name: "tag".into(),
+                }) };
+                associate(&mut entries, MetadataForm::synthesized(key, meter)?, MetadataForm::Borrowed(prefix),
+                    (prefix_index, 0), reader_data, meter, &prefix.span)?;
+            }
+            _ => return Err(fail(prefix.span.clone(), "Invalid metadata: expected a map, keyword, symbol or string")),
+        }
+    }
+    meter((entries.len() as u64)
+        .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
+    // Each surviving entry has a distinct winning source position, so stable
+    // and unstable order coincide; this in-place sort needs no scratch backing.
+    entries.sort_unstable_by_key(|entry| entry.order);
+    Ok(entries)
 }
 
 // Original reader-data normalization. This comparison is deliberately about
@@ -609,6 +691,51 @@ pub fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i3
 #[cfg(test)]
 mod metadata_reader_tests {
     use super::*;
+
+    #[test]
+    fn metadata_view_storage_is_thin_and_synthesized_box_work_is_precharged() {
+        assert!(std::mem::size_of::<MetadataForm<'_>>() <= 2 * std::mem::size_of::<usize>());
+        assert!(std::mem::size_of::<MetadataEntry<'_>>() <= 6 * std::mem::size_of::<usize>());
+        let form = Form { span: 5..8, metadata: vec![], kind: Kind::Bool(true) };
+        let mut charged = 0;
+        let result = MetadataForm::synthesized(form.clone(), &mut |work| {
+            charged += work;
+            Err(fail(5..8, "synthesized owner cancelled"))
+        });
+        let error = result.err().expect("owner allocation must be gated by the meter");
+        assert_eq!(error.message, "synthesized owner cancelled");
+        assert_eq!(charged, std::mem::size_of::<Form>() as u64);
+        let retry = MetadataForm::synthesized(form.clone(), &mut |_| Ok(())).unwrap();
+        assert_eq!(retry.as_ref(), &form);
+    }
+
+    #[test]
+    fn normalized_metadata_view_retains_borrowed_collision_key_and_winning_value_with_shorthands() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("value");
+        form.metadata = vec![read("{:dup [outer] :other 4}"), read(":private"), read("{:dup [inner]}")];
+        let view = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(view.len(), 3);
+        let Kind::Map(outer) = &form.metadata[0].kind else { unreachable!() };
+        let Kind::Map(inner) = &form.metadata[2].kind else { unreachable!() };
+        assert!(matches!(&view[0].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &inner[0])));
+        assert!(matches!(&view[0].value, MetadataForm::Borrowed(value) if std::ptr::eq(*value, &outer[1])));
+        assert!(matches!(&view[1].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &outer[2])));
+        assert!(matches!(&view[2].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &form.metadata[1])));
+        assert!(matches!(&view[2].value, MetadataForm::Synthesized(value) if matches!(value.kind, Kind::Bool(true))));
+        let output = reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(output, vec![inner[0].clone(), outer[1].clone(), outer[2].clone(), outer[3].clone(), form.metadata[1].clone(), Form {
+            kind: Kind::Bool(true), span: form.metadata[1].span.clone(), metadata: vec![],
+        }]);
+        assert!(!std::ptr::eq(&output[1], view[0].value.as_ref()));
+        let mut shorthand = read("value");
+        shorthand.metadata = vec![read("string"), read("\"inner\"")];
+        let view = reader_metadata_view_metered(&shorthand, &mut |_| Ok(())).unwrap();
+        assert_eq!(view.len(), 1);
+        assert!(matches!(&view[0].key, MetadataForm::Synthesized(value) if matches!(&value.kind, Kind::Keyword(key) if key.name == "tag")));
+        assert!(std::ptr::eq(view[0].value.as_ref(), &shorthand.metadata[0]));
+        assert_eq!(view[0].key.as_ref().span, shorthand.metadata[1].span);
+    }
 
     #[test]
     fn map_metadata_view_borrows_exact_entries_without_copy_or_charge() {

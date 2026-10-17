@@ -84,7 +84,7 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
             message: failure.message,
         })?;
     super::analyze_selected_fragment(
-        forms,
+        &forms,
         0..SOURCE.len(),
         &Environment::default(),
         phase,
