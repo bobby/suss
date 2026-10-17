@@ -28763,3 +28763,18 @@ These are nested instruction-fuel intervals, not wall-time or additive independe
 operation totals. Macro phase and remaining variants do not execute after failure.
 A direct-root-first membership search is a candidate; all snapshot, seed, owner,
 callback, foreign-store and negative-proof obligations remain required.
+
+
+Supplemental terminal evidence for the parent source be9403182656cf370c708842de2828e869af19e8
+is retained in m4-draft263-terminal-evidence-2026-10-16.tar.gz, SHA256
+be2751102791052c235d6ab78b0d99f6996149ba224666479732b0790a2ac97a.
+It contains the required cargo test --workspace --locked -- --test-threads=2
+terminal receipt and logs: exit101, 83 passes and two guest-fuel failures,
+14 of 253 integration targets completed and239 unexecuted. Later targets and
+doctests were unexecuted. The450 input hashes correspond to that parent commit.
+The same parent final-head CI run38991995530 also fails:520 successful Rust
+executions and16 failures, or516 distinct successful target-qualified tests
+and16 failures after deduplicating repeated bootstrap executions. Foundation
+Python348 passes. These are parent results, not execution of the diagnostic
+branch. All raw failures, logs, source correspondence and independent classifiers
+remain in the archive; no new Cargo execution accompanies publication.
