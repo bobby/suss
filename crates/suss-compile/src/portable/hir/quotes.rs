@@ -336,12 +336,12 @@ fn merged_metadata_pairs_metered(
 /// Genuine reader syntax remains borrowed. Only shorthand-generated syntax is
 /// owned here; callers explicitly materialize whichever normalized values they
 /// need. Order and the retained first key object are part of normalization.
-pub(super) enum MetadataForm<'a> {
+pub(crate) enum MetadataForm<'a> {
     Borrowed(&'a Form),
     Synthesized(Box<Form>),
 }
 impl MetadataForm<'_> {
-    pub(super) fn as_ref(&self) -> &Form {
+    pub(crate) fn as_ref(&self) -> &Form {
         match self { Self::Borrowed(form) => form, Self::Synthesized(form) => form }
     }
     fn synthesized(form: Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
@@ -351,7 +351,7 @@ impl MetadataForm<'_> {
         Ok(Self::Synthesized(Box::new(form)))
     }
 }
-pub(super) struct MetadataEntry<'a> {
+pub(crate) struct MetadataEntry<'a> {
     pub key: MetadataForm<'a>,
     pub value: MetadataForm<'a>,
     order: (usize, usize),
@@ -375,7 +375,7 @@ fn metadata_reserve<T>(
         .map_err(|_| fail(span.clone(), "Unable to reserve metadata view"))
 }
 
-pub(super) fn reader_metadata_view_metered<'a>(
+pub(crate) fn reader_metadata_view_metered<'a>(
     form: &'a Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<MetadataEntry<'a>>, Diagnostic> {
     merged_metadata_view_metered(form, true, meter)

@@ -22,6 +22,7 @@ use super::{
     resolve::{Binding as ResolvedBinding, BootstrapSelection, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
+pub(crate) use quotes::reader_metadata_view_metered;
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
 pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
 use std::{

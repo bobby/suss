@@ -168,9 +168,47 @@ impl Ord for NamespaceKey {
 // Iterative validation keeps guest-facing reader forms off the Rust call stack.
 // Every visit, normalized metadata pass, and text unit is charged to the active
 // Session operation instead of a second per-form quota.
+fn metadata_guard_capacity_error() -> SessionError {
+    SessionError::Host(wasmtime::Error::msg("Metadata guard stack capacity overflow"))
+}
+
+// Pay requested backing, relocation, and eventual release before acquisition.
+// Only references move; neither Form payloads nor their metadata are copied.
+fn metadata_guard_reserve<'a>(
+    pending: &mut Vec<&'a Form>, additional: usize,
+    charge: &mut impl FnMut(u64) -> Result<()>,
+) -> Result<()> {
+    let required = pending.len().checked_add(additional)
+        .ok_or_else(metadata_guard_capacity_error)?;
+    // Initialize and retire each appended reference, even when backing is reused.
+    let entries = additional.checked_mul(2)
+        .and_then(|units| u64::try_from(units).ok())
+        .ok_or_else(metadata_guard_capacity_error)?;
+    charge(entries)?;
+    if required <= pending.capacity() { return Ok(()); }
+    let capacity = pending.capacity().checked_mul(2)
+        .ok_or_else(metadata_guard_capacity_error)?.max(required);
+    let units = capacity.checked_add(pending.len())
+        .and_then(|count| count.checked_mul(std::mem::size_of::<&Form>()))
+        .and_then(|bytes| bytes.checked_add(2)) // allocation and release
+        .and_then(|units| u64::try_from(units).ok())
+        .ok_or_else(metadata_guard_capacity_error)?;
+    charge(units)?;
+    pending.try_reserve_exact(capacity - pending.len())
+        .map_err(|_| SessionError::Host(wasmtime::Error::msg("Unable to reserve metadata guard stack")))
+}
+
 fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> Result<()> {
+    validate_form_data_visiting(form, charge, &mut |_| {})
+}
+
+fn validate_form_data_visiting(
+    form: &Form, charge: &mut impl FnMut(u64) -> Result<()>,
+    visit: &mut impl FnMut(Option<&Form>),
+) -> Result<()> {
     let mut pending = vec![form];
     while let Some(form) = pending.pop() {
+        visit(Some(form));
         let text_units = match &form.kind {
             Kind::String(value) => value.len(),
             Kind::Symbol(value) => value.to_string().encode_utf16().count(),
@@ -212,20 +250,24 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
                     "Metadata requires a symbol or collection",
                 )));
             }
-            // Normalize and clone metadata within the same graph work budget.
+            // Normalize every prefix before visiting any winning contents. The
+            // view owns shorthand syntax and borrows genuine map entries.
             charge(form.metadata.len() as u64)?;
-            let pairs = preserve_source_error(form.span.clone(), charge, |charge| {
-                hir::reader_metadata_pairs_metered(form, &mut |work| charge(work))
+            let entries = preserve_source_error(form.span.clone(), charge, |charge| {
+                hir::reader_metadata_view_metered(form, &mut |work| charge(work))
             })?;
-            let normalized = Form {
-                span: form.span.clone(),
-                metadata: vec![],
-                kind: Kind::Map(pairs),
-            };
-            // Keep the temporary alive until it is visited below by validating
-            // it immediately with a second iterative stack.
-            let mut metadata_pending = vec![&normalized];
+            visit(None); // normalized synthetic map root
+            charge(1)?; // the former synthetic, metadata-free map root
+            let mut metadata_pending = Vec::new();
+            let initial = entries.len().checked_mul(2)
+                .ok_or_else(metadata_guard_capacity_error)?;
+            metadata_guard_reserve(&mut metadata_pending, initial, charge)?;
+            for entry in entries.iter().rev() {
+                metadata_pending.push(entry.value.as_ref());
+                metadata_pending.push(entry.key.as_ref());
+            }
             while let Some(item) = metadata_pending.pop() {
+                visit(Some(item));
                 let used = match &item.kind {
                     Kind::String(value) => value.len(),
                     Kind::Symbol(value) => value.to_string().encode_utf16().count(),
@@ -241,7 +283,8 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
                 charge(1u64.saturating_add(used as u64))?;
                 match &item.kind {
                     Kind::Map(items) if items.len() % 2 == 0 => {
-                        metadata_pending.extend(items.iter().rev())
+                        metadata_guard_reserve(&mut metadata_pending, items.len(), charge)?;
+                        metadata_pending.extend(items.iter().rev());
                     }
                     Kind::Map(_) => {
                         return Err(SessionError::Host(wasmtime::Error::msg(
@@ -249,7 +292,8 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
                         )));
                     }
                     Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
-                        metadata_pending.extend(items.iter().rev())
+                        metadata_guard_reserve(&mut metadata_pending, items.len(), charge)?;
+                        metadata_pending.extend(items.iter().rev());
                     }
                     Kind::Conditional(_)
                     | Kind::SplicingConditional(_)
@@ -4295,3 +4339,6 @@ mod async_payload_clone_meter_tests {
     }
 
 }
+
+#[cfg(test)]
+mod metadata_guard_tests;
