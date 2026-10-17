@@ -373,6 +373,15 @@ impl CanonicalMethods {
         constructor: Option<&SessionValue>,
         descriptor: &SessionValue,
     ) -> Result<bool> {
+        self.source_class_matches_at(session, owner, constructor, descriptor, None)
+    }
+    // An ordinal is only a lookup hint. Its stored owner must match the supplied
+    // name; arbitrary/reordered inputs retain the original metered name lookup.
+    fn source_class_matches_at(
+        &self, session: &mut Session, owner: &str,
+        constructor: Option<&SessionValue>, descriptor: &SessionValue,
+        ordinal: Option<usize>,
+    ) -> Result<bool> {
         session.check(descriptor)?;
         if let Some(constructor) = constructor {
             session.check(constructor)?;
@@ -381,13 +390,23 @@ impl CanonicalMethods {
         if self.identity != session.identity {
             return Err(SessionError::ForeignValue);
         }
-        // Meter actual owner comparisons, including failed/unknown lookups.
+        session.charge_host_work(1)?;
         let mut found = None;
-        for class in &self.source_classes {
-            session.charge_host_work(owner.len() as u64 + class.owner.len() as u64 + 1)?;
-            if class.owner == owner {
-                found = Some(class);
-                break;
+        if let Some(index) = ordinal {
+            session.charge_host_work(1)?;
+            if let Some(class) = self.source_classes.get(index) {
+                session.charge_host_work(owner.len() as u64 + class.owner.len() as u64 + 1)?;
+                if class.owner == owner { found = Some(class); }
+            }
+        }
+        if found.is_none() {
+            // Unknown names and untrusted/wrong ordinals retain full lookup.
+            for class in &self.source_classes {
+                session.charge_host_work(owner.len() as u64 + class.owner.len() as u64 + 1)?;
+                if class.owner == owner {
+                    found = Some(class);
+                    break;
+                }
             }
         }
         let Some(expected) = found else {
@@ -589,6 +608,16 @@ impl Session {
         };
         registry.source_class_matches(self, owner, constructor, descriptor)
     }
+    pub(super) fn initial_source_class_matches_at(
+        &mut self, owner: &str, constructor: Option<&SessionValue>,
+        descriptor: &SessionValue, ordinal: Option<usize>,
+    ) -> Result<bool> {
+        let _request = self.operation_budget_scope()?;
+        self.charge_host_work(1)?;
+        let Some(registry) = self.canonical_methods.clone() else { return Ok(false); };
+        registry.source_class_matches_at(self, owner, constructor, descriptor, ordinal)
+    }
+
 }
 
 #[cfg(test)]

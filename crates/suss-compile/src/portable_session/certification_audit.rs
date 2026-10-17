@@ -1,4 +1,5 @@
-//! Invocation-local query reuse within a callback-free inspection interval.
+//! Prototype-query reuse within a callback-free inspection interval.
+//! Class checks are fresh inspections with checked ordinal lookup hints.
 //! Such intervals may occur between constructions or during final certification.
 //! Discard the audit before every construction or fallback materialization; no
 //! cached query may survive a potential guest callback, including on failure.
@@ -51,15 +52,6 @@ impl Context<u64> for Meter<'_> {
         self.0.charge_host_work(1)?;
         Ok(a.cmp(b))
     }
-}
-fn name_bucket(session: &mut Session, name: &str) -> Result<u64> {
-    session.charge_host_work(1)?;
-    let mut hash = 0xcbf29ce484222325u64;
-    for chunk in name.as_bytes().chunks(256) {
-        session.charge_host_work((chunk.len() as u64).saturating_mul(3))?;
-        for byte in chunk { hash = (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3); }
-    }
-    Ok(hash)
 }
 impl CertificationAudit {
     pub(crate) fn new(session: &mut Session) -> Result<Self> {
@@ -135,11 +127,26 @@ impl CertificationAudit {
         Ok(valid)
     }
     pub(crate) fn class(&mut self, session: &mut Session, input: &BridgeClassInput) -> Result<bool> {
+        self.class_at(session, input, None)
+    }
+    pub(super) fn class_at(
+        &mut self, session: &mut Session, input: &BridgeClassInput,
+        ordinal: Option<usize>,
+    ) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
-        let bucket = name_bucket(session, input.name)?;
-        self.query(session, Some(input.name),
-            input.constructor.iter().chain(std::iter::once(&input.descriptor)), bucket,
-            |session| session.initial_source_class_matches(input.name, input.constructor.as_ref(), &input.descriptor))
+        session.charge_host_work(3)?;
+        if self.identity != session.identity { return Err(SessionError::ForeignValue); }
+        if !same_registry(&self.methods, &session.canonical_methods)
+            || !same_registry(&self.origins, &session.prototype_origin) { return Err(invalid()); }
+        // Preserve the original query's supplied-root ownership/error order.
+        for root in input.constructor.iter().chain(std::iter::once(&input.descriptor)) {
+            session.charge_host_work(1)?;
+            session.check(root)?;
+        }
+        // Classes deliberately have no result cache or retained query roots.
+        // Every input observes the current constructor descriptor and schema.
+        session.initial_source_class_matches_at(input.name,
+            input.constructor.as_ref(), &input.descriptor, ordinal)
     }
     pub(super) fn prototype(&mut self, session: &mut Session, input: &PrototypeInputs) -> Result<bool> {
         self.query(session, None, input.expectation_fields().iter(), 0, |session| input.matches(session))
@@ -256,7 +263,7 @@ mod tests {
         assert_eq!(audit.entries.len(), 5);
     }
     #[test]
-    fn warm_complete_class_catalog_fits_finite_fuel() {
+    fn fresh_complete_class_catalog_fits_finite_fuel() {
         let mut session = Session::new_macro().unwrap();
         let registry = session.canonical_methods.clone().unwrap();
         let mut inputs = Vec::new();
@@ -270,27 +277,31 @@ mod tests {
             descriptor: session.data_descriptor(&array, false).unwrap() });
         assert_eq!(inputs.len(), 24);
         let mut audit = CertificationAudit::new(&mut session).unwrap();
-        for input in &inputs { assert!(audit.class(&mut session, input).unwrap()); }
+        for (index, input) in inputs.iter().enumerate() {
+            assert!(audit.class_at(&mut session, input, Some(index)).unwrap());
+        }
         session.collect().unwrap();
         session.set_operation_fuel(5_000);
         let operation = session.operation_budget_scope().unwrap();
         let before = session.operation_fuel_remaining().unwrap();
-        for input in &inputs { assert!(audit.class(&mut session, input).unwrap()); }
-        eprintln!("warm class catalog fuel spent: {}", before - session.operation_fuel_remaining().unwrap());
-        assert_eq!(audit.entries.len(), 24);
+        for (index, input) in inputs.iter().enumerate() {
+            assert!(audit.class_at(&mut session, input, Some(index)).unwrap());
+        }
+        eprintln!("fresh class catalog fuel spent: {}", before - session.operation_fuel_remaining().unwrap());
+        assert!(audit.entries.is_empty(), "fresh class checks retain no query entries");
         drop(operation);
     }
     #[test]
-    fn audit_class_exact_binding_gc_false_and_later_owner_error() {
+    fn audit_class_exact_binding_gc_repeated_false_and_later_owner_error() {
         let mut session = Session::new_macro().unwrap();
         let list = class(&mut session, "List");
         let cons = class(&mut session, "Cons");
         let mut audit = CertificationAudit::new(&mut session).unwrap();
         assert!(audit.class(&mut session, &list).unwrap());
-        assert_eq!(audit.entries.len(), 1);
+        assert!(audit.entries.is_empty());
         session.collect().unwrap();
         assert!(audit.class(&mut session, &list).unwrap());
-        assert_eq!(audit.entries.len(), 1, "GC must not break rooted exact hits");
+        assert!(audit.entries.is_empty(), "GC must not require retained class query roots");
 
         for changed in [
             BridgeClassInput { name: "Cons", constructor: list.constructor.clone(), descriptor: list.descriptor.clone() },
@@ -302,9 +313,9 @@ mod tests {
             assert!(!session.initial_source_class_matches(changed.name,
                 changed.constructor.as_ref(), &changed.descriptor).unwrap());
             assert!(!audit.class(&mut session, &changed).unwrap());
-            assert_eq!(audit.entries.len(), before + 1, "every changed binding must miss");
+            assert_eq!(audit.entries.len(), before, "fresh false checks must not publish");
             assert!(!audit.class(&mut session, &changed).unwrap());
-            assert_eq!(audit.entries.len(), before + 1, "completed false results may hit");
+            assert_eq!(audit.entries.len(), before, "repeated false checks must stay fresh");
         }
 
         let mut foreign = Session::new_macro().unwrap();
@@ -337,15 +348,15 @@ mod tests {
             let error = audit.class(session, &list).unwrap_err();
             assert!(matches!(error, SessionError::Trap(ref error)
                 if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
-            assert!(audit.entries.is_empty(), "failure at final staging charge must not publish");
+            assert!(audit.entries.is_empty(), "failure during inspection must not publish");
             Ok(())
         }).unwrap();
         assert!(audit.class(&mut session, &list).unwrap());
-        assert_eq!(audit.entries.len(), 1);
+        assert!(audit.entries.is_empty());
         session.with_operation_budget(|session| {
             session.interrupt_handle().interrupt();
             assert!(audit.class(session, &list).unwrap_err().is_interrupt());
-            assert_eq!(audit.entries.len(), 1);
+            assert!(audit.entries.is_empty());
             Ok(())
         }).unwrap();
         assert!(audit.class(&mut session, &list).unwrap());
@@ -361,14 +372,146 @@ mod tests {
         drop(empty);
 
         // Deliberate negative scope test: a changed registry must be rejected
-        // before a cached true hit. Never validate under replacement authority.
+        // before any fresh inspection. Never validate under replacement authority.
         let saved = session.canonical_methods.take();
         assert!(audit.class(&mut session, &list).is_err());
-        assert_eq!(audit.entries.len(), 1);
+        assert!(audit.entries.is_empty());
         drop(audit);
         session.canonical_methods = saved;
         let mut next = CertificationAudit::new(&mut session).unwrap();
         assert!(next.class(&mut session, &list).unwrap());
+    }
+
+    #[test]
+    fn ordinal_catalog_reordering_coverage_and_wrong_hints_preserve_authority() {
+        let mut session = Session::new_macro().unwrap();
+        let registry = session.canonical_methods.clone().unwrap();
+        let mut inputs = Vec::new();
+        for (name, constructor) in crate::portable_macro_data::source_class_names()
+            .zip(registry.source_constructor_roots()) {
+            inputs.push(BridgeClassInput { name, constructor: Some(constructor.clone()),
+                descriptor: session.data_descriptor(constructor, true).unwrap() });
+        }
+        let array = session.data_array(&[]).unwrap();
+        inputs.push(BridgeClassInput { name: "SourceArray", constructor: None,
+            descriptor: session.data_descriptor(&array, false).unwrap() });
+        let mut audit = CertificationAudit::new(&mut session).unwrap();
+        for input in &inputs {
+            // A wrong/out-of-range hint cannot grant OR remove authority.
+            assert!(audit.class_at(&mut session, input, Some(usize::MAX)).unwrap());
+            assert!(audit.class_at(&mut session, input, Some(0)).unwrap());
+        }
+        inputs.reverse();
+        fn checked(session: &mut Session, audit: &mut CertificationAudit, inputs: &[BridgeClassInput]) -> bool {
+            let copied = inputs.iter().map(|input| BridgeClassInput { name: input.name,
+                constructor: input.constructor.clone(), descriptor: input.descriptor.clone() }).collect();
+            ConstructionRecords::with_bridge_classes(copied)
+                .matches_class_schemas_audited(session, audit).unwrap()
+        }
+        assert!(checked(&mut session, &mut audit, &inputs));
+        session.collect().unwrap();
+        assert!(checked(&mut session, &mut audit, &inputs));
+        // SourceArray is first after reversal. A constructor is forbidden there.
+        inputs[0].constructor = inputs[1].constructor.clone();
+        assert!(!checked(&mut session, &mut audit, &inputs));
+        inputs[0].constructor = None;
+        assert!(checked(&mut session, &mut audit, &inputs));
+        let saved_name = inputs[0].name;
+        inputs[0].name = inputs[1].name;
+        assert!(!checked(&mut session, &mut audit, &inputs));
+        inputs[0].name = "UnknownOrdinalClass";
+        assert!(!checked(&mut session, &mut audit, &inputs));
+        inputs[0].name = saved_name;
+        inputs.pop();
+        assert!(!checked(&mut session, &mut audit, &inputs));
+        assert!(audit.entries.is_empty());
+    }
+
+    #[test]
+    fn fresh_ordinal_checks_observe_schema_changes_and_restore_without_new_audit() {
+        let mut session = Session::new_macro().unwrap();
+        let list = class(&mut session, "List");
+        let mut audit = CertificationAudit::new(&mut session).unwrap();
+        assert!(audit.class_at(&mut session, &list, Some(2)).unwrap());
+        // Class inspection itself no longer caches results. This test exercises
+        // that property; it does NOT permit prototype reuse across mutation.
+        let original = session.inspect(&list.descriptor, |mut store, value| {
+            let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let schema = descriptor.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            schema.get(&mut store, 0)?.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
+        }).unwrap();
+        let poison = session.eval("\"ordinal-schema-poison\"").unwrap();
+        session.inspect(&list.descriptor, |mut store, value| {
+            let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let schema = descriptor.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            let poison = poison.value.to_rooted(&mut store);
+            schema.set(&mut store, 0, wasmtime::Val::AnyRef(Some(poison)))
+        }).unwrap();
+        assert!(!audit.class_at(&mut session, &list, Some(2)).unwrap());
+        assert!(!audit.class_at(&mut session, &list, Some(2)).unwrap());
+        session.collect().unwrap(); // original is owned across this GC.
+        session.inspect(&list.descriptor, |mut store, value| {
+            let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let schema = descriptor.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            let original = original.to_rooted(&mut store);
+            schema.set(&mut store, 0, wasmtime::Val::AnyRef(Some(original)))
+        }).unwrap();
+        assert!(audit.class_at(&mut session, &list, Some(2)).unwrap());
+        let cons = class(&mut session, "Cons");
+        let nil = session.eval("nil").unwrap();
+        fn set_owner(session: &mut Session, list: &BridgeClassInput, changed: &SessionValue) {
+            session.inspect(list.constructor.as_ref().unwrap(), |mut store, value| {
+                let closure = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let owner = closure.field(&mut store, 0)?.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = owner.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                let changed = changed.value.to_rooted(&mut store);
+                fields.set(&mut store, 0, wasmtime::Val::AnyRef(Some(changed)))
+            }).unwrap();
+        }
+        // Same constructor closure and supplied descriptor: its LIVE owner is
+        // still inspected, including malformed-owner language errors.
+        set_owner(&mut session, &list, &cons.descriptor);
+        session.collect().unwrap();
+        assert!(!audit.class_at(&mut session, &list, Some(2)).unwrap());
+        set_owner(&mut session, &list, &nil);
+        assert!(matches!(audit.class_at(&mut session, &list, Some(2)), Err(SessionError::Language(_))));
+        set_owner(&mut session, &list, &list.descriptor);
+        assert!(audit.class_at(&mut session, &list, Some(2)).unwrap());
+    }
+
+    #[test]
+    fn fresh_ordinal_every_fuel_boundary_and_irq_preserve_recovery_and_late_errors() {
+        let mut session = Session::new_macro().unwrap();
+        let list = class(&mut session, "List");
+        let mut audit = CertificationAudit::new(&mut session).unwrap();
+        let cost = session.with_operation_budget(|session| {
+            let before = session.operation_fuel_remaining()?;
+            assert!(audit.class_at(session, &list, Some(2))?);
+            Ok(before - session.operation_fuel_remaining()?)
+        }).unwrap();
+        let handles = session.stats().external_value_handles;
+        for fuel in 0..cost {
+            session.with_operation_budget(|session| {
+                session.store.set_fuel(fuel)?;
+                let result = audit.class_at(session, &list, Some(2));
+                assert!(matches!(result, Err(SessionError::Trap(ref error))
+                    if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                    "allowance {fuel}/{cost}: expected OutOfFuel, got {result:?}");
+                assert!(audit.entries.is_empty());
+                Ok(())
+            }).unwrap();
+            assert_eq!(session.stats().external_value_handles, handles);
+        }
+        assert!(audit.class_at(&mut session, &list, Some(2)).unwrap());
+        let unknown = BridgeClassInput { name: "UnknownOrdinalClass",
+            constructor: list.constructor.clone(), descriptor: list.descriptor.clone() };
+        session.with_operation_budget(|session| {
+            assert!(!audit.class_at(session, &unknown, Some(2))?);
+            session.interrupt_handle().interrupt();
+            assert!(audit.class_at(session, &list, Some(2)).unwrap_err().is_interrupt());
+            Ok(())
+        }).unwrap();
+        assert!(audit.class_at(&mut session, &list, Some(2)).unwrap());
     }
 
     #[test]

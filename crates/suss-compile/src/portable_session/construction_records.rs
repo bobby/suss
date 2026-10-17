@@ -350,7 +350,7 @@ impl ConstructionRecords {
             }
             // Do not suppress a later budget/interrupt error after a false audit.
             valid &= match audit.as_deref_mut() {
-                Some(audit) => audit.class(session, input)?,
+                Some(audit) => audit.class_at(session, input, position)?,
                 None => session.initial_source_class_matches(
                     input.name, input.constructor.as_ref(), &input.descriptor,
                 )?,
