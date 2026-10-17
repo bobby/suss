@@ -27899,3 +27899,11 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+
+### Publication of local experiment snapshot (2026-10-16)
+
+Branch diagnostic/m4-primitive-string-access-before preserves the existing source, test and artifact bytes
+from this isolated worktree. Publication adds no new execution result. Existing
+raw failures and limitations remain applicable; this snapshot is not an issue
+acceptance result. No additional Cargo command was run for publication.
