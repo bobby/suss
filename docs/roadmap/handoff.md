@@ -28529,3 +28529,84 @@ Read-only CI diagnosis for preceding9d14186 retained zero runs/checks and missin
 PR263 merge ref/unknown mergeability despite its actual base being an ancestor.
 Actions and the unchanged workflow are enabled. No configuration defect or
 cause for missing trigger processing is established by those API observations.
+
+
+## Frozen817 Jank capture and original source-criteria checks (2026-10-16)
+
+Archive `evidence/m4-jank-acceptance-audit-2026-10-16.tar.gz`, SHA256
+`ba5b2e15368a19f4c4a96bc6b4ff16c48700d30d329f126b2c8540d7119ecd5c`,
+retains1265 manifested payloads. FILES.json maps5020 original paths to1263
+content-addressed blobs; generated fixture Git internals/bytecode are omitted,
+while working inputs, generators, raw failures and receipts remain.
+
+One actual producer used frozen817d48e source and regenerated bootstrap. Commands:
+
+```sh
+python3 scripts/clojure_test_suite.py
+SUSS_CLOJURE_TEST_SUITE_CAPTURE=/home/bobby/.cache/suss-m4-work/function-owner-jank-run/observations cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2 --nocapture
+```
+
+Pin check exited0. Capture/baseline gate exited101 after326.469s, with all921
+input hashes unchanged. Actual observations have SHA256
+`ec3e857e869483e456244e486220290a29af2fb5181f1e9b5f06cdc526125626`.
+All450 production inputs match committed817d48e; later diagnostics are excluded.
+The existing200M corpus allowance remains unchanged and does not establish
+10M default macro transport. No known-failure baseline was rewritten.
+
+Strict independent host classification finds248 namespace records:61loaded and
+187failed. Outcomes are1055host passes,25guest judgments and4752unexecuted;
+22 framework failures consist of TWO actual assertion errors and20 missing
+reference-skip units. Do not describe22 as executed failing assertions. The
+actual test-failure/skip arrays are empty; namespace failures are preserved.
+
+The four complete selected #264 bodies have35expected IDs: identical?4,
+hash-map8 and hash-set11 all execute as23host passes; when-let12 remains
+unexecuted behind its explicit missing-macro namespace failure. Complete35-ID
+coverage fails. Original M4 source-audit groups remain incomplete: #17 has
+106host/7guest/165unexecuted and three skip-mismatch units; #18 has
+31host/161unexecuted; #19 has323host/10guest/166unexecuted. Groups overlap and
+must not be summed as distinct assertions. The complete original map/test-map
+sequence1-69 executes in order:62host/7guest, no missing IDs, failures or skips.
+This bounded execution does not fulfill all #241/#252 criteria.
+
+Against the exact retained failure baseline, no previously nonfailing assertion
+becomes failed/unexecuted.124newhost and8newguest results were previously
+failed/unexecuted. Update#48 is a newly executed kind:error after its old
+namespace blocker; partial#2 is unchanged. Both preserve their unsupported ABI2
+layout observations. This is an unmatched baseline comparison, not causal proof
+or a blanket classification of remaining gaps as unrelated.
+
+The archive also retains the original #16-19 source/assertion audit at d311f70
+and the reviewed host helper. Its38 synthetic adversarial tests pass; old failed
+attempts remain. Exact corpus/comparator/selection/group hashes, unexpected
+outcomes and four-field skip multisets are checked. Exit0 is host verification,
+exit2 qualified guest/reference skips, exit1 failed/incomplete. Source mapping
+and host-tool tests are not native collection execution.
+
+Original source/provenance commands at817d48e:
+
+```sh
+python3 -m unittest discover -s scripts -p test_core_import.py
+python3 -m unittest discover -s scripts -p test_cljs_reviews.py
+python3 scripts/core_import.py --check
+python3 scripts/cljs_inventory.py --check
+python3 scripts/cljs_reviews.py
+```
+
+Negative cohorts passed15+10. The first import check failed because this
+worktree's ClojureScript submodule was empty and Git reported the parent HEAD.
+Initialized it using `git submodule update --init --reference
+/home/bobby/Work/code/bobby/suss/clojurescript -- clojurescript`, obtaining exact
+c4295f303100bbf5afac449242d30bca1126f1a1. Import/inventory/review checks then
+passed with1072 inputs unchanged. Initial failure remains; these are source
+checks, not runtime core-import acceptance.
+
+Two separately frozen unpublished source-child diagnostic attempts compiled and
+regenerated bootstrap, then each retained1pass/2fail. Per-record trace narrows
+lineage rejection to11constructor direct facts; children, logical source, input,
+class and prototype predicates pass. No root cause or fix is inferred. Observer
+logging is unmetered diagnostic overhead and not performance evidence. The
+same operation budget/full negative cases remain; actual certificate reuse in
+test setup did not eliminate the fuel failure. Full workspace baseline and
+passing final-head CI remain separate gates. Post-push817 API inspection found
+zero matching Actions runs/checks.
