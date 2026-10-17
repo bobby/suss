@@ -549,7 +549,7 @@ fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
 }
 // Tuple sizes describe the current field types, not a promised layout for a
 // future boxed payload. The actual candidate type would need its own size check.
-fn cow_trace_layouts() -> [(&'static str, usize); 13] {
+fn cow_trace_layouts() -> [(&'static str, usize); 15] {
     use std::mem::size_of;
     [
         ("Hir", size_of::<Hir>()), ("Expression", size_of::<Expression>()),
@@ -557,7 +557,9 @@ fn cow_trace_layouts() -> [(&'static str, usize); 13] {
         ("Binding", size_of::<Binding>()), ("Global", size_of::<Global>()),
         ("OptionParameter", size_of::<Option<Parameter>>()), ("OptionGlobal", size_of::<Option<Global>>()),
         ("GeneralFunction_field_tuple", size_of::<(Vec<Method>, Vec<BindingId>, Option<Arc<Parameter>>, Option<Global>)>()),
-        ("Definition_field_tuple", size_of::<(Global, Vec<Form>, Range<usize>, Option<Vec<u16>>, Option<Box<Hir>>, bool)>()),
+        ("Definition_field_tuple", size_of::<(Global, DefinitionSyntax, Range<usize>, Option<Box<Hir>>, bool)>()),
+        ("DefinitionSyntax", size_of::<DefinitionSyntax>()),
+        ("DefinitionSyntaxPayload", size_of::<DefinitionSyntaxPayload>()),
         ("AsyncTry_field_tuple", size_of::<(Box<Hir>, Option<Box<Hir>>, Option<Box<Hir>>, Option<Parameter>)>()),
         ("GlobalOrFallback_field_tuple", size_of::<(Global, Global)>()),
         ("Function_field_tuple", size_of::<(Vec<Parameter>, Vec<BindingId>, Box<Hir>)>()),
@@ -604,9 +606,15 @@ pub(super) fn cow_trace_expression(family: &'static str, kind: &Expression) {
             Expression::AsyncTry { payload, .. } => {
                 field(if payload.is_some() { "AsyncTry.payload_some" } else { "AsyncTry.payload_none" });
             }
-            Expression::Definition { docstring, name_metadata, .. } => {
-                field(if docstring.is_some() { "Definition.docstring_some" } else { "Definition.docstring_none" });
-                field(if name_metadata.is_empty() { "Definition.name_metadata_empty" } else { "Definition.name_metadata_nonempty" });
+            Expression::Definition { syntax, .. } => {
+                field(if syntax.docstring().is_some() { "Definition.docstring_some" } else { "Definition.docstring_none" });
+                field(if syntax.name_metadata().is_empty() { "Definition.name_metadata_empty" } else { "Definition.name_metadata_nonempty" });
+                field(if syntax.has_payload() { "Definition.syntax_some" } else { "Definition.syntax_none" });
+                field(match &syntax.0 {
+                    DefinitionSyntaxOwner::Empty => "Definition.syntax_empty",
+                    DefinitionSyntaxOwner::Captured(_) => "Definition.syntax_captured",
+                    DefinitionSyntaxOwner::Owned(_) => "Definition.syntax_owned",
+                });
             }
             _ => {}
         }
@@ -775,6 +783,35 @@ fn cow_parameter(parameter: &Parameter, meter: &mut CowMeter<'_>) -> Result<Para
     Ok(Parameter { id: parameter.id, name: cow_text(&parameter.name, meter)?,
         metadata: cow_forms(&parameter.metadata, meter)?, span: parameter.span.clone() })
 }
+/// Stage all owned syntax copies before publishing its immutable owner. This
+/// does not reuse owners between independent declarations, even for equal data.
+pub(super) fn capture_definition_syntax(metadata: &[Form], docstring: Option<&[u16]>, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if metadata.is_empty() && docstring.is_none() { return Ok(DefinitionSyntax::default()); }
+    let name_metadata = cow_forms(metadata, meter)?;
+    let docstring = docstring.map(|units| cow_copy(units, meter)).transpose()?;
+    cow_charge(meter, 1, std::mem::size_of::<DefinitionSyntaxPayload>())?;
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+    // Retain the established generic Arc allocation/OOM policy.
+    Ok(DefinitionSyntax(DefinitionSyntaxOwner::Owned(Arc::new(DefinitionSyntaxPayload { name_metadata, docstring }))))
+}
+/// The caller supplies only its exact locally retained provisional revision,
+/// never an environment re-query or completed HIR owner. Checking both state
+/// fields prevents a completed initializer graph from entering this owner edge.
+pub(super) fn capture_provisional_definition_syntax(owner: &Arc<super::super::resolve::DefinitionInfo>, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if owner.analysis_completed || owner.initializer.is_some() {
+        meter(1)?;
+        return Err(fail(owner.declaration.span.clone(), "Definition syntax requires an incomplete initializer-free revision"));
+    }
+    if owner.declaration.metadata.is_empty() && owner.docstring.is_none() {
+        return Ok(DefinitionSyntax::default());
+    }
+    meter(1)?; // precharged Arc retain; no syntax copies or owner allocation
+    Ok(DefinitionSyntax(DefinitionSyntaxOwner::Captured(owner.clone())))
+}
+fn cow_definition_syntax(syntax: &DefinitionSyntax, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if syntax.has_payload() { meter(1)?; }
+    Ok(syntax.clone())
+}
 /// Move the completed parameter into an immutable owner, after charging its
 /// payload and Arc header. Nested text/metadata are moved, not copied. Arc::new
 /// retains the existing generic Arc allocation/OOM policy.
@@ -862,13 +899,10 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
             Throw(value) => Throw(cow_box(value, meter)?),
             Assign { global, value } => Assign { global: cow_global(global, meter)?, value: cow_box(value, meter)? },
             Try { regions } => Try { regions: [cow_box(&regions[0], meter)?, cow_box(&regions[1], meter)?, cow_box(&regions[2], meter)?] },
-            Definition { global, name_metadata, name_span, docstring, initializer, once } => {
+            Definition { global, syntax, name_span, initializer, once } => {
                 let global = cow_global(global, meter)?;
-                let name_metadata = cow_forms(name_metadata, meter)?;
-                let docstring = docstring.as_ref().map(|units| {
-                    cow_copy(units, meter)
-                }).transpose()?;
-                Definition { global, name_metadata, name_span: name_span.clone(), docstring,
+                let syntax = cow_definition_syntax(syntax, meter)?;
+                Definition { global, syntax, name_span: name_span.clone(),
                     initializer: cow_optional_box(initializer, meter)?, once: *once }
             }
             Let { bindings, body } => Let { bindings: cow_bindings(bindings, meter)?, body: cow_box(body, meter)? },
@@ -1207,6 +1241,228 @@ mod cow_trace_tests {
 #[cfg(test)]
 mod ownership_tests {
     use super::*;
+
+    fn owned_syntax_owner(syntax: &DefinitionSyntax) -> &Arc<DefinitionSyntaxPayload> {
+        let DefinitionSyntaxOwner::Owned(owner) = &syntax.0 else { panic!("owned syntax fallback") };
+        owner
+    }
+    fn captured_syntax_owner(syntax: &DefinitionSyntax) -> &Arc<super::super::super::resolve::DefinitionInfo> {
+        let DefinitionSyntaxOwner::Captured(owner) = &syntax.0 else { panic!("captured provisional syntax") };
+        owner
+    }
+    fn definition_syntaxes(node: &Hir, result: &mut Vec<DefinitionSyntax>) {
+        match &node.kind {
+            Expression::Definition { syntax, initializer, .. } => {
+                result.push(syntax.clone());
+                if let Some(initializer) = initializer { definition_syntaxes(initializer, result); }
+            }
+            Expression::Function { body, .. } => definition_syntaxes(body, result),
+            // Fixed function bodies retain their recurrence target in a Loop,
+            // including functions with no parameters or explicit recur.
+            Expression::Loop { bindings, body, .. } => {
+                for binding in bindings { definition_syntaxes(&binding.value, result); }
+                definition_syntaxes(body, result);
+            }
+            Expression::Do(nodes) => for node in nodes { definition_syntaxes(node, result); },
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn definition_syntax_captures_local_provisional_before_nested_same_name_replacement() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def ^{:marker [outer facts]} same \"outer\" (fn* [] (inspect-function-owner) (def ^{:marker [inner facts]} same \"inner\" (fn* [] (inspect-function-owner))) (inspect-function-owner)))";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let mut host = ObserveFunctionOwner::default();
+            let (hir, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut host).unwrap();
+            assert_eq!(host.snapshots.len(), 3);
+            let mut syntax = Vec::new();
+            definition_syntaxes(&hir, &mut syntax);
+            assert_eq!(syntax.len(), 2);
+            for (index, expected_doc) in ["outer", "inner"].into_iter().enumerate() {
+                let owner = captured_syntax_owner(&syntax[index]);
+                assert!(Arc::ptr_eq(owner, &host.snapshots[index].1));
+                assert!(!owner.analysis_completed && owner.initializer.is_none());
+                assert_eq!(syntax[index].name_metadata().as_ptr(), owner.declaration.metadata.as_ptr());
+                assert_eq!(syntax[index].docstring().unwrap(), expected_doc.encode_utf16().collect::<Vec<_>>().as_slice());
+                assert_eq!(syntax[index].docstring().unwrap().as_ptr(), owner.docstring.as_ref().unwrap().as_ptr());
+            }
+            assert!(!Arc::ptr_eq(captured_syntax_owner(&syntax[0]), captured_syntax_owner(&syntax[1])));
+            // The environment was replaced by the nested completed revision,
+            // then the outer completed revision. Neither may become our owner.
+            assert!(host.snapshots[2].1.analysis_completed);
+            assert!(!Arc::ptr_eq(captured_syntax_owner(&syntax[0]), &host.snapshots[2].1));
+            let scope = &host.snapshots[0].0[0];
+            let global = function_owner_global(&environment, phase, &scope.namespace, "same");
+            let completed = environment.shared_definition_info(&global).unwrap();
+            assert!(completed.analysis_completed && completed.initializer.is_some());
+            assert!(!Arc::ptr_eq(completed, captured_syntax_owner(&syntax[0])));
+            for copy in [hir.clone(), cow_hir(&hir, &mut |_| Ok(())).unwrap()] {
+                let mut copied = Vec::new();
+                definition_syntaxes(&copy, &mut copied);
+                assert_eq!(copied.len(), 2);
+                for index in 0..2 {
+                    assert!(Arc::ptr_eq(captured_syntax_owner(&syntax[index]), captured_syntax_owner(&copied[index])));
+                }
+            }
+            // Capture cancellation neither retains nor publishes an owner;
+            // a retry pays exactly one retain, without copying source payloads.
+            let owner = captured_syntax_owner(&syntax[0]);
+            let count = Arc::strong_count(owner);
+            let rejected = capture_provisional_definition_syntax(owner, &mut |work| {
+                assert_eq!(work, 1);
+                Err(fail(11..29, "injected captured syntax cancellation"))
+            });
+            assert_eq!(rejected.unwrap_err().message, "injected captured syntax cancellation");
+            assert_eq!(Arc::strong_count(owner), count);
+            let mut charged = 0;
+            let retry = capture_provisional_definition_syntax(owner, &mut |work| { charged += work; Ok(()) }).unwrap();
+            assert_eq!(charged, 1);
+            assert!(Arc::ptr_eq(owner, captured_syntax_owner(&retry)));
+            for (analysis_completed, initializer) in [(true, None), (false, completed.initializer.clone())] {
+                let mut invalid = (**owner).clone();
+                invalid.analysis_completed = analysis_completed;
+                invalid.initializer = initializer;
+                let invalid = Arc::new(invalid);
+                let result = capture_provisional_definition_syntax(&invalid, &mut |_| Ok(()));
+                assert_eq!(result.unwrap_err().message, "Definition syntax requires an incomplete initializer-free revision");
+                assert_eq!(Arc::strong_count(&invalid), 1);
+            }
+        }
+    }
+
+    #[test]
+    fn preserved_declaration_syntax_owns_new_facts_and_empty_docstring_stays_captured() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def ^:original same \"old\" 1) (def empty \"\" 2)";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let (hir, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut super::super::super::NoExpansion).unwrap();
+            let mut syntax = Vec::new();
+            definition_syntaxes(&hir, &mut syntax);
+            assert_eq!(syntax.len(), 2);
+            assert!(captured_syntax_owner(&syntax[1]).docstring.as_ref().unwrap().is_empty());
+            assert_eq!(syntax[1].docstring(), Some(&[][..]));
+            let global = function_owner_global(&environment, phase, environment.current_namespace(phase), "same");
+            let prior = environment.shared_definition_info(&global).unwrap().clone();
+            let preserved = "(def ^{:declared true :new [facts]} same)";
+            let forms = suss_reader::forms::read_forms(preserved).unwrap();
+            let Kind::List(parts) = &forms[0].kind else { unreachable!() };
+            let mut owners = Vec::new();
+            for _ in 0..2 {
+                let (hir, revised) = prepare_with_expander(&forms, 0..preserved.len(), &environment, phase, &mut super::super::super::NoExpansion).unwrap();
+                assert!(Arc::ptr_eq(&prior, revised.shared_definition_info(&global).unwrap()));
+                let mut current = Vec::new();
+                definition_syntaxes(&hir, &mut current);
+                assert_eq!(current.len(), 1);
+                assert_eq!(format!("{:?}", current[0].name_metadata()), format!("{:?}", parts[1].metadata));
+                assert_eq!(current[0].docstring(), None);
+                owners.push(owned_syntax_owner(&current[0]).clone());
+            }
+            assert!(!Arc::ptr_eq(&owners[0], &owners[1]));
+            assert_eq!(prior.docstring.as_deref(), Some(&[111u16, 108, 100][..]));
+        }
+    }
+
+    #[test]
+    fn definition_syntax_keeps_presence_exact_facts_and_independent_owners_through_hir_copies() {
+        let input = suss_reader::forms::read_forms("^{:tag [nested facts] :line 91} declaration").unwrap();
+        let metadata = &input[0].metadata;
+        assert!(!metadata.is_empty());
+        let mut environment = Environment::default();
+        let global = environment.declare_cell(Phase::Runtime, "syntax.owner", "definition").unwrap();
+        let empty: &[u16] = &[];
+        let text: &[u16] = &[100, 0xd800, 99]; // preserve raw UTF16, including a lone surrogate
+        for metadata in [&[][..], metadata.as_slice()] {
+            for docstring in [None, Some(empty), Some(text)] {
+                let syntax = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+                assert_eq!(format!("{:?}", syntax.name_metadata()), format!("{metadata:?}"));
+                assert_eq!(syntax.docstring(), docstring);
+                assert_eq!(syntax.has_payload(), !metadata.is_empty() || docstring.is_some());
+                let independent = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+                if let DefinitionSyntaxOwner::Owned(owner) = &syntax.0 {
+                    assert!(!Arc::ptr_eq(owner, owned_syntax_owner(&independent)));
+                }
+                let node = Hir { source: None, span: 11..29, metadata: vec![], ty: Type::Value,
+                    kind: Expression::Definition { global: global.clone(), syntax,
+                        name_span: input[0].span.clone(), initializer: None, once: true } };
+                if let Expression::Definition { syntax: DefinitionSyntax(DefinitionSyntaxOwner::Owned(owner)), .. } = &node.kind {
+                    let count = Arc::strong_count(owner);
+                    let rejected = cow_hir(&node, &mut |work| {
+                        if work == 1 { Err(fail(11..29, "injected HIR syntax retain cancellation")) }
+                        else { Ok(()) }
+                    });
+                    assert_eq!(rejected.unwrap_err().message, "injected HIR syntax retain cancellation");
+                    assert_eq!(Arc::strong_count(owner), count);
+                }
+                let mut remaining = (std::mem::size_of::<Hir>() + global.namespace().len()
+                    + global.name().len() + usize::from(!metadata.is_empty() || docstring.is_some())) as u64;
+                let copied = cow_hir(&node, &mut |work| {
+                    remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "definition copy budget exhausted"))?;
+                    Ok(())
+                }).unwrap();
+                assert_eq!(remaining, 0);
+                let cloned = node.clone();
+                let Expression::Definition { syntax: original, .. } = &node.kind else { unreachable!() };
+                for retained in [&copied, &cloned] {
+                    let Expression::Definition { syntax, name_span, initializer, once, .. } = &retained.kind else { panic!("definition") };
+                    assert_eq!(name_span, &input[0].span);
+                    assert!(initializer.is_none() && *once);
+                    assert_eq!(format!("{:?}", syntax.name_metadata()), format!("{metadata:?}"));
+                    assert_eq!(syntax.docstring(), docstring);
+                    if let DefinitionSyntaxOwner::Owned(owner) = &original.0 {
+                        assert!(Arc::ptr_eq(owner, owned_syntax_owner(&syntax)));
+                    } else { assert!(!syntax.has_payload()); }
+                }
+            }
+        }
+        let absent = capture_definition_syntax(&[], None, &mut |_| panic!("no syntax allocation")).unwrap();
+        assert!(!cow_definition_syntax(&absent, &mut |_| panic!("no owner to retain")).unwrap().has_payload());
+    }
+
+    #[test]
+    fn definition_syntax_copy_allocation_and_retain_failures_keep_prior_owner_and_retry() {
+        let input = suss_reader::forms::read_forms("^{:tag [nested facts] :line 91} declaration").unwrap();
+        let metadata = &input[0].metadata;
+        let before = format!("{metadata:?}");
+        let docstring = Some(&[100u16, 111, 99][..]);
+        let mut charges = Vec::new();
+        let prior = capture_definition_syntax(metadata, docstring, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(&charges[charges.len()-2..], &[
+            std::mem::size_of::<DefinitionSyntaxPayload>() as u64,
+            (2 * std::mem::size_of::<usize>()) as u64]);
+        for reject in 0..charges.len() {
+            let mut published = prior.clone();
+            let mut calls = 0;
+            let result = capture_definition_syntax(metadata, docstring, &mut |_| {
+                let current = calls;
+                calls += 1;
+                if current == reject { Err(fail(11..29, "injected syntax cancellation")) }
+                else { Ok(()) }
+            });
+            match result {
+                Ok(syntax) => { published = syntax; panic!("unexpected publication: {published:?}"); }
+                Err(error) => assert_eq!(error.message, "injected syntax cancellation"),
+            }
+            assert_eq!(calls, reject + 1);
+            assert!(Arc::ptr_eq(owned_syntax_owner(&published), owned_syntax_owner(&prior)));
+            assert_eq!(format!("{metadata:?}"), before);
+            let retry = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+            assert!(!Arc::ptr_eq(owned_syntax_owner(&retry), owned_syntax_owner(&prior)));
+            assert_eq!(format!("{:?}", retry.name_metadata()), before);
+            assert_eq!(retry.docstring(), docstring);
+        }
+        let count = Arc::strong_count(owned_syntax_owner(&prior));
+        let result = cow_definition_syntax(&prior, &mut |work| {
+            assert_eq!(work, 1);
+            Err(fail(11..29, "injected syntax retain cancellation"))
+        });
+        assert_eq!(result.unwrap_err().message, "injected syntax retain cancellation");
+        assert_eq!(Arc::strong_count(owned_syntax_owner(&prior)), count);
+        let mut charged = 0;
+        let retry = cow_definition_syntax(&prior, &mut |work| { charged += work; Ok(()) }).unwrap();
+        assert_eq!(charged, 1);
+        assert!(Arc::ptr_eq(owned_syntax_owner(&retry), owned_syntax_owner(&prior)));
+    }
 
     #[test]
     fn self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload() {

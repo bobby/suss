@@ -88,6 +88,35 @@ impl WriteDomain {
         value: &SessionValue,
         fact: &Fact,
     ) -> Result<()> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        let fact_kind = if fuel_trace { match fact {
+            Fact::Scalar(_) => "Scalar", Fact::Array(_) => "Array",
+            Fact::Constructor(_) => "Constructor", Fact::CanonicalSeed(_) => "Seed",
+            Fact::ExternalSeed(_) => "ExternalSeed",
+        }} else { "" };
+        macro_rules! record_observed {
+            ($phase:literal, $operation:expr, $summary:expr) => {{
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=before remaining={:?}",
+                        self.as_ref(), $phase, session.operation_fuel_remaining().ok());
+                }
+                let result = $operation;
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=after result={:?} remaining={:?}",
+                        self.as_ref(), $phase, result.as_ref().map($summary).map_err(|error| error.to_string()),
+                        session.operation_fuel_remaining().ok());
+                }
+                result
+            }};
+        }
+        macro_rules! record_skipped {
+            ($phase:literal, $reason:literal) => {
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=skipped reason={} remaining={:?}",
+                        self.as_ref(), $phase, $reason, session.operation_fuel_remaining().ok());
+                }
+            };
+        }
         let watch = match fact {
             Fact::Constructor(f) => f.memo_watch(),
             _ => None,
@@ -96,17 +125,40 @@ impl WriteDomain {
             watch.bind_source_domain(self);
         }
         let own = match fact {
-            Fact::Scalar(f) => f.matches(session, value)?,
-            Fact::Array(f) => f.matches(session, value)?,
-            Fact::Constructor(f) => {
-                f.matches(session, value)? && f.matches_prototype_origin(session)?
+            Fact::Scalar(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
             }
-            Fact::CanonicalSeed(f) => f.matches(session, value)?,
-            Fact::ExternalSeed(_) => false,
+            Fact::Array(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
+            }
+            Fact::Constructor(f) => {
+                let direct = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                if direct {
+                    record_observed!("prototype", f.matches_prototype_origin(session), |valid: &bool| *valid)?
+                } else {
+                    record_skipped!("prototype", "direct-fact-false");
+                    false
+                }
+            }
+            Fact::CanonicalSeed(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
+            }
+            Fact::ExternalSeed(_) => {
+                record_skipped!("direct-fact", "external-unverified");
+                record_skipped!("prototype", "not-constructor");
+                false
+            }
         };
         if !own {
             self.invalidate();
         }
+        let (edges, cuts, seed) = record_observed!("edges-cuts", (|| -> Result<_> {
         let upper = match fact {
             Fact::Constructor(f) => f.inputs().size_hint().1.unwrap_or(0),
             Fact::Array(f) => f.inputs().size_hint().1.unwrap_or(0),
@@ -134,12 +186,18 @@ impl WriteDomain {
             Fact::CanonicalSeed(seed) => Some(seed.clone()),
             _ => None,
         };
+        Ok((edges, cuts, seed))
+        })(), |_| ())?;
         let snapshot = if own && seed.is_none() {
-            Some(session.capture_storage_cut_accounted(value, &cuts, self.handles.clone())?)
+            Some(record_observed!("snapshot-capture",
+                session.capture_storage_cut_accounted(value, &cuts, self.handles.clone()), |_| ())?)
         } else {
+            if !own { record_skipped!("snapshot-capture", "invalid-fact"); }
+            else { record_skipped!("snapshot-capture", "seed-has-existing-witness"); }
             None
         };
         let mut state = registry_lock(&self.state);
+        record_observed!("node-growth", (|| -> Result<()> {
         if state.sealed { return Err(wasmtime::Error::msg("Source domain is sealed").into()); }
         if state.nodes.len() == state.nodes.capacity() {
             let capacity = state
@@ -159,7 +217,12 @@ impl WriteDomain {
             state.nodes.try_reserve_exact(extra).map_err(|_| {
                 SessionError::Host(wasmtime::Error::msg("Memo domain allocation failed"))
             })?;
+        } else {
+            record_skipped!("node-growth-allocation", "capacity-available");
         }
+        Ok(())
+        })(), |_| ())?;
+        record_observed!("node-publication", (|| -> Result<()> {
         state.nodes.push(Node {
             value: value.clone(),
             snapshot,
@@ -168,6 +231,7 @@ impl WriteDomain {
             watch: watch.as_ref().map(Arc::downgrade),
         });
         Ok(())
+        })(), |_| ())
     }
     pub(super) fn matches(
         &self,

@@ -428,6 +428,43 @@ pub struct Parameter {
     pub metadata: Vec<Form>,
     pub span: Range<usize>,
 }
+/// Immutable syntax owned by one analyzed definition. Empty metadata with no
+/// docstring needs no owner; an explicitly empty docstring remains present.
+#[derive(Debug, Clone, Default)]
+pub struct DefinitionSyntax(DefinitionSyntaxOwner);
+#[derive(Debug, Clone, Default)]
+enum DefinitionSyntaxOwner {
+    #[default]
+    Empty,
+    // Only the actual provisional revision, before initializer analysis. This
+    // extends the lifetime of its full source forms/origin, not only metadata.
+    Captured(std::sync::Arc<super::resolve::DefinitionInfo>),
+    Owned(std::sync::Arc<DefinitionSyntaxPayload>),
+}
+#[derive(Debug)]
+struct DefinitionSyntaxPayload {
+    name_metadata: Vec<Form>,
+    docstring: Option<Vec<u16>>,
+}
+impl DefinitionSyntax {
+    pub fn name_metadata(&self) -> &[Form] {
+        match &self.0 {
+            DefinitionSyntaxOwner::Empty => &[],
+            DefinitionSyntaxOwner::Captured(owner) => &owner.declaration.metadata,
+            DefinitionSyntaxOwner::Owned(payload) => &payload.name_metadata,
+        }
+    }
+    pub fn docstring(&self) -> Option<&[u16]> {
+        match &self.0 {
+            DefinitionSyntaxOwner::Empty => None,
+            DefinitionSyntaxOwner::Captured(owner) => owner.docstring.as_deref(),
+            DefinitionSyntaxOwner::Owned(payload) => payload.docstring.as_deref(),
+        }
+    }
+    fn has_payload(&self) -> bool {
+        !matches!(&self.0, DefinitionSyntaxOwner::Empty)
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Method {
     pub variadic: bool,
@@ -733,9 +770,8 @@ pub enum Expression {
     GlobalCell(Global),
     Definition {
         global: Global,
-        name_metadata: Vec<Form>,
+        syntax: DefinitionSyntax,
         name_span: Range<usize>,
-        docstring: Option<Vec<u16>>,
         initializer: Option<Box<Hir>>,
         once: bool,
     },
@@ -1097,9 +1133,8 @@ impl Analyzer<'_> {
                         ty: Type::Value,
                         kind: Expression::Definition {
                             global: fallback.clone(),
-                            name_metadata: Vec::new(),
+                            syntax: DefinitionSyntax::default(),
                             name_span: form.span.clone(),
-                            docstring: None,
                             initializer: Some(Box::new(initializer)),
                             once: true,
                         }.census_created(),
@@ -1534,16 +1569,24 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global,
-                name_metadata: args[0].metadata.clone(),
-                name_span: args[0].span.clone(),
-                docstring: if args.len() == 3 {
-                    match &args[1].kind {
-                        Kind::String(units) => Some(units.clone()),
-                        _ => unreachable!(),
-                    }
+                syntax: if let Some(owner) = &provisional {
+                    // Retain the exact local revision published before init;
+                    // nested definitions may have replaced the environment entry.
+                    local_bindings::capture_provisional_definition_syntax(owner,
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 } else {
-                    None
+                    // A preserved declaration has no current provisional owner.
+                    // Its new executable syntax must not borrow the old record.
+                    local_bindings::capture_definition_syntax(&args[0].metadata, if args.len() == 3 {
+                        match &args[1].kind {
+                            Kind::String(units) => Some(units.as_slice()),
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        None
+                    }, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 },
+                name_span: args[0].span.clone(),
                 initializer,
                 once,
             }.census_created(),

@@ -94,28 +94,29 @@ impl InputIndex<'_> {
         let b = b.value.to_rooted(&mut scope);
         Ok(Rooted::<AnyRef>::ref_eq(&scope, &a, &b)?)
     }
-    fn contains_explicit<R: AsRef<Record>>(
+    fn contains_explicit<R: RecordAccess + ?Sized>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[R],
+        records: &R,
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         let hash = self.hash(value)?;
         let mut cursor = index.get(hash, self)?;
         while let Some(id) = cursor {
-            if self.same(value, &records[id].as_ref().value)? {
+            let record = records.record(id, self.session)?;
+            if self.same(value, &record.value)? {
                 return Ok(true);
             }
             cursor = collisions[id];
         }
         Ok(false)
     }
-    fn contains<R: AsRef<Record>>(
+    fn contains<R: RecordAccess + ?Sized>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[R],
+        records: &R,
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         if self.contains_explicit(index, collisions, records, value)? {
@@ -124,9 +125,10 @@ impl InputIndex<'_> {
         // Copied fields of an EMPTY seed are covered by its pristine complete
         // storage witness, even when they were not bridge-created allocations.
         // Membership alone is not validation: direct seed checks remain required.
-        for record in records {
+        for id in 0..records.len() {
             self.charge(1)?;
-            if let Fact::CanonicalSeed(seed) = &record.as_ref().fact {
+            let record = records.record(id, self.session)?;
+            if let Fact::CanonicalSeed(seed) = &record.fact {
                 if seed.contains_initial_reference(self.session, value)? {
                     return Ok(true);
                 }
@@ -150,6 +152,123 @@ pub(crate) struct Record {
 impl AsRef<Record> for Record {
     fn as_ref(&self) -> &Record { self }
 }
+// Only ordinals index this native ledger. Pages/addresses never authorize a
+// source edge. Logical page boundaries are independent of allocator capacity.
+const RECORD_PAGE: usize = 32;
+#[derive(Default)]
+struct PagedRecords {
+    pages: Vec<Vec<Record>>,
+    len: usize,
+    first_limit: usize,
+}
+fn record_error(message: &'static str) -> SessionError {
+    SessionError::Host(wasmtime::Error::msg(message))
+}
+fn record_bytes<T>(count: usize) -> Result<u64, SessionError> {
+    count
+        .checked_mul(std::mem::size_of::<T>())
+        .filter(|bytes| *bytes <= isize::MAX as usize)
+        .and_then(|bytes| u64::try_from(bytes).ok())
+        .ok_or_else(|| record_error("Construction record allocation overflow"))
+}
+fn record_reserve<T>(
+    session: &mut Session,
+    values: &mut Vec<T>,
+    capacity: usize,
+) -> Result<(), SessionError> {
+    if capacity > values.capacity() {
+        let bytes = record_bytes::<T>(capacity)?
+            .checked_add(record_bytes::<T>(values.len())?)
+            .ok_or_else(|| record_error("Construction record allocation overflow"))?;
+        session.charge_host_work(bytes)?;
+        values
+            .try_reserve_exact(capacity - values.len())
+            .map_err(|_| record_error("Construction record allocation failed"))?;
+    }
+    Ok(())
+}
+// Slice views keep differential tests and selected-ledger checks independent
+// of the page representation. Every read is fallible and metered.
+trait RecordAccess {
+    fn len(&self) -> usize;
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError>;
+}
+impl<R: AsRef<Record>> RecordAccess for [R] {
+    fn len(&self) -> usize {
+        <[R]>::len(self)
+    }
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError> {
+        session.charge_host_work(1)?;
+        self.get(id)
+            .map(AsRef::as_ref)
+            .ok_or_else(|| record_error("Unknown construction record"))
+    }
+}
+impl RecordAccess for PagedRecords {
+    fn len(&self) -> usize {
+        self.len
+    }
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError> {
+        // Bounds, page/slot arithmetic, directory and slot reads.
+        session.charge_host_work(5)?;
+        if id >= self.len {
+            return Err(record_error("Unknown construction record"));
+        }
+        self.pages
+            .get(id / RECORD_PAGE)
+            .and_then(|page| page.get(id % RECORD_PAGE))
+            .ok_or_else(|| record_error("Incomplete construction record page"))
+    }
+}
+impl PagedRecords {
+    fn push(&mut self, session: &mut Session, record: Record) -> Result<(), SessionError> {
+        // Length advance, offsets, last-page selection and reserve predicates.
+        session.charge_host_work(8)?;
+        let next_len = self
+            .len
+            .checked_add(1)
+            .ok_or_else(|| record_error("Construction record length overflow"))?;
+        let page_id = self.len / RECORD_PAGE;
+        let offset = self.len % RECORD_PAGE;
+        if offset == 0 {
+            // Directory capacity can survive failure, but an empty page cannot
+            // become visible. Stage the new page privately until all fees pass.
+            if self.pages.len() == self.pages.capacity() {
+                let capacity = self
+                    .pages
+                    .capacity()
+                    .checked_mul(2)
+                    .map(|n| n.max(4))
+                    .ok_or_else(|| record_error("Construction record directory overflow"))?;
+                record_reserve(session, &mut self.pages, capacity)?;
+            }
+            let limit = if page_id == 0 { 4 } else { RECORD_PAGE };
+            let mut page = Vec::new();
+            record_reserve(session, &mut page, limit)?;
+            session.charge_host_work(5)?; // record/page pushes, len/initial-capacity publication
+            page.push(record);
+            self.pages.push(page);
+            if page_id == 0 {
+                self.first_limit = limit;
+            }
+        } else {
+            if page_id == 0 && offset == self.first_limit {
+                let limit = self
+                    .first_limit
+                    .checked_mul(2)
+                    .filter(|n| *n <= RECORD_PAGE)
+                    .ok_or_else(|| record_error("Construction record first-page overflow"))?;
+                record_reserve(session, &mut self.pages[0], limit)?;
+                // Reserve bookkeeping may survive a later debit failure.
+                self.first_limit = limit;
+            }
+            session.charge_host_work(3)?; // page selection, reserved push, len publication
+            self.pages[page_id].push(record);
+        }
+        self.len = next_len;
+        Ok(())
+    }
+}
 pub(crate) struct BridgeClassInput {
     pub name: &'static str,
     pub constructor: Option<SessionValue>,
@@ -159,7 +278,7 @@ struct ChildBinding { value: SessionValue }
 pub(crate) struct ConstructionRecords {
     domain: std::sync::Arc<super::write_domain::WriteDomain>,
     children: Vec<ChildBinding>,
-    records: Vec<Record>,
+    records: PagedRecords,
     bridge_classes: Vec<BridgeClassInput>,
     class_prechecks_valid: bool,
 }
@@ -168,7 +287,7 @@ impl ConstructionRecords {
         Self {
             domain: super::write_domain::WriteDomain::new(),
             children: Vec::new(),
-            records: Vec::new(),
+            records: PagedRecords::default(),
             bridge_classes,
             class_prechecks_valid: true,
         }
@@ -256,8 +375,9 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut valid = true;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             if let Fact::Constructor(inputs) = &record.fact {
                 valid &= match audit.as_deref_mut() {
                     Some(audit) => inputs.matches_prototype_origin_audited(session, audit)?,
@@ -284,9 +404,9 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         Self::check_selected_inputs(session, root, hash_mask, &self.records, &self.children)
     }
-    fn check_selected_inputs<R: AsRef<Record>>(
+    fn check_selected_inputs<R: RecordAccess + ?Sized>(
         session: &mut Session, root: &SessionValue, hash_mask: u64,
-        records: &[R], children: &[ChildBinding],
+        records: &R, children: &[ChildBinding],
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut meter = InputIndex { session, hash_mask };
@@ -311,8 +431,9 @@ impl ConstructionRecords {
         trace(&meter, "reserved");
         // No guest execution or guest allocation occurs while this ephemeral
         // identity-hash index is live. Collision chains always use ref_eq.
-        for (id, record) in records.iter().enumerate() {
-            let hash = meter.hash(&record.as_ref().value)?;
+        for id in 0..records.len() {
+            let record = records.record(id, meter.session)?;
+            let hash = meter.hash(&record.value)?;
             // insert returns the previous head from the same charged probe.
             // Collision capacity was reserved above, so publication needs no
             // fallible work between updating the head and recording its link.
@@ -340,14 +461,14 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         Self::check_selected_edges(meter, index, collisions, &self.records, &self.children)
     }
-    fn check_selected_edges<R: AsRef<Record>>(
+    fn check_selected_edges<R: RecordAccess + ?Sized>(
         meter: &mut InputIndex<'_>, index: &InputHeads, collisions: &[Option<usize>],
-        records: &[R], children: &[ChildBinding],
+        records: &R, children: &[ChildBinding],
     ) -> Result<bool, SessionError> {
         let mut valid = true;
-        for record in records {
+        for id in 0..records.len() {
             meter.charge(1)?;
-            let record = record.as_ref();
+            let record = records.record(id, meter.session)?;
             match &record.fact {
                 Fact::Array(fact) => {
                     for value in fact.inputs() {
@@ -413,45 +534,16 @@ impl ConstructionRecords {
         value: SessionValue,
         fact: Fact,
     ) -> Result<(), SessionError> {
-        session.charge_host_work(1)?;
-        if self.records.len() == self.records.capacity() {
-            let count = self
-                .records
-                .capacity()
-                .checked_mul(2)
-                .ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record capacity overflow",
-                    ))
-                })?
-                .max(4);
-            let bytes = count
-                .checked_add(self.records.len())
-                .and_then(|n| n.checked_mul(std::mem::size_of::<Record>()))
-                .ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record allocation overflow",
-                    ))
-                })?;
-            session.charge_host_work(bytes as u64)?;
-            self.records
-                .try_reserve_exact(count - self.records.len())
-                .map_err(|_| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record allocation failed",
-                    ))
-                })?;
-        }
-        self.records.push(Record { value, fact });
-        Ok(())
+        self.records.push(session, Record { value, fact })
     }
     pub(crate) fn len(&self) -> usize {
         self.records.len()
     }
     pub(crate) fn external_seeds(&self, session: &mut Session) -> Result<usize, SessionError> {
         let mut count = 0;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             if let Fact::ExternalSeed(name) = &record.fact {
                 session.charge_host_work(name.len() as u64)?;
                 count += 1;
@@ -462,8 +554,9 @@ impl ConstructionRecords {
     pub(crate) fn matches_direct_facts(&self, session: &mut Session) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut valid = true;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             // Never short-circuit later inspection/budget/interrupt failures.
             valid &= match &record.fact {
                 Fact::Scalar(fact) => fact.matches(session, &record.value)?,
@@ -480,6 +573,179 @@ impl ConstructionRecords {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn paged_prefix(session: &mut Session, value: &SessionValue, count: usize) -> PagedRecords {
+        let mut records = PagedRecords::default();
+        for _ in 0..count {
+            records
+                .push(
+                    session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("page-fault-fixture"),
+                    },
+                )
+                .unwrap();
+        }
+        records
+    }
+    #[test]
+    fn paged_records_preserve_ordinals_boundaries_and_logical_pages_with_excess_capacity() {
+        let mut session = Session::new().unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let mut records = PagedRecords::default();
+        let mut expected = Vec::new();
+        for id in 0..133 {
+            let value = session
+                .data_scalar(&crate::portable::hir::Literal::Number(id as f64))
+                .unwrap();
+            records
+                .push(
+                    &mut session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("ordinal-fixture"),
+                    },
+                )
+                .unwrap();
+            expected.push(value);
+            assert_eq!(records.len(), id + 1);
+            assert_eq!(records.pages.len(), (id + RECORD_PAGE) / RECORD_PAGE);
+            for page in &records.pages[..records.pages.len() - 1] {
+                assert_eq!(page.len(), RECORD_PAGE);
+            }
+            assert!(!records.pages.last().unwrap().is_empty());
+        }
+        for id in (0..expected.len()).rev() {
+            let record = records.record(id, &mut session).unwrap();
+            let mut meter = InputIndex {
+                session: &mut session,
+                hash_mask: 0,
+            };
+            assert!(meter.same(&record.value, &expected[id]).unwrap());
+        }
+        assert!(records.record(records.len(), &mut session).is_err());
+        assert!(record_bytes::<Record>(usize::MAX).is_err());
+        // Allocator excess MUST NOT move the logical page boundary.
+        let value = expected[0].clone();
+        let mut excess = paged_prefix(&mut session, &value, 4);
+        excess.pages[0].try_reserve_exact(128).unwrap();
+        for _ in 4..33 {
+            excess
+                .push(
+                    &mut session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("excess-capacity"),
+                    },
+                )
+                .unwrap();
+        }
+        assert_eq!(excess.pages.len(), 2);
+        assert_eq!(excess.pages[0].len(), RECORD_PAGE);
+        assert_eq!(excess.pages[1].len(), 1);
+    }
+    #[test]
+    fn paged_records_every_append_fuel_cut_and_irq_leave_no_partial_page_and_retry() {
+        let mut session = Session::new().unwrap();
+        let value = session
+            .data_scalar(&crate::portable::hir::Literal::Number(17.0))
+            .unwrap();
+        for count in [0, 4, 8, 16, 32, 64, 128] {
+            let cost = session
+                .with_operation_budget(|session| {
+                    let mut records = paged_prefix(session, &value, count);
+                    let before = session.operation_fuel_remaining()?;
+                    records.push(
+                        session,
+                        Record {
+                            value: value.clone(),
+                            fact: Fact::ExternalSeed("candidate"),
+                        },
+                    )?;
+                    Ok(before - session.operation_fuel_remaining()?)
+                })
+                .unwrap();
+            for allowance in 0..cost {
+                let mut records = session.with_operation_budget(|session| {
+                        let mut records = paged_prefix(session, &value, count);
+                        let pages = records.pages.len();
+                        session.store.set_fuel(allowance)?;
+                        let error = records.push(session, Record { value: value.clone(), fact: Fact::ExternalSeed("candidate") }).unwrap_err();
+                        assert!(matches!(error, SessionError::Trap(ref error)
+                            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                        assert_eq!(records.len(), count);
+                        assert_eq!(records.pages.len(), pages, "no empty page may be published on failure");
+                        assert!(records.pages.iter().all(|page| !page.is_empty()));
+                        Ok(records)
+                    }).unwrap();
+                session
+                    .with_operation_budget(|session| {
+                        for id in 0..count {
+                            let record = records.record(id, session)?;
+                            assert!(matches!(
+                                &record.fact,
+                                Fact::ExternalSeed("page-fault-fixture")
+                            ));
+                            let mut meter = InputIndex {
+                                session,
+                                hash_mask: 0,
+                            };
+                            assert!(meter.same(&record.value, &value)?);
+                        }
+                        records.push(
+                            session,
+                            Record {
+                                value: value.clone(),
+                                fact: Fact::ExternalSeed("candidate"),
+                            },
+                        )?;
+                        assert_eq!(records.len(), count + 1);
+                        assert!(matches!(
+                            &records.record(count, session)?.fact,
+                            Fact::ExternalSeed("candidate")
+                        ));
+                        Ok(())
+                    })
+                    .unwrap();
+            }
+            let mut records = session
+                .with_operation_budget(|session| Ok(paged_prefix(session, &value, count)))
+                .unwrap();
+            session
+                .with_operation_budget(|session| {
+                    let pages = records.pages.len();
+                    session.interrupt_handle().interrupt();
+                    assert!(
+                        records
+                            .push(
+                                session,
+                                Record {
+                                    value: value.clone(),
+                                    fact: Fact::ExternalSeed("candidate")
+                                }
+                            )
+                            .unwrap_err()
+                            .is_interrupt()
+                    );
+                    assert_eq!(records.len(), count);
+                    assert_eq!(records.pages.len(), pages);
+                    Ok(())
+                })
+                .unwrap();
+            session
+                .with_operation_budget(|session| {
+                    records.push(
+                        session,
+                        Record {
+                            value: value.clone(),
+                            fact: Fact::ExternalSeed("candidate"),
+                        },
+                    )
+                })
+                .unwrap();
+            assert_eq!(records.len(), count + 1);
+        }
+    }
     #[test]
     fn construction_records_table_clustered_hashes_and_empty_overflow() {
         let mut session = Session::new().unwrap();
@@ -749,8 +1015,9 @@ mod tests {
         // A present child record is insufficient if its direct facts changed.
         // The low-level test below changes the UTF-16 storage directly; it does
         // not depend on source string indexing adapters or guest equality.
-        let child = match &records.records[1].fact {
-            Fact::Scalar(_) => &records.records[1].value,
+        let child_record = records.records.record(1, &mut session).unwrap();
+        let child = match &child_record.fact {
+            Fact::Scalar(_) => &child_record.value,
             _ => unreachable!(),
         };
         session
@@ -797,5 +1064,5 @@ mod tests {
 }
 
 impl Default for ConstructionRecords {
- fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:Vec::new(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
+ fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:PagedRecords::default(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
 }

@@ -249,6 +249,7 @@ impl<'a> Lowerer<'a> {
         lower_charge(self.meter, work, span)
     }
     fn clone_global(&mut self, global: &Global, span: &Range<usize>) -> Result<Global, Diagnostic> {
+        let _trace = super::hir::CowTraceScope::new("ir_global_copy");
         self.charge(
             1usize
                 .saturating_add(global.namespace().len())
@@ -258,6 +259,7 @@ impl<'a> Lowerer<'a> {
         Ok(global.clone())
     }
     fn display_name(&mut self, hir: &Hir) -> Result<Option<Vec<u16>>, Diagnostic> {
+        let _trace = super::hir::CowTraceScope::new("ir_function_name");
         if let Some(scope) = hir
             .source
             .as_ref()

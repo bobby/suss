@@ -79,9 +79,8 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global: global.clone(),
-                name_metadata: Vec::new(),
+                syntax: DefinitionSyntax::default(),
                 name_span: form.span.clone(),
-                docstring: None,
                 initializer: Some(Box::new(descriptor)),
                 once: true,
             }.census_created(),
@@ -174,7 +173,7 @@ impl Analyzer<'_> {
             }).collect();
             let keys = self.nominal(form, Nominal::Array, keys);
             let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
-                kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
+                kind: Expression::Definition { global: table.clone(), syntax: DefinitionSyntax::default(), name_span: form.span.clone(),
                     initializer: Some(Box::new(keys)), once: true }.census_created() };
             self.callable_keys.insert(table.clone(), definition);
         }
@@ -826,9 +825,8 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global: cell.clone(),
-                name_metadata: Vec::new(),
+                syntax: DefinitionSyntax::default(),
                 name_span: form.span.clone(),
-                docstring: None,
                 initializer: Some(Box::new(initialization)),
                 once: true,
             }.census_created(),

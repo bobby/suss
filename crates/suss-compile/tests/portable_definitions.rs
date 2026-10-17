@@ -350,6 +350,25 @@ fn source_namespaces_resolve_requires_renames_core_aliases_and_exclusions() {
 }
 
 #[test]
+fn definition_syntax_preserves_absent_empty_and_present_docstrings_in_both_phases() {
+    let source = "(def plain 1) (def empty \"\" 2) (def ^{:retained [1 2]} annotated \"doc\" 3)";
+    let input = suss_reader::forms::read_forms(source).unwrap();
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let environment = Environment::new("definition.syntax").unwrap();
+        let hir = portable::analyze_in(source, &environment, phase).unwrap();
+        let portable::hir::Expression::Do(body) = &hir.kind else { panic!("top-level definitions") };
+        assert_eq!(body.len(), 3);
+        for (index, expected_doc) in [None, Some(&[][..]), Some(&[100u16, 111, 99][..])].into_iter().enumerate() {
+            let portable::hir::Expression::Definition { syntax, name_span, .. } = &body[index].kind else { panic!("definition") };
+            let suss_reader::forms::Kind::List(parts) = &input[index].kind else { unreachable!() };
+            assert_eq!(name_span, &parts[1].span);
+            assert_eq!(format!("{:?}", syntax.name_metadata()), format!("{:?}", parts[1].metadata));
+            assert_eq!(syntax.docstring(), expected_doc);
+        }
+    }
+}
+
+#[test]
 fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
     let mut session = Session::new();
     let value = session.eval("(let [local 3] ((fn [] (def captured-value local)))) captured-value");
@@ -359,17 +378,16 @@ fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
         panic!()
     };
     let portable::hir::Expression::Definition {
-        name_metadata,
+        syntax,
         name_span,
-        docstring,
         ..
     } = &body[0].kind
     else {
         panic!()
     };
-    assert_eq!(name_metadata.len(), 1);
+    assert_eq!(syntax.name_metadata().len(), 1);
     assert_eq!(name_span, &(5..21));
-    assert_eq!(docstring.as_deref(), Some(&[100u16, 111, 99][..]));
+    assert_eq!(syntax.docstring(), Some(&[100u16, 111, 99][..]));
     let prepared = portable::prepare_fragment(
         "(ns ^:retained app \"doc\") (def value 1)",
         &Environment::default(),
@@ -621,7 +639,7 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
         for (index, expected_name) in ["first", "second", "first"].into_iter().enumerate() {
             let portable::hir::Expression::Definition {
                 global,
-                name_metadata,
+                syntax,
                 name_span,
                 initializer,
                 ..
@@ -634,6 +652,7 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
             assert_eq!(global.name(), expected_name);
             assert!(initializer.is_none());
             assert!(source[name_span.clone()].ends_with(expected_name));
+            let name_metadata = syntax.name_metadata();
             assert_eq!(name_metadata.len(), if index == 0 { 2 } else { 1 });
             if index == 0 {
                 assert!(name_metadata.iter().any(|metadata|
@@ -643,7 +662,7 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
             // merged reader data, including both generated and original keys.
             let declaration = suss_reader::forms::Form {
                 span: name_span.clone(),
-                metadata: name_metadata.clone(),
+                metadata: name_metadata.to_vec(),
                 kind: Kind::Symbol(suss_reader::Symbol::new(expected_name)),
             };
             let merged = portable::hir::reader_metadata_pairs(&declaration).unwrap();

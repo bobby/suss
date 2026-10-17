@@ -2870,6 +2870,14 @@ fn runtime_abi_int32_coercion_wraps_finite_values_and_zeroes_nonfinite() {
         (2147483648.0, i32::MIN),
         (9007199254740991.0, -1),
         (9007199254740992.0, 0),
+        // Both sides of the signed-i64 shortcut, including the adjacent
+        // representable doubles: conversion must never trap or saturate.
+        (9223372036854774784.0, -1024),
+        (9223372036854775808.0, 0),
+        (9223372036854777856.0, 2048),
+        (-9223372036854774784.0, 1024),
+        (-9223372036854775808.0, 0),
+        (-9223372036854777856.0, -2048),
         (1e100, 0),
         (-1e100, 0),
         (f64::MAX, 0),

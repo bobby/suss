@@ -13,6 +13,21 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[
             LocalGet(0),
             Call(convert),
+            LocalTee(1),
+            // Ordinary hash operands fit in signed i64. Wasm truncation and
+            // wrapping compute ToInt32 directly, after the same live coercion.
+            // Strict magnitude excludes both i64 endpoints; nonfinite and
+            // larger values retain the general floating-remainder path below.
+            F64Abs,
+            F64Const(9223372036854775808.0.into()),
+            F64Lt,
+            If(BlockType::Empty),
+            LocalGet(1),
+            I64TruncF64S,
+            I32WrapI64,
+            Return,
+            End,
+            LocalGet(1),
             F64Trunc,
             LocalSet(1),
             // NaN and either infinity must return zero before a Wasm integer

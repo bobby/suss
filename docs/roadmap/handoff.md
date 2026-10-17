@@ -28856,3 +28856,52 @@ owned-payload strategy, all commands/receipts/source freezes, scope-mismatch and
 compiler-only probe sources/logs, and map comparison (zero assertions/all69
 unexecuted). No full baseline, final CI, issue closure or performance success is
 claimed for this experimental tuple. Later source changes require fresh gates.
+
+
+### Captured native declaration syntax and measured record pages (2026-10-16)
+
+Definition syntax now retains the exact local incomplete provisional record,
+never a completed initializer graph or a later environment lookup. Preserved
+catalog declarations use the incoming owned fallback. One retain is prepaid;
+all fallback copies/allocation remain charged. This can extend full provisional
+source-form/origin lifetimes and is not a measured retained-memory saving.
+
+The third frozen459-input cohort passes52 Rust executions andretains five
+failures: four fuel failures plus a new test-only traversal failure. The helper
+omitted executable Loop children; fixingthat traversal preserves its expected
+two owners andall source/pointer assertions. After regeneratingbootstrap identity,
+all18 ownership tests pass with459 unchanged inputs. No ignored/unknown result
+becomes success through lowered expectations. The four fuel gaps remain open.
+
+Construction-record pages preserve order, facts, collision chains andowning-ledger
+projections; every access is fallible/metered. Actual parentvariant0 ledger cost
+328,452→95,158 saves233,294. Materialization2,285,067→2,035,629 saves249,438;
+inclusive hashing separately saves16,144, not attributed to paging. Setup and
+access overhead remain visible. Runtime variant3 still exhausts fuel beforethe
+remaining variants, Macro andphysical/memo tails; no #270 acceptance is claimed.
+
+Captured syntax preparation recovers263,832 charged units versusthe unsuccessful
+owned-payload tuple. The compiler-only30M probe completes12,721,815 metered units,
+including1,190,973 verification; no Store/user program executes. IRconstruction
+2,006,192 comprises globalcopies1,200,020, functionnames94,109 andother712,063.
+This localizes work toremove ratherthan cutting tariffs orraising defaults.
+
+Enrollment remains799,823: snapshots443,000 (Constructor312,577), prototype122,577,
+node growth121,607, edges/cuts106,320 anddirect facts6,319. All132 phase sequences
+pair exactlywithzero residual; publication intervals debit zero butperform work.
+Nested intervals must notbe added to their enclosing totals. Existing quotas,
+validation andsource/guest identities remain intact.
+
+Archive m4-native-captured-syntax-records-2026-10-16.tar.gz retains both raw source
+tuples, failed traversal test, correction, commands, observations andhash manifest.
+The map gate still reportszero assertions/all69 unexecuted; bitwiseprimary fails
+common core setup whilefive effect/error regressions pass. Focused ABI boundary,
+definition andledger suites pass. Requiredfull baseline andfinal-head CI remain
+separate unmet gates; no issue closure, merge ormilestone completion is claimed.
+
+Final corrected-source provenance: `python3 -m unittest discover -s scripts -p
+'test_*.py'` passes all348 tests, and all12 remaining inventory, review, import,
+bootstrap, provenance and pinned-suite checks exit0 (13 commands total). Raw logs,
+command receipts and source-freeze mapping are retained separately in
+`m4-native-final-provenance-2026-10-16.tar.gz`; they ran after the main archive.
+These checks do not execute the full workspace baseline or resolve the fuel gaps.
