@@ -161,13 +161,110 @@ fn room<T>(values: &mut Vec<T>, meter: &mut Meter<'_>) -> Result<()> {
 }
 
 struct Cut { value: SessionValue, collision: Option<usize> }
+const LINEAR_INDEX_LIMIT: usize = 8;
+
+trait IndexedRoot {
+    fn root(&self) -> &SessionValue;
+    fn collision(&self) -> Option<usize>;
+    fn set_collision(&mut self, next: Option<usize>);
+}
+impl IndexedRoot for Cut {
+    fn root(&self) -> &SessionValue {
+        &self.value
+    }
+    fn collision(&self) -> Option<usize> {
+        self.collision
+    }
+    fn set_collision(&mut self, next: Option<usize>) {
+        self.collision = next;
+    }
+}
+impl IndexedRoot for Node {
+    fn root(&self) -> &SessionValue {
+        &self.value
+    }
+    fn collision(&self) -> Option<usize> {
+        self.collision
+    }
+    fn set_collision(&mut self, next: Option<usize>) {
+        self.collision = next;
+    }
+}
+
+// Only capture-local indexes change representation. Owning record layouts and
+// ordinal order remain unchanged. No guest calls/GC occur while hashes live.
+fn lookup<T: IndexedRoot>(
+    values: &[T],
+    index: &Option<TryOrderedMap<u64, usize>>,
+    reference: &Rooted<AnyRef>,
+    meter: &mut Meter<'_>,
+) -> Result<(Option<u64>, Option<usize>, Option<usize>)> {
+    meter.work(1)?; // mode/lookup entry
+    if let Some(index) = index {
+        let hash = Capture::hash(reference, meter)?;
+        let head = index.get(&hash, meter)?.copied();
+        let mut cursor = head;
+        while let Some(id) = cursor {
+            meter.work(1)?;
+            let previous = values[id].root().value.to_rooted(&mut meter.store);
+            if Rooted::<AnyRef>::ref_eq(&meter.store, reference, &previous)? {
+                return Ok((Some(hash), head, Some(id)));
+            }
+            cursor = values[id].collision();
+        }
+        Ok((Some(hash), head, None))
+    } else {
+        for (id, previous) in values.iter().enumerate() {
+            meter.work(1)?; // candidate read/root/exact comparison
+            let previous = previous.root().value.to_rooted(&mut meter.store);
+            if Rooted::<AnyRef>::ref_eq(&meter.store, reference, &previous)? {
+                return Ok((None, None, Some(id)));
+            }
+        }
+        Ok((None, None, None))
+    }
+}
+
+fn promote<T: IndexedRoot>(
+    values: &mut [T],
+    index: &mut Option<TryOrderedMap<u64, usize>>,
+    meter: &mut Meter<'_>,
+) -> Result<()> {
+    // Called only after a complete miss at the unique-entry boundary. Stage
+    // links too: failure cannot leave a partially installed collision topology.
+    let mut staged = TryOrderedMap::default();
+    let mut links = Vec::new();
+    allocation::<Option<usize>>(values.len(), meter)?;
+    links
+        .try_reserve_exact(values.len())
+        .map_err(|e| invalid(format!("Storage snapshot promotion allocation failed: {e}")))?;
+    for (id, value) in values.iter().enumerate() {
+        meter.work(1)?;
+        let reference = value.root().value.to_rooted(&mut meter.store);
+        let hash = Capture::hash(&reference, meter)?;
+        links.push(staged.insert(hash, id, meter)?);
+    }
+    // Prepay installation before modifying any existing link or index.
+    meter.work(
+        u64::try_from(values.len())
+            .map_err(|_| invalid("Storage snapshot promotion size overflow"))?
+            .checked_add(1)
+            .ok_or_else(|| invalid("Storage snapshot promotion size overflow"))?,
+    )?;
+    for (value, next) in values.iter_mut().zip(links) {
+        value.set_collision(next);
+    }
+    *index = Some(staged);
+    Ok(())
+}
+
 struct Capture {
     owner: u64,
     handles: Arc<AtomicUsize>,
     nodes: Vec<Node>,
-    index: TryOrderedMap<u64, usize>,
+    index: Option<TryOrderedMap<u64, usize>>,
     cuts: Vec<Cut>,
-    cut_index: TryOrderedMap<u64, usize>,
+    cut_index: Option<TryOrderedMap<u64, usize>>,
 }
 impl Capture {
     fn hash(reference: &Rooted<AnyRef>, meter: &mut Meter<'_>) -> Result<u64> {
@@ -192,19 +289,12 @@ impl Capture {
             }
             // Immediate scalars are immutable leaves, never opaque boxes.
             if reference.as_i31(&meter.store)?.is_some() { continue }
-            let hash = snapshot_observed!(meter, "cut-reference-hash", 1, Self::hash(&reference, meter))?;
-            let head = snapshot_observed!(meter, "cut-index-get", self.cuts.len(), self.cut_index.get(&hash, meter)).map(|head| head.copied())?;
-            let mut cursor = head;
-            let mut duplicate = false;
-            while let Some(id) = cursor {
-                meter.work(1)?;
-                let previous = self.cuts[id].value.value.to_rooted(&mut meter.store);
-                if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &previous)? {
-                    duplicate = true; break;
-                }
-                cursor = self.cuts[id].collision;
+            let (mut hash, mut head, found) = snapshot_observed!(meter, "cut-adaptive-lookup", self.cuts.len(), lookup(&self.cuts, &self.cut_index, &reference, meter))?;
+            if found.is_some() { continue }
+            if self.cut_index.is_none() && self.cuts.len() == LINEAR_INDEX_LIMIT {
+                snapshot_observed!(meter, "cut-index-promotion", self.cuts.len(), promote(&mut self.cuts, &mut self.cut_index, meter))?;
+                (hash, head, _) = lookup(&self.cuts, &self.cut_index, &reference, meter)?;
             }
-            if duplicate { continue }
             snapshot_observed!(meter, "cut-buffer-room", self.cuts.len(), room(&mut self.cuts, meter))?;
             meter.work(1)?;
             let value = reference.to_owned_rooted(&mut meter.store)?;
@@ -212,7 +302,9 @@ impl Capture {
             let id = self.cuts.len();
             self.cuts.push(Cut { value: SessionValue { identity: self.owner,
                 value, handles: self.handles.clone() }, collision: head });
-            snapshot_observed!(meter, "cut-index-insert", self.cuts.len(), self.cut_index.insert(hash, id, meter))?;
+            if let Some(index) = &mut self.cut_index {
+                snapshot_observed!(meter, "cut-index-insert", self.cuts.len(), index.insert(hash.expect("indexed hash"), id, meter))?;
+            }
         }
         Ok(())
     }
@@ -241,43 +333,23 @@ impl Capture {
                 // No guest execution or guest heap allocation occurs in this
                 // traversal. The ephemeral index is discarded before returning;
                 // later checks use rooted ref_eq, not pre-GC reference hashes.
-                let hash = snapshot_observed!(meter, "node-reference-hash", 1, Self::hash(&reference, meter))?;
                 if !self.cuts.is_empty() {
-                    let cut = snapshot_observed!(meter, "cut-lookup", self.cuts.len(), (|| -> Result<Option<Atom>> {
-                    let mut cursor = self.cut_index.get(&hash, meter)?.copied();
-                    while let Some(id) = cursor {
+                    let (_, _, found) = snapshot_observed!(meter, "cut-lookup", self.cuts.len(), lookup(&self.cuts, &self.cut_index, &reference, meter))?;
+                    if let Some(id) = found {
                         meter.work(1)?;
-                        let expected = self.cuts[id].value.value.to_rooted(&mut meter.store);
-                        if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &expected)? {
-                            // Atom buffer bytes were already charged; the
-                            // clone performs an owned-root reference increment.
-                            meter.work(1)?;
-                            return Ok(Some(Atom::Opaque(self.cuts[id].value.clone())));
-                        }
-                        cursor = self.cuts[id].collision;
+                        return Ok(Atom::Opaque(self.cuts[id].value.clone()));
                     }
-                    Ok(None)
-                    })())?;
-                    if let Some(cut) = cut { return Ok(cut); }
                 }
-                let (head, found) = snapshot_observed!(meter, "node-lookup", self.nodes.len(), (|| -> Result<_> {
-                let head = snapshot_observed!(meter, "node-index-get", self.nodes.len(), self.index.get(&hash, meter)).map(|head| head.copied())?;
-                let mut cursor = head;
-                while let Some(id) = cursor {
-                    meter.work(1)?;
-                    let previous = self.nodes[id].value.value.to_rooted(&mut meter.store);
-                    if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &previous)? {
-                        return Ok((head, Some(id)));
-                    }
-                    cursor = self.nodes[id].collision;
-                }
-                Ok((head, None))
-                })())?;
+                let (mut hash, mut head, found) = snapshot_observed!(meter, "node-lookup", self.nodes.len(), lookup(&self.nodes, &self.index, &reference, meter))?;
                 if let Some(id) = found { return Ok(Atom::Node(id)); }
                 if reference.as_struct(&meter.store)?.is_none()
                     && reference.as_array(&meter.store)?.is_none()
                 {
                     return Err(invalid("Unsupported heap reference in storage snapshot"));
+                }
+                if self.index.is_none() && self.nodes.len() == LINEAR_INDEX_LIMIT {
+                    snapshot_observed!(meter, "node-index-promotion", self.nodes.len(), promote(&mut self.nodes, &mut self.index, meter))?;
+                    (hash, head, _) = lookup(&self.nodes, &self.index, &reference, meter)?;
                 }
                 snapshot_observed!(meter, "node-buffer-room", self.nodes.len(), room(&mut self.nodes, meter))?;
                 meter.work(1)?;
@@ -295,7 +367,9 @@ impl Capture {
                 });
                 // Capture is private until complete. Any error drops all its
                 // owned roots; no partial snapshot is returned or published.
-                snapshot_observed!(meter, "node-index-insert", self.nodes.len(), self.index.insert(hash, id, meter))?;
+                if let Some(index) = &mut self.index {
+                    snapshot_observed!(meter, "node-index-insert", self.nodes.len(), index.insert(hash.expect("indexed hash"), id, meter))?;
+                }
                 Atom::Node(id)
             }
             Val::ExternRef(Some(_)) | Val::ExnRef(Some(_)) | Val::ContRef(Some(_)) => {
@@ -561,8 +635,8 @@ impl Session {
         let root = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
         let mut meter = Meter::new(scope.as_context_mut(), &interrupt);
         let mut capture = Capture { owner: self.identity, handles,
-            nodes: Vec::new(), index: TryOrderedMap::default(),
-            cuts: Vec::new(), cut_index: TryOrderedMap::default() };
+            nodes: Vec::new(), index: None,
+            cuts: Vec::new(), cut_index: None };
         let added = snapshot_observed!(meter, "add-cuts", cuts.len(), capture.add_cuts(cuts, &root, &mut meter));
         if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
             eprintln!("source-snapshot-cuts input={} dedup={} complete={} remaining={:?}",
@@ -714,9 +788,9 @@ mod tests {
                 owner: session.identity,
                 handles: session.handles.clone(),
                 nodes: Vec::new(),
-                index: TryOrderedMap::default(),
+                index: None,
             cuts: Vec::new(),
-            cut_index: TryOrderedMap::default(),
+            cut_index: None,
             }
             .finish(value, &mut meter)
             .unwrap()
@@ -1080,9 +1154,9 @@ mod tests {
                     owner: session.identity,
                     handles: session.handles.clone(),
                     nodes: Vec::new(),
-                    index: TryOrderedMap::default(),
+                    index: None,
             cuts: Vec::new(),
-            cut_index: TryOrderedMap::default(),
+            cut_index: None,
                 }
                 .finish(root_value, &mut meter)
                 .unwrap_err()
@@ -1213,8 +1287,8 @@ mod tests {
             let mut meter = Meter::new(scope.as_context_mut(), &irq);
             meter.force_hash_collision = true;
             let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
-                nodes: Vec::new(), index: TryOrderedMap::default(), cuts: Vec::new(),
-                cut_index: TryOrderedMap::default() };
+                nodes: Vec::new(), index: None, cuts: Vec::new(),
+                cut_index: None };
             capture.add_cuts(&[&a, &b, &a, &nil], &value, &mut meter).unwrap();
             capture.finish(value, &mut meter).unwrap()
         };
@@ -1259,8 +1333,8 @@ mod tests {
                 snapshot.matches_with_slots(value, &mut meter, &mut |_, _, _, _| Ok(false)).unwrap_err()
             } else {
                 let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
-                    nodes: Vec::new(), index: TryOrderedMap::default(), cuts: Vec::new(),
-                    cut_index: TryOrderedMap::default() };
+                    nodes: Vec::new(), index: None, cuts: Vec::new(),
+                    cut_index: None };
                 capture.add_cuts(&[&child], &value, &mut meter)
                     .and_then(|()| capture.finish(value, &mut meter)).unwrap_err()
             };
@@ -1280,5 +1354,160 @@ mod tests {
         let value = Val::AnyRef(Some(other.value.to_rooted(&mut scope)));
         assert!(matches!(small.contains_reference_in_context(scope.as_context_mut(), value,
             foreign.identity, &irq), Err(SessionError::ForeignValue)));
+    }
+    fn adaptive_capture(
+        session: &mut Session,
+        root: &SessionValue,
+        cuts: &[&SessionValue],
+        indexed: bool,
+    ) -> StorageSnapshot {
+        let _request = session.operation_budget_scope().unwrap();
+        let irq = session.host_work_interrupt();
+        let mut scope = RootScope::new(&mut session.store);
+        let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+        let mut meter = Meter::new(scope.as_context_mut(), &irq);
+        meter.force_hash_collision = true;
+        let mut capture = Capture {
+            owner: session.identity,
+            handles: session.handles.clone(),
+            nodes: Vec::new(),
+            index: indexed.then(TryOrderedMap::default),
+            cuts: Vec::new(),
+            cut_index: indexed.then(TryOrderedMap::default),
+        };
+        capture.add_cuts(cuts, &value, &mut meter).unwrap();
+        assert_eq!(
+            capture.cut_index.is_some(),
+            indexed || capture.cuts.len() > LINEAR_INDEX_LIMIT
+        );
+        capture.finish(value, &mut meter).unwrap()
+    }
+
+    #[test]
+    fn adaptive_indexes_boundary_cycles_duplicates_and_wide_collisions_match_bfs() {
+        let mut session = Session::new().unwrap();
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        for count in [7, 8, 9, 17] {
+            let leaves: Vec<_> = (0..count).map(|_| raw_array(&mut session, &[])).collect();
+            let refs: Vec<_> = leaves.iter().collect();
+            let root = raw_array(&mut session, &refs);
+            // Root plus count-1 children; a repeated root is a genuine cycle.
+            set_array(&mut session, &root, 0, &root);
+            let adaptive = adaptive_capture(&mut session, &root, &[], false);
+            let indexed = adaptive_capture(&mut session, &root, &[], true);
+            assert_eq!(adaptive.nodes.len(), count);
+            assert_eq!(indexed.nodes.len(), count);
+            for (a, b) in adaptive.nodes.iter().zip(&indexed.nodes) {
+                let ar = a.value.value.to_rooted(&mut session.store);
+                let br = b.value.value.to_rooted(&mut session.store);
+                assert!(Rooted::<AnyRef>::ref_eq(&session.store, &ar, &br).unwrap());
+                assert_eq!(format!("{:?}", a.contents), format!("{:?}", b.contents));
+            }
+            session.collect().unwrap();
+            assert!(session.storage_matches(&root, &adaptive).unwrap());
+            assert!(session.storage_matches(&root, &indexed).unwrap());
+            set_array(&mut session, &root, 1, &nil);
+            assert!(!session.storage_matches(&root, &adaptive).unwrap());
+            assert!(!session.storage_matches(&root, &indexed).unwrap());
+
+            // Independently exercise cut promotion, including a duplicate at8.
+            let mut cuts = refs.clone();
+            cuts.insert(count.min(8), &leaves[0]);
+            let root = raw_array(&mut session, &refs);
+            let a = adaptive_capture(&mut session, &root, &cuts, false);
+            let b = adaptive_capture(&mut session, &root, &cuts, true);
+            assert_eq!(a.nodes.len(), 1);
+            assert_eq!(b.nodes.len(), 1);
+            assert!(session.storage_matches(&root, &a).unwrap());
+            set_array(&mut session, &root, 0, &leaves[1]);
+            assert!(!session.storage_matches(&root, &a).unwrap());
+            assert!(!session.storage_matches(&root, &b).unwrap());
+        }
+    }
+
+    #[test]
+    fn adaptive_node_and_cut_promotion_irq_is_atomic_and_recovers() {
+        let mut session = Session::new().unwrap();
+        let roots: Vec<_> = (0..9).map(|_| raw_array(&mut session, &[])).collect();
+        let root = raw_array(&mut session, &[]);
+        for cuts in [false, true] {
+            let mut completed = false;
+            for cancel in 0..2048 {
+                let handles = session.stats().external_value_handles;
+                let _request = session.operation_budget_scope().unwrap();
+                let irq = session.host_work_interrupt();
+                let mut scope = RootScope::new(&mut session.store);
+                let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                meter.force_hash_collision = true;
+                let mut capture = Capture {
+                    owner: session.identity,
+                    handles: session.handles.clone(),
+                    nodes: Vec::new(),
+                    index: None,
+                    cuts: Vec::new(),
+                    cut_index: None,
+                };
+                if cuts {
+                    capture
+                        .add_cuts(&roots[..8].iter().collect::<Vec<_>>(), &value, &mut meter)
+                        .unwrap();
+                    capture.add_cuts(&[&roots[0]], &value, &mut meter).unwrap();
+                    assert!(capture.cut_index.is_none());
+                } else {
+                    for r in &roots[..8] {
+                        let v = Val::AnyRef(Some(r.value.to_rooted(&mut meter.store)));
+                        capture.atom(v, &mut meter).unwrap();
+                    }
+                    let v = Val::AnyRef(Some(roots[0].value.to_rooted(&mut meter.store)));
+                    assert!(matches!(
+                        capture.atom(v, &mut meter).unwrap(),
+                        Atom::Node(0)
+                    ));
+                    assert!(capture.index.is_none());
+                }
+                meter.cancel_after = Some(cancel);
+                let result = if cuts {
+                    promote(&mut capture.cuts, &mut capture.cut_index, &mut meter)
+                } else {
+                    promote(&mut capture.nodes, &mut capture.index, &mut meter)
+                };
+                match result {
+                    Ok(()) => {
+                        completed = true;
+                        meter.cancel_after = None;
+                        let reference = roots[0].value.to_rooted(&mut meter.store);
+                        let (_, _, found) = if cuts {
+                            lookup(&capture.cuts, &capture.cut_index, &reference, &mut meter)
+                        } else {
+                            lookup(&capture.nodes, &capture.index, &reference, &mut meter)
+                        }
+                        .unwrap();
+                        assert_eq!(found, Some(0));
+                    }
+                    Err(error) => {
+                        exhausted(error, wasmtime::Trap::Interrupt);
+                        if cuts {
+                            assert!(capture.cut_index.is_none());
+                            assert!(capture.cuts.iter().all(|c| c.collision.is_none()));
+                        } else {
+                            assert!(capture.index.is_none());
+                            assert!(capture.nodes.iter().all(|n| n.collision.is_none()));
+                        }
+                    }
+                }
+                drop(capture);
+                drop(meter);
+                drop(scope);
+                drop(_request);
+                assert_eq!(session.stats().external_value_handles, handles);
+                if completed {
+                    break;
+                }
+            }
+            assert!(completed, "promotion must eventually complete");
+            let snapshot = adaptive_capture(&mut session, &root, &[], false);
+            assert!(session.storage_matches(&root, &snapshot).unwrap());
+        }
     }
 }

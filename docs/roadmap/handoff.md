@@ -28977,3 +28977,52 @@ Raw frozen inputs, failed compiler/setup attempts, commands and comparisons are
 packaged in m4-native-global-ownership-2026-10-17.tar.gz. Independent source
 review found no blocker. Complete execution criteria, required full baseline
 and final-head CI remain separate gates.
+
+### Bootstrap operation selection and adaptive snapshot indexes (2026-10-17)
+
+HIR now selects a copyable bootstrap operation without constructing a discarded
+Global. Shared classification retains the public Binding-returning API and its
+metered owner creation. Both HIR lookup positions, lexical guards and ordinary
+Binding errors/fallbacks remain unchanged, including unchecked access and reify.
+Before refactoring, a probe executed the compiled c10 public API for all55 names,
+both phases and8 alias/shadow/exclusion/redefinition/restoration scenarios. The
+880 frozen routing rows pass against the new API/operation path; they prove
+routing equivalence, not guest value/effect acceptance. The probe's initial
+private-API compilation error, corrected source, receipts and executable are
+retained separately. Global-owner allocation checks do not claim zero String
+allocations: the existing shadow lookup still copies temporary Strings.
+
+Snapshot capture uses exact-reference linear searches for at most8 owned nodes
+or cuts, then privately promotes to the original AVL indexing for wider graphs.
+Duplicates are checked before promotion. Cut/node promotions are independent;
+all index/link allocation and installation work is prepaid before publication.
+BFS IDs, owned roots, complete fields/types/methods, collision checks, foreign/
+root-cut checks and iterative deep fallback remain intact. Existing16 snapshot
+regressions plus2 new boundary/cycle/wide-collision/GC/promotion-IRQ/recovery
+regressions pass. Failed promotion publishes no usable partial index; capture
+cleanup releases staged handles.
+These are representation/algorithm changes, not a tariff or quota reduction.
+
+The frozen2,915-input cohort compiles and regenerates both bootstraps, changing
+only their4 declared outputs. Noncustom Wasm sections remain byte-identical to
+c10. Focused execution records141 Rust passes,4 fuel failures and0 ignores;
+Global tests include all880 routing rows, nominal/array fallback tests pass,
+and cumulative fuel remains10/10. Python348 and all13 foundation commands pass
+on the unchanged tuple. Both patches received independent source review.
+
+Compiler-only30M preparation is11,711,801 units (76,689 fewer than c10), with
+unchanged1,190,973 verification cost and no user program execution. Default core
+still exhausts fuel; its16 other core tests remain filtered. Runtime source-child
+variant3 now completes, while variant4 exhausts fuel; Macro and later physical/
+memo tails remain unexecuted. The complete original map test still executes0
+assertions/all69 unexecuted. Bitwise primary still fails core setup while5
+other regressions pass. No required full-baseline or final-head CI success is
+inferred from these focused results. c10 PR CI's16 observed failures remain
+classified as native/guest fuel failures with raw changed diagnostics retained.
+
+Raw commands, both frozen source tuples, parent routing fixture/probe and all
+terminal results are retained in
+m4-bootstrap-selection-snapshot-indexes-2026-10-17.tar.gz, SHA256
+8acb3b1e5ece081ca00c869de91c388b7cd8b5b36cfc219cfc300aaea9fe885d.
+The manifest maps every declared input to exact bytes and preserves every
+observed failure. No full workspace or new-head CI result is claimed here.

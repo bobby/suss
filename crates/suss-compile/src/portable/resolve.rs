@@ -165,6 +165,67 @@ pub(crate) struct ProtocolMethod {
     pub name: String,
     pub signatures: Vec<(usize, usize)>, // argument arity, bundle key index
 }
+/// Bootstrap syntax dispatch needs an operation, not a retained live-cell key.
+/// Name selection still performs the existing qualification/shadow checks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BootstrapSelection {
+    Control(ControlForm), Bitwise(Bitwise), Comparison(Comparison), Array(ArrayOperation),
+    Let, Loop, Fn, Defonce, Binding, Nominal(NominalForm),
+}
+impl BootstrapSelection {
+    fn from_name(name: &str) -> Self {
+        if let Some(operation) = ControlForm::from_name(name) {
+            Self::Control(operation)
+        } else if let Some(operation) = Bitwise::from_name(name) {
+            Self::Bitwise(operation)
+        } else if let Some(operation) = match name {
+            "<" => Some(Comparison::Less), "<=" => Some(Comparison::LessEqual),
+            ">" => Some(Comparison::Greater), ">=" => Some(Comparison::GreaterEqual),
+            "==" => Some(Comparison::StrictEqual), _ => None,
+        } { Self::Comparison(operation) }
+        else if let Some(operation) = match name {
+            "array" => Some(ArrayOperation::Literal), "make-array" => Some(ArrayOperation::Make),
+            "alength" => Some(ArrayOperation::Length), "aget" => Some(ArrayOperation::Get),
+            "aset" => Some(ArrayOperation::Set), _ => None,
+        } { Self::Array(operation) }
+        else {
+            match name {
+                "let" => Self::Let, "loop" => Self::Loop, "fn" => Self::Fn,
+                "defonce" => Self::Defonce, "binding" | "with-redefs" => Self::Binding,
+                _ => Self::Nominal(match name {
+                    "deftype" => NominalForm::Deftype, "deftype*" => NominalForm::DeftypeInternal,
+                    "defrecord*" => NominalForm::DefrecordInternal, "defprotocol" => NominalForm::Defprotocol,
+                    "instance?" => NominalForm::Instance, "satisfies?" => NominalForm::Satisfies,
+                    "implements?" => NominalForm::Implements, _ => NominalForm::ExtendType,
+                }),
+            }
+        }
+    }
+    pub(crate) fn from_binding(binding: &Binding) -> Option<Self> {
+        Some(match binding {
+            Binding::BootstrapControl { operation, .. } => Self::Control(*operation),
+            Binding::BootstrapBitwise { operation, .. } => Self::Bitwise(*operation),
+            Binding::BootstrapComparison { operation, .. } => Self::Comparison(*operation),
+            Binding::BootstrapArray { operation, .. } => Self::Array(*operation),
+            Binding::BootstrapLet(_) => Self::Let, Binding::BootstrapLoop(_) => Self::Loop,
+            Binding::BootstrapFn(_) => Self::Fn, Binding::BootstrapDefonce(_) => Self::Defonce,
+            Binding::BootstrapBinding(_) => Self::Binding,
+            Binding::Nominal { form, .. } => Self::Nominal(*form),
+            _ => return None,
+        })
+    }
+    fn with_global(self, global: Global) -> Binding {
+        match self {
+            Self::Control(operation) => Binding::BootstrapControl { global, operation },
+            Self::Bitwise(operation) => Binding::BootstrapBitwise { global, operation },
+            Self::Comparison(operation) => Binding::BootstrapComparison { global, operation },
+            Self::Array(operation) => Binding::BootstrapArray { global, operation },
+            Self::Let => Binding::BootstrapLet(global), Self::Loop => Binding::BootstrapLoop(global),
+            Self::Fn => Binding::BootstrapFn(global), Self::Defonce => Binding::BootstrapDefonce(global),
+            Self::Binding => Binding::BootstrapBinding(global), Self::Nominal(form) => Binding::Nominal { global, form },
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
     BootstrapBitwise {
@@ -1513,55 +1574,13 @@ impl Environment {
         let global = if let Some((key, _)) = self.bindings.get_key_value(&query) {
             key.retain_metered(meter)?
         } else { Global::own(query, meter)? };
-        // Preserve the original bootstrap VARIANT, independent of live Binding.
-        Ok(Some(if let Some(operation) = ControlForm::from_name(name) {
-            Binding::BootstrapControl { global, operation }
-        } else if let Some(operation) = Bitwise::from_name(name) {
-            Binding::BootstrapBitwise { global, operation }
-        } else if let Some(operation) = match name {
-            "<" => Some(Comparison::Less),
-            "<=" => Some(Comparison::LessEqual),
-            ">" => Some(Comparison::Greater),
-            ">=" => Some(Comparison::GreaterEqual),
-            "==" => Some(Comparison::StrictEqual),
-            _ => None,
-        } {
-            Binding::BootstrapComparison { global, operation }
-        } else if let Some(operation) = match name {
-            "array" => Some(ArrayOperation::Literal),
-            "make-array" => Some(ArrayOperation::Make),
-            "alength" => Some(ArrayOperation::Length),
-            "aget" => Some(ArrayOperation::Get),
-            "aset" => Some(ArrayOperation::Set),
-            _ => None,
-        } {
-            Binding::BootstrapArray { global, operation }
-        } else if name == "let" {
-            Binding::BootstrapLet(global)
-        } else if name == "loop" {
-            Binding::BootstrapLoop(global)
-        } else if name == "fn" {
-            Binding::BootstrapFn(global)
-        } else if name == "defonce" {
-            Binding::BootstrapDefonce(global)
-        } else if name == "binding" || name == "with-redefs" {
-            Binding::BootstrapBinding(global)
-        } else {
-            Binding::Nominal {
-                global,
-                form: match name {
-                    "deftype" => NominalForm::Deftype,
-                    "deftype*" => NominalForm::DeftypeInternal,
-                    "defrecord*" => NominalForm::DefrecordInternal,
-                    "defprotocol" => NominalForm::Defprotocol,
-                    "instance?" => NominalForm::Instance,
-                    "satisfies?" => NominalForm::Satisfies,
-                    "implements?" => NominalForm::Implements,
-                    _ => NominalForm::ExtendType,
-                },
-            }
-        }))
+        // Public callers requesting a Binding still receive its charged owner.
+        Ok(Some(BootstrapSelection::from_name(name).with_global(global)))
     }
+    pub(crate) fn bootstrap_selection(&self, phase: Phase, symbol: &Symbol) -> Option<BootstrapSelection> {
+        self.selected_bootstrap_name(phase, symbol).map(BootstrapSelection::from_name)
+    }
+
     pub fn resolve(
         &self,
         phase: Phase,
@@ -1717,6 +1736,64 @@ mod global_ownership_tests {
     fn same_owner(a: &Global, b: &Global) -> bool { Arc::ptr_eq(&a.0, &b.0) }
 
     #[test]
+    fn bootstrap_operation_routing_matches_executed_c10_parent_without_global_owners() {
+        // Captured by executing c10's compiled public API before this refactor;
+        // expected variants are data, not another implementation of selection.
+        let fixture = include_str!("../../tests/fixtures/bootstrap-selection-c10c037.tsv");
+        let mut seen = BTreeSet::new();
+        for row in fixture.lines().filter(|line| !line.starts_with('#')) {
+            let fields: Vec<_> = row.splitn(4, '\t').collect();
+            assert_eq!(fields.len(), 4);
+            let phase = match fields[0] { "Runtime" => Phase::Runtime, "Macro" => Phase::Macro, _ => panic!("unknown fixture phase") };
+            let scenario = fields[1];
+            let name = fields[2];
+            assert!(BOOTSTRAP_GLOBAL_NAMES.contains(&name));
+            assert!(seen.insert((phase, name, scenario)));
+            let mut env = Environment::new("routing.probe").unwrap();
+            let symbol = match scenario {
+                "bare" => Symbol::new(name),
+                "qualified" => Symbol::namespaced("cljs.core", name),
+                "alias" => {
+                    env.alias(phase, "corealias", "cljs.core").unwrap();
+                    Symbol::namespaced("corealias", name)
+                }
+                "shadowed" => {
+                    env.declare_cell(phase, "routing.probe", name).unwrap();
+                    Symbol::new(name)
+                }
+                "excluded" => {
+                    env.exclude_core(phase, name).unwrap();
+                    Symbol::new(name)
+                }
+                "redefined" => {
+                    env.declare_cell(phase, "suss.core", name).unwrap();
+                    Symbol::namespaced("cljs.core", name)
+                }
+                "referred" => {
+                    if !env.has_binding(phase, "suss.core", name) {
+                        env.declare_cell(phase, "suss.core", name).unwrap();
+                    }
+                    env.refer(phase, "renamed", "suss.core", name).unwrap();
+                    Symbol::new("renamed")
+                }
+                "restored" => {
+                    let before = env.clone();
+                    let global = env.declare_cell(phase, "suss.core", name).unwrap();
+                    env.restore_declarations(&before, &[global], phase);
+                    Symbol::namespaced("cljs.core", name)
+                }
+                _ => panic!("unknown fixture scenario"),
+            };
+            let binding = env.resolve_bootstrap_macro(phase, &symbol);
+            assert_eq!(format!("{binding:?}"), fields[3], "{phase:?} {scenario} {name}");
+            let owners = allocations();
+            assert_eq!(env.bootstrap_selection(phase, &symbol), binding.as_ref().and_then(BootstrapSelection::from_binding));
+            assert_eq!(allocations(), owners, "operation selection must not construct a Global owner");
+        }
+        assert_eq!(seen.len(), BOOTSTRAP_GLOBAL_NAMES.len() * 2 * 8);
+    }
+
+    #[test]
     fn hir_callers_propagate_every_interruption_and_recover_without_publishing() {
         struct InterruptHost {
             calls: usize,
@@ -1753,9 +1830,9 @@ mod global_ownership_tests {
                     &forms, 0..source.len(), &env, phase, &mut complete,
                 ).unwrap();
                 assert!(complete.calls > 0);
-                // Reject every charged boundary, including both resolver
-                // callers. A swallowed Err or fallback to ordinary resolution
-                // would either succeed or replace this exact diagnostic.
+                // Reject every remaining charged preparation boundary. Pure
+                // bootstrap operation selection no longer constructs owners.
+                // A swallowed Err would succeed or replace this diagnostic.
                 for reject in 0..complete.calls {
                     let mut interrupted = host(Some(reject));
                     let failure = super::super::hir::prepare_with_expander(

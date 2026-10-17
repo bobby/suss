@@ -1,0 +1,881 @@
+# Actual c10c037 native public-API observations: 55 names x 2 phases x 8 routing scenarios.
+Runtime	bare	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	qualified	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	alias	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	shadowed	->	None
+Runtime	excluded	->	None
+Runtime	redefined	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	referred	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	restored	->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Runtime	bare	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	qualified	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	alias	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	shadowed	<	None
+Runtime	excluded	<	None
+Runtime	redefined	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	referred	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	restored	<	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<" }, operation: Less })
+Runtime	bare	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	qualified	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	alias	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	shadowed	<=	None
+Runtime	excluded	<=	None
+Runtime	redefined	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	referred	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	restored	<=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Runtime	bare	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	qualified	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	alias	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	shadowed	==	None
+Runtime	excluded	==	None
+Runtime	redefined	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	referred	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	restored	==	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Runtime	bare	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	qualified	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	alias	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	shadowed	>	None
+Runtime	excluded	>	None
+Runtime	redefined	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	referred	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	restored	>	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">" }, operation: Greater })
+Runtime	bare	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	qualified	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	alias	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	shadowed	>=	None
+Runtime	excluded	>=	None
+Runtime	redefined	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	referred	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	restored	>=	Some(BootstrapComparison { global: Global { phase: Runtime, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Runtime	bare	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	qualified	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	alias	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	shadowed	aget	None
+Runtime	excluded	aget	None
+Runtime	redefined	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	referred	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	restored	aget	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aget" }, operation: Get })
+Runtime	bare	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	qualified	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	alias	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	shadowed	alength	None
+Runtime	excluded	alength	None
+Runtime	redefined	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	referred	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	restored	alength	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "alength" }, operation: Length })
+Runtime	bare	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	qualified	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	alias	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	shadowed	and	None
+Runtime	excluded	and	None
+Runtime	redefined	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	referred	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	restored	and	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "and" }, operation: And })
+Runtime	bare	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	qualified	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	alias	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	shadowed	array	None
+Runtime	excluded	array	None
+Runtime	redefined	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	referred	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	restored	array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "array" }, operation: Literal })
+Runtime	bare	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	qualified	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	alias	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	shadowed	as->	None
+Runtime	excluded	as->	None
+Runtime	redefined	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	referred	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	restored	as->	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Runtime	bare	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	qualified	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	alias	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	shadowed	aset	None
+Runtime	excluded	aset	None
+Runtime	redefined	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	referred	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	restored	aset	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "aset" }, operation: Set })
+Runtime	bare	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	qualified	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	alias	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	shadowed	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	excluded	binding	None
+Runtime	redefined	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	referred	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	restored	binding	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "binding" }))
+Runtime	bare	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	qualified	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	alias	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	shadowed	bit-and	None
+Runtime	excluded	bit-and	None
+Runtime	redefined	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	referred	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	restored	bit-and	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and" }, operation: And })
+Runtime	bare	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	qualified	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	alias	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	shadowed	bit-and-not	None
+Runtime	excluded	bit-and-not	None
+Runtime	redefined	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	referred	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	restored	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Runtime	bare	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	qualified	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	alias	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	shadowed	bit-clear	None
+Runtime	excluded	bit-clear	None
+Runtime	redefined	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	referred	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	restored	bit-clear	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Runtime	bare	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	qualified	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	alias	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	shadowed	bit-flip	None
+Runtime	excluded	bit-flip	None
+Runtime	redefined	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	referred	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	restored	bit-flip	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Runtime	bare	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	qualified	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	alias	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	shadowed	bit-not	None
+Runtime	excluded	bit-not	None
+Runtime	redefined	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	referred	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	restored	bit-not	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Runtime	bare	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	qualified	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	alias	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	shadowed	bit-or	None
+Runtime	excluded	bit-or	None
+Runtime	redefined	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	referred	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	restored	bit-or	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Runtime	bare	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	qualified	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	alias	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	shadowed	bit-set	None
+Runtime	excluded	bit-set	None
+Runtime	redefined	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	referred	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	restored	bit-set	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Runtime	bare	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	qualified	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	alias	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	shadowed	bit-shift-left	None
+Runtime	excluded	bit-shift-left	None
+Runtime	redefined	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	referred	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	restored	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Runtime	bare	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	qualified	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	alias	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	shadowed	bit-shift-right	None
+Runtime	excluded	bit-shift-right	None
+Runtime	redefined	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	referred	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	restored	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Runtime	bare	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	qualified	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	alias	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	shadowed	bit-shift-right-zero-fill	None
+Runtime	excluded	bit-shift-right-zero-fill	None
+Runtime	redefined	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	referred	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	restored	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Runtime	bare	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	qualified	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	alias	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	shadowed	bit-test	None
+Runtime	excluded	bit-test	None
+Runtime	redefined	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	referred	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	restored	bit-test	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Runtime	bare	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	qualified	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	alias	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	shadowed	bit-xor	None
+Runtime	excluded	bit-xor	None
+Runtime	redefined	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	referred	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	restored	bit-xor	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Runtime	bare	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	qualified	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	alias	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	shadowed	caching-hash	None
+Runtime	excluded	caching-hash	None
+Runtime	redefined	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	referred	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	restored	caching-hash	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Runtime	bare	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	qualified	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	alias	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	shadowed	case	None
+Runtime	excluded	case	None
+Runtime	redefined	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	referred	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	restored	case	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "case" }, operation: Case })
+Runtime	bare	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	qualified	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	alias	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	shadowed	cond	None
+Runtime	excluded	cond	None
+Runtime	redefined	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	referred	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	restored	cond	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "cond" }, operation: Cond })
+Runtime	bare	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	qualified	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	alias	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	shadowed	dec	None
+Runtime	excluded	dec	None
+Runtime	redefined	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	referred	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	restored	dec	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Runtime	bare	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	qualified	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	alias	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	shadowed	declare	None
+Runtime	excluded	declare	None
+Runtime	redefined	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	referred	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	restored	declare	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "declare" }, operation: Declare })
+Runtime	bare	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	qualified	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	alias	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	shadowed	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	excluded	defonce	None
+Runtime	redefined	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	referred	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	restored	defonce	Some(BootstrapDefonce(Global { phase: Runtime, namespace: "suss.core", name: "defonce" }))
+Runtime	bare	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	qualified	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	alias	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	shadowed	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	excluded	defprotocol	None
+Runtime	redefined	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	referred	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	restored	defprotocol	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Runtime	bare	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	qualified	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	alias	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	shadowed	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	excluded	defrecord*	None
+Runtime	redefined	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	referred	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	restored	defrecord*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Runtime	bare	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	qualified	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	alias	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	shadowed	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	excluded	deftype	None
+Runtime	redefined	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	referred	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	restored	deftype	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Runtime	bare	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	qualified	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	alias	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	shadowed	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	excluded	deftype*	None
+Runtime	redefined	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	referred	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	restored	deftype*	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Runtime	bare	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	qualified	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	alias	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	shadowed	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	excluded	extend-type	None
+Runtime	redefined	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	referred	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	restored	extend-type	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Runtime	bare	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	qualified	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	alias	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	shadowed	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	excluded	fn	None
+Runtime	redefined	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	referred	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	restored	fn	Some(BootstrapFn(Global { phase: Runtime, namespace: "suss.core", name: "fn" }))
+Runtime	bare	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	qualified	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	alias	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	shadowed	if-let	None
+Runtime	excluded	if-let	None
+Runtime	redefined	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	referred	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	restored	if-let	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Runtime	bare	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	qualified	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	alias	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	shadowed	if-not	None
+Runtime	excluded	if-not	None
+Runtime	redefined	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	referred	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	restored	if-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Runtime	bare	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	qualified	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	alias	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	shadowed	implements?	None
+Runtime	excluded	implements?	None
+Runtime	redefined	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	referred	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	restored	implements?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "implements?" }, form: Implements })
+Runtime	bare	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	qualified	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	alias	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	shadowed	inc	None
+Runtime	excluded	inc	None
+Runtime	redefined	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	referred	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	restored	inc	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "inc" }, operation: Increment })
+Runtime	bare	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	qualified	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	alias	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	shadowed	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	excluded	instance?	None
+Runtime	redefined	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	referred	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	restored	instance?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "instance?" }, form: Instance })
+Runtime	bare	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	qualified	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	alias	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	shadowed	int	None
+Runtime	excluded	int	None
+Runtime	redefined	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	referred	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	restored	int	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "int" }, operation: Int })
+Runtime	bare	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	qualified	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	alias	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	shadowed	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	excluded	let	None
+Runtime	redefined	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	referred	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	restored	let	Some(BootstrapLet(Global { phase: Runtime, namespace: "suss.core", name: "let" }))
+Runtime	bare	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	qualified	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	alias	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	shadowed	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	excluded	loop	None
+Runtime	redefined	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	referred	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	restored	loop	Some(BootstrapLoop(Global { phase: Runtime, namespace: "suss.core", name: "loop" }))
+Runtime	bare	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	qualified	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	alias	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	shadowed	make-array	None
+Runtime	excluded	make-array	None
+Runtime	redefined	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	referred	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	restored	make-array	Some(BootstrapArray { global: Global { phase: Runtime, namespace: "suss.core", name: "make-array" }, operation: Make })
+Runtime	bare	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	qualified	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	alias	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	shadowed	neg?	None
+Runtime	excluded	neg?	None
+Runtime	redefined	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	referred	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	restored	neg?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Runtime	bare	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	qualified	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	alias	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	shadowed	or	None
+Runtime	excluded	or	None
+Runtime	redefined	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	referred	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	restored	or	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "or" }, operation: Or })
+Runtime	bare	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	qualified	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	alias	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	shadowed	pos?	None
+Runtime	excluded	pos?	None
+Runtime	redefined	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	referred	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	restored	pos?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Runtime	bare	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	qualified	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	alias	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	shadowed	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	excluded	satisfies?	None
+Runtime	redefined	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	referred	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	restored	satisfies?	Some(Nominal { global: Global { phase: Runtime, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Runtime	bare	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	qualified	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	alias	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	shadowed	unsigned-bit-shift-right	None
+Runtime	excluded	unsigned-bit-shift-right	None
+Runtime	redefined	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	referred	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	restored	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Runtime, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Runtime	bare	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	qualified	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	alias	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	shadowed	when	None
+Runtime	excluded	when	None
+Runtime	redefined	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	referred	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	restored	when	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when" }, operation: When })
+Runtime	bare	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	qualified	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	alias	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	shadowed	when-not	None
+Runtime	excluded	when-not	None
+Runtime	redefined	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	referred	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	restored	when-not	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Runtime	bare	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	qualified	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	alias	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	shadowed	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	excluded	with-redefs	None
+Runtime	redefined	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	referred	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	restored	with-redefs	Some(BootstrapBinding(Global { phase: Runtime, namespace: "suss.core", name: "with-redefs" }))
+Runtime	bare	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Runtime	qualified	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Runtime	alias	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Runtime	shadowed	zero?	None
+Runtime	excluded	zero?	None
+Runtime	redefined	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Runtime	referred	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Runtime	restored	zero?	Some(BootstrapControl { global: Global { phase: Runtime, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	bare	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	qualified	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	alias	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	shadowed	->	None
+Macro	excluded	->	None
+Macro	redefined	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	referred	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	restored	->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "->" }, operation: ThreadFirst })
+Macro	bare	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	qualified	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	alias	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	shadowed	<	None
+Macro	excluded	<	None
+Macro	redefined	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	referred	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	restored	<	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<" }, operation: Less })
+Macro	bare	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	qualified	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	alias	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	shadowed	<=	None
+Macro	excluded	<=	None
+Macro	redefined	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	referred	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	restored	<=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "<=" }, operation: LessEqual })
+Macro	bare	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	qualified	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	alias	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	shadowed	==	None
+Macro	excluded	==	None
+Macro	redefined	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	referred	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	restored	==	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: "==" }, operation: StrictEqual })
+Macro	bare	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	qualified	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	alias	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	shadowed	>	None
+Macro	excluded	>	None
+Macro	redefined	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	referred	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	restored	>	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">" }, operation: Greater })
+Macro	bare	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	qualified	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	alias	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	shadowed	>=	None
+Macro	excluded	>=	None
+Macro	redefined	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	referred	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	restored	>=	Some(BootstrapComparison { global: Global { phase: Macro, namespace: "suss.core", name: ">=" }, operation: GreaterEqual })
+Macro	bare	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	qualified	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	alias	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	shadowed	aget	None
+Macro	excluded	aget	None
+Macro	redefined	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	referred	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	restored	aget	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aget" }, operation: Get })
+Macro	bare	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	qualified	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	alias	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	shadowed	alength	None
+Macro	excluded	alength	None
+Macro	redefined	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	referred	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	restored	alength	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "alength" }, operation: Length })
+Macro	bare	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	qualified	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	alias	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	shadowed	and	None
+Macro	excluded	and	None
+Macro	redefined	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	referred	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	restored	and	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "and" }, operation: And })
+Macro	bare	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	qualified	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	alias	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	shadowed	array	None
+Macro	excluded	array	None
+Macro	redefined	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	referred	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	restored	array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "array" }, operation: Literal })
+Macro	bare	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	qualified	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	alias	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	shadowed	as->	None
+Macro	excluded	as->	None
+Macro	redefined	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	referred	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	restored	as->	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "as->" }, operation: AsThread })
+Macro	bare	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	qualified	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	alias	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	shadowed	aset	None
+Macro	excluded	aset	None
+Macro	redefined	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	referred	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	restored	aset	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "aset" }, operation: Set })
+Macro	bare	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	qualified	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	alias	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	shadowed	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	excluded	binding	None
+Macro	redefined	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	referred	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	restored	binding	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "binding" }))
+Macro	bare	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	qualified	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	alias	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	shadowed	bit-and	None
+Macro	excluded	bit-and	None
+Macro	redefined	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	referred	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	restored	bit-and	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and" }, operation: And })
+Macro	bare	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	qualified	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	alias	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	shadowed	bit-and-not	None
+Macro	excluded	bit-and-not	None
+Macro	redefined	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	referred	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	restored	bit-and-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-and-not" }, operation: AndNot })
+Macro	bare	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	qualified	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	alias	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	shadowed	bit-clear	None
+Macro	excluded	bit-clear	None
+Macro	redefined	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	referred	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	restored	bit-clear	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-clear" }, operation: Clear })
+Macro	bare	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	qualified	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	alias	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	shadowed	bit-flip	None
+Macro	excluded	bit-flip	None
+Macro	redefined	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	referred	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	restored	bit-flip	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-flip" }, operation: Flip })
+Macro	bare	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	qualified	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	alias	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	shadowed	bit-not	None
+Macro	excluded	bit-not	None
+Macro	redefined	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	referred	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	restored	bit-not	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-not" }, operation: Not })
+Macro	bare	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	qualified	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	alias	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	shadowed	bit-or	None
+Macro	excluded	bit-or	None
+Macro	redefined	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	referred	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	restored	bit-or	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-or" }, operation: Or })
+Macro	bare	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	qualified	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	alias	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	shadowed	bit-set	None
+Macro	excluded	bit-set	None
+Macro	redefined	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	referred	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	restored	bit-set	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-set" }, operation: Set })
+Macro	bare	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	qualified	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	alias	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	shadowed	bit-shift-left	None
+Macro	excluded	bit-shift-left	None
+Macro	redefined	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	referred	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	restored	bit-shift-left	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-left" }, operation: Left })
+Macro	bare	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	qualified	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	alias	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	shadowed	bit-shift-right	None
+Macro	excluded	bit-shift-right	None
+Macro	redefined	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	referred	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	restored	bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right" }, operation: Right })
+Macro	bare	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	qualified	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	alias	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	shadowed	bit-shift-right-zero-fill	None
+Macro	excluded	bit-shift-right-zero-fill	None
+Macro	redefined	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	referred	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	restored	bit-shift-right-zero-fill	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-shift-right-zero-fill" }, operation: Unsigned })
+Macro	bare	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	qualified	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	alias	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	shadowed	bit-test	None
+Macro	excluded	bit-test	None
+Macro	redefined	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	referred	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	restored	bit-test	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-test" }, operation: Test })
+Macro	bare	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	qualified	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	alias	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	shadowed	bit-xor	None
+Macro	excluded	bit-xor	None
+Macro	redefined	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	referred	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	restored	bit-xor	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "bit-xor" }, operation: Xor })
+Macro	bare	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	qualified	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	alias	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	shadowed	caching-hash	None
+Macro	excluded	caching-hash	None
+Macro	redefined	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	referred	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	restored	caching-hash	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "caching-hash" }, operation: CachingHash })
+Macro	bare	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	qualified	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	alias	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	shadowed	case	None
+Macro	excluded	case	None
+Macro	redefined	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	referred	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	restored	case	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "case" }, operation: Case })
+Macro	bare	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	qualified	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	alias	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	shadowed	cond	None
+Macro	excluded	cond	None
+Macro	redefined	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	referred	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	restored	cond	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "cond" }, operation: Cond })
+Macro	bare	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	qualified	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	alias	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	shadowed	dec	None
+Macro	excluded	dec	None
+Macro	redefined	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	referred	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	restored	dec	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "dec" }, operation: Decrement })
+Macro	bare	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	qualified	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	alias	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	shadowed	declare	None
+Macro	excluded	declare	None
+Macro	redefined	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	referred	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	restored	declare	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "declare" }, operation: Declare })
+Macro	bare	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	qualified	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	alias	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	shadowed	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	excluded	defonce	None
+Macro	redefined	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	referred	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	restored	defonce	Some(BootstrapDefonce(Global { phase: Macro, namespace: "suss.core", name: "defonce" }))
+Macro	bare	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	qualified	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	alias	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	shadowed	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	excluded	defprotocol	None
+Macro	redefined	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	referred	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	restored	defprotocol	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defprotocol" }, form: Defprotocol })
+Macro	bare	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	qualified	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	alias	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	shadowed	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	excluded	defrecord*	None
+Macro	redefined	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	referred	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	restored	defrecord*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "defrecord*" }, form: DefrecordInternal })
+Macro	bare	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	qualified	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	alias	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	shadowed	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	excluded	deftype	None
+Macro	redefined	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	referred	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	restored	deftype	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype" }, form: Deftype })
+Macro	bare	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	qualified	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	alias	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	shadowed	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	excluded	deftype*	None
+Macro	redefined	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	referred	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	restored	deftype*	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "deftype*" }, form: DeftypeInternal })
+Macro	bare	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	qualified	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	alias	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	shadowed	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	excluded	extend-type	None
+Macro	redefined	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	referred	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	restored	extend-type	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "extend-type" }, form: ExtendType })
+Macro	bare	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	qualified	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	alias	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	shadowed	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	excluded	fn	None
+Macro	redefined	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	referred	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	restored	fn	Some(BootstrapFn(Global { phase: Macro, namespace: "suss.core", name: "fn" }))
+Macro	bare	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	qualified	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	alias	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	shadowed	if-let	None
+Macro	excluded	if-let	None
+Macro	redefined	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	referred	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	restored	if-let	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-let" }, operation: IfLet })
+Macro	bare	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	qualified	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	alias	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	shadowed	if-not	None
+Macro	excluded	if-not	None
+Macro	redefined	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	referred	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	restored	if-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "if-not" }, operation: IfNot })
+Macro	bare	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	qualified	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	alias	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	shadowed	implements?	None
+Macro	excluded	implements?	None
+Macro	redefined	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	referred	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	restored	implements?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "implements?" }, form: Implements })
+Macro	bare	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	qualified	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	alias	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	shadowed	inc	None
+Macro	excluded	inc	None
+Macro	redefined	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	referred	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	restored	inc	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "inc" }, operation: Increment })
+Macro	bare	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	qualified	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	alias	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	shadowed	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	excluded	instance?	None
+Macro	redefined	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	referred	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	restored	instance?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "instance?" }, form: Instance })
+Macro	bare	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	qualified	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	alias	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	shadowed	int	None
+Macro	excluded	int	None
+Macro	redefined	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	referred	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	restored	int	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "int" }, operation: Int })
+Macro	bare	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	qualified	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	alias	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	shadowed	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	excluded	let	None
+Macro	redefined	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	referred	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	restored	let	Some(BootstrapLet(Global { phase: Macro, namespace: "suss.core", name: "let" }))
+Macro	bare	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	qualified	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	alias	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	shadowed	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	excluded	loop	None
+Macro	redefined	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	referred	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	restored	loop	Some(BootstrapLoop(Global { phase: Macro, namespace: "suss.core", name: "loop" }))
+Macro	bare	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	qualified	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	alias	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	shadowed	make-array	None
+Macro	excluded	make-array	None
+Macro	redefined	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	referred	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	restored	make-array	Some(BootstrapArray { global: Global { phase: Macro, namespace: "suss.core", name: "make-array" }, operation: Make })
+Macro	bare	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	qualified	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	alias	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	shadowed	neg?	None
+Macro	excluded	neg?	None
+Macro	redefined	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	referred	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	restored	neg?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "neg?" }, operation: Negative })
+Macro	bare	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	qualified	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	alias	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	shadowed	or	None
+Macro	excluded	or	None
+Macro	redefined	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	referred	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	restored	or	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "or" }, operation: Or })
+Macro	bare	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	qualified	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	alias	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	shadowed	pos?	None
+Macro	excluded	pos?	None
+Macro	redefined	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	referred	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	restored	pos?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "pos?" }, operation: Positive })
+Macro	bare	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	qualified	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	alias	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	shadowed	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	excluded	satisfies?	None
+Macro	redefined	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	referred	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	restored	satisfies?	Some(Nominal { global: Global { phase: Macro, namespace: "suss.core", name: "satisfies?" }, form: Satisfies })
+Macro	bare	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	qualified	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	alias	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	shadowed	unsigned-bit-shift-right	None
+Macro	excluded	unsigned-bit-shift-right	None
+Macro	redefined	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	referred	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	restored	unsigned-bit-shift-right	Some(BootstrapBitwise { global: Global { phase: Macro, namespace: "suss.core", name: "unsigned-bit-shift-right" }, operation: Unsigned })
+Macro	bare	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	qualified	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	alias	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	shadowed	when	None
+Macro	excluded	when	None
+Macro	redefined	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	referred	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	restored	when	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when" }, operation: When })
+Macro	bare	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	qualified	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	alias	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	shadowed	when-not	None
+Macro	excluded	when-not	None
+Macro	redefined	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	referred	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	restored	when-not	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "when-not" }, operation: WhenNot })
+Macro	bare	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	qualified	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	alias	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	shadowed	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	excluded	with-redefs	None
+Macro	redefined	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	referred	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	restored	with-redefs	Some(BootstrapBinding(Global { phase: Macro, namespace: "suss.core", name: "with-redefs" }))
+Macro	bare	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	qualified	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	alias	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	shadowed	zero?	None
+Macro	excluded	zero?	None
+Macro	redefined	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	referred	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })
+Macro	restored	zero?	Some(BootstrapControl { global: Global { phase: Macro, namespace: "suss.core", name: "zero?" }, operation: Zero })

@@ -19,7 +19,7 @@ mod quotes;
 mod source_tags;
 use super::{
     Diagnostic,
-    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+    resolve::{Binding as ResolvedBinding, BootstrapSelection, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
@@ -1089,10 +1089,9 @@ impl Analyzer<'_> {
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
-                        match self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
-                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))? {
-                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
-                            Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
+                        match self.environment.bootstrap_selection(self.phase, symbol) {
+                            Some(BootstrapSelection::Let) => Some("let*"),
+                            Some(BootstrapSelection::Loop) => Some("loop*"),
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
@@ -2558,12 +2557,12 @@ impl Analyzer<'_> {
             return self.quote_data(&args[0], 0);
         }
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare
+        let (selected, resolved) = if bare
             && matches!(
                 symbol.name.as_str(),
                 "if" | "do" | "fn*" | "def" | "let*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
-            None
+            (None, None)
         } else {
             if bare
                 && (self.locals.contains_key(&symbol.name)
@@ -2571,34 +2570,29 @@ impl Analyzer<'_> {
             {
                 return self.call(form, items);
             }
-            Some(
-                if let Some(binding) = self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
-                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
-                {
-                    binding
-                } else {
-                    self.environment
-                        .resolve(self.phase, symbol, items[0].span.clone())?
-                },
-            )
+            if let Some(selected) = self.environment.bootstrap_selection(self.phase, symbol) {
+                (Some(selected), None)
+            } else {
+                (None, Some(self.environment.resolve(self.phase, symbol, items[0].span.clone())?))
+            }
         };
-        if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
-            return self.control_form(form, args, *operation, context, tail);
+        // Ordinary resolution can also yield a bootstrap/nominal binding (for
+        // example reify). Keep that fallback and its errors unchanged.
+        let bootstrap = selected.or_else(|| resolved.as_ref().and_then(BootstrapSelection::from_binding));
+        if let Some(BootstrapSelection::Control(operation)) = bootstrap {
+            return self.control_form(form, args, operation, context, tail);
         }
-        if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
-            return self.bitwise_form(form, args, *operation);
+        if let Some(BootstrapSelection::Bitwise(operation)) = bootstrap {
+            return self.bitwise_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
-            return self.comparison_form(form, args, *operation);
+        if let Some(BootstrapSelection::Comparison(operation)) = bootstrap {
+            return self.comparison_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::BootstrapArray { operation, .. }) = &resolved {
-            return self.array_form(form, args, *operation);
+        if let Some(BootstrapSelection::Array(operation)) = bootstrap {
+            return self.array_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::Nominal {
-            form: nominal_form, ..
-        }) = &resolved
-        {
-            return self.nominal_form(form, args, *nominal_form);
+        if let Some(BootstrapSelection::Nominal(nominal_form)) = bootstrap {
+            return self.nominal_form(form, args, nominal_form);
         }
         if bare && symbol.name == "set!" {
             if args.len() != 2 {
@@ -2672,7 +2666,7 @@ impl Analyzer<'_> {
                 },
             });
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
+        if matches!(bootstrap, Some(BootstrapSelection::Binding)) {
             return self.dynamic_scope(form, args, context);
         }
         if bare && symbol.name == "throw" {
@@ -2748,16 +2742,16 @@ impl Analyzer<'_> {
             }
             return self.definition(form, args, false);
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapDefonce(_))) {
+        if matches!(bootstrap, Some(BootstrapSelection::Defonce)) {
             return self.definition(form, args, true);
         }
         if (bare && symbol.name == "fn*")
-            || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
+            || matches!(bootstrap, Some(BootstrapSelection::Fn))
         {
             let value = self.function(
                 form,
                 args,
-                matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
+                matches!(bootstrap, Some(BootstrapSelection::Fn)),
                 name_hint,
                 initializer,
             )?;
