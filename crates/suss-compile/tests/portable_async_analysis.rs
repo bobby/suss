@@ -427,3 +427,31 @@ fn ordinary_object_and_protocol_methods_do_not_inherit_future_await_context() {
         );
     }
 }
+
+#[test]
+fn async_payload_owner_clones_share_only_lowering_facts_and_independent_analysis_is_fresh() {
+    use std::sync::Arc;
+    fn region(h: &Hir) -> &Hir {
+        let Expression::Future { body, .. } = &single(h).kind else { panic!("future") };
+        single(body)
+    }
+    let source = "(suss.async/future* (try (throw 17) (catch :default payload (suss.async/await* payload)) (finally 9)))";
+    let first = analyze(source);
+    let copied = first.clone();
+    let independent = analyze(source);
+    let a = region(&first); let b = region(&copied); let c = region(&independent);
+    let get = |h: &Hir| match &h.kind {
+        Expression::AsyncTry { payload: Some(p), .. } => p.clone(), _ => panic!("payload")
+    };
+    let pa = get(a); let pb = get(b); let pc = get(c);
+    assert!(Arc::ptr_eq(&pa, &pb));
+    assert!(!Arc::ptr_eq(&pa, &pc));
+    assert_eq!(pa.id, pc.id);
+    assert_eq!(pa.span, pc.span);
+    let Some(SourceNode::Try { payload: Some(source_binding), .. }) = a.source.as_ref().unwrap().node.as_deref() else { panic!("source try") };
+    assert_eq!(pa.id, source_binding.id);
+    assert_eq!(pa.span, source_binding.declaration.span);
+    assert!(pa.metadata.is_empty(), "hidden lowering parameter is not the source declaration");
+    let absent = analyze("(suss.async/future* (try 17 (finally 9)))");
+    assert!(matches!(&region(&absent).kind, Expression::AsyncTry { payload: None, .. }));
+}

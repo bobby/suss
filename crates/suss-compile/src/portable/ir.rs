@@ -335,7 +335,7 @@ impl<'a> Lowerer<'a> {
                 }, Type::Value, hir.span.clone())?
             }
             Expression::AsyncTry { body, handler, cleanup, payload } if self.suspendable => {
-                return self.async_region(hir, body, handler.as_deref(), cleanup.as_deref(), payload.as_ref(), Vec::new());
+                return self.async_region(hir, body, handler.as_deref(), cleanup.as_deref(), payload.as_deref(), Vec::new());
             }
             Expression::AsyncDynamicScope { bindings, body } if self.suspendable => {
                 let mut globals = Vec::new();

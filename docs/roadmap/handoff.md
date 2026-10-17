@@ -29144,3 +29144,43 @@ packing/saving claim. Its archive SHA256
 d72f4e992c4d8c68edb936d2568262102ee8ee953810897a19c6a144c7387c58
 and all2,915committed inputs were independently verified. Diagnostic target is
 released; caller-phase/full validation gates remain unchanged.
+
+### Compact async lowering ownership and metered Graph copies (2026-10-17)
+
+AsyncTry holds an immutable Arc<Parameter>. Each genuine payload construction
+prepays text copying, Parameter72bytes and Arc header16; metered copies retain
+that owner for1unit. The separate SourceNode::Try LocalBinding owner is retained
+unchanged. Actual compiler census measures Expression96→64 and Hir160→128.
+AST enqueue copies HIR once through the active meter; ast_record retains the
+actual source owner and moves the full owned HIR into Lowering at the original
+queue position. This removes the second deep copy without removing the exported
+lowering field or metadata. Standalone Lowering and six exception HIR-copy
+sites now use metered copying; typed Session fuel/IRQ errors are preserved.
+Other arbitrary analyzer HIR-copy paths remain catalogued and unmetered: this
+is partial #252 accounting, not a complete clone audit.
+
+Initial cache patch missed a bare HIR use for exported lowering; compile101,
+zero tests, all2,915inputs unchanged. Owned-HIR transfer corrected that error.
+Subsequent new-test pilots failed on invalid metadata-on-string, an extra async
+harness run after completion, missing PersistentVector in the bare analyzer,
+and missing Symbol in a bare Runtime bridge. These failures/inputs are retained
+in cache/native-async-payload-{candidate,repaired-candidate,fixtures-candidate,
+do-fixture-candidate}. Targeted-stop receipts record verified groups268214 and
+297109, terminal130, no surviving group members and unchanged inputs; later
+coverage is unexecuted. The Do-fixture runner failed fast. No production outcome
+assertions were removed: valid annotated Do, production Macro session, and
+proper empty-queue checks exercise the intended invariants.
+
+Before the fixture-only corrections, both full unchanged core_import runs pass
+17/17 under default allowances and self-local-methods2/2 pass. Diagnostic30M
+compiler-only preparation11,022,010 (net311,053 less than e85), prefix666,846,
+preparation excluding verification9,164,191, verification1,190,973. This probe
+executes no user program and its configured allowance is not acceptance.
+
+Fresh run-native-async-payload-macro-session-candidate.py is live on the final
+fixture source. Compile(lib+all3async targets), bootstrap, Graph2, async
+execution14, ownership26, trace4 and async analysis11 pass; all7new tests execute.
+Both bootstrap noncustom section sequences equal e85. Broader source/negative
+cohort, fresh full-core revalidation, foundation commands and final-head CI are
+pending at this checkpoint. No full baseline, #270 closure or merge is claimed.
+Independent reviews approve production ownership/copy changes and fixture fixes.

@@ -691,6 +691,13 @@ impl Hir {
         std::mem::replace(&mut self.kind, Expression::Literal(Literal::Nil))
     }
 }
+/// Copy owned HIR through the active caller's cumulative work meter. Native
+/// source owners stay shared; each owned child and parameter retain is charged.
+pub(crate) fn clone_hir_metered(node: &Hir,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Hir, Diagnostic> {
+    local_bindings::cow_hir(node, meter)
+}
+
 impl Drop for Hir {
     fn drop(&mut self) {
         let kind = self.take_kind();
@@ -719,7 +726,9 @@ pub enum Expression {
         body: Box<Hir>,
         handler: Option<Box<Hir>>,
         cleanup: Option<Box<Hir>>,
-        payload: Option<Parameter>,
+        // Private immutable lowering facts, separate from SourceNode::Try's
+        // source binding owner. Each actual construction creates a fresh Arc.
+        payload: Option<std::sync::Arc<Parameter>>,
     },
     AsyncDynamicScope {
         bindings: Vec<(Global, Hir)>,

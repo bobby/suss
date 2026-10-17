@@ -464,6 +464,11 @@ impl<'a> AnalysisGraph<'a> {
         })
         .map_err(SessionError::Compile)
     }
+    fn clone_hir(&mut self, node: &Hir) -> Result<Hir> {
+        preserve_source_error(node.span.clone(),
+            &mut |units| self.session.charge_host_work(units),
+            |meter| hir::clone_hir_metered(node, meter))
+    }
     pub fn new(bridge: &'a FormBridge, session: &'a mut Session) -> Self {
         Self {
             bridge,
@@ -515,7 +520,7 @@ impl<'a> AnalysisGraph<'a> {
                 Task::Field(value) => self.field_record(id, &value, 0)?,
                 Task::Scope(value) => self.scope_record(id, &value, 0)?,
                 Task::Callable(value) => self.callable_record(id, &value, 0)?,
-                Task::Ast(value) => self.ast_record(id, &value, 0)?,
+                Task::Ast(value) => self.ast_record(id, value, 0)?,
                 Task::Lowering(value) => self.lowering_record(id, &value, 0)?,
             };
             debug_assert!(self.recipes[id].is_some(), "task root was not finalized");
@@ -2451,8 +2456,12 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, value)) = self.asts.get(&key) {
             return Ok(value.clone());
         }
-        let native = self.task(Task::Ast(hir.clone()))?;
-        let value = self.source_boundary(source_roots::Owner::Ast(source.clone()), native)?;
+        let copied = self.clone_hir(hir)?;
+        let native = self.task(Task::Ast(copied))?;
+        self.charge(1)?; // source_boundary consumes this owner; it does not clone it
+        let boundary_source = source.clone();
+        let value = self.source_boundary(source_roots::Owner::Ast(boundary_source), native)?;
+        self.charge(1)?; // memo table's owning reference
         self.asts.insert(key, (source.clone(), value));
         Ok(value)
     }
@@ -2513,8 +2522,12 @@ impl<'a> AnalysisGraph<'a> {
             ],
         )
     }
-    fn ast_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
-        let source = hir.source.as_ref().expect("source AST task");
+    fn ast_record(&mut self, slot: Value, hir: Hir, depth: usize) -> Result<Value> {
+        // The original owned HIR is needed later by the exported lowering field.
+        // Retain its source separately so HIR can move without stripping facts.
+        self.charge(1)?;
+        let source_owner = hir.source.as_ref().expect("source AST task").clone();
+        let source = &source_owner;
         let quote = if source.form.metadata.is_empty()
             && let Kind::List(items) = &source.form.kind
             && items.len() == 2
@@ -2551,7 +2564,9 @@ impl<'a> AnalysisGraph<'a> {
             source.context,
             depth + 1,
         )?;
-        let lowering = self.lowering(hir, depth + 1)?;
+        // Same queue position as before; move the already copied HIR rather
+        // than making a second recursive copy for suss/lowering.
+        let lowering = self.task(Task::Lowering(hir))?;
         // Only proved retained source-node routes authorize this literal key.
         // Unknown routes, including Suss-only Future/Await, stay cold.
         let env_key = match source.node.as_deref() {
@@ -3028,7 +3043,8 @@ impl<'a> AnalysisGraph<'a> {
         self.map_in_task_slot(slot, fields)
     }
     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
-        self.task(Task::Lowering(hir.clone()))
+        let copied = self.clone_hir(hir)?;
+        self.task(Task::Lowering(copied))
     }
     fn lowering_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -4091,4 +4107,114 @@ mod sharing_tests {
             Kind::Vector(_)
         ));
     }
+}
+
+#[cfg(test)]
+mod async_payload_clone_meter_tests {
+    use super::*;
+    #[test]
+    fn graph_hir_clone_preserves_typed_error_and_payload_owner_on_failed_retain() {
+        let parameter = Arc::new(hir::Parameter { id: hir::BindingId(7), name: "payload".into(),
+            metadata: vec![], span: 0..7 });
+        let node = Hir { source: None, span: 0..7, metadata: vec![], ty: hir::Type::Value,
+            kind: Expression::AsyncTry { body: Box::new(Hir { source: None, span: 0..7,
+                metadata: vec![], ty: hir::Type::Nil, kind: Expression::Literal(Literal::Nil) }),
+                handler: None, cleanup: None, payload: Some(parameter.clone()) } };
+        let mut measured = 0;
+        let copied = preserve_source_error(node.span.clone(),
+            &mut |work| { measured += work; Ok(()) },
+            |meter| hir::clone_hir_metered(&node, meter)).unwrap();
+        let Expression::AsyncTry { payload: Some(actual), .. } = &copied.kind else { panic!("payload") };
+        assert!(Arc::ptr_eq(actual, &parameter));
+        let count = Arc::strong_count(&parameter);
+        let mut remaining = measured - 1;
+        let result = preserve_source_error(node.span.clone(), &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or(SessionError::ForeignValue)?;
+            Ok(())
+        }, |meter| hir::clone_hir_metered(&node, meter));
+        assert!(matches!(result, Err(SessionError::ForeignValue)), "do not relabel typed Session errors");
+        assert_eq!(Arc::strong_count(&parameter), count);
+    }
+    #[test]
+    fn graph_ast_moves_owned_hir_buffer_to_lowering_and_keeps_source_metadata() {
+        fn single(mut node: &Hir) -> &Hir {
+            while let Expression::Do(items) = &node.kind {
+                // Preserve the genuine annotated do; only unwrap synthetic or
+                // metadata-empty sequence wrappers around the selected node.
+                if node.source.as_ref().is_some_and(|source| !source.form.metadata.is_empty()) { break; }
+                assert_eq!(items.len(), 1);
+                node = &items[0];
+            }
+            node
+        }
+        // Inspect executable children only, never retained SourceAnalysis HIR:
+        // the assertion must observe the task's actual lowering allocation.
+        fn string_buffer<'a>(node: &'a Hir, expected: &[u16]) -> Option<&'a [u16]> {
+            match &node.kind {
+                Expression::Literal(Literal::String(units)) if units.as_slice() == expected => Some(units),
+                Expression::Call { callee, arguments } => string_buffer(callee, expected)
+                    .or_else(|| arguments.iter().find_map(|child| string_buffer(child, expected))),
+                Expression::Array { arguments, .. } | Expression::Nominal { arguments, .. }
+                | Expression::Do(arguments) => arguments.iter().find_map(|child| string_buffer(child, expected)),
+                Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } =>
+                    bindings.iter().find_map(|binding| string_buffer(&binding.value, expected))
+                        .or_else(|| string_buffer(body, expected)),
+                _ => None,
+            }
+        }
+        let analyzed = portable::analyze("^:transfer (do \"owned-storage\")").unwrap();
+        let node = single(&analyzed);
+        let expected: Vec<u16> = "owned-storage".encode_utf16().collect();
+        let original_units = string_buffer(node, &expected).expect("original exact UTF16 literal");
+        let source = node.source.as_ref().expect("analyzed source");
+        assert!(matches!(&source.form.kind, Kind::List(_)), "genuine annotated do list source");
+        assert!(!source.form.metadata.is_empty(), "actual reader metadata on the source form");
+        for capture_roots in [false, true] {
+            let mut session = Session::new_macro().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let _request = session.operation_budget_scope().unwrap();
+            let initial = Arc::strong_count(source);
+            {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                graph.capture_roots = capture_roots;
+                let value = graph.ast(node, 0).unwrap();
+                let (_, Task::Ast(queued)) = graph.jobs.back().unwrap() else { panic!("owned HIR task") };
+                assert!(Arc::ptr_eq(source, queued.source.as_ref().unwrap()));
+                assert_eq!(queued.metadata, node.metadata);
+                let units = string_buffer(queued, &expected).expect("queued exact UTF16 literal");
+                let queued_buffer = units.as_ptr();
+                assert_ne!(queued_buffer, original_units.as_ptr(), "one real metered copy at AST enqueue");
+                assert_eq!(units, original_units);
+                let (memo_source, memo_value) = graph.asts.get(&(Arc::as_ptr(source) as usize)).unwrap();
+                assert!(Arc::ptr_eq(source, memo_source));
+                assert_eq!(*memo_value, value);
+                assert_eq!(Arc::strong_count(source), initial + if capture_roots { 3 } else { 2 });
+                let count = Arc::strong_count(source);
+                assert_eq!(graph.ast(node, 0).unwrap(), value);
+                assert_eq!(graph.jobs.len(), 1);
+                assert_eq!(Arc::strong_count(source), count, "memo hit queues no new task");
+                let (native, Task::Ast(owned)) = graph.jobs.pop_front().unwrap() else { panic!("AST task") };
+                assert_eq!(graph.ast_record(native, owned, 0).unwrap(), native);
+                let (lowering_id, lowering) = graph.jobs.iter().find_map(|(id, task)| match task {
+                    Task::Lowering(hir) if hir.source.as_ref().is_some_and(|s| Arc::ptr_eq(s, source)) => Some((*id, hir)),
+                    _ => None,
+                }).expect("exported lowering task");
+                let units = string_buffer(lowering, &expected).expect("lowering exact UTF16 literal");
+                assert_eq!(units.as_ptr(), queued_buffer, "move the same allocation, no second copy");
+                assert_eq!(units, original_units);
+                assert_eq!(lowering.metadata, node.metadata);
+                assert_eq!(lowering.span, node.span);
+                assert!(Arc::ptr_eq(source, lowering.source.as_ref().unwrap()));
+                assert!(matches!(graph.recipes[native].as_ref(), Some(Recipe::Map(entries))
+                    if entries.iter().any(|(key, child)| *child == lowering_id &&
+                        matches!(graph.recipes[*key].as_ref(), Some(Recipe::Identifier {
+                            namespace: Some(namespace), name, keyword: true, ..
+                        }) if namespace == "suss" && name == "lowering"))), "AST retains exact exported :suss/lowering field");
+                assert_eq!(graph.source_roots.roots.iter().filter(|root| matches!(&root.owner,
+                    source_roots::Owner::Ast(owner) if Arc::ptr_eq(owner, source))).count(), usize::from(capture_roots));
+            }
+            assert_eq!(Arc::strong_count(source), initial);
+        }
+    }
+
 }

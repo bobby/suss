@@ -574,7 +574,7 @@ fn cow_trace_layouts() -> [(&'static str, usize); 15] {
         ("Definition_field_tuple", size_of::<(Global, DefinitionSyntax, Range<usize>, Option<Box<Hir>>, bool)>()),
         ("DefinitionSyntax", size_of::<DefinitionSyntax>()),
         ("DefinitionSyntaxPayload", size_of::<DefinitionSyntaxPayload>()),
-        ("AsyncTry_field_tuple", size_of::<(Box<Hir>, Option<Box<Hir>>, Option<Box<Hir>>, Option<Parameter>)>()),
+        ("AsyncTry_field_tuple", size_of::<(Box<Hir>, Option<Box<Hir>>, Option<Box<Hir>>, Option<Arc<Parameter>>)>()),
         ("GlobalOrFallback_field_tuple", size_of::<(Global, Global)>()),
         ("Function_field_tuple", size_of::<(Vec<Parameter>, Vec<BindingId>, Box<Hir>)>()),
     ]
@@ -832,6 +832,14 @@ pub(super) fn capture_self_parameter(parameter: Parameter, meter: &mut CowMeter<
     cow_charge(meter, 2, std::mem::size_of::<usize>())?;
     Ok(Arc::new(parameter))
 }
+/// A fresh lowering-only catch parameter. The hidden source LocalBinding
+/// remains a separate owner; neither Arc identity authorizes guest reuse.
+/// Prepare the actual copied name, then prepay Parameter and Arc header.
+pub(super) fn capture_async_parameter(id: BindingId, name: &str, span: Range<usize>,
+    meter: &mut CowMeter<'_>) -> Result<Arc<Parameter>, Diagnostic> {
+    let name = cow_text(name, meter)?;
+    capture_self_parameter(Parameter { id, name, metadata: Vec::new(), span }, meter)
+}
 fn cow_self_parameter(parameter: &Option<Arc<Parameter>>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<Parameter>>, Diagnostic> {
     if let Some(parameter) = parameter {
         meter(1)?; // bounded retain of the immutable parameter; no payload copy
@@ -873,7 +881,7 @@ fn cow_dynamic(bindings: &[(Global, Hir)], meter: &mut CowMeter<'_>) -> Result<V
 }
 /// Clone owned executable access payloads, charging each node before copying it.
 /// Source-analysis Arcs remain shared; no recursive derived HIR Clone is used.
-fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
+pub(super) fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
     let _trace = CowTraceScope::new("hir_copy");
     stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
         cow_charge(meter, 1, std::mem::size_of::<Hir>())?;
@@ -899,7 +907,7 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
             AsyncTry { body, handler, cleanup, payload } => AsyncTry {
                 body: cow_box(body, meter)?, handler: cow_optional_box(handler, meter)?,
                 cleanup: cow_optional_box(cleanup, meter)?,
-                payload: payload.as_ref().map(|p| cow_parameter(p, meter)).transpose()? },
+                payload: cow_self_parameter(payload, meter)? },
             AsyncDynamicScope { bindings, body } => AsyncDynamicScope { bindings: cow_dynamic(bindings, meter)?, body: cow_box(body, meter)? },
             DynamicScope { bindings, body } => DynamicScope { bindings: cow_dynamic(bindings, meter)?, body: cow_box(body, meter)? },
             Bitwise { operation, arguments } => Bitwise { operation: *operation, arguments: cow_hirs(arguments, meter)? },
@@ -1202,7 +1210,7 @@ mod cow_trace_tests {
             kind: Expression::Literal(Literal::Nil) });
         for kind in [
             Expression::GeneralFunction { methods: vec![], captures: vec![], self_binding: Some(Arc::new(parameter())), rest_class: None }.census_created(),
-            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: Some(parameter()) }.census_created(),
+            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: Some(Arc::new(parameter())) }.census_created(),
             Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: None }.census_created(),
         ] {
             let node = Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Value, kind };
@@ -2305,6 +2313,90 @@ mod ownership_tests {
         assert_eq!(derived.path(), owner.path());
         assert_eq!(derived.macro_form_data_metered(&lowered, &mut |_| Ok(())).unwrap(), reader);
         assert_eq!(owner.text(), source);
+    }
+
+    #[test]
+    fn async_payload_owner_is_fresh_prepaid_and_failed_preparation_recovers() {
+        let mut charges = Vec::new();
+        let first = capture_async_parameter(BindingId(7), "payload", 11..29,
+            &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(charges[charges.len()-2..], [std::mem::size_of::<Parameter>() as u64,
+            (2 * std::mem::size_of::<usize>()) as u64]);
+        let second = capture_async_parameter(BindingId(7), "payload", 11..29,
+            &mut |_| Ok(())).unwrap();
+        assert!(!Arc::ptr_eq(&first, &second), "equal facts are not interned");
+        assert!(first.metadata.is_empty());
+        for message in ["budget exhausted", "interrupt requested"] {
+            for reject in 0..charges.len() {
+                let mut call = 0;
+                let failed = capture_async_parameter(BindingId(7), "payload", 11..29, &mut |_| {
+                    let now = call; call += 1;
+                    if now == reject { Err(fail(11..29, message)) } else { Ok(()) }
+                });
+                assert!(failed.is_err(), "must fail before owner publication");
+                assert_eq!(Arc::strong_count(&first), 1);
+            }
+        }
+        let mut remaining = charges.iter().sum::<u64>() - 1;
+        assert!(capture_async_parameter(BindingId(7), "payload", 11..29, &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "budget exhausted"))?;
+            Ok(())
+        }).is_err());
+        let retry = capture_async_parameter(BindingId(7), "payload", 11..29,
+            &mut |_| Ok(())).unwrap();
+        assert!(!Arc::ptr_eq(&first, &retry));
+        assert_eq!(retry.name, first.name);
+        assert_eq!(retry.span, first.span);
+    }
+
+    #[test]
+    fn async_payload_copies_retain_owner_with_one_metered_retain_and_none_adds_no_work() {
+        let parameter = capture_async_parameter(BindingId(7), "payload", 11..29,
+            &mut |_| Ok(())).unwrap();
+        let make = |payload| Hir { source: None, span: 11..29, metadata: vec![], ty: Type::Value,
+            kind: Expression::AsyncTry { body: Box::new(Hir { source: None, span: 11..29,
+                metadata: vec![], ty: Type::Nil, kind: Expression::Literal(Literal::Nil) }),
+                handler: None, cleanup: None, payload } };
+        let some = make(Some(parameter.clone()));
+        let none = make(None);
+        let mut some_work = 0;
+        let copied = cow_hir(&some, &mut |work| { some_work += work; Ok(()) }).unwrap();
+        let mut none_work = 0;
+        let _ = cow_hir(&none, &mut |work| { none_work += work; Ok(()) }).unwrap();
+        assert_eq!(some_work, none_work + 1);
+        let derived = some.clone();
+        for node in [&copied, &derived] {
+            let Expression::AsyncTry { payload: Some(actual), .. } = &node.kind else { panic!("payload") };
+            assert!(Arc::ptr_eq(actual, &parameter));
+            assert_eq!(actual.id, BindingId(7));
+        }
+        let old_count = Arc::strong_count(&parameter);
+        let mut remaining = some_work - 1;
+        assert!(cow_hir(&some, &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "budget exhausted"))?;
+            Ok(())
+        }).is_err());
+        assert_eq!(Arc::strong_count(&parameter), old_count);
+        assert!(cow_self_parameter(&None, &mut |_| panic!("no retain for None")).unwrap().is_none());
+    }
+
+    #[test]
+    fn async_payload_metered_clone_preserves_actual_source_revision_and_distinct_lowering_owner() {
+        fn single(mut node: &Hir) -> &Hir {
+            while let Expression::Do(items) = &node.kind { assert_eq!(items.len(), 1); node = &items[0]; }
+            node
+        }
+        let analyzed = crate::portable::analyze("(suss.async/future* (try (throw 17) (catch :default payload (suss.async/await* payload))))").unwrap();
+        let Expression::Future { body, .. } = &single(&analyzed).kind else { panic!("future") };
+        let node = single(body);
+        let copied = cow_hir(node, &mut |_| Ok(())).unwrap();
+        assert!(Arc::ptr_eq(node.source.as_ref().unwrap(), copied.source.as_ref().unwrap()));
+        let Expression::AsyncTry { payload: Some(original), .. } = &node.kind else { panic!("payload") };
+        let Expression::AsyncTry { payload: Some(retained), .. } = &copied.kind else { panic!("copied payload") };
+        assert!(Arc::ptr_eq(original, retained));
+        let Some(SourceNode::Try { payload: Some(binding), .. }) = node.source.as_ref().unwrap().node.as_deref() else { panic!("source try") };
+        assert_eq!(binding.id, original.id);
+        assert_eq!(binding.declaration.span, original.span);
     }
 
 }

@@ -139,7 +139,8 @@ impl Analyzer<'_> {
             None
         };
         let cleanup = if let Some(body) = &source_cleanup {
-            self.exception_region(form, vec![], body.clone())
+            let copied = self.clone_local_hir(body)?;
+            self.exception_region(form, vec![], copied)
         } else {
             self.literal_form(form, Literal::Nil)
         };
@@ -209,23 +210,27 @@ impl Analyzer<'_> {
                 metadata: vec![],
                 span: payload.declaration.span.clone(),
             };
-            self.exception_region(form, vec![parameter], source_handler.clone())
+            let copied = self.clone_local_hir(&source_handler)?;
+            self.exception_region(form, vec![parameter], copied)
         } else {
             self.literal_form(form, Literal::Nil)
         };
         let source_body =
             self.analyzed_body(&args[..body_end], form.span.clone(), context, false)?;
-        let body = self.exception_region(form, vec![], source_body.clone());
+        let copied_body = self.clone_local_hir(&source_body)?;
+        let body = self.exception_region(form, vec![], copied_body);
         let kind = if self.suspendable {
             Expression::AsyncTry {
-                body: Box::new(source_body.clone()),
-                handler: payload.as_ref().map(|_| Box::new(source_handler.clone())),
-                cleanup: source_cleanup.clone().map(Box::new),
+                body: Box::new(self.clone_local_hir(&source_body)?),
+                handler: payload.as_ref().map(|_| self.clone_local_hir(&source_handler).map(Box::new)).transpose()?,
+                cleanup: source_cleanup.as_ref().map(|body| self.clone_local_hir(body).map(Box::new)).transpose()?,
                 payload: payload.as_ref().map(|payload| {
                     let Kind::Symbol(name) = &payload.declaration.kind else { unreachable!() };
-                    Parameter { id: payload.id, name: name.name.clone(), metadata: vec![],
-                        span: payload.declaration.span.clone() }
-                }),
+                    local_bindings::capture_async_parameter(payload.id, &name.name,
+                        payload.declaration.span.clone(), &mut |work| {
+                            self.expander.charge_expansion_work(work, form.span.clone())
+                        })
+                }).transpose()?,
             }.census_created()
         } else {
             Expression::Try { regions: [Box::new(body), Box::new(handler), Box::new(cleanup)] }

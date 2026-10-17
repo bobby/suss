@@ -640,3 +640,30 @@ fn yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame() {
     assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 7.0);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
+
+#[test]
+fn async_payload_some_none_keep_suspended_cleanup_effects_and_gc_roots() {
+    for catches in [false, true] {
+        let mut h = Harness::new();
+        let dependency = h.value("future-pending-new", &[]);
+        let cleanup = h.value("future-pending-new", &[]);
+        h.bind("dependency", dependency.clone()); h.bind("cleanup", cleanup.clone());
+        let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]); h.bind("trace", zero);
+        let clause = if catches { "(catch :default payload (+ payload 10))" } else { "" };
+        let owner = h.source(&format!("(suss.async/future* (try (suss.async/await* test/dependency) {clause} (finally (suss.async/await* test/cleanup) (set! test/trace (+ test/trace 1)))))"));
+        h.run(); h.store.gc(None).unwrap();
+        assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+        let value = h.value("number-box", &[Val::F64(if catches { 32f64 } else { 42f64 }.to_bits())]);
+        let settle = if catches { "future-reject" } else { "future-resolve" };
+        assert_eq!(h.integer(settle, &[dependency, value]), 1);
+        h.run(); h.store.gc(None).unwrap();
+        assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+        let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+        assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
+        h.run(); assert_eq!(h.ready_number(&owner), 42.0);
+        assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
+        let trace = h.source("test/trace");
+        assert_eq!(trace.unwrap_anyref().unwrap().as_struct(&h.store).unwrap().unwrap()
+            .field(&mut h.store, 0).unwrap().unwrap_f64(), 1.0);
+    }
+}
