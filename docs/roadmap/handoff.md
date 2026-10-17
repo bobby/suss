@@ -29227,3 +29227,41 @@ A checked shared schema-witness candidate is source-reviewed but uncompiled;
 repetition/hits and net savings are unproved. Focused execution must preserve full
 storage validation, constructor callbacks, exact roots, failure rollback, GC and
 current guard suites before any performance/acceptance claim.
+
+### Checked constructor schema witness reuse (2026-10-17)
+
+ConstructorInputs shares an immutable Arc<StorageSnapshot>. A16-row Session-local
+performance cache looks up exact rooted schema identity and fully validates all
+current reachable storage before reuse. Miss/mismatch takes the original fresh
+capture; no form is rejected for cache capacity. Names, actual construction,
+postconstructor validation and memo-watch registration remain unchanged. Cache
+capacity/owners/retains and conservative replaced-witness retirement (including
+its counting walk) are prepaid before these operations; cache publication is
+infallible and occurs only after all checks succeed. Older facts retain their
+original witnesses. Reset replaces the cache. General RAII cleanup and arbitrary
+HIR-copy accounting remain separate #252 gaps.
+
+First compile pilot fails E0499 in a new test helper; zero tests executed.
+A rooted temporary fixes the overlapping mutable borrows. Next compile passes,
+but independent review discovers unpaid variable-size eviction cleanup. That
+producer is stopped130 at bootstrap via verified group425508; no group members
+remain. It wrote only runtime.json/runtime.wasm; actual partial bytes/stop hashes
+are retained, all nonbootstrap inputs unchanged. No completed bootstrap inferred.
+
+Fresh run-native-checked-schema-retirement-candidate.py compiles and regenerates
+both bootstrap artifacts; ordered noncustom sections equal7fd5231/cd20 in both
+phases. All5new cache regressions execute and pass: strict hit/mutation/distinct
+roots, fuel/IRQ staging rollback, actual names/factory/watch cancellation,
+17-root eviction/GC/reset/foreign checks and last/shared-owner retirement/retry.
+All10constructor tests (including those5), deferred5, snapshot18 and domains4
+pass. Python348/all13foundation commands pass on unchanged2,915inputs. Independent
+review approves the exact3source files and the bounded retirement repair.
+
+The unchanged source-child test still fails RuntimeSome4 materialization. Its
+entry remaining fuel rises704,697→1,243,353 (+538,656); RuntimeSome0 completed
+materialization drops1,787,528→1,675,953 (111,575less), Some1–3 each remove about
+118,000. Later Macro and negative tails remain unexecuted; no acceptance claim.
+Compiler-only diagnostic remains11,022,010, as expected for a Session-level
+change; it is not a runtime saving. Remaining focused source/core/map checks
+are live, not inferred successful. No native full baseline or new-head CI success
+is claimed. No quota/tariff reduction or merge.
