@@ -15,6 +15,7 @@ use std::sync::{
     atomic::{AtomicBool, AtomicUsize},
 };
 use wasmtime::{AnyRef, AsContextMut, RootScope, Rooted, StoreContextMut, Val};
+mod edge_index;
 type Result<T> = std::result::Result<T, SessionError>;
 struct Node {
     value: SessionValue,
@@ -384,6 +385,12 @@ impl WriteDomain {
         domain_observed!("storage-and-edges", (|| -> Result<bool> {
         let mut valid = state.valid && classes && parent && canonical;
         let mut scope = RootScope::new(store.as_context_mut());
+        // All adapters have returned. From here through snapshots, slot hooks
+        // and seed fallback there are only native reads/barriers, no guest call,
+        // allocation into the GC heap, or collection. Drop this ephemeral table
+        // before RootScope cleanup; no keys survive the callback-free proof.
+        let mut direct = edge_index::Index::unprepared(&state, identity);
+        direct.prepare(&mut edge_index::Meter::new(scope.as_context_mut(), irq))?;
         for (ordinal, node) in state.nodes.iter().enumerate() {
             macro_rules! node_observed {
                 ($phase:literal, $operation:expr) => {{
@@ -447,31 +454,14 @@ impl WriteDomain {
             node_observed!("edge-membership", (|| -> Result<()> {
             for edge in &node.edges {
                 Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
-                let edge = edge.value.to_rooted(&mut scope);
-                let mut member = edge.as_i31(&scope)?.is_some();
-                if member {
-                    continue;
-                }
-                for other in &state.nodes {
-                    Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
-                    let other_root = other.value.value.to_rooted(&mut scope);
-                    member |= Rooted::<AnyRef>::ref_eq(&scope, &edge, &other_root)?;
-                    if member {
-                        break;
-                    }
-                }
-                if !member {
-                    for child in &state.children {
-                        Session::consume_host_work(scope.as_context_mut(),1,irq)?;
-                        let root=child.value.value.to_rooted(&mut scope);
-                        if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
-                    }
-                }
+                let mut member = direct.contains(edge,
+                    &mut edge_index::Meter::new(scope.as_context_mut(), irq))?;
                 // Exact recorded/child roots are sufficient membership proof.
                 // Only an edge absent from ALL those roots needs a seed-interior
                 // search. Complete seed snapshots still run for every seed in
                 // the outer node loop, even after an earlier false result.
                 if !member {
+                    let edge = edge.value.to_rooted(&mut scope);
                     for other in &state.nodes {
                         Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                         if let Some(seed) = &other.seed {
@@ -608,6 +598,53 @@ mod tests {
         let _unknown = record_array_edge(&mut session, &domain, &equal);
         assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
             "equal payload cannot authorize a reference absent from roots and seed interiors");
+    }
+    #[test]
+    fn indexed_domain_wide_direct_hits_still_validate_seed_interiors_and_poison() {
+        for count in [12, 70] {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, seed, interior) = membership_fixture(&mut session);
+        let _interior_edge = record_array_edge(&mut session, &domain, &interior);
+        for i in 0..count {
+            let (value, fact) = session.data_scalar_with_inputs(&Literal::Number(i as f64)).unwrap();
+            domain.record(&mut session, &value, &Fact::Scalar(fact)).unwrap();
+            let _direct_edge = record_array_edge(&mut session, &domain, &value);
+        }
+        assert!(registry_lock(&domain.state).nodes.len() > 8);
+        assert!(registry_lock(&domain.state).nodes.len() > if count == 70 { 128 } else { 8 });
+        session.collect().unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let poison = session.eval("(fn [seed] (set! (.-__hash seed) 991))").unwrap();
+        drop(session.invoke(&poison, &[&seed]).unwrap());
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
+            "indexed direct hits must not bypass the complete seed snapshot");
+        }
+    }
+    #[test]
+    fn indexed_domain_false_does_not_hide_later_foreign_edge_or_release_source_roots() {
+        for count in [12, 70] {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, _seed, _interior) = membership_fixture(&mut session);
+        for i in 0..count {
+            let (value, fact) = session.data_scalar_with_inputs(&Literal::Number(i as f64)).unwrap();
+            domain.record(&mut session, &value, &Fact::Scalar(fact)).unwrap();
+            let _edge = record_array_edge(&mut session, &domain, &value);
+        }
+        assert!(registry_lock(&domain.state).nodes.len() > if count == 70 { 128 } else { 8 });
+        // A genuine recorded array with an unrecorded boxed input is closed-edge
+        // invalid. Later validation still must run and propagate its error.
+        let missing = session.data_scalar(&Literal::Number(17.0)).unwrap();
+        let _invalid = record_array_edge(&mut session, &domain, &missing);
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap());
+        let late = record_array_edge(&mut session, &domain, &missing);
+        let mut foreign = Session::new_macro().unwrap();
+        let other = foreign.data_scalar(&Literal::Number(17.0)).unwrap();
+        // Corrupt only the private claimed edge for this negative, never mint a
+        // source fact or certify the foreign value by test-only semantics.
+        registry_lock(&domain.state).nodes.last_mut().unwrap().edges.push(other);
+        assert!(matches!(domain_valid(&mut session, &domain, &target), Err(SessionError::ForeignValue)));
+        let _keep_root_alive = late;
+        }
     }
     fn method(session: &mut Session, descriptor: &SessionValue) -> SessionValue {
         let name = format!(
