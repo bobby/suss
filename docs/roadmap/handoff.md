@@ -27899,3 +27899,82 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+### Isolated exported property-get fuel measurement (2026-10-16)
+
+Test-only branch portable/m4-property-get-cost is based on8fda18a. New Session
+child property_get_cost_tests.rs measures get_fuel immediately before/after the
+exact exported Func.call; export lookup, argument rooting, buffers, owning,
+decoding and string-method invocation are outside the interval. Both Runtime
+and Macro use default SessionOptions and one existing operation scope per phase
+for the measured cohort. No setter, explicit guest hash, tariff/quota change or
+production optimization. Runtime ABI getter sources exactly match8fda18a.
+
+Own property-get-cost-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS override. Final:
+cargo test -p suss-compile --locked --lib portable_session::property_get_cost_tests::exported_property_get_instruction_fuel -- --exact --test-threads=2 --nocapture.
+Exit0,1pass/0fail/0ignore,26.27s test/48.26s runner. All3447 tracked-plus-new-child
+paths unchanged during execution, including regenerated bootstrap manifests/Wasm.
+Test source SHA25662ab7e9d1aaa3a728292612c9a9cbe26a3636692697a04899ac798972f9fd4d8.
+
+286 validated rows: both phases have identical costs, three repetitions per
+success case; string owners empty/ASCII/UTF16; Keyword dynamic qualified,
+dynamic unqualified and compiled literal. Named/fixed-named fuel respectively:
+String length397/340; charCodeAt lookup351/294; steady charAt450/393
+(first named charAt512); Keyword ns984/923,name1044/983,_hash1070/1009.
+Indexed object-field-get costs19 for these Keyword fields, with different
+guards; this is not evidence that named validation can be bypassed. Nine extra
+indexed reference reads per phase establish expected values and are visible
+in raw call logs, outside the286 selected rows. Method validation uses the
+original object-method-invoke with private ARGS and confirms empty/ASCII/UTF16
+results (including NaN and a surrogate), outside lookup intervals.
+
+Unknown String property648/591, unknown Keyword property7013/6952 return
+undefined. Nil receiver275/218 and nonstring key40/40 retain original language
+exceptions/pending tags. These16 rows across both phases are explicit outcomes,
+not skipped or converted successes. No microbenchmark-time performance or full
+hash-operation savings claim; initial method-root state and sequential call
+order are retained. No custom accessor/layout mutation contract is established.
+
+Task cache /home/bobby/.cache/suss-m4-work/property-get-cost retains all attempts:
+two compile failures, fingerprint mismatch before execution, two invalid fixture
+adapter/buffer failures, bootstrap regenerations and final successful run with
+source snapshots, before/after freezes, commands/exit receipts and observations.
+Bootstrap regeneration is required because the test module changes the compiler
+source fingerprint; it changes artifact identity, not production getter source.
+No main/other worktree or target was changed. Next: independent measurement
+review before considering any separately authorized optimization; no integration,
+PR, baseline or issue acceptance claim.
+
+Supplemental charCodeAt scalar-versus-member-call measurement (same isolated
+branch,2026-10-16): no production optimization. Added test-only
+exported_char_code_at_instruction_fuel. Bootstrap regeneration exits0 because
+appending the test changes the compiler fingerprint. Own target/jobs2; exact
+filter cargo test -p suss-compile --locked --lib portable_session::property_get_cost_tests::exported_char_code_at_instruction_fuel -- --exact --test-threads=2 --nocapture.
+Terminal exit0,1pass/0fail/0ignore,25.93s test/51.54s runner,3447 frozen paths
+unchanged. Current child source SHA25657901541e541ff6ace49f582d3a4d4bc54c3d27e55f469153690e4c5a6a61a49.
+
+216 validated rows (3strings*12boxed Number indices*3repeats*2phases). Exact
+exported calls only: named lookup351fuel; object-method-invoke272..279; existing
+string-char-code-at scalar36..43. Per matched row invoke-minus-scalar236,
+lookup-plus-invoke-minus-scalar587. Both phases identical. Validation checks
+returned numbers outside intervals against Rust UTF16/ToIntegerOrInfinity
+expectations, including NaN, infinities,negative/large/out-of-bounds indices,
+signed zero,fractions and surrogate units. Reusing an already selected method
+has the identical measured object-method-invoke cost. No explicit guest hash.
+
+Private ARGS allocation, expression evaluation, export lookup, rooting, result
+ownership/decoding and emitter LocalGet/ArrayNewFixed instructions are excluded.
+Lookup+invoke is a sum of disjoint actual call intervals, not a single compiled
+expression cost. Proposed String/Number fast-path guards are unimplemented and
+unmeasured. No custom receiver/accessor/fallback/arity/effect-order safety claim
+follows. The older getter cohort was not rerun after appending this test; its
+original exact source and results remain in the prior immutable cache archive.
+Main owns any future compiler implementation; no optimization was authored here.
+
+
+### Publication of local experiment snapshot (2026-10-16)
+
+Branch portable/m4-property-get-cost preserves the existing source, test and artifact bytes
+from this isolated worktree. Publication adds no new execution result. Existing
+raw failures and limitations remain applicable; this snapshot is not an issue
+acceptance result. No additional Cargo command was run for publication.

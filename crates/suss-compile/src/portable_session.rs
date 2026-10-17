@@ -3742,3 +3742,6 @@ mod tests {
 
 #[cfg(test)]
 pub(crate) mod memo_leaf_test_support;
+
+#[cfg(test)]
+mod property_get_cost_tests;
