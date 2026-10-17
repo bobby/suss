@@ -647,7 +647,22 @@ mod tests {
     fn scalar_domain_shares_only_valid_fact_and_preserves_wrong_supplied_root_and_late_error() {
         for phase in [crate::portable::resolve::Phase::Runtime, crate::portable::resolve::Phase::Macro] {
             let mut session = match phase { crate::portable::resolve::Phase::Runtime => Session::new_repl().unwrap(), _ => Session::new_macro().unwrap() };
-            let (_records, _fixture_domain, target, _seed, _interior) = membership_fixture(&mut session);
+            let macro_fixture = match phase {
+                crate::portable::resolve::Phase::Macro => Some(membership_fixture(&mut session)),
+                crate::portable::resolve::Phase::Runtime => {
+                    // Runtime factories supply direct facts but do not enroll
+                    // protected memo Watches. Establish that actual capability
+                    // boundary instead of unwrapping/manufacturing a Watch.
+                    let bridge = FormBridge::new(&mut session).unwrap().recording(&mut session).unwrap();
+                    drop(bridge.identifier(&mut session, None, "runtime-no-memo-watch", true, None).unwrap());
+                    let records = bridge.into_records().unwrap();
+                    let runtime_domain = records.write_domain();
+                    assert!(!registry_lock(&runtime_domain.state).nodes.is_empty());
+                    assert!(registry_lock(&runtime_domain.state).nodes.iter().all(|node| node.watch().is_none()));
+                    assert!(records.matches_direct_facts(&mut session).unwrap());
+                    None
+                }
+            };
             // Exercise a minimal no-edge domain so an intentionally foreign
             // later test entry is never rooted by an earlier membership scan.
             let domain = WriteDomain::new();
@@ -683,13 +698,20 @@ mod tests {
                 }).unwrap();
             }
             session.collect().unwrap();
-            assert!(!check(&mut session, &domain, &target).unwrap());
-            // Test-only malformed later entry: even an already-invalid domain
-            // must run its later physical checks and propagate owner errors.
-            let mut foreign = Session::new_macro().unwrap();
-            let (_, foreign_facts) = foreign.data_scalar_with_inputs(&Literal::Nil).unwrap();
-            registry_lock(&domain.state).nodes.push(Node::Scalar(foreign_facts));
-            assert!(matches!(check(&mut session, &domain, &target), Err(SessionError::ForeignValue)));
+            if let Some((_records, _fixture_domain, target, _seed, _interior)) = macro_fixture {
+                assert!(!check(&mut session, &domain, &target).unwrap());
+                // Test-only malformed later entry: an invalid Macro-transport
+                // domain must still run later checks and propagate owner errors.
+                let mut foreign = Session::new_macro().unwrap();
+                let (_, foreign_facts) = foreign.data_scalar_with_inputs(&Literal::Nil).unwrap();
+                registry_lock(&domain.state).nodes.push(Node::Scalar(foreign_facts));
+                assert!(matches!(check(&mut session, &domain, &target), Err(SessionError::ForeignValue)));
+            } else {
+                assert_eq!(phase, crate::portable::resolve::Phase::Runtime);
+                assert!(registry_lock(&domain.state).nodes.iter().all(|node| node.watch().is_none()));
+                // This is explicit capability absence, not a passing Runtime
+                // proof or a claim about the still-unexecuted sourcechild gate.
+            }
         }
     }
     #[test]
