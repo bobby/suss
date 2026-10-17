@@ -21,6 +21,7 @@ use suss_reader::forms::{Form, Kind};
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
 mod initializer_plan;
+mod hir_projection;
 #[cfg(test)]
 mod plan_scratch_tests;
 mod source_facts;
@@ -414,8 +415,8 @@ enum Task {
     Field(Arc<FieldBinding>),
     Scope(Arc<FunctionScope>),
     Callable(Arc<hir::SourceCallable>),
-    Ast(Hir),
-    Lowering(Hir),
+    Ast(hir_projection::View),
+    Lowering(hir_projection::View),
 }
 
 /// Memo tables own their source identities as well as the resulting GC roots.
@@ -522,7 +523,7 @@ impl<'a> AnalysisGraph<'a> {
                 Task::Scope(value) => self.scope_record(id, &value, 0)?,
                 Task::Callable(value) => self.callable_record(id, &value, 0)?,
                 Task::Ast(value) => self.ast_record(id, value, 0)?,
-                Task::Lowering(value) => self.lowering_record(id, &value, 0)?,
+                Task::Lowering(value) => self.lowering_record(id, value, 0)?,
             };
             debug_assert!(self.recipes[id].is_some(), "task root was not finalized");
         }
@@ -2294,7 +2295,7 @@ impl<'a> AnalysisGraph<'a> {
             }
         }
         if let Some(initializer) = &binding.initializer {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?, self.ast(initializer, depth + 1)?));
+            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?, self.ast_shared(initializer, depth + 1)?));
             let init_key = self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?;
             let init = self.keyword(init_key)?;
             entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("children"))?, self.vector(&[init])?));
@@ -2336,14 +2337,14 @@ impl<'a> AnalysisGraph<'a> {
             ));
             entries.push((FieldKey::Cold("suss/declaration-namespace"), self.symbol(namespace)?));
             entries.push((FieldKey::Cold("suss/protocol-receiver"), self.flag(protocol_receiver)?));
-            entries.push((FieldKey::Cold("suss/receiver-access"), self.lowering(access, depth + 1)?));
+            entries.push((FieldKey::Cold("suss/receiver-access"), self.lowering_shared(access, depth + 1)?));
             if let Some(argument) = argument {
                 entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(argument, depth + 1)?));
             }
         }
         if let SourceRole::CatchBinding { hidden, access } = &binding.source_role {
             entries.push((FieldKey::Cold("suss/private-payload"), self.local(hidden, depth + 1)?));
-            entries.push((FieldKey::Cold("suss/payload-access"), self.lowering(access, depth + 1)?));
+            entries.push((FieldKey::Cold("suss/payload-access"), self.lowering_shared(access, depth + 1)?));
         }
         let context = self.context(binding.declaration_context)?;
         entries.push((FieldKey::Cold("suss/declaration-context"), context));
@@ -2489,23 +2490,61 @@ impl<'a> AnalysisGraph<'a> {
         }
         self.map_in_task_slot(slot, entries)
     }
+    // A hit performs one original source-memo lookup before retaining any HIR
+    // owner. Projection construction is native-only and cannot mutate this memo.
+    fn ast_cached(&mut self, hir: &Hir) -> Result<Option<Value>> {
+        if let Some(source) = &hir.source {
+            self.charge(1)?;
+            return Ok(self.asts.get(&(Arc::as_ptr(source) as usize)).map(|(_, value)| *value));
+        }
+        Ok(None)
+    }
+    // Borrowed/synthetic callers keep the original metered owned-copy fallback.
     fn ast(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
-        let Some(source) = &hir.source else {
-            return self.lowering(hir, depth);
-        };
-        let key = Arc::as_ptr(source) as usize;
-        self.charge(1)?;
-        if let Some((_, value)) = self.asts.get(&key) {
-            return Ok(value.clone());
-        }
+        if let Some(value) = self.ast_cached(hir)? { return Ok(value); }
         let copied = self.clone_hir(hir)?;
-        let native = self.task(Task::Ast(copied))?;
-        self.charge(1)?; // source_boundary consumes this owner; it does not clone it
+        let owner = hir_projection::Owner::copied(self.session, copied)?;
+        self.ast_unobserved(owner)
+    }
+    fn ast_shared(&mut self, hir: &Arc<Hir>, depth: usize) -> Result<Value> {
+        Self::depth(depth)?;
+        if let Some(value) = self.ast_cached(hir)? { return Ok(value); }
+        let owner = hir_projection::Owner::shared(self.session, hir)?;
+        self.ast_unobserved(owner)
+    }
+    fn ast_slice(&mut self, nodes: &Arc<[Hir]>, index: usize, depth: usize) -> Result<Value> {
+        Self::depth(depth)?;
+        self.charge(1)?;
+        let node = nodes.get(index).ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Invalid source HIR slice index")))?;
+        if let Some(value) = self.ast_cached(node)? { return Ok(value); }
+        let owner = hir_projection::Owner::slice(self.session, nodes, index)?;
+        self.ast_unobserved(owner)
+    }
+    fn ast_unobserved(&mut self, owner: hir_projection::Owner) -> Result<Value> {
+        let view = hir_projection::View::root(self.session, owner)?;
+        self.enqueue_unobserved_view(view)
+    }
+    fn ast_view(&mut self, view: hir_projection::View, depth: usize) -> Result<Value> {
+        Self::depth(depth)?;
+        if let Some(source) = &view.node().source {
+            self.charge(1)?;
+            if let Some((_, value)) = self.asts.get(&(Arc::as_ptr(source) as usize)) { return Ok(*value); }
+        }
+        self.enqueue_unobserved_view(view)
+    }
+    // Private: called only after an absent source-memo lookup, with no graph
+    // mutation or callbacks between that lookup and here. Arena discovery does
+    // not pre-enroll source nodes, preserving original first-seen queue order.
+    fn enqueue_unobserved_view(&mut self, view: hir_projection::View) -> Result<Value> {
+        let Some(source) = &view.node().source else { return self.task(Task::Lowering(view)); };
+        let key = Arc::as_ptr(source) as usize;
+        self.charge(2)?; // existing boundary and memo owning source references
         let boundary_source = source.clone();
+        let memo_source = source.clone();
+        let native = self.task(Task::Ast(view))?;
         let value = self.source_boundary(source_roots::Owner::Ast(boundary_source), native)?;
-        self.charge(1)?; // memo table's owning reference
-        self.asts.insert(key, (source.clone(), value));
+        self.asts.insert(key, (memo_source, value));
         Ok(value)
     }
     fn callable(&mut self, callable: &Arc<hir::SourceCallable>) -> Result<Value> {
@@ -2540,7 +2579,7 @@ impl<'a> AnalysisGraph<'a> {
                 parameters.push(self.form(&form, depth + 1)?);
             }
             let parameters = self.vector(&parameters)?;
-            let body = self.ast(&method.body, depth + 1)?;
+            let body = self.ast_shared(&method.body, depth + 1)?;
             let variadic = self.flag(method.variadic)?;
             methods.push(self.map(vec![
                 ("suss/parameters", parameters),
@@ -2565,11 +2604,11 @@ impl<'a> AnalysisGraph<'a> {
             ],
         )
     }
-    fn ast_record(&mut self, slot: Value, hir: Hir, depth: usize) -> Result<Value> {
-        // The original owned HIR is needed later by the exported lowering field.
-        // Retain its source separately so HIR can move without stripping facts.
+    fn ast_record(&mut self, slot: Value, view: hir_projection::View, depth: usize) -> Result<Value> {
+        // The retained root and exact projection move to exported lowering.
+        // Retain source separately; no executable subtree is copied here.
         self.charge(1)?;
-        let source_owner = hir.source.as_ref().expect("source AST task").clone();
+        let source_owner = view.node().source.as_ref().expect("source AST task").clone();
         let source = &source_owner;
         let quote = if source.form.metadata.is_empty()
             && let Kind::List(items) = &source.form.kind
@@ -2607,9 +2646,8 @@ impl<'a> AnalysisGraph<'a> {
             source.context,
             depth + 1,
         )?;
-        // Same queue position as before; move the already copied HIR rather
-        // than making a second recursive copy for suss/lowering.
-        let lowering = self.task(Task::Lowering(hir))?;
+        // Same queue position and complete exported field as before.
+        let lowering = self.task(Task::Lowering(view))?;
         // Only proved retained source-node routes authorize this literal key.
         // Unknown routes, including Suss-only Future/Await, stay cold.
         let env_key = match source.node.as_deref() {
@@ -2656,10 +2694,10 @@ impl<'a> AnalysisGraph<'a> {
         {
             let (operation, children) = match collection.as_ref() {
                 hir::SourceNode::Vector(items) => {
-                    ("vector", vec![(FieldKey::Literal(AnalyzerLiteralKeyword("items")), items.iter().collect::<Vec<_>>())])
+                    ("vector", vec![(FieldKey::Literal(AnalyzerLiteralKeyword("items")), items, 0, 1)])
                 }
                 hir::SourceNode::Set(items) => {
-                    ("set", vec![(FieldKey::Cold("items"), items.iter().collect::<Vec<_>>())])
+                    ("set", vec![(FieldKey::Cold("items"), items, 0, 1)])
                 }
                 hir::SourceNode::Map(items) => {
                     if items.len() % 2 != 0 {
@@ -2670,8 +2708,8 @@ impl<'a> AnalysisGraph<'a> {
                     (
                         "map",
                         vec![
-                            (FieldKey::Cold("keys"), items.iter().step_by(2).collect::<Vec<_>>()),
-                            (FieldKey::Cold("vals"), items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
+                            (FieldKey::Cold("keys"), items, 0, 2),
+                            (FieldKey::Cold("vals"), items, 1, 2),
                         ],
                     )
                 }
@@ -2679,11 +2717,11 @@ impl<'a> AnalysisGraph<'a> {
             };
             fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword(operation)?));
             let mut names = Vec::new();
-            for (name, children) in children {
+            for (name, children, start, step) in children {
                 names.push(self.keyword(name)?);
                 let mut records = Vec::new();
-                for child in children {
-                    records.push(self.ast(child, depth + 1)?);
+                for index in (start..children.len()).step_by(step) {
+                    records.push(self.ast_slice(children, index, depth + 1)?);
                 }
                 fields.push((name, self.vector(&records)?));
             }
@@ -2708,7 +2746,7 @@ impl<'a> AnalysisGraph<'a> {
                 records.push(self.local(binding, depth + 1)?);
             }
             fields.push((FieldKey::Cold("bindings"), self.vector(&records)?));
-            fields.push((FieldKey::Cold("body"), self.ast(body, depth + 1)?));
+            fields.push((FieldKey::Cold("body"), self.ast_shared(body, depth + 1)?));
             let bindings = self.keyword("bindings")?;
             let body = self.keyword("body")?;
             fields.push((FieldKey::Cold("children"), self.vector(&[bindings, body])?));
@@ -2721,8 +2759,8 @@ impl<'a> AnalysisGraph<'a> {
         }) = source.node.as_deref()
         {
             fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("try")?));
-            fields.push((FieldKey::Cold("body"), self.ast(body, depth + 1)?));
-            fields.push((FieldKey::Cold("catch"), self.ast(handler, depth + 1)?));
+            fields.push((FieldKey::Cold("body"), self.ast_shared(body, depth + 1)?));
+            fields.push((FieldKey::Cold("catch"), self.ast_shared(handler, depth + 1)?));
             let name = if let Some(payload) = payload {
                 self.form(&payload.declaration, depth + 1)?
             } else {
@@ -2732,7 +2770,7 @@ impl<'a> AnalysisGraph<'a> {
             let mut children = vec![self.keyword("body")?, self.keyword("catch")?];
             let finally = if let Some(cleanup) = cleanup {
                 children.push(self.keyword("finally")?);
-                self.ast(cleanup, depth + 1)?
+                self.ast_shared(cleanup, depth + 1)?
             } else {
                 self.scalar(Literal::Nil)?
             };
@@ -2745,8 +2783,8 @@ impl<'a> AnalysisGraph<'a> {
             let (operation, many, one) = match node.as_ref() {
                 hir::SourceNode::Do { statements, result } => (
                     "do",
-                    vec![(FieldKey::Cold("statements"), statements.as_ref())],
-                    vec![(FieldKey::Cold("ret"), result.as_ref())],
+                    vec![(FieldKey::Cold("statements"), statements)],
+                    vec![(FieldKey::Cold("ret"), result)],
                 ),
                 hir::SourceNode::If {
                     condition,
@@ -2756,37 +2794,37 @@ impl<'a> AnalysisGraph<'a> {
                     "if",
                     vec![],
                     vec![
-                        (FieldKey::Cold("test"), condition.as_ref()),
-                        (FieldKey::Cold("then"), consequent.as_ref()),
-                        (FieldKey::Cold("else"), alternative.as_ref()),
+                        (FieldKey::Cold("test"), condition),
+                        (FieldKey::Cold("then"), consequent),
+                        (FieldKey::Cold("else"), alternative),
                     ],
                 ),
                 hir::SourceNode::Recur(arguments) => {
-                    ("recur", vec![(FieldKey::Cold("exprs"), arguments.as_ref())], vec![])
+                    ("recur", vec![(FieldKey::Cold("exprs"), arguments)], vec![])
                 }
                 hir::SourceNode::Throw(exception) => {
-                    ("throw", vec![], vec![(FieldKey::Cold("exception"), exception.as_ref())])
+                    ("throw", vec![], vec![(FieldKey::Cold("exception"), exception)])
                 }
                 hir::SourceNode::Assign { target, value } => (
                     "set!",
                     vec![],
-                    vec![(FieldKey::Cold("target"), target.as_ref()), (FieldKey::Cold("val"), value.as_ref())],
+                    vec![(FieldKey::Cold("target"), target), (FieldKey::Cold("val"), value)],
                 ),
                 hir::SourceNode::Invoke { callee, arguments } => (
                     "invoke",
-                    vec![(FieldKey::Cold("args"), arguments.as_ref())],
-                    vec![(FieldKey::Cold("fn"), callee.as_ref())],
+                    vec![(FieldKey::Cold("args"), arguments)],
+                    vec![(FieldKey::Cold("fn"), callee)],
                 ),
                 hir::SourceNode::Construct { class, arguments } => (
                     "new",
-                    vec![(FieldKey::Cold("args"), arguments.as_ref())],
-                    vec![(FieldKey::Cold("class"), class.as_ref())],
+                    vec![(FieldKey::Cold("args"), arguments)],
+                    vec![(FieldKey::Cold("class"), class)],
                 ),
                 hir::SourceNode::Future(body) => {
-                    ("suss/future", vec![], vec![(FieldKey::Cold("body"), body.as_ref())])
+                    ("suss/future", vec![], vec![(FieldKey::Cold("body"), body)])
                 }
                 hir::SourceNode::Await(value) => {
-                    ("suss/await", vec![], vec![(FieldKey::Cold("value"), value.as_ref())])
+                    ("suss/await", vec![], vec![(FieldKey::Cold("value"), value)])
                 }
                 _ => ("", vec![], vec![]),
             };
@@ -2814,13 +2852,13 @@ impl<'a> AnalysisGraph<'a> {
                 };
                 for (name, children) in many {
                     let mut records = Vec::new();
-                    for child in children {
-                        records.push(self.ast(child, depth + 1)?);
+                    for index in 0..children.len() {
+                        records.push(self.ast_slice(children, index, depth + 1)?);
                     }
                     fields.push((name, self.vector(&records)?));
                 }
                 for (name, child) in one {
-                    fields.push((name, self.ast(child, depth + 1)?));
+                    fields.push((name, self.ast_shared(child, depth + 1)?));
                 }
                 let mut keywords = Vec::new();
                 for name in names {
@@ -2842,8 +2880,8 @@ impl<'a> AnalysisGraph<'a> {
                 )));
             }
             fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("with-meta")?));
-            fields.push((FieldKey::Cold("meta"), self.ast(metadata, depth + 1)?));
-            fields.push((FieldKey::Cold("expr"), self.ast(expression, depth + 1)?));
+            fields.push((FieldKey::Cold("meta"), self.ast_shared(metadata, depth + 1)?));
+            fields.push((FieldKey::Cold("expr"), self.ast_shared(expression, depth + 1)?));
             let meta = self.keyword("meta")?;
             let expr = self.keyword("expr")?;
             fields.push((FieldKey::Cold("children"), self.vector(&[meta, expr])?));
@@ -2916,7 +2954,7 @@ impl<'a> AnalysisGraph<'a> {
                     fields.push((FieldKey::Cold("variadic?"), self.flag(*variadic)?));
                 }
                 if let Some(initializer) = &binding.initializer {
-                    fields.push((FieldKey::Cold("init"), self.ast(initializer, depth + 1)?));
+                    fields.push((FieldKey::Cold("init"), self.ast_shared(initializer, depth + 1)?));
                 }
             }
         }
@@ -3025,7 +3063,7 @@ impl<'a> AnalysisGraph<'a> {
                         parameters.push(self.local(declaration, depth + 1)?);
                     }
                     let parameters = self.vector(&parameters)?;
-                    let body = self.ast(&method.body, depth + 1)?;
+                    let body = self.ast_shared(&method.body, depth + 1)?;
                     let form = self.form(&method.form, depth + 1)?;
                     let entry = &method.environment;
                     let env = self.environment(
@@ -3085,142 +3123,59 @@ impl<'a> AnalysisGraph<'a> {
         }
         self.map_in_task_slot(slot, fields)
     }
+    // FieldBinding.access is owned Hir, not Arc<Hir>. Keep the original
+    // metered copy fallback; do not manufacture shared source ownership.
     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
-        let copied = self.clone_hir(hir)?;
-        self.task(Task::Lowering(copied))
-    }
-    fn lowering_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
-        let (operation, children): (&str, Vec<&Hir>) = match &hir.kind {
-            Expression::Future { body, .. } => ("future", vec![body]),
-            Expression::Await { value } => ("await", vec![value]),
-            Expression::AsyncTry {
-                body,
-                handler,
-                cleanup,
-                ..
-            } => (
-                "async-try",
-                std::iter::once(body.as_ref())
-                    .chain(handler.iter().map(|h| h.as_ref()))
-                    .chain(cleanup.iter().map(|h| h.as_ref()))
-                    .collect(),
-            ),
-            Expression::Literal(_) => ("literal", vec![]),
-            Expression::Local(_) => ("local", vec![]),
-            Expression::Global(_) => ("global", vec![]),
-            Expression::GlobalCell(_) => ("global-cell", vec![]),
-            Expression::GlobalOrFallback { .. } => ("reader-global-fallback", vec![]),
-            Expression::Bitwise { arguments, .. }
-            | Expression::Comparison { arguments, .. }
-            | Expression::Array { arguments, .. }
-            | Expression::Nominal { arguments, .. }
-            | Expression::Arithmetic { arguments, .. } => {
-                ("native-operation", arguments.iter().collect())
-            }
-            Expression::NilTest(value) => ("nil-test", vec![value]),
-            Expression::Throw(value) => ("throw", vec![value]),
-            Expression::Assign { value, .. } => ("assign", vec![value]),
-            Expression::Definition { initializer, .. } => (
-                "definition",
-                initializer.iter().map(|value| value.as_ref()).collect(),
-            ),
-            Expression::Let { bindings, body } => (
-                "let",
-                bindings
-                    .iter()
-                    .map(|binding| binding.value.as_ref())
-                    .chain(std::iter::once(body.as_ref()))
-                    .collect(),
-            ),
-            Expression::Loop { bindings, body, .. } => (
-                "loop",
-                bindings
-                    .iter()
-                    .map(|binding| binding.value.as_ref())
-                    .chain(std::iter::once(body.as_ref()))
-                    .collect(),
-            ),
-            Expression::If {
-                condition,
-                consequent,
-                alternative,
-            } => ("if", vec![condition, consequent, alternative]),
-            Expression::Do(values) => ("do", values.iter().collect()),
-            Expression::Recur { arguments, .. } => ("recur", arguments.iter().collect()),
-            Expression::Call { callee, arguments } => (
-                "call",
-                std::iter::once(callee.as_ref())
-                    .chain(arguments.iter())
-                    .collect(),
-            ),
-            Expression::Function { body, .. } => ("function", vec![body]),
-            Expression::GeneralFunction { methods, .. } => (
-                "function",
-                methods.iter().map(|method| method.body.as_ref()).collect(),
-            ),
-            Expression::AsyncDynamicScope { bindings, body } => (
-                "async-dynamic-scope",
-                bindings
-                    .iter()
-                    .map(|(_, value)| value)
-                    .chain(std::iter::once(body.as_ref()))
-                    .collect(),
-            ),
-            Expression::DynamicScope { bindings, body } => (
-                "dynamic-scope",
-                bindings
-                    .iter()
-                    .map(|(_, value)| value)
-                    .chain(std::iter::once(body.as_ref()))
-                    .collect(),
-            ),
-            Expression::Try { regions } => (
-                "try",
-                regions.iter().map(|region| region.as_ref()).collect(),
-            ),
-        };
-        let operation = self.keyword(operation)?;
+        let copied = self.clone_hir(hir)?;
+        let owner = hir_projection::Owner::copied(self.session, copied)?;
+        let view = hir_projection::View::root(self.session, owner)?;
+        self.task(Task::Lowering(view))
+    }
+    fn lowering_shared(&mut self, hir: &Arc<Hir>, depth: usize) -> Result<Value> {
+        Self::depth(depth)?;
+        let owner = hir_projection::Owner::shared(self.session, hir)?;
+        let view = hir_projection::View::root(self.session, owner)?;
+        self.task(Task::Lowering(view))
+    }
+    fn lowering_record(&mut self, slot: Value, view: hir_projection::View, depth: usize) -> Result<Value> {
+        Self::depth(depth)?;
+        let node = view.node();
+        let operation = self.keyword(node.operation)?;
         let mut entries = vec![("suss/operation", operation)];
-        match &hir.kind {
-            Expression::Literal(value) if !matches!(value, Literal::Undefined) => {
-                entries.push(("suss/value", self.scalar(value.clone())?))
-            }
-            Expression::Local(id) => entries.push(("suss/id", self.number(id.0)?)),
-            Expression::Literal(Literal::Undefined) => {
-                entries.push(("suss/undefined", self.flag(true)?))
-            }
-            Expression::Arithmetic { operator, .. } => {
-                entries.push(("suss/native-operator", self.text(&format!("{operator:?}"))?))
-            }
-            Expression::Nominal { operation, .. } => entries.push((
-                "suss/native-operator",
-                self.text(&format!("{operation:?}"))?,
-            )),
-            Expression::Array { operation, .. } => entries.push((
-                "suss/native-operator",
-                self.text(&format!("{operation:?}"))?,
-            )),
-            Expression::Comparison { operation, .. } => entries.push((
-                "suss/native-operator",
-                self.text(&format!("{operation:?}"))?,
-            )),
-            Expression::Bitwise { operation, .. } => entries.push((
-                "suss/native-operator",
-                self.text(&format!("{operation:?}"))?,
-            )),
-            Expression::Loop { target, .. } | Expression::Recur { target, .. } => {
-                entries.push(("suss/loop-id", self.number(target.0)?))
-            }
-            _ => {}
+        use hir_projection::Detail;
+        match &node.detail {
+            Detail::Literal(Literal::Undefined) => entries.push(("suss/undefined", self.flag(true)?)),
+            Detail::Literal(value) => {
+                // Projection payload and scalar-input buffers are distinct;
+                // prepay this actual copy rather than hiding it in Clone.
+                let value = hir_projection::copy_literal(self.session, value)?;
+                entries.push(("suss/value", self.scalar(value)?));
+            },
+            Detail::Local(id) => entries.push(("suss/id", self.number(*id)?)),
+            Detail::Loop(id) => entries.push(("suss/loop-id", self.number(*id)?)),
+            Detail::Arithmetic(operator) => entries.push(("suss/native-operator", self.text(&format!("{operator:?}"))?)),
+            Detail::Nominal(operation) => entries.push(("suss/native-operator", self.text(&format!("{operation:?}"))?)),
+            Detail::Array(operation) => entries.push(("suss/native-operator", self.text(&format!("{operation:?}"))?)),
+            Detail::Comparison(operation) => entries.push(("suss/native-operator", self.text(&format!("{operation:?}"))?)),
+            Detail::Bitwise(operation) => entries.push(("suss/native-operator", self.text(&format!("{operation:?}"))?)),
+            Detail::None => {},
         }
-        let children = children
-            .into_iter()
-            .map(|child| self.ast(child, depth + 1))
-            .collect::<Result<Vec<_>>>()?;
+        let mut children = Vec::new();
+        let child_storage = view.child_count().checked_mul(std::mem::size_of::<Value>())
+            .and_then(|bytes| bytes.checked_add(std::mem::size_of::<Vec<Value>>() + 2))
+            .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Lowering child backing overflow")))?;
+        self.charge(child_storage)?; // requested backing and eventual release
+        children.try_reserve_exact(view.child_count())
+            .map_err(|_| SessionError::Host(wasmtime::Error::msg("Unable to reserve lowering children")))?;
+        for ordinal in 0..view.child_count() {
+            let child = view.child(self.session, ordinal)?;
+            children.push(self.ast_view(child, depth + 1)?);
+        }
         entries.push(("suss/children", self.vector(&children)?));
         self.map_in_task_slot(slot, entries)
     }
+
 }
 
 #[cfg(test)]
@@ -4222,16 +4177,18 @@ mod async_payload_clone_meter_tests {
                 graph.capture_roots = capture_roots;
                 let value = graph.ast(node, 0).unwrap();
                 let (_, Task::Ast(queued)) = graph.jobs.back().unwrap() else { panic!("owned HIR task") };
-                assert!(Arc::ptr_eq(source, queued.source.as_ref().unwrap()));
-                assert_eq!(queued.metadata, node.metadata);
-                let units = string_buffer(queued, &expected).expect("queued exact UTF16 literal");
+                assert!(Arc::ptr_eq(source, queued.retained_root().source.as_ref().unwrap()));
+                assert_eq!(queued.retained_root().metadata, node.metadata);
+                let units = string_buffer(queued.retained_root(), &expected).expect("queued exact UTF16 literal");
                 let queued_buffer = units.as_ptr();
                 assert_ne!(queued_buffer, original_units.as_ptr(), "one real metered copy at AST enqueue");
                 assert_eq!(units, original_units);
                 let (memo_source, memo_value) = graph.asts.get(&(Arc::as_ptr(source) as usize)).unwrap();
                 assert!(Arc::ptr_eq(source, memo_source));
                 assert_eq!(*memo_value, value);
-                assert_eq!(Arc::strong_count(source), initial + if capture_roots { 3 } else { 2 });
+                // One additional source owner belongs to the shallow arena node;
+                // the fallback still makes exactly one owned HIR enqueue copy.
+                assert_eq!(Arc::strong_count(source), initial + if capture_roots { 4 } else { 3 });
                 let count = Arc::strong_count(source);
                 assert_eq!(graph.ast(node, 0).unwrap(), value);
                 assert_eq!(graph.jobs.len(), 1);
@@ -4239,15 +4196,15 @@ mod async_payload_clone_meter_tests {
                 let (native, Task::Ast(owned)) = graph.jobs.pop_front().unwrap() else { panic!("AST task") };
                 assert_eq!(graph.ast_record(native, owned, 0).unwrap(), native);
                 let (lowering_id, lowering) = graph.jobs.iter().find_map(|(id, task)| match task {
-                    Task::Lowering(hir) if hir.source.as_ref().is_some_and(|s| Arc::ptr_eq(s, source)) => Some((*id, hir)),
+                    Task::Lowering(hir) if hir.node().source.as_ref().is_some_and(|s| Arc::ptr_eq(s, source)) => Some((*id, hir)),
                     _ => None,
                 }).expect("exported lowering task");
-                let units = string_buffer(lowering, &expected).expect("lowering exact UTF16 literal");
-                assert_eq!(units.as_ptr(), queued_buffer, "move the same allocation, no second copy");
+                let units = string_buffer(lowering.retained_root(), &expected).expect("lowering exact UTF16 literal");
+                assert_eq!(units.as_ptr(), queued_buffer, "HIR owner buffer moves unchanged; projection/scalar payload copies are separate");
                 assert_eq!(units, original_units);
-                assert_eq!(lowering.metadata, node.metadata);
-                assert_eq!(lowering.span, node.span);
-                assert!(Arc::ptr_eq(source, lowering.source.as_ref().unwrap()));
+                assert_eq!(lowering.retained_root().metadata, node.metadata);
+                assert_eq!(lowering.retained_root().span, node.span);
+                assert!(Arc::ptr_eq(source, lowering.node().source.as_ref().unwrap()));
                 assert!(matches!(graph.recipes[native].as_ref(), Some(Recipe::Map(entries))
                     if entries.iter().any(|(key, child)| *child == lowering_id &&
                         matches!(graph.recipes[*key].as_ref(), Some(Recipe::Identifier {
@@ -4257,6 +4214,83 @@ mod async_payload_clone_meter_tests {
                     source_roots::Owner::Ast(owner) if Arc::ptr_eq(owner, source))).count(), usize::from(capture_roots));
             }
             assert_eq!(Arc::strong_count(source), initial);
+        }
+    }
+
+    #[test]
+    fn retained_ast_root_keeps_original_buffers_first_seen_revision_and_decoded_lowering() {
+        fn selected(mut node: &Hir) -> &Hir {
+            while let Expression::Do(items) = &node.kind {
+                if node.source.as_ref().is_some_and(|source| !source.form.metadata.is_empty()) { break; }
+                assert_eq!(items.len(), 1);
+                node = &items[0];
+            }
+            node
+        }
+        let analyzed = portable::analyze("^:transfer (do \"owned-storage\")").unwrap();
+        // Independent capture before graph execution; ownership is genuine,
+        // not content-interned or recovered from a borrowed raw pointer.
+        let root = Arc::new(selected(&analyzed).clone());
+        let source = root.source.as_ref().unwrap().clone();
+        for capture_roots in [false, true] {
+            let mut session = Session::new_macro().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let retained = Arc::strong_count(&root);
+            let mut decoded = Vec::new();
+            let mut queue_work = Vec::new();
+            for shared in [true, false] {
+                let request = session.operation_budget_scope().unwrap();
+                let value = {
+                    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                    graph.capture_roots = capture_roots;
+                    let before_queue = graph.session.operation_fuel_remaining().unwrap();
+                    let id = if shared { graph.ast_shared(&root, 0).unwrap() }
+                        else { graph.ast(&root, 0).unwrap() };
+                    queue_work.push(before_queue - graph.session.operation_fuel_remaining().unwrap());
+                    let (_, Task::Ast(queued)) = graph.jobs.back().unwrap() else { panic!("AST view") };
+                    assert_eq!(queued.retained_root().metadata, root.metadata);
+                    assert_eq!(std::ptr::eq(queued.retained_root(), root.as_ref()), shared,
+                        "shared path retains genuine HIR; borrowed fallback owns a real copy");
+                    if shared {
+                        let (_, Task::Ast(view)) = graph.jobs.back().unwrap() else { panic!("AST view") };
+                        assert!(std::ptr::eq(view.retained_root(), root.as_ref()), "no executable HIR copy at enqueue");
+                        assert_eq!(view.retained_root().metadata, root.metadata);
+                        assert_eq!(view.retained_root().span, root.span);
+                        let jobs_before_hit = graph.jobs.len();
+                        let owners_before_hit = Arc::strong_count(&root);
+                        let before_hit = graph.session.operation_fuel_remaining().unwrap();
+                        assert_eq!(graph.ast_shared(&root, 0).unwrap(), id);
+                        let hit_cost = before_hit - graph.session.operation_fuel_remaining().unwrap();
+                        assert_eq!(hit_cost, 1, "one old source-memo lookup; no transient HIR owner retain on hit");
+                        assert_eq!(graph.jobs.len(), jobs_before_hit);
+                        assert_eq!(Arc::strong_count(&root), owners_before_hit);
+                        let mut changed = root.as_ref().clone();
+                        changed.kind = Expression::Literal(Literal::Number(999.0));
+                        let changed = Arc::new(changed);
+                        let jobs = graph.jobs.len();
+                        assert_eq!(graph.ast_shared(&changed, 0).unwrap(), id,
+                            "same SourceArc retains original first-seen lowering, not a later replacement");
+                        assert_eq!(graph.jobs.len(), jobs);
+                        assert!(Arc::ptr_eq(&graph.asts.get(&(Arc::as_ptr(&source) as usize)).unwrap().0, &source));
+                    }
+                    graph.materialize(id).unwrap()
+                };
+                drop(request);
+                session.collect().unwrap();
+                decoded.push(bridge.read(&mut session, &value, 0..1).unwrap());
+            }
+            assert_eq!(decoded[0], decoded[1], "complete decoded AST including source metadata and exported lowering matches owned fallback");
+            assert!(queue_work[0] < queue_work[1],
+                "actual shared enqueue must avoid fallback's paid HIR clone/allocation, including both routes' projection costs: {queue_work:?}");
+            eprintln!("hir-projection capture_roots={capture_roots} shared_queue={} borrowed_copy_queue={}", queue_work[0], queue_work[1]);
+            assert_eq!(Arc::strong_count(&root), retained, "all graph/view owners released");
+            let request = session.operation_budget_scope().unwrap();
+            let interrupt = session.host_work_interrupt();
+            interrupt.store(true, std::sync::atomic::Ordering::SeqCst);
+            let result = hir_projection::View::root(&mut session, hir_projection::Owner::Shared(root.clone()));
+            match result { Err(error) => assert!(error.is_interrupt(), "{error:?}"), _ => panic!("IRQ must propagate") }
+            assert_eq!(Arc::strong_count(&root), retained);
+            drop(request);
         }
     }
 
