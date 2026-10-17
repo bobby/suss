@@ -26461,3 +26461,15 @@ regressions. Focused compiled validation, native let/when-let and selected Jank
 currently total13 Rust passes; all12 original Jank IDs execute and match host
 comparisons. The Java-free bootstrap verifier and subsequent required full
 workspace baseline/final-head CI are separate gates; no readiness is claimed.
+
+
+The corrected tuple now completes17 focused Rust passes,347 Python tests,
+all12 ordered Jank host assertions andtwo byte-exact Java-free bootstrap
+reproductions. Independently verified archive
+m4-when-let-ci-provenance-focused-2026-10-16.tar.gz, SHA256
+04e6fb45a897f0fe6678151b911389bb9a8add1ec65bbec3f05d3b715fc460d3,
+retains1874 manifested payloads andall1846 frozen inputs matchingd1c3c1e.
+The required full baseline started atd1c3c1e inwhen-let-d1-full-baseline with
+CARGO_BUILD_JOBS=2 andthe unchanged command above; its receipt is nonterminal.
+This evidence-only follow-up changes no declared baseline input. Full baseline
+andfinal-head CI outcomes remain pending; no merge or issue closure is claimed.
