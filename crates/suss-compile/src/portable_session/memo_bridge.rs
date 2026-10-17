@@ -381,13 +381,23 @@ pub(super) fn install(
     let ty = FuncType::new(store.engine(), [ValType::Ref(RefType::EQREF), ValType::I32,
         ValType::Ref(RefType::EQREF)], []);
     let bridge = Func::new(&mut *store, ty, move |mut caller, arguments, _results| {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=entry remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         let mut caller = RootScope::new(&mut caller);
         Session::consume_host_work(caller.as_context_mut(), 32, &interrupt)?;
         let site = usize::try_from(arguments[1].unwrap_i32())
             .map_err(|_| wasmtime::Error::msg("Invalid canonical memo site"))?;
         let (_, field) = bootstrap::memo_owner_slots().nth(site)
             .ok_or_else(|| wasmtime::Error::msg("Unknown canonical memo site"))?;
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=sweep:before remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         ledger.sweep(caller.as_context_mut(), &interrupt)?;
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=sweep:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         // Stage only live matching watches. Locks never span runtime inspection
         // or the setter. All fallible capacity work precedes guest mutation.
         let (authority, prototype, count) = {
@@ -396,6 +406,9 @@ pub(super) fn install(
         };
         let mut candidates = Vec::new();
         let mut proof_receivers = None;
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=prevalidation:before remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         if let Some(authority) = authority.as_ref() {
             for index in 0..count {
                 Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
@@ -426,9 +439,20 @@ pub(super) fn install(
                 }
             }
         }
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=prevalidation:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
+            eprintln!("memo-store-fuel hook=canonical stage=setter:before remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         // Exact ordinary setter, including the original language exception and
         // pending-exception state. Failure publishes no staged receipt.
-        setter.call(&mut caller, &[arguments[0].clone(), Val::I32(field as i32), arguments[2].clone()], &mut [])?;
+        let outcome = setter.call(&mut caller, &[arguments[0].clone(), Val::I32(field as i32), arguments[2].clone()], &mut []);
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=setter:after ok={} remaining={:?}", outcome.is_ok(), caller.as_context_mut().get_fuel().ok());
+        }
+        outcome?;
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=postvalidation:before remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         for (watch, receipt, valid) in &mut candidates {
             Session::consume_host_work(caller.as_context_mut(), 8, &interrupt)?;
             if !watch.canonical(caller.as_context_mut(), runtime, authority.as_ref().unwrap(), &interrupt)? { continue }
@@ -439,10 +463,16 @@ pub(super) fn install(
                 receipt.source_safe=watch.domain_matches(caller.as_context_mut(),runtime,authority.as_ref().unwrap(),prototype.as_ref().unwrap(),&interrupt,Some(receipt),proof_receivers.as_deref().unwrap_or(&[]))?;
             }
         }
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=postvalidation:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         // All fallible validation/allocation completes before any publication.
         // Traps after the setter leave new state conservatively unauthenticated.
         for (watch, receipt, valid) in candidates {
             if valid { *registry_lock(&watch.receipt) = Some(receipt); }
+        }
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=canonical stage=publication:after remaining={:?}", caller.as_context_mut().get_fuel().ok());
         }
         Ok(())
     });
@@ -1175,6 +1205,10 @@ pub(super) fn install_scoped(
         return Err(wasmtime::Error::msg("Invalid physical store callback type"));
     };
     let hook = Func::new(&mut *store, ty.clone(), move |mut caller, arguments, _| {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=scoped stage=entry remaining={:?}", caller.as_context_mut().get_fuel().ok());
+        }
         Session::consume_host_work(caller.as_context_mut(), 4, &interrupt)?;
         let mut scope = RootScope::new(&mut caller);
         let mut candidates = Vec::new();
@@ -1185,6 +1219,9 @@ pub(super) fn install_scoped(
                 (entries.authority.clone(), entries.prototype.clone(), entries.watches.len())
             };
             if let (Some(authority), Some(prototype)) = (authority, prototype) {
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=prevalidation:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                }
                 for index in 0..count {
                     Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
                     let watch = { registry_lock(&ledger.entries).watches[index].upgrade() };
@@ -1209,8 +1246,19 @@ pub(super) fn install_scoped(
                         .map_err(scoped_error)?;
                     candidates.push((watch, Receipt { value, bits, source_safe: true }, false));
                 }
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=prevalidation:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                    eprintln!("memo-store-fuel hook=scoped stage=setter:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                }
                 // Exact original instruction: no recursion, no exception translation.
-                raw_store.call(&mut scope, arguments, &mut [])?;
+                let outcome = raw_store.call(&mut scope, arguments, &mut []);
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=setter:after ok={} remaining={:?}", outcome.is_ok(), scope.as_context_mut().get_fuel().ok());
+                }
+                outcome?;
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=postvalidation:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                }
                 for (watch, receipt, valid) in &mut candidates {
                     Session::consume_host_work(scope.as_context_mut(), 8, &interrupt)?;
                     let Some(receiver) = observer.receiver(scope.as_context_mut()) else { continue };
@@ -1220,15 +1268,28 @@ pub(super) fn install_scoped(
                     let Some(domain) = domain else { continue };
                     *valid = scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, Some((watch, receipt)), watch, proof_receivers.as_deref().unwrap_or(&[]))?;
                 }
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=postvalidation:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                }
                 // No fallible work after the first publication. No outside write
                 // clears an old receipt: exact reference/domain checks decide reuse.
                 for (watch, receipt, valid) in candidates {
                     if valid { *registry_lock(&watch.receipt) = Some(receipt); }
                 }
+                if fuel_trace {
+                    eprintln!("memo-store-fuel hook=scoped stage=publication:after remaining={:?}", scope.as_context_mut().get_fuel().ok());
+                }
                 return Ok(());
             }
         }
-        raw_store.call(&mut scope, arguments, &mut [])
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=scoped stage=fallback-setter:before remaining={:?}", scope.as_context_mut().get_fuel().ok());
+        }
+        let outcome = raw_store.call(&mut scope, arguments, &mut []);
+        if fuel_trace {
+            eprintln!("memo-store-fuel hook=scoped stage=fallback-setter:after ok={} remaining={:?}", outcome.is_ok(), scope.as_context_mut().get_fuel().ok());
+        }
+        outcome
     });
     installer.call(store, &[Val::FuncRef(Some(hook))], &mut [])
 }
