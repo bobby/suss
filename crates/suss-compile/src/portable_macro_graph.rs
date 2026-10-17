@@ -1888,6 +1888,7 @@ impl<'a> AnalysisGraph<'a> {
             let (definition, initializer_recipe) = self.definition_with_initializer(
                 &info.definition_form, info.initializer_form.as_ref(), depth + 1,
             )?;
+            trace(self.session, "definition-form")?;
             if tracing && info.initializer_form.is_some() {
                 eprintln!("metadata-initializer {}/{} reused={}", global.namespace(), global.name(), initializer_recipe.is_some());
             }
@@ -1897,6 +1898,7 @@ impl<'a> AnalysisGraph<'a> {
                 self.flag(info.analysis_completed)?,
             ));
             fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
+            trace(self.session, "declaration-form")?;
             fields.push(("suss/defonce", self.flag(info.once)?));
             if let Some(form) = &info.initializer_form {
                 let value = match initializer_recipe {
@@ -1905,6 +1907,7 @@ impl<'a> AnalysisGraph<'a> {
                 };
                 fields.push(("suss/initializer-form", value));
             }
+            trace(self.session, "initializer-form")?;
             fields.push((
                 "suss/initializer-recorded",
                 self.flag(info.initializer.is_some())?,
@@ -1915,6 +1918,7 @@ impl<'a> AnalysisGraph<'a> {
             }
             if let Some(callable) = callable {
                 fields.push(("suss/source-function", self.callable(callable)?));
+                trace(self.session, "callable-reference")?;
                 const FUNCTION_FIELDS: [&str; 6] = [
                     "fn-var",
                     "variadic?",
@@ -2120,6 +2124,7 @@ impl<'a> AnalysisGraph<'a> {
                 fields.push((field, self.form(&tag, depth + 1)?));
             }
         }
+        trace(self.session, "semantic-fields")?;
         // Share the final metadata value of this captured declaration revision,
         // including a top-fn overlay. Reader occurrences remain independently
         // constructed elsewhere; resolved var copies reuse this catalog value only
@@ -2141,6 +2146,7 @@ impl<'a> AnalysisGraph<'a> {
         let value = if let Some(revision) = info {
             self.source_boundary(source_roots::Owner::Declaration(global.clone(), revision.clone()), native)?
         } else { native };
+        trace(self.session, "source-boundaries")?;
         if let (Some(recipe), Some(revision)) = (metadata_recipe, info) {
             // Capture only after the final declaration and overlaid metadata
             // recipe exist. No guest storage is consulted or retained.
