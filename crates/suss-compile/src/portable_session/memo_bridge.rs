@@ -89,6 +89,22 @@ fn bits(mut store: StoreContextMut<'_, ()>, value: &Val, ty: &StructType) -> was
     if !StructType::eq(&number.ty(&store)?, ty) { return Ok(None) }
     Ok(match number.field(&mut store, 0)? { Val::F64(bits) => Some(bits), _ => None })
 }
+// Diagnostic-only scopes: no new charge or authority. Observer
+// formatting/fuel-read overhead is unmetered and must not be called saved fuel.
+macro_rules! validation_observed {
+    ($fuel:expr, $label:literal, $operation:expr) => {{
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled {
+            eprintln!("source-validation phase={} event=before remaining={:?}", $label, $fuel);
+        }
+        let result = $operation;
+        if enabled {
+            eprintln!("source-validation phase={} event=after ok={} remaining={:?}",
+                $label, result.is_ok(), $fuel);
+        }
+        result
+    }};
+}
 impl Watch {
     fn current(&self, mut store: StoreContextMut<'_, ()>, receiver: &Val,
         irq: &AtomicBool) -> wasmtime::Result<Option<Val>> {
@@ -188,7 +204,7 @@ impl Watch {
         let Some(authority) = session.canonical_methods.clone() else { return Ok(false) };
         // Schema and constructor identity are initial-source authority, not live
         // public names. Unrelated protocols and live hash helper bindings survive.
-        if !authority.source_constructor_matches(session, &self.constructor, &self.descriptor)? {
+        if !validation_observed!(session.operation_fuel_remaining().ok(), "watch/constructor-health", authority.source_constructor_matches(session, &self.constructor, &self.descriptor))? {
             return Ok(false);
         }
         let irq = session.host_work_interrupt();
@@ -196,10 +212,12 @@ impl Watch {
         let mut scope = RootScope::new(&mut session.store);
         // Authenticate the existing transition independently of a later valid
         // method replacement. New receipts still require canonical write sites.
-        if !self.method_valid(scope.as_context_mut(), runtime, &authority, &irq, false)? { return Ok(false) }
+        if !validation_observed!(scope.as_context_mut().get_fuel().ok(), "watch/method-health", self.method_valid(scope.as_context_mut(), runtime, &authority, &irq, false))? { return Ok(false) }
+        validation_observed!(scope.as_context_mut().get_fuel().ok(), "watch/current-receipt", (|| -> Result<bool, SessionError> {
         let receiver = Val::AnyRef(Some(self.receiver.value.to_rooted(&mut scope)));
         let Some(current) = self.current(scope.as_context_mut(), &receiver, &irq)? else { return Ok(false) };
         Ok(self.authenticated(scope.as_context_mut(), &current, &irq)?)
+        })())
     }
 }
 

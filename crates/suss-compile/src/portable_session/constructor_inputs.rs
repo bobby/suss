@@ -392,6 +392,22 @@ impl Session {
         Ok((value, Some(inputs)))
     }
 }
+// Diagnostic-only scopes: no new charge or authority. Observer
+// formatting/fuel-read overhead is unmetered and must not be called saved fuel.
+macro_rules! validation_observed {
+    ($fuel:expr, $label:literal, $operation:expr) => {{
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled {
+            eprintln!("source-validation phase={} event=before remaining={:?}", $label, $fuel);
+        }
+        let result = $operation;
+        if enabled {
+            eprintln!("source-validation phase={} event=after ok={} remaining={:?}",
+                $label, result.is_ok(), $fuel);
+        }
+        result
+    }};
+}
 impl ConstructorInputs {
     pub(super) fn bind_native_inputs(
         &mut self, session: &mut Session,
@@ -452,26 +468,29 @@ impl ConstructorInputs {
         session.check(value)?;
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
-        if !same(session, value, &self.receiver)?
-            || !session.storage_matches(&self.schema, &self.schema_storage)?
+        if !validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-identity", same(session, value, &self.receiver))?
+            || !validation_observed!(session.operation_fuel_remaining().ok(), "constructor/schema-snapshot", session.storage_matches(&self.schema, &self.schema_storage))?
         {
             return Ok(false);
         }
-        let descriptor = field(session, value, 0)?;
-        let storage = field(session, value, 1)?;
-        let properties = field(session, value, 2)?;
-        if !same(session, &descriptor, &self.descriptor)?
-            || !same(session, &storage, &self.field_storage)?
-            || !same(session, &properties, &self.properties)?
+        let descriptor = validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-read", field(session, value, 0))?;
+        let storage = validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-read", field(session, value, 1))?;
+        let properties = validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-read", field(session, value, 2))?;
+        if !validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-match", same(session, &descriptor, &self.descriptor))?
+            || !validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-match", same(session, &storage, &self.field_storage))?
+            || !validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-spine-match", same(session, &properties, &self.properties))?
         {
             return Ok(false);
         }
         // Revalidate receipt before borrowing the Store for the field walk.
         // Original input edges remain unchanged, including the original nil.
-        let authenticated_slot = match &self.memo_watch {
-            Some(watch) if watch.matches(session)? => Some(watch.slot()),
-            _ => None,
-        };
+        let authenticated_slot = validation_observed!(session.operation_fuel_remaining().ok(), "constructor/memo-watch", (|| -> Result<Option<usize>> {
+            Ok(match &self.memo_watch {
+                Some(watch) if watch.matches(session)? => Some(watch.slot()),
+                _ => None,
+            })
+        })())?;
+        validation_observed!(session.operation_fuel_remaining().ok(), "constructor/receiver-fields", (|| -> Result<bool> {
         let interrupt = session.host_work_interrupt();
         let mut scope = RootScope::new(&mut session.store);
         let object = value
@@ -528,6 +547,7 @@ impl ConstructorInputs {
             }
         }
         Ok(true)
+        })())
     }
 }
 

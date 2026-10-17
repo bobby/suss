@@ -11,6 +11,22 @@ use crate::portable::{
 use crate::portable_session::{Session, SessionError};
 use std::{rc::Rc, sync::Arc};
 
+// Diagnostic-only scopes: no new charge or authority. Observer
+// formatting/fuel-read overhead is unmetered and must not be called saved fuel.
+macro_rules! validation_observed {
+    ($fuel:expr, $label:literal, $operation:expr) => {{
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled {
+            eprintln!("source-validation phase={} event=before remaining={:?}", $label, $fuel);
+        }
+        let result = $operation;
+        if enabled {
+            eprintln!("source-validation phase={} event=after ok={} remaining={:?}",
+                $label, result.is_ok(), $fuel);
+        }
+        result
+    }};
+}
 type Locals = Arc<std::collections::HashMap<String, Arc<hir::LocalBinding>>>;
 type Fields = Arc<std::collections::HashMap<String, Arc<hir::FieldBinding>>>;
 
@@ -400,8 +416,8 @@ impl AnalysisGraph<'_> {
         children: Vec<CheckedChild>,
     ) -> Result<Option<SourceInputs>> {
         let _request = self.session.operation_budget_scope()?;
-        let layout = self.source_root_children()?;
-        let Some(expected) = self.source_root_expectation_with_layout(id, &layout)? else {
+        let layout = validation_observed!(self.session.operation_fuel_remaining().ok(), "inputs/layout", self.source_root_children())?;
+        let Some(expected) = validation_observed!(self.session.operation_fuel_remaining().ok(), "inputs/parent-projection", self.source_root_expectation_with_layout(id, &layout))? else {
             return Ok(None);
         };
         self.session.charge_host_work(2)?;
@@ -417,9 +433,10 @@ impl AnalysisGraph<'_> {
             crate::portable_session::certification_audit::CertificationAudit::new(self.session)?;
         for (ordinal, child) in children.into_iter().enumerate() {
             self.session.charge_host_work(2)?;
-            let child_expected = self
-                .source_root_expectation_with_layout(layout[id][ordinal], &layout)?
-                .ok_or_else(|| invalid("Unsupported source-edge expectation"))?;
+            let child_expected = validation_observed!(
+                self.session.operation_fuel_remaining().ok(), "inputs/child-projection",
+                self.source_root_expectation_with_layout(layout[id][ordinal], &layout)
+            )?.ok_or_else(|| invalid("Unsupported source-edge expectation"))?;
             match Certificate::checked_into(
                 self.session,
                 self.bridge,
@@ -440,6 +457,7 @@ impl AnalysisGraph<'_> {
         if !valid {
             return Ok(None);
         }
+        validation_observed!(self.session.operation_fuel_remaining().ok(), "inputs/token-staging", (|| -> Result<Option<SourceInputs>> {
         let mut aliases = Vec::new();
         reserve(self.session, &mut aliases, layout[id].len())?;
         for child in &layout[id] {
@@ -481,6 +499,7 @@ impl AnalysisGraph<'_> {
             inputs,
             by_alias,
         }))
+        })())
     }
     fn materialize_source_parent(
         &mut self,
@@ -746,10 +765,8 @@ impl Certificate {
         session.charge_host_work(key_comparison_work(&owner, &certificate.source.key))?;
         let same = owner == certificate.source.key;
         let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
-        let current =
-            expected
-                .witness
-                .matches_logical_source(session, bridge, &certificate.value)?;
+        let current = validation_observed!(session.operation_fuel_remaining().ok(),
+            "checked/current-logical", expected.witness.matches_logical_source(session, bridge, &certificate.value))?;
         if !(same && valid && current) {
             return Ok(None);
         }
@@ -830,21 +847,21 @@ impl Certificate {
                 valid &= found.ok_or_else(|| invalid("Unvalidated source child"))?;
             }
             // No short circuit suppresses later native authority/errors.
-            valid &= certificate.source.witness.matches_logical_source(
+            valid &= validation_observed!(session.operation_fuel_remaining().ok(), "validate/logical", certificate.source.witness.matches_logical_source(
                 session,
                 bridge,
                 &certificate.value,
-            )?;
-            valid &= certificate.records.matches_direct_facts(session)?;
-            valid &= certificate
+            ))?;
+            valid &= validation_observed!(session.operation_fuel_remaining().ok(), "validate/direct", certificate.records.matches_direct_facts(session))?;
+            valid &= validation_observed!(session.operation_fuel_remaining().ok(), "validate/recorded", certificate
                 .records
-                .matches_recorded_inputs(session, &certificate.value)?;
-            valid &= certificate
+                .matches_recorded_inputs(session, &certificate.value))?;
+            valid &= validation_observed!(session.operation_fuel_remaining().ok(), "validate/classes", certificate
                 .records
-                .matches_class_schemas_audited(session, audit)?;
-            valid &= certificate
+                .matches_class_schemas_audited(session, audit))?;
+            valid &= validation_observed!(session.operation_fuel_remaining().ok(), "validate/prototypes", certificate
                 .records
-                .matches_prototype_origins_audited(session, audit)?;
+                .matches_prototype_origins_audited(session, audit))?;
             reserve(session, done, 1)?;
             session.charge_host_work(1)?;
             done.push((certificate.clone(), valid));
@@ -1451,6 +1468,8 @@ mod tests {
             )
             .unwrap();
             let bridge = FormBridge::new(&mut s).unwrap();
+            // Diagnostic only: one fixed whole-request cap; not default-fuel acceptance.
+            s.set_operation_fuel(30_000_000);
             let _op = s.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut s);
             macro_rules! fuel {

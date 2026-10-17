@@ -381,7 +381,15 @@ impl WriteDomain {
             interrupt: irq,
         }))?;
         let state = registry_lock(&self.state);
-        domain_observed!("storage-and-edges", (|| -> Result<bool> {
+        let mut edge_counts = if fuel_trace { Some([0_u64; 8]) } else { None };
+        macro_rules! count_edge {
+            ($index:expr) => {
+                if let Some(counts) = edge_counts.as_mut() {
+                    counts[$index] = counts[$index].saturating_add(1);
+                }
+            };
+        }
+        let result = domain_observed!("storage-and-edges", (|| -> Result<bool> {
         let mut valid = state.valid && classes && parent && canonical;
         let mut scope = RootScope::new(store.as_context_mut());
         for (ordinal, node) in state.nodes.iter().enumerate() {
@@ -446,17 +454,21 @@ impl WriteDomain {
             valid &= storage_valid;
             node_observed!("edge-membership", (|| -> Result<()> {
             for edge in &node.edges {
+                count_edge!(0);
                 Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                 let edge = edge.value.to_rooted(&mut scope);
                 let mut member = edge.as_i31(&scope)?.is_some();
                 if member {
+                    count_edge!(1);
                     continue;
                 }
                 for other in &state.nodes {
                     Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                     let other_root = other.value.value.to_rooted(&mut scope);
+                    count_edge!(2);
                     member |= Rooted::<AnyRef>::ref_eq(&scope, &edge, &other_root)?;
                     if member {
+                        count_edge!(3);
                         break;
                     }
                 }
@@ -464,7 +476,8 @@ impl WriteDomain {
                     for child in &state.children {
                         Session::consume_host_work(scope.as_context_mut(),1,irq)?;
                         let root=child.value.value.to_rooted(&mut scope);
-                        if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
+                        count_edge!(4);
+                        if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {count_edge!(5);member=true;break;}
                     }
                 }
                 // Exact recorded/child roots are sufficient membership proof.
@@ -474,7 +487,9 @@ impl WriteDomain {
                 if !member {
                     for other in &state.nodes {
                         Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
+                        count_edge!(6);
                         if let Some(seed) = &other.seed {
+                            count_edge!(7);
                             member |= seed.write_storage().contains_reference_in_context(
                                 scope.as_context_mut(),
                                 Val::AnyRef(Some(edge)),
@@ -491,7 +506,12 @@ impl WriteDomain {
             })())?;
         }
         Ok(valid)
-        })())
+        })());
+        if let Some(counts) = edge_counts {
+            eprintln!("source-domain-edges domain={:p} staged={} ok={} edges={} immediate={} node_attempts={} node_hits={} child_attempts={} child_hits={} seed_candidates={} interior_calls={} saturated={}",
+                self, staged.is_some(), result.is_ok(), counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6], counts[7], counts.contains(&u64::MAX));
+        }
+        result
     }
 }
 
