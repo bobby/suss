@@ -28,6 +28,9 @@ class RecordAbiProvenance(unittest.TestCase):
             'algorithm': 'range-loop',
             'guard-sha256': '0' * 64,
             'guard-location': 'decoy',
+            'checked-validation-sha256': '0' * 64,
+            'short-route-sha256': '0' * 64,
+            'short-precondition': 'unchecked cached slot',
         }.items():
             with self.subTest(key=key):
                 changed = copy.deepcopy(self.data)
@@ -67,9 +70,9 @@ class RecordAbiProvenance(unittest.TestCase):
                 b'LocalGet(3),\n        I32Eqz,\n        If(BlockType::Empty),\n        I32Const(0),'),
         }
         scopes = named_property_guard_scopes(source)
-        for route in ['generic', 'checked']:
+        for route in ['generic', 'checked-validation']:
             route_mutations = mutations.copy()
-            if route == 'checked':
+            if route == 'checked-validation':
                 # Character-template lines move inside a closure; reserved and
                 # equality generator lines keep their original indentation.
                 for key in ['non_ascii_comparison', 'mask_word_selection',
@@ -120,15 +123,21 @@ class RecordAbiProvenance(unittest.TestCase):
 
     def test_combined_comparator_and_throw_cannot_be_bypassed(self):
         source = (ROOT / self.data['source']).read_bytes()
-        scope = named_property_guard_scopes(source)['checked']
-        for old, new in [
-            (b'body.extend([LocalGet(5), LocalGet(2)]);', b'body.extend([LocalGet(5), LocalGet(5)]);'),
-            (b'            ArrayGetU(STRING),', b'            ArrayLen,'),
-            (b'    nominal::error(&mut body);', b'    body.extend([I32Const(0), Return]);'),
-            (b'    body.push(End); // successful validation exits this block, never the function.',
+        scopes = named_property_guard_scopes(source)
+        for route, field, old, new in [
+            ('checked', 'checked-guard-sha256',
+             b'body.extend([LocalGet(5), LocalGet(2)]);',
+             b'body.extend([LocalGet(5), LocalGet(5)]);'),
+            ('checked', 'checked-guard-sha256',
+             b'            ArrayGetU(STRING),', b'            ArrayLen,'),
+            ('checked-validation', 'checked-validation-sha256',
+             b'    nominal::error(&mut body);', b'    body.extend([I32Const(0), Return]);'),
+            ('checked-validation', 'checked-validation-sha256',
+             b'    body.push(End); // successful validation exits this block, never the function.',
              b'    body.extend([End, I32Const(1), Return]);'),
         ]:
-            with self.subTest(bypass=old):
+            with self.subTest(route=route, bypass=old):
+                scope = scopes[route]
                 self.assertIn(old, scope)
                 mutated_scope = scope.replace(old, new, 1)
                 mutated = source.replace(scope, mutated_scope, 1)
@@ -136,13 +145,13 @@ class RecordAbiProvenance(unittest.TestCase):
                 changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'complete guard differs'):
                     verify_named_property_abi_adaptation(changed, mutated)
-                changed['checked-guard-sha256'] = hashlib.sha256(mutated_scope).hexdigest()
+                changed[field] = hashlib.sha256(mutated_scope).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
                     verify_named_property_abi_adaptation(changed, mutated)
 
     def test_checked_prefix_cannot_skip_unit_or_reserved_validation(self):
         source = (ROOT / self.data['source']).read_bytes()
-        checked = named_property_guard_scopes(source)['checked']
+        checked = named_property_guard_scopes(source)['checked-validation']
         for old, new in [
             (b'    body.push(Block(BlockType::Empty));\n    for index in 0..4 {',
              b'    body.push(Block(BlockType::Empty));\n    for index in 0..3 {'),
@@ -164,7 +173,7 @@ class RecordAbiProvenance(unittest.TestCase):
                 changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'complete guard differs'):
                     verify_named_property_abi_adaptation(changed, mutated)
-                changed['checked-guard-sha256'] = hashlib.sha256(changed_scope).hexdigest()
+                changed['checked-validation-sha256'] = hashlib.sha256(changed_scope).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
                     verify_named_property_abi_adaptation(changed, mutated)
 
@@ -172,7 +181,7 @@ class RecordAbiProvenance(unittest.TestCase):
         source = (ROOT / self.data['source']).read_bytes()
         scopes = named_property_guard_scopes(source)
         for route, field in [('generic', 'guard-sha256'),
-                             ('checked', 'checked-guard-sha256')]:
+                             ('checked-validation', 'checked-validation-sha256')]:
             with self.subTest(route=route):
                 scope = scopes[route]
                 self.assertEqual(scope.count(b'I32Const(128),'), 1)
@@ -186,6 +195,56 @@ class RecordAbiProvenance(unittest.TestCase):
                     actual_scope = actual_scope.replace(
                         b'let _field_supported =', b'let field_supported =')
                 changed[field] = hashlib.sha256(actual_scope).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
+    def test_shared_validator_calls_and_packed_comparison_are_closed(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        scope = named_property_guard_scopes(source)['checked']
+        for old, new in [
+            (b'let mut body = checked_field_validation();', b'let mut body = vec![];'),
+            (b'let mut short_body = checked_field_validation();', b'let mut short_body = vec![];'),
+            (b'I32Const(0xffff), I32And, I32Ne,', b'I32Const(0x7fff), I32And, I32Ne,'),
+        ]:
+            with self.subTest(bypass=old):
+                self.assertEqual(scope.count(old), 1)
+                changed_scope = scope.replace(old, new, 1)
+                mutated = source.replace(scope, changed_scope, 1)
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'complete guard differs'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+                changed['checked-guard-sha256'] = hashlib.sha256(changed_scope).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
+    def test_short_route_guards_scan_and_fallback_are_closed(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        scope = named_property_guard_scopes(source)['short-route']
+        for old, new in [
+            (b'I32Const(4), I32GtU,', b'I32Const(5), I32GtU,'),
+            (b'guard(&mut body,3,ARGS);', b'// payload guard removed'),
+            (b'guard(&mut body,4,ARGS);', b'// schema guard removed'),
+            (b'guard(&mut body,5,STRING);', b'// entry guard removed'),
+            (b'Call(field_match),', b'I32Const(1),'),
+            (b'LocalGet(6),LocalSet(7),', b'LocalGet(6),Drop,'),
+            (b'Br(0),End,End,', b'Br(1),End,End,'),
+            (b'I32Const(0xffff),I32And,', b'I32Const(0x7fff),I32And,'),
+            (b'Call(b.names["named-property-get"])', b'Call(b.names["nil"])'),
+            (b'    body.push(I32Const(1));', b'    body.push(I32Const(0));'),
+            (b'body.extend([I32Const(0),I32Const(0),RefI31]);',
+             b'body.extend([I32Const(1),I32Const(0),RefI31]);'),
+            (b'&[ValType::I32,VALUE],', b'&[VALUE],'),
+        ]:
+            with self.subTest(bypass=old):
+                self.assertEqual(scope.count(old), 1)
+                changed_scope = scope.replace(old, new, 1)
+                mutated = source.replace(scope, changed_scope, 1)
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                with self.assertRaisesRegex(ValueError, 'complete guard differs'):
+                    verify_named_property_abi_adaptation(changed, mutated)
+                changed['short-route-sha256'] = hashlib.sha256(changed_scope).hexdigest()
                 with self.assertRaisesRegex(ValueError, 'guard identity mismatch'):
                     verify_named_property_abi_adaptation(changed, mutated)
 

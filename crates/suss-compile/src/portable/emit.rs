@@ -1,6 +1,7 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
 mod integer_bits;
+mod short_keys;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -156,11 +157,15 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
+    let mut module_short_keys = false;
     for function in all_functions {
         let primitive_strings = PrimitiveStringKeys::new(function);
         for block in &function.blocks {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
-            for inst in &block.instructions {
+            // Enumerating reuses this import walk; prepay its index bookkeeping
+            // once for the block, with no separate short-key admission traversal.
+            meter(block.instructions.len() as u64)?;
+            for (instruction_index, inst) in block.instructions.iter().enumerate() {
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -254,6 +259,17 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
+                            // Inspect adjacency only at actual getters. Import
+                            // publication is once per module, never per callee.
+                            meter(2)?; // module flag and preceding-index check
+                            if !module_short_keys && instruction_index > 0 {
+                                meter(1)?; // bounded adjacent-pair inspection
+                                if short_keys::adjacent(&block.instructions[instruction_index - 1..=instruction_index]).is_some() {
+                                    meter(512)?; // actual new import node/backing/control
+                                    names.insert("short-literal-property-probe");
+                                    module_short_keys = true;
+                                }
+                            }
                             names.insert("named-property-get");
                             if primitive_strings.length.contains(&arguments[1].0) { names.insert("number-box"); }
                             if primitive_strings.char_code_at.contains(&arguments[1].0) { names.insert("string-char-code-at-method"); }
@@ -383,6 +399,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "comparison-greater-equal"
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" | super::bootstrap::MEMO_WRITE_IMPORT_NAME => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "short-literal-property-probe" => (vec![VALUE, ValType::I64, ValType::I32], vec![ValType::I32, VALUE]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -483,7 +500,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None, memos.as_deref_mut(), meter,
+        &futures, None, module_short_keys, memos.as_deref_mut(), meter,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -494,7 +511,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None, memos.as_deref_mut(), meter,
+            &futures, None, module_short_keys, memos.as_deref_mut(), meter,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -504,7 +521,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut(), meter)?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), module_short_keys, memos.as_deref_mut(), meter)?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -731,12 +748,15 @@ fn emit_function(
     dispatchers: &[&GeneralClosureBody],
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
+    module_short_keys: bool,
     mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
     let primitive_strings = PrimitiveStringKeys::new(ir);
     // Continuation spill/resume retains the original all-GC SSA representation.
     let integer_plan = integer_bits::Plan::new(ir, continuation.is_none(), meter)?;
+    meter(1)?; // module admission/continuation control before optional planning
+    let short_keys = short_keys::Plan::new(ir, module_short_keys && continuation.is_none(), meter)?;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -820,6 +840,7 @@ fn emit_function(
                 .instruction(&If(BlockType::Empty));
         }
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
+        let mut pending_short_key = None;
         for inst in instructions {
             match &inst.operation {
                 Operation::RegionPush { handler, cleanup, end, dynamic } => {
@@ -906,7 +927,14 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
-                    emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    meter(1)?; // checked plan access only for actual string literals
+                    if short_keys.elide(inst.result) {
+                        meter(4 + 4 * units.len() as u64)?; // unit read, widen/shift/or plus packed tuple/control
+                        meter(2)?; // retain original borrowed UTF16 slice (pointer/length), no copy
+                        pending_short_key = Some((inst.result, short_keys::pack(units), units.len() as i32, units.as_slice()));
+                    } else {
+                        emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    }
                 }
                 Operation::GlobalCell(global) => {
                     let index_global = globals
@@ -1248,6 +1276,33 @@ fn emit_function(
                                 )));
                         }
                         Nominal::NamedGet => {
+                            // Only a proved adjacent literal populates pending;
+                            // no other opcode reads/takes it, and each block
+                            // starts empty. Continuations never populate it.
+                            meter(1)?; // actual pending-key read/take
+                            if let Some((key,bits,len,units)) = pending_short_key.take() {
+                                if arguments.len()==2 && arguments[1]==key {
+                                    meter(16 + 4 * units.len() as u64)?; // probe branch, original literal/fallback emission
+                                    // The key has no other use and ordinary SSA
+                                    // locals are VALUE. Reuse that existing GC
+                                    // slot for the probe value, restoring the
+                                    // original STRING before any miss callback.
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&I64Const(bits)).instruction(&I32Const(len))
+                                        .instruction(&Call(index("short-literal-property-probe")))
+                                        .instruction(&LocalSet(key.0 as u32 + offset))
+                                        .instruction(&If(BlockType::Result(VALUE)))
+                                        .instruction(&LocalGet(key.0 as u32 + offset))
+                                        .instruction(&Else);
+                                    emit_utf16_literal(&mut function, units, key.0 as u32 + offset, &ir.span)?;
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&LocalGet(key.0 as u32 + offset))
+                                        .instruction(&Call(index("named-property-get")))
+                                        .instruction(&End)
+                                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                                    continue;
+                                }
+                            }
                             let length = primitive_strings.length.contains(&arguments[1].0);
                             let char_code_at = primitive_strings.char_code_at.contains(&arguments[1].0);
                             let fast = length || char_code_at;

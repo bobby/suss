@@ -1,3 +1,18 @@
+## Short-property preservation execution — 2026-10-17
+
+Component59fdbad: normal bootstrap0;80Rust executions77pass/3fail/0ignored.
+Shared four-case native oracle both phases afterGC, source46, core17, map69,
+analysis-graph11 and invocation tags pass. SourceChild all220ordered markers
+match; final149643remaining eachphase vs132163control. Namespace five-call
+probe and inference are fuel-blocked; callable six-row probe has4semantic alias
+mismatches (indices5/7/8). Matched f156parent namespace0/2 has identical complete
+callable observations and same first-probe fuel stage/span. All2996component /
+4026parent tracked inputs bind to Git and stay unchanged. No blanket fuel or
+unexecuted classification for the six-row failure. [Commands/raw evidence](evidence/m4-short-property-preservation-2026-10-17.md).
+Required full `cargo test --workspace --locked -- --test-threads=2` and final-head
+CI follow committed integration review; those later outcomes are not claimed.
+Coherent raw declaration/field retention is a separate guarded implementation.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
