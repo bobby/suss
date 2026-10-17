@@ -1144,7 +1144,11 @@ pub fn lower_metered(
     hir: &Hir,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
-    verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+    {
+        let _trace = super::hir::CowTraceScope::new("ir_recurrence");
+        verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+    }
+    let _trace = super::hir::CowTraceScope::new("ir_build");
     Lowerer::new(hir.span.clone(), meter)?.finish(hir)
 }
 

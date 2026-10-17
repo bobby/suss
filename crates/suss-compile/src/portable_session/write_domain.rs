@@ -236,6 +236,22 @@ impl WriteDomain {
         receivers: &[Val],
         require_target: bool,
     ) -> Result<bool> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        macro_rules! domain_observed {
+            ($label:literal, $operation:expr) => {{
+                if fuel_trace {
+                    eprintln!("source-domain domain={:p} staged={} phase={} event=before remaining={:?}",
+                        self, staged.is_some(), $label, store.get_fuel().ok());
+                }
+                let result = $operation;
+                if fuel_trace {
+                    eprintln!("source-domain domain={:p} staged={} phase={} event=after result={:?} remaining={:?}",
+                        self, staged.is_some(), $label,
+                        result.as_ref().map_err(|error| error.to_string()), store.get_fuel().ok());
+                }
+                result
+            }};
+        }
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
         let watches = {
@@ -285,38 +301,61 @@ impl WriteDomain {
                 }
             }
         }
-        let mut canonical = true;
-        for watch in &watches {
-            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
-        }
-        let classes = methods.source_classes_in_context(InspectionContext {
+        let canonical = domain_observed!("canonical-loop", (|| -> Result<bool> {
+            let mut canonical = true;
+            for watch in &watches {
+                canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
+            }
+            Ok(canonical)
+        })())?;
+        let classes = domain_observed!("source-classes", methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
             identity,
             interrupt: irq,
-        })?;
-        let parent = prototype.parent_matches_in_context(InspectionContext {
+        }))?;
+        let parent = domain_observed!("prototype", prototype.parent_matches_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
             identity,
             interrupt: irq,
-        })?;
+        }))?;
         let state = registry_lock(&self.state);
+        domain_observed!("storage-and-edges", (|| -> Result<bool> {
         let mut valid = state.valid && classes && parent && canonical;
-        let mut scope = RootScope::new(store);
-        for node in &state.nodes {
+        let mut scope = RootScope::new(store.as_context_mut());
+        for (ordinal, node) in state.nodes.iter().enumerate() {
+            macro_rules! node_observed {
+                ($phase:literal, $operation:expr) => {{
+                    if fuel_trace {
+                        // Presence flags only: no extra Weak upgrade or guest
+                        // reference inspection is performed for diagnostics.
+                        eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=before remaining={:?}",
+                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            $phase, scope.as_context_mut().get_fuel().ok());
+                    }
+                    let result = $operation;
+                    if fuel_trace {
+                        eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=after result={:?} remaining={:?}",
+                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            $phase, result.as_ref().map_err(|error| error.to_string()), scope.as_context_mut().get_fuel().ok());
+                    }
+                    result
+                }};
+            }
             Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
             let root = Val::AnyRef(Some(node.value.value.to_rooted(&mut scope)));
+            let storage_valid = node_observed!("snapshot", (|| -> Result<bool> {
             if let Some(seed) = &node.seed {
-                valid &= seed.write_storage().matches_in_context(
+                Ok(seed.write_storage().matches_in_context(
                     scope.as_context_mut(),
                     root,
                     identity,
                     irq,
-                )?;
+                )?)
             } else if let Some(snapshot) = &node.snapshot {
                 let watch = node.watch.as_ref().and_then(Weak::upgrade);
-                valid &= snapshot.matches_in_context_with_slots(
+                Ok(snapshot.matches_in_context_with_slots(
                     scope.as_context_mut(),
                     root,
                     identity,
@@ -339,10 +378,13 @@ impl WriteDomain {
                             .source_authenticated(store, actual, irq)
                             .map_err(Into::into)
                     },
-                )?;
+                )?)
             } else {
-                valid = false;
+                Ok(false)
             }
+            })())?;
+            valid &= storage_valid;
+            node_observed!("edge-membership", (|| -> Result<()> {
             for edge in &node.edges {
                 Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                 let edge = edge.value.to_rooted(&mut scope);
@@ -378,8 +420,11 @@ impl WriteDomain {
                 }
                 valid &= member;
             }
+            Ok(())
+            })())?;
         }
         Ok(valid)
+        })())
     }
 }
 

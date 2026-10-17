@@ -213,9 +213,12 @@ impl Analyzer<'_> {
         // Ordinary vector/map/set metadata is an expression, analyzed in the
         // surrounding lexical environment (pinned analyze-wrap-meta). Reader
         // prefix merging happens before analysis: discarded values never run.
-        let entries = merged_metadata_pairs_metered(form, false, &mut |work| {
-            self.expander.charge_expansion_work(work, form.span.clone())
-        })?;
+        let entries = {
+            let _trace = CowTraceScope::new("literal_metadata_merge");
+            merged_metadata_pairs_metered(form, false, &mut |work| {
+                self.expander.charge_expansion_work(work, form.span.clone())
+            })?
+        };
         if entries.is_empty() {
             return Ok(value);
         }
@@ -260,9 +263,12 @@ impl Analyzer<'_> {
         let mut retained = reader_data;
         // Reader-data merging precedes construction. Actual source -assoc
         // supplies equality of the resulting compiled runtime keys.
-        let entries = merged_metadata_pairs_metered(form, reader_data, &mut |work| {
-            self.expander.charge_expansion_work(work, form.span.clone())
-        })?;
+        let entries = {
+            let _trace = CowTraceScope::new("literal_metadata_merge");
+            merged_metadata_pairs_metered(form, reader_data, &mut |work| {
+                self.expander.charge_expansion_work(work, form.span.clone())
+            })?
+        };
         for pair in entries.chunks_exact(2) {
             let key = self.quote_data_impl(&pair[0], depth + 2, reader_data)?;
             let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;

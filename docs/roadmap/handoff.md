@@ -28734,3 +28734,32 @@ CI before interpreting unexecuted suites. The remaining source-child fuel failur
 and default core-import setup failure require diagnosis under unchanged budgets.
 No current-source Jank, issue acceptance, complete workspace baseline, passing CI
 or merge-readiness conclusion follows from this checkpoint.
+
+
+### Native fuel attribution source and raw runs (2026-10-16)
+
+Branch portable/m4-native-fuel-hotspots starts at be9403182656cf370c708842de2828e869af19e8.
+The twelve opt-in/test diagnostic source files and four regenerated bootstrap
+artifacts match all 450 compiled-input hashes from native-layout-and-domain-census.
+No representation or membership-search optimization has been implemented here.
+The evidence archive m4-native-fuel-hotspots-2026-10-16.tar.gz retains the
+chronological raw runs, rejected initial bootstrap mismatch, exact source snapshots,
+commands, exit receipts, observers and input manifests. Its internal SHA256 manifest
+covers each payload; the publication manifest itself is outside that manifest.
+
+The final run executes four observer tests successfully and regenerates bootstrap
+successfully. The exact core_import::imported_identity_preserves_exact_values_and_object_identity_across_gc
+fixture and source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo
+each fail with fuel exhaustion (exit 101, zero passes and one failure per command).
+See receipt.json for full cargo commands, raw logs and unchanged-input checks.
+No full baseline or final-head CI success is claimed for this diagnostic branch.
+
+Measured root analysis consumes 2,292,992 native units for 8,957 Arc<Hir> captures.
+Hir is 240 bytes in this build. Compact self-parameter ownership is a candidate,
+not an executed optimization or proven saving. Source-child variant zero spends
+4,118,259 units materializing its parent; variant one exhausts fuel. Its 2,880
+edge-membership checks consume 1,949,568 units versus 160,908 for node snapshots.
+These are nested instruction-fuel intervals, not wall-time or additive independent
+operation totals. Macro phase and remaining variants do not execute after failure.
+A direct-root-first membership search is a candidate; all snapshot, seed, owner,
+callback, foreign-store and negative-proof obligations remain required.

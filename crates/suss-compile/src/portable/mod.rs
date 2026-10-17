@@ -324,18 +324,20 @@ pub(crate) struct AnalyzedFragment {
 pub(crate) struct ExpansionRequest<'a> {
     host: &'a mut dyn ExpansionHost,
     remaining: u64,
+    _trace_request: hir::CowTraceRequest,
 }
 impl<'a> ExpansionRequest<'a> {
     pub(crate) fn new(host: &'a mut dyn ExpansionHost, span: Range<usize>) -> Result<Self, Diagnostic> {
         host.begin_expansion_request(span)?;
         let remaining = host.expansion_work_fuel();
-        hir::cow_trace_reset(remaining);
-        Ok(Self { host, remaining })
+        let trace_request = hir::CowTraceRequest::new(remaining);
+        Ok(Self { host, remaining, _trace_request: trace_request })
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
     fn expansion_work_fuel(&self) -> u64 { self.remaining }
     fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+        let trace_charge = hir::CowTraceCharge::new();
         let result = (|| {
             self.host.charge_expansion_work(work, span.clone())?;
             self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
@@ -344,7 +346,7 @@ impl ExpansionHost for ExpansionRequest<'_> {
             })?;
             Ok(())
         })();
-        hir::cow_trace_charge(work, &result);
+        trace_charge.record(work, &result);
         result
     }
 

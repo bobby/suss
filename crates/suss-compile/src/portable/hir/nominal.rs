@@ -84,7 +84,7 @@ impl Analyzer<'_> {
                 docstring: None,
                 initializer: Some(Box::new(descriptor)),
                 once: true,
-            },
+            }.census_created(),
         };
         let read = Hir {
             source: None,
@@ -175,7 +175,7 @@ impl Analyzer<'_> {
             let keys = self.nominal(form, Nominal::Array, keys);
             let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
                 kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
-                    initializer: Some(Box::new(keys)), once: true } };
+                    initializer: Some(Box::new(keys)), once: true }.census_created() };
             self.callable_keys.insert(table.clone(), definition);
         }
         let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
@@ -831,7 +831,7 @@ impl Analyzer<'_> {
                 docstring: None,
                 initializer: Some(Box::new(initialization)),
                 once: true,
-            },
+            }.census_created(),
         };
         // The macro transfers this form's own reader metadata to the created
         // object, emitting nil when the elided metadata is empty.
@@ -1146,7 +1146,7 @@ impl Analyzer<'_> {
                     captures,
                     self_binding: None,
                 rest_class: None,
-                },
+                }.census_created(),
             };
             methods.push(ProtocolMethod {
                 name: symbol.name.clone(),
@@ -1487,7 +1487,7 @@ impl Analyzer<'_> {
                             captures: captures.into_iter().collect(),
                             self_binding: None,
                 rest_class,
-                        }
+                        }.census_created()
                     };
                     let implementation = Hir {
                         source: None,

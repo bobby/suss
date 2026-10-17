@@ -407,8 +407,12 @@ impl Analyzer<'_> {
         super::super::clone_form_metered(form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))
     }
     pub(super) fn capture_local_access(&mut self, node: Hir) -> Result<Arc<Hir>, Diagnostic> {
-        cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 1, std::mem::size_of::<Hir>())?;
-        cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 2, std::mem::size_of::<usize>())?;
+        {
+            let _trace = CowTraceScope::new("local_access_owner");
+            cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 1, std::mem::size_of::<Hir>())?;
+            cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 2, std::mem::size_of::<usize>())?;
+        }
+        cow_trace_expression("capture_arc", &node.kind);
         Ok(Arc::new(node))
     }
     pub(super) fn clone_local_hir(&mut self, node: &Hir) -> Result<Hir, Diagnostic> {
@@ -423,10 +427,20 @@ impl Analyzer<'_> {
 struct CowTraceState {
     stack: Vec<&'static str>,
     totals: BTreeMap<String, (u64, u64, u64)>,
+    events: BTreeMap<&'static str, (u64, u64)>,
+    census: BTreeMap<(&'static str, &'static str), (u64, u64)>,
     budget: u64,
+    root: u64,
+    request_depth: usize,
+    charge_depth: usize,
+    shared_full_insert: bool,
 }
 thread_local! { static COW_TRACE: std::cell::RefCell<CowTraceState> = std::cell::RefCell::new(CowTraceState::default()); }
+#[cfg(test)]
+thread_local! { static COW_TRACE_FOR_TEST: std::cell::Cell<Option<bool>> = const { std::cell::Cell::new(None) }; }
 fn cow_trace_enabled() -> bool {
+    #[cfg(test)]
+    if let Some(enabled) = COW_TRACE_FOR_TEST.with(|enabled| enabled.get()) { return enabled }
     static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *ENABLED.get_or_init(|| std::env::var_os("SUSS_HIR_COW_TRACE").is_some())
 }
@@ -443,14 +457,74 @@ impl Drop for CowTraceScope {
         if self.0 { COW_TRACE.with(|state| { state.borrow_mut().stack.pop(); }); }
     }
 }
-pub(crate) fn cow_trace_reset(budget: u64) {
-    if cow_trace_enabled() { COW_TRACE.with(|state| {
-        let mut state = state.borrow_mut();
-        state.totals.clear(); state.budget = budget;
-    }); }
+/// A trace region follows the real ExpansionRequest lifetime. Only a root
+/// clears counters; nested requests retain earlier reader/dependency work.
+pub(crate) struct CowTraceRequest(bool);
+impl CowTraceRequest {
+    pub(crate) fn new(budget: u64) -> Self {
+        let enabled = cow_trace_enabled();
+        if enabled { COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            if state.request_depth == 0 {
+                state.totals.clear(); state.events.clear(); state.census.clear(); state.budget = budget;
+                for (name, bytes) in cow_trace_layouts() {
+                    state.census.insert(("layout", name), (1, bytes as u64));
+                }
+                state.root = state.root.wrapping_add(1);
+            }
+            state.request_depth += 1;
+            eprintln!("HIR_COW_TRACE event=request_begin root={} depth={} available={} root_budget={} reset={}",
+                state.root, state.request_depth, budget, state.budget, state.request_depth == 1);
+        }); }
+        Self(enabled)
+    }
 }
-pub(crate) fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
-    if !cow_trace_enabled() { return; }
+impl Drop for CowTraceRequest {
+    fn drop(&mut self) {
+        if !self.0 { return }
+        COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            state.request_depth -= 1;
+            if state.request_depth != 0 { return }
+            // Exactly one summary per root, including successful roots. Error
+            // headers below describe attempted debits, not extra summaries.
+            eprintln!("HIR_COW_TRACE event=root_end root={} budget={} charge_depth={}", state.root, state.budget, state.charge_depth);
+            for (label, (calls, accepted, rejected)) in &state.totals {
+                eprintln!("HIR_COW_TRACE bucket={label} calls={calls} accepted={accepted} rejected={rejected}");
+            }
+            for (label, (count, units)) in &state.events {
+                eprintln!("HIR_COW_TRACE event={label} count={count} units={units}");
+            }
+            for ((family, kind), (count, bytes)) in &state.census {
+                eprintln!("HIR_COW_TRACE census={family} kind={kind} count={count} bytes={bytes}");
+            }
+        });
+    }
+}
+/// Forwarding requests still perform every original check/debit. Only their
+/// diagnostic observations are suppressed: record once at the outermost call.
+pub(crate) struct CowTraceCharge { enabled: bool, outermost: bool }
+impl CowTraceCharge {
+    pub(crate) fn new() -> Self {
+        let enabled = cow_trace_enabled();
+        let outermost = enabled && COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            let outermost = state.charge_depth == 0;
+            state.charge_depth += 1;
+            outermost
+        });
+        Self { enabled, outermost }
+    }
+    pub(crate) fn record(&self, work: u64, result: &Result<(), Diagnostic>) {
+        if self.outermost { cow_trace_charge(work, result); }
+    }
+}
+impl Drop for CowTraceCharge {
+    fn drop(&mut self) {
+        if self.enabled { COW_TRACE.with(|state| state.borrow_mut().charge_depth -= 1); }
+    }
+}
+fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
     COW_TRACE.with(|state| {
         let mut state = state.borrow_mut();
         let leaf = state.stack.last().copied().unwrap_or("other_analysis");
@@ -458,17 +532,140 @@ pub(crate) fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
             let parents = &state.stack[..state.stack.len() - 1];
             let caller = if parents.is_empty() { "other_analysis".to_owned() } else { parents.join("/") };
             format!("form_copy:{caller}")
+        } else if state.shared_full_insert && matches!(leaf, "map_copy" | "map_growth_prepare") {
+            format!("{leaf}:shared_full")
         } else { leaf.to_owned() };
         let totals = state.totals.entry(label).or_default();
-        totals.0 += 1;
-        if result.is_ok() { totals.1 += work; } else { totals.2 += work; }
+        totals.0 = totals.0.saturating_add(1);
+        if result.is_ok() { totals.1 = totals.1.saturating_add(work); }
+        else { totals.2 = totals.2.saturating_add(work); }
         if let Err(error) = result {
-            eprintln!("HIR_COW_TRACE budget={} error={:?} message={:?}", state.budget, error.span, error.message);
-            for (label, (calls, accepted, rejected)) in &state.totals {
-                eprintln!("HIR_COW_TRACE bucket={label} calls={calls} accepted={accepted} rejected={rejected}");
-            }
+            // Rejected units are attempted work; a host may already have
+            // debited before a forwarding wrapper rejects its own allowance.
+            eprintln!("HIR_COW_TRACE event=charge_error root={} budget={} error={:?} message={:?}",
+                state.root, state.budget, error.span, error.message);
         }
     });
+}
+// Tuple sizes describe the current field types, not a promised layout for a
+// future boxed payload. The actual candidate type would need its own size check.
+fn cow_trace_layouts() -> [(&'static str, usize); 13] {
+    use std::mem::size_of;
+    [
+        ("Hir", size_of::<Hir>()), ("Expression", size_of::<Expression>()),
+        ("ArcHeader", 2 * size_of::<usize>()), ("Parameter", size_of::<Parameter>()),
+        ("Binding", size_of::<Binding>()), ("Global", size_of::<Global>()),
+        ("OptionParameter", size_of::<Option<Parameter>>()), ("OptionGlobal", size_of::<Option<Global>>()),
+        ("GeneralFunction_field_tuple", size_of::<(Vec<Method>, Vec<BindingId>, Option<Parameter>, Option<Global>)>()),
+        ("Definition_field_tuple", size_of::<(Global, Vec<Form>, Range<usize>, Option<Vec<u16>>, Option<Box<Hir>>, bool)>()),
+        ("AsyncTry_field_tuple", size_of::<(Box<Hir>, Option<Box<Hir>>, Option<Box<Hir>>, Option<Parameter>)>()),
+        ("GlobalOrFallback_field_tuple", size_of::<(Global, Global)>()),
+        ("Function_field_tuple", size_of::<(Vec<Parameter>, Vec<BindingId>, Box<Hir>)>()),
+    ]
+}
+fn cow_trace_expression_kind(kind: &Expression) -> &'static str {
+    use Expression::*;
+    match kind {
+        Future { .. } => "Future", Await { .. } => "Await", AsyncTry { .. } => "AsyncTry",
+        AsyncDynamicScope { .. } => "AsyncDynamicScope", Bitwise { .. } => "Bitwise",
+        Comparison { .. } => "Comparison", NilTest(_) => "NilTest", Array { .. } => "Array",
+        DynamicScope { .. } => "DynamicScope", Assign { .. } => "Assign", Throw(_) => "Throw",
+        Try { .. } => "Try", Nominal { .. } => "Nominal", Literal(_) => "Literal", Local(_) => "Local",
+        Global(_) => "Global", GlobalOrFallback { .. } => "GlobalOrFallback", GlobalCell(_) => "GlobalCell",
+        Definition { .. } => "Definition", Let { .. } => "Let", Loop { .. } => "Loop",
+        Recur { .. } => "Recur", If { .. } => "If", Do(_) => "Do", Function { .. } => "Function",
+        GeneralFunction { .. } => "GeneralFunction", Call { .. } => "Call", Arithmetic { .. } => "Arithmetic",
+    }
+}
+pub(super) fn cow_trace_expression(family: &'static str, kind: &Expression) {
+    if !cow_trace_enabled() { return }
+    let kind_name = cow_trace_expression_kind(kind);
+    COW_TRACE.with(|state| {
+        let mut state = state.borrow_mut();
+        let value = state.census.entry((family, kind_name)).or_default();
+        value.0 = value.0.saturating_add(1);
+        // Counts are diagnostic observations, never extra debits. Only the
+        // capture family denotes an actual Arc<Hir> backing allocation here.
+        let bytes = if family == "capture_arc" { std::mem::size_of::<Hir>() + 2 * std::mem::size_of::<usize>() }
+            else { std::mem::size_of::<Expression>() };
+        value.1 = value.1.saturating_add(bytes as u64);
+        // Field rows are counts only (bytes=0), not measured allocations. They
+        // partition the same family's variant observations and must not be
+        // summed into construction or capture counts a second time.
+        let mut field = |label| {
+            let value = state.census.entry((family, label)).or_default();
+            value.0 = value.0.saturating_add(1);
+        };
+        match kind {
+            Expression::GeneralFunction { self_binding, rest_class, .. } => {
+                field(if self_binding.is_some() { "GeneralFunction.self_binding_some" } else { "GeneralFunction.self_binding_none" });
+                field(if rest_class.is_some() { "GeneralFunction.rest_class_some" } else { "GeneralFunction.rest_class_none" });
+            }
+            Expression::AsyncTry { payload, .. } => {
+                field(if payload.is_some() { "AsyncTry.payload_some" } else { "AsyncTry.payload_none" });
+            }
+            Expression::Definition { docstring, name_metadata, .. } => {
+                field(if docstring.is_some() { "Definition.docstring_some" } else { "Definition.docstring_none" });
+                field(if name_metadata.is_empty() { "Definition.name_metadata_empty" } else { "Definition.name_metadata_nonempty" });
+            }
+            _ => {}
+        }
+    });
+}
+
+fn cow_trace_event(label: &'static str, units: usize) {
+    COW_TRACE.with(|state| {
+        let mut state = state.borrow_mut();
+        let value = state.events.entry(label).or_default();
+        value.0 = value.0.saturating_add(1);
+        value.1 = value.1.saturating_add(u64::try_from(units).unwrap_or(u64::MAX));
+    });
+}
+/// No map scans/reference-count reads are added when tracing is disabled.
+struct CowTraceMapInsert { enabled: bool, previous: bool, shared_full: bool }
+impl CowTraceMapInsert {
+    fn new<T>(map: &Arc<HashMap<String, Arc<T>>>, growing: bool) -> Self {
+        let enabled = cow_trace_enabled();
+        if !enabled { return Self { enabled, previous: false, shared_full: false } }
+        let shared = Arc::strong_count(map) != 1 || Arc::weak_count(map) != 0;
+        let shared_full = shared && growing;
+        let previous = COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            let previous = state.shared_full_insert;
+            state.shared_full_insert = shared_full;
+            previous
+        });
+        cow_trace_event(match (shared, growing) {
+            (true, true) => "map_insert_shared_full",
+            (true, false) => "map_insert_shared_nongrowing",
+            (false, true) => "map_insert_private_full",
+            (false, false) => "map_insert_private_nongrowing",
+        }, 0);
+        if shared_full {
+            cow_trace_event("shared_full_old_len", map.len());
+            cow_trace_event("shared_full_old_capacity", map.capacity());
+        }
+        Self { enabled, previous, shared_full }
+    }
+    fn copy_ready<T>(&self, staged: Option<&HashMap<String, Arc<T>>>) {
+        if self.shared_full {
+            if let Some(staged) = staged {
+                cow_trace_event("shared_full_copy_completed", staged.capacity());
+                if staged.capacity() != 0 { cow_trace_event("shared_full_nonempty_copy_table", staged.capacity()); }
+            }
+        }
+    }
+    fn growth_charge_capacity(&self, capacity: usize) {
+        if self.shared_full { cow_trace_event("shared_full_growth_charge_capacity", capacity); }
+    }
+    fn growth_ready(&self, capacity: usize) {
+        if self.shared_full { cow_trace_event("shared_full_growth_completed", capacity); }
+    }
+}
+impl Drop for CowTraceMapInsert {
+    fn drop(&mut self) {
+        if self.enabled { COW_TRACE.with(|state| state.borrow_mut().shared_full_insert = self.previous); }
+    }
 }
 
 type CowMeter<'a> = dyn FnMut(u64) -> Result<(), Diagnostic> + 'a;
@@ -675,6 +872,7 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
             }
             Call { callee, arguments } => Call { callee: cow_box(callee, meter)?, arguments: cow_hirs(arguments, meter)? },
         };
+        cow_trace_expression("metered_clone", &kind);
         Ok(Hir { source: node.source.clone(), span: node.span.clone(), metadata, ty: node.ty, kind })
     })
 }
@@ -739,9 +937,12 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
     meter(1)?;
     let key = cow_text(name, meter)?;
     let growing = !map.contains_key(name) && map.len() == map.capacity();
+    let trace_insert = CowTraceMapInsert::new(map, growing);
     if growing {
+        let _trace = CowTraceScope::new("map_growth_prepare");
         let capacity = map.capacity().checked_mul(2).and_then(|n| n.checked_add(4))
             .ok_or_else(|| fail(0..0, "Source ownership capacity overflow"))?;
+        trace_insert.growth_charge_capacity(capacity);
         cow_table::<T>(capacity, meter)?;
         cow_table::<T>(map.capacity(), meter)?;
         // HashMap growth rehashes existing String keys, not just Arc slots.
@@ -751,12 +952,16 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
         }
     }
     let mut staged = cow_map_copy(map, meter)?;
+    trace_insert.copy_ready(staged.as_ref());
     let previous = {
         let target = match staged.as_mut() {
             Some(staged) => staged,
             None => Arc::get_mut(map).expect("private source map"),
         };
-        if growing { target.try_reserve(1).map_err(|_| fail(0..0, "Unable to grow source ownership map"))?; }
+        if growing {
+            target.try_reserve(1).map_err(|_| fail(0..0, "Unable to grow source ownership map"))?;
+            trace_insert.growth_ready(target.capacity());
+        }
         target.insert(key, value)
     };
     if let Some(staged) = staged { *map = Arc::new(staged); }
@@ -781,6 +986,206 @@ fn local_revision_mut<'a>(locals: &'a mut SourceLocals, name: &str, meter: &mut 
     let entry = Arc::get_mut(locals).expect("private source map").get_mut(name).expect("existing local");
     if let Some(replacement) = replacement { *entry = replacement; }
     Ok(Arc::get_mut(entry).expect("private source entry"))
+}
+
+#[cfg(test)]
+mod cow_trace_tests {
+    use super::*;
+    use crate::portable::{ExpansionHost, ExpansionRequest, NoExpansion};
+
+    struct TraceTest {
+        saved: CowTraceState,
+        enabled: Option<bool>,
+    }
+    impl TraceTest {
+        fn new(enabled: bool) -> Self {
+            let saved = COW_TRACE.with(|state| std::mem::take(&mut *state.borrow_mut()));
+            let previous = COW_TRACE_FOR_TEST.with(|state| state.replace(Some(enabled)));
+            Self { saved, enabled: previous }
+        }
+    }
+    impl Drop for TraceTest {
+        fn drop(&mut self) {
+            COW_TRACE.with(|state| *state.borrow_mut() = std::mem::take(&mut self.saved));
+            COW_TRACE_FOR_TEST.with(|state| state.set(self.enabled));
+        }
+    }
+
+    #[derive(Default)]
+    struct Meter { accepted: u64 }
+    impl ExpansionHost for Meter {
+        fn expansion_work_fuel(&self) -> u64 { 100 - self.accepted }
+        fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+            if work == 13 { return Err(fail(span, "trace host rejection")) }
+            if work == 99 { panic!("trace host unwind") }
+            self.accepted += work;
+            Ok(())
+        }
+        fn expand(&mut self, _: &Form, _: crate::portable::ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> { Ok(None) }
+    }
+
+    #[test]
+    fn nested_forwarding_records_once_retains_earlier_work_and_recovers_after_error_and_unwind() {
+        let _test = TraceTest::new(true);
+        let mut host = Meter::default();
+        {
+            let mut root = ExpansionRequest::new(&mut host, 0..10).unwrap();
+            root.charge_expansion_work(3, 1..2).unwrap();
+            {
+                let mut second = ExpansionRequest::new(&mut root, 0..10).unwrap();
+                let mut third = ExpansionRequest::new(&mut second, 0..10).unwrap();
+                let mut fourth = ExpansionRequest::new(&mut third, 0..10).unwrap();
+                fourth.charge_expansion_work(7, 2..3).unwrap();
+                COW_TRACE.with(|state| {
+                    let state = state.borrow();
+                    assert_eq!(state.budget, 100);
+                    assert_eq!(state.request_depth, 4);
+                    assert_eq!(state.totals["other_analysis"], (2, 10, 0));
+                });
+                let error = fourth.charge_expansion_work(13, 3..4).unwrap_err();
+                assert_eq!(error.message, "trace host rejection");
+                let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let _scope = CowTraceScope::new("unwinding_test");
+                    let _ = fourth.charge_expansion_work(99, 4..5);
+                }));
+                assert!(panic.is_err());
+                COW_TRACE.with(|state| {
+                    assert_eq!(state.borrow().charge_depth, 0);
+                    assert!(state.borrow().stack.is_empty());
+                });
+                fourth.charge_expansion_work(2, 5..6).unwrap();
+            }
+            COW_TRACE.with(|state| {
+                let state = state.borrow();
+                assert_eq!(state.request_depth, 1);
+                assert_eq!(state.totals["other_analysis"], (4, 12, 13));
+            });
+        }
+        assert_eq!(host.accepted, 12, "diagnostic suppression must not alter host debits");
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.request_depth, 0);
+            assert_eq!(state.charge_depth, 0);
+            assert_eq!(state.root, 1);
+        });
+        let mut next = ExpansionRequest::new(&mut host, 0..10).unwrap();
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.root, 2);
+            assert_eq!(state.budget, 88);
+            assert!(state.totals.is_empty());
+        });
+        next.charge_expansion_work(1, 6..7).unwrap();
+        COW_TRACE.with(|state| assert_eq!(state.borrow().totals["other_analysis"], (1, 1, 0)));
+    }
+
+    #[test]
+    fn hir_layout_and_variant_census_separates_real_capture_from_direct_and_clone_construction() {
+        let _test = TraceTest::new(true);
+        let _request = CowTraceRequest::new(100);
+        let kind = Expression::GeneralFunction { methods: vec![], captures: vec![], self_binding: None, rest_class: None }.census_created();
+        let original = Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Value, kind };
+        let cloned = original.clone();
+        let metered = cow_hir(&original, &mut |_| Ok(())).unwrap();
+        assert!(matches!(cloned.kind, Expression::GeneralFunction { .. }));
+        assert!(matches!(metered.kind, Expression::GeneralFunction { .. }));
+        // Exercise an actual capture through the native analyzer; no Session,
+        // bootstrap restore, or guest execution is needed for this census test.
+        let source = "(let* [x 1] x)";
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let _analyzed = super::super::prepare(&forms, 0..source.len(), &Environment::default(), Phase::Runtime).unwrap();
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.census[&("layout", "Hir")], (1, std::mem::size_of::<Hir>() as u64));
+            assert_eq!(state.census[&("layout", "Expression")], (1, std::mem::size_of::<Expression>() as u64));
+            assert_eq!(state.census[&("constructed_direct", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("derived_clone", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("metered_clone", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("capture_arc", "Literal")], (1, (std::mem::size_of::<Hir>() + 2 * std::mem::size_of::<usize>()) as u64));
+        });
+        let parameter = || Parameter { id: BindingId(9), name: "payload".into(), metadata: vec![], span: 0..1 };
+        let body = || Box::new(Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Nil,
+            kind: Expression::Literal(Literal::Nil) });
+        for kind in [
+            Expression::GeneralFunction { methods: vec![], captures: vec![], self_binding: Some(parameter()), rest_class: None }.census_created(),
+            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: Some(parameter()) }.census_created(),
+            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: None }.census_created(),
+        ] {
+            let node = Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Value, kind };
+            let _cloned = node.clone();
+            let _copied = cow_hir(&node, &mut |_| Ok(())).unwrap();
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            for family in ["constructed_direct", "derived_clone", "metered_clone"] {
+                for field in ["GeneralFunction.self_binding_none", "GeneralFunction.self_binding_some", "AsyncTry.payload_none", "AsyncTry.payload_some"] {
+                    assert_eq!(state.census[&(family, field)], (1, 0));
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn shared_full_insert_reports_the_actual_staged_copy_and_growth_without_changing_map_facts() {
+        let _test = TraceTest::new(true);
+        let mut host = NoExpansion;
+        let mut request = ExpansionRequest::new(&mut host, 0..10).unwrap();
+        let mut raw = HashMap::new();
+        raw.try_reserve(3).unwrap();
+        let old_capacity = raw.capacity();
+        for index in 0..old_capacity { raw.insert(format!("key-{index}"), Arc::new(())); }
+        let mut map = Arc::new(raw);
+        let saved = map.clone();
+        cow_insert(&mut map, "new-key", Arc::new(()), &mut |work| request.charge_expansion_work(work, 0..10)).unwrap();
+        assert_eq!(saved.len(), old_capacity);
+        assert!(!saved.contains_key("new-key"));
+        assert_eq!(map.len(), old_capacity + 1);
+        assert!(map.capacity() > old_capacity);
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.events["map_insert_shared_full"], (1, 0));
+            assert_eq!(state.events["shared_full_old_capacity"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_copy_completed"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_nonempty_copy_table"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_growth_completed"], (1, map.capacity() as u64));
+            assert!(state.totals["map_copy:shared_full"].1 > 0);
+            assert!(state.totals["map_growth_prepare:shared_full"].1 > 0);
+        });
+    }
+
+    #[test]
+    fn disabled_trace_leaves_observer_state_untouched_and_ir_labels_are_distinct() {
+        let _test = TraceTest::new(false);
+        {
+            let _request = CowTraceRequest::new(10);
+            let _scope = CowTraceScope::new("ir_build");
+            let charge = CowTraceCharge::new();
+            charge.record(2, &Ok(()));
+            let map: Arc<HashMap<String, Arc<()>>> = Arc::new(HashMap::new());
+            let map_trace = CowTraceMapInsert::new(&map, true);
+            map_trace.growth_charge_capacity(4);
+            map_trace.growth_ready(3);
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.root, 0);
+            assert_eq!(state.request_depth, 0);
+            assert_eq!(state.charge_depth, 0);
+            assert!(state.stack.is_empty() && state.totals.is_empty() && state.events.is_empty() && state.census.is_empty());
+        });
+        COW_TRACE_FOR_TEST.with(|enabled| enabled.set(Some(true)));
+        let _request = CowTraceRequest::new(10);
+        for (label, work) in [("ir_recurrence", 2), ("ir_build", 3)] {
+            let _scope = CowTraceScope::new(label);
+            let charge = CowTraceCharge::new();
+            charge.record(work, &Ok(()));
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.totals["ir_recurrence"], (1, 2, 0));
+            assert_eq!(state.totals["ir_build"], (1, 3, 0));
+        });
+    }
 }
 
 #[cfg(test)]

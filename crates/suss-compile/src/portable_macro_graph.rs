@@ -539,6 +539,10 @@ impl<'a> AnalysisGraph<'a> {
         mut control: Option<&mut reuse::Build<'_>>,
         source: Option<(&source_roots::SourceInputs, &FormBridge)>,
     ) -> Result<SessionValue> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if fuel_trace {
+            eprintln!("source-materialize root={root} event=entry remaining={:?}", self.session.operation_fuel_remaining().ok());
+        }
         self.finish_recipes()?;
         if source.is_some() && control.is_some() {
             return Err(SessionError::Host(wasmtime::Error::msg("Source and legacy metadata controllers cannot overlap")));
@@ -728,6 +732,20 @@ impl<'a> AnalysisGraph<'a> {
             let active_bridge = if !frame.tainted && has_inputs {
                 source.map_or(self.bridge, |(_, normal)| normal)
             } else { bridge };
+            // Frames dispatch only after their dependencies have completed;
+            // these intervals exclude child recipe dispatches.
+            if fuel_trace {
+                let kind = match self.recipes[frame.id].as_ref().unwrap() {
+                    Recipe::Scalar(_) => "scalar", Recipe::Identifier { .. } => "identifier",
+                    Recipe::Form(_) => "form", Recipe::Alias(_) => "alias",
+                    Recipe::List(_) => "list", Recipe::Vector(_) => "vector",
+                    Recipe::ReaderVector(_) => "reader-vector", Recipe::Set(_) => "set",
+                    Recipe::ReaderSet(_) => "reader-set", Recipe::Map(_) => "map",
+                    Recipe::ReaderMap(_) => "reader-map", Recipe::Metadata { .. } => "metadata",
+                };
+                eprintln!("source-materialize root={root} recipe={} kind={kind} event=dispatch-before remaining={:?}", frame.id, self.session.operation_fuel_remaining().ok());
+            }
+            let result: Result<SessionValue> = (|| {
             let value = if let Some((inputs, _)) = source.filter(|(inputs,_)| inputs.intercepts(frame.id)) {
                 self.session.charge_host_work(1)?;
                 inputs.selected(self.session, frame.id)?.ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Missing selected source input")))?.clone()
@@ -781,6 +799,13 @@ impl<'a> AnalysisGraph<'a> {
                     &inputs[1..1 + set_items.len()],
                 )?,
             }};
+            Ok(value)
+            })();
+            if fuel_trace {
+                eprintln!("source-materialize root={root} recipe={} event=dispatch-after result={:?} remaining={:?}",
+                    frame.id, result.as_ref().map(|_| ()).map_err(|error| error.to_string()), self.session.operation_fuel_remaining().ok());
+            }
+            let value = result?;
             let tainted=if source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id)) {
                 true
             } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
@@ -798,6 +823,9 @@ impl<'a> AnalysisGraph<'a> {
                 }
                 parent.inputs.push(value);
             } else {
+                if fuel_trace {
+                    eprintln!("source-materialize root={root} event=return remaining={:?}", self.session.operation_fuel_remaining().ok());
+                }
                 return Ok(value);
             }
         }

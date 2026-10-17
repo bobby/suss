@@ -2,7 +2,7 @@
 mod arrays;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionForm, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
-pub(crate) use local_bindings::{CowTraceScope, cow_trace_charge, cow_trace_reset};
+pub(crate) use local_bindings::{CowTraceScope, CowTraceCharge, CowTraceRequest};
 mod function_parameters;
 mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
@@ -643,7 +643,7 @@ impl Clone for Hir {
             span: self.span.clone(),
             metadata: self.metadata.clone(),
             ty: self.ty,
-            kind: self.kind.clone(),
+            kind: self.kind.clone().census_cloned(),
         })
     }
 }
@@ -778,6 +778,18 @@ pub enum Expression {
         operator: Arithmetic,
         arguments: Vec<Hir>,
     },
+}
+impl Expression {
+    /// Diagnostic constructor hook. Moves/rewrites of an existing expression
+    /// must not call this: they do not allocate a hypothetical new payload.
+    pub(crate) fn census_created(self) -> Self {
+        local_bindings::cow_trace_expression("constructed_direct", &self);
+        self
+    }
+    fn census_cloned(self) -> Self {
+        local_bindings::cow_trace_expression("derived_clone", &self);
+        self
+    }
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
     Diagnostic {
@@ -939,12 +951,19 @@ impl Analyzer<'_> {
         // Recursive re-expansion consumes the enclosing request budget. The
         // growable stack below protects native analysis without imposing a
         // fixed language-level nesting ceiling.
-        self.expander.charge_expansion_work(1, form.span.clone())?;
+        {
+            let _trace = CowTraceScope::new("analysis_visit");
+            self.expander.charge_expansion_work(1, form.span.clone())?;
+        }
         let previous_origin = self.origin.clone();
-        let has_template = self.analysis_depth == 0 && super::syntax_quote::has_template_metered(
-            form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-        )?;
+        let has_template = self.analysis_depth == 0 && {
+            let _trace = CowTraceScope::new("syntax_quote_scan");
+            super::syntax_quote::has_template_metered(
+                form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+            )?
+        };
         let reader_form = if has_template {
+            let _trace = CowTraceScope::new("reader_expand_replay");
             let expander = &mut *self.expander;
             let mut meter = |work| expander.charge_expansion_work(work, form.span.clone());
             let mut reader = self.environment.reader_state.clone();
@@ -1058,6 +1077,7 @@ impl Analyzer<'_> {
             }
         }
         let coerced = {
+            let _trace = CowTraceScope::new("reader_sequence_probe");
             let expander = &mut *self.expander;
             super::syntax_quote::reader_sequence_initializer(
                 form, &self.environment, self.phase, self.origin.as_deref(),
@@ -1082,7 +1102,7 @@ impl Analyzer<'_> {
                             docstring: None,
                             initializer: Some(Box::new(initializer)),
                             once: true,
-                        },
+                        }.census_created(),
                     },
                 );
             }
@@ -1101,7 +1121,7 @@ impl Analyzer<'_> {
                         span: items[0].span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
-                        kind: Expression::GlobalOrFallback { global, fallback },
+                        kind: Expression::GlobalOrFallback { global, fallback }.census_created(),
                     }),
                     arguments: vec![argument],
                 },
@@ -1286,7 +1306,7 @@ impl Analyzer<'_> {
                         if let Some(binding) = self.locals.get(&symbol.name) {
                             (Expression::Local(binding.id), binding.ty)
                         } else if let Some(field) = self.fields.get(&symbol.name) {
-                            (field.access.kind.clone(), field.access.ty)
+                            (field.access.kind.clone().census_cloned(), field.access.ty)
                         } else {
                             self.global_value(symbol, form.span.clone())?
                         }
@@ -1478,7 +1498,10 @@ impl Analyzer<'_> {
                 .and_then(|work| work.checked_add(1))
                 .and_then(|work| u64::try_from(work).ok())
                 .ok_or_else(|| fail(form.span.clone(), "Definition owner work overflow"))?;
-            self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            {
+                let _trace = CowTraceScope::new("definition_owner");
+                self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            }
             Some(self.environment.record_definition_shared(global.clone(), definition.clone()))
         } else {
             None
@@ -1523,7 +1546,7 @@ impl Analyzer<'_> {
                 },
                 initializer,
                 once,
-            },
+            }.census_created(),
         })
     }
     fn function(
@@ -1738,7 +1761,7 @@ impl Analyzer<'_> {
                 captures: captures.into_iter().collect(),
                 self_binding,
                 rest_class,
-            },
+            }.census_created(),
         };
         let function = self.attach_callable_signatures(form, function)?;
         *self
