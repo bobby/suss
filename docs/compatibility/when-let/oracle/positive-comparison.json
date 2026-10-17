@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "status": "match",
+  "rows": 16,
+  "scope": "Pinned CLJS observations match the authored native regression expectation; native execution remains separate.",
+  "observation_sha256": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
+  "guest_sha256": "1ff240f8d0c564ff59d72a63e3271b0dbd9c6271a500cedf37f7c3ba40e68583"
+}

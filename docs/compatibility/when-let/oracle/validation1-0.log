@@ -1,0 +1,4 @@
+WARNING: unchecked-max already refers to: cljs.core/unchecked-max being replaced by: cljs.core$macros/unchecked-max at line 1204 /home/bobby/Work/code/bobby/suss-m4-when-let/clojurescript/src/main/clojure/cljs/core.cljc
+WARNING: unchecked-min already refers to: cljs.core/unchecked-min being replaced by: cljs.core$macros/unchecked-min at line 1212 /home/bobby/Work/code/bobby/suss-m4-when-let/clojurescript/src/main/clojure/cljs/core.cljc
+WARNING: refer-global already refers to: cljs.core/refer-global being replaced by: cljs.core$macros/refer-global at line 3135 /home/bobby/Work/code/bobby/suss-m4-when-let/clojurescript/src/main/clojure/cljs/core.cljc
+WARNING: require-global already refers to: cljs.core/require-global being replaced by: cljs.core$macros/require-global at line 3142 /home/bobby/Work/code/bobby/suss-m4-when-let/clojurescript/src/main/clojure/cljs/core.cljc

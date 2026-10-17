@@ -1,0 +1,36 @@
+{
+  "commands": [
+    [
+      "/home/bobby/.cache/suss-m4-oracle-tools/bin/clojure",
+      "-J-Xmx1g",
+      "-J-XX:ActiveProcessorCount=2",
+      "-Srepro",
+      "-M",
+      "-m",
+      "cljs.main",
+      "-co",
+      "{:force true :cache-analysis false :target :nodejs :output-to \"out/validation2/probe.js\" :output-dir \"out/validation2/cljs\" :optimizations :none :source-map false}",
+      "-c",
+      "suss-oracle.when-let-validation"
+    ],
+    [
+      "node",
+      "out/validation2/probe.js"
+    ]
+  ],
+  "source_sha256": "15b4ac47b62be2e5a0ae1bc264962597595c43c280510932fd83c4eb89ed4fc5",
+  "steps": [
+    {
+      "exit": 0,
+      "seconds": 26.41315648201271,
+      "log": "validation2-0.log"
+    },
+    {
+      "exit": 0,
+      "seconds": 0.628597504022764,
+      "log": "validation2-1.log"
+    }
+  ],
+  "scope": "Pinned development CLJS/Node only; no Suss execution.",
+  "source_unchanged": true
+}

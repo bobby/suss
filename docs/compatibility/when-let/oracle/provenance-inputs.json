@@ -1,0 +1,13 @@
+{
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source_root": "/home/bobby/Work/code/bobby/suss-m4-when-let",
+  "files": {
+    "clojurescript/src/main/clojure/cljs/core.cljc": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+    "clojurescript/src/main/clojure/cljs/support.cljc": "36b15fe0942c2f3d8dc80f7abc07adc9b380bb6e83cd5edcedb1abe9257663dd",
+    "runtime/core-import/epl-v10.html": "d0d35c5fb45696fcaa98858f6c1f1cf0d41400302f4adb966eb9a54fa9b9a226",
+    "crates/suss-cli/tests/compiled_when_let.rs": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+    "tests/oracle/src/suss_oracle/main.cljs": "60c7af8b3f2ae9a231713c01c95eb22d586c06a7bd59e5fd331ef79e35dcc089"
+  },
+  "guest_sha256": "1ff240f8d0c564ff59d72a63e3271b0dbd9c6271a500cedf37f7c3ba40e68583",
+  "scope": "Development-only positive fixture copied from frozen native regression."
+}

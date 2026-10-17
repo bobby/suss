@@ -1,0 +1,1 @@
+support.cljc helper ends at line18; initial metadata listed19 although excerpt bytes already stopped at EOF. Corrected range metadata only; retained predecessor. No executable fixture or observation changed.
