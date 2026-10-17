@@ -26440,3 +26440,24 @@ After these focused checks, the required
 on the same compiled tuple using `run-when-let-full-baseline.py`. Its archived
 launch receipt is partial, not a terminal outcome. Inspect the live producer
 receipt/log and final-head CI before claiming a workspace or acceptance pass.
+
+
+### Core-import manifest dependency refresh for when-let (2026-10-16)
+
+CI for41674a7 correctly rejected the stale core-import manifest reviews hash.
+Regeneration changes only reviews-sha256 in runtime/core-import/manifest.json;
+all imported source bytes remain unchanged. Both generated bootstrap JSON/Wasm
+pairs now bind that manifest. Independent review confirms unchanged non-custom
+Wasm sections and the exact post-bootstrap input freeze. No checker was weakened.
+
+The earlier required full baseline at41674a7 was stopped by authorized SIGINT
+after this confirmed provenance blocker:55 completed passing tests, two additional
+observed passes in an interrupted target, zero observed failures; remaining work
+is unexecuted. All1846 declared inputs, including419 compiled inputs, remain
+unchanged in its retained stop receipt. This is partial evidence, not a baseline pass.
+
+The isolated repair passes core-import/provenance checks and its15 checker
+regressions. Focused compiled validation, native let/when-let and selected Jank
+currently total13 Rust passes; all12 original Jank IDs execute and match host
+comparisons. The Java-free bootstrap verifier and subsequent required full
+workspace baseline/final-head CI are separate gates; no readiness is claimed.

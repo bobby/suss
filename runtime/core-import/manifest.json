@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "6a420f4c6f9393ac793c9500971d2cb51fdad3254b8a539c72c01fe348ef6d18",
-  "reviews-sha256": "06a959c6938d810b7305d651bb23a4182d2a3884b95a75100a9048605a0114da",
+  "reviews-sha256": "8a5e21f754c05e3f3993479748d320e0b9e5f751d170015563ac09c179fa00c8",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
