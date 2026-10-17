@@ -382,6 +382,18 @@ pub(super) fn normalized_copy(session: &mut Session, source: &Form) -> Result<Fo
     )?;
     normalize(session, copy)
 }
+// An owned finite observation, never a source/storage authority. Only the
+// private callback-free root check retains this across two comparisons.
+pub(super) struct ObservedSource {
+    actual: Form,
+    source_valid: bool,
+}
+impl ObservedSource {
+    pub(super) fn read(session: &mut Session, bridge: &FormBridge, value: &SessionValue) -> Result<Self> {
+        let (actual, source_valid) = bridge.read_finite(session, value)?;
+        Ok(Self { actual, source_valid })
+    }
+}
 impl LogicalSourceWitness {
     /// None is conservative admission decline, never a successful certificate.
     /// Compound/ambiguous keys still need native portable key normalization.
@@ -413,12 +425,22 @@ impl LogicalSourceWitness {
         value: &SessionValue,
     ) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
-        let (actual, source_valid) = bridge.read_finite(session, value)?;
-        if !source_valid {
+        let observed = ObservedSource::read(session, bridge, value)?;
+        self.matches_observed(session, &observed)
+    }
+    pub(super) fn matches_observed(
+        &self, session: &mut Session, observed: &ObservedSource,
+    ) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        // This comparison still performs work and must poll even for false
+        // source validity: the old second finite read polled here as well.
+        session.charge_host_work(1)?;
+        let actual = &observed.actual;
+        if !observed.source_valid {
             return Ok(false);
         }
         if self.small_unordered {
-            return paired_logical_equal(session, &self.expected, &actual);
+            return paired_logical_equal(session, &self.expected, actual);
         }
         let mut keys = Interner::default();
         let mut plan = Plan::default();
@@ -426,7 +448,7 @@ impl LogicalSourceWitness {
             session.charge_host_work(work)
         })?;
         let expected = plan.nodes[expected].key;
-        let actual = keys.unordered_plan(&actual, &mut plan, &mut |work| {
+        let actual = keys.unordered_plan(actual, &mut plan, &mut |work| {
             session.charge_host_work(work)
         })?;
         session.charge_host_work(1)?;
@@ -453,6 +475,63 @@ mod tests {
             Phase::Runtime => Session::new_repl().unwrap(),
             Phase::Macro => Session::new_macro().unwrap(),
         }
+    }
+    #[test]
+    fn finite_observation_compares_each_witness_and_next_read_observes_mutation() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = session(phase);
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let good = LogicalSourceWitness::from_source(&mut session, &source("(1 2)")).unwrap().unwrap();
+            let wrong = LogicalSourceWitness::from_source(&mut session, &source("(1 3)")).unwrap().unwrap();
+            let value = session.eval("(list 1 2)").unwrap();
+            let observed = ObservedSource::read(&mut session, &bridge, &value).unwrap();
+            session.collect().unwrap();
+            assert!(good.matches_observed(&mut session, &observed).unwrap());
+            assert!(!wrong.matches_observed(&mut session, &observed).unwrap());
+            assert!(good.matches_observed(&mut session, &observed).unwrap());
+            // End the pass before the real guest mutation.
+            drop(observed);
+            let mutate = session.eval("(fn [x] (set! (.-first x) 9))").unwrap();
+            drop(session.invoke(&mutate, &[&value]).unwrap());
+            let fresh = ObservedSource::read(&mut session, &bridge, &value).unwrap();
+            assert!(!good.matches_observed(&mut session, &fresh).unwrap());
+        }
+    }
+    #[test]
+    fn finite_observation_comparison_preserves_fuel_irq_and_retry() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let witness = LogicalSourceWitness::from_source(&mut session, &source("(1 2)")).unwrap().unwrap();
+        let value = session.eval("(list 1 2)").unwrap();
+        let observed = ObservedSource::read(&mut session, &bridge, &value).unwrap();
+        session.with_operation_budget(|session| {
+            let remaining = session.operation_fuel_remaining()?;
+            session.charge_host_work(remaining)?;
+            assert!(matches!(witness.matches_observed(session, &observed), Err(SessionError::Trap(_))));
+            Ok(())
+        }).unwrap();
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            assert!(witness.matches_observed(session, &observed).unwrap_err().is_interrupt());
+            Ok(())
+        }).unwrap();
+        assert!(witness.matches_observed(&mut session, &observed).unwrap());
+        let keyword = session.eval(":finite-invalid").unwrap();
+        corrupt_fqn(&mut session, &keyword);
+        let invalid = ObservedSource::read(&mut session, &bridge, &keyword).unwrap();
+        assert!(!witness.matches_observed(&mut session, &invalid).unwrap());
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            assert!(witness.matches_observed(session, &invalid).unwrap_err().is_interrupt());
+            Ok(())
+        }).unwrap();
+        session.with_operation_budget(|session| {
+            let remaining = session.operation_fuel_remaining()?;
+            session.charge_host_work(remaining)?;
+            assert!(matches!(witness.matches_observed(session, &invalid), Err(SessionError::Trap(_))));
+            Ok(())
+        }).unwrap();
+        assert!(!witness.matches_observed(&mut session, &invalid).unwrap());
     }
     #[test]
     fn source_facts_compare_unordered_pairs_metadata_and_exact_numeric_bits() {

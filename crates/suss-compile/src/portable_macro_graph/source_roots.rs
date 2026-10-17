@@ -610,6 +610,12 @@ impl AnalysisGraph<'_> {
         })))
     }
 }
+// One-shot fixture seam after root authority checks, immediately before
+// the independent current comparison. No release-build API or callback.
+#[cfg(test)]
+std::thread_local! {
+    static CURRENT_WITNESS_INTERRUPT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
 impl Certificate {
     fn finish_bound(
         session: &mut Session,
@@ -745,11 +751,23 @@ impl Certificate {
         // logical equivalence cannot substitute for a source-owner mismatch.
         session.charge_host_work(key_comparison_work(&owner, &certificate.source.key))?;
         let same = owner == certificate.source.key;
-        let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
-        let current =
-            expected
-                .witness
-                .matches_logical_source(session, bridge, &certificate.value)?;
+        // Only a newly validated ROOT hands its actual observation directly
+        // to the independent expected comparison. Completed entries retain no
+        // Forms; a completed-root hit uses the original fresh current read.
+        session.charge_host_work(1)?;
+        let mut observed = None;
+        let valid = Self::validate_into_observing(
+            session, bridge, certificate, done, audit, Some(&mut observed),
+        )?;
+        #[cfg(test)]
+        if CURRENT_WITNESS_INTERRUPT.with(|armed| armed.replace(false)) {
+            session.interrupt_handle().interrupt();
+        }
+        let current = match observed.as_ref() {
+            Some(observed) => expected.witness.matches_observed(session, observed)?,
+            None => expected.witness.matches_logical_source(session, bridge, &certificate.value)?,
+        };
+        drop(observed);
         if !(same && valid && current) {
             return Ok(None);
         }
@@ -775,6 +793,16 @@ impl Certificate {
         root: &Rc<Self>,
         done: &mut Vec<(Rc<Self>, bool)>,
         audit: &mut crate::portable_session::certification_audit::CertificationAudit,
+    ) -> Result<bool> {
+        Self::validate_into_observing(session, bridge, root, done, audit, None)
+    }
+    fn validate_into_observing(
+        session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge,
+        root: &Rc<Self>,
+        done: &mut Vec<(Rc<Self>, bool)>,
+        audit: &mut crate::portable_session::certification_audit::CertificationAudit,
+        mut root_observation: Option<&mut Option<super::source_facts::ObservedSource>>,
     ) -> Result<bool> {
         let mut stack = Vec::new();
         reserve(session, &mut stack, 1)?;
@@ -830,11 +858,26 @@ impl Certificate {
                 valid &= found.ok_or_else(|| invalid("Unvalidated source child"))?;
             }
             // No short circuit suppresses later native authority/errors.
-            valid &= certificate.source.witness.matches_logical_source(
-                session,
-                bridge,
-                &certificate.value,
-            )?;
+            let retain_root = if root_observation.is_some() {
+                session.charge_host_work(1)?;
+                Rc::ptr_eq(&certificate, root)
+            } else {
+                false
+            };
+            let observed = if retain_root {
+                let observed = super::source_facts::ObservedSource::read(
+                    session, bridge, &certificate.value,
+                )?;
+                valid &= certificate.source.witness.matches_observed(session, &observed)?;
+                Some(observed)
+            } else {
+                // Descendants and standalone validation keep their original
+                // immediate observation lifetime.
+                valid &= certificate.source.witness.matches_logical_source(
+                    session, bridge, &certificate.value,
+                )?;
+                None
+            };
             valid &= certificate.records.matches_direct_facts(session)?;
             valid &= certificate
                 .records
@@ -847,7 +890,13 @@ impl Certificate {
                 .matches_prototype_origins_audited(session, audit)?;
             reserve(session, done, 1)?;
             session.charge_host_work(1)?;
+            if observed.is_some() {
+                session.charge_host_work(1)?;
+            }
             done.push((certificate.clone(), valid));
+            if let Some(observed) = observed {
+                **root_observation.as_mut().expect("root observation requested") = Some(observed);
+            }
         }
         // A previously completed root need not be the last completed entry.
         for (pointer, result) in done.iter() {
@@ -1070,6 +1119,23 @@ mod tests {
             let wrong = graph.source_root_expectation(b).unwrap().unwrap();
             (certificate, wrong)
         };
+        let wrong_contents = Rc::new(Expectation {
+            owner: certificate.source.owner.clone(),
+            key: certificate.source.owner.key(&mut session).unwrap(),
+            witness: super::super::source_facts::LogicalSourceWitness::from_source(
+                &mut session, &suss_reader::forms::read_forms("nil").unwrap().pop().unwrap(),
+            ).unwrap().unwrap(),
+            children: Vec::new(),
+        });
+        let independent = Certificate::checked_batch(&mut session, &bridge, [
+            (&certificate, &certificate.source),
+            (&certificate, &wrong_contents),
+            (&certificate, &certificate.source),
+        ]).unwrap();
+        assert!(independent[0].is_some());
+        assert!(independent[1].is_none(), "same owner cannot replace independent logical comparison");
+        assert!(independent[2].is_some());
+        drop(independent);
         session.collect().unwrap();
         // Repeating the same genuine root exercises a completed-root hit; its
         // independent expected owner must still be checked on every occurrence.
@@ -1167,6 +1233,44 @@ mod tests {
                 .unwrap()
                 .is_some()
         );
+    }
+    #[test]
+    fn false_root_observation_still_polls_current_witness_after_authority_checks() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit {:x 17}} finite-irq-root 1)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let certificate = {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let (_, meta, _) = declaration(&mut graph, "finite-irq-root");
+            standalone(&mut graph, meta)
+        };
+        let get_key = session.eval("(fn [m] (first (keys m)))").unwrap();
+        let key = session.invoke(&get_key, &[&certificate.value]).unwrap();
+        let get_fqn = session.eval("(fn [k] (.-fqn k))").unwrap();
+        let saved = session.invoke(&get_fqn, &[&key]).unwrap();
+        let poison = session.eval("\"forged-finite-fqn\"").unwrap();
+        fn replace_fqn(session: &mut Session, key: &SessionValue, value: &SessionValue) {
+            session.inspect(key, |mut store, key| {
+                let object = key.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = object.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                let value = value.rooted(&mut store);
+                fields.set(&mut store, 2, wasmtime::Val::AnyRef(Some(value)))
+            }).unwrap();
+        }
+        replace_fqn(&mut session, &key, &poison);
+        assert!(!bridge.read_finite(&mut session, &certificate.value).unwrap().1,
+            "fixture must produce an actual source-invalid finite observation");
+        CURRENT_WITNESS_INTERRUPT.with(|armed| armed.set(true));
+        match Certificate::checked(&mut session, &bridge, &certificate, &certificate.source) {
+            Err(error) => assert!(error.is_interrupt()),
+            Ok(_) => panic!("false source validity must not hide the current-check interrupt"),
+        }
+        assert!(!CURRENT_WITNESS_INTERRUPT.with(|armed| armed.get()), "must reach exact current-check seam");
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &certificate.source).unwrap().is_none());
+        replace_fqn(&mut session, &key, &saved);
+        session.collect().unwrap();
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &certificate.source).unwrap().is_some());
     }
     #[test]
     fn runtime_keyword_warming_does_not_authenticate_source_factory_facts() {
