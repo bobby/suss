@@ -98,7 +98,17 @@ impl Session {
         }
         // A changed schema is not rejected: ordinary construction observes its
         // current state through exactly the original complete, strict capture.
-        let snapshot = self.capture_storage(schema)?;
+        // The cache and shared native fact witness own private roots. They
+        // are not caller-owned SessionValues reported by SessionStats.
+        // Each cold witness owns its counter through its rooted values, so
+        // eviction/reset cannot invalidate a fact retaining the same witness.
+        let accounting_owner = std::mem::size_of::<std::sync::atomic::AtomicUsize>()
+            .checked_add(2 * std::mem::size_of::<usize>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Schema witness accounting allocation overflow"))?;
+        self.charge_host_work(accounting_owner)?;
+        let handles = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let snapshot = self.capture_storage_accounted(schema, handles.clone())?;
         let owner = std::mem::size_of::<StorageSnapshot>()
             .checked_add(2 * std::mem::size_of::<usize>())
             .and_then(|n| u64::try_from(n).ok())
@@ -140,7 +150,13 @@ impl Session {
         }
         // Exact schema root retention, shared witness retention, publication.
         self.charge_host_work(3)?;
-        let entry = SchemaWitnessEntry { schema: schema.clone(), snapshot: snapshot.clone() };
+        handles.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let cached_schema = SessionValue {
+            identity: schema.identity,
+            value: schema.value.clone(),
+            handles,
+        };
+        let entry = SchemaWitnessEntry { schema: cached_schema, snapshot: snapshot.clone() };
         Ok((snapshot, Some(SchemaWitnessPublication { entry, target, grown })))
     }
 }
@@ -1226,6 +1242,99 @@ mod tests {
             assert!(inputs.unwrap().matches(&mut session, &value).unwrap());
         }
     }
+    #[test]
+    fn checked_schema_private_roots_preserve_external_stats_failures_and_fact_lifetimes() {
+        use std::sync::{Arc, atomic::Ordering};
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            session.eval("(deftype PrivateSchemaAccounting [a b])").unwrap();
+            let class = session.eval("PrivateSchemaAccounting").unwrap();
+            let local = session.eval("17").unwrap();
+            let external = session.stats().external_value_handles;
+            assert!(session.schema_witness_cache.entries.is_empty());
+            let (value, fact) = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let fact = fact.unwrap();
+            assert_eq!(session.schema_witness_cache.entries.len(), 1);
+            let counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            assert!(!Arc::ptr_eq(&counter, &session.handles));
+            // Exactly one schema-array root, two UTF16 name-array roots,
+            // plus the cache's separately owned schema handle. No hidden stats offset.
+            assert_eq!(counter.load(Ordering::Relaxed), 4);
+            assert!(Arc::ptr_eq(&fact.schema_storage, &session.schema_witness_cache.entries[0].snapshot));
+            let weak = Arc::downgrade(&fact.schema_storage);
+            assert!(fact.matches(&mut session, &value).unwrap());
+            let held_external = session.stats().external_value_handles;
+            // All rejected owner/poll work leaves current cache identity,
+            // private roots, publication cursor and caller roots exactly intact.
+            let cursor = session.schema_witness_cache.next;
+            let mut other = Session::new().unwrap();
+            let foreign = other.eval("99").unwrap();
+            for interrupt in [false, true] {
+                let request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(0).unwrap();
+                if interrupt { session.interrupt_handle().interrupt(); }
+                assert!(matches!(session.data_construct_with_inputs(&class, &[&foreign]), Err(SessionError::ForeignValue)));
+                let error = session.data_construct_with_inputs(&class, &[&local, &foreign]).unwrap_err();
+                if interrupt { assert!(error.is_interrupt(), "{error:?}"); }
+                else { assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))); }
+                assert_eq!(session.stats().external_value_handles, held_external);
+                assert_eq!(counter.load(Ordering::Relaxed), 4);
+                assert_eq!(session.schema_witness_cache.next, cursor);
+                assert_eq!(session.schema_witness_cache.entries.len(), 1);
+                assert!(Arc::ptr_eq(&weak.upgrade().unwrap(), &session.schema_witness_cache.entries[0].snapshot));
+                drop(request);
+            }
+            // A genuine hit shares the existing witness and creates no roots
+            // after its returned value/fact have been dropped.
+            let again = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            assert!(Arc::ptr_eq(&again.1.as_ref().unwrap().schema_storage, &fact.schema_storage));
+            drop(again);
+            assert_eq!(session.stats().external_value_handles, held_external);
+            assert_eq!(counter.load(Ordering::Relaxed), 4);
+            // Retiring only cache ownership leaves the fact's independent
+            // private witness alive and complete across GC.
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            assert_eq!(counter.load(Ordering::Relaxed), 3);
+            session.collect().unwrap();
+            assert!(fact.matches(&mut session, &value).unwrap());
+            assert!(weak.upgrade().is_some());
+            // Existing real cancellation seam, not a replacement publication.
+            let request = session.operation_budget_scope().unwrap();
+            SCHEMA_CANCEL_STAGE.with(|stage| stage.set(Some("factory")));
+            let error = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap_err();
+            assert!(error.is_interrupt(), "{error:?}");
+            assert!(session.schema_witness_cache.entries.is_empty());
+            assert_eq!(session.stats().external_value_handles, held_external);
+            assert_eq!(counter.load(Ordering::Relaxed), 3);
+            drop(request);
+            let retry = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let retry_counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            assert!(!Arc::ptr_eq(&counter, &retry_counter));
+            assert_eq!(retry_counter.load(Ordering::Relaxed), 4);
+            drop(retry);
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            assert_eq!(retry_counter.load(Ordering::Relaxed), 0);
+            drop((fact, value));
+            assert_eq!(counter.load(Ordering::Relaxed), 0);
+            assert!(weak.upgrade().is_none());
+            assert_eq!(session.stats().external_value_handles, external);
+            let (reset_value, reset_fact) = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let reset_fact = reset_fact.unwrap();
+            let reset_counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            let reset_weak = Arc::downgrade(&reset_fact.schema_storage);
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 4);
+            session.reset().unwrap();
+            assert_eq!(session.stats().external_value_handles, 0);
+            assert!(session.schema_witness_cache.entries.is_empty());
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 3);
+            assert!(reset_weak.upgrade().is_some());
+            assert!(matches!(reset_fact.matches(&mut session, &reset_value), Err(SessionError::ForeignValue)));
+            drop((reset_fact, reset_value));
+            assert!(reset_weak.upgrade().is_none());
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 0);
+        }
+    }
+
 }
 
 impl ConstructorInputs {
