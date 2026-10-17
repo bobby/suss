@@ -867,7 +867,7 @@ mod when_let_validation_tests {
             let value = macros.session.invoke(&capture, &[&function, &form, &bindings]).unwrap();
             macros.session.collect().unwrap();
             let observed = macros.bridge.read(&mut macros.session, &value, 0..source.len()).unwrap();
-            let Kind::Vector(fields) = observed.kind else { panic!("validation result") };
+            let Kind::Vector(fields) = &observed.kind else { panic!("validation result") };
             assert_eq!(fields.len(), 2);
             let Kind::String(message) = &fields[0].kind else { panic!("exception message") };
             assert_eq!(String::from_utf16(message).unwrap(), case["message"].as_str().unwrap());

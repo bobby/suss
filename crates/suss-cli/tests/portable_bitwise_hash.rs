@@ -340,3 +340,19 @@ fn integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_c
         for source in cases { bitwise_true_after_gc(&mut session, source); }
     }
 }
+
+#[test]
+fn cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Retain the actual Number through a global, collect it, then compare
+        // aliases and consume it again. Reloaded globals have no planner facts.
+        session.eval("(def cached_integer_saved (unsigned-bit-shift-right -1 0))").unwrap();
+        session.collect().unwrap();
+        for source in [
+            "(let [x (unsigned-bit-shift-right -1 0) alias x read-x (fn [] x) a (bit-xor x x) captured (read-x) b (bit-and x 255)] (and (identical? x alias) (= captured 4294967295) (= a 0) (= b 255) (= x 4294967295)))",
+            r#"(let [events (atom []) x (int 7) y (js-obj "valueOf" (fn [] (swap! events conj :convert) 3)) a (bit-xor x (do (swap! events conj :evaluate) y)) b (bit-or x 0)] (and (= a 4) (= b 7) (= @events [:evaluate :convert]) (= x 7)))"#,
+            "(let [x (unsigned-bit-shift-right -1 0) recur-call (fn walk [n] (if (= n 0) 3 (walk (dec n)))) a (bit-xor x (recur-call 3)) b (bit-and x 255)] (and (= a -4) (= b 255) (= x 4294967295)))",
+            "(let [a (bit-xor cached_integer_saved 0)] (and (= cached_integer_saved 4294967295) (= a -1)))",
+        ] { bitwise_true_after_gc(&mut session, source); }
+    }
+}

@@ -5,6 +5,89 @@ use suss_compile::portable::{
 };
 
 #[test]
+fn cached_integer_bits_keep_escaping_box_and_remove_only_repeated_coercions() {
+    let number = |value| Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Literal(Literal::Number(value)),
+    };
+    let inner = Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Bitwise { operation: Bitwise::Int, arguments: vec![number(7.0)] },
+    };
+    let mut ir = portable::ir::lower(&Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+        kind: Expression::Bitwise { operation: Bitwise::Xor, arguments: vec![inner, number(3.0)] },
+    }).unwrap();
+    let producer = ir.blocks[0].instructions.iter().find(|instruction|
+        matches!(instruction.operation, Operation::Bitwise { operation: Bitwise::Int, .. }))
+        .unwrap().result;
+    for instruction in &mut ir.blocks[0].instructions {
+        if let Operation::Bitwise { operation: Bitwise::Xor, arguments } = &mut instruction.operation {
+            *arguments = vec![producer, producer];
+        }
+    }
+    // Insert a real zero-argument closure call after the producer, before its
+    // cached consumers. The body returns nil, adding no numeric box/coercion.
+    let mut closure_ir = portable::ir::lower(&Hir {
+        source: None, span: 0..1, metadata: vec![], ty: Type::Closure(0),
+        kind: Expression::Function {
+            parameters: vec![], captures: vec![],
+            body: Box::new(Hir {
+                source: None, span: 0..1, metadata: vec![], ty: Type::Nil,
+                kind: Expression::Literal(Literal::Nil),
+            }),
+        },
+    }).unwrap();
+    let closure_operation = closure_ir.blocks[0].instructions.remove(0).operation;
+    assert!(matches!(&closure_operation, Operation::MakeClosure { .. }));
+    let closure = portable::ir::ValueId(ir.values.len());
+    ir.values.push(portable::ir::Value { ty: Type::Closure(0), span: 0..1 });
+    let called = portable::ir::ValueId(ir.values.len());
+    ir.values.push(portable::ir::Value { ty: Type::Value, span: 0..1 });
+    let after_producer = ir.blocks[0].instructions.iter()
+        .position(|instruction| instruction.result == producer).unwrap() + 1;
+    ir.blocks[0].instructions.splice(after_producer..after_producer, [
+        portable::ir::Instruction { result: closure, operation: closure_operation, span: 0..1 },
+        portable::ir::Instruction { result: called,
+            operation: Operation::Call { operands: vec![closure] }, span: 0..1 },
+    ]);
+    // The original box also escapes through the return, independently of the
+    // repeated integer uses. It must still be allocated at the producer.
+    ir.blocks[0].terminator = portable::ir::Terminator::Return(producer);
+    let wasm = portable::compile_ir(&ir).unwrap();
+    let mut names = Vec::new();
+    let mut boxes = 0;
+    let mut coercions = 0;
+    let mut invokes = 0;
+    for payload in wasmparser::Parser::new(0).parse_all(&wasm) {
+        match payload.unwrap() {
+            wasmparser::Payload::ImportSection(imports) => {
+                for import in imports.into_imports() {
+                    let import = import.unwrap();
+                    if matches!(import.ty, wasmparser::TypeRef::Func(_)) { names.push(import.name.to_owned()); }
+                }
+            }
+            wasmparser::Payload::CodeSectionEntry(body) => {
+                for operator in body.get_operators_reader().unwrap() {
+                    if let wasmparser::Operator::Call { function_index } = operator.unwrap() {
+                        match names.get(function_index as usize).map(String::as_str) {
+                            Some("number-box") => boxes += 1,
+                            Some("coerce-int32") => coercions += 1,
+                            Some("invoke") => invokes += 1,
+                            _ => {},
+                        }
+                    }
+                }
+            }
+            _ => {},
+        }
+    }
+    assert_eq!(invokes, 1, "intervening real call remains emitted");
+    assert_eq!(boxes, 4, "two literals, retained producer and final xor box");
+    assert_eq!(coercions, 1, "producer conversion remains; both repeated uses reuse bits");
+}
+
+#[test]
 fn integer_chain_emission_omits_the_unobserved_intermediate_number_box() {
     let number = |value| Hir {
         source: None, span: 0..1, metadata: vec![], ty: Type::Number,
