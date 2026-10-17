@@ -965,7 +965,9 @@ impl Analyzer<'_> {
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
                         return self.form_in_named(&expanded, context, tail, name_hint);
                     }
-                    // Original bounded bootstrap for simple binding vectors.
+                    // Bootstrap binding forms lower before source facts are
+                    // recorded. let shares the pinned function-pattern binder;
+                    // loop keeps its existing primitive lowering.
                     // Pinned EPL-1.0 core.cljc772–813 expands let/loop to their
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
@@ -976,7 +978,11 @@ impl Analyzer<'_> {
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
-                        let mut expanded = form.clone();
+                        let mut expanded = if primitive == "let*" {
+                            self.destructured_let(form)?
+                        } else {
+                            form.clone()
+                        };
                         let Kind::List(items) = &mut expanded.kind else {
                             unreachable!()
                         };

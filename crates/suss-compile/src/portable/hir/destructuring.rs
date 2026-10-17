@@ -490,6 +490,49 @@ impl Expansion {
     }
 }
 impl Analyzer<'_> {
+    // Pinned core.cljc let (772–790): destructure ordered binding pairs,
+    // then analyze the resulting let*. This introduces no function/recur target.
+    pub(super) fn destructured_let(&mut self, form: &Form) -> Result<Form, Diagnostic> {
+        let Kind::List(parts) = &form.kind else { unreachable!() };
+        let Some(binding_form) = parts.get(1) else {
+            return Err(fail(form.span.clone(), "let requires a binding vector"));
+        };
+        let Kind::Vector(entries) = &binding_form.kind else {
+            return Err(fail(binding_form.span.clone(), "let bindings must be a vector"));
+        };
+        if entries.len() % 2 != 0 {
+            return Err(fail(binding_form.span.clone(), "let binding has no initializer"));
+        }
+        if entries.chunks_exact(2).all(|pair| matches!(pair[0].kind, Kind::Symbol(_))) {
+            // Keep ordinary bootstrap lets on their existing fixed rewrite.
+            return Ok(form.clone());
+        }
+        let mut expansion = Expansion {
+            next: self.next,
+            occupied: self.locals.keys().cloned().collect(),
+        };
+        expansion.occupied.extend(self.fields.keys().cloned());
+        collect_names(form, &mut expansion.occupied);
+        let mut bindings = Vec::new();
+        for pair in entries.chunks_exact(2) {
+            // Preserve primitive validation of ordinary symbol declarations.
+            if matches!(pair[0].kind, Kind::Symbol(_)) {
+                bindings.extend_from_slice(pair);
+            } else {
+                if !matches!(pair[0].kind, Kind::Vector(_) | Kind::Map(_)) {
+                    return Err(fail(pair[0].span.clone(), "Unsupported top-level binding key"));
+                }
+                expansion.bind(&mut bindings, &pair[0], pair[1].clone())?;
+            }
+        }
+        let mut result = form.clone();
+        let Kind::List(parts) = &mut result.kind else { unreachable!() };
+        parts[0] = symbol(&parts[0], "let*");
+        parts[1].kind = Kind::Vector(bindings);
+        self.next = expansion.next;
+        Ok(result)
+    }
+
     pub(super) fn destructured_function_arguments(
         &mut self,
         form: &Form,

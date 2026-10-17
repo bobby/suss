@@ -1,0 +1,1 @@
+{:paths ["src"] :mvn/local-repo "/tmp/suss-oracle-m2" :deps {org.clojure/clojure {:mvn/version "1.12.1"} org.clojure/clojurescript {:local/root "/home/bobby/Work/code/bobby/suss-m4-when-let/clojurescript"}}}

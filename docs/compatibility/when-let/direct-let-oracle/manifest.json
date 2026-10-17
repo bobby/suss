@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "scope": "Raw small inputs, commands, receipts, outputs and comparison; generated compiler trees excluded. Cache only; no frozen repository changes.",
+  "files": {
+    ".cpcache/148138750.basis": "2ddfe3d9c57750c282c44c7de9f5bd9be71843312c1428a01b45134ae423fc8e",
+    ".cpcache/148138750.cp": "cf0d64989c9f41c234dd4229d2f7a7342efcf818ad99dff952c502d698214839",
+    ".cpcache/148138750.manifest": "173ade99124d5858704c13f868f731496cdb813be10e1a92c886b4855771854f",
+    "compare.py": "b0e4b8f93221d3276527431d0ed142f80662afa36ee6d4a9ebbc57314113f79c",
+    "comparison.json": "c5924a6cf7f46235ae7b9824635fe3764cf6f34da1c2d07a44e78c1e41548700",
+    "deps.edn": "f1ab88421adfde7c9ceb1d26662675a4237b74b008df91e97d8e78ebac9f71de",
+    "expected.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "guest1.cljs": "0fb42c4699ff523374bd14b8d7ad1103e7e4f33faaae9d8764965d0560b5ed00",
+    "guest2.cljs": "c45f2cc0f77a3843420386c4dd10f40c3a2a32e6da5e18b13bc30c326ddb951c",
+    "inputs.json": "86ad30c57c933a2f560e4ad58c3bdcd5afc248a165ad64a22231c6640c840e46",
+    "run.py": "b2c96b42ebb5cce087755bee048936b6e10b232049b3422a5542ea87dc34c63a",
+    "run1-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run1-1.log": "d269aa9ae4c186c90b22a5f7aa619eee7bfc8a3b1612b70ba271fdb1d949a5ca",
+    "run1-observations.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "run1-receipt.json": "6420bda691eabca817de15db51c0b10bf88e396fe71f114f572e3a2719092d67",
+    "run2-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run2-1.log": "d269aa9ae4c186c90b22a5f7aa619eee7bfc8a3b1612b70ba271fdb1d949a5ca",
+    "run2-observations.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "run2-receipt.json": "17b6600e706a018ceb4833c487760d16bdb9b8ee159da124062448dfa0687a9f",
+    "src/suss_oracle/direct_let_probe.cljs": "5443fc4757671d7f2f92e64a7b11eeb65e9f744fd326de30244fc96e2b14cbf1"
+  }
+}

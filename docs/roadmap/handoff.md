@@ -26345,3 +26345,98 @@ Final focused archive m4-cold-reader-focused-2026-10-16.tar.gz SHA256 b9184ac7e9
 The exact `cargo test --workspace --locked -- --test-threads=2` baseline at5aff6827 exited0 after25828.114s:1808 pass executions,0failures,22explicit ignores;398 frozen paths unchanged. Raw log, metadata, terminal receipt, target classification and frozen snapshot are retained in `evidence/m4-cold-reader-full-baseline-2026-10-16.tar.gz`, SHA256ece00358fd34fa0c6fdefcca00500c162a9832c3d64b7f3d413925eb03a9bb3d (406payloads). Ignore outcomes are not passes or broader conformance evidence.
 
 CI run38931494913 at5aff6827 passed foundation, all8 integration shards and aggregate test. Independent audit verified244/244 planned integration targets complete, no unexecuted targets,1812 Rust pass executions/0fail/22ignores and347 Python passes. Actual synthetic checkout tree equals5aff. Raw logs and retrieval receipts: `evidence/m4-cold-reader-ci-2026-10-16.tar.gz`, SHA256628822fe7d3e3d45ffc785d488e594ea49bfb69909ea866a5700468db095e5fd. The four extra CI pass executions are the same four compiled-bootstrap tests run once by foundation bootstrap verification and again by integration shard5; the local baseline executes them once. Raw name-multiset comparison has no local-only pass executions. Documentation/evidence changes require review and final-head CI. No merge.
+
+### When-let compiled source and binding prerequisite (Refs #266)
+
+Base `75e537b`. The immutable `when-let-before` capture kept all 1778 inputs
+unchanged: `compiled_when_let` had three decoder support passes and three
+unresolved-name failures; the complete pinned Jank body had zero executed
+assertions and all 12 IDs unexecuted due to the unresolved namespace. These
+failures are retained; they do not imply Macro-phase execution.
+
+The complete pinned when-let macro is registered in the existing compiled
+Macro pipeline. Ordered assert-args checks retain the pinned messages and
+phase data. Bootstrap let's former head-only rewrite could not lower vector/map
+bindings; it now reuses the existing EPL-derived binder for ordered pairs,
+retaining ordinary symbol validation, live extraction calls and the enclosing
+recur target. Ordinary symbol bindings and loop lowering retain their paths.
+
+`docs/compatibility/when-let/` retains exact upstream forms, EPL notices/license,
+adaptation patch, source hashes and executable oracle inputs. Two fresh pinned
+CLJS compiler/Node runs match the exact native 16-observation when-let guest.
+Two fresh self-host macro-function runs match all five malformed binding
+diagnostics and recovery. These underlying diagnostics do not promise analyzer
+wrapper diagnostics; the public negative test requires only the language
+exception category. Preparation failures and source-range metadata correction
+are retained separately. No Java/Node dependency was added to shipped code.
+
+`direct-let-oracle/` separately retains two fresh pinned compiler/Node runs of
+both exact direct-let guest substrings. Both match the explicit native expected
+values `[17 19 [17 19] 23 19 59 77 [1 4 2 3 5]]` and `[[11 7 18] 6]`, covering
+once-only ordered initializers, eager defaults, prior/outer scope, temporary
+hygiene and tail recur. The provenance record binds both current native fixture
+hashes; the checker also verifies their guest substrings against oracle inputs.
+All raw commands/logs/receipts and the direct-let payload manifest are retained.
+
+The original native test remains byte-identical at
+`f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02`.
+After the before capture, the Jank gate gained explicit reference schema=1,
+suite `95d4a9112cfc5fe6629be3d14bb99080ea00af2f` and CLJS
+`c4295f303100bbf5afac449242d30bca1126f1a1` assertions. Its before hash
+`e91a2bf283249e9279ddd4b341df5fb0df85d2d92145b51053311fd4c371ab6d`
+is preserved in provenance and the before snapshot. The whole original test
+body and complete 12 IDs remain selected. Jank uses Runtime and its existing
+200M harness budget; native feature tests execute both default caller phases.
+
+Actual post-pipeline commands, with `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target`:
+
+```sh
+python3 scripts/check_when_let_provenance.py
+python3 scripts/cljs_reviews.py
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --locked --lib portable_macros::when_let_validation_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-cli --locked --test compiled_when_let --test compiled_let_destructuring -- --test-threads=2 --nocapture
+SUSS_WHEN_LET_CAPTURE=/home/bobby/.cache/suss-m4-work/when-let-after cargo test -p suss-compile --locked --test clojure_test_suite pinned_when_let_complete_body_matches_reference -- --exact --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+```
+
+Every stage exited zero. Rust pass executions: private validation 1, native 11
+(5 feature tests and 6 decoder support tests), Jank wrapper 1, bootstrap verifier
+4: total 17, zero failures. Separately, all 12 complete ordered Jank IDs were
+host-decided passes, zero guest judgments/missing/errors/skips. The verifier also
+reproduced both phase artifacts byte-for-byte. The terminal receipt and raw
+stage logs are in `when-let-after`; all 1825 frozen inputs remained unchanged
+after allowing only the four regenerated bootstrap files. No quota was changed.
+
+The updated provenance checker passes and is included in the foundation CI
+commands. Required full `cargo test --workspace --locked -- --test-threads=2`
+and final-head CI remain pending. Focused passes do not establish broader
+source-sharing/integrity, cumulative fuel or M4 acceptance. No merge authorized.
+
+
+### When-let execution archive (2026-10-16)
+
+Archive `evidence/m4-when-let-execution-2026-10-16.tar.gz`, SHA256
+`a3bb34e4723ff815feeb126420a1dad132e0f8aadf43ba647976cbd2e56325cd`. PATHS.json maps 1286 original paths to
+458 content-addressed blobs; all 459 manifested payloads
+and mapped blob hashes were verified after packaging. Commands and immutable
+before/after source/artifact snapshots are included, with independent comparison
+and 419-input source correspondence.
+
+`run-when-let-before.py` retained three decoder passes and three unresolved-name
+feature failures, plus all12 Jank IDs unexecuted at namespace loading.
+`run-when-let-after.py` passed provenance/review checks, both bootstrap phases,
+private validation1, native11 (five feature tests and six decoder executions),
+the Jank wrapper1 and bootstrap execution4:17 Rust passes. The wrapper separately
+compared all12 ordered original assertion IDs with12 host passes and no skips,
+guest judgments, missing IDs or namespace/test failures. Native feature cases
+execute both default caller phases; the separate Runtime Jank harness retains
+its existing200M allowance. Bootstrap verification reproduces both phases twice
+without Java/Node and executes their artifacts.
+
+After these focused checks, the required
+`cargo test --workspace --locked -- --test-threads=2` was launched with jobs2
+on the same compiled tuple using `run-when-let-full-baseline.py`. Its archived
+launch receipt is partial, not a terminal outcome. Inspect the live producer
+receipt/log and final-head CI before claiming a workspace or acceptance pass.

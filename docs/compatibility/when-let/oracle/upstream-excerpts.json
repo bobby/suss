@@ -1,0 +1,23 @@
+{
+  "pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "sources": {
+    "core.cljc": {
+      "source_sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+      "inclusive_lines": [
+        412,
+        424
+      ],
+      "range_sha256": "780b3f6d2a0cd49fb551c63ee05adcff6c70e3ea2599b1acba3d87ed9b85449c"
+    },
+    "support.cljc": {
+      "source_sha256": "36b15fe0942c2f3d8dc80f7abc07adc9b380bb6e83cd5edcedb1abe9257663dd",
+      "inclusive_lines": [
+        11,
+        18
+      ],
+      "range_sha256": "3d80387ac960fde9f444ca012313e3e2f5be71219e3aaa24485d73d109d676f8"
+    }
+  },
+  "license": "EPL-1.0",
+  "scope": "Exact upstream excerpts, not production adaptation or execution evidence."
+}
