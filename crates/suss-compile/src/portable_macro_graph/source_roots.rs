@@ -1451,6 +1451,8 @@ mod tests {
             )
             .unwrap();
             let bridge = FormBridge::new(&mut s).unwrap();
+            // Diagnostic only: one fixed whole-request cap; not default-fuel acceptance.
+            s.set_operation_fuel(30_000_000);
             let _op = s.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut s);
             macro_rules! fuel {
