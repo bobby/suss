@@ -47,7 +47,7 @@ impl Analyzer<'_> {
             return Ok(function);
         };
         let methods = methods.clone();
-        let self_binding = self_binding.clone();
+        let self_binding = self_binding.as_deref().cloned();
         let owner = self.fresh_binding(form, function)?;
         let mut bindings = vec![owner.clone()];
         if let Some(parameter) = self_binding {

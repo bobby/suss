@@ -1,5 +1,5 @@
 //! Source macro functions execute in a separate compiled phase Store.
-use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
+use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost, resolve};
 use crate::{
     portable_macro_data::FormBridge,
     portable_macro_graph::AnalysisGraph,
@@ -173,6 +173,21 @@ impl CompiledMacros {
         // accounting starts empty, including after an explicit session reset.
         macros.artifact_cache = Default::default();
         Ok(macros)
+    }
+    /// Source normalization needs a rollback identity, not a fresh bootstrap
+    /// Environment. Share the caller's actual catalog; debit any new owner to
+    /// the Macro operation (a nested active operation is never replenished).
+    pub(crate) fn checkpoint_global(&mut self, environment: &resolve::Environment, namespace: &str, name: &str) -> Result<resolve::Global, SessionError> {
+        let _budget = self.session.operation_budget_scope()?;
+        let mut host_error = None;
+        let result = environment.checkpoint_global_metered(resolve::Phase::Macro, namespace, name, &mut |work| {
+            self.session.charge_host_work(work).map_err(|error| {
+                host_error = Some(error);
+                Diagnostic { span: 0..0, message: "Macro checkpoint identity budget exhausted".into() }
+            })
+        });
+        if let Some(error) = host_error { return Err(error); }
+        result.map_err(SessionError::Compile)
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<MacroCheckpoint, SessionError> {
         Ok((

@@ -226,7 +226,7 @@ impl Analyzer<'_> {
                     Parameter { id: payload.id, name: name.name.clone(), metadata: vec![],
                         span: payload.declaration.span.clone() }
                 }),
-            }
+            }.census_created()
         } else {
             Expression::Try { regions: [Box::new(body), Box::new(handler), Box::new(cleanup)] }
         };

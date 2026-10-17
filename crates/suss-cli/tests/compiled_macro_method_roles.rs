@@ -20,13 +20,10 @@ fn field_role(field: &FieldBinding) -> serde_json::Value {
     serde_json::json!(["field", null, field.mutable])
 }
 fn shadow(binding: &LocalBinding) -> serde_json::Value {
-    if let SourceRole::MethodThis {
-        argument: Some(argument),
-        ..
-    } = &binding.source_role
-    {
-        local_role(argument)
-    } else if let Some(previous) = &binding.shadow {
+    if let SourceRole::MethodThis { facts } = &binding.source_role {
+        if let Some(argument) = &facts.argument { return local_role(argument); }
+    }
+    if let Some(previous) = &binding.shadow {
         local_role(previous)
     } else if let Some(previous) = &binding.shadow_field {
         field_role(previous)
@@ -110,16 +107,14 @@ fn source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_
             ("object-field", "FieldHolder", false),
         ] {
             let receiver = &host.locals[label]["this"];
-            let SourceRole::MethodThis {
-                type_declaration,
-                argument,
-                access,
-                protocol_receiver,
-                ..
-            } = &receiver.source_role
+            let SourceRole::MethodThis { facts } = &receiver.source_role
             else {
                 panic!("actual this-as role");
             };
+            let type_declaration = &facts.type_declaration;
+            let argument = &facts.argument;
+            let access = &facts.access;
+            let protocol_receiver = &facts.protocol_receiver;
             assert!(matches!(
                 receiver.kind,
                 LocalKind::Argument {
@@ -233,15 +228,13 @@ fn repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow() {
             ("object-triple", 1),
         ] {
             let receiver = &host.locals[label]["arbitrary"];
-            let SourceRole::MethodThis {
-                receiver_declaration,
-                argument: Some(argument),
-                access,
-                ..
-            } = &receiver.source_role
+            let SourceRole::MethodThis { facts } = &receiver.source_role
             else {
                 panic!("this-as shadows the actual same-named user argument");
             };
+            let receiver_declaration = &facts.receiver_declaration;
+            let access = &facts.access;
+            let argument = facts.argument.as_ref().expect("this-as shadows the actual same-named user argument");
             assert_eq!(
                 argument.source_kind(),
                 LocalKind::Argument {

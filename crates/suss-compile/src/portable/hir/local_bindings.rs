@@ -39,17 +39,34 @@ pub enum SourceRole {
         index: usize,
         rest: bool,
     },
-    MethodThis {
-        type_declaration: Arc<Form>,
-        namespace: String,
-        protocol_receiver: bool,
-        /// Actual source receiver form, independent of a same-named last formal.
-        receiver_declaration: Arc<Form>,
-        /// Visible source argument shadow; Object receivers may shadow a user arg.
-        argument: Option<Arc<LocalBinding>>,
-        /// Actual lowered receiver access; inspecting it does not read a value.
-        access: Arc<Hir>,
-    },
+    MethodThis { facts: Arc<MethodThisFacts> },
+}
+
+/// Immutable facts owned by one actual method-role construction. Binding
+/// revisions retain this owner; equal facts from separate constructions do not.
+#[derive(Debug, Clone)]
+pub struct MethodThisFacts {
+    pub type_declaration: Arc<Form>,
+    pub namespace: String,
+    pub protocol_receiver: bool,
+    /// Actual source receiver, independent of a same-named last formal.
+    pub receiver_declaration: Arc<Form>,
+    /// Visible source argument shadow, including Object receiver adaptation.
+    pub argument: Option<Arc<LocalBinding>>,
+    pub access: Arc<Hir>,
+}
+impl SourceRole {
+    pub(crate) fn method_this(
+        type_declaration: Arc<Form>, namespace: String, protocol_receiver: bool,
+        receiver_declaration: Arc<Form>, argument: Option<Arc<LocalBinding>>,
+        access: Arc<Hir>, meter: &mut CowMeter<'_>,
+    ) -> Result<Self, Diagnostic> {
+        cow_charge(meter, 1, std::mem::size_of::<MethodThisFacts>())?;
+        cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+        Ok(Self::MethodThis { facts: Arc::new(MethodThisFacts {
+            type_declaration, namespace, protocol_receiver, receiver_declaration, argument, access,
+        }) })
+    }
 }
 
 /// Immutable syntax owner. Definition reuse retains only the provisional
@@ -256,18 +273,15 @@ impl Analyzer<'_> {
             None
         };
         let mut meter = |work| self.expander.charge_expansion_work(work, declarations[0].span.clone());
-        let role = SourceRole::MethodThis {
-            type_declaration: cow_shared_form(type_declaration, &mut meter)?,
-            namespace: cow_text(self.environment.current_namespace(self.phase), &mut meter)?,
-            protocol_receiver: !object_method,
-            receiver_declaration,
-            argument,
-            access: {
-                cow_charge(&mut meter, 1, std::mem::size_of::<Hir>())?;
-                cow_charge(&mut meter, 2, std::mem::size_of::<usize>())?;
-                Arc::new(self.local(&declarations[0], receiver.id))
-            },
-        };
+        let type_declaration = cow_shared_form(type_declaration, &mut meter)?;
+        let namespace = cow_text(self.environment.current_namespace(self.phase), &mut meter)?;
+        cow_charge(&mut meter, 1, std::mem::size_of::<Hir>())?;
+        cow_charge(&mut meter, 2, std::mem::size_of::<usize>())?;
+        drop(meter);
+        let access = Arc::new(self.local(&declarations[0], receiver.id));
+        let mut meter = |work| self.expander.charge_expansion_work(work, declarations[0].span.clone());
+        let role = SourceRole::method_this(type_declaration, namespace, !object_method,
+            receiver_declaration, argument, access, &mut meter)?;
         self.local_revision_mut(&receiver.name)?.source_role = role;
         Ok(())
     }
@@ -407,8 +421,12 @@ impl Analyzer<'_> {
         super::super::clone_form_metered(form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))
     }
     pub(super) fn capture_local_access(&mut self, node: Hir) -> Result<Arc<Hir>, Diagnostic> {
-        cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 1, std::mem::size_of::<Hir>())?;
-        cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 2, std::mem::size_of::<usize>())?;
+        {
+            let _trace = CowTraceScope::new("local_access_owner");
+            cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 1, std::mem::size_of::<Hir>())?;
+            cow_charge(&mut |work| self.expander.charge_expansion_work(work, node.span.clone()), 2, std::mem::size_of::<usize>())?;
+        }
+        cow_trace_expression("capture_arc", &node.kind);
         Ok(Arc::new(node))
     }
     pub(super) fn clone_local_hir(&mut self, node: &Hir) -> Result<Hir, Diagnostic> {
@@ -423,10 +441,20 @@ impl Analyzer<'_> {
 struct CowTraceState {
     stack: Vec<&'static str>,
     totals: BTreeMap<String, (u64, u64, u64)>,
+    events: BTreeMap<&'static str, (u64, u64)>,
+    census: BTreeMap<(&'static str, &'static str), (u64, u64)>,
     budget: u64,
+    root: u64,
+    request_depth: usize,
+    charge_depth: usize,
+    shared_full_insert: bool,
 }
 thread_local! { static COW_TRACE: std::cell::RefCell<CowTraceState> = std::cell::RefCell::new(CowTraceState::default()); }
+#[cfg(test)]
+thread_local! { static COW_TRACE_FOR_TEST: std::cell::Cell<Option<bool>> = const { std::cell::Cell::new(None) }; }
 fn cow_trace_enabled() -> bool {
+    #[cfg(test)]
+    if let Some(enabled) = COW_TRACE_FOR_TEST.with(|enabled| enabled.get()) { return enabled }
     static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *ENABLED.get_or_init(|| std::env::var_os("SUSS_HIR_COW_TRACE").is_some())
 }
@@ -443,14 +471,74 @@ impl Drop for CowTraceScope {
         if self.0 { COW_TRACE.with(|state| { state.borrow_mut().stack.pop(); }); }
     }
 }
-pub(crate) fn cow_trace_reset(budget: u64) {
-    if cow_trace_enabled() { COW_TRACE.with(|state| {
-        let mut state = state.borrow_mut();
-        state.totals.clear(); state.budget = budget;
-    }); }
+/// A trace region follows the real ExpansionRequest lifetime. Only a root
+/// clears counters; nested requests retain earlier reader/dependency work.
+pub(crate) struct CowTraceRequest(bool);
+impl CowTraceRequest {
+    pub(crate) fn new(budget: u64) -> Self {
+        let enabled = cow_trace_enabled();
+        if enabled { COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            if state.request_depth == 0 {
+                state.totals.clear(); state.events.clear(); state.census.clear(); state.budget = budget;
+                for (name, bytes) in cow_trace_layouts() {
+                    state.census.insert(("layout", name), (1, bytes as u64));
+                }
+                state.root = state.root.wrapping_add(1);
+            }
+            state.request_depth += 1;
+            eprintln!("HIR_COW_TRACE event=request_begin root={} depth={} available={} root_budget={} reset={}",
+                state.root, state.request_depth, budget, state.budget, state.request_depth == 1);
+        }); }
+        Self(enabled)
+    }
 }
-pub(crate) fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
-    if !cow_trace_enabled() { return; }
+impl Drop for CowTraceRequest {
+    fn drop(&mut self) {
+        if !self.0 { return }
+        COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            state.request_depth -= 1;
+            if state.request_depth != 0 { return }
+            // Exactly one summary per root, including successful roots. Error
+            // headers below describe attempted debits, not extra summaries.
+            eprintln!("HIR_COW_TRACE event=root_end root={} budget={} charge_depth={}", state.root, state.budget, state.charge_depth);
+            for (label, (calls, accepted, rejected)) in &state.totals {
+                eprintln!("HIR_COW_TRACE bucket={label} calls={calls} accepted={accepted} rejected={rejected}");
+            }
+            for (label, (count, units)) in &state.events {
+                eprintln!("HIR_COW_TRACE event={label} count={count} units={units}");
+            }
+            for ((family, kind), (count, bytes)) in &state.census {
+                eprintln!("HIR_COW_TRACE census={family} kind={kind} count={count} bytes={bytes}");
+            }
+        });
+    }
+}
+/// Forwarding requests still perform every original check/debit. Only their
+/// diagnostic observations are suppressed: record once at the outermost call.
+pub(crate) struct CowTraceCharge { enabled: bool, outermost: bool }
+impl CowTraceCharge {
+    pub(crate) fn new() -> Self {
+        let enabled = cow_trace_enabled();
+        let outermost = enabled && COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            let outermost = state.charge_depth == 0;
+            state.charge_depth += 1;
+            outermost
+        });
+        Self { enabled, outermost }
+    }
+    pub(crate) fn record(&self, work: u64, result: &Result<(), Diagnostic>) {
+        if self.outermost { cow_trace_charge(work, result); }
+    }
+}
+impl Drop for CowTraceCharge {
+    fn drop(&mut self) {
+        if self.enabled { COW_TRACE.with(|state| state.borrow_mut().charge_depth -= 1); }
+    }
+}
+fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
     COW_TRACE.with(|state| {
         let mut state = state.borrow_mut();
         let leaf = state.stack.last().copied().unwrap_or("other_analysis");
@@ -458,17 +546,148 @@ pub(crate) fn cow_trace_charge(work: u64, result: &Result<(), Diagnostic>) {
             let parents = &state.stack[..state.stack.len() - 1];
             let caller = if parents.is_empty() { "other_analysis".to_owned() } else { parents.join("/") };
             format!("form_copy:{caller}")
+        } else if state.shared_full_insert && matches!(leaf, "map_copy" | "map_growth_prepare") {
+            format!("{leaf}:shared_full")
         } else { leaf.to_owned() };
         let totals = state.totals.entry(label).or_default();
-        totals.0 += 1;
-        if result.is_ok() { totals.1 += work; } else { totals.2 += work; }
+        totals.0 = totals.0.saturating_add(1);
+        if result.is_ok() { totals.1 = totals.1.saturating_add(work); }
+        else { totals.2 = totals.2.saturating_add(work); }
         if let Err(error) = result {
-            eprintln!("HIR_COW_TRACE budget={} error={:?} message={:?}", state.budget, error.span, error.message);
-            for (label, (calls, accepted, rejected)) in &state.totals {
-                eprintln!("HIR_COW_TRACE bucket={label} calls={calls} accepted={accepted} rejected={rejected}");
-            }
+            // Rejected units are attempted work; a host may already have
+            // debited before a forwarding wrapper rejects its own allowance.
+            eprintln!("HIR_COW_TRACE event=charge_error root={} budget={} error={:?} message={:?}",
+                state.root, state.budget, error.span, error.message);
         }
     });
+}
+// Tuple sizes describe the current field types, not a promised layout for a
+// future boxed payload. The actual candidate type would need its own size check.
+fn cow_trace_layouts() -> [(&'static str, usize); 15] {
+    use std::mem::size_of;
+    [
+        ("Hir", size_of::<Hir>()), ("Expression", size_of::<Expression>()),
+        ("ArcHeader", 2 * size_of::<usize>()), ("Parameter", size_of::<Parameter>()),
+        ("Binding", size_of::<Binding>()), ("Global", size_of::<Global>()),
+        ("OptionParameter", size_of::<Option<Parameter>>()), ("OptionGlobal", size_of::<Option<Global>>()),
+        ("GeneralFunction_field_tuple", size_of::<(Vec<Method>, Vec<BindingId>, Option<Arc<Parameter>>, Option<Global>)>()),
+        ("Definition_field_tuple", size_of::<(Global, DefinitionSyntax, Range<usize>, Option<Box<Hir>>, bool)>()),
+        ("DefinitionSyntax", size_of::<DefinitionSyntax>()),
+        ("DefinitionSyntaxPayload", size_of::<DefinitionSyntaxPayload>()),
+        ("AsyncTry_field_tuple", size_of::<(Box<Hir>, Option<Box<Hir>>, Option<Box<Hir>>, Option<Parameter>)>()),
+        ("GlobalOrFallback_field_tuple", size_of::<(Global, Global)>()),
+        ("Function_field_tuple", size_of::<(Vec<Parameter>, Vec<BindingId>, Box<Hir>)>()),
+    ]
+}
+fn cow_trace_expression_kind(kind: &Expression) -> &'static str {
+    use Expression::*;
+    match kind {
+        Future { .. } => "Future", Await { .. } => "Await", AsyncTry { .. } => "AsyncTry",
+        AsyncDynamicScope { .. } => "AsyncDynamicScope", Bitwise { .. } => "Bitwise",
+        Comparison { .. } => "Comparison", NilTest(_) => "NilTest", Array { .. } => "Array",
+        DynamicScope { .. } => "DynamicScope", Assign { .. } => "Assign", Throw(_) => "Throw",
+        Try { .. } => "Try", Nominal { .. } => "Nominal", Literal(_) => "Literal", Local(_) => "Local",
+        Global(_) => "Global", GlobalOrFallback { .. } => "GlobalOrFallback", GlobalCell(_) => "GlobalCell",
+        Definition { .. } => "Definition", Let { .. } => "Let", Loop { .. } => "Loop",
+        Recur { .. } => "Recur", If { .. } => "If", Do(_) => "Do", Function { .. } => "Function",
+        GeneralFunction { .. } => "GeneralFunction", Call { .. } => "Call", Arithmetic { .. } => "Arithmetic",
+    }
+}
+pub(super) fn cow_trace_expression(family: &'static str, kind: &Expression) {
+    if !cow_trace_enabled() { return }
+    let kind_name = cow_trace_expression_kind(kind);
+    COW_TRACE.with(|state| {
+        let mut state = state.borrow_mut();
+        let value = state.census.entry((family, kind_name)).or_default();
+        value.0 = value.0.saturating_add(1);
+        // Counts are diagnostic observations, never extra debits. Only the
+        // capture family denotes an actual Arc<Hir> backing allocation here.
+        let bytes = if family == "capture_arc" { std::mem::size_of::<Hir>() + 2 * std::mem::size_of::<usize>() }
+            else { std::mem::size_of::<Expression>() };
+        value.1 = value.1.saturating_add(bytes as u64);
+        // Field rows are counts only (bytes=0), not measured allocations. They
+        // partition the same family's variant observations and must not be
+        // summed into construction or capture counts a second time.
+        let mut field = |label| {
+            let value = state.census.entry((family, label)).or_default();
+            value.0 = value.0.saturating_add(1);
+        };
+        match kind {
+            Expression::GeneralFunction { self_binding, rest_class, .. } => {
+                field(if self_binding.is_some() { "GeneralFunction.self_binding_some" } else { "GeneralFunction.self_binding_none" });
+                field(if rest_class.is_some() { "GeneralFunction.rest_class_some" } else { "GeneralFunction.rest_class_none" });
+            }
+            Expression::AsyncTry { payload, .. } => {
+                field(if payload.is_some() { "AsyncTry.payload_some" } else { "AsyncTry.payload_none" });
+            }
+            Expression::Definition { syntax, .. } => {
+                field(if syntax.docstring().is_some() { "Definition.docstring_some" } else { "Definition.docstring_none" });
+                field(if syntax.name_metadata().is_empty() { "Definition.name_metadata_empty" } else { "Definition.name_metadata_nonempty" });
+                field(if syntax.has_payload() { "Definition.syntax_some" } else { "Definition.syntax_none" });
+                field(match &syntax.0 {
+                    DefinitionSyntaxOwner::Empty => "Definition.syntax_empty",
+                    DefinitionSyntaxOwner::Captured(_) => "Definition.syntax_captured",
+                    DefinitionSyntaxOwner::Owned(_) => "Definition.syntax_owned",
+                });
+            }
+            _ => {}
+        }
+    });
+}
+
+fn cow_trace_event(label: &'static str, units: usize) {
+    COW_TRACE.with(|state| {
+        let mut state = state.borrow_mut();
+        let value = state.events.entry(label).or_default();
+        value.0 = value.0.saturating_add(1);
+        value.1 = value.1.saturating_add(u64::try_from(units).unwrap_or(u64::MAX));
+    });
+}
+/// No map scans/reference-count reads are added when tracing is disabled.
+struct CowTraceMapInsert { enabled: bool, previous: bool, shared_full: bool }
+impl CowTraceMapInsert {
+    fn new<T>(map: &Arc<HashMap<String, Arc<T>>>, growing: bool) -> Self {
+        let enabled = cow_trace_enabled();
+        if !enabled { return Self { enabled, previous: false, shared_full: false } }
+        let shared = Arc::strong_count(map) != 1 || Arc::weak_count(map) != 0;
+        let shared_full = shared && growing;
+        let previous = COW_TRACE.with(|state| {
+            let mut state = state.borrow_mut();
+            let previous = state.shared_full_insert;
+            state.shared_full_insert = shared_full;
+            previous
+        });
+        cow_trace_event(match (shared, growing) {
+            (true, true) => "map_insert_shared_full",
+            (true, false) => "map_insert_shared_nongrowing",
+            (false, true) => "map_insert_private_full",
+            (false, false) => "map_insert_private_nongrowing",
+        }, 0);
+        if shared_full {
+            cow_trace_event("shared_full_old_len", map.len());
+            cow_trace_event("shared_full_old_capacity", map.capacity());
+        }
+        Self { enabled, previous, shared_full }
+    }
+    fn copy_ready<T>(&self, staged: Option<&HashMap<String, Arc<T>>>) {
+        if self.shared_full {
+            if let Some(staged) = staged {
+                cow_trace_event("shared_full_copy_completed", staged.capacity());
+                if staged.capacity() != 0 { cow_trace_event("shared_full_nonempty_copy_table", staged.capacity()); }
+            }
+        }
+    }
+    fn growth_charge_capacity(&self, capacity: usize) {
+        if self.shared_full { cow_trace_event("shared_full_growth_charge_capacity", capacity); }
+    }
+    fn growth_ready(&self, capacity: usize) {
+        if self.shared_full { cow_trace_event("shared_full_growth_completed", capacity); }
+    }
+}
+impl Drop for CowTraceMapInsert {
+    fn drop(&mut self) {
+        if self.enabled { COW_TRACE.with(|state| state.borrow_mut().shared_full_insert = self.previous); }
+    }
 }
 
 type CowMeter<'a> = dyn FnMut(u64) -> Result<(), Diagnostic> + 'a;
@@ -570,13 +789,56 @@ pub(super) fn derive_reader_origin(origin: Option<&super::super::SourceOrigin>, 
     Ok(Arc::new(origin.with_reader_expansion(lowered, reader)))
 }
 fn cow_global(global: &Global, meter: &mut CowMeter<'_>) -> Result<Global, Diagnostic> {
-    cow_charge(meter, global.namespace().len(), 1)?;
-    cow_charge(meter, global.name().len(), 1)?;
-    Ok(global.clone())
+    global.retain_metered(meter)
 }
 fn cow_parameter(parameter: &Parameter, meter: &mut CowMeter<'_>) -> Result<Parameter, Diagnostic> {
     Ok(Parameter { id: parameter.id, name: cow_text(&parameter.name, meter)?,
         metadata: cow_forms(&parameter.metadata, meter)?, span: parameter.span.clone() })
+}
+/// Stage all owned syntax copies before publishing its immutable owner. This
+/// does not reuse owners between independent declarations, even for equal data.
+pub(super) fn capture_definition_syntax(metadata: &[Form], docstring: Option<&[u16]>, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if metadata.is_empty() && docstring.is_none() { return Ok(DefinitionSyntax::default()); }
+    let name_metadata = cow_forms(metadata, meter)?;
+    let docstring = docstring.map(|units| cow_copy(units, meter)).transpose()?;
+    cow_charge(meter, 1, std::mem::size_of::<DefinitionSyntaxPayload>())?;
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+    // Retain the established generic Arc allocation/OOM policy.
+    Ok(DefinitionSyntax(DefinitionSyntaxOwner::Owned(Arc::new(DefinitionSyntaxPayload { name_metadata, docstring }))))
+}
+/// The caller supplies only its exact locally retained provisional revision,
+/// never an environment re-query or completed HIR owner. Checking both state
+/// fields prevents a completed initializer graph from entering this owner edge.
+pub(super) fn capture_provisional_definition_syntax(owner: &Arc<super::super::resolve::DefinitionInfo>, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if owner.analysis_completed || owner.initializer.is_some() {
+        meter(1)?;
+        return Err(fail(owner.declaration.span.clone(), "Definition syntax requires an incomplete initializer-free revision"));
+    }
+    if owner.declaration.metadata.is_empty() && owner.docstring.is_none() {
+        return Ok(DefinitionSyntax::default());
+    }
+    meter(1)?; // precharged Arc retain; no syntax copies or owner allocation
+    Ok(DefinitionSyntax(DefinitionSyntaxOwner::Captured(owner.clone())))
+}
+fn cow_definition_syntax(syntax: &DefinitionSyntax, meter: &mut CowMeter<'_>) -> Result<DefinitionSyntax, Diagnostic> {
+    if syntax.has_payload() { meter(1)?; }
+    Ok(syntax.clone())
+}
+/// Move the completed parameter into an immutable owner, after charging its
+/// payload and Arc header. Nested text/metadata are moved, not copied. Arc::new
+/// retains the existing generic Arc allocation/OOM policy.
+pub(super) fn capture_self_parameter(parameter: Parameter, meter: &mut CowMeter<'_>) -> Result<Arc<Parameter>, Diagnostic> {
+    cow_charge(meter, 1, std::mem::size_of::<Parameter>())?;
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+    Ok(Arc::new(parameter))
+}
+fn cow_self_parameter(parameter: &Option<Arc<Parameter>>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<Parameter>>, Diagnostic> {
+    if let Some(parameter) = parameter {
+        meter(1)?; // bounded retain of the immutable parameter; no payload copy
+        Ok(Some(parameter.clone()))
+    } else {
+        Ok(None)
+    }
 }
 fn cow_parameters(parameters: &[Parameter], meter: &mut CowMeter<'_>) -> Result<Vec<Parameter>, Diagnostic> {
     let mut result = cow_vector(parameters.len(), meter)?;
@@ -649,13 +911,10 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
             Throw(value) => Throw(cow_box(value, meter)?),
             Assign { global, value } => Assign { global: cow_global(global, meter)?, value: cow_box(value, meter)? },
             Try { regions } => Try { regions: [cow_box(&regions[0], meter)?, cow_box(&regions[1], meter)?, cow_box(&regions[2], meter)?] },
-            Definition { global, name_metadata, name_span, docstring, initializer, once } => {
+            Definition { global, syntax, name_span, initializer, once } => {
                 let global = cow_global(global, meter)?;
-                let name_metadata = cow_forms(name_metadata, meter)?;
-                let docstring = docstring.as_ref().map(|units| {
-                    cow_copy(units, meter)
-                }).transpose()?;
-                Definition { global, name_metadata, name_span: name_span.clone(), docstring,
+                let syntax = cow_definition_syntax(syntax, meter)?;
+                Definition { global, syntax, name_span: name_span.clone(),
                     initializer: cow_optional_box(initializer, meter)?, once: *once }
             }
             Let { bindings, body } => Let { bindings: cow_bindings(bindings, meter)?, body: cow_box(body, meter)? },
@@ -670,11 +929,12 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
                     parameters: cow_parameters(&method.parameters, meter)?, body: cow_box(&method.body, meter)? }); }
                 let methods = copied;
                 GeneralFunction { methods, captures: cow_captures(captures, meter)?,
-                    self_binding: self_binding.as_ref().map(|p| cow_parameter(p, meter)).transpose()?,
+                    self_binding: cow_self_parameter(self_binding, meter)?,
                     rest_class: rest_class.as_ref().map(|g| cow_global(g, meter)).transpose()? }
             }
             Call { callee, arguments } => Call { callee: cow_box(callee, meter)?, arguments: cow_hirs(arguments, meter)? },
         };
+        cow_trace_expression("metered_clone", &kind);
         Ok(Hir { source: node.source.clone(), span: node.span.clone(), metadata, ty: node.ty, kind })
     })
 }
@@ -683,11 +943,10 @@ fn cow_role(role: &SourceRole, meter: &mut CowMeter<'_>) -> Result<SourceRole, D
     Ok(match role {
         SourceRole::CatchBinding { hidden, access } => SourceRole::CatchBinding {
             hidden: hidden.clone(), access: access.clone() },
-        SourceRole::MethodThis { type_declaration, namespace, protocol_receiver, receiver_declaration, argument, access } => SourceRole::MethodThis {
-            type_declaration: type_declaration.clone(),
-            namespace: cow_text(namespace, meter)?, protocol_receiver: *protocol_receiver,
-            receiver_declaration: receiver_declaration.clone(),
-            argument: argument.clone(), access: access.clone() },
+        SourceRole::MethodThis { facts } => {
+            meter(1)?;
+            SourceRole::MethodThis { facts: facts.clone() }
+        },
         SourceRole::Plain => SourceRole::Plain,
         SourceRole::FunctionName { variadic, methods } => SourceRole::FunctionName { variadic: *variadic, methods: methods.clone() },
         SourceRole::PrivateCatch { anchor } => SourceRole::PrivateCatch { anchor: anchor.clone() },
@@ -739,9 +998,12 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
     meter(1)?;
     let key = cow_text(name, meter)?;
     let growing = !map.contains_key(name) && map.len() == map.capacity();
+    let trace_insert = CowTraceMapInsert::new(map, growing);
     if growing {
+        let _trace = CowTraceScope::new("map_growth_prepare");
         let capacity = map.capacity().checked_mul(2).and_then(|n| n.checked_add(4))
             .ok_or_else(|| fail(0..0, "Source ownership capacity overflow"))?;
+        trace_insert.growth_charge_capacity(capacity);
         cow_table::<T>(capacity, meter)?;
         cow_table::<T>(map.capacity(), meter)?;
         // HashMap growth rehashes existing String keys, not just Arc slots.
@@ -751,12 +1013,16 @@ fn cow_insert<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, value: Arc<
         }
     }
     let mut staged = cow_map_copy(map, meter)?;
+    trace_insert.copy_ready(staged.as_ref());
     let previous = {
         let target = match staged.as_mut() {
             Some(staged) => staged,
             None => Arc::get_mut(map).expect("private source map"),
         };
-        if growing { target.try_reserve(1).map_err(|_| fail(0..0, "Unable to grow source ownership map"))?; }
+        if growing {
+            target.try_reserve(1).map_err(|_| fail(0..0, "Unable to grow source ownership map"))?;
+            trace_insert.growth_ready(target.capacity());
+        }
         target.insert(key, value)
     };
     if let Some(staged) = staged { *map = Arc::new(staged); }
@@ -784,8 +1050,499 @@ fn local_revision_mut<'a>(locals: &'a mut SourceLocals, name: &str, meter: &mut 
 }
 
 #[cfg(test)]
+mod cow_trace_tests {
+    use super::*;
+    use crate::portable::{ExpansionHost, ExpansionRequest, NoExpansion};
+
+    struct TraceTest {
+        saved: CowTraceState,
+        enabled: Option<bool>,
+    }
+    impl TraceTest {
+        fn new(enabled: bool) -> Self {
+            let saved = COW_TRACE.with(|state| std::mem::take(&mut *state.borrow_mut()));
+            let previous = COW_TRACE_FOR_TEST.with(|state| state.replace(Some(enabled)));
+            Self { saved, enabled: previous }
+        }
+    }
+    impl Drop for TraceTest {
+        fn drop(&mut self) {
+            COW_TRACE.with(|state| *state.borrow_mut() = std::mem::take(&mut self.saved));
+            COW_TRACE_FOR_TEST.with(|state| state.set(self.enabled));
+        }
+    }
+
+    #[derive(Default)]
+    struct Meter { accepted: u64 }
+    impl ExpansionHost for Meter {
+        fn expansion_work_fuel(&self) -> u64 { 100 - self.accepted }
+        fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+            if work == 13 { return Err(fail(span, "trace host rejection")) }
+            if work == 99 { panic!("trace host unwind") }
+            self.accepted += work;
+            Ok(())
+        }
+        fn expand(&mut self, _: &Form, _: crate::portable::ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> { Ok(None) }
+    }
+
+    #[test]
+    fn nested_forwarding_records_once_retains_earlier_work_and_recovers_after_error_and_unwind() {
+        let _test = TraceTest::new(true);
+        let mut host = Meter::default();
+        {
+            let mut root = ExpansionRequest::new(&mut host, 0..10).unwrap();
+            root.charge_expansion_work(3, 1..2).unwrap();
+            {
+                let mut second = ExpansionRequest::new(&mut root, 0..10).unwrap();
+                let mut third = ExpansionRequest::new(&mut second, 0..10).unwrap();
+                let mut fourth = ExpansionRequest::new(&mut third, 0..10).unwrap();
+                fourth.charge_expansion_work(7, 2..3).unwrap();
+                COW_TRACE.with(|state| {
+                    let state = state.borrow();
+                    assert_eq!(state.budget, 100);
+                    assert_eq!(state.request_depth, 4);
+                    assert_eq!(state.totals["other_analysis"], (2, 10, 0));
+                });
+                let error = fourth.charge_expansion_work(13, 3..4).unwrap_err();
+                assert_eq!(error.message, "trace host rejection");
+                let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let _scope = CowTraceScope::new("unwinding_test");
+                    let _ = fourth.charge_expansion_work(99, 4..5);
+                }));
+                assert!(panic.is_err());
+                COW_TRACE.with(|state| {
+                    assert_eq!(state.borrow().charge_depth, 0);
+                    assert!(state.borrow().stack.is_empty());
+                });
+                fourth.charge_expansion_work(2, 5..6).unwrap();
+            }
+            COW_TRACE.with(|state| {
+                let state = state.borrow();
+                assert_eq!(state.request_depth, 1);
+                assert_eq!(state.totals["other_analysis"], (4, 12, 13));
+            });
+        }
+        assert_eq!(host.accepted, 12, "diagnostic suppression must not alter host debits");
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.request_depth, 0);
+            assert_eq!(state.charge_depth, 0);
+            assert_eq!(state.root, 1);
+        });
+        let mut next = ExpansionRequest::new(&mut host, 0..10).unwrap();
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.root, 2);
+            assert_eq!(state.budget, 88);
+            assert!(state.totals.is_empty());
+        });
+        next.charge_expansion_work(1, 6..7).unwrap();
+        COW_TRACE.with(|state| assert_eq!(state.borrow().totals["other_analysis"], (1, 1, 0)));
+    }
+
+    #[test]
+    fn hir_layout_and_variant_census_separates_real_capture_from_direct_and_clone_construction() {
+        let _test = TraceTest::new(true);
+        let _request = CowTraceRequest::new(100);
+        let kind = Expression::GeneralFunction { methods: vec![], captures: vec![], self_binding: None, rest_class: None }.census_created();
+        let original = Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Value, kind };
+        let cloned = original.clone();
+        let metered = cow_hir(&original, &mut |_| Ok(())).unwrap();
+        assert!(matches!(cloned.kind, Expression::GeneralFunction { .. }));
+        assert!(matches!(metered.kind, Expression::GeneralFunction { .. }));
+        // Exercise an actual capture through the native analyzer; no Session,
+        // bootstrap restore, or guest execution is needed for this census test.
+        let source = "(let* [x 1] x)";
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let _analyzed = super::super::prepare(&forms, 0..source.len(), &Environment::default(), Phase::Runtime).unwrap();
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.census[&("layout", "Hir")], (1, std::mem::size_of::<Hir>() as u64));
+            assert_eq!(state.census[&("layout", "Expression")], (1, std::mem::size_of::<Expression>() as u64));
+            assert_eq!(state.census[&("constructed_direct", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("derived_clone", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("metered_clone", "GeneralFunction")].0, 1);
+            assert_eq!(state.census[&("capture_arc", "Literal")], (1, (std::mem::size_of::<Hir>() + 2 * std::mem::size_of::<usize>()) as u64));
+        });
+        let parameter = || Parameter { id: BindingId(9), name: "payload".into(), metadata: vec![], span: 0..1 };
+        let body = || Box::new(Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Nil,
+            kind: Expression::Literal(Literal::Nil) });
+        for kind in [
+            Expression::GeneralFunction { methods: vec![], captures: vec![], self_binding: Some(Arc::new(parameter())), rest_class: None }.census_created(),
+            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: Some(parameter()) }.census_created(),
+            Expression::AsyncTry { body: body(), handler: None, cleanup: None, payload: None }.census_created(),
+        ] {
+            let node = Hir { source: None, span: 0..1, metadata: vec![], ty: Type::Value, kind };
+            let _cloned = node.clone();
+            let _copied = cow_hir(&node, &mut |_| Ok(())).unwrap();
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            for family in ["constructed_direct", "derived_clone", "metered_clone"] {
+                for field in ["GeneralFunction.self_binding_none", "GeneralFunction.self_binding_some", "AsyncTry.payload_none", "AsyncTry.payload_some"] {
+                    assert_eq!(state.census[&(family, field)], (1, 0));
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn shared_full_insert_reports_the_actual_staged_copy_and_growth_without_changing_map_facts() {
+        let _test = TraceTest::new(true);
+        let mut host = NoExpansion;
+        let mut request = ExpansionRequest::new(&mut host, 0..10).unwrap();
+        let mut raw = HashMap::new();
+        raw.try_reserve(3).unwrap();
+        let old_capacity = raw.capacity();
+        for index in 0..old_capacity { raw.insert(format!("key-{index}"), Arc::new(())); }
+        let mut map = Arc::new(raw);
+        let saved = map.clone();
+        cow_insert(&mut map, "new-key", Arc::new(()), &mut |work| request.charge_expansion_work(work, 0..10)).unwrap();
+        assert_eq!(saved.len(), old_capacity);
+        assert!(!saved.contains_key("new-key"));
+        assert_eq!(map.len(), old_capacity + 1);
+        assert!(map.capacity() > old_capacity);
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.events["map_insert_shared_full"], (1, 0));
+            assert_eq!(state.events["shared_full_old_capacity"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_copy_completed"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_nonempty_copy_table"], (1, old_capacity as u64));
+            assert_eq!(state.events["shared_full_growth_completed"], (1, map.capacity() as u64));
+            assert!(state.totals["map_copy:shared_full"].1 > 0);
+            assert!(state.totals["map_growth_prepare:shared_full"].1 > 0);
+        });
+    }
+
+    #[test]
+    fn disabled_trace_leaves_observer_state_untouched_and_ir_labels_are_distinct() {
+        let _test = TraceTest::new(false);
+        {
+            let _request = CowTraceRequest::new(10);
+            let _scope = CowTraceScope::new("ir_build");
+            let charge = CowTraceCharge::new();
+            charge.record(2, &Ok(()));
+            let map: Arc<HashMap<String, Arc<()>>> = Arc::new(HashMap::new());
+            let map_trace = CowTraceMapInsert::new(&map, true);
+            map_trace.growth_charge_capacity(4);
+            map_trace.growth_ready(3);
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.root, 0);
+            assert_eq!(state.request_depth, 0);
+            assert_eq!(state.charge_depth, 0);
+            assert!(state.stack.is_empty() && state.totals.is_empty() && state.events.is_empty() && state.census.is_empty());
+        });
+        COW_TRACE_FOR_TEST.with(|enabled| enabled.set(Some(true)));
+        let _request = CowTraceRequest::new(10);
+        for (label, work) in [("ir_recurrence", 2), ("ir_build", 3)] {
+            let _scope = CowTraceScope::new(label);
+            let charge = CowTraceCharge::new();
+            charge.record(work, &Ok(()));
+        }
+        COW_TRACE.with(|state| {
+            let state = state.borrow();
+            assert_eq!(state.totals["ir_recurrence"], (1, 2, 0));
+            assert_eq!(state.totals["ir_build"], (1, 3, 0));
+        });
+    }
+}
+
+#[cfg(test)]
 mod ownership_tests {
     use super::*;
+
+    fn owned_syntax_owner(syntax: &DefinitionSyntax) -> &Arc<DefinitionSyntaxPayload> {
+        let DefinitionSyntaxOwner::Owned(owner) = &syntax.0 else { panic!("owned syntax fallback") };
+        owner
+    }
+    fn captured_syntax_owner(syntax: &DefinitionSyntax) -> &Arc<super::super::super::resolve::DefinitionInfo> {
+        let DefinitionSyntaxOwner::Captured(owner) = &syntax.0 else { panic!("captured provisional syntax") };
+        owner
+    }
+    fn definition_syntaxes(node: &Hir, result: &mut Vec<DefinitionSyntax>) {
+        match &node.kind {
+            Expression::Definition { syntax, initializer, .. } => {
+                result.push(syntax.clone());
+                if let Some(initializer) = initializer { definition_syntaxes(initializer, result); }
+            }
+            Expression::Function { body, .. } => definition_syntaxes(body, result),
+            // Fixed function bodies retain their recurrence target in a Loop,
+            // including functions with no parameters or explicit recur.
+            Expression::Loop { bindings, body, .. } => {
+                for binding in bindings { definition_syntaxes(&binding.value, result); }
+                definition_syntaxes(body, result);
+            }
+            Expression::Do(nodes) => for node in nodes { definition_syntaxes(node, result); },
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn definition_syntax_captures_local_provisional_before_nested_same_name_replacement() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def ^{:marker [outer facts]} same \"outer\" (fn* [] (inspect-function-owner) (def ^{:marker [inner facts]} same \"inner\" (fn* [] (inspect-function-owner))) (inspect-function-owner)))";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let mut host = ObserveFunctionOwner::default();
+            let (hir, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut host).unwrap();
+            assert_eq!(host.snapshots.len(), 3);
+            let mut syntax = Vec::new();
+            definition_syntaxes(&hir, &mut syntax);
+            assert_eq!(syntax.len(), 2);
+            for (index, expected_doc) in ["outer", "inner"].into_iter().enumerate() {
+                let owner = captured_syntax_owner(&syntax[index]);
+                assert!(Arc::ptr_eq(owner, &host.snapshots[index].1));
+                assert!(!owner.analysis_completed && owner.initializer.is_none());
+                assert_eq!(syntax[index].name_metadata().as_ptr(), owner.declaration.metadata.as_ptr());
+                assert_eq!(syntax[index].docstring().unwrap(), expected_doc.encode_utf16().collect::<Vec<_>>().as_slice());
+                assert_eq!(syntax[index].docstring().unwrap().as_ptr(), owner.docstring.as_ref().unwrap().as_ptr());
+            }
+            assert!(!Arc::ptr_eq(captured_syntax_owner(&syntax[0]), captured_syntax_owner(&syntax[1])));
+            // The environment was replaced by the nested completed revision,
+            // then the outer completed revision. Neither may become our owner.
+            assert!(host.snapshots[2].1.analysis_completed);
+            assert!(!Arc::ptr_eq(captured_syntax_owner(&syntax[0]), &host.snapshots[2].1));
+            let scope = &host.snapshots[0].0[0];
+            let global = function_owner_global(&environment, phase, &scope.namespace, "same");
+            let completed = environment.shared_definition_info(&global).unwrap();
+            assert!(completed.analysis_completed && completed.initializer.is_some());
+            assert!(!Arc::ptr_eq(completed, captured_syntax_owner(&syntax[0])));
+            for copy in [hir.clone(), cow_hir(&hir, &mut |_| Ok(())).unwrap()] {
+                let mut copied = Vec::new();
+                definition_syntaxes(&copy, &mut copied);
+                assert_eq!(copied.len(), 2);
+                for index in 0..2 {
+                    assert!(Arc::ptr_eq(captured_syntax_owner(&syntax[index]), captured_syntax_owner(&copied[index])));
+                }
+            }
+            // Capture cancellation neither retains nor publishes an owner;
+            // a retry pays exactly one retain, without copying source payloads.
+            let owner = captured_syntax_owner(&syntax[0]);
+            let count = Arc::strong_count(owner);
+            let rejected = capture_provisional_definition_syntax(owner, &mut |work| {
+                assert_eq!(work, 1);
+                Err(fail(11..29, "injected captured syntax cancellation"))
+            });
+            assert_eq!(rejected.unwrap_err().message, "injected captured syntax cancellation");
+            assert_eq!(Arc::strong_count(owner), count);
+            let mut charged = 0;
+            let retry = capture_provisional_definition_syntax(owner, &mut |work| { charged += work; Ok(()) }).unwrap();
+            assert_eq!(charged, 1);
+            assert!(Arc::ptr_eq(owner, captured_syntax_owner(&retry)));
+            for (analysis_completed, initializer) in [(true, None), (false, completed.initializer.clone())] {
+                let mut invalid = (**owner).clone();
+                invalid.analysis_completed = analysis_completed;
+                invalid.initializer = initializer;
+                let invalid = Arc::new(invalid);
+                let result = capture_provisional_definition_syntax(&invalid, &mut |_| Ok(()));
+                assert_eq!(result.unwrap_err().message, "Definition syntax requires an incomplete initializer-free revision");
+                assert_eq!(Arc::strong_count(&invalid), 1);
+            }
+        }
+    }
+
+    #[test]
+    fn preserved_declaration_syntax_owns_new_facts_and_empty_docstring_stays_captured() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let source = "(def ^:original same \"old\" 1) (def empty \"\" 2)";
+            let forms = suss_reader::forms::read_forms(source).unwrap();
+            let (hir, environment) = prepare_with_expander(&forms, 0..source.len(), &Environment::default(), phase, &mut super::super::super::NoExpansion).unwrap();
+            let mut syntax = Vec::new();
+            definition_syntaxes(&hir, &mut syntax);
+            assert_eq!(syntax.len(), 2);
+            assert!(captured_syntax_owner(&syntax[1]).docstring.as_ref().unwrap().is_empty());
+            assert_eq!(syntax[1].docstring(), Some(&[][..]));
+            let global = function_owner_global(&environment, phase, environment.current_namespace(phase), "same");
+            let prior = environment.shared_definition_info(&global).unwrap().clone();
+            let preserved = "(def ^{:declared true :new [facts]} same)";
+            let forms = suss_reader::forms::read_forms(preserved).unwrap();
+            let Kind::List(parts) = &forms[0].kind else { unreachable!() };
+            let mut owners = Vec::new();
+            for _ in 0..2 {
+                let (hir, revised) = prepare_with_expander(&forms, 0..preserved.len(), &environment, phase, &mut super::super::super::NoExpansion).unwrap();
+                assert!(Arc::ptr_eq(&prior, revised.shared_definition_info(&global).unwrap()));
+                let mut current = Vec::new();
+                definition_syntaxes(&hir, &mut current);
+                assert_eq!(current.len(), 1);
+                assert_eq!(format!("{:?}", current[0].name_metadata()), format!("{:?}", parts[1].metadata));
+                assert_eq!(current[0].docstring(), None);
+                owners.push(owned_syntax_owner(&current[0]).clone());
+            }
+            assert!(!Arc::ptr_eq(&owners[0], &owners[1]));
+            assert_eq!(prior.docstring.as_deref(), Some(&[111u16, 108, 100][..]));
+        }
+    }
+
+    #[test]
+    fn definition_syntax_keeps_presence_exact_facts_and_independent_owners_through_hir_copies() {
+        let input = suss_reader::forms::read_forms("^{:tag [nested facts] :line 91} declaration").unwrap();
+        let metadata = &input[0].metadata;
+        assert!(!metadata.is_empty());
+        let mut environment = Environment::default();
+        let global = environment.declare_cell(Phase::Runtime, "syntax.owner", "definition").unwrap();
+        let empty: &[u16] = &[];
+        let text: &[u16] = &[100, 0xd800, 99]; // preserve raw UTF16, including a lone surrogate
+        for metadata in [&[][..], metadata.as_slice()] {
+            for docstring in [None, Some(empty), Some(text)] {
+                let syntax = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+                assert_eq!(format!("{:?}", syntax.name_metadata()), format!("{metadata:?}"));
+                assert_eq!(syntax.docstring(), docstring);
+                assert_eq!(syntax.has_payload(), !metadata.is_empty() || docstring.is_some());
+                let independent = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+                if let DefinitionSyntaxOwner::Owned(owner) = &syntax.0 {
+                    assert!(!Arc::ptr_eq(owner, owned_syntax_owner(&independent)));
+                }
+                let node = Hir { source: None, span: 11..29, metadata: vec![], ty: Type::Value,
+                    kind: Expression::Definition { global: global.clone(), syntax,
+                        name_span: input[0].span.clone(), initializer: None, once: true } };
+                if let Expression::Definition { syntax: DefinitionSyntax(DefinitionSyntaxOwner::Owned(owner)), .. } = &node.kind {
+                    let count = Arc::strong_count(owner);
+                    let mut retains = 0;
+                    let rejected = cow_hir(&node, &mut |work| {
+                        if work == 1 { retains += 1; }
+                        if retains == 2 { Err(fail(11..29, "injected HIR syntax retain cancellation")) }
+                        else { Ok(()) }
+                    });
+                    assert_eq!(retains, 2); // Global retain, then syntax retain
+                    assert_eq!(rejected.unwrap_err().message, "injected HIR syntax retain cancellation");
+                    assert_eq!(Arc::strong_count(owner), count);
+                }
+                let mut remaining = (std::mem::size_of::<Hir>() + 1 + usize::from(!metadata.is_empty() || docstring.is_some())) as u64;
+                let copied = cow_hir(&node, &mut |work| {
+                    remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "definition copy budget exhausted"))?;
+                    Ok(())
+                }).unwrap();
+                assert_eq!(remaining, 0);
+                let cloned = node.clone();
+                let Expression::Definition { syntax: original, .. } = &node.kind else { unreachable!() };
+                for retained in [&copied, &cloned] {
+                    let Expression::Definition { syntax, name_span, initializer, once, .. } = &retained.kind else { panic!("definition") };
+                    assert_eq!(name_span, &input[0].span);
+                    assert!(initializer.is_none() && *once);
+                    assert_eq!(format!("{:?}", syntax.name_metadata()), format!("{metadata:?}"));
+                    assert_eq!(syntax.docstring(), docstring);
+                    if let DefinitionSyntaxOwner::Owned(owner) = &original.0 {
+                        assert!(Arc::ptr_eq(owner, owned_syntax_owner(&syntax)));
+                    } else { assert!(!syntax.has_payload()); }
+                }
+            }
+        }
+        let absent = capture_definition_syntax(&[], None, &mut |_| panic!("no syntax allocation")).unwrap();
+        assert!(!cow_definition_syntax(&absent, &mut |_| panic!("no owner to retain")).unwrap().has_payload());
+    }
+
+    #[test]
+    fn definition_syntax_copy_allocation_and_retain_failures_keep_prior_owner_and_retry() {
+        let input = suss_reader::forms::read_forms("^{:tag [nested facts] :line 91} declaration").unwrap();
+        let metadata = &input[0].metadata;
+        let before = format!("{metadata:?}");
+        let docstring = Some(&[100u16, 111, 99][..]);
+        let mut charges = Vec::new();
+        let prior = capture_definition_syntax(metadata, docstring, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(&charges[charges.len()-2..], &[
+            std::mem::size_of::<DefinitionSyntaxPayload>() as u64,
+            (2 * std::mem::size_of::<usize>()) as u64]);
+        for reject in 0..charges.len() {
+            let mut published = prior.clone();
+            let mut calls = 0;
+            let result = capture_definition_syntax(metadata, docstring, &mut |_| {
+                let current = calls;
+                calls += 1;
+                if current == reject { Err(fail(11..29, "injected syntax cancellation")) }
+                else { Ok(()) }
+            });
+            match result {
+                Ok(syntax) => { published = syntax; panic!("unexpected publication: {published:?}"); }
+                Err(error) => assert_eq!(error.message, "injected syntax cancellation"),
+            }
+            assert_eq!(calls, reject + 1);
+            assert!(Arc::ptr_eq(owned_syntax_owner(&published), owned_syntax_owner(&prior)));
+            assert_eq!(format!("{metadata:?}"), before);
+            let retry = capture_definition_syntax(metadata, docstring, &mut |_| Ok(())).unwrap();
+            assert!(!Arc::ptr_eq(owned_syntax_owner(&retry), owned_syntax_owner(&prior)));
+            assert_eq!(format!("{:?}", retry.name_metadata()), before);
+            assert_eq!(retry.docstring(), docstring);
+        }
+        let count = Arc::strong_count(owned_syntax_owner(&prior));
+        let result = cow_definition_syntax(&prior, &mut |work| {
+            assert_eq!(work, 1);
+            Err(fail(11..29, "injected syntax retain cancellation"))
+        });
+        assert_eq!(result.unwrap_err().message, "injected syntax retain cancellation");
+        assert_eq!(Arc::strong_count(owned_syntax_owner(&prior)), count);
+        let mut charged = 0;
+        let retry = cow_definition_syntax(&prior, &mut |work| { charged += work; Ok(()) }).unwrap();
+        assert_eq!(charged, 1);
+        assert!(Arc::ptr_eq(owned_syntax_owner(&retry), owned_syntax_owner(&prior)));
+    }
+
+    #[test]
+    fn self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload() {
+        let parameter = || Parameter {
+            id: BindingId(7),
+            name: "recursive-name".repeat(1024),
+            metadata: suss_reader::forms::read_forms("{:tag [original nested facts]}").unwrap(),
+            span: 11..29,
+        };
+        // Either allocation charge can fail before any owner is published.
+        for reject in 0..2 {
+            let mut calls = 0;
+            let mut published = None;
+            let result = capture_self_parameter(parameter(), &mut |_| {
+                let current = calls;
+                calls += 1;
+                if current == reject { Err(fail(11..29, "injected self owner cancellation")) }
+                else { Ok(()) }
+            });
+            match result {
+                Ok(owner) => published = Some(owner),
+                Err(error) => {
+                    assert_eq!(error.span, 11..29);
+                    assert_eq!(error.message, "injected self owner cancellation");
+                }
+            }
+            assert!(published.is_none());
+            assert_eq!(calls, reject + 1);
+        }
+        let value = parameter();
+        let name_storage = value.name.as_ptr();
+        let metadata_storage = value.metadata.as_ptr();
+        let mut charges = Vec::new();
+        let owner = capture_self_parameter(value, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(charges, vec![std::mem::size_of::<Parameter>() as u64,
+            (2 * std::mem::size_of::<usize>()) as u64]);
+        assert_eq!(owner.name.as_ptr(), name_storage);
+        assert_eq!(owner.metadata.as_ptr(), metadata_storage);
+        let node = Hir { source: None, span: 11..29, metadata: vec![], ty: Type::Value,
+            kind: Expression::GeneralFunction { methods: vec![], captures: vec![],
+                self_binding: Some(owner.clone()), rest_class: None } };
+        let initial_count = Arc::strong_count(&owner);
+        let rejected = cow_hir(&node, &mut |work| {
+            if work == 1 { Err(fail(11..29, "injected retain cancellation")) }
+            else { Ok(()) }
+        });
+        assert!(rejected.is_err());
+        assert_eq!(Arc::strong_count(&owner), initial_count);
+        // A retry fits node-copy plus one retain, independent of the large
+        // parameter text/metadata. No deep Parameter copy is charged or made.
+        let mut remaining = (std::mem::size_of::<Hir>() + 1) as u64;
+        let copied = cow_hir(&node, &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "copy budget exhausted"))?;
+            Ok(())
+        }).unwrap();
+        assert_eq!(remaining, 0);
+        let cloned = node.clone();
+        for retained in [&copied, &cloned] {
+            let Expression::GeneralFunction { self_binding: Some(binding), .. } = &retained.kind else { panic!("named function") };
+            assert!(Arc::ptr_eq(binding, &owner));
+            assert_eq!(binding.span, 11..29);
+            assert_eq!(binding.id, BindingId(7));
+            assert_eq!(binding.metadata.as_ptr(), metadata_storage);
+        }
+        // Anonymous functions add neither an owner nor a retain charge.
+        assert!(cow_self_parameter(&None, &mut |_| panic!("no owner to retain")).unwrap().is_none());
+    }
 
     #[derive(Default)]
     struct Observe(Vec<(SourceLocals, SourceFields)>);
@@ -1024,13 +1781,83 @@ mod ownership_tests {
             identity: Arc::new(()), id: BindingId(0), ty: Type::Value,
             declaration: declaration.clone(), origin: None, kind: LocalKind::Let,
             declaration_context: crate::portable::AnalysisContext::Expression,
-            source_role: SourceRole::MethodThis {
-                type_declaration: declaration.clone(), namespace: "owned.namespace".into(),
-                protocol_receiver: true, receiver_declaration: declaration,
-                argument: None, access: Arc::new(access),
-            }, initializer: None, shadow: None, shadow_field: None,
+            source_role: SourceRole::method_this(declaration.clone(), "owned.namespace".into(),
+                true, declaration, None, Arc::new(access), &mut |_| Ok(())).unwrap(), initializer: None, shadow: None, shadow_field: None,
         });
         Arc::new(HashMap::from([("x".into(), binding.clone()), ("untouched".into(), binding)]))
+    }
+
+    #[test]
+    fn method_this_facts_share_revisions_but_equal_constructions_and_replacements_are_distinct() {
+        let saved = copy_fixture();
+        let SourceRole::MethodThis { facts: original } = &saved["x"].source_role else { unreachable!() };
+        let mut retain_charges = vec![];
+        let retained = cow_role(&saved["x"].source_role, &mut |work| { retain_charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(retain_charges, [1]);
+        let SourceRole::MethodThis { facts: retained } = retained else { unreachable!() };
+        assert!(Arc::ptr_eq(original, &retained));
+        let distinct = SourceRole::method_this(original.type_declaration.clone(), original.namespace.clone(),
+            original.protocol_receiver, original.receiver_declaration.clone(), original.argument.clone(),
+            original.access.clone(), &mut |_| Ok(())).unwrap();
+        let SourceRole::MethodThis { facts: distinct } = &distinct else { unreachable!() };
+        assert!(!Arc::ptr_eq(original, distinct));
+        assert_eq!(format!("{original:?}"), format!("{distinct:?}"));
+        let mut revised = saved.clone();
+        let revision = local_revision_mut(&mut revised, "x", &mut |_| Ok(())).unwrap();
+        assert!(Arc::ptr_eq(&revision.identity, &saved["x"].identity));
+        revision.source_role = SourceRole::MethodThis { facts: distinct.clone() };
+        assert!(!Arc::ptr_eq(&revised["x"], &saved["x"]));
+        let SourceRole::MethodThis { facts: still_original } = &saved["x"].source_role else { unreachable!() };
+        assert!(Arc::ptr_eq(still_original, original));
+        assert!(Arc::ptr_eq(&distinct.type_declaration, &original.type_declaration));
+        assert!(Arc::ptr_eq(&distinct.receiver_declaration, &original.receiver_declaration));
+        assert!(Arc::ptr_eq(&distinct.access, &original.access));
+        assert_eq!(distinct.namespace, original.namespace);
+        assert_eq!(distinct.protocol_receiver, original.protocol_receiver);
+        assert_eq!(distinct.argument.is_some(), original.argument.is_some());
+    }
+
+    #[test]
+    fn method_this_facts_construction_and_publication_cancel_at_each_charge_then_retry() {
+        let saved = copy_fixture();
+        let SourceRole::MethodThis { facts: original } = &saved["x"].source_role else { unreachable!() };
+        let stage = |map: &mut SourceLocals, meter: &mut CowMeter<'_>| -> Result<(), Diagnostic> {
+            let namespace = cow_text("replacement.namespace", meter)?;
+            let role = SourceRole::method_this(original.type_declaration.clone(), namespace, false,
+                original.receiver_declaration.clone(), Some(saved["untouched"].clone()), original.access.clone(), meter)?;
+            local_revision_mut(map, "x", meter)?.source_role = role;
+            Ok(())
+        };
+        let mut complete = saved.clone();
+        let mut charges = vec![];
+        stage(&mut complete, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(&charges[..3], &["replacement.namespace".len() as u64,
+            std::mem::size_of::<MethodThisFacts>() as u64, (2 * std::mem::size_of::<usize>()) as u64]);
+        for cancel in 0..charges.len() {
+            let mut map = saved.clone();
+            let mut call = 0;
+            let before = Arc::strong_count(original);
+            let error = stage(&mut map, &mut |_| {
+                let current = call; call += 1;
+                if current == cancel { Err(fail(11..19, "method facts interrupted")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "method facts interrupted");
+            assert!(Arc::ptr_eq(&map, &saved));
+            assert!(Arc::ptr_eq(&map["x"], &saved["x"]));
+            assert_eq!(Arc::strong_count(original), before);
+            stage(&mut map, &mut |_| Ok(())).unwrap();
+            let SourceRole::MethodThis { facts } = &map["x"].source_role else { unreachable!() };
+            assert!(!Arc::ptr_eq(facts, original));
+            assert_eq!(facts.namespace, "replacement.namespace");
+            assert!(!facts.protocol_receiver);
+            assert!(Arc::ptr_eq(facts.argument.as_ref().unwrap(), &saved["untouched"]));
+            assert!(Arc::ptr_eq(&facts.type_declaration, &original.type_declaration));
+            assert!(Arc::ptr_eq(&facts.receiver_declaration, &original.receiver_declaration));
+            assert!(Arc::ptr_eq(&facts.access, &original.access));
+        }
+        let before = Arc::strong_count(original);
+        assert!(cow_role(&saved["x"].source_role, &mut |_| Err(fail(0..0, "retain interrupted"))).is_err());
+        assert_eq!(Arc::strong_count(original), before);
     }
 
     #[test]
@@ -1041,11 +1868,12 @@ mod ownership_tests {
         let copied = local_revision_mut(&mut attempt, "x", &mut |units| { charges.push(units); Ok(()) }).unwrap();
         assert_eq!(format!("{copied:?}"), format!("{:?}", saved["x"]));
         assert!(Arc::ptr_eq(&copied.declaration, &saved["x"].declaration));
-        let SourceRole::MethodThis { type_declaration: old_type, receiver_declaration: old_receiver, access: old_access, .. } = &saved["x"].source_role else { unreachable!() };
-        let SourceRole::MethodThis { type_declaration: new_type, receiver_declaration: new_receiver, access: new_access, .. } = &copied.source_role else { unreachable!() };
-        assert!(Arc::ptr_eq(old_type, new_type));
-        assert!(Arc::ptr_eq(old_receiver, new_receiver));
-        assert!(Arc::ptr_eq(old_access, new_access));
+        let SourceRole::MethodThis { facts: old } = &saved["x"].source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts: new } = &copied.source_role else { unreachable!() };
+        assert!(Arc::ptr_eq(old, new));
+        assert!(Arc::ptr_eq(&old.type_declaration, &new.type_declaration));
+        assert!(Arc::ptr_eq(&old.receiver_declaration, &new.receiver_declaration));
+        assert!(Arc::ptr_eq(&old.access, &new.access));
         copied.id = BindingId(9);
         assert!(!Arc::ptr_eq(&attempt, &saved));
         assert!(Arc::ptr_eq(&attempt["untouched"], &saved["untouched"]));
@@ -1054,7 +1882,8 @@ mod ownership_tests {
         // clone errors. HIR/map charges retain the injected diagnostic span.
         let mut allowed_spans = vec![11..19];
         let mut forms = vec![saved["x"].declaration.as_ref()];
-        let SourceRole::MethodThis { type_declaration, receiver_declaration, access, .. } = &saved["x"].source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts } = &saved["x"].source_role else { unreachable!() };
+        let MethodThisFacts { type_declaration, receiver_declaration, access, .. } = facts.as_ref();
         forms.extend([type_declaration.as_ref(), receiver_declaration.as_ref()]);
         let Expression::Call { callee, arguments } = &access.kind else { unreachable!() };
         forms.extend(access.metadata.iter());
@@ -1194,11 +2023,8 @@ mod ownership_tests {
             ty: Type::String, kind: Expression::Literal(Literal::String(vec![66; 20_000])) });
         let binding = Arc::make_mut(Arc::get_mut(&mut saved).unwrap().get_mut("x").unwrap());
         binding.declaration = payload.clone();
-        binding.source_role = SourceRole::MethodThis {
-            type_declaration: payload.clone(), receiver_declaration: payload.clone(),
-            namespace: "owned.namespace".into(), protocol_receiver: true,
-            argument: None, access: access.clone(),
-        };
+        binding.source_role = SourceRole::method_this(payload.clone(), "owned.namespace".into(),
+            true, payload.clone(), None, access.clone(), &mut |_| Ok(())).unwrap();
         let mut changed = saved.clone();
         let mut remaining = 10_000u64; // far smaller than either immutable payload
         let revision = local_revision_mut(&mut changed, "x", &mut |units| {
@@ -1206,7 +2032,8 @@ mod ownership_tests {
             Ok(())
         }).unwrap();
         assert!(Arc::ptr_eq(&revision.declaration, &payload));
-        let SourceRole::MethodThis { type_declaration, receiver_declaration, access: revised_access, .. } = &revision.source_role else { unreachable!() };
+        let SourceRole::MethodThis { facts } = &revision.source_role else { unreachable!() };
+        let MethodThisFacts { type_declaration, receiver_declaration, access: revised_access, .. } = facts.as_ref();
         assert!(Arc::ptr_eq(type_declaration, &payload));
         assert!(Arc::ptr_eq(receiver_declaration, &payload));
         assert!(Arc::ptr_eq(revised_access, &access));
@@ -1261,8 +2088,8 @@ mod ownership_tests {
     fn catch_role_revision_preserves_payload_owners_and_isolates_fact_changes() {
         let mut saved = copy_fixture();
         let hidden = saved["untouched"].clone();
-        let SourceRole::MethodThis { access, .. } = &saved["x"].source_role else { unreachable!() };
-        let access = access.clone();
+        let SourceRole::MethodThis { facts } = &saved["x"].source_role else { unreachable!() };
+        let access = facts.access.clone();
         let binding = Arc::make_mut(Arc::get_mut(&mut saved).unwrap().get_mut("x").unwrap());
         binding.source_role = SourceRole::CatchBinding { hidden: hidden.clone(), access: access.clone() };
         let mut changed = saved.clone();

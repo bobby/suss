@@ -249,15 +249,14 @@ impl<'a> Lowerer<'a> {
         lower_charge(self.meter, work, span)
     }
     fn clone_global(&mut self, global: &Global, span: &Range<usize>) -> Result<Global, Diagnostic> {
-        self.charge(
-            1usize
-                .saturating_add(global.namespace().len())
-                .saturating_add(global.name().len()),
-            span,
-        )?;
-        Ok(global.clone())
+        let _trace = super::hir::CowTraceScope::new("ir_global_copy");
+        global.retain_metered(&mut |work| (self.meter)(work).map_err(|mut error| {
+            error.span = span.clone();
+            error
+        }))
     }
     fn display_name(&mut self, hir: &Hir) -> Result<Option<Vec<u16>>, Diagnostic> {
+        let _trace = super::hir::CowTraceScope::new("ir_function_name");
         if let Some(scope) = hir
             .source
             .as_ref()
@@ -1144,7 +1143,11 @@ pub fn lower_metered(
     hir: &Hir,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
-    verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+    {
+        let _trace = super::hir::CowTraceScope::new("ir_recurrence");
+        verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+    }
+    let _trace = super::hir::CowTraceScope::new("ir_build");
     Lowerer::new(hir.span.clone(), meter)?.finish(hir)
 }
 

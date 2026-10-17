@@ -967,7 +967,26 @@ mod tests {
         entries: Vec<(Value, Value)>,
         child: &Rc<Certificate>,
     ) -> Rc<Certificate> {
-        let layout = graph.source_root_children().unwrap();
+        let source_phase = match &graph.source_roots.roots[id].owner {
+            Owner::Declaration(global, _) => global.phase(),
+            _ => graph.session.phase(),
+        };
+        macro_rules! parent_observed {
+            ($stage:expr, $operation:expr) => {{
+                if std::env::var_os("SUSS_SOURCE_CHILD_FUEL_TRACE").is_some() {
+                    eprintln!("source-child-fuel source={source_phase:?} stage=parent-{}:before remaining={:?}",
+                        $stage, graph.session.operation_fuel_remaining().ok());
+                }
+                let result = $operation;
+                if std::env::var_os("SUSS_SOURCE_CHILD_FUEL_TRACE").is_some() {
+                    eprintln!("source-child-fuel source={source_phase:?} stage=parent-{} result={:?} remaining={:?}",
+                        $stage, result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+                        graph.session.operation_fuel_remaining().ok());
+                }
+                result
+            }};
+        }
+        let layout = parent_observed!("layout", graph.source_root_children()).unwrap();
         let mut supplied = Vec::new();
         let mut imported = Vec::new();
         for boundary in &layout[id] {
@@ -987,7 +1006,8 @@ mod tests {
             );
             imported.push((graph.source_roots.roots[*boundary].alias, certificate));
         }
-        let recording = graph.bridge.recording(graph.session).unwrap();
+        let recording =
+            parent_observed!("recording", graph.bridge.recording(graph.session)).unwrap();
         let mut actual = Vec::new();
         for (key, value) in entries {
             let key = graph.materialize_using(key, &recording).unwrap();
@@ -1000,8 +1020,12 @@ mod tests {
             };
             actual.push((key, value));
         }
-        let value = recording.map_values(graph.session, &actual).unwrap();
-        let records = recording.into_records().unwrap();
+        let value = parent_observed!(
+            "map-construction",
+            recording.map_values(graph.session, &actual)
+        )
+        .unwrap();
+        let records = parent_observed!("records", recording.into_records()).unwrap();
         assert!(
             !records
                 .matches_recorded_inputs(graph.session, &value)
@@ -1012,13 +1036,16 @@ mod tests {
             .source_root_expectation_with_layout(id, &layout)
             .unwrap()
             .unwrap();
-        Certificate::finish(
-            graph.session,
-            graph.bridge,
-            expected,
-            value,
-            records,
-            supplied,
+        parent_observed!(
+            "finish",
+            Certificate::finish(
+                graph.session,
+                graph.bridge,
+                expected,
+                value,
+                records,
+                supplied,
+            )
         )
         .unwrap()
         .unwrap()
@@ -1426,6 +1453,27 @@ mod tests {
             let bridge = FormBridge::new(&mut s).unwrap();
             let _op = s.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut s);
+            macro_rules! fuel {
+                ($variant:expr, $stage:expr) => {
+                    if std::env::var_os("SUSS_SOURCE_CHILD_FUEL_TRACE").is_some() {
+                        eprintln!("source-child-fuel source={source_phase:?} variant={:?} stage={} remaining={:?}",
+                            $variant, $stage, graph.session.operation_fuel_remaining().ok());
+                    }
+                };
+            }
+            macro_rules! observed {
+                ($variant:expr, $stage:expr, $operation:expr) => {{
+                    fuel!($variant, concat!($stage, ":before"));
+                    let result = $operation;
+                    if std::env::var_os("SUSS_SOURCE_CHILD_FUEL_TRACE").is_some() {
+                        eprintln!("source-child-fuel source={source_phase:?} variant={:?} stage={} result={:?} remaining={:?}",
+                            $variant, $stage, result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+                            graph.session.operation_fuel_remaining().ok());
+                    }
+                    result
+                }};
+            }
+            fuel!(None::<usize>, "request-start");
             let (a, am, entries) = declaration_from_source(
                 &mut graph,
                 &source_snapshot.environment,
@@ -1451,8 +1499,15 @@ mod tests {
                 .index(graph.session, b_doc)
                 .unwrap()
                 .unwrap();
-            let layout = graph.source_root_children().unwrap();
+            let layout = observed!(
+                None::<usize>,
+                "declarations-layout",
+                graph.source_root_children()
+            )
+            .unwrap();
+            fuel!(None::<usize>, "doc-certificate:before");
             let child_doc = standalone_with_layout(&mut graph, ad, &layout);
+            fuel!(None::<usize>, "doc-certificate:after");
             let wrong = graph
                 .source_root_expectation_with_layout(bd, &layout)
                 .unwrap()
@@ -1471,7 +1526,9 @@ mod tests {
             );
             // A child authenticated against ITS OWN source must still be
             // rejected at a different parent's native boundary ordinal.
+            fuel!(None::<usize>, "wrong-owner-checks:after");
             let wrong_doc = standalone_with_layout(&mut graph, bd, &layout);
+            fuel!(None::<usize>, "wrong-doc-certificate:after");
             // Keep the genuine factory certificates, not validation booleans.
             // Every variant below performs complete current validation again.
             // This remains ONE unchanged operation budget for the entire test.
@@ -1483,7 +1540,9 @@ mod tests {
                     standalone_with_layout(&mut graph, *boundary, &layout)
                 });
             }
+            fuel!(None::<usize>, "common-certificates:after");
             for variant in 0..5 {
+                fuel!(Some(variant), "variant-start");
                 let selected = layout[a].iter().enumerate().map(|(slot, boundary)| {
                     let certificate = if *boundary == ad && variant == 0 {
                         &wrong_doc
@@ -1492,12 +1551,15 @@ mod tests {
                     };
                     (certificate, &certificate.source)
                 });
-                let mut supplied: Vec<_> =
+                let mut supplied: Vec<_> = observed!(
+                    Some(variant),
+                    "child-batch",
                     Certificate::checked_batch(graph.session, graph.bridge, selected)
-                        .unwrap()
-                        .into_iter()
-                        .map(|child| child.unwrap())
-                        .collect();
+                )
+                .unwrap()
+                .into_iter()
+                .map(|child| child.unwrap())
+                .collect();
                 match variant {
                     1 => {
                         supplied.pop().unwrap();
@@ -1535,21 +1597,39 @@ mod tests {
                     }
                     _ => {}
                 }
-                let expected = graph
-                    .source_root_expectation_with_layout(a, &layout)
-                    .unwrap()
-                    .unwrap();
-                let recording = graph.bridge.recording(graph.session).unwrap();
+                fuel!(Some(variant), "coverage-mutation:after");
+                let expected = observed!(
+                    Some(variant),
+                    "expectation",
+                    graph.source_root_expectation_with_layout(a, &layout)
+                )
+                .unwrap()
+                .unwrap();
+                let recording = observed!(
+                    Some(variant),
+                    "recording-bridge",
+                    graph.bridge.recording(graph.session)
+                )
+                .unwrap();
                 let alias = graph.source_roots.roots[a].alias;
-                let value = graph.materialize_using(alias, &recording).unwrap();
+                let value = observed!(
+                    Some(variant),
+                    "materialize",
+                    graph.materialize_using(alias, &recording)
+                )
+                .unwrap();
                 assert!(
-                    Certificate::finish(
-                        graph.session,
-                        graph.bridge,
-                        expected,
-                        value,
-                        recording.into_records().unwrap(),
-                        supplied,
+                    observed!(
+                        Some(variant),
+                        "finish",
+                        Certificate::finish(
+                            graph.session,
+                            graph.bridge,
+                            expected,
+                            value,
+                            recording.into_records().unwrap(),
+                            supplied,
+                        )
                     )
                     .unwrap()
                     .is_none(),
@@ -1559,6 +1639,7 @@ mod tests {
             // Physical lineage negative: inject only the CORRECT native alias
             // tokens, then deliberately patch the doc slot with the equal-valued
             // wrong-owner child. Correct child inventory cannot bless that slot.
+            fuel!(None::<usize>, "physical-child-checks:before");
             let mut supplied = Vec::new();
             for certificate in &common {
                 let expected = certificate.source.clone();
@@ -1568,15 +1649,33 @@ mod tests {
                         .unwrap(),
                 );
             }
-            let inputs = graph.source_root_inputs(a, supplied).unwrap().unwrap();
-            let normal = graph.bridge.recording(graph.session).unwrap();
-            let private = normal
-                .deferred_private_bridge(graph.session, &inputs.log)
-                .unwrap();
+            fuel!(None::<usize>, "physical-child-checks:after");
+            let inputs = observed!(
+                None::<usize>,
+                "physical-inputs",
+                graph.source_root_inputs(a, supplied)
+            )
+            .unwrap()
+            .unwrap();
+            let normal = observed!(
+                None::<usize>,
+                "physical-normal-bridge",
+                graph.bridge.recording(graph.session)
+            )
+            .unwrap();
+            let private = observed!(
+                None::<usize>,
+                "physical-private-bridge",
+                normal.deferred_private_bridge(graph.session, &inputs.log)
+            )
+            .unwrap();
             let native = graph.source_roots.roots[a].native;
-            let value = graph
-                .materialize_with_inputs(native, &private, None, Some((&inputs, &normal)))
-                .unwrap();
+            let value = observed!(
+                None::<usize>,
+                "physical-materialize",
+                graph.materialize_with_inputs(native, &private, None, Some((&inputs, &normal)))
+            )
+            .unwrap();
             drop(normal);
             let (_, factories) = private.into_deferred_records().unwrap();
             let correct: Vec<_> = inputs
@@ -1591,14 +1690,23 @@ mod tests {
                 .position(|input| input.alias == a_doc)
                 .unwrap();
             wrong_pairs[doc_slot].1 = &wrong_doc.value;
-            inputs
-                .log
-                .borrow()
-                .apply(graph.session, &value, &wrong_pairs)
-                .unwrap();
+            observed!(
+                None::<usize>,
+                "physical-slot-patch",
+                inputs
+                    .log
+                    .borrow()
+                    .apply(graph.session, &value, &wrong_pairs)
+            )
+            .unwrap();
             let mut rejected = false;
-            for factory in factories {
-                match factory.finalize(graph.session, &correct) {
+            for (factory_index, factory) in factories.into_iter().enumerate() {
+                fuel!(Some(factory_index), "physical-factory-index");
+                match observed!(
+                    None::<usize>,
+                    "physical-factory-finalize",
+                    factory.finalize(graph.session, &correct)
+                ) {
                     Ok(_) => {}
                     Err(error) => {
                         assert!(
@@ -1618,13 +1726,23 @@ mod tests {
             );
             let meta_slot = layout[a].iter().position(|id| *id == am).unwrap();
             let child_meta = common[meta_slot].clone();
+            fuel!(None::<usize>, "final-parent:before");
             let parent = parent(&mut graph, a, am, entries, &child_meta);
+            fuel!(None::<usize>, "final-parent:after");
             invoke(
                 graph.session,
                 "(fn [m] (set! (.-__hash m) 991))",
                 &parent.value,
             );
-            assert!(!Certificate::validate(graph.session, graph.bridge, &parent).unwrap());
+            fuel!(None::<usize>, "forged-memo-write:after");
+            assert!(
+                !observed!(
+                    None::<usize>,
+                    "final-validation",
+                    Certificate::validate(graph.session, graph.bridge, &parent)
+                )
+                .unwrap()
+            );
             let _ = b;
         }
     }

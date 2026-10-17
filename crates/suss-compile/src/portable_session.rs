@@ -1215,6 +1215,20 @@ impl Session {
         Self::consume_host_work(self.store.as_context_mut(), units, &self.interrupt)
             .map_err(Into::into)
     }
+    /// Declare compiler-owned setup/import cells against THIS Session's active
+    /// operation. Keep original host traps instead of normalizing them through
+    /// the resolver's Diagnostic-only callback interface.
+    pub(crate) fn declare_compiler_cell(&mut self, environment: &mut Environment, namespace: &str, name: &str) -> Result<CellIdentity, SessionError> {
+        let mut host_error = None;
+        let result = environment.declare_cell_metered(self.phase, namespace, name, &mut |work| {
+            self.charge_host_work(work).map_err(|error| {
+                host_error = Some(error);
+                Diagnostic { span: 0..0, message: "Compiler binding ownership budget exhausted".into() }
+            })
+        });
+        if let Some(error) = host_error { return Err(error); }
+        result.map_err(SessionError::Compile)
+    }
     /// Store-context counterpart for decoders. Callers must pass the cancellation
     /// flag captured from this same Session, not another Store's flag.
     pub(crate) fn consume_host_work(

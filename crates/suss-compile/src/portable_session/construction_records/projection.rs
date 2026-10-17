@@ -70,7 +70,8 @@ impl FactoryProjection {
         let mut heads = InputHeads::new(ledger.records.len(), &mut meter)?;
         let mut collisions = Vec::new();
         reserve(meter.session, &mut collisions, ledger.records.len())?;
-        for (id, record) in ledger.records.iter().enumerate() {
+        for id in 0..ledger.records.len() {
+            let record = ledger.records.record(id, meter.session)?;
             let hash = meter.hash(&record.value)?;
             let previous = heads.insert(hash, id, &mut meter)?;
             collisions.push(previous);
@@ -86,7 +87,7 @@ impl FactoryProjection {
             let mut found = false;
             while let Some(id) = cursor {
                 meter.charge(2)?;
-                let record = &ledger.records[id];
+                let record = ledger.records.record(id, meter.session)?;
                 if meter.same(value, &record.value)? {
                     found = true;
                     if !selected[id] {
@@ -116,8 +117,9 @@ impl FactoryProjection {
             // The selected root must have its OWN recorded factory. Only edges
             // can terminate at an authenticated child or pristine initial seed.
             if !found && !first {
-                for (id, record) in ledger.records.iter().enumerate() {
+                for id in 0..ledger.records.len() {
                     meter.charge(1)?;
+                    let record = ledger.records.record(id, meter.session)?;
                     if let Fact::CanonicalSeed(seed) = &record.fact {
                         if seed.contains_initial_reference(meter.session, value)? {
                             selected[id] = true;
@@ -183,7 +185,7 @@ impl FactoryProjection {
         let session = &mut *meter.session;
         for id in &self.selected {
             session.charge_host_work(2)?;
-            let record = &self.ledger.records[*id];
+            let record = self.ledger.records.record(*id, session)?;
             session.charge_host_work(1)?;
             valid &= match &record.fact {
                 Fact::Scalar(fact) => fact.matches(session, &record.value)?,
@@ -215,6 +217,75 @@ mod tests {
     fn matches(s: &mut Session, view: &FactoryProjection, root: &SessionValue) -> bool {
         let mut audit = CertificationAudit::new(s).unwrap();
         view.matches_factory_facts(s, root, &mut audit).unwrap()
+    }
+    #[test]
+    fn paged_projection_forced_collisions_match_independent_flat_view_and_keep_roots_after_gc() {
+        let mut s = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut s).unwrap();
+        let recording = bridge.recording(&mut s).unwrap();
+        let mut values = Vec::new();
+        for id in 0..70 {
+            values.push(
+                recording
+                    .scalar(
+                        &mut s,
+                        &Literal::String(format!("page-{id}").encode_utf16().collect()),
+                    )
+                    .unwrap(),
+            );
+        }
+        let root = recording.vector_values(&mut s, &values).unwrap();
+        let ledger = Rc::new(recording.into_records().unwrap());
+        assert!(ledger.records.len() > 64);
+        let view = FactoryProjection::from_recorded_root_with_hash(&mut s, &ledger, &root, 0)
+            .unwrap()
+            .unwrap();
+        {
+            let _request = s.operation_budget_scope().unwrap();
+            let mut flat = Vec::new();
+            reserve(&mut s, &mut flat, ledger.records.len()).unwrap();
+            for id in 0..ledger.records.len() {
+                flat.push(ledger.records.record(id, &mut s).unwrap());
+            }
+            let paged = ledger.check_recorded_inputs(&mut s, &root, 0).unwrap();
+            let reference = ConstructionRecords::check_selected_inputs(
+                &mut s,
+                &root,
+                0,
+                flat.as_slice(),
+                &ledger.children,
+            )
+            .unwrap();
+            assert!(paged);
+            assert_eq!(paged, reference);
+            // Order and all factory roots, not page addresses, select the view.
+            for pair in view.selected.windows(2) {
+                assert!(pair[0] < pair[1]);
+            }
+        }
+        drop(values);
+        drop(ledger);
+        s.collect().unwrap();
+        assert!(matches(&mut s, &view, &root));
+        // A selected string crossing a page boundary must remain validated.
+        let selected = view
+            .ledger
+            .records
+            .record(33, &mut s)
+            .unwrap()
+            .value
+            .clone();
+        s.inspect(&selected, |mut store, value| {
+            value
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap()
+                .set(&mut store, 0, wasmtime::Val::I32(99))?;
+            Ok(())
+        })
+        .unwrap();
+        assert!(!matches(&mut s, &view, &root));
     }
     #[test]
     fn factory_projection_preserves_shared_aliases_and_closes_exact_native_inputs_under_collisions()
@@ -353,16 +424,16 @@ mod tests {
         // it is the negative control for any future source integration. A bound
         // source certificate MUST also import the inspected base's causal proof.
         assert!(matches(&mut s, &view, &copied));
-        assert!(
-            ledger.records.iter().enumerate().any(|(id, record)| {
-                let mut meter = InputIndex {
-                    session: &mut s,
-                    hash_mask: u64::MAX,
-                };
-                meter.same(&record.value, &base).unwrap() && !view.selected.contains(&id)
-            }),
-            "the inspected base is absent from the physical input closure"
-        );
+        let mut found_base = false;
+        for id in 0..ledger.records.len() {
+            let record = ledger.records.record(id, &mut s).unwrap();
+            let mut meter = InputIndex { session: &mut s, hash_mask: u64::MAX };
+            if meter.same(&record.value, &base).unwrap() && !view.selected.contains(&id) {
+                found_base = true;
+                break;
+            }
+        }
+        assert!(found_base, "the inspected base is absent from the physical input closure");
     }
     #[test]
     fn factory_projection_checks_complete_pristine_seed_snapshot() {

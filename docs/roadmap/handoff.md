@@ -28734,3 +28734,322 @@ CI before interpreting unexecuted suites. The remaining source-child fuel failur
 and default core-import setup failure require diagnosis under unchanged budgets.
 No current-source Jank, issue acceptance, complete workspace baseline, passing CI
 or merge-readiness conclusion follows from this checkpoint.
+
+
+### Native fuel attribution source and raw runs (2026-10-16)
+
+Branch portable/m4-native-fuel-hotspots starts at be9403182656cf370c708842de2828e869af19e8.
+The twelve opt-in/test diagnostic source files and four regenerated bootstrap
+artifacts match all 450 compiled-input hashes from native-layout-and-domain-census.
+No representation or membership-search optimization has been implemented here.
+The evidence archive m4-native-fuel-hotspots-2026-10-16.tar.gz retains the
+chronological raw runs, rejected initial bootstrap mismatch, exact source snapshots,
+commands, exit receipts, observers and input manifests. Its internal SHA256 manifest
+covers each payload; the publication manifest itself is outside that manifest.
+
+The final run executes four observer tests successfully and regenerates bootstrap
+successfully. The exact core_import::imported_identity_preserves_exact_values_and_object_identity_across_gc
+fixture and source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo
+each fail with fuel exhaustion (exit 101, zero passes and one failure per command).
+See receipt.json for full cargo commands, raw logs and unchanged-input checks.
+No full baseline or final-head CI success is claimed for this diagnostic branch.
+
+Measured root analysis consumes 2,292,992 native units for 8,957 Arc<Hir> captures.
+Hir is 240 bytes in this build. Compact self-parameter ownership is a candidate,
+not an executed optimization or proven saving. Source-child variant zero spends
+4,118,259 units materializing its parent; variant one exhausts fuel. Its 2,880
+edge-membership checks consume 1,949,568 units versus 160,908 for node snapshots.
+These are nested instruction-fuel intervals, not wall-time or additive independent
+operation totals. Macro phase and remaining variants do not execute after failure.
+A direct-root-first membership search is a candidate; all snapshot, seed, owner,
+callback, foreign-store and negative-proof obligations remain required.
+
+
+Supplemental terminal evidence for the parent source be9403182656cf370c708842de2828e869af19e8
+is retained in m4-draft263-terminal-evidence-2026-10-16.tar.gz, SHA256
+be2751102791052c235d6ab78b0d99f6996149ba224666479732b0790a2ac97a.
+It contains the required cargo test --workspace --locked -- --test-threads=2
+terminal receipt and logs: exit101, 83 passes and two guest-fuel failures,
+14 of 253 integration targets completed and239 unexecuted. Later targets and
+doctests were unexecuted. The450 input hashes correspond to that parent commit.
+The same parent final-head CI run38991995530 also fails:520 successful Rust
+executions and16 failures, or516 distinct successful target-qualified tests
+and16 failures after deduplicating repeated bootstrap executions. Foundation
+Python348 passes. These are parent results, not execution of the diagnostic
+branch. All raw failures, logs, source correspondence and independent classifiers
+remain in the archive; no new Cargo execution accompanies publication.
+
+
+### First executed native ownership and membership repairs (2026-10-16)
+
+Named-function self parameters now use exact immutable Arc ownership. Completed
+parameter payload/header allocation is prepaid and metered HIR copies retain
+that owner. Definition/signature semantics and source facts remain unchanged.
+WriteDomain membership checks all exact recorded/child roots before searching
+seed interiors; all node snapshots, methods/prototypes, child dependencies and
+remaining comparisons stay checked and metered. Independent four-file review
+found no source blocker; foreign rejection coverage is at construction, not an
+invented traversal result. Refs #270, #252 and #264; no acceptance closure.
+
+The first frozen cohort passes24 Rust tests: observers4, domain4, closures14,
+pinned-parameter native2. Extension passes ownership14 and cumulative fuel10.
+Together48 passes, three fuel failures, zero ignored. Bootstrap regeneration
+succeeds; Python348 tests and all13 foundation provenance commands succeed.
+The core-import exact case still fails native fuel during IR construction;
+16 other core-import cases were not rerun. Source-child reaches Runtime variant3
+rather than variant1, then exhausts fuel; later variants, Macro and physical/memo
+tails remain unexecuted. No full-baseline or CI success is claimed for this tuple.
+
+Measured HIR layout240→200 bytes with8,957 captures; complete pre-IR analysis
+saves414,808 units after352 newly charged owner units. Recurrence126,072 now
+completes; IR construction consumes313,632 before its next76-unit charge fails
+with66 remaining. Remaining construction/emission work is unknown. Source-child
+variant0 materialization4,118,259→2,285,067 saves1,833,192 (44.51%); membership
+1,949,568→116,376. Nested intervals are not additional independent savings.
+
+The unchanged pinned map gate fails macro invocation withzero assertions and
+all69 IDs unexecuted. A matched parent control withall450 compiled inputs of
+5187354 also fails macro invocation/fuel at239..5926, withzero assertions.
+Backtraces differ and are retained. This failure is present in the parent; the
+older81769-ID success is not current acceptance. No blanket skip or verdict
+success replaces it. Both source tuples retain all raw observations/comparisons.
+
+Archive m4-native-fuel-first-repairs-2026-10-16.tar.gz retains commands, receipts,
+source/artifact freezes, matched control and manifest. First cohort freezes450
+inputs; extension/control456, adding pinned Jank/oracle/checker bytes. Parameter
+oracle JSON is separately captured after execution and matched to parent bytes;
+it was not independently frozen by the first cohort. The initial provenance
+precheck failed because the new worktree CLJS submodule was uninitialized; after
+pinned initialization all checkers pass. No fresh CLJS oracle run is claimed.
+
+
+### Second allocation candidates and complete metered cost probe (2026-10-16)
+
+An explicitly experimental tuple adds a shared owned Definition syntax payload,
+32-slot append-only construction-record pages and the reviewed finite ToInt32
+shortcut. Compilation/bootstrap generation succeed. Focused int32 boundaries1,
+ownership16, definitions14, ledger/projection15 and bitwise5 pass:51 Rust passes,
+four fuel failures, zero ignored. The bitwise primary case fails common core
+setup before observations; core-import, source-child and the map gate also retain
+fuel failures. All459 declared inputs remain unchanged. New functional boundary,
+collision, GC, poison and failure/retry tests pass, not complete source authority.
+
+Owned syntax HIR shrinks200→184 bytes but complete pre-IR cost INCREASES102,180:
+166,064 capture/copy saving is outweighed by268,244 newly charged syntax copies
+and owner allocation. This strategy is not a demonstrated default-budget repair.
+Its full source and failed results are retained while existing immutable
+provisional declaration ownership is evaluated. No earlier failure is hidden.
+
+The first temporary cost probe changes Session execution fuel to30M but plain
+NoExpansion preparation retains its10M compiler fallback; it fails at the same
+native boundary. This scope mismatch does not establish a30M native failure.
+A corrected explicit ExpansionHost probe retains the same reader/conditional,
+source-copy, default Environment and provided namespace steps. One initial
+ModuleIdentity import compile error is retained. Corrected preparation completes
+at30M with12,985,647 metered units:prefix666,846, other preparation11,127,828,
+IR verification1,190,973. Complete IR construction is2,006,192; recurrence126,072.
+The preparation probe executes no Store/user program and earns no acceptance
+credit. Native work before emission totals11,794,674; default core still fails.
+
+Archive m4-native-second-candidates-2026-10-16.tar.gz retains the unsuccessful
+owned-payload strategy, all commands/receipts/source freezes, scope-mismatch and
+compiler-only probe sources/logs, and map comparison (zero assertions/all69
+unexecuted). No full baseline, final CI, issue closure or performance success is
+claimed for this experimental tuple. Later source changes require fresh gates.
+
+
+### Captured native declaration syntax and measured record pages (2026-10-16)
+
+Definition syntax now retains the exact local incomplete provisional record,
+never a completed initializer graph or a later environment lookup. Preserved
+catalog declarations use the incoming owned fallback. One retain is prepaid;
+all fallback copies/allocation remain charged. This can extend full provisional
+source-form/origin lifetimes and is not a measured retained-memory saving.
+
+The third frozen459-input cohort passes52 Rust executions andretains five
+failures: four fuel failures plus a new test-only traversal failure. The helper
+omitted executable Loop children; fixingthat traversal preserves its expected
+two owners andall source/pointer assertions. After regeneratingbootstrap identity,
+all18 ownership tests pass with459 unchanged inputs. No ignored/unknown result
+becomes success through lowered expectations. The four fuel gaps remain open.
+
+Construction-record pages preserve order, facts, collision chains andowning-ledger
+projections; every access is fallible/metered. Actual parentvariant0 ledger cost
+328,452→95,158 saves233,294. Materialization2,285,067→2,035,629 saves249,438;
+inclusive hashing separately saves16,144, not attributed to paging. Setup and
+access overhead remain visible. Runtime variant3 still exhausts fuel beforethe
+remaining variants, Macro andphysical/memo tails; no #270 acceptance is claimed.
+
+Captured syntax preparation recovers263,832 charged units versusthe unsuccessful
+owned-payload tuple. The compiler-only30M probe completes12,721,815 metered units,
+including1,190,973 verification; no Store/user program executes. IRconstruction
+2,006,192 comprises globalcopies1,200,020, functionnames94,109 andother712,063.
+This localizes work toremove ratherthan cutting tariffs orraising defaults.
+
+Enrollment remains799,823: snapshots443,000 (Constructor312,577), prototype122,577,
+node growth121,607, edges/cuts106,320 anddirect facts6,319. All132 phase sequences
+pair exactlywithzero residual; publication intervals debit zero butperform work.
+Nested intervals must notbe added to their enclosing totals. Existing quotas,
+validation andsource/guest identities remain intact.
+
+Archive m4-native-captured-syntax-records-2026-10-16.tar.gz retains both raw source
+tuples, failed traversal test, correction, commands, observations andhash manifest.
+The map gate still reportszero assertions/all69 unexecuted; bitwiseprimary fails
+common core setup whilefive effect/error regressions pass. Focused ABI boundary,
+definition andledger suites pass. Requiredfull baseline andfinal-head CI remain
+separate unmet gates; no issue closure, merge ormilestone completion is claimed.
+
+Final corrected-source provenance: `python3 -m unittest discover -s scripts -p
+'test_*.py'` passes all348 tests, and all12 remaining inventory, review, import,
+bootstrap, provenance and pinned-suite checks exit0 (13 commands total). Raw logs,
+command receipts and source-freeze mapping are retained separately in
+`m4-native-final-provenance-2026-10-16.tar.gz`; they ran after the main archive.
+These checks do not execute the full workspace baseline or resolve the fuel gaps.
+
+### Shared native Global identities (2026-10-16)
+
+Global now retains an immutable phase/namespace/name owner. Value Eq/Ord,
+borrowed lookup ordering, Debug and Wasm import names are preserved. Temporary
+query Strings in the metered identity paths remain copied and charged; those
+queries allocate no Arc. Existing
+binding keys are retained, while absent bootstrap selectors create charged
+private owners without publishing bindings. DefinitionInfo revisions remain
+independent. Both HIR selector callers propagate meter errors. Syntax-quote uses
+a selection predicate without constructing an unused owner. Macro rollback keys
+use read-only lookup/create rather than cloning an entire caller Environment.
+There is no extra bootstrap catalog to copy on Environment cloning.
+
+Global creation prepays text and owner/header storage; IR/HIR copies now retain
+that actual owner instead of copying both Strings. Namespace refers, source
+cells, reader pairs, reify/protocol keys and active Session import/rollback paths
+use current meters. Convenience setup calls precede active preparation and use
+separate finite accounting. In particular, AOT command/world import setup has a
+per-cell bound, which does not bound the aggregate import list. This remains an
+explicit setup limitation, not evidence of complete cumulative accounting.
+
+Compile-only pilot1 retains two new-test &&str argument errors and unchanged
+3,488-input hashes. Pilot2 passes after dereferencing those arguments. The final
+source removes a redundant loop retain and adds an executing HIR interruption
+regression: every charged boundary for let/loop/inc in both phases must return
+the exact interruption, make no later charge, preserve caller generation and
+permit subsequent preparation. All7 Global tests pass. The original selector
+variant block corresponds byte-for-byte to14c2ad1 apart from the Result wrapper
+and final-use loop move; runtime resolution tests provide separate execution.
+
+With2,914 frozen compiler/runtime/recipe/oracle inputs, bootstrap regeneration
+succeeds and changes only its4 declared outputs. Both phases' noncustom Wasm
+sections are byte-identical to14c2ad1. Focused tests pass117 Rust executions:
+ABI1, ownership18, Global7, definitions14, resolution14, modules11, phases3,
+closures14, ledger15, snapshots16 and domains4. Python348 and all13 foundation
+commands pass on the same unchanged tuple. A fresh pinned development CLJS/Node
+run matches all117 core-import observations exactly; its initial missing-Java
+setup attempt is retained separately. These reference observations execute no
+Suss code and do not establish default-budget core execution.
+
+Snapshot observers use the existing opt-in materialization trace flag. They
+retain original operations, errors, tariffs, roots and charged layouts while
+recording cut, index, node and atom-buffer intervals. Intervals are nested;
+subintervals cannot be added again to their enclosing totals. The selected
+single-test trace avoids cross-test interleaving; general concurrent logs have
+no unique operation IDs. Default-budget execution and terminal gate results are
+recorded separately below rather than inferred from source approval or byte
+correspondence.
+
+The complete focused cohort terminates with132 Rust passes,4 fuel failures and
+0 ignores; all2,914 inputs remain unchanged. Cumulative-fuel/recovery adds10
+passes and bitwise effect/error regressions add5. Core import still exhausts
+10M during IR construction (the trace records an ir_build rejection); its16
+other tests are filtered, not credited. The separate explicit30M compiler-only
+probe completes11,788,490 units, versus12,721,815 previously, and executes no
+Store/user program. Verification remains1,190,973. IR construction falls
+2,006,192→826,842; global copies alone fall1,200,020→20,670. HIR layout falls
+184→160 bytes. Total net saving is933,325:1,428,446 measured copy/layout savings
+are offset by495,121 additional unclassified other-analysis units. Current
+labels do not independently split owner allocation from query/retain overhead.
+
+Source-child variant0 materialization remains2,035,629 units. Runtime variant3
+still exhausts fuel during materialization; later variants, Macro and physical/
+memo tails remain unexecuted. Full original Jank map execution still stops in
+macro transport with0 assertions and all69 unexecuted; the host comparison
+retains the raw changed backtrace. Bitwise primary fails common core setup.
+These failures are not excluded, converted to values or hidden by raised quotas.
+Raw frozen inputs, failed compiler/setup attempts, commands and comparisons are
+packaged in m4-native-global-ownership-2026-10-17.tar.gz. Independent source
+review found no blocker. Complete execution criteria, required full baseline
+and final-head CI remain separate gates.
+
+### Bootstrap operation selection and adaptive snapshot indexes (2026-10-17)
+
+HIR now selects a copyable bootstrap operation without constructing a discarded
+Global. Shared classification retains the public Binding-returning API and its
+metered owner creation. Both HIR lookup positions, lexical guards and ordinary
+Binding errors/fallbacks remain unchanged, including unchecked access and reify.
+Before refactoring, a probe executed the compiled c10 public API for all55 names,
+both phases and8 alias/shadow/exclusion/redefinition/restoration scenarios. The
+880 frozen routing rows pass against the new API/operation path; they prove
+routing equivalence, not guest value/effect acceptance. The probe's initial
+private-API compilation error, corrected source, receipts and executable are
+retained separately. Global-owner allocation checks do not claim zero String
+allocations: the existing shadow lookup still copies temporary Strings.
+
+Snapshot capture uses exact-reference linear searches for at most8 owned nodes
+or cuts, then privately promotes to the original AVL indexing for wider graphs.
+Duplicates are checked before promotion. Cut/node promotions are independent;
+all index/link allocation and installation work is prepaid before publication.
+BFS IDs, owned roots, complete fields/types/methods, collision checks, foreign/
+root-cut checks and iterative deep fallback remain intact. Existing16 snapshot
+regressions plus2 new boundary/cycle/wide-collision/GC/promotion-IRQ/recovery
+regressions pass. Failed promotion publishes no usable partial index; capture
+cleanup releases staged handles.
+These are representation/algorithm changes, not a tariff or quota reduction.
+
+The frozen2,915-input cohort compiles and regenerates both bootstraps, changing
+only their4 declared outputs. Noncustom Wasm sections remain byte-identical to
+c10. Focused execution records141 Rust passes,4 fuel failures and0 ignores;
+Global tests include all880 routing rows, nominal/array fallback tests pass,
+and cumulative fuel remains10/10. Python348 and all13 foundation commands pass
+on the unchanged tuple. Both patches received independent source review.
+
+Compiler-only30M preparation is11,711,801 units (76,689 fewer than c10), with
+unchanged1,190,973 verification cost and no user program execution. Default core
+still exhausts fuel; its16 other core tests remain filtered. Runtime source-child
+variant3 now completes, while variant4 exhausts fuel; Macro and later physical/
+memo tails remain unexecuted. The complete original map test still executes0
+assertions/all69 unexecuted. Bitwise primary still fails core setup while5
+other regressions pass. No required full-baseline or final-head CI success is
+inferred from these focused results. c10 PR CI's16 observed failures remain
+classified as native/guest fuel failures with raw changed diagnostics retained.
+
+Raw commands, both frozen source tuples, parent routing fixture/probe and all
+terminal results are retained in
+m4-bootstrap-selection-snapshot-indexes-2026-10-17.tar.gz, SHA256
+8acb3b1e5ece081ca00c869de91c388b7cd8b5b36cfc219cfc300aaea9fe885d.
+The manifest maps every declared input to exact bytes and preserves every
+observed failure. No full workspace or new-head CI result is claimed here.
+
+### Shared method-receiver facts (2026-10-17)
+
+MethodThis now owns all six existing receiver facts through one immutable Arc.
+Each genuine construction/replacement creates a distinct owner after charging
+its payload and Arc header; binding revision copies charge one retain. Local
+binding revision identities and graph projection order/keys remain unchanged.
+Existing CLI method-role assertions are migrated without removing observations.
+Independent source review found no blocker; public fields still rely on the
+existing immutable-owner discipline and Debug gains a facts wrapper.
+
+Frozen-input focused runner: /home/bobby/.cache/suss-m4-work/
+run-native-method-this-candidate.py, CARGO_BUILD_JOBS=2, target
+memo-proof-cost-target, no RUSTFLAGS. Compiler no-run and bootstrap generation
+pass; only the four bootstrap outputs changed. Both bootstrap noncustom Wasm
+section sequences match parent682d2b8 exactly. Binding ownership20/20, Global
+ownership8/8, receiver roles2/2 and Int32 ABI1/1 pass. Ownership includes new
+sharing/equal-distinct/replacement and fail-each-charge/retry regressions.
+The remaining focused cohort, diagnostic net-cost measurement and Python/
+provenance commands are running at this checkpoint; no additional pass, net
+saving, complete baseline or final-head CI success is claimed.
+
+Existing default-core/source-child/map acceptance failures remain unresolved
+until the unchanged tests execute successfully. Direct all-six-field guest
+identity coverage is not established by the native role tests. The next action
+is to retain terminal cohort results, measure total cost including new owners,
+and review committed source/evidence correspondence. No issue closure/merge.

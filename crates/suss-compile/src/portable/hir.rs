@@ -2,7 +2,7 @@
 mod arrays;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionForm, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
-pub(crate) use local_bindings::{CowTraceScope, cow_trace_charge, cow_trace_reset};
+pub(crate) use local_bindings::{CowTraceScope, CowTraceCharge, CowTraceRequest};
 mod function_parameters;
 mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
@@ -19,7 +19,7 @@ mod quotes;
 mod source_tags;
 use super::{
     Diagnostic,
-    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+    resolve::{Binding as ResolvedBinding, BootstrapSelection, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
@@ -428,6 +428,43 @@ pub struct Parameter {
     pub metadata: Vec<Form>,
     pub span: Range<usize>,
 }
+/// Immutable syntax owned by one analyzed definition. Empty metadata with no
+/// docstring needs no owner; an explicitly empty docstring remains present.
+#[derive(Debug, Clone, Default)]
+pub struct DefinitionSyntax(DefinitionSyntaxOwner);
+#[derive(Debug, Clone, Default)]
+enum DefinitionSyntaxOwner {
+    #[default]
+    Empty,
+    // Only the actual provisional revision, before initializer analysis. This
+    // extends the lifetime of its full source forms/origin, not only metadata.
+    Captured(std::sync::Arc<super::resolve::DefinitionInfo>),
+    Owned(std::sync::Arc<DefinitionSyntaxPayload>),
+}
+#[derive(Debug)]
+struct DefinitionSyntaxPayload {
+    name_metadata: Vec<Form>,
+    docstring: Option<Vec<u16>>,
+}
+impl DefinitionSyntax {
+    pub fn name_metadata(&self) -> &[Form] {
+        match &self.0 {
+            DefinitionSyntaxOwner::Empty => &[],
+            DefinitionSyntaxOwner::Captured(owner) => &owner.declaration.metadata,
+            DefinitionSyntaxOwner::Owned(payload) => &payload.name_metadata,
+        }
+    }
+    pub fn docstring(&self) -> Option<&[u16]> {
+        match &self.0 {
+            DefinitionSyntaxOwner::Empty => None,
+            DefinitionSyntaxOwner::Captured(owner) => owner.docstring.as_deref(),
+            DefinitionSyntaxOwner::Owned(payload) => payload.docstring.as_deref(),
+        }
+    }
+    fn has_payload(&self) -> bool {
+        !matches!(&self.0, DefinitionSyntaxOwner::Empty)
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Method {
     pub variadic: bool,
@@ -643,7 +680,7 @@ impl Clone for Hir {
             span: self.span.clone(),
             metadata: self.metadata.clone(),
             ty: self.ty,
-            kind: self.kind.clone(),
+            kind: self.kind.clone().census_cloned(),
         })
     }
 }
@@ -733,9 +770,8 @@ pub enum Expression {
     GlobalCell(Global),
     Definition {
         global: Global,
-        name_metadata: Vec<Form>,
+        syntax: DefinitionSyntax,
         name_span: Range<usize>,
-        docstring: Option<Vec<u16>>,
         initializer: Option<Box<Hir>>,
         once: bool,
     },
@@ -766,7 +802,7 @@ pub enum Expression {
     GeneralFunction {
         methods: Vec<Method>,
         captures: Vec<BindingId>,
-        self_binding: Option<Parameter>,
+        self_binding: Option<std::sync::Arc<Parameter>>,
         rest_class: Option<Global>,
     },
     Call {
@@ -778,6 +814,18 @@ pub enum Expression {
         operator: Arithmetic,
         arguments: Vec<Hir>,
     },
+}
+impl Expression {
+    /// Diagnostic constructor hook. Moves/rewrites of an existing expression
+    /// must not call this: they do not allocate a hypothetical new payload.
+    pub(crate) fn census_created(self) -> Self {
+        local_bindings::cow_trace_expression("constructed_direct", &self);
+        self
+    }
+    fn census_cloned(self) -> Self {
+        local_bindings::cow_trace_expression("derived_clone", &self);
+        self
+    }
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
     Diagnostic {
@@ -939,12 +987,19 @@ impl Analyzer<'_> {
         // Recursive re-expansion consumes the enclosing request budget. The
         // growable stack below protects native analysis without imposing a
         // fixed language-level nesting ceiling.
-        self.expander.charge_expansion_work(1, form.span.clone())?;
+        {
+            let _trace = CowTraceScope::new("analysis_visit");
+            self.expander.charge_expansion_work(1, form.span.clone())?;
+        }
         let previous_origin = self.origin.clone();
-        let has_template = self.analysis_depth == 0 && super::syntax_quote::has_template_metered(
-            form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-        )?;
+        let has_template = self.analysis_depth == 0 && {
+            let _trace = CowTraceScope::new("syntax_quote_scan");
+            super::syntax_quote::has_template_metered(
+                form, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+            )?
+        };
         let reader_form = if has_template {
+            let _trace = CowTraceScope::new("reader_expand_replay");
             let expander = &mut *self.expander;
             let mut meter = |work| expander.charge_expansion_work(work, form.span.clone());
             let mut reader = self.environment.reader_state.clone();
@@ -1034,9 +1089,9 @@ impl Analyzer<'_> {
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
-                        match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
-                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
-                            Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
+                        match self.environment.bootstrap_selection(self.phase, symbol) {
+                            Some(BootstrapSelection::Let) => Some("let*"),
+                            Some(BootstrapSelection::Loop) => Some("loop*"),
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
@@ -1058,6 +1113,7 @@ impl Analyzer<'_> {
             }
         }
         let coerced = {
+            let _trace = CowTraceScope::new("reader_sequence_probe");
             let expander = &mut *self.expander;
             super::syntax_quote::reader_sequence_initializer(
                 form, &self.environment, self.phase, self.origin.as_deref(),
@@ -1065,7 +1121,8 @@ impl Analyzer<'_> {
             )?
         };
         if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+            let (global, fallback, fresh) = self.environment.reader_sequence_cells_metered(self.phase,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
             if fresh {
                 let initializer = self.form(&coerced)?;
                 self.callable_keys.insert(
@@ -1077,12 +1134,11 @@ impl Analyzer<'_> {
                         ty: Type::Value,
                         kind: Expression::Definition {
                             global: fallback.clone(),
-                            name_metadata: Vec::new(),
+                            syntax: DefinitionSyntax::default(),
                             name_span: form.span.clone(),
-                            docstring: None,
                             initializer: Some(Box::new(initializer)),
                             once: true,
-                        },
+                        }.census_created(),
                     },
                 );
             }
@@ -1101,7 +1157,7 @@ impl Analyzer<'_> {
                         span: items[0].span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
-                        kind: Expression::GlobalOrFallback { global, fallback },
+                        kind: Expression::GlobalOrFallback { global, fallback }.census_created(),
                     }),
                     arguments: vec![argument],
                 },
@@ -1286,7 +1342,7 @@ impl Analyzer<'_> {
                         if let Some(binding) = self.locals.get(&symbol.name) {
                             (Expression::Local(binding.id), binding.ty)
                         } else if let Some(field) = self.fields.get(&symbol.name) {
-                            (field.access.kind.clone(), field.access.ty)
+                            (field.access.kind.clone().census_cloned(), field.access.ty)
                         } else {
                             self.global_value(symbol, form.span.clone())?
                         }
@@ -1418,7 +1474,8 @@ impl Analyzer<'_> {
         }
         let global = self
             .environment
-            .declare_cell(self.phase, &namespace, &name.name)
+            .declare_cell_metered(self.phase, &namespace, &name.name,
+                &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))
             .map_err(|mut error| {
                 error.span = args[0].span.clone();
                 error
@@ -1478,7 +1535,10 @@ impl Analyzer<'_> {
                 .and_then(|work| work.checked_add(1))
                 .and_then(|work| u64::try_from(work).ok())
                 .ok_or_else(|| fail(form.span.clone(), "Definition owner work overflow"))?;
-            self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            {
+                let _trace = CowTraceScope::new("definition_owner");
+                self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            }
             Some(self.environment.record_definition_shared(global.clone(), definition.clone()))
         } else {
             None
@@ -1511,19 +1571,27 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global,
-                name_metadata: args[0].metadata.clone(),
-                name_span: args[0].span.clone(),
-                docstring: if args.len() == 3 {
-                    match &args[1].kind {
-                        Kind::String(units) => Some(units.clone()),
-                        _ => unreachable!(),
-                    }
+                syntax: if let Some(owner) = &provisional {
+                    // Retain the exact local revision published before init;
+                    // nested definitions may have replaced the environment entry.
+                    local_bindings::capture_provisional_definition_syntax(owner,
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 } else {
-                    None
+                    // A preserved declaration has no current provisional owner.
+                    // Its new executable syntax must not borrow the old record.
+                    local_bindings::capture_definition_syntax(&args[0].metadata, if args.len() == 3 {
+                        match &args[1].kind {
+                            Kind::String(units) => Some(units.as_slice()),
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        None
+                    }, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 },
+                name_span: args[0].span.clone(),
                 initializer,
                 once,
-            },
+            }.census_created(),
         })
     }
     fn function(
@@ -1728,6 +1796,13 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             captures.remove(&parameter.id);
         }
+        // The analysis-local parameter is now complete and immutable. Only
+        // named functions allocate an owner; HIR copies retain that same value.
+        let self_binding = self_binding.map(|parameter| {
+            local_bindings::capture_self_parameter(parameter, &mut |work| {
+                self.expander.charge_expansion_work(work, form.span.clone())
+            })
+        }).transpose()?;
         let function = Hir {
             source: None,
             span: form.span.clone(),
@@ -1738,7 +1813,7 @@ impl Analyzer<'_> {
                 captures: captures.into_iter().collect(),
                 self_binding,
                 rest_class,
-            },
+            }.census_created(),
         };
         let function = self.attach_callable_signatures(form, function)?;
         *self
@@ -2286,7 +2361,8 @@ impl Analyzer<'_> {
                 }
                 Err(_) if namespace == self.environment.current_namespace(self.phase) => self
                     .environment
-                    .declare_cell(self.phase, namespace, &target.name)?,
+                    .declare_cell_metered(self.phase, namespace, &target.name,
+                        &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))?,
                 Err(error) => return Err(error),
             };
             if self
@@ -2481,12 +2557,12 @@ impl Analyzer<'_> {
             return self.quote_data(&args[0], 0);
         }
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare
+        let (selected, resolved) = if bare
             && matches!(
                 symbol.name.as_str(),
                 "if" | "do" | "fn*" | "def" | "let*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
-            None
+            (None, None)
         } else {
             if bare
                 && (self.locals.contains_key(&symbol.name)
@@ -2494,33 +2570,29 @@ impl Analyzer<'_> {
             {
                 return self.call(form, items);
             }
-            Some(
-                if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
-                {
-                    binding
-                } else {
-                    self.environment
-                        .resolve(self.phase, symbol, items[0].span.clone())?
-                },
-            )
+            if let Some(selected) = self.environment.bootstrap_selection(self.phase, symbol) {
+                (Some(selected), None)
+            } else {
+                (None, Some(self.environment.resolve(self.phase, symbol, items[0].span.clone())?))
+            }
         };
-        if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
-            return self.control_form(form, args, *operation, context, tail);
+        // Ordinary resolution can also yield a bootstrap/nominal binding (for
+        // example reify). Keep that fallback and its errors unchanged.
+        let bootstrap = selected.or_else(|| resolved.as_ref().and_then(BootstrapSelection::from_binding));
+        if let Some(BootstrapSelection::Control(operation)) = bootstrap {
+            return self.control_form(form, args, operation, context, tail);
         }
-        if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
-            return self.bitwise_form(form, args, *operation);
+        if let Some(BootstrapSelection::Bitwise(operation)) = bootstrap {
+            return self.bitwise_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
-            return self.comparison_form(form, args, *operation);
+        if let Some(BootstrapSelection::Comparison(operation)) = bootstrap {
+            return self.comparison_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::BootstrapArray { operation, .. }) = &resolved {
-            return self.array_form(form, args, *operation);
+        if let Some(BootstrapSelection::Array(operation)) = bootstrap {
+            return self.array_form(form, args, operation);
         }
-        if let Some(ResolvedBinding::Nominal {
-            form: nominal_form, ..
-        }) = &resolved
-        {
-            return self.nominal_form(form, args, *nominal_form);
+        if let Some(BootstrapSelection::Nominal(nominal_form)) = bootstrap {
+            return self.nominal_form(form, args, nominal_form);
         }
         if bare && symbol.name == "set!" {
             if args.len() != 2 {
@@ -2594,7 +2666,7 @@ impl Analyzer<'_> {
                 },
             });
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
+        if matches!(bootstrap, Some(BootstrapSelection::Binding)) {
             return self.dynamic_scope(form, args, context);
         }
         if bare && symbol.name == "throw" {
@@ -2670,16 +2742,16 @@ impl Analyzer<'_> {
             }
             return self.definition(form, args, false);
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapDefonce(_))) {
+        if matches!(bootstrap, Some(BootstrapSelection::Defonce)) {
             return self.definition(form, args, true);
         }
         if (bare && symbol.name == "fn*")
-            || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
+            || matches!(bootstrap, Some(BootstrapSelection::Fn))
         {
             let value = self.function(
                 form,
                 args,
-                matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
+                matches!(bootstrap, Some(BootstrapSelection::Fn)),
                 name_hint,
                 initializer,
             )?;

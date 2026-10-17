@@ -125,13 +125,24 @@ impl Watch {
     fn method_valid(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
         authority: &CanonicalMethods, irq: &AtomicBool, require_initial: bool,
     ) -> wasmtime::Result<bool> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if fuel_trace {
+            eprintln!("source-method-query owner={} require_initial={require_initial} event=before remaining={:?}",
+                self.owner, store.get_fuel().ok());
+        }
         let descriptor = Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)));
-        let context = InspectionContext { store, identity: self.identity, runtime, interrupt: irq };
+        let context = InspectionContext { store: store.as_context_mut(), identity: self.identity, runtime, interrupt: irq };
         let result = if require_initial {
             authority.matches_in_context(context, self.owner, descriptor)
         } else {
             authority.method_layout_in_context(context, self.owner, descriptor)
         };
+        if fuel_trace {
+            // Only Ok(true) proves the authority's exact expected descriptor.
+            // False/error rows do not establish distinct descriptor key counts.
+            eprintln!("source-method-query owner={} require_initial={require_initial} event=after result={:?} remaining={:?}",
+                self.owner, result.as_ref().map_err(|error| error.to_string()), store.get_fuel().ok());
+        }
         match result {
             Ok(valid) => Ok(valid),
             // A malformed protocol table is failed inspection, not an extra

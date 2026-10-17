@@ -69,8 +69,9 @@ impl Analyzer<'_> {
         method: &str,
         arity: usize,
         schema: Vec<Hir>,
-    ) -> Hir {
-        let global = self.environment.protocol_key(protocol, method, arity);
+    ) -> Result<Hir, Diagnostic> {
+        let global = self.environment.protocol_key_metered(protocol, method, arity,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         let descriptor = self.nominal(form, Nominal::Descriptor, schema);
         let initialize = Hir {
             source: None,
@@ -79,12 +80,11 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global: global.clone(),
-                name_metadata: Vec::new(),
+                syntax: DefinitionSyntax::default(),
                 name_span: form.span.clone(),
-                docstring: None,
                 initializer: Some(Box::new(descriptor)),
                 once: true,
-            },
+            }.census_created(),
         };
         let read = Hir {
             source: None,
@@ -93,7 +93,7 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Global(global),
         };
-        self.do_hir(form, vec![initialize, read])
+        Ok(self.do_hir(form, vec![initialize, read]))
     }
     /// Prepare one source callee before its arguments. Canonical closures keep
     /// the universal ABI path; objects invoke the actual retained IFn method.
@@ -129,7 +129,7 @@ impl Analyzer<'_> {
         let schema = (0..signature)
             .map(|_| self.literal_form(form, Literal::String(vec![])))
             .collect();
-        let key = self.stable_key(form, &protocol, "-invoke", signature, schema);
+        let key = self.stable_key(form, &protocol, "-invoke", signature, schema)?;
         // Ordinary emitted ClojureScript calls capture the object's callable
         // method before evaluating arguments. Explicit -invoke separately uses
         // its live native protocol table and receiver convention.
@@ -166,16 +166,17 @@ impl Analyzer<'_> {
         }
         let protocol = self.environment.protocols.keys().find(|global| global.phase() == self.phase && global.namespace() == "suss.core" && global.name() == "IFn").cloned();
         let Some(protocol) = protocol else { return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, name])); };
-        let table = self.environment.protocol_key(&protocol, "$callable-property-keys", 22);
+        let table = self.environment.protocol_key_metered(&protocol, "$callable-property-keys", 22,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         if !self.callable_keys.contains_key(&table) {
             let keys = (1..=22).map(|arity| {
                 let schema = (0..arity).map(|_| self.literal_form(form, Literal::String(vec![]))).collect();
                 self.stable_key(form, &protocol, "-invoke", arity, schema)
-            }).collect();
+            }).collect::<Result<Vec<_>, Diagnostic>>()?;
             let keys = self.nominal(form, Nominal::Array, keys);
             let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
-                kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
-                    initializer: Some(Box::new(keys)), once: true } };
+                kind: Expression::Definition { global: table.clone(), syntax: DefinitionSyntax::default(), name_span: form.span.clone(),
+                    initializer: Some(Box::new(keys)), once: true }.census_created() };
             self.callable_keys.insert(table.clone(), definition);
         }
         let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
@@ -233,7 +234,7 @@ impl Analyzer<'_> {
                 // The pin resolves the protocol syntactically and tests direct
                 // implementation only. Native/default fallback is satisfies?.
                 let protocol = self.named_global(&args[0])?;
-                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![]);
+                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![])?;
                 let value = self.form(&args[1])?;
                 Ok(self.nominal(form, Nominal::Satisfies, vec![marker, value]))
             }
@@ -247,7 +248,7 @@ impl Analyzer<'_> {
                 let protocol = self.named_global(&args[0])?;
                 // Like the pin's macro, the marker follows the resolved syntactic
                 // protocol name, not a runtime alias of a protocol object.
-                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![]);
+                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![])?;
                 let value = self.form(&args[1])?;
                 let binding = self.fresh_binding(&args[1], value)?;
                 let value = self.local(&args[1], binding.id);
@@ -791,7 +792,8 @@ impl Analyzer<'_> {
         let generation = self.environment.source_generation();
         let cell = self
             .environment
-            .reify_class_key(self.phase, generation, site);
+            .reify_class_key_metered(self.phase, generation, site,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
         let descriptor = self.nominal(form, Nominal::Descriptor, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
@@ -826,12 +828,11 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Definition {
                 global: cell.clone(),
-                name_metadata: Vec::new(),
+                syntax: DefinitionSyntax::default(),
                 name_span: form.span.clone(),
-                docstring: None,
                 initializer: Some(Box::new(initialization)),
                 once: true,
-            },
+            }.census_created(),
         };
         // The macro transfers this form's own reader metadata to the created
         // object, emitting nil when the elided metadata is empty.
@@ -930,7 +931,7 @@ impl Analyzer<'_> {
         let schema = (0..arity)
             .map(|_| self.literal_form(form, Literal::String(vec![])))
             .collect();
-        let key = self.stable_key(form, &protocol, &method_symbol.name, arity, schema);
+        let key = self.stable_key(form, &protocol, &method_symbol.name, arity, schema)?;
         let value = self.form(owner)?;
         let owner_binding = self.fresh_binding(owner, value)?;
         let owner_read = self.local(owner, owner_binding.id);
@@ -974,7 +975,7 @@ impl Analyzer<'_> {
             unreachable!()
         };
         let mut bindings = Vec::new();
-        let marker = self.stable_key(form, protocol, "", 0, vec![]);
+        let marker = self.stable_key(form, protocol, "", 0, vec![])?;
         bindings.push(self.fresh_binding(form, marker)?);
         let mut methods = Vec::new();
         let mut definitions = Vec::new();
@@ -1056,14 +1057,15 @@ impl Analyzer<'_> {
                 }
                 let key_index = bindings.len();
                 let descriptor =
-                    self.stable_key(params, protocol, &symbol.name, parameters.len(), schema);
+                    self.stable_key(params, protocol, &symbol.name, parameters.len(), schema)?;
                 let key = self.fresh_binding(params, descriptor)?;
                 let key_value = self.local(params, key.id);
                 bindings.push(key);
                 let namespace = self.environment.current_namespace(self.phase).to_owned();
                 let method_global =
                     self.environment
-                        .declare_cell(self.phase, &namespace, &symbol.name)?;
+                        .declare_cell_metered(self.phase, &namespace, &symbol.name,
+                            &mut |work| self.expander.charge_expansion_work(work, params.span.clone()))?;
                 let cell = Hir {
                     source: None,
                     span: method_name.span.clone(),
@@ -1081,7 +1083,7 @@ impl Analyzer<'_> {
                     let schema = (0..=parameters.len())
                         .map(|_| self.literal_form(params, Literal::String(vec![])))
                         .collect();
-                    let next = self.stable_key(params, protocol, &symbol.name, parameters.len() + 1, schema);
+                    let next = self.stable_key(params, protocol, &symbol.name, parameters.len() + 1, schema)?;
                     let next = self.fresh_binding(params, next)?;
                     let next_value = self.local(params, next.id);
                     bindings.push(next);
@@ -1146,7 +1148,7 @@ impl Analyzer<'_> {
                     captures,
                     self_binding: None,
                 rest_class: None,
-                },
+                }.census_created(),
             };
             methods.push(ProtocolMethod {
                 name: symbol.name.clone(),
@@ -1487,7 +1489,7 @@ impl Analyzer<'_> {
                             captures: captures.into_iter().collect(),
                             self_binding: None,
                 rest_class,
-                        }
+                        }.census_created()
                     };
                     let implementation = Hir {
                         source: None,

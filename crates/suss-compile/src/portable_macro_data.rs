@@ -6,6 +6,25 @@ use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
+// Diagnostic only: each existing operation is evaluated exactly once. Fuel
+// reads never propagate errors or replenish the enclosing operation budget.
+macro_rules! materialize_observed {
+    ($session:expr, $label:literal, $operation:expr) => {{
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled {
+            eprintln!("source-materialize-call label={} event=before remaining={:?}",
+                $label, $session.operation_fuel_remaining().ok());
+        }
+        let result = $operation;
+        if enabled {
+            eprintln!("source-materialize-call label={} event=after result={:?} remaining={:?}",
+                $label, result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+                $session.operation_fuel_remaining().ok());
+        }
+        result
+    }};
+}
+
 pub(crate) fn normalized_reader_metadata(
     session: &mut Session,
     form: &Form,
@@ -440,9 +459,11 @@ impl FormBridge {
             // Clone the domain under the lock, then perform every factory and
             // runtime check without it. The lock protects publication only.
             let domain=records.lock().map_err(|_|SessionError::Host(error("Poisoned construction records")))?.write_domain();
-            domain.record(session,value,&fact)?;
-            records.lock().map_err(|_|SessionError::Host(error("Poisoned construction records")))?
-                .push_prepared(session,value.clone(),fact)?;
+            materialize_observed!(session, "domain-enrollment", domain.record(session,value,&fact))?;
+            materialize_observed!(session, "ledger-publication", (|| {
+                records.lock().map_err(|_|SessionError::Host(error("Poisoned construction records")))?
+                    .push_prepared(session,value.clone(),fact)
+            })())?;
         }
         Ok(())
     }
@@ -467,7 +488,7 @@ impl FormBridge {
             return Ok(value);
         }
         if self.recording.is_some() {
-            let (value, fact) = session.data_construct_with_inputs(class, arguments)?;
+            let (value, fact) = materialize_observed!(session, "constructor-and-native-fact", session.data_construct_with_inputs(class, arguments))?;
             let fact = match fact {
                 Some(fact) => {
                     crate::portable_session::construction_records::Fact::Constructor(fact)
@@ -500,7 +521,7 @@ impl FormBridge {
         }
         if self.recording.is_some() {
             self.precheck_class(session, Class::SourceArray)?;
-            let (value, fact) = session.data_array_with_inputs(values)?;
+            let (value, fact) = materialize_observed!(session, "array-and-native-fact", session.data_array_with_inputs(values))?;
             self.record(
                 session,
                 &value,
@@ -657,7 +678,7 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         if self.recording.is_some() {
-            let (value,fact)=session.data_scalar_with_inputs(literal)?;
+            let (value,fact)=materialize_observed!(session, "scalar-and-native-fact", session.data_scalar_with_inputs(literal))?;
             self.record(session,&value,crate::portable_session::construction_records::Fact::Scalar(fact))?;
             Ok(value)
         } else { session.data_scalar(literal) }
@@ -702,7 +723,7 @@ impl FormBridge {
             let hash = if entries.len() <= 8 {
                 0
             } else {
-                let hash = session.invoke(&self.core.factories["hash"], &[key])?;
+                let hash = materialize_observed!(session, "hash-invocation-inclusive", session.invoke(&self.core.factories["hash"], &[key]))?;
                 session.inspect(&hash, |mut store, hash| {
                     let data = fields(&mut store, &hash, 1)?;
                     let [Val::F64(bits)] = data.as_slice() else {
@@ -726,7 +747,7 @@ impl FormBridge {
                         .is_some_and(|other| other == identifier)
                 } else {
                     let equal =
-                        session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1])?;
+                        materialize_observed!(session, "equality-invocation-inclusive", session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1]))?;
                     session.inspect(&equal, |store, value| {
                         Ok(sentinel(&store, &value)? == Some(4))
                     })?

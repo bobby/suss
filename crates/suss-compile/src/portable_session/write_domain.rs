@@ -88,6 +88,35 @@ impl WriteDomain {
         value: &SessionValue,
         fact: &Fact,
     ) -> Result<()> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        let fact_kind = if fuel_trace { match fact {
+            Fact::Scalar(_) => "Scalar", Fact::Array(_) => "Array",
+            Fact::Constructor(_) => "Constructor", Fact::CanonicalSeed(_) => "Seed",
+            Fact::ExternalSeed(_) => "ExternalSeed",
+        }} else { "" };
+        macro_rules! record_observed {
+            ($phase:literal, $operation:expr, $summary:expr) => {{
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=before remaining={:?}",
+                        self.as_ref(), $phase, session.operation_fuel_remaining().ok());
+                }
+                let result = $operation;
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=after result={:?} remaining={:?}",
+                        self.as_ref(), $phase, result.as_ref().map($summary).map_err(|error| error.to_string()),
+                        session.operation_fuel_remaining().ok());
+                }
+                result
+            }};
+        }
+        macro_rules! record_skipped {
+            ($phase:literal, $reason:literal) => {
+                if fuel_trace {
+                    eprintln!("source-domain-record domain={:p} fact={fact_kind} phase={} event=skipped reason={} remaining={:?}",
+                        self.as_ref(), $phase, $reason, session.operation_fuel_remaining().ok());
+                }
+            };
+        }
         let watch = match fact {
             Fact::Constructor(f) => f.memo_watch(),
             _ => None,
@@ -96,17 +125,40 @@ impl WriteDomain {
             watch.bind_source_domain(self);
         }
         let own = match fact {
-            Fact::Scalar(f) => f.matches(session, value)?,
-            Fact::Array(f) => f.matches(session, value)?,
-            Fact::Constructor(f) => {
-                f.matches(session, value)? && f.matches_prototype_origin(session)?
+            Fact::Scalar(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
             }
-            Fact::CanonicalSeed(f) => f.matches(session, value)?,
-            Fact::ExternalSeed(_) => false,
+            Fact::Array(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
+            }
+            Fact::Constructor(f) => {
+                let direct = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                if direct {
+                    record_observed!("prototype", f.matches_prototype_origin(session), |valid: &bool| *valid)?
+                } else {
+                    record_skipped!("prototype", "direct-fact-false");
+                    false
+                }
+            }
+            Fact::CanonicalSeed(f) => {
+                let valid = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
+                record_skipped!("prototype", "not-constructor");
+                valid
+            }
+            Fact::ExternalSeed(_) => {
+                record_skipped!("direct-fact", "external-unverified");
+                record_skipped!("prototype", "not-constructor");
+                false
+            }
         };
         if !own {
             self.invalidate();
         }
+        let (edges, cuts, seed) = record_observed!("edges-cuts", (|| -> Result<_> {
         let upper = match fact {
             Fact::Constructor(f) => f.inputs().size_hint().1.unwrap_or(0),
             Fact::Array(f) => f.inputs().size_hint().1.unwrap_or(0),
@@ -134,12 +186,18 @@ impl WriteDomain {
             Fact::CanonicalSeed(seed) => Some(seed.clone()),
             _ => None,
         };
+        Ok((edges, cuts, seed))
+        })(), |_| ())?;
         let snapshot = if own && seed.is_none() {
-            Some(session.capture_storage_cut_accounted(value, &cuts, self.handles.clone())?)
+            Some(record_observed!("snapshot-capture",
+                session.capture_storage_cut_accounted(value, &cuts, self.handles.clone()), |_| ())?)
         } else {
+            if !own { record_skipped!("snapshot-capture", "invalid-fact"); }
+            else { record_skipped!("snapshot-capture", "seed-has-existing-witness"); }
             None
         };
         let mut state = registry_lock(&self.state);
+        record_observed!("node-growth", (|| -> Result<()> {
         if state.sealed { return Err(wasmtime::Error::msg("Source domain is sealed").into()); }
         if state.nodes.len() == state.nodes.capacity() {
             let capacity = state
@@ -159,7 +217,12 @@ impl WriteDomain {
             state.nodes.try_reserve_exact(extra).map_err(|_| {
                 SessionError::Host(wasmtime::Error::msg("Memo domain allocation failed"))
             })?;
+        } else {
+            record_skipped!("node-growth-allocation", "capacity-available");
         }
+        Ok(())
+        })(), |_| ())?;
+        record_observed!("node-publication", (|| -> Result<()> {
         state.nodes.push(Node {
             value: value.clone(),
             snapshot,
@@ -168,6 +231,7 @@ impl WriteDomain {
             watch: watch.as_ref().map(Arc::downgrade),
         });
         Ok(())
+        })(), |_| ())
     }
     pub(super) fn matches(
         &self,
@@ -236,6 +300,22 @@ impl WriteDomain {
         receivers: &[Val],
         require_target: bool,
     ) -> Result<bool> {
+        let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        macro_rules! domain_observed {
+            ($label:literal, $operation:expr) => {{
+                if fuel_trace {
+                    eprintln!("source-domain domain={:p} staged={} phase={} event=before remaining={:?}",
+                        self, staged.is_some(), $label, store.get_fuel().ok());
+                }
+                let result = $operation;
+                if fuel_trace {
+                    eprintln!("source-domain domain={:p} staged={} phase={} event=after result={:?} remaining={:?}",
+                        self, staged.is_some(), $label,
+                        result.as_ref().map_err(|error| error.to_string()), store.get_fuel().ok());
+                }
+                result
+            }};
+        }
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
         let watches = {
@@ -285,38 +365,61 @@ impl WriteDomain {
                 }
             }
         }
-        let mut canonical = true;
-        for watch in &watches {
-            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
-        }
-        let classes = methods.source_classes_in_context(InspectionContext {
+        let canonical = domain_observed!("canonical-loop", (|| -> Result<bool> {
+            let mut canonical = true;
+            for watch in &watches {
+                canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
+            }
+            Ok(canonical)
+        })())?;
+        let classes = domain_observed!("source-classes", methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
             identity,
             interrupt: irq,
-        })?;
-        let parent = prototype.parent_matches_in_context(InspectionContext {
+        }))?;
+        let parent = domain_observed!("prototype", prototype.parent_matches_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
             identity,
             interrupt: irq,
-        })?;
+        }))?;
         let state = registry_lock(&self.state);
+        domain_observed!("storage-and-edges", (|| -> Result<bool> {
         let mut valid = state.valid && classes && parent && canonical;
-        let mut scope = RootScope::new(store);
-        for node in &state.nodes {
+        let mut scope = RootScope::new(store.as_context_mut());
+        for (ordinal, node) in state.nodes.iter().enumerate() {
+            macro_rules! node_observed {
+                ($phase:literal, $operation:expr) => {{
+                    if fuel_trace {
+                        // Presence flags only: no extra Weak upgrade or guest
+                        // reference inspection is performed for diagnostics.
+                        eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=before remaining={:?}",
+                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            $phase, scope.as_context_mut().get_fuel().ok());
+                    }
+                    let result = $operation;
+                    if fuel_trace {
+                        eprintln!("source-domain-node domain={:p} staged={} ordinal={ordinal} watch={} seed={} snapshot={} phase={} event=after result={:?} remaining={:?}",
+                            self, staged.is_some(), node.watch.is_some(), node.seed.is_some(), node.snapshot.is_some(),
+                            $phase, result.as_ref().map_err(|error| error.to_string()), scope.as_context_mut().get_fuel().ok());
+                    }
+                    result
+                }};
+            }
             Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
             let root = Val::AnyRef(Some(node.value.value.to_rooted(&mut scope)));
+            let storage_valid = node_observed!("snapshot", (|| -> Result<bool> {
             if let Some(seed) = &node.seed {
-                valid &= seed.write_storage().matches_in_context(
+                Ok(seed.write_storage().matches_in_context(
                     scope.as_context_mut(),
                     root,
                     identity,
                     irq,
-                )?;
+                )?)
             } else if let Some(snapshot) = &node.snapshot {
                 let watch = node.watch.as_ref().and_then(Weak::upgrade);
-                valid &= snapshot.matches_in_context_with_slots(
+                Ok(snapshot.matches_in_context_with_slots(
                     scope.as_context_mut(),
                     root,
                     identity,
@@ -339,10 +442,13 @@ impl WriteDomain {
                             .source_authenticated(store, actual, irq)
                             .map_err(Into::into)
                     },
-                )?;
+                )?)
             } else {
-                valid = false;
+                Ok(false)
             }
+            })())?;
+            valid &= storage_valid;
+            node_observed!("edge-membership", (|| -> Result<()> {
             for edge in &node.edges {
                 Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
                 let edge = edge.value.to_rooted(&mut scope);
@@ -357,17 +463,6 @@ impl WriteDomain {
                     if member {
                         break;
                     }
-                    if let Some(seed) = &other.seed {
-                        member |= seed.write_storage().contains_reference_in_context(
-                            scope.as_context_mut(),
-                            Val::AnyRef(Some(edge)),
-                            identity,
-                            irq,
-                        )?;
-                        if member {
-                            break;
-                        }
-                    }
                 }
                 if !member {
                     for child in &state.children {
@@ -376,10 +471,31 @@ impl WriteDomain {
                         if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
                     }
                 }
+                // Exact recorded/child roots are sufficient membership proof.
+                // Only an edge absent from ALL those roots needs a seed-interior
+                // search. Complete seed snapshots still run for every seed in
+                // the outer node loop, even after an earlier false result.
+                if !member {
+                    for other in &state.nodes {
+                        Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
+                        if let Some(seed) = &other.seed {
+                            member |= seed.write_storage().contains_reference_in_context(
+                                scope.as_context_mut(),
+                                Val::AnyRef(Some(edge)),
+                                identity,
+                                irq,
+                            )?;
+                            if member { break; }
+                        }
+                    }
+                }
                 valid &= member;
             }
+            Ok(())
+            })())?;
         }
         Ok(valid)
+        })())
     }
 }
 
@@ -399,6 +515,104 @@ fn reserve_context<T>(mut store:StoreContextMut<'_,()>,irq:&AtomicBool,values:&m
 mod tests {
     use super::*;
     use crate::{portable::hir::Literal, portable_macro_data::FormBridge};
+    // Real canonical seed and watched factory inputs. Keep records alive: their
+    // constructor facts own the Watches; the domain intentionally stores Weak.
+    fn membership_fixture(session: &mut Session) -> (
+        super::super::construction_records::ConstructionRecords,
+        Arc<WriteDomain>, Arc<Watch>, SessionValue, SessionValue,
+    ) {
+        let bridge = FormBridge::new(session).unwrap().recording(session).unwrap();
+        let seed = bridge.map_values(session, &[]).unwrap();
+        let _keyword = bridge.identifier(session, None, "domain-membership", true, None).unwrap();
+        let interior = session.data_fields(&seed).unwrap()[2].clone();
+        let records = bridge.into_records().unwrap();
+        let domain = records.write_domain();
+        let watch = registry_lock(&domain.state).nodes.iter()
+            .find_map(|node| node.watch.as_ref().and_then(Weak::upgrade)).unwrap();
+        (records, domain, watch, seed, interior)
+    }
+    fn domain_valid(session: &mut Session, domain: &WriteDomain, target: &Watch) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        let methods = session.canonical_methods.clone().unwrap();
+        let prototype = session.prototype_origin.clone().unwrap();
+        let identity = session.identity;
+        let runtime = session.runtime;
+        let irq = session.host_work_interrupt();
+        domain.matches(session.store.as_context_mut(), runtime, identity, &irq,
+            &methods, &prototype, None, target, &[])
+    }
+    fn record_array_edge(session: &mut Session, domain: &Arc<WriteDomain>, edge: &SessionValue) -> SessionValue {
+        let (value, fact) = session.data_array_with_inputs(&[edge]).unwrap();
+        domain.record(session, &value, &Fact::Array(fact)).unwrap();
+        value
+    }
+    #[test]
+    fn direct_membership_and_seed_interior_preserve_exact_closed_domain_and_seed_checks() {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, seed, interior) = membership_fixture(&mut session);
+        // This edge is only inside the independently captured canonical seed.
+        // It has no separately recorded factory root in this domain.
+        {
+            let state = registry_lock(&domain.state);
+            session.inspect(&interior, |mut store, value| {
+                for node in &state.nodes {
+                    let root = node.value.value.to_rooted(&mut store);
+                    assert!(!Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &root)?);
+                }
+                Ok(())
+            }).unwrap();
+        }
+        let _seed_edge = record_array_edge(&mut session, &domain, &interior);
+        // Record a genuine input AFTER its user, so membership must find a later
+        // direct root without consulting the preceding seed's interior graph.
+        let (number, number_fact) = session.data_scalar_with_inputs(&Literal::Number(17.0)).unwrap();
+        let _direct_edge = record_array_edge(&mut session, &domain, &number);
+        domain.record(&mut session, &number, &Fact::Scalar(number_fact)).unwrap();
+        session.collect().unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let poison = session.eval("(fn [seed] (set! (.-__hash seed) 991))").unwrap();
+        drop(session.invoke(&poison, &[&seed]).unwrap());
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
+            "a direct-root hit cannot bypass the full canonical seed snapshot");
+    }
+    #[test]
+    fn membership_rejects_equal_content_missing_and_foreign_edges_and_recovers_from_fuel_irq() {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, _seed, _interior) = membership_fixture(&mut session);
+        let (number, fact) = session.data_scalar_with_inputs(&Literal::Number(17.0)).unwrap();
+        domain.record(&mut session, &number, &Fact::Scalar(fact)).unwrap();
+        let _edge = record_array_edge(&mut session, &domain, &number);
+        session.collect().unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        session.with_operation_budget(|session| {
+            let remaining = session.operation_fuel_remaining()?;
+            session.charge_host_work(remaining)?;
+            assert!(matches!(domain_valid(session, &domain, &target), Err(SessionError::Trap(_))));
+            Ok(())
+        }).unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            match domain_valid(session, &domain, &target) {
+                Err(error) => assert!(error.is_interrupt()),
+                Ok(_) => panic!("pending interrupt must not be hidden by direct membership"),
+            }
+            Ok(())
+        }).unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let mut foreign = Session::new_macro().unwrap();
+        assert!(matches!(foreign.data_array_with_inputs(&[&number]), Err(SessionError::ForeignValue)));
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let equal = session.data_scalar(&Literal::Number(17.0)).unwrap();
+        session.inspect(&equal, |mut store, value| {
+            let original = number.value.to_rooted(&mut store);
+            assert!(!Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &original)?);
+            Ok(())
+        }).unwrap();
+        let _unknown = record_array_edge(&mut session, &domain, &equal);
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
+            "equal payload cannot authorize a reference absent from roots and seed interiors");
+    }
     fn method(session: &mut Session, descriptor: &SessionValue) -> SessionValue {
         let name = format!(
             "key-{}",
