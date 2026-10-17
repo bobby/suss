@@ -886,3 +886,93 @@ assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
         String::from_utf8_lossy(&compared.stderr));
     println!("PINNED_KEYWORD_CONFORMANCE {}", String::from_utf8_lossy(&compared.stdout));
 }
+
+/// Test-only 8fda18a baseline: complete pinned count/subs bodies, independent observations.
+#[test]
+fn pinned_count_subs_namespaces_keep_full_ordered_observations() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root).output().unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let names = ["clojure.core-test.count", "clojure.core-test.subs"];
+    for namespace in names {
+        let original = repository.join("vendor/clojure-test-suite/upstream/test")
+            .join(namespace.replace('.', "/").replace('-', "_") + ".cljc");
+        let original_bytes=std::fs::read(original).unwrap();
+        let generated_bytes=std::fs::read(source_file(&source_root, namespace)).unwrap();
+        assert_eq!(original_bytes,generated_bytes,
+            "the complete original namespace declaration/body must remain intact");
+        if let Some(directory)=std::env::var_os("SUSS_COUNT_SUBS_CONFORMANCE_CAPTURE") {
+            let directory=PathBuf::from(directory);std::fs::create_dir_all(&directory).unwrap();
+            std::fs::write(directory.join(format!("{namespace}-original.cljc")),&original_bytes).unwrap();
+            std::fs::write(directory.join(format!("{namespace}-generated-before-routing.cljc")),&generated_bytes).unwrap();
+        }
+    }
+    let tests = ["clojure.core-test.subs/test-subs", "clojure.core-test.count/test-count"];
+    let selected = json!({"namespaces": names, "tests": tests});
+    let observations = Harness::new(&source_root).run(&selected, &source_root);
+    for namespace in names {
+        let original=std::fs::read_to_string(repository.join("vendor/clojure-test-suite/upstream/test")
+            .join(namespace.replace('.', "/").replace('-', "_")+".cljc")).unwrap();
+        let routed=std::fs::read_to_string(source_file(&source_root,namespace)).unwrap();
+        let original_end=read_forms(&original).unwrap()[0].span.end;
+        let routed_end=read_forms(&routed).unwrap()[0].span.end;
+        assert_eq!(&original.as_bytes()[original_end..],&routed.as_bytes()[routed_end..],
+            "only the existing harness namespace adaptation may change");
+        if let Some(directory)=std::env::var_os("SUSS_COUNT_SUBS_CONFORMANCE_CAPTURE") {
+            std::fs::write(PathBuf::from(directory).join(format!("{namespace}-routed.cljc")),routed).unwrap();
+        }
+    }
+    let captured = workspace.path().join("count-subs-observations.json");
+    std::fs::write(&captured, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_COUNT_SUBS_CONFORMANCE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("count-subs-observations.json"),
+            serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    }
+    // Use the same independent operand comparator as the suite. Never accept
+    // guest equality, an executed prefix, or a reviewed failure as a pass here.
+    let compared = Command::new("python3").arg("-c").arg(r#"
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'))
+import clojure_test_suite as suite
+reference=json.loads((root/'tests/oracle/clojure-test-suite-observations.json').read_text())
+names=['clojure.core-test.count','clojure.core-test.subs']
+tests=['clojure.core-test.subs/test-subs','clojure.core-test.count/test-count']
+reference.update(namespaces=names,tests=tests,
+ assertions=[x for x in reference['assertions'] if x['test'] in tests],
+ skips=[x for x in reference['skips'] if x['namespace'] in names])
+observed=json.loads(Path(sys.argv[2]).read_text())
+expected=[(x['test'],x['ordinal']) for x in reference['assertions']]
+actual=[(x['test'],x['ordinal']) for x in observed['assertions']]
+counts,failures=suite.compare(reference,observed)
+result={'counts':counts,'failures':failures,'expected_ids':expected,'actual_ids':actual,
+        'ordered_ids_match':actual==expected,'test_failures':observed['test-failures'],
+        'skips':observed['skips']}
+print(json.dumps(result),flush=True)
+Path(sys.argv[2]).with_name('count-subs-comparison.json').write_text(json.dumps(result,indent=2)+'\n')
+assert not observed['test-failures']
+assert not failures['tests'] and not failures['namespaces']
+assert expected and actual==expected
+assert counts['pass']==len(expected) and counts['guest-judged']==0
+assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
+"#).arg(&repository).arg(&captured).output().unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_COUNT_SUBS_CONFORMANCE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::write(directory.join("count-subs-comparator.stdout"), &compared.stdout).unwrap();
+        std::fs::write(directory.join("count-subs-comparator.stderr"), &compared.stderr).unwrap();
+        let comparison = workspace.path().join("count-subs-comparison.json");
+        if comparison.exists() {
+            std::fs::copy(comparison, directory.join("count-subs-comparison.json")).unwrap();
+        }
+    }
+    assert!(compared.status.success(), "{}\n{}", String::from_utf8_lossy(&compared.stdout),
+        String::from_utf8_lossy(&compared.stderr));
+    println!("PINNED_COUNT_SUBS_CONFORMANCE {}", String::from_utf8_lossy(&compared.stdout));
+}

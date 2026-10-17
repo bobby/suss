@@ -27899,3 +27899,53 @@ review requested. Next measurement: actual memo-ledger enrollment/sweep/store
 work on this source before selecting a further optimization. Preserve local
 method/source obligations and all originally-nil receipt restrictions; do not
 infer broad warming from remaining cold-key cost.
+
+### Pinned count/subs before-candidate observations — 2026-10-16
+
+Test-only sidecar `portable/m4-count-subs-baseline`, exact production8fda18a;
+COW `count-subs-baseline-target`. No production/bootstrap changes or regeneration.
+Temporary gate added only to `crates/suss-compile/tests/clojure_test_suite.rs`,
+using the existing Harness and independent Python comparator without changing
+its200000000 operation allowance or decoding budget. No clause/body changes,
+skips, aliases, function workarounds or always-green gate were introduced.
+The strict failing gate is left UNCOMMITTED for inspection, not installed as an
+accepted baseline/conformance test. Do not commit it blindly.
+
+`CARGO_TARGET_DIR=~/.cache/suss-m4-work/count-subs-baseline-target CARGO_BUILD_JOBS=2 SUSS_COUNT_SUBS_CONFORMANCE_CAPTURE=~/.cache/suss-m4-work/count-subs-baseline-capture cargo test -p suss-compile --locked --test clojure_test_suite pinned_count_subs_namespaces_keep_full_ordered_observations -- --exact --nocapture --test-threads=1`
+(no RUSTFLAGS): terminal101,0Rust-pass/1failed gate,61.28s test/84.01s command.
+All435 frozen source/bootstrap paths remained unchanged during execution.
+
+Pinned suite95d4a9112cfc5fe6629be3d14bb99080ea00af2f reference selects49 IDs,
+ordered test-subs30 then test-count19; namespace load order count then subs.
+Actual count19 IDs match the complete ordered count subset and all19 are
+host-compared passes. Subs fails at namespace load: `Unresolved Runtime name
+subs at bytes228..2414`; all30 subs assertions are NOT EXECUTED. Overall49-ID
+sequence is incomplete:19host-pass,0guest-judged,0assertion-mismatch,30unexecuted,
+0skip,1namespace failure. No subs semantic/conformance or combined-gate success
+is claimed. No compatibility fix was attempted.
+
+Both selected complete original namespace files equal generated source bytes
+before routing. Executed assertions also verify complete body suffix equality
+after the existing namespace-only harness adaptation. Source hashes: count
+62c5fe36e104324e678f2c59b4a3807a5d7eeacfeac66b809b0d64cdb11ba4bc,
+subs4cc9a7c3238280439bfef3381e0ab16052d770f37eb4ed1df29e2a7f7e8424a2.
+Original/generated/routed bytes, full pinned raw reference, actual observations,
+comparison with all expected/actual IDs, comparator stdout/stderr and raw failed
+log are retained; this is a before-result, not evidence for main's later String
+candidate or default macro-fuel acceptance.
+
+Archive `docs/roadmap/evidence/m4-count-subs-8fda-baseline-2026-10-16.tar.gz`,
+SHA256a0f0e8dfdbb0bf0ca6fbd23d7fbfd83e138e74205d6a0cdae663065aa50e7d5e:
+477 manifested payloads/435 frozen paths, every hash verified and both phase
+compiler/core/dependency/Wasm fingerprints recomputed true. Supporting reference
+and fingerprint inputs were captured after execution, not separately frozen
+before it. No new PR, production change, full baseline, final CI or test-gate
+commit. No producer remains live. Main owns any later candidate comparison.
+
+
+### Publication of local experiment snapshot (2026-10-16)
+
+Branch portable/m4-count-subs-baseline preserves the existing source, test and artifact bytes
+from this isolated worktree. Publication adds no new execution result. Existing
+raw failures and limitations remain applicable; this snapshot is not an issue
+acceptance result. No additional Cargo command was run for publication.
