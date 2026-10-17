@@ -29793,3 +29793,32 @@ Independent source/execution review precedes publication. The required current
 source full workspace baseline and final-head CI remain separate pending gates.
 The next substantive repair candidate is repeated HIR subtree copying during
 source-AST preparation; no benefit for that candidate is claimed here.
+
+
+## Retained HIR projection: commands and evidence
+
+Source `5e14a6b8541921aca694ea41574fb69bfbb7624a` retains genuine HIR roots for AST/lowering queues and
+uses private flat lowering projections. The initial V4 bootstrap compilation
+failure is retained; V5 normal bootstrap and 26 focused executions pass, while
+default CoreEnv and three record/reduction witnesses retain their four fuel
+failures before criterion observations. Projection and queue fixture work
+reductions do not establish whole-CoreEnv benefit. The duplicate default
+metadata/COW diagnostic adds no unique test credit and reaches declarations
+before queued AST work.
+
+Commands: `python3 run-hir-projection-focused.py`, then
+`python3 run-hir-projection-preservation.py`, under the captured one-job/one-Rayon
+configuration and unchanged operation allowances. Terminal preservation: 89 passing executions and one diagnostic repeat fuel failure (no additional unique test credit), zero ignored. Combined focused/preservation:
+119 unique selected tests: 115 pass, 4 fuel failures, zero ignored. Map independent comparison, exact committed source binding
+and raw failures are retained; no aggregation of reruns.
+Source-child keeps all 220 ordered markers/results and ends at the same 129,753
+per phase as source3a (zero actual net difference on that fixture).
+
+Evidence: `m4-retained-hir-projection-2026-10-17.tar.gz` (SHA256 3971b9301e31abcf2fa16f3720ec1c9a491e0f82e11063ac546fd67fca120f90),
+report `m4-retained-hir-projection-2026-10-17.md`. Thin supplement explicitly
+requires the source71 archive SHA266d1ce35b4014cbe9eb67fdcf20220cd2dcec0784f0aecb34ef7412e7cdc88c
+and source3a supplement SHA6455ee46741981db166cfc593711236681ea584008c39ed6e202803dd9f5a9f5.
+Parent3a terminal CI has foundation green and 14 known integration fuel failures;
+it is not candidate CI. Candidate full baseline/final-head CI remain separate.
+The next source-supported early work target is declaration metadata ownership;
+its 714,710-unit normalization/recipe region is not a removable-copy estimate.
