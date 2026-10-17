@@ -743,6 +743,7 @@ impl ExpansionHost for CompiledMacros {
         self.source_expansions += 1;
         let mut stage = String::from("caller form provenance");
         let result = self.session.with_operation_budget(|session| -> Result<Form, SessionError> {
+            let _host_debits = crate::portable_session::HostDebitProbe::new();
             trace_fuel(session, &target, "start")?;
             let mut meter = |work| {
                     session.charge_host_work(work).map_err(|error| Diagnostic {

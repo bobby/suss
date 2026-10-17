@@ -142,25 +142,12 @@ impl Watch {
         }
     }
     pub(super) fn domain_method(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
-        authority: &CanonicalMethods, irq: &AtomicBool, layout_descriptors: &[Val],
+        authority: &CanonicalMethods, irq: &AtomicBool, layout_descriptor: Option<&Val>,
     ) -> wasmtime::Result<bool> {
         Session::consume_host_work(store.as_context_mut(), 1, irq)?;
         let descriptor = Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)));
-        let mut relaxed = false;
-        for active in layout_descriptors {
-            Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-            if same(&store, &descriptor, active)? { relaxed = true; break; }
-        }
+        let relaxed = if let Some(active) = layout_descriptor { same(&store, &descriptor, active)? } else { false };
         self.method_valid(store, runtime, authority, irq, !relaxed)
-    }
-    pub(super) fn anchor(&self, mut store: StoreContextMut<'_, ()>, receiver: &Val,
-        domain: &super::write_domain::WriteDomain, irq: &AtomicBool,
-    ) -> wasmtime::Result<Option<Val>> {
-        Session::consume_host_work(store.as_context_mut(), 2, irq)?;
-        let source = registry_lock(&self.source_domain).as_ref().and_then(Weak::upgrade);
-        if !source.is_some_and(|source| std::ptr::eq(source.as_ref(), domain)) { return Ok(None); }
-        if self.current(store.as_context_mut(), receiver, irq)?.is_none() { return Ok(None); }
-        Ok(Some(Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)))))
     }
     pub(super) fn slot(&self) -> usize { self.slot }
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool, SessionError> {
@@ -258,7 +245,6 @@ fn reserve_candidate(
 pub(super) fn install(
     store: &mut Store<()>, linker: &mut Linker<()>, runtime: Instance,
     interrupt: Arc<AtomicBool>, ledger: Arc<Ledger>,
-    observer: Option<Arc<super::dispatch_observer::Observer>>,
 ) -> wasmtime::Result<()> {
     let setter = runtime.get_func(&mut *store, "macro-memo-field-set")
         .or_else(|| runtime.get_func(&mut *store, "object-field-set"))
@@ -266,7 +252,6 @@ pub(super) fn install(
     let ty = FuncType::new(store.engine(), [ValType::Ref(RefType::EQREF), ValType::I32,
         ValType::Ref(RefType::EQREF)], []);
     let bridge = Func::new(&mut *store, ty, move |mut caller, arguments, _results| {
-        let mut caller = RootScope::new(&mut caller);
         Session::consume_host_work(caller.as_context_mut(), 32, &interrupt)?;
         let site = usize::try_from(arguments[1].unwrap_i32())
             .map_err(|_| wasmtime::Error::msg("Invalid canonical memo site"))?;
@@ -280,7 +265,6 @@ pub(super) fn install(
             (entries.authority.clone(), entries.prototype.clone(), entries.watches.len())
         };
         let mut candidates = Vec::new();
-        let mut proof_receivers = None;
         if let Some(authority) = authority.as_ref() {
             for index in 0..count {
                 Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
@@ -300,12 +284,7 @@ pub(super) fn install(
                             .map_err(|error| wasmtime::Error::msg(error.to_string()))?
                     };
                     let source_safe=if let Some(prototype)=prototype.as_ref() {
-                        if proof_receivers.is_none() {
-                            proof_receivers = Some(if let Some(observer) = &observer {
-                                observer.receivers(caller.as_context_mut(), &interrupt)?
-                            } else { Vec::new() });
-                        }
-                        watch.domain_matches(caller.as_context_mut(),runtime,authority,prototype,&interrupt,None,proof_receivers.as_deref().unwrap_or(&[]))?
+                        watch.domain_matches(caller.as_context_mut(),runtime,authority,prototype,&interrupt,None)?
                     } else {false};
                     candidates.push((watch, Receipt { value, bits, source_safe }, false));
                 }
@@ -321,7 +300,7 @@ pub(super) fn install(
             if !same(&caller.as_context_mut(), &current, &arguments[2])? { continue }
             *valid = bits(caller.as_context_mut(), &current, &watch.number_type)? == Some(receipt.bits);
             if receipt.source_safe {
-                receipt.source_safe=watch.domain_matches(caller.as_context_mut(),runtime,authority.as_ref().unwrap(),prototype.as_ref().unwrap(),&interrupt,Some(receipt),proof_receivers.as_deref().unwrap_or(&[]))?;
+                receipt.source_safe=watch.domain_matches(caller.as_context_mut(),runtime,authority.as_ref().unwrap(),prototype.as_ref().unwrap(),&interrupt,Some(receipt))?;
             }
         }
         // All fallible validation/allocation completes before any publication.
@@ -858,10 +837,10 @@ impl Watch {
   let receipt=registry_lock(&self.receipt);
   match receipt.as_ref() {Some(receipt) if receipt.source_safe=>self.matches_receipt(store,value,receipt,irq),_=>Ok(false)}
  }
- fn domain_matches(&self,store:StoreContextMut<'_,()>,runtime:Instance,authority:&CanonicalMethods,prototype:&super::prototype_origin::Authority,irq:&AtomicBool,staged:Option<&Receipt>,receivers:&[Val])->wasmtime::Result<bool> {
+ fn domain_matches(&self,store:StoreContextMut<'_,()>,runtime:Instance,authority:&CanonicalMethods,prototype:&super::prototype_origin::Authority,irq:&AtomicBool,staged:Option<&Receipt>)->wasmtime::Result<bool> {
   let domain=registry_lock(&self.source_domain).as_ref().and_then(Weak::upgrade);
   let Some(domain)=domain else{return Ok(false)};
-  match domain.matches(store,runtime,self.identity,irq,authority,prototype,staged.map(|receipt|(self,receipt)),self,receivers) {
+  match domain.matches(store,runtime,self.identity,irq,authority,prototype,staged.map(|receipt|(self,receipt)),None) {
    Ok(valid)=>Ok(valid),Err(SessionError::Language(_))=>Ok(false),Err(SessionError::Host(error)|SessionError::Trap(error))=>Err(error),Err(error)=>Err(wasmtime::Error::msg(error.to_string()))
   }
  }
@@ -883,7 +862,6 @@ pub(super) fn install_scoped(
         Session::consume_host_work(caller.as_context_mut(), 4, &interrupt)?;
         let mut scope = RootScope::new(&mut caller);
         let mut candidates = Vec::new();
-        let mut proof_receivers = None;
         if observer.has_scope() {
             let (authority, prototype, count) = {
                 let entries = registry_lock(&ledger.entries);
@@ -904,10 +882,9 @@ pub(super) fn install_scoped(
                     // A mere watch or numeric store is not source authority.
                     let domain = registry_lock(&watch.source_domain).as_ref().and_then(Weak::upgrade);
                     let Some(domain) = domain else { continue };
-                    if proof_receivers.is_none() {
-                        proof_receivers = Some(observer.receivers(scope.as_context_mut(), &interrupt)?);
-                    }
-                    if !scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, None, &watch, proof_receivers.as_deref().unwrap())? { continue }
+                    let descriptor = Val::AnyRef(Some(watch.descriptor.value.to_rooted(&mut scope)));
+                    if !watch.domain_method(scope.as_context_mut(), runtime, &authority, &interrupt, Some(&descriptor))? { continue }
+                    if !scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, None, &descriptor)? { continue }
                     reserve_candidate(scope.as_context_mut(), &mut candidates, &interrupt)?;
                     Session::consume_host_work(scope.as_context_mut(), std::mem::size_of::<Receipt>() as u64 + 1, &interrupt)?;
                     let value = own(&mut scope, arguments[2].clone(), ledger.identity, &ledger.handles)
@@ -923,7 +900,9 @@ pub(super) fn install_scoped(
                     if !watch.matches_receipt(scope.as_context_mut(), &current, receipt, &interrupt)? { continue }
                     let domain = registry_lock(&watch.source_domain).as_ref().and_then(Weak::upgrade);
                     let Some(domain) = domain else { continue };
-                    *valid = scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, Some((watch, receipt)), watch, proof_receivers.as_deref().unwrap_or(&[]))?;
+                    let descriptor = Val::AnyRef(Some(watch.descriptor.value.to_rooted(&mut scope)));
+                    *valid = watch.domain_method(scope.as_context_mut(), runtime, &authority, &interrupt, Some(&descriptor))?
+                        && scoped_domain(&domain, scope.as_context_mut(), runtime, &ledger, &authority, &prototype, &interrupt, Some((watch, receipt)), &descriptor)?;
                 }
                 // No fallible work after the first publication. No outside write
                 // clears an old receipt: exact reference/domain checks decide reuse.
@@ -947,9 +926,9 @@ fn scoped_domain(
     domain: &super::write_domain::WriteDomain, store: StoreContextMut<'_, ()>,
     runtime: Instance, ledger: &Ledger, authority: &CanonicalMethods,
     prototype: &super::prototype_origin::Authority, irq: &AtomicBool,
-    staged: Option<(&Watch, &Receipt)>, target: &Watch, receivers: &[Val],
+    staged: Option<(&Watch, &Receipt)>, descriptor: &Val,
 ) -> wasmtime::Result<bool> {
-    match domain.matches(store, runtime, ledger.identity, irq, authority, prototype, staged, target, receivers) {
+    match domain.matches(store, runtime, ledger.identity, irq, authority, prototype, staged, Some(descriptor)) {
         Ok(valid) => Ok(valid),
         Err(SessionError::Language(_)) => Ok(false),
         Err(error) => Err(scoped_error(error)),

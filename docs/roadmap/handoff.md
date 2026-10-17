@@ -27743,3 +27743,11 @@ Isolated combined branch froma182b98 applied107a736→84eba2f delta. Source file
 Focused run-combined-cold-focused.py TERMINALdriver0 with all eight command exits0: scoped13, matched leaf4/all48rows, raw keys15, initializer-native3, direct identifier1, public cumulative10, cross-invocation2 and pinned map1. Total49pass executions/0fail/0ignored, source unchanged across430Rust/source/bootstrap hashes. Explicit pinned comparator:69ordered IDs,62host-decided/seven guest-judged, no failed/skipped/unexecuted assertions. This preserves the original complete map declaration/default allowance, not a full workspace claim.
 
 Archive m4-combined-cold-memo-focused-2026-10-16.tar.gz SHA256 0c54460bf50b07f94f375f103931cd366b89b6ac14fdb13cc559694522b2b06a, 25hashed payloads plus manifest, read back verified. Commands use combined-acceptance-target/jobs2/test-threads2; no quota changes. Previous six direct transport fuel failures remain recorded at a182b98; they were not rerun by this cohort. Next: integrate reviewed source-location optimization, then target the remaining fuel regressions. Full workspace baseline/final-head CI and independent committed-head integration review remain required. No issue closure/merge.
+
+
+### Publication of local experiment snapshot (2026-10-16)
+
+Branch portable/m4-memo-cold-only-cost preserves the existing source, test and artifact bytes
+from this isolated worktree. Publication adds no new execution result. Existing
+raw failures and limitations remain applicable; this snapshot is not an issue
+acceptance result. No additional Cargo command was run for publication.

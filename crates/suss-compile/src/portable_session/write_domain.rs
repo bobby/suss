@@ -139,8 +139,7 @@ impl WriteDomain {
         methods: &CanonicalMethods,
         prototype: &Authority,
         staged: Option<(&Watch, &Receipt)>,
-        target: &Watch,
-        receivers: &[Val],
+        layout_descriptor: Option<&Val>,
     ) -> Result<bool> {
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
@@ -164,36 +163,9 @@ impl WriteDomain {
             }
             watches
         };
-        // The target and every layout anchor must belong to this exact domain.
-        // Actual dynamic IHash ancestry grants only method-layout inspection;
-        // all payload/edge/schema/prototype and child-receipt checks stay below.
-        let mut member = false;
-        for watch in &watches {
-            Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-            if std::ptr::eq(watch.as_ref(), target) { member = true; break; }
-        }
-        if !member { return Ok(false); }
-        let bytes = receivers.len().checked_mul(std::mem::size_of::<Val>())
-            .and_then(|n| u64::try_from(n).ok())
-            .ok_or_else(|| wasmtime::Error::msg("Memo layout context overflow"))?;
-        Session::consume_host_work(store.as_context_mut(), bytes, irq)?;
-        Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-        let mut layouts = Vec::new();
-        layouts.try_reserve_exact(receivers.len())
-            .map_err(|_| wasmtime::Error::msg("Memo layout context allocation failed"))?;
-        for receiver in receivers {
-            Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-            for watch in &watches {
-                Session::consume_host_work(store.as_context_mut(), 1, irq)?;
-                if let Some(descriptor) = watch.anchor(store.as_context_mut(), receiver, self, irq)? {
-                    layouts.push(descriptor);
-                    break;
-                }
-            }
-        }
         let mut canonical = true;
         for watch in &watches {
-            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
+            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, layout_descriptor)?;
         }
         let classes = methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),

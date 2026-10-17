@@ -23,6 +23,19 @@ use wasmtime::{
     ValType,
 };
 
+// Temporary diagnostic: observe explicit host debits without changing their rates.
+thread_local! { static HOST_DEBITS: std::cell::RefCell<BTreeMap<&'static str,u64>> = std::cell::RefCell::new(BTreeMap::new()); }
+pub(crate) struct HostDebitProbe(Option<BTreeMap<&'static str,u64>>);
+impl HostDebitProbe {
+    pub(crate) fn new() -> Self { Self(std::env::var_os("SUSS_HOST_DEBIT_TRACE").map(|_| HOST_DEBITS.with(|x|x.borrow().clone()))) }
+}
+impl Drop for HostDebitProbe {
+    fn drop(&mut self) { if let Some(before)=self.0.take() { HOST_DEBITS.with(|x| {
+        let delta:BTreeMap<_,_>=x.borrow().iter().map(|(k,v)|(*k,v-before.get(k).copied().unwrap_or(0))).filter(|(_,v)|*v!=0).collect();
+        eprintln!("host-debit-operation {delta:?}");
+    }); } }
+}
+
 mod frontend;
 pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
@@ -614,7 +627,7 @@ impl Session {
         let mut linker = Linker::new(&engine);
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let memo_ledger = memo_bridge::Ledger::new(identity);
-        memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone(), dispatch_observer.clone())?;
+        memo_bridge::install(&mut store, &mut linker, runtime, interrupt.clone(), memo_ledger.clone())?;
         if let Some(observer) = &dispatch_observer {
             memo_bridge::install_scoped(&mut store, runtime, interrupt.clone(), memo_ledger.clone(), observer.clone())?;
         }
@@ -1216,6 +1229,7 @@ impl Session {
     }
     /// Store-context counterpart for decoders. Callers must pass the cancellation
     /// flag captured from this same Session, not another Store's flag.
+    #[track_caller]
     pub(crate) fn consume_host_work(
         mut store: StoreContextMut<'_, ()>,
         units: u64,
@@ -1229,6 +1243,10 @@ impl Session {
             return Err(wasmtime::Trap::Interrupt.into());
         }
         let fuel = store.get_fuel()?;
+        if std::env::var_os("SUSS_HOST_DEBIT_TRACE").is_some() {
+            let file=std::panic::Location::caller().file();
+            HOST_DEBITS.with(|x| *x.borrow_mut().entry(file).or_default() += units.min(fuel));
+        }
         match fuel.checked_sub(units) {
             Some(remaining) => store.set_fuel(remaining),
             None => {
