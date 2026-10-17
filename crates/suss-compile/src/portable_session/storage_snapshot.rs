@@ -416,6 +416,24 @@ impl Capture {
             } else if let Some(array) = reference.as_array(&meter.store)? {
                 let ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
+                let trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+                let storage = if trace {
+                    match ty.element_type() {
+                        wasmtime::StorageType::I8 => "i8",
+                        wasmtime::StorageType::I16 => "i16",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::I32) => "i32",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::I64) => "i64",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::F32) => "f32",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::F64) => "f64",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::V128) => "v128",
+                        wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_)) => "ref",
+                    }
+                } else { "unobserved" };
+                if trace {
+                    eprintln!("source-snapshot-array ordinal={id} storage={storage} count={count} event=before remaining={:?}",
+                        meter.store.get_fuel().ok());
+                }
+                let array_result: Result<Contents> = (|| {
                 let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
                     allocation::<Atom>(count as usize, meter)?;
                     let mut values = Vec::new();
@@ -429,7 +447,14 @@ impl Capture {
                     let value = array.get(&mut meter.store, index)?;
                     values.push(self.atom(value, meter)?);
                 }
-                Contents::Array(ty, values)
+                Ok(Contents::Array(ty, values))
+                })();
+                if trace {
+                    eprintln!("source-snapshot-array ordinal={id} storage={storage} count={count} event=after result={:?} remaining={:?}",
+                        array_result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+                        meter.store.get_fuel().ok());
+                }
+                array_result?
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };

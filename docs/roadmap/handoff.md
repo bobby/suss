@@ -29114,3 +29114,44 @@ and all13foundation commands exit0 on the unchanged2,915-input tuple. Remaining
 focused execution and net cost measurement are live; no new acceptance/full
 baseline/CI success is inferred. Independent actual source review found no
 blocker. No quota/tariff reduction, issue closure or merge.
+
+## Snapshot array census diagnostic (Refs #270)
+
+Isolated branch diagnostic/m4-snapshot-array-census starts at2462d5c. The
+independently reviewed observer only logs array storage type/count and enclosing
+fuel intervals when SUSS_SOURCE_MATERIALIZE_FUEL_TRACE is enabled. Original
+array allocation, element traversal, order, errors and charges are unchanged;
+no packing implementation or source-authority relaxation is included. Observer
+SHA2569d08e5ede3a2809c716695511c0002505af5f61b9f4f36760f2269d821ce615b.
+
+Runner cache/run-native-snapshot-array-census-isolated.py used exclusive
+m4-cost-diagnostic-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS override. All2,915
+frozen inputs remained unchanged except the4allowed regenerated bootstrap files.
+An initial pre-Cargo setup failure (missing pinnedCLJS submodule checkout) is
+retained; initializing exactc4295f3 resolved setup without changing the pin.
+Compile --lib --no-run exit0; default bootstrap exit0; storage_snapshot focused
+18pass/0fail. Both regenerated Wasm noncustom section sequences equal parent.
+The 30M native_core_cost_probe exit0 measured prefix666,846 + preparation
+excluding verification9,475,244 + verification1,190,973 =11,333,063. This is
+preparation-only diagnostics, executed=false, not default-budget acceptance.
+
+The unchanged exact source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo
+focused test exited101 (0pass/1fail) on fuel at Runtime/Some(4)/materialize;
+Macro phase/later cases were not reached. Parser output retains1,054complete
+captures and1failed capture, no open capture. Complete captures contain2,156i16
+arrays/12,540elements (627,000inclusive fuel,601,920allocation debit) and3,828ref
+arrays/7,180elements (3,563,032inclusive fuel,2,059,264allocation debit). The
+failed ref array declared4elements, with no completed-element claim; requested
+allocation1,280bytes versus1,113accepted allocation debit. Ref-array intervals
+include nested node/index/buffer work and are not exclusive per-element costs.
+Counts are observations across this one partially executed test, not unique
+source objects or complete portable type coverage. No quota/tariff changes,
+Store-execution success, full baseline, CI acceptance or issue closure claimed.
+
+Evidence docs/roadmap/evidence/m4-snapshot-array-census-2462d5c-2026-10-17.tar.gz
+SHA256d72f4e992c4d8c68edb936d2568262102ee8ee953810897a19c6a144c7387c58,
+29payloads including raw logs, parser, command plan, full freeze manifests,
+observer before/after, setup-failure qualification and4bootstrap outputs.
+Reproduce commands are in run/command-plan.json; parser command:
+python3 snapshot-array-census-plan/parse.py run/source-child.log.
+Publication is an archival diagnostic branch, not a production PR or merge.
