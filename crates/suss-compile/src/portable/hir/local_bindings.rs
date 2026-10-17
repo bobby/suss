@@ -775,9 +775,7 @@ pub(super) fn derive_reader_origin(origin: Option<&super::super::SourceOrigin>, 
     Ok(Arc::new(origin.with_reader_expansion(lowered, reader)))
 }
 fn cow_global(global: &Global, meter: &mut CowMeter<'_>) -> Result<Global, Diagnostic> {
-    cow_charge(meter, global.namespace().len(), 1)?;
-    cow_charge(meter, global.name().len(), 1)?;
-    Ok(global.clone())
+    global.retain_metered(meter)
 }
 fn cow_parameter(parameter: &Parameter, meter: &mut CowMeter<'_>) -> Result<Parameter, Diagnostic> {
     Ok(Parameter { id: parameter.id, name: cow_text(&parameter.name, meter)?,
@@ -1387,15 +1385,17 @@ mod ownership_tests {
                         name_span: input[0].span.clone(), initializer: None, once: true } };
                 if let Expression::Definition { syntax: DefinitionSyntax(DefinitionSyntaxOwner::Owned(owner)), .. } = &node.kind {
                     let count = Arc::strong_count(owner);
+                    let mut retains = 0;
                     let rejected = cow_hir(&node, &mut |work| {
-                        if work == 1 { Err(fail(11..29, "injected HIR syntax retain cancellation")) }
+                        if work == 1 { retains += 1; }
+                        if retains == 2 { Err(fail(11..29, "injected HIR syntax retain cancellation")) }
                         else { Ok(()) }
                     });
+                    assert_eq!(retains, 2); // Global retain, then syntax retain
                     assert_eq!(rejected.unwrap_err().message, "injected HIR syntax retain cancellation");
                     assert_eq!(Arc::strong_count(owner), count);
                 }
-                let mut remaining = (std::mem::size_of::<Hir>() + global.namespace().len()
-                    + global.name().len() + usize::from(!metadata.is_empty() || docstring.is_some())) as u64;
+                let mut remaining = (std::mem::size_of::<Hir>() + 1 + usize::from(!metadata.is_empty() || docstring.is_some())) as u64;
                 let copied = cow_hir(&node, &mut |work| {
                     remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "definition copy budget exhausted"))?;
                     Ok(())

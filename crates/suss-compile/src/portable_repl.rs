@@ -406,13 +406,7 @@ pub(crate) fn prepare_script_compiled_batch(
                     ..
                 }) = items.get(1)
                 {
-                    let global = crate::portable::resolve::Environment::default()
-                        .declare_cell(
-                            crate::portable::resolve::Phase::Macro,
-                            namespace,
-                            &name.name,
-                        )
-                        .map_err(SessionError::Compile)?;
+                    let global = macros.checkpoint_global(&snapshot.environment, namespace, &name.name)?;
                     staged_macros.push((macros.binding_checkpoint()?, global));
                 }
                 macros.enter_namespace(namespace)?;

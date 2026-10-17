@@ -268,8 +268,7 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
         }
         if self
             .environment
-            .resolve_bootstrap_macro(self.phase, symbol)
-            .is_some()
+            .has_bootstrap_macro(self.phase, symbol)
         {
             return Symbol::namespaced("cljs.core", &symbol.name);
         }

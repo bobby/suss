@@ -250,13 +250,10 @@ impl<'a> Lowerer<'a> {
     }
     fn clone_global(&mut self, global: &Global, span: &Range<usize>) -> Result<Global, Diagnostic> {
         let _trace = super::hir::CowTraceScope::new("ir_global_copy");
-        self.charge(
-            1usize
-                .saturating_add(global.namespace().len())
-                .saturating_add(global.name().len()),
-            span,
-        )?;
-        Ok(global.clone())
+        global.retain_metered(&mut |work| (self.meter)(work).map_err(|mut error| {
+            error.span = span.clone();
+            error
+        }))
     }
     fn display_name(&mut self, hir: &Hir) -> Result<Option<Vec<u16>>, Diagnostic> {
         let _trace = super::hir::CowTraceScope::new("ir_function_name");

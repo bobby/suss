@@ -110,6 +110,25 @@ impl Context<u64> for Meter<'_> {
     }
 }
 
+// Raw, nested observational intervals only. No fields are added to Meter,
+// Capture, Atom or StorageSnapshot: their charged layouts stay unchanged.
+macro_rules! snapshot_observed {
+    ($meter:expr, $phase:literal, $count:expr, $operation:expr) => {{
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled {
+            eprintln!("source-snapshot phase={} count={} event=before remaining={:?}",
+                $phase, $count, $meter.store.get_fuel().ok());
+        }
+        let result = $operation;
+        if enabled {
+            eprintln!("source-snapshot phase={} count={} event=after result={:?} remaining={:?}",
+                $phase, $count, result.as_ref().map(|_| ()).map_err(|error| error.to_string()),
+                $meter.store.get_fuel().ok());
+        }
+        result
+    }};
+}
+
 fn invalid(message: impl Into<String>) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message.into()))
 }
@@ -118,7 +137,11 @@ fn allocation<T>(count: usize, meter: &mut Meter<'_>) -> Result<()> {
         .checked_mul(size_of::<T>())
         .and_then(|n| u64::try_from(n).ok())
         .ok_or_else(|| invalid("Storage snapshot allocation size overflow"))?;
-    meter.work(bytes)
+    if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
+        eprintln!("source-snapshot-allocation type={} count={count} element_bytes={} requested_bytes={bytes}",
+            std::any::type_name::<T>(), size_of::<T>());
+    }
+    snapshot_observed!(meter, "allocation-debit", count, meter.work(bytes))
 }
 fn room<T>(values: &mut Vec<T>, meter: &mut Meter<'_>) -> Result<()> {
     meter.work(1)?;
@@ -169,8 +192,8 @@ impl Capture {
             }
             // Immediate scalars are immutable leaves, never opaque boxes.
             if reference.as_i31(&meter.store)?.is_some() { continue }
-            let hash = Self::hash(&reference, meter)?;
-            let head = self.cut_index.get(&hash, meter)?.copied();
+            let hash = snapshot_observed!(meter, "cut-reference-hash", 1, Self::hash(&reference, meter))?;
+            let head = snapshot_observed!(meter, "cut-index-get", self.cuts.len(), self.cut_index.get(&hash, meter)).map(|head| head.copied())?;
             let mut cursor = head;
             let mut duplicate = false;
             while let Some(id) = cursor {
@@ -182,19 +205,22 @@ impl Capture {
                 cursor = self.cuts[id].collision;
             }
             if duplicate { continue }
-            room(&mut self.cuts, meter)?;
+            snapshot_observed!(meter, "cut-buffer-room", self.cuts.len(), room(&mut self.cuts, meter))?;
             meter.work(1)?;
             let value = reference.to_owned_rooted(&mut meter.store)?;
             self.handles.fetch_add(1, AtomicOrdering::Relaxed);
             let id = self.cuts.len();
             self.cuts.push(Cut { value: SessionValue { identity: self.owner,
                 value, handles: self.handles.clone() }, collision: head });
-            self.cut_index.insert(hash, id, meter)?;
+            snapshot_observed!(meter, "cut-index-insert", self.cuts.len(), self.cut_index.insert(hash, id, meter))?;
         }
         Ok(())
     }
 
     fn atom(&mut self, value: Val, meter: &mut Meter<'_>) -> Result<Atom> {
+        let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
+        if enabled { eprintln!("source-snapshot-atom event=before remaining={:?}", meter.store.get_fuel().ok()); }
+        let result: Result<Atom> = (|| {
         meter.work(1)?;
         Ok(match value {
             Val::I32(x) => Atom::I32(x),
@@ -215,8 +241,9 @@ impl Capture {
                 // No guest execution or guest heap allocation occurs in this
                 // traversal. The ephemeral index is discarded before returning;
                 // later checks use rooted ref_eq, not pre-GC reference hashes.
-                let hash = Self::hash(&reference, meter)?;
+                let hash = snapshot_observed!(meter, "node-reference-hash", 1, Self::hash(&reference, meter))?;
                 if !self.cuts.is_empty() {
+                    let cut = snapshot_observed!(meter, "cut-lookup", self.cuts.len(), (|| -> Result<Option<Atom>> {
                     let mut cursor = self.cut_index.get(&hash, meter)?.copied();
                     while let Some(id) = cursor {
                         meter.work(1)?;
@@ -225,27 +252,34 @@ impl Capture {
                             // Atom buffer bytes were already charged; the
                             // clone performs an owned-root reference increment.
                             meter.work(1)?;
-                            return Ok(Atom::Opaque(self.cuts[id].value.clone()));
+                            return Ok(Some(Atom::Opaque(self.cuts[id].value.clone())));
                         }
                         cursor = self.cuts[id].collision;
                     }
+                    Ok(None)
+                    })())?;
+                    if let Some(cut) = cut { return Ok(cut); }
                 }
-                let head = self.index.get(&hash, meter)?.copied();
+                let (head, found) = snapshot_observed!(meter, "node-lookup", self.nodes.len(), (|| -> Result<_> {
+                let head = snapshot_observed!(meter, "node-index-get", self.nodes.len(), self.index.get(&hash, meter)).map(|head| head.copied())?;
                 let mut cursor = head;
                 while let Some(id) = cursor {
                     meter.work(1)?;
                     let previous = self.nodes[id].value.value.to_rooted(&mut meter.store);
                     if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &previous)? {
-                        return Ok(Atom::Node(id));
+                        return Ok((head, Some(id)));
                     }
                     cursor = self.nodes[id].collision;
                 }
+                Ok((head, None))
+                })())?;
+                if let Some(id) = found { return Ok(Atom::Node(id)); }
                 if reference.as_struct(&meter.store)?.is_none()
                     && reference.as_array(&meter.store)?.is_none()
                 {
                     return Err(invalid("Unsupported heap reference in storage snapshot"));
                 }
-                room(&mut self.nodes, meter)?;
+                snapshot_observed!(meter, "node-buffer-room", self.nodes.len(), room(&mut self.nodes, meter))?;
                 meter.work(1)?;
                 let value = reference.to_owned_rooted(&mut meter.store)?;
                 self.handles.fetch_add(1, AtomicOrdering::Relaxed);
@@ -261,7 +295,7 @@ impl Capture {
                 });
                 // Capture is private until complete. Any error drops all its
                 // owned roots; no partial snapshot is returned or published.
-                self.index.insert(hash, id, meter)?;
+                snapshot_observed!(meter, "node-index-insert", self.nodes.len(), self.index.insert(hash, id, meter))?;
                 Atom::Node(id)
             }
             Val::ExternRef(Some(_)) | Val::ExnRef(Some(_)) | Val::ContRef(Some(_)) => {
@@ -270,6 +304,16 @@ impl Capture {
                 ));
             }
         })
+        })();
+        if enabled {
+            let kind = match &result {
+                Ok(Atom::Opaque(_)) => "opaque", Ok(Atom::Node(_)) => "node",
+                Ok(_) => "scalar", Err(_) => "error",
+            };
+            eprintln!("source-snapshot-atom event=after kind={kind} result={:?} remaining={:?}",
+                result.as_ref().map(|_| ()).map_err(|error| error.to_string()), meter.store.get_fuel().ok());
+        }
+        result
     }
 
     fn finish(mut self, root: Val, meter: &mut Meter<'_>) -> Result<StorageSnapshot> {
@@ -281,11 +325,14 @@ impl Capture {
             let contents = if let Some(structure) = reference.as_struct(&meter.store)? {
                 let ty = structure.ty(&meter.store)?;
                 let count = ty.fields().len();
-                allocation::<Atom>(count, meter)?;
-                let mut values = Vec::new();
-                values.try_reserve_exact(count).map_err(|error| {
-                    invalid(format!("Storage snapshot allocation failed: {error}"))
-                })?;
+                let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count, (|| -> Result<Vec<Atom>> {
+                    allocation::<Atom>(count, meter)?;
+                    let mut values = Vec::new();
+                    values.try_reserve_exact(count).map_err(|error| {
+                        invalid(format!("Storage snapshot allocation failed: {error}"))
+                    })?;
+                    Ok(values)
+                })())?;
                 for field in 0..count {
                     meter.work(1)?;
                     let value = structure.field(&mut meter.store, field)?;
@@ -295,11 +342,14 @@ impl Capture {
             } else if let Some(array) = reference.as_array(&meter.store)? {
                 let ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
-                allocation::<Atom>(count as usize, meter)?;
-                let mut values = Vec::new();
-                values.try_reserve_exact(count as usize).map_err(|error| {
-                    invalid(format!("Storage snapshot allocation failed: {error}"))
-                })?;
+                let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
+                    allocation::<Atom>(count as usize, meter)?;
+                    let mut values = Vec::new();
+                    values.try_reserve_exact(count as usize).map_err(|error| {
+                        invalid(format!("Storage snapshot allocation failed: {error}"))
+                    })?;
+                    Ok(values)
+                })())?;
                 for index in 0..count {
                     meter.work(1)?;
                     let value = array.get(&mut meter.store, index)?;
@@ -309,6 +359,10 @@ impl Capture {
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };
+            if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
+                let atoms = match &contents { Contents::Struct(_, atoms) | Contents::Array(_, atoms) => atoms.len() };
+                eprintln!("source-snapshot-node ordinal={id} atoms={atoms} event=complete remaining={:?}", meter.store.get_fuel().ok());
+            }
             self.nodes[id].contents = Some(contents);
             id += 1;
         }
@@ -509,8 +563,18 @@ impl Session {
         let mut capture = Capture { owner: self.identity, handles,
             nodes: Vec::new(), index: TryOrderedMap::default(),
             cuts: Vec::new(), cut_index: TryOrderedMap::default() };
-        capture.add_cuts(cuts, &root, &mut meter)?;
-        capture.finish(root, &mut meter)
+        let added = snapshot_observed!(meter, "add-cuts", cuts.len(), capture.add_cuts(cuts, &root, &mut meter));
+        if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
+            eprintln!("source-snapshot-cuts input={} dedup={} complete={} remaining={:?}",
+                cuts.len(), capture.cuts.len(), added.is_ok(), meter.store.get_fuel().ok());
+        }
+        added?;
+        let result = snapshot_observed!(meter, "finish", cuts.len(), capture.finish(root, &mut meter));
+        if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
+            eprintln!("source-snapshot-summary input_cuts={} nodes={:?} complete={} remaining={:?}",
+                cuts.len(), result.as_ref().ok().map(|snapshot| snapshot.nodes.len()), result.is_ok(), meter.store.get_fuel().ok());
+        }
+        result
     }
 
     pub(crate) fn storage_matches(

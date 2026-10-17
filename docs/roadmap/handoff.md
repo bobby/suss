@@ -28905,3 +28905,75 @@ bootstrap, provenance and pinned-suite checks exit0 (13 commands total). Raw log
 command receipts and source-freeze mapping are retained separately in
 `m4-native-final-provenance-2026-10-16.tar.gz`; they ran after the main archive.
 These checks do not execute the full workspace baseline or resolve the fuel gaps.
+
+### Shared native Global identities (2026-10-16)
+
+Global now retains an immutable phase/namespace/name owner. Value Eq/Ord,
+borrowed lookup ordering, Debug and Wasm import names are preserved. Temporary
+query Strings in the metered identity paths remain copied and charged; those
+queries allocate no Arc. Existing
+binding keys are retained, while absent bootstrap selectors create charged
+private owners without publishing bindings. DefinitionInfo revisions remain
+independent. Both HIR selector callers propagate meter errors. Syntax-quote uses
+a selection predicate without constructing an unused owner. Macro rollback keys
+use read-only lookup/create rather than cloning an entire caller Environment.
+There is no extra bootstrap catalog to copy on Environment cloning.
+
+Global creation prepays text and owner/header storage; IR/HIR copies now retain
+that actual owner instead of copying both Strings. Namespace refers, source
+cells, reader pairs, reify/protocol keys and active Session import/rollback paths
+use current meters. Convenience setup calls precede active preparation and use
+separate finite accounting. In particular, AOT command/world import setup has a
+per-cell bound, which does not bound the aggregate import list. This remains an
+explicit setup limitation, not evidence of complete cumulative accounting.
+
+Compile-only pilot1 retains two new-test &&str argument errors and unchanged
+3,488-input hashes. Pilot2 passes after dereferencing those arguments. The final
+source removes a redundant loop retain and adds an executing HIR interruption
+regression: every charged boundary for let/loop/inc in both phases must return
+the exact interruption, make no later charge, preserve caller generation and
+permit subsequent preparation. All7 Global tests pass. The original selector
+variant block corresponds byte-for-byte to14c2ad1 apart from the Result wrapper
+and final-use loop move; runtime resolution tests provide separate execution.
+
+With2,914 frozen compiler/runtime/recipe/oracle inputs, bootstrap regeneration
+succeeds and changes only its4 declared outputs. Both phases' noncustom Wasm
+sections are byte-identical to14c2ad1. Focused tests pass117 Rust executions:
+ABI1, ownership18, Global7, definitions14, resolution14, modules11, phases3,
+closures14, ledger15, snapshots16 and domains4. Python348 and all13 foundation
+commands pass on the same unchanged tuple. A fresh pinned development CLJS/Node
+run matches all117 core-import observations exactly; its initial missing-Java
+setup attempt is retained separately. These reference observations execute no
+Suss code and do not establish default-budget core execution.
+
+Snapshot observers use the existing opt-in materialization trace flag. They
+retain original operations, errors, tariffs, roots and charged layouts while
+recording cut, index, node and atom-buffer intervals. Intervals are nested;
+subintervals cannot be added again to their enclosing totals. The selected
+single-test trace avoids cross-test interleaving; general concurrent logs have
+no unique operation IDs. Default-budget execution and terminal gate results are
+recorded separately below rather than inferred from source approval or byte
+correspondence.
+
+The complete focused cohort terminates with132 Rust passes,4 fuel failures and
+0 ignores; all2,914 inputs remain unchanged. Cumulative-fuel/recovery adds10
+passes and bitwise effect/error regressions add5. Core import still exhausts
+10M during IR construction (the trace records an ir_build rejection); its16
+other tests are filtered, not credited. The separate explicit30M compiler-only
+probe completes11,788,490 units, versus12,721,815 previously, and executes no
+Store/user program. Verification remains1,190,973. IR construction falls
+2,006,192→826,842; global copies alone fall1,200,020→20,670. HIR layout falls
+184→160 bytes. Total net saving is933,325:1,428,446 measured copy/layout savings
+are offset by495,121 additional unclassified other-analysis units. Current
+labels do not independently split owner allocation from query/retain overhead.
+
+Source-child variant0 materialization remains2,035,629 units. Runtime variant3
+still exhausts fuel during materialization; later variants, Macro and physical/
+memo tails remain unexecuted. Full original Jank map execution still stops in
+macro transport with0 assertions and all69 unexecuted; the host comparison
+retains the raw changed backtrace. Bitwise primary fails common core setup.
+These failures are not excluded, converted to values or hidden by raised quotas.
+Raw frozen inputs, failed compiler/setup attempts, commands and comparisons are
+packaged in m4-native-global-ownership-2026-10-17.tar.gz. Independent source
+review found no blocker. Complete execution criteria, required full baseline
+and final-head CI remain separate gates.

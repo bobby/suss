@@ -1089,7 +1089,8 @@ impl Analyzer<'_> {
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
-                        match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+                        match self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))? {
                             Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
                             _ => None,
@@ -1121,7 +1122,8 @@ impl Analyzer<'_> {
             )?
         };
         if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+            let (global, fallback, fresh) = self.environment.reader_sequence_cells_metered(self.phase,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
             if fresh {
                 let initializer = self.form(&coerced)?;
                 self.callable_keys.insert(
@@ -1473,7 +1475,8 @@ impl Analyzer<'_> {
         }
         let global = self
             .environment
-            .declare_cell(self.phase, &namespace, &name.name)
+            .declare_cell_metered(self.phase, &namespace, &name.name,
+                &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))
             .map_err(|mut error| {
                 error.span = args[0].span.clone();
                 error
@@ -2359,7 +2362,8 @@ impl Analyzer<'_> {
                 }
                 Err(_) if namespace == self.environment.current_namespace(self.phase) => self
                     .environment
-                    .declare_cell(self.phase, namespace, &target.name)?,
+                    .declare_cell_metered(self.phase, namespace, &target.name,
+                        &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))?,
                 Err(error) => return Err(error),
             };
             if self
@@ -2568,7 +2572,8 @@ impl Analyzer<'_> {
                 return self.call(form, items);
             }
             Some(
-                if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
+                if let Some(binding) = self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 {
                     binding
                 } else {
