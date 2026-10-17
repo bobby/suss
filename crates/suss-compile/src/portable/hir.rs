@@ -766,7 +766,7 @@ pub enum Expression {
     GeneralFunction {
         methods: Vec<Method>,
         captures: Vec<BindingId>,
-        self_binding: Option<Parameter>,
+        self_binding: Option<std::sync::Arc<Parameter>>,
         rest_class: Option<Global>,
     },
     Call {
@@ -1751,6 +1751,13 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             captures.remove(&parameter.id);
         }
+        // The analysis-local parameter is now complete and immutable. Only
+        // named functions allocate an owner; HIR copies retain that same value.
+        let self_binding = self_binding.map(|parameter| {
+            local_bindings::capture_self_parameter(parameter, &mut |work| {
+                self.expander.charge_expansion_work(work, form.span.clone())
+            })
+        }).transpose()?;
         let function = Hir {
             source: None,
             span: form.span.clone(),

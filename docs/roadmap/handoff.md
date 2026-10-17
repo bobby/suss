@@ -28778,3 +28778,46 @@ and16 failures after deduplicating repeated bootstrap executions. Foundation
 Python348 passes. These are parent results, not execution of the diagnostic
 branch. All raw failures, logs, source correspondence and independent classifiers
 remain in the archive; no new Cargo execution accompanies publication.
+
+
+### First executed native ownership and membership repairs (2026-10-16)
+
+Named-function self parameters now use exact immutable Arc ownership. Completed
+parameter payload/header allocation is prepaid and metered HIR copies retain
+that owner. Definition/signature semantics and source facts remain unchanged.
+WriteDomain membership checks all exact recorded/child roots before searching
+seed interiors; all node snapshots, methods/prototypes, child dependencies and
+remaining comparisons stay checked and metered. Independent four-file review
+found no source blocker; foreign rejection coverage is at construction, not an
+invented traversal result. Refs #270, #252 and #264; no acceptance closure.
+
+The first frozen cohort passes24 Rust tests: observers4, domain4, closures14,
+pinned-parameter native2. Extension passes ownership14 and cumulative fuel10.
+Together48 passes, three fuel failures, zero ignored. Bootstrap regeneration
+succeeds; Python348 tests and all13 foundation provenance commands succeed.
+The core-import exact case still fails native fuel during IR construction;
+16 other core-import cases were not rerun. Source-child reaches Runtime variant3
+rather than variant1, then exhausts fuel; later variants, Macro and physical/memo
+tails remain unexecuted. No full-baseline or CI success is claimed for this tuple.
+
+Measured HIR layout240→200 bytes with8,957 captures; complete pre-IR analysis
+saves414,808 units after352 newly charged owner units. Recurrence126,072 now
+completes; IR construction consumes313,632 before its next76-unit charge fails
+with66 remaining. Remaining construction/emission work is unknown. Source-child
+variant0 materialization4,118,259→2,285,067 saves1,833,192 (44.51%); membership
+1,949,568→116,376. Nested intervals are not additional independent savings.
+
+The unchanged pinned map gate fails macro invocation withzero assertions and
+all69 IDs unexecuted. A matched parent control withall450 compiled inputs of
+5187354 also fails macro invocation/fuel at239..5926, withzero assertions.
+Backtraces differ and are retained. This failure is present in the parent; the
+older81769-ID success is not current acceptance. No blanket skip or verdict
+success replaces it. Both source tuples retain all raw observations/comparisons.
+
+Archive m4-native-fuel-first-repairs-2026-10-16.tar.gz retains commands, receipts,
+source/artifact freezes, matched control and manifest. First cohort freezes450
+inputs; extension/control456, adding pinned Jank/oracle/checker bytes. Parameter
+oracle JSON is separately captured after execution and matched to parent bytes;
+it was not independently frozen by the first cohort. The initial provenance
+precheck failed because the new worktree CLJS submodule was uninitialized; after
+pinned initialization all checkers pass. No fresh CLJS oracle run is claimed.

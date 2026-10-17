@@ -399,23 +399,30 @@ impl WriteDomain {
                     if member {
                         break;
                     }
-                    if let Some(seed) = &other.seed {
-                        member |= seed.write_storage().contains_reference_in_context(
-                            scope.as_context_mut(),
-                            Val::AnyRef(Some(edge)),
-                            identity,
-                            irq,
-                        )?;
-                        if member {
-                            break;
-                        }
-                    }
                 }
                 if !member {
                     for child in &state.children {
                         Session::consume_host_work(scope.as_context_mut(),1,irq)?;
                         let root=child.value.value.to_rooted(&mut scope);
                         if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
+                    }
+                }
+                // Exact recorded/child roots are sufficient membership proof.
+                // Only an edge absent from ALL those roots needs a seed-interior
+                // search. Complete seed snapshots still run for every seed in
+                // the outer node loop, even after an earlier false result.
+                if !member {
+                    for other in &state.nodes {
+                        Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
+                        if let Some(seed) = &other.seed {
+                            member |= seed.write_storage().contains_reference_in_context(
+                                scope.as_context_mut(),
+                                Val::AnyRef(Some(edge)),
+                                identity,
+                                irq,
+                            )?;
+                            if member { break; }
+                        }
                     }
                 }
                 valid &= member;
@@ -444,6 +451,104 @@ fn reserve_context<T>(mut store:StoreContextMut<'_,()>,irq:&AtomicBool,values:&m
 mod tests {
     use super::*;
     use crate::{portable::hir::Literal, portable_macro_data::FormBridge};
+    // Real canonical seed and watched factory inputs. Keep records alive: their
+    // constructor facts own the Watches; the domain intentionally stores Weak.
+    fn membership_fixture(session: &mut Session) -> (
+        super::super::construction_records::ConstructionRecords,
+        Arc<WriteDomain>, Arc<Watch>, SessionValue, SessionValue,
+    ) {
+        let bridge = FormBridge::new(session).unwrap().recording(session).unwrap();
+        let seed = bridge.map_values(session, &[]).unwrap();
+        let _keyword = bridge.identifier(session, None, "domain-membership", true, None).unwrap();
+        let interior = session.data_fields(&seed).unwrap()[2].clone();
+        let records = bridge.into_records().unwrap();
+        let domain = records.write_domain();
+        let watch = registry_lock(&domain.state).nodes.iter()
+            .find_map(|node| node.watch.as_ref().and_then(Weak::upgrade)).unwrap();
+        (records, domain, watch, seed, interior)
+    }
+    fn domain_valid(session: &mut Session, domain: &WriteDomain, target: &Watch) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        let methods = session.canonical_methods.clone().unwrap();
+        let prototype = session.prototype_origin.clone().unwrap();
+        let identity = session.identity;
+        let runtime = session.runtime;
+        let irq = session.host_work_interrupt();
+        domain.matches(session.store.as_context_mut(), runtime, identity, &irq,
+            &methods, &prototype, None, target, &[])
+    }
+    fn record_array_edge(session: &mut Session, domain: &Arc<WriteDomain>, edge: &SessionValue) -> SessionValue {
+        let (value, fact) = session.data_array_with_inputs(&[edge]).unwrap();
+        domain.record(session, &value, &Fact::Array(fact)).unwrap();
+        value
+    }
+    #[test]
+    fn direct_membership_and_seed_interior_preserve_exact_closed_domain_and_seed_checks() {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, seed, interior) = membership_fixture(&mut session);
+        // This edge is only inside the independently captured canonical seed.
+        // It has no separately recorded factory root in this domain.
+        {
+            let state = registry_lock(&domain.state);
+            session.inspect(&interior, |mut store, value| {
+                for node in &state.nodes {
+                    let root = node.value.value.to_rooted(&mut store);
+                    assert!(!Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &root)?);
+                }
+                Ok(())
+            }).unwrap();
+        }
+        let _seed_edge = record_array_edge(&mut session, &domain, &interior);
+        // Record a genuine input AFTER its user, so membership must find a later
+        // direct root without consulting the preceding seed's interior graph.
+        let (number, number_fact) = session.data_scalar_with_inputs(&Literal::Number(17.0)).unwrap();
+        let _direct_edge = record_array_edge(&mut session, &domain, &number);
+        domain.record(&mut session, &number, &Fact::Scalar(number_fact)).unwrap();
+        session.collect().unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let poison = session.eval("(fn [seed] (set! (.-__hash seed) 991))").unwrap();
+        drop(session.invoke(&poison, &[&seed]).unwrap());
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
+            "a direct-root hit cannot bypass the full canonical seed snapshot");
+    }
+    #[test]
+    fn membership_rejects_equal_content_missing_and_foreign_edges_and_recovers_from_fuel_irq() {
+        let mut session = Session::new_macro().unwrap();
+        let (_records, domain, target, _seed, _interior) = membership_fixture(&mut session);
+        let (number, fact) = session.data_scalar_with_inputs(&Literal::Number(17.0)).unwrap();
+        domain.record(&mut session, &number, &Fact::Scalar(fact)).unwrap();
+        let _edge = record_array_edge(&mut session, &domain, &number);
+        session.collect().unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        session.with_operation_budget(|session| {
+            let remaining = session.operation_fuel_remaining()?;
+            session.charge_host_work(remaining)?;
+            assert!(matches!(domain_valid(session, &domain, &target), Err(SessionError::Trap(_))));
+            Ok(())
+        }).unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            match domain_valid(session, &domain, &target) {
+                Err(error) => assert!(error.is_interrupt()),
+                Ok(_) => panic!("pending interrupt must not be hidden by direct membership"),
+            }
+            Ok(())
+        }).unwrap();
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let mut foreign = Session::new_macro().unwrap();
+        assert!(matches!(foreign.data_array_with_inputs(&[&number]), Err(SessionError::ForeignValue)));
+        assert!(domain_valid(&mut session, &domain, &target).unwrap());
+        let equal = session.data_scalar(&Literal::Number(17.0)).unwrap();
+        session.inspect(&equal, |mut store, value| {
+            let original = number.value.to_rooted(&mut store);
+            assert!(!Rooted::<AnyRef>::ref_eq(&store, value.unwrap_anyref().unwrap(), &original)?);
+            Ok(())
+        }).unwrap();
+        let _unknown = record_array_edge(&mut session, &domain, &equal);
+        assert!(!domain_valid(&mut session, &domain, &target).unwrap(),
+            "equal payload cannot authorize a reference absent from roots and seed interiors");
+    }
     fn method(session: &mut Session, descriptor: &SessionValue) -> SessionValue {
         let name = format!(
             "key-{}",
