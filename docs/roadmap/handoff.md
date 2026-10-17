@@ -29316,3 +29316,39 @@ calls; this is nested work, not an additional total. Source confirms live .sval
 and ordinary nonrecording datum arguments. Domain-proof savings must not be
 credited as the map bottleneck. Allraw failures and both current/parent source
 captures remain retained for the next terminal archive.
+
+
+## Realized LazySeq live Object lookup diagnostic (2026-10-17)
+
+Isolated branch based on ce88795; test-only portable_session module, no public
+API or production runtime change. Command: `CARGO_BUILD_JOBS=2 RAYON_NUM_THREADS=2
+CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/memo-proof-cost-target cargo test
+-p suss-compile --locked --lib
+portable_session::lazy_object_cost_probe::realized_lazy_object_lookup_vs_captured_original_cost
+-- --exact --test-threads=2 --nocapture`. Regenerated both bootstrap phases via
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`
+with the same target/jobs. Bootstrap0; focused1pass0fail434filtered,16completed
+measurement rows/restoration checks; all2916frozen inputs unchanged afterward.
+
+Original LazySeq thunk warmed once. Both matched adapters take the same method
+and receiver: A `(fn[m x](.call (.-sval x) x))`, B `(fn[m x](.call m x))`. Both100/200
+iterations and forward/reverse orders give5231vs3075fuel/iteration, difference2156.
+This is incremental compiled lookup-site work versus local read, not exclusive
+method-get work. Separate dynamic `.sval` control4662 and stored-s control19 use
+different entry mechanisms. Exact result roots, original method identity, physical
+receiver restoration and thunkcount1 hold, including GC roots. Default10M applies
+once per loop; no nested refill. Already-realized receiver only: no extrapolation
+to map60.53M lazy realization, no production capture/bypass recommendation.
+
+Archive `docs/roadmap/evidence/m4-realized-lazy-object-lookup-2026-10-17.tar.gz`
+SHA256 `21258ad3c841781fc697c3ca0339b7424ee14a04a41c6f0992b589c938485ce3`:2905members,
+5source/artifact tuples; exact source and raw commands/receipts retained. Initial
+API compile errors (10then9), expected bootstrap identity failure, and interrupted
+redundant observer-only hash loop remain explicit; no measurement from failed
+attempts. Last observer interruption occurred after compiler terminal; separate
+single-pass2916hash check unchanged. Final sourceSHA
+`d47775a9d88642b09e70ba5cfe03c4f8476c59a962c6d6e4351f74a679f9e3c7`.
+Main relayed Carver independent source/artifact approval before this diagnostic
+publication. Archive itself records pre-publication review-pending state; this
+addendum records the later approval. No issue-fixPR, full baseline/CI or completion
+claim. Primary ce worktree untouched.

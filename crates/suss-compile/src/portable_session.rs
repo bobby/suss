@@ -3761,3 +3761,6 @@ mod tests {
 pub(crate) mod memo_leaf_test_support;
 #[cfg(test)]
 mod constructor_callback_tests;
+
+#[cfg(test)]
+mod lazy_object_cost_probe;
