@@ -154,6 +154,7 @@ impl CompiledMacros {
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
+        macros.define(crate::portable_when_let::SOURCE)?;
         macros.define(crate::portable_lazy_seq::SOURCE)?;
         macros
             .session
@@ -734,7 +735,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["defn", "defrecord", "lazy-seq"]
+                ["defn", "defrecord", "lazy-seq", "when-let"]
                     .into_iter()
                     .find_map(|core_name| {
                         context
@@ -836,3 +837,46 @@ mod memo_leaf_tests;
 
 #[cfg(test)]
 mod analyzer_literal_effect_tests;
+
+#[cfg(test)]
+mod when_let_validation_tests {
+    use super::*;
+
+    #[test]
+    fn compiled_when_let_validation_matches_pinned_messages_and_phase_after_gc() {
+        let reference: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../tests/oracle/when-let-validation-observations.json"
+        )).unwrap();
+        assert_eq!(reference["upstream"], "c4295f303100bbf5afac449242d30bca1126f1a1");
+        let mut macros = CompiledMacros::new().unwrap();
+        let function = macros.definitions[&("suss.core".to_owned(), "when-let".to_owned())].clone();
+        let capture = macros.session.eval(r#"
+          (fn [expand form bindings]
+            (try (expand form nil bindings 1)
+              (catch :default problem
+                [(ex-message problem) (get (ex-data problem) :clojure.error/phase)])))
+        "#).unwrap();
+        let cases = reference["cases"].as_array().unwrap();
+        assert_eq!(cases.len(), 5);
+        for case in cases {
+            let source = case["source"].as_str().unwrap();
+            let form = read_forms(source).unwrap().remove(0);
+            let Kind::List(items) = &form.kind else { panic!("oracle macro call") };
+            let bindings = macros.bridge.quote(&mut macros.session, items[1].clone()).unwrap();
+            let form = macros.bridge.quote(&mut macros.session, form).unwrap();
+            let value = macros.session.invoke(&capture, &[&function, &form, &bindings]).unwrap();
+            macros.session.collect().unwrap();
+            let observed = macros.bridge.read(&mut macros.session, &value, 0..source.len()).unwrap();
+            let Kind::Vector(fields) = observed.kind else { panic!("validation result") };
+            assert_eq!(fields.len(), 2);
+            let Kind::String(message) = &fields[0].kind else { panic!("exception message") };
+            assert_eq!(String::from_utf16(message).unwrap(), case["message"].as_str().unwrap());
+            assert!(matches!(&fields[1].kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "macro-syntax-check"));
+            assert_eq!(case["phase"], ":macro-syntax-check");
+            let recovered = macros.session.eval("(+ 20 22)").unwrap();
+            let recovered = macros.bridge.read(&mut macros.session, &recovered, 0..1).unwrap();
+            assert!(matches!(recovered.kind, Kind::Number(n) if n == 42.0));
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "native_fixture": "crates/suss-cli/tests/compiled_let_destructuring.rs",
+  "native_fixture_sha256": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d",
+  "guests": {
+    "guest1.cljs": "0fb42c4699ff523374bd14b8d7ad1103e7e4f33faaae9d8764965d0560b5ed00",
+    "guest2.cljs": "c45f2cc0f77a3843420386c4dd10f40c3a2a32e6da5e18b13bc30c326ddb951c"
+  },
+  "encoder_source_sha256": "d9d0350f0a661595c0a7e5a4dff4a09232e2e3bb0b449b43a378bf2026a9b573",
+  "scope": "Exact two native guest substrings; encoder runs after each full guest evaluation. Development CLJS only."
+}

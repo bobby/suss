@@ -1,0 +1,36 @@
+{
+  "commands": [
+    [
+      "/home/bobby/.cache/suss-m4-oracle-tools/bin/clojure",
+      "-J-Xmx1g",
+      "-J-XX:ActiveProcessorCount=2",
+      "-Srepro",
+      "-M",
+      "-m",
+      "cljs.main",
+      "-co",
+      "{:force true :cache-analysis false :target :nodejs :output-to \"out/run2/probe.js\" :output-dir \"out/run2/cljs\" :optimizations :none :source-map false}",
+      "-c",
+      "suss-oracle.direct-let-probe"
+    ],
+    [
+      "node",
+      "out/run2/probe.js"
+    ]
+  ],
+  "source_sha256": "5443fc4757671d7f2f92e64a7b11eeb65e9f744fd326de30244fc96e2b14cbf1",
+  "steps": [
+    {
+      "exit": 0,
+      "seconds": 22.097179133008467,
+      "log": "run2-0.log"
+    },
+    {
+      "exit": 0,
+      "seconds": 0.22763613000279292,
+      "log": "run2-1.log"
+    }
+  ],
+  "scope": "Pinned development CLJS/Node only; no Suss execution.",
+  "source_unchanged": true
+}

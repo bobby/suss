@@ -1919,14 +1919,12 @@ fn test_as_thread() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_vector_destructuring_let() {
     let result = run_expr_i32("(let [[a b] [10 20]] (+ a b))");
     assert_eq!(result, 30);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_vector_destructuring_rest() {
     // [a & rest] destructuring - count of rest
     let result = run_expr_i32("(let [[a & rest] [1 2 3]] (count rest))");
@@ -1938,7 +1936,6 @@ fn test_vector_destructuring_rest() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_map_destructuring_keys() {
     // {:keys [a b]} destructuring
     let result = run_expr_i32("(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))");
@@ -1946,7 +1943,6 @@ fn test_map_destructuring_keys() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Binding destructuring is not lowered yet; see prototype_cases_awaiting_compiled_support"]
 fn test_map_destructuring_direct() {
     // {sym :key} direct binding
     let result = run_expr_i32("(let [{x :a y :b} {:a 10 :b 20}] (+ x y))");
@@ -2570,8 +2566,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_cond_thread_first", "(cond-> 1 true inc true inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_cond_thread_first_false", "(cond-> 1 true inc false inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_doseq_basic", "(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)", "Unresolved Runtime name doseq at bytes 19..24"),
-    ("test_map_destructuring_direct", "(let [{x :a y :b} {:a 10 :b 20}] (+ x y))", "Binding destructuring is not lowered yet at bytes 6..17"),
-    ("test_map_destructuring_keys", "(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..19"),
     ("test_print_no_newline", "(print \"hello\")", "Unresolved Runtime name print at bytes 1..6"),
     ("test_println_basic", "(println \"hello\")", "Unresolved Runtime name println at bytes 1..8"),
     ("test_println_multiple_args", "(println \"hello\" \"world\")", "Unresolved Runtime name println at bytes 1..8"),
@@ -2579,8 +2573,6 @@ const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_println_number", "(println 42)", "Unresolved Runtime name println at bytes 1..8"),
     ("test_prn_basic", "(prn 42)", "Unresolved Runtime name prn at bytes 1..4"),
     ("test_some_thread_first", "(some-> 1 inc inc)", "Unresolved Runtime name some-> at bytes 1..7"),
-    ("test_vector_destructuring_let", "(let [[a b] [10 20]] (+ a b))", "Binding destructuring is not lowered yet at bytes 6..11"),
-    ("test_vector_destructuring_rest", "(let [[a & rest] [1 2 3]] (count rest))", "Binding destructuring is not lowered yet at bytes 6..16"),
     ("test_when_first", "(when-first [x [42 1 2]] x)", "Unresolved Runtime name when-first at bytes 1..11"),
 ];
 

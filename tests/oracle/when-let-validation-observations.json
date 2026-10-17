@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "scope": "Actual compiled self-host core macro function; diagnostics exclude analyzer wrapping.",
+  "cases": [
+    {
+      "source": "(when-let 17 1)",
+      "status": "exception",
+      "message": "when-let requires a vector for its binding",
+      "phase": ":macro-syntax-check",
+      "data": "{:clojure.error/phase :macro-syntax-check}"
+    },
+    {
+      "source": "(when-let [] 1)",
+      "status": "exception",
+      "message": "when-let requires exactly 2 forms in binding vector",
+      "phase": ":macro-syntax-check",
+      "data": "{:clojure.error/phase :macro-syntax-check}"
+    },
+    {
+      "source": "(when-let [x] 1)",
+      "status": "exception",
+      "message": "when-let requires exactly 2 forms in binding vector",
+      "phase": ":macro-syntax-check",
+      "data": "{:clojure.error/phase :macro-syntax-check}"
+    },
+    {
+      "source": "(when-let [x 1 y 2] x)",
+      "status": "exception",
+      "message": "when-let requires exactly 2 forms in binding vector",
+      "phase": ":macro-syntax-check",
+      "data": "{:clojure.error/phase :macro-syntax-check}"
+    },
+    {
+      "source": "(when-let (x 1) 1)",
+      "status": "exception",
+      "message": "when-let requires a vector for its binding",
+      "phase": ":macro-syntax-check",
+      "data": "{:clojure.error/phase :macro-syntax-check}"
+    }
+  ],
+  "recovery-expansion": "(cljs.core$macros/let [temp__20983__auto__ 17] (cljs.core$macros/when temp__20983__auto__ (cljs.core$macros/let [x temp__20983__auto__] x)))"
+}

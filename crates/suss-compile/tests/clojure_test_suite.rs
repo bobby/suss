@@ -886,3 +886,125 @@ assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
         String::from_utf8_lossy(&compared.stderr));
     println!("PINNED_KEYWORD_CONFORMANCE {}", String::from_utf8_lossy(&compared.stdout));
 }
+
+/// #260 supplemental cases execute unchanged pinned identifier name and namespace cases.
+#[test]
+fn pinned_reader_identifier_names_keep_values() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root).output().unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let names = ["clojure.core-test.name", "clojure.core-test.namespace"];
+    for namespace in names {
+        let original = repository.join("vendor/clojure-test-suite/upstream/test")
+            .join(namespace.replace('.', "/").replace('-', "_") + ".cljc");
+        assert_eq!(std::fs::read(original).unwrap(),
+            std::fs::read(source_file(&source_root, namespace)).unwrap(),
+            "the original identifier declaration must remain intact");
+    }
+    let tests = ["clojure.core-test.name/test-name",
+                 "clojure.core-test.namespace/test-namespace"];
+    let selected = json!({"namespaces": names, "tests": tests});
+    let observations = Harness::new(&source_root).run(&selected, &source_root);
+    let captured = workspace.path().join("identifier-observations.json");
+    std::fs::write(&captured, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_READER_IDENTIFIER_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("identifier-observations.json"),
+            serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    }
+    // Use the same independent operand comparator as the suite. Never accept
+    // guest equality, an executed prefix, or a reviewed failure as a pass here.
+    let compared = Command::new("python3").arg("-c").arg(r#"
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'))
+import clojure_test_suite as suite
+reference=json.loads((root/'tests/oracle/clojure-test-suite-observations.json').read_text())
+names=['clojure.core-test.name','clojure.core-test.namespace']
+tests=['clojure.core-test.name/test-name','clojure.core-test.namespace/test-namespace']
+reference.update(namespaces=names,tests=tests,
+ assertions=[x for x in reference['assertions'] if x['test'] in tests],
+ skips=[x for x in reference['skips'] if x['test'] in tests])
+observed=json.loads(Path(sys.argv[2]).read_text())
+expected=[(x['test'],x['ordinal']) for x in reference['assertions']]
+actual=[(x['test'],x['ordinal']) for x in observed['assertions']]
+counts,failures=suite.compare(reference,observed)
+assert not observed['test-failures']
+assert not failures['tests'] and not failures['namespaces']
+print(json.dumps({'counts':counts,'failures':failures,'ordered_ids_match':actual==expected}))
+assert expected and actual==expected
+assert counts['pass']==len(expected) and counts['guest-judged']==0
+assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
+"#).arg(&repository).arg(&captured).output().unwrap();
+    assert!(compared.status.success(), "{}\n{}", String::from_utf8_lossy(&compared.stdout),
+        String::from_utf8_lossy(&compared.stderr));
+    println!("PINNED_IDENTIFIER_FIELDS {}", String::from_utf8_lossy(&compared.stdout));
+}
+
+/// #266: execute the entire original CLJS when-let body, never an assertion prefix.
+#[test]
+fn pinned_when_let_complete_body_matches_reference() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root).output().unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let namespace = "clojure.core-test.when-let";
+    let original = repository.join("vendor/clojure-test-suite/upstream/test/clojure/core_test/when_let.cljc");
+    assert_eq!(std::fs::read(&original).unwrap(),
+               std::fs::read(source_file(&source_root, namespace)).unwrap(),
+               "the complete pinned source must remain unchanged before harness require routing");
+    let selected = json!({"namespaces": [namespace],
+                          "tests": ["clojure.core-test.when-let/test-when-let"]});
+    // Generate the usual source tree, but load/run only this namespace and its
+    // real dependencies. The other 247 suite namespaces are not executed.
+    let observations = Harness::new(&source_root).run(&selected, &source_root);
+    let captured = workspace.path().join("when-let-observations.json");
+    let bytes = serde_json::to_vec_pretty(&observations).unwrap();
+    std::fs::write(&captured, &bytes).unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_WHEN_LET_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("when-let-observations.json"), &bytes).unwrap();
+    }
+    let compared = Command::new("python3").arg("-c").arg(r#"
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'))
+import clojure_test_suite as suite
+suite.verify(json.loads(suite.LOCK.read_text()))
+reference=json.loads((root/'tests/oracle/clojure-test-suite-observations.json').read_text())
+name='clojure.core-test.when-let';test=name+'/test-when-let'
+assert type(reference['schema']) is int and reference['schema']==1
+assert reference['suite']=='95d4a9112cfc5fe6629be3d14bb99080ea00af2f'
+assert reference['upstream']=='c4295f303100bbf5afac449242d30bca1126f1a1'
+reference.update(namespaces=[name],tests=[test],
+ assertions=[x for x in reference['assertions'] if x['test'].split('/')[0]==name],
+ skips=[x for x in reference['skips'] if x['namespace']==name])
+expected=[(x['test'],x['ordinal']) for x in reference['assertions']]
+assert expected==[(test,n) for n in range(1,13)]
+observed=json.loads(Path(sys.argv[2]).read_text())
+actual=[(x['test'],x['ordinal']) for x in observed['assertions']]
+counts,failures=suite.compare(reference,observed)
+print(json.dumps({'counts':counts,'failures':failures,
+ 'expected_ids':expected,'actual_ids':actual,'ordered_ids_match':actual==expected}))
+assert actual==expected
+assert observed['namespaces']==[{'namespace':name,'status':'loaded'}]
+assert not observed['test-failures'] and not observed['skips'] and not reference['skips']
+assert not any(failures[k] for k in ['tests','namespaces','assertions','skip-mismatches'])
+assert counts['pass']==12 and counts['guest-judged']==0
+assert counts['fail']==counts['not-executed']==counts['skipped']==0
+"#).arg(&repository).arg(&captured).output().unwrap();
+    eprintln!("PINNED_WHEN_LET {}{}", String::from_utf8_lossy(&compared.stdout),
+              String::from_utf8_lossy(&compared.stderr));
+    assert!(compared.status.success(), "complete pinned when-let comparison failed");
+}
