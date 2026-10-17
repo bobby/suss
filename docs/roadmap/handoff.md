@@ -29053,3 +29053,32 @@ until the unchanged tests execute successfully. Direct all-six-field guest
 identity coverage is not established by the native role tests. The next action
 is to retain terminal cohort results, measure total cost including new owners,
 and review committed source/evidence correspondence. No issue closure/merge.
+
+Receiver-facts terminal evidence:147 Rust passes,6 failures,0 ignored; all2,915
+frozen compiler/runtime/recipe/oracle inputs unchanged. All13 foundation commands
+exit0, including Python348. Direct exact-rlib probe measures LocalBinding120
+and SourceRole24 (parent160/64); MethodThisFacts64 plus Arc header16. Compiler
+30M diagnostic total11,423,481 = prefix666,846 + preparation excluding verify
+9,565,662 + verify1,190,973. Net reduction288,320 from682 includes new-owner
+costs: method-role bucket increases79,280, other-analysis unchanged. Default
+core still rejects in ir_build;16 other core tests remain filtered.
+
+Expanded self-local-methods tests both fail during CORE loading before method
+observations. Matched detached682 parent control also fails both during CORE
+loading; all3,903 captured files unchanged. These are inherited setup failures,
+not method acceptance. Older main-based76a CI passes these tests; the broader
+stack regression remains open. Runtime source-child boundaries exactly match
+682: variant0 materialization1,787,528; variants0–3 finish; variant4 starts
+materialization704,697 then exhausts at recipe42 identifier Node growth4→8
+request1,088 with921 left. Macro/physical/memo tails remain unexecuted.
+Pinned map still0assertions/69unexecuted with a namespace macro fuel failure;
+independent host comparison retains that outcome. Bitwise primaryCORE failure
+and5passes remain. Both bootstrap noncustom section sequences equal682.
+
+Archive m4-shared-method-receiver-facts-2026-10-17.tar.gz, SHA256
+5bef1fe4dbaf30a5f90e874c502614240ca50486a1fc563f24c653263ca8b0ca,
+retains exact inputs, commands, all raw results, parent-control receipts and
+layout-probe source/executable. Source review confirmed committed4d0c488.
+Archive correspondence review and new-head CI remain separate gates. No full
+native-branch baseline or issue closure is established. Next measured candidates
+are single-table shared-full insertion and exact primitive-array census.
