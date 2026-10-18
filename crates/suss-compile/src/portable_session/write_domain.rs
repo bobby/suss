@@ -564,7 +564,7 @@ mod tests {
     }
     fn record_array_edge(session: &mut Session, domain: &Arc<WriteDomain>, edge: &SessionValue) -> SessionValue {
         let (value, fact) = session.data_array_with_inputs(&[edge]).unwrap();
-        domain.record(session, &value, &Fact::Array(fact)).unwrap();
+        domain.record(session, &value, &Fact::Array(Box::new(fact))).unwrap();
         value
     }
     #[test]

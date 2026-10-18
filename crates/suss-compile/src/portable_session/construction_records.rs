@@ -140,10 +140,29 @@ impl InputIndex<'_> {
 
 pub(crate) enum Fact {
     Scalar(std::sync::Arc<ScalarInputs>),
-    Array(SourceArrayInputs),
-    Constructor(ConstructorInputs),
+    Array(Box<SourceArrayInputs>),
+    Constructor(Box<ConstructorInputs>),
     CanonicalSeed(std::sync::Arc<super::canonical_seeds::CanonicalSeed>),
     ExternalSeed(&'static str),
+}
+// Keep the large immutable input owners out of every scalar/seed record slot.
+// Charge the separate payload allocation and move before allocating it, plus
+// bounded Box initialization/release controls. Existing nested input teardown
+// keeps its prior policy. Page/directory fees use actual smaller slot sizes.
+impl Fact {
+    fn boxed<T>(session: &mut Session, inputs: T) -> Result<Box<T>, SessionError> {
+        let bytes = record_bytes::<T>(1)?.checked_mul(2)
+            .and_then(|bytes| bytes.checked_add(4))
+            .ok_or_else(|| record_error("Construction fact allocation overflow"))?;
+        session.charge_host_work(bytes)?;
+        Ok(Box::new(inputs))
+    }
+    pub(crate) fn array(session: &mut Session, inputs: SourceArrayInputs) -> Result<Self, SessionError> {
+        Ok(Self::Array(Self::boxed(session, inputs)?))
+    }
+    pub(crate) fn constructor(session: &mut Session, inputs: ConstructorInputs) -> Result<Self, SessionError> {
+        Ok(Self::Constructor(Self::boxed(session, inputs)?))
+    }
 }
 pub(crate) struct Record {
     pub value: SessionValue,
@@ -573,6 +592,80 @@ impl ConstructionRecords {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn boxed_fact_cuts_release_unpublished_inputs_and_preserve_existing_records() {
+        use crate::portable::{hir::Literal, resolve::Phase};
+        enum Prepared { Array(SourceArrayInputs), Constructor(ConstructorInputs) }
+        fn prepare(session: &mut Session, class: &SessionValue, input: &SessionValue, constructor: bool)
+            -> (SessionValue, Prepared) {
+            if constructor {
+                let (value, inputs) = session.data_construct_with_inputs(class, &[input]).unwrap();
+                (value, Prepared::Constructor(inputs.unwrap()))
+            } else {
+                let (value, inputs) = session.data_array_with_inputs(&[input]).unwrap();
+                (value, Prepared::Array(inputs))
+            }
+        }
+        fn rebox(session: &mut Session, fact: Prepared) -> Result<Fact, SessionError> {
+            match fact {
+                Prepared::Constructor(inputs) => Fact::constructor(session, inputs),
+                Prepared::Array(inputs) => Fact::array(session, inputs),
+            }
+        }
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = match phase {
+                Phase::Runtime => Session::new_repl().unwrap(),
+                Phase::Macro => Session::new_macro().unwrap(),
+            };
+            session.eval("(deftype BoxedRecordInput [x])").unwrap();
+            let class = session.eval("BoxedRecordInput").unwrap();
+            let input = session.data_scalar(&Literal::Number(17.0)).unwrap();
+            let mut prior = paged_prefix(&mut session, &input, 33);
+            for constructor in [false, true] {
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.operation_fuel_remaining().unwrap();
+                let fact = rebox(&mut session, fact).unwrap();
+                let cost = before - session.operation_fuel_remaining().unwrap();
+                drop((fact, value, request));
+                let handles = session.stats().external_value_handles;
+                for allowance in 0..cost {
+                    let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                    let request = session.operation_budget_scope().unwrap();
+                    session.store.set_fuel(allowance).unwrap();
+                    let error = rebox(&mut session, fact).err().unwrap();
+                    assert!(matches!(error, SessionError::Trap(ref e)
+                        if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                    drop((value, request));
+                    assert_eq!(session.stats().external_value_handles, handles);
+                    assert_eq!(prior.len(), 33);
+                }
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let request = session.operation_budget_scope().unwrap();
+                session.interrupt_handle().interrupt();
+                assert!(rebox(&mut session, fact).err().unwrap().is_interrupt());
+                drop((value, request));
+                assert_eq!(session.stats().external_value_handles, handles);
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let fact = session.with_operation_budget(|session| rebox(session, fact)).unwrap();
+                session.collect().unwrap();
+                match &fact {
+                    Fact::Array(inputs) => assert!(inputs.matches(&mut session, &value).unwrap()),
+                    Fact::Constructor(inputs) => assert!(inputs.matches(&mut session, &value).unwrap()),
+                    _ => unreachable!(),
+                }
+                prior.push(&mut session, Record { value, fact }).unwrap();
+                assert_eq!(prior.len(), 34);
+                // Removing only this private test append leaves every old slot.
+                prior.pages.last_mut().unwrap().pop();
+                prior.len -= 1;
+                for id in 0..33 {
+                    let old = prior.record(id, &mut session).unwrap().value.clone();
+                    assert!(session.values_identical(&old, &input).unwrap());
+                }
+            }
+        }
+    }
     fn paged_prefix(session: &mut Session, value: &SessionValue, count: usize) -> PagedRecords {
         let mut records = PagedRecords::default();
         for _ in 0..count {
@@ -888,7 +981,7 @@ mod tests {
                 .push(
                     &mut session,
                     parent.clone(),
-                    Fact::Constructor(inputs.unwrap()),
+                    Fact::Constructor(Box::new(inputs.unwrap())),
                 )
                 .unwrap();
             assert!(
@@ -916,7 +1009,7 @@ mod tests {
                 .push(
                     &mut session,
                     padded.clone(),
-                    Fact::Constructor(inputs.unwrap()),
+                    Fact::Constructor(Box::new(inputs.unwrap())),
                 )
                 .unwrap();
             assert!(
@@ -941,7 +1034,7 @@ mod tests {
         let (parent, array) = session.data_array_with_inputs(&[&child, &child]).unwrap();
         let mut records = ConstructionRecords::default();
         records
-            .push(&mut session, parent.clone(), Fact::Array(array))
+            .push(&mut session, parent.clone(), Fact::Array(Box::new(array)))
             .unwrap();
         session.collect().unwrap();
         assert!(records.matches_direct_facts(&mut session).unwrap());
