@@ -120,6 +120,34 @@ fn dependency(session: &mut Session, recipe: &Recipe, index: usize) -> Result<Va
         _ => unreachable!("validated dependency cursor"),
     })
 }
+// Child count is checked before descent. Grow lazily only for a successful
+// child, never at frame entry: even huge/all-declined recipes stay allocation
+// free until the same delivery point as before. Generic stack/reference reserve
+// policy is deliberately unchanged.
+fn reserve_child(session: &mut Session, values: &mut Vec<Form>, total: usize) -> Result<()> {
+    session.charge_host_work(2)?; // checked next length and comparison with arity
+    let needed = values.len().checked_add(1)
+        .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?;
+    if needed > total {
+        return Err(invalid("Metadata expectation child count exceeds recipe"));
+    }
+    if values.len() == values.capacity() {
+        let count = needed.max(values.capacity().checked_mul(2)
+            .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?)
+            .max(4.min(total)).min(total);
+        let bytes = count.checked_mul(std::mem::size_of::<Form>())
+            .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?;
+        let copied = values.len().checked_mul(std::mem::size_of::<Form>())
+            .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?;
+        // Same allocation/relocation tariff as reserve; only the actual
+        // requested capacity changes. Pay both before invoking the allocator.
+        session.charge_host_work(bytes as u64)?;
+        session.charge_host_work(copied as u64)?;
+        values.try_reserve_exact(count - values.len())
+            .map_err(|_| invalid("Metadata expectation allocation failed"))?;
+    }
+    Ok(())
+}
 // One output buffer, retaining missing-position information until finish. A
 // declined child never prevents later siblings from being visited/validated.
 #[derive(Default)]
@@ -130,9 +158,9 @@ struct Inputs {
     last_present: bool,
 }
 impl Inputs {
-    fn push(&mut self, session: &mut Session, value: Option<Form>) -> Result<()> {
+    fn push(&mut self, session: &mut Session, value: Option<Form>, total: usize) -> Result<()> {
         // Presence/count bookkeeping plus moving the completed child. Allocation
-        // and relocation remain charged by reserve, including reused capacity.
+        // and relocation remain charged by reserve_child, with unchanged tariffs.
         session.charge_host_work(4)?;
         let present = value.is_some();
         if self.count == 0 { self.first_present = present; }
@@ -140,7 +168,7 @@ impl Inputs {
         self.count = self.count.checked_add(1)
             .ok_or_else(|| invalid("Metadata expectation edge count overflow"))?;
         if let Some(value) = value {
-            reserve(session, &mut self.values, 1)?;
+            reserve_child(session, &mut self.values, total)?;
             self.values.push(value);
         }
         Ok(())
@@ -323,7 +351,9 @@ pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: V
                 frames.pop();
                 continue;
             }
-            parent.inputs.push(session, value)?;
+            session.charge_host_work(1)?; // read checked parent arity before use
+            let total = parent.dependency_count;
+            parent.inputs.push(session, value, total)?;
             break;
         }
     }
