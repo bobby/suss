@@ -304,10 +304,27 @@ pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: V
         }
         let done = frames.pop().unwrap();
         let value = finish(session, recipes[done.id].as_ref().unwrap(), done.inputs)?;
-        if let Some(parent) = frames.last_mut() {
+        // All alias frames were entered normally, with the same ancestor scans,
+        // edge reads and cycle checks. Once their sole child has completed, pass
+        // its owned result through without allocating four Form slots merely to
+        // pop one value again. Do not skip descent or memoize alias outputs.
+        loop {
+            let Some(parent) = frames.last_mut() else {
+                return Ok(value);
+            };
+            session.charge_host_work(1)?; // read the parent's completion kind
+            if matches!(recipes[parent.id].as_ref().unwrap(), Recipe::Alias(_)) {
+                // Preserve the existing fixed delivery bookkeeping (four units
+                // including the kind read above), loop completion (one), and
+                // one-input finish (two). Only absent buffer work loses its fee.
+                session.charge_host_work(3)?;
+                session.charge_host_work(1)?;
+                session.charge_host_work(2)?;
+                frames.pop();
+                continue;
+            }
             parent.inputs.push(session, value)?;
-        } else {
-            return Ok(value);
+            break;
         }
     }
     unreachable!("a source expectation has a root")
