@@ -491,7 +491,7 @@ impl FormBridge {
             let (value, fact) = materialize_observed!(session, "constructor-and-native-fact", session.data_construct_with_inputs(class, arguments))?;
             let fact = match fact {
                 Some(fact) => {
-                    crate::portable_session::construction_records::Fact::Constructor(fact)
+                    crate::portable_session::construction_records::Fact::constructor(session, fact)?
                 }
                 None => crate::portable_session::construction_records::Fact::ExternalSeed(
                     "special constructor",
@@ -522,11 +522,8 @@ impl FormBridge {
         if self.recording.is_some() {
             self.precheck_class(session, Class::SourceArray)?;
             let (value, fact) = materialize_observed!(session, "array-and-native-fact", session.data_array_with_inputs(values))?;
-            self.record(
-                session,
-                &value,
-                crate::portable_session::construction_records::Fact::Array(fact),
-            )?;
+            let fact = crate::portable_session::construction_records::Fact::array(session, fact)?;
+            self.record(session, &value, fact)?;
             Ok(value)
         } else {
             let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,values)?),None=>None};

@@ -155,7 +155,7 @@ mod tests {
             );
             let (parent, fact) = session.data_array_with_inputs(&[child]).unwrap();
             records
-                .push(&mut session, parent.clone(), Fact::Array(fact))
+                .push(&mut session, parent.clone(), Fact::Array(Box::new(fact)))
                 .unwrap();
             assert!(
                 records
@@ -171,7 +171,7 @@ mod tests {
             );
             let (other, fact) = session.data_array_with_inputs(&[&replacement]).unwrap();
             records
-                .push(&mut session, other.clone(), Fact::Array(fact))
+                .push(&mut session, other.clone(), Fact::Array(Box::new(fact)))
                 .unwrap();
             assert!(
                 !records
