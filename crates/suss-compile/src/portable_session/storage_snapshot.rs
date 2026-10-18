@@ -20,7 +20,7 @@ use std::{
     },
 };
 use wasmtime::{
-    AnyRef, ArrayType, AsContextMut, Func, RootScope, Rooted, StoreContextMut, StructType, Val,
+    AnyRef, AsContextMut, Func, RootScope, Rooted, StoreContextMut, Val,
 };
 
 type Result<T> = std::result::Result<T, SessionError>;
@@ -45,8 +45,10 @@ enum Atom {
 
 #[derive(Debug)]
 enum Contents {
-    Struct(StructType, Vec<Atom>),
-    Array(ArrayType, Vec<Atom>),
+    // Each node owns the exact captured GC object. Its intrinsic type is
+    // immutable; mutable nominal descriptors/prototypes remain captured atoms.
+    Struct(Vec<Atom>),
+    Array(Vec<Atom>),
 }
 
 #[derive(Debug)]
@@ -456,9 +458,11 @@ impl<'cuts> Capture<'cuts> {
                     let value = structure.field(&mut meter.store, field)?;
                     values.push(self.atom(value, meter)?);
                 }
-                Contents::Struct(ty, values)
+                Contents::Struct(values)
             } else if let Some(array) = reference.as_array(&meter.store)? {
-                let ty = array.ty(&meter.store)?;
+                // Retain the original fallible type query, but no persistent
+                // wrapper is needed beside the owned original object.
+                let _ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
                 let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
                     allocation::<Atom>(count as usize, meter)?;
@@ -473,12 +477,12 @@ impl<'cuts> Capture<'cuts> {
                     let value = array.get(&mut meter.store, index)?;
                     values.push(self.atom(value, meter)?);
                 }
-                Contents::Array(ty, values)
+                Contents::Array(values)
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };
             if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
-                let atoms = match &contents { Contents::Struct(_, atoms) | Contents::Array(_, atoms) => atoms.len() };
+                let atoms = match &contents { Contents::Struct(atoms) | Contents::Array(atoms) => atoms.len() };
                 eprintln!("source-snapshot-node ordinal={id} atoms={atoms} event=complete remaining={:?}", meter.store.get_fuel().ok());
             }
             self.nodes[id].contents = Some(contents);
@@ -515,7 +519,7 @@ impl StorageSnapshot {
             // Iteration, contents selection, length read and checked arithmetic.
             meter(8)?;
             let atoms = match &node.contents {
-                Some(Contents::Struct(_, atoms) | Contents::Array(_, atoms)) => Some(atoms),
+                Some(Contents::Struct(atoms) | Contents::Array(atoms)) => Some(atoms),
                 None => None,
             };
             let atom_work = match atoms {
@@ -569,7 +573,7 @@ impl StorageSnapshot {
             meter.work(1)?;
             if self.atom_matches(&Atom::Node(id), value.clone(), &mut meter)? { return Ok(true) }
             let atoms = match node.contents.as_ref().expect("complete snapshot") {
-                Contents::Array(_, atoms) | Contents::Struct(_, atoms) => atoms,
+                Contents::Array(atoms) | Contents::Struct(atoms) => atoms,
             };
             for atom in atoms {
                 meter.work(1)?;
@@ -629,11 +633,15 @@ impl StorageSnapshot {
                 .as_ref()
                 .expect("only complete snapshots escape capture")
             {
-                Contents::Struct(ty, values) => {
+                Contents::Struct(values) => {
                     let Some(structure) = reference.as_struct(&meter.store)? else {
                         return Ok(false);
                     };
-                    if !StructType::eq(&structure.ty(&meter.store)?, ty) {
+                    // Incoming edges already require exact identity with this
+                    // owned node. That identity fixes the intrinsic Wasm type;
+                    // retain current kind/count and every mutable field check.
+                    meter.work(3)?;
+                    if structure.ty(&meter.store)?.fields().len() != values.len() {
                         return Ok(false);
                     }
                     for (field, expected) in values.iter().enumerate() {
@@ -644,13 +652,12 @@ impl StorageSnapshot {
                         }
                     }
                 }
-                Contents::Array(ty, values) => {
+                Contents::Array(values) => {
                     let Some(array) = reference.as_array(&meter.store)? else {
                         return Ok(false);
                     };
-                    if !ArrayType::eq(&array.ty(&meter.store)?, ty)
-                        || array.len(&meter.store)? as usize != values.len()
-                    {
+                    let _ty = array.ty(&meter.store)?;
+                    if array.len(&meter.store)? as usize != values.len() {
                         return Ok(false);
                     }
                     for (index, expected) in values.iter().enumerate() {
@@ -763,7 +770,7 @@ impl Session {
 mod tests {
     use super::*;
     use crate::portable::hir::Literal;
-    use wasmtime::{FieldType, Mutability, StorageType, StructRef, StructRefPre, ValType};
+    use wasmtime::{ArrayType, StructType, FieldType, Mutability, StorageType, StructRef, StructRefPre, ValType};
 
     fn raw_array(session: &mut Session, values: &[&SessionValue]) -> SessionValue {
         session.budget().unwrap();
@@ -1031,6 +1038,65 @@ mod tests {
             .unwrap();
         drop(scope);
         assert!(!session.storage_matches(&text, &snapshot).unwrap());
+    }
+
+    #[test]
+    fn native_storage_snapshot_owned_nodes_survive_external_type_and_module_drop() {
+        eprintln!("snapshot-owned-layout Node={} Contents={} Snapshot={} Atom={}",
+            size_of::<Node>(), size_of::<Contents>(), size_of::<StorageSnapshot>(), size_of::<Atom>());
+        let mut session = Session::new().unwrap();
+        // The host allocator's temporary StructType is dropped by structure().
+        let host = structure(&mut session, ValType::I32, Val::I32(17));
+        let values = {
+            let _request = session.operation_budget_scope().unwrap();
+            let module = wasmtime::Module::new(&session.engine, r#"(module
+                (type $s (struct (field (mut i32))))
+                (type $a (array (mut i32)))
+                (type $immutable (array i32))
+                (func (export "object") (result (ref $s)) i32.const 17 struct.new $s)
+                (func (export "array") (result (ref $a)) i32.const 17 i32.const 2 array.new $a)
+                (func (export "immutable") (result (ref $immutable))
+                    i32.const 17 i32.const 2 array.new $immutable))"#).unwrap();
+            let instance = wasmtime::Instance::new(&mut session.store, &module, &[]).unwrap();
+            let mut values = Vec::new();
+            for name in ["object", "object", "array", "immutable"] {
+                let mut scope = RootScope::new(&mut session.store);
+                let function = instance.get_func(&mut scope, name).unwrap();
+                let mut result = [Val::null_any_ref()];
+                function.call(&mut scope, &[], &mut result).unwrap();
+                values.push(super::super::own(&mut scope, result[0].clone(),
+                    session.identity, &session.handles).unwrap());
+            }
+            values
+        }; // Caller Module/Instance/function handles are gone; Store owns registrations.
+        let host_snapshot = session.capture_storage(&host).unwrap();
+        let guest_snapshot = session.capture_storage(&values[0]).unwrap();
+        let array_snapshot = session.capture_storage(&values[2]).unwrap();
+        session.collect().unwrap();
+        assert!(session.storage_matches(&host, &host_snapshot).unwrap());
+        assert!(session.storage_matches(&values[0], &guest_snapshot).unwrap());
+        assert!(session.storage_matches(&values[2], &array_snapshot).unwrap());
+        // Same intrinsic type/different object, and same array contents with a
+        // different mutability/type, never replace the captured references.
+        assert!(!session.storage_matches(&values[1], &guest_snapshot).unwrap());
+        assert!(!session.storage_matches(&values[3], &array_snapshot).unwrap());
+        for (root, snapshot) in [(&host, &host_snapshot), (&values[0], &guest_snapshot)] {
+            set_field(&mut session, root, Val::I32(99));
+            assert!(!session.storage_matches(root, snapshot).unwrap());
+            set_field(&mut session, root, Val::I32(17));
+            assert!(session.storage_matches(root, snapshot).unwrap());
+        }
+        for value in [99, 17] {
+            let mut scope = RootScope::new(&mut session.store);
+            let array = values[2].value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+            array.set(&mut scope, 1, Val::I32(value)).unwrap();
+            drop(scope);
+            assert_eq!(session.storage_matches(&values[2], &array_snapshot).unwrap(), value == 17);
+        }
+        session.collect().unwrap();
+        assert!(session.storage_matches(&host, &host_snapshot).unwrap());
+        assert!(session.storage_matches(&values[0], &guest_snapshot).unwrap());
+        assert!(session.storage_matches(&values[2], &array_snapshot).unwrap());
     }
 
     #[test]
