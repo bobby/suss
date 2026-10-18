@@ -9494,3 +9494,273 @@ mod checked_field_loop_regression {
         }
     }
 }
+
+mod sparse_set_repair_tests {
+    use super::*;
+    fn array(store: &Store<()>, value: &Val) -> wasmtime::Rooted<wasmtime::ArrayRef> {
+        value
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(store)
+            .unwrap()
+            .unwrap()
+    }
+    fn number(store: &mut Store<()>, runtime: Instance, n: f64) -> Val {
+        nominal_value(store, runtime, "number-box", &[Val::F64(n.to_bits())])
+    }
+    fn bits(store: &mut Store<()>, value: &Val) -> f64 {
+        value
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&*store)
+            .unwrap()
+            .unwrap()
+            .field(store, 0)
+            .unwrap()
+            .unwrap_f64()
+    }
+    fn set(store: &mut Store<()>, runtime: Instance, backing: &Val, index: u32, value: &Val) {
+        nominal_value(
+            store,
+            runtime,
+            "source-array-sparse-set",
+            &[backing.clone(), Val::I32(index as i32), value.clone()],
+        );
+    }
+    #[test]
+    fn sparse_set_ordered_insert_replace_alias_gc_and_uint32_property() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(
+            &mut store,
+            &Module::new(&engine, runtime_abi::module()).unwrap(),
+            &[],
+        )
+        .unwrap();
+        let backing = nominal_value(
+            &mut store,
+            runtime,
+            "source-array-sparse-new",
+            &[Val::I32(0)],
+        );
+        let alias = backing.clone();
+        for (index, n) in [
+            (7, 70.0),
+            (1, 10.0),
+            (5, 50.0),
+            (9, 90.0),
+            (3, 30.0),
+            (5, 55.0),
+        ] {
+            let value = number(&mut store, runtime, n);
+            set(&mut store, runtime, &backing, index, &value);
+            store.gc(None).unwrap();
+            let actual = nominal_value(
+                &mut store,
+                runtime,
+                "source-array-sparse-get",
+                &[alias.clone(), Val::I32(index as i32)],
+            );
+            assert_eq!(bits(&mut store, &actual), n);
+        }
+        let mut node = array(&store, &backing).get(&mut store, 1).unwrap();
+        for (key, n) in [
+            (1.0, 10.0),
+            (3.0, 30.0),
+            (5.0, 55.0),
+            (7.0, 70.0),
+            (9.0, 90.0),
+        ] {
+            let entry = array(&store, &node);
+            let k = entry.get(&mut store, 0).unwrap();
+            let v = entry.get(&mut store, 1).unwrap();
+            assert_eq!(bits(&mut store, &k), key);
+            assert_eq!(bits(&mut store, &v), n);
+            node = entry.get(&mut store, 2).unwrap();
+        }
+        assert_eq!(
+            node.unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)
+                .unwrap()
+                .unwrap()
+                .get_u32(),
+            0
+        );
+        let special = number(&mut store, runtime, 99.0);
+        set(&mut store, runtime, &alias, u32::MAX, &special);
+        store.gc(None).unwrap();
+        assert_eq!(
+            nominal_value(
+                &mut store,
+                runtime,
+                "source-array-sparse-length",
+                &[backing.clone()]
+            )
+            .unwrap_i32(),
+            10
+        );
+        let value = nominal_value(
+            &mut store,
+            runtime,
+            "source-array-sparse-get",
+            &[backing, Val::I32(-1)],
+        );
+        assert_eq!(bits(&mut store, &value), 99.0);
+    }
+    #[test]
+    fn sparse_set_late_corruption_rejects_before_matching_head_write_then_recovers() {
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(
+            &mut store,
+            &Module::new(&engine, runtime_abi::module()).unwrap(),
+            &[],
+        )
+        .unwrap();
+        for corruption in [
+            "cycle",
+            "descending",
+            "duplicate",
+            "nan",
+            "past-length",
+            "bad-tail",
+            "bad-shape",
+        ] {
+            let backing = nominal_value(
+                &mut store,
+                runtime,
+                "source-array-sparse-new",
+                &[Val::I32(0)],
+            );
+            let old = number(&mut store, runtime, 17.0);
+            for index in [1, 5, 9] {
+                set(&mut store, runtime, &backing, index, &old);
+            }
+            let fields = array(&store, &backing);
+            let head = fields.get(&mut store, 1).unwrap();
+            let middle = array(&store, &head).get(&mut store, 2).unwrap();
+            let tail = array(&store, &middle).get(&mut store, 2).unwrap();
+            let (target, slot, bad) = match corruption {
+                "cycle" => (array(&store, &tail), 2, head.clone()),
+                "descending" => (array(&store, &tail), 0, number(&mut store, runtime, 4.0)),
+                "duplicate" => (array(&store, &tail), 0, number(&mut store, runtime, 5.0)),
+                "nan" => (
+                    array(&store, &tail),
+                    0,
+                    number(&mut store, runtime, f64::NAN),
+                ),
+                "past-length" => (array(&store, &tail), 0, number(&mut store, runtime, 10.0)),
+                "bad-tail" => (array(&store, &tail), 2, old.clone()),
+                "bad-shape" => (array(&store, &middle), 2, backing.clone()),
+                _ => unreachable!(),
+            };
+            let original = target.get(&mut store, slot).unwrap();
+            target.set(&mut store, slot, bad).unwrap();
+            store.gc(None).unwrap();
+            let replacement = number(&mut store, runtime, 99.0);
+            let err = runtime
+                .get_func(&mut store, "source-array-sparse-set")
+                .unwrap()
+                .call(
+                    &mut store,
+                    &[backing.clone(), Val::I32(1), replacement.clone()],
+                    &mut [Val::null_any_ref()],
+                )
+                .unwrap_err();
+            assert!(
+                err.is::<wasmtime::ThrownException>(),
+                "{corruption}: {err:#}"
+            );
+            let exception = store
+                .take_pending_exception()
+                .expect("typed language exception");
+            assert!(wasmtime::Tag::eq(
+                &exception.tag(&mut store).unwrap(),
+                &runtime.get_tag(&mut store, "language-exception").unwrap(),
+                &store
+            ));
+            let unchanged = array(&store, &head).get(&mut store, 1).unwrap();
+            assert_eq!(bits(&mut store, &unchanged), 17.0, "{corruption}");
+            let length = fields.get(&mut store, 0).unwrap();
+            assert_eq!(bits(&mut store, &length), 10.0);
+            target.set(&mut store, slot, original).unwrap();
+            store.gc(None).unwrap();
+            set(&mut store, runtime, &backing, 1, &replacement);
+            let actual = nominal_value(
+                &mut store,
+                runtime,
+                "source-array-sparse-get",
+                &[backing, Val::I32(1)],
+            );
+            assert_eq!(bits(&mut store, &actual), 99.0);
+        }
+    }
+    #[test]
+    fn sparse_set_wrong_receiver_and_cross_store_are_rejected_before_writes() {
+        let engine = support::engine();
+        let module = Module::new(&engine, runtime_abi::module()).unwrap();
+        let mut store = Store::new(&engine, ());
+        let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+        let value = number(&mut store, runtime, 17.0);
+        let nil = nominal_value(&mut store, runtime, "nil", &[]);
+        let malformed = nominal_value(&mut store, runtime, "args-new", &[Val::I32(4)]);
+        for wrong in [nil, value.clone(), malformed, Val::null_any_ref()] {
+            let error = runtime
+                .get_func(&mut store, "source-array-sparse-set")
+                .unwrap()
+                .call(
+                    &mut store,
+                    &[wrong, Val::I32(0), value.clone()],
+                    &mut [Val::null_any_ref()],
+                )
+                .unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+            assert!(store.take_pending_exception().is_some());
+        }
+        let mut foreign = Store::new(&engine, ());
+        let other = Instance::new(&mut foreign, &module, &[]).unwrap();
+        let foreign_backing = nominal_value(
+            &mut foreign,
+            other,
+            "source-array-sparse-new",
+            &[Val::I32(0)],
+        );
+        let error = runtime
+            .get_func(&mut store, "source-array-sparse-set")
+            .unwrap()
+            .call(
+                &mut store,
+                &[foreign_backing.clone(), Val::I32(0), value.clone()],
+                &mut [Val::null_any_ref()],
+            )
+            .unwrap_err();
+        assert!(!error.is::<wasmtime::ThrownException>());
+        assert!(!store.has_pending_exception());
+        assert_eq!(
+            nominal_value(
+                &mut foreign,
+                other,
+                "source-array-sparse-length",
+                &[foreign_backing]
+            )
+            .unwrap_i32(),
+            0
+        );
+        let valid = nominal_value(
+            &mut store,
+            runtime,
+            "source-array-sparse-new",
+            &[Val::I32(0)],
+        );
+        set(&mut store, runtime, &valid, 0, &value);
+        store.gc(None).unwrap();
+        let actual = nominal_value(
+            &mut store,
+            runtime,
+            "source-array-sparse-get",
+            &[valid, Val::I32(0)],
+        );
+        assert_eq!(bits(&mut store, &actual), 17.0);
+    }
+}
