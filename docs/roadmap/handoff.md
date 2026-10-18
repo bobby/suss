@@ -28258,3 +28258,11 @@ foundation success; no full local baseline was repeated while focused tests fail
 
 [Commands, raw logs, input freezes and independent reviews](evidence/m4-pr256-complete-coreenv-cost-2026-10-18.md)
 retain the diagnostic overlays and limitations.
+
+## Private placeholder lookup evidence (2026-10-18)
+
+Source `12b88bcecf5e300360745c67ded9820f8afd9fc3` removes redundant token-owner rescans using checked insertion and immutable Session identity. A prepaid dispatch uses empty/direct lookup for zero/one-to-two tokens and immutable GC kind/arity negative filtering for larger sets. Exact reference identity, input ownership, capture/apply checks and callback order remain. Normal bootstrap/identity verification pass; the actual final focused cohort is **12PASS/0FAIL/0ignored** (7 slot tests, 5 reuse guards), with no allowance override.
+
+Wide lookup costs13007→1158 units; empty-token lookup at96 inputs costs193→100. One/two-token compatible cases add only2/1 units per call, constant across widths8/96. These are lookup intervals, excluding setup and GC; full-program improvement remains unmeasured. The earlier V2 small-case regressions and distinct observer tuple remain archived, not counted as final tests. The observer finds about95% of second-request transport cost in parent execution, without isolating token scans. Its Macro-first cost differs150 units from control; cause is unknown.
+
+Use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and the shared `CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`. Exact `private_slot` and `portable_macro_graph::reuse::tests::reuse_` commands, source/bootstrap freezes and independent reviews are in the [evidence report](evidence/m4-pr256-private-slot-token-scans-2026-10-18.md). Production allowances and issue criteria remain unchanged. No full baseline or passing final-head CI is established; measure the complete fixture on this source next.
