@@ -28236,3 +28236,25 @@ started while original focused acceptance remains red.
 bind the commands, source/bootstrap tuples, independent map replay and final
 comment-only artifact correspondence. Whole-request cost for the new port is
 not inferred from the preceding ad6 scratch census.
+
+## Complete core-environment cost measurement (2026-10-18)
+
+On c59b623, a test-only2B Macro allowance completes the first Runtime expansion
+then fails the second environment at0..36. A separate10B diagnostic completes
+the original fixture in both caller phases with every assertion retained:
+1PASS/0FAIL/0ignored,694.26seconds. The four traced expansion costs are
+1299517125,3766083473,1299585605,3766081893; these exclude work outside the
+trace boundaries. Both controllers are terminal, drained and source-restored.
+The first expansion saves407183242units (23.8579%) against the completed ad6
+measurement; no full-program time improvement or old second-request comparison
+is established. Production defaults and issue acceptance criteria are unchanged.
+
+Historical second-request prefix partitioning attributes25.26M units to658
+completed validation checks and1.832B to inter-check gaps; it does not identify
+a single dominant function or prove c59 counts. Separate expectation projection,
+witness capture, logical comparison and outer materialization before selecting
+another optimization. The exact c59 CI run39172955939 is terminal failure with
+foundation success; no full local baseline was repeated while focused tests fail.
+
+[Commands, raw logs, input freezes and independent reviews](evidence/m4-pr256-complete-coreenv-cost-2026-10-18.md)
+retain the diagnostic overlays and limitations.
