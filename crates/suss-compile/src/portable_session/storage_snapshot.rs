@@ -49,6 +49,14 @@ enum Contents {
     // immutable; mutable nominal descriptors/prototypes remain captured atoms.
     Struct(Vec<Atom>),
     Array(Vec<Atom>),
+    // Declared i8/i16/i32 arrays cannot contain reference edges. Preserve the
+    // exact I32 values returned by Wasmtime, including packed zero extension.
+    I32Array(Vec<i32>),
+}
+
+fn i32_array(ty: &wasmtime::ArrayType) -> bool {
+    matches!(ty.element_type(), wasmtime::StorageType::I8 | wasmtime::StorageType::I16
+        | wasmtime::StorageType::ValType(wasmtime::ValType::I32))
 }
 
 #[derive(Debug)]
@@ -462,27 +470,54 @@ impl<'cuts> Capture<'cuts> {
             } else if let Some(array) = reference.as_array(&meter.store)? {
                 // Retain the original fallible type query, but no persistent
                 // wrapper is needed beside the owned original object.
-                let _ty = array.ty(&meter.store)?;
+                let ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
-                let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
-                    allocation::<Atom>(count as usize, meter)?;
-                    let mut values = Vec::new();
-                    values.try_reserve_exact(count as usize).map_err(|error| {
-                        invalid(format!("Storage snapshot allocation failed: {error}"))
-                    })?;
-                    Ok(values)
-                })())?;
-                for index in 0..count {
-                    meter.work(1)?;
-                    let value = array.get(&mut meter.store, index)?;
-                    values.push(self.atom(value, meter)?);
+                // Declared-type inspection and transient type/branch controls.
+                // Never infer an integer array from its current element values.
+                meter.work(8)?;
+                if i32_array(&ty) {
+                    let mut values = snapshot_observed!(meter, "i32-buffer-allocation", count as usize, (|| -> Result<Vec<i32>> {
+                        allocation::<i32>(count as usize, meter)?;
+                        let mut values = Vec::new();
+                        values.try_reserve_exact(count as usize).map_err(|error| {
+                            invalid(format!("Storage snapshot allocation failed: {error}"))
+                        })?;
+                        Ok(values)
+                    })())?;
+                    for index in 0..count {
+                        meter.work(1)?;
+                        let value = array.get(&mut meter.store, index)?;
+                        // Retain the original atom conversion/read/error path;
+                        // only its persistent backing representation changes.
+                        let atom = self.atom(value, meter)?;
+                        meter.work(1)?;
+                        let Atom::I32(value) = atom else {
+                            return Err(invalid("Integer array returned a non-I32 value"));
+                        };
+                        values.push(value);
+                    }
+                    Contents::I32Array(values)
+                } else {
+                    let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
+                        allocation::<Atom>(count as usize, meter)?;
+                        let mut values = Vec::new();
+                        values.try_reserve_exact(count as usize).map_err(|error| {
+                            invalid(format!("Storage snapshot allocation failed: {error}"))
+                        })?;
+                        Ok(values)
+                    })())?;
+                    for index in 0..count {
+                        meter.work(1)?;
+                        let value = array.get(&mut meter.store, index)?;
+                        values.push(self.atom(value, meter)?);
+                    }
+                    Contents::Array(values)
                 }
-                Contents::Array(values)
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };
             if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
-                let atoms = match &contents { Contents::Struct(atoms) | Contents::Array(atoms) => atoms.len() };
+                let atoms = match &contents { Contents::Struct(atoms) | Contents::Array(atoms) => atoms.len(), Contents::I32Array(values) => values.len() };
                 eprintln!("source-snapshot-node ordinal={id} atoms={atoms} event=complete remaining={:?}", meter.store.get_fuel().ok());
             }
             self.nodes[id].contents = Some(contents);
@@ -517,13 +552,14 @@ impl StorageSnapshot {
             .map_err(|_| invalid("Snapshot retirement work overflow"))?;
         for node in &self.nodes {
             // Iteration, contents selection, length read and checked arithmetic.
-            meter(8)?;
-            let atoms = match &node.contents {
-                Some(Contents::Struct(atoms) | Contents::Array(atoms)) => Some(atoms),
+            meter(10)?; // original scan controls plus payload-stride selection
+            let payload = match &node.contents {
+                Some(Contents::Struct(atoms) | Contents::Array(atoms)) => Some((atoms.len(), size_of::<Atom>())),
+                Some(Contents::I32Array(values)) => Some((values.len(), size_of::<i32>())),
                 None => None,
             };
-            let atom_work = match atoms {
-                Some(atoms) => atoms.len().checked_mul(size_of::<Atom>())
+            let atom_work = match payload {
+                Some((count, bytes)) => count.checked_mul(bytes)
                     .and_then(|n| n.checked_add(1)) // atom-buffer release
                     .and_then(|n| u64::try_from(n).ok())
                     .ok_or_else(|| invalid("Snapshot retirement work overflow"))?,
@@ -572,8 +608,12 @@ impl StorageSnapshot {
         for (id, node) in self.nodes.iter().enumerate() {
             meter.work(1)?;
             if self.atom_matches(&Atom::Node(id), value.clone(), &mut meter)? { return Ok(true) }
+            meter.work(1)?;
             let atoms = match node.contents.as_ref().expect("complete snapshot") {
                 Contents::Array(atoms) | Contents::Struct(atoms) => atoms,
+                // The original I32 atoms never contributed reference membership.
+                // The owned array node itself has already been checked above.
+                Contents::I32Array(_) => continue,
             };
             for atom in atoms {
                 meter.work(1)?;
@@ -664,6 +704,31 @@ impl StorageSnapshot {
                         meter.work(1)?;
                         let actual = array.get(&mut meter.store, index as u32)?;
                         if !self.atom_matches(expected, actual.clone(), meter)? {
+                            meter.work(1)?;
+                            if !allow(meter.store.as_context_mut(), Val::AnyRef(Some(reference)), index as u32, &actual)? {
+                                return Ok(false);
+                            }
+                        }
+                    }
+                }
+                Contents::I32Array(values) => {
+                    let Some(array) = reference.as_array(&meter.store)? else {
+                        return Ok(false);
+                    };
+                    // Capture selected integer storage from this exact owned
+                    // array. Its intrinsic element type cannot change. Keep the
+                    // original fallible type query without reclassifying it.
+                    let _ty = array.ty(&meter.store)?;
+                    if array.len(&meter.store)? as usize != values.len() {
+                        return Ok(false);
+                    }
+                    for (index, expected) in values.iter().enumerate() {
+                        meter.work(1)?;
+                        let actual = array.get(&mut meter.store, index as u32)?;
+                        // Same strict I32 comparison as atom_matches, without
+                        // reconstructing a generic Atom for a typed payload.
+                        meter.work(1)?;
+                        if !matches!(&actual, Val::I32(found) if found == expected) {
                             meter.work(1)?;
                             if !allow(meter.store.as_context_mut(), Val::AnyRef(Some(reference)), index as u32, &actual)? {
                                 return Ok(false);
@@ -1756,6 +1821,204 @@ mod tests {
             assert!(completed, "promotion must eventually complete");
             let snapshot = adaptive_capture(&mut session, &root, &[], false);
             assert!(session.storage_matches(&root, &snapshot).unwrap());
+        }
+    }
+}
+
+#[cfg(test)]
+mod i32_array_tests {
+    use super::*;
+    use crate::portable::resolve::Phase;
+    use wasmtime::{ArrayRef, ArrayRefPre, ArrayType, FieldType, Mutability, StorageType, ValType};
+
+    fn session(phase: Phase) -> Session {
+        Session::with_options_in(Default::default(), phase).unwrap()
+    }
+    fn array(s: &mut Session, ty: StorageType, mutability: Mutability, values: &[Val]) -> SessionValue {
+        let _request = s.operation_budget_scope().unwrap();
+        let ty = ArrayType::new(&s.engine, FieldType::new(mutability, ty));
+        let pre = ArrayRefPre::new(&mut s.store, ty);
+        let mut scope = RootScope::new(&mut s.store);
+        let array = ArrayRef::new_fixed(&mut scope, &pre, values).unwrap();
+        super::super::own(&mut scope, Val::AnyRef(Some(array.to_anyref())), s.identity, &s.handles).unwrap()
+    }
+    fn set(s: &mut Session, root: &SessionValue, index: u32, value: i32) {
+        let mut scope = RootScope::new(&mut s.store);
+        let array = root.value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+        array.set(&mut scope, index, Val::I32(value)).unwrap();
+    }
+    // Independent old representation: read the actual array into I32 atoms,
+    // rather than deriving this control from the compact snapshot's payload.
+    fn generic_control(s: &mut Session, root: &SessionValue) -> StorageSnapshot {
+        let mut scope = RootScope::new(&mut s.store);
+        let array = root.value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+        let atoms = (0..array.len(&scope).unwrap()).map(|i| {
+            let Val::I32(value) = array.get(&mut scope, i).unwrap() else { panic!("integer fixture"); };
+            Atom::I32(value)
+        }).collect();
+        StorageSnapshot { owner: s.identity, root: Atom::Node(0), nodes: vec![Node {
+            value: root.clone(), collision: None, contents: Some(Contents::Array(atoms)),
+        }] }
+    }
+    #[test]
+    fn i32_snapshot_packed_bits_empty_immutable_gc_and_replacement_match_generic_control() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = session(phase);
+            for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+                for mutability in [Mutability::Const, Mutability::Var] {
+                    for input in [vec![], vec![0, 1, 127, 128, 255, 256, 0xd800, 0xdc00, 65535, -1, i32::MIN, i32::MAX]] {
+                        let values = input.iter().copied().map(Val::I32).collect::<Vec<_>>();
+                        let root = array(&mut s, ty.clone(), mutability, &values);
+                        let other = array(&mut s, ty.clone(), mutability, &values);
+                        let compact = s.capture_storage(&root).unwrap();
+                        let legacy = generic_control(&mut s, &root);
+                        let Some(Contents::I32Array(payload)) = &compact.nodes[0].contents else { panic!("declared integer storage must compact"); };
+                        let expected = input.iter().map(|x| match &ty {
+                            StorageType::I8 => i32::from(*x as u8),
+                            StorageType::I16 => i32::from(*x as u16),
+                            _ => *x,
+                        }).collect::<Vec<_>>();
+                        assert_eq!(payload, &expected);
+                        assert_eq!(payload.len() * size_of::<i32>(), expected.len() * 4);
+                        s.collect().unwrap();
+                        for snapshot in [&compact, &legacy] {
+                            assert!(s.storage_matches(&root, snapshot).unwrap());
+                            assert!(!s.storage_matches(&other, snapshot).unwrap());
+                        }
+                        if mutability == Mutability::Var && !expected.is_empty() {
+                            for (index, original) in expected.iter().enumerate() {
+                                set(&mut s, &root, index as u32, original ^ 1);
+                                for snapshot in [&compact, &legacy] { assert!(!s.storage_matches(&root, snapshot).unwrap()); }
+                                set(&mut s, &root, index as u32, *original);
+                                for snapshot in [&compact, &legacy] { assert!(s.storage_matches(&root, snapshot).unwrap()); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        eprintln!("i32-snapshot-layout Node={} Contents={} Atom={} integer={}", size_of::<Node>(), size_of::<Contents>(), size_of::<Atom>(), size_of::<i32>());
+    }
+    fn hook_check(s: &mut Session, root: &SessionValue, snapshot: &StorageSnapshot,
+        accepted: bool, fail_at: Option<u32>,
+    ) -> (Result<bool>, Vec<(u32, i32)>) {
+        let _request = s.operation_budget_scope().unwrap();
+        let irq = s.host_work_interrupt();
+        let identity = s.identity;
+        let mut scope = RootScope::new(&mut s.store);
+        let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+        let mut seen = Vec::new();
+        let result = snapshot.matches_in_context_with_slots(scope.as_context_mut(), value.clone(), identity, &irq,
+            |store, supplied, index, current| {
+                let a = supplied.unwrap_anyref().unwrap();
+                let b = value.unwrap_anyref().unwrap();
+                assert!(Rooted::<AnyRef>::ref_eq(&store, a, b)?);
+                let Val::I32(current) = current else { panic!("integer hook value"); };
+                seen.push((index, *current));
+                if fail_at == Some(index) { return Err(invalid("deliberate integer hook error")); }
+                Ok(accepted)
+            });
+        (result, seen)
+    }
+    #[test]
+    fn i32_snapshot_mismatch_hooks_keep_order_value_error_and_root_guard() {
+        let mut s = Session::new().unwrap();
+        for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+            let root = array(&mut s, ty.clone(), Mutability::Var, &[Val::I32(1), Val::I32(2), Val::I32(3)]);
+            let compact = s.capture_storage(&root).unwrap();
+            let legacy = generic_control(&mut s, &root);
+            for index in 0..3 { set(&mut s, &root, index, 128 + index as i32); }
+            for (accepted, fail_at) in [(false, None), (true, None), (true, Some(1))] {
+                let (a, av) = hook_check(&mut s, &root, &compact, accepted, fail_at);
+                let (b, bv) = hook_check(&mut s, &root, &legacy, accepted, fail_at);
+                assert_eq!(av, bv);
+                match (a, b) {
+                    (Ok(a), Ok(b)) => assert_eq!(a, b),
+                    (Err(a), Err(b)) => assert_eq!(a.to_string(), b.to_string()),
+                    _ => panic!("compact/generic hook outcomes differ"),
+                }
+            }
+            let other = array(&mut s, ty, Mutability::Var, &[Val::I32(128), Val::I32(129), Val::I32(130)]);
+            let (result, seen) = hook_check(&mut s, &other, &compact, true, None);
+            assert!(!result.unwrap()); assert!(seen.is_empty());
+        }
+    }
+    #[test]
+    fn i32_snapshot_reference_arrays_keep_atoms_cuts_and_membership_distinctions() {
+        let mut s = Session::new().unwrap();
+        let nil = s.data_scalar(&crate::portable::hir::Literal::Nil).unwrap();
+        let references = {
+            let _request = s.operation_budget_scope().unwrap();
+            let mut scope = RootScope::new(&mut s.store);
+            let value = Val::AnyRef(Some(nil.value.to_rooted(&mut scope)));
+            let ty = ArrayType::new(&s.engine, FieldType::new(Mutability::Var, StorageType::ValType(ValType::ANYREF)));
+            let pre = ArrayRefPre::new(&mut scope, ty);
+            let array = ArrayRef::new_fixed(&mut scope, &pre, &[value]).unwrap();
+            super::super::own(&mut scope, Val::AnyRef(Some(array.to_anyref())), s.identity, &s.handles).unwrap()
+        };
+        let reference_snapshot = s.capture_storage(&references).unwrap();
+        assert!(matches!(&reference_snapshot.nodes[0].contents, Some(Contents::Array(_))));
+        assert!(s.storage_contains_reference(&nil, &reference_snapshot).unwrap());
+        let integer = array(&mut s, StorageType::I16, Mutability::Var, &[Val::I32(0)]);
+        let integer_snapshot = s.capture_storage(&integer).unwrap();
+        assert!(s.storage_contains_reference(&integer, &integer_snapshot).unwrap());
+        assert!(!s.storage_contains_reference(&nil, &integer_snapshot).unwrap(), "I32 zero is not an i31 nil reference");
+        let cut = s.capture_storage_cut_accounted(&references, &[&nil], s.handles.clone()).unwrap();
+        assert!(s.storage_matches(&references, &cut).unwrap());
+        let mut other = Session::new().unwrap();
+        let local = other.data_scalar(&crate::portable::hir::Literal::Nil).unwrap();
+        assert!(matches!(other.storage_matches(&local, &integer_snapshot), Err(SessionError::ForeignValue)));
+    }
+    #[test]
+    fn i32_snapshot_all_fuel_and_irq_cuts_release_roots_and_retry() {
+        let mut s = Session::new().unwrap();
+        for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+            let root = array(&mut s, ty, Mutability::Var, &[Val::I32(128), Val::I32(0xd800), Val::I32(-1)]);
+            let snapshot = s.capture_storage(&root).unwrap();
+            for checking in [false, true] {
+                let handles = s.stats().external_value_handles;
+                let cost = {
+                    let _request = s.operation_budget_scope().unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    let before = meter.store.get_fuel().unwrap();
+                    if checking { assert!(snapshot.matches(value, &mut meter).unwrap()); }
+                    else { drop(Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).unwrap()); }
+                    before - meter.store.get_fuel().unwrap()
+                };
+                assert!(cost > 0 && cost < 10_000);
+                for fuel in 0..cost {
+                    let _request = s.operation_budget_scope().unwrap();
+                    s.store.set_fuel(fuel).unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    let result = if checking { snapshot.matches(value, &mut meter).map(|x| assert!(x)) }
+                    else { Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).map(drop) };
+                    assert!(matches!(result, Err(SessionError::Trap(ref error)) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                }
+                let mut completed = false;
+                for cut in 0..200 {
+                    let _request = s.operation_budget_scope().unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    meter.cancel_after = Some(cut);
+                    let result = if checking { snapshot.matches(value, &mut meter).map(|x| assert!(x)) }
+                    else { Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).map(drop) };
+                    match result { Ok(()) => { completed = true; break; }, Err(error) => assert!(error.is_interrupt(), "{error}") }
+                }
+                assert!(completed);
+                assert_eq!(s.stats().external_value_handles, handles);
+                assert!(s.storage_matches(&root, &snapshot).unwrap());
+            }
         }
     }
 }
