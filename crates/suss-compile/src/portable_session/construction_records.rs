@@ -584,7 +584,7 @@ impl ConstructionRecords {
                 Fact::Constructor(fact) => fact.fresh_direct_status(session, &record.value)?,
                 Fact::Scalar(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
                 Fact::Array(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
-                Fact::CanonicalSeed(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
+                Fact::CanonicalSeed(fact) => fact.fresh_direct_status(session, &record.value)?,
                 Fact::ExternalSeed(_) => (false, false),
             };
             session.charge_host_work(2)?;
