@@ -56,11 +56,14 @@ fn frontier(graph: &mut AnalysisGraph<'_>, root: Value) -> Result<Vec<usize>> {
 }
 
 fn aliases(graph: &mut AnalysisGraph<'_>, children: &[usize]) -> Result<Vec<Value>> {
+    aliases_in(graph.session, &graph.source_roots, children)
+}
+fn aliases_in(session: &mut Session, roots: &Captures, children: &[usize]) -> Result<Vec<Value>> {
     let mut result = Vec::new();
-    reserve(graph.session, &mut result, children.len())?;
+    reserve(session, &mut result, children.len())?;
     for child in children {
-        graph.session.charge_host_work(2)?;
-        result.push(graph.source_roots.roots[*child].alias);
+        session.charge_host_work(2)?;
+        result.push(roots.roots[*child].alias);
     }
     Ok(result)
 }
@@ -138,16 +141,22 @@ impl Plan {
         reserve(graph.session, &mut expected, layout.len())?;
         graph.session.charge_host_work(layout.len() as u64)?;
         expected.resize_with(layout.len(), || None);
+        let mut projection = super::super::metadata_expectations::shared::Builder::new(&graph.recipes);
         for id in &order {
             admission_stage(graph, "expectation-before", Some(*id));
-            let Some(witness) = graph.source_root_expectation_with_layout(*id, &layout)? else {
+            let native = graph.source_roots.roots[*id].native;
+            let Some(value) = projection.project(graph.session, native)? else {
                 return admission_decline(graph, "source-expectation", Some(*id));
             };
+            let Some(logical) = super::super::source_facts::LogicalSourceWitness::from_shared(graph.session, value)? else {
+                return admission_decline(graph, "source-expectation", Some(*id));
+            };
+            let witness = expectation_with_shared_witness(graph.session, &graph.source_roots, *id, &layout, logical)?;
             admission_stage(graph, "expectation-after", Some(*id));
             admission_stage(graph, "placement-before", Some(*id));
-            let selected = aliases(graph, &layout[*id])?;
+            let selected = aliases_in(graph.session, &graph.source_roots, &layout[*id])?;
             let native = graph.source_roots.roots[*id].native;
-            if !graph.private_source_placement_for(native, &selected)? {
+            if !super::super::private_placement::placement_in(graph.session, &graph.recipes, native, &selected, true)? {
                 return admission_decline(graph, "boundary-private-placement", Some(*id));
             }
             admission_stage(graph, "placement-after", Some(*id));
@@ -191,24 +200,20 @@ impl Plan {
             None
         } else {
             admission_stage(graph, "export-placement-before", None);
-            let selected = aliases(graph, &exports)?;
-            if !graph.private_source_placement_for(root, &selected)? {
+            let selected = aliases_in(graph.session, &graph.source_roots, &exports)?;
+            if !super::super::private_placement::placement_in(graph.session, &graph.recipes, root, &selected, true)? {
                 return admission_decline(graph, "export-private-placement", None);
             }
             admission_stage(graph, "export-placement-after", None);
             admission_stage(graph, "export-project-before", None);
-            let Some(form) =
-                super::super::metadata_expectations::project(graph.session, &graph.recipes, root)?
+            let Some(value) = projection.project(graph.session, root)?
             else {
                 return admission_decline(graph, "export-projection", None);
             };
             admission_stage(graph, "export-project-after", None);
             admission_stage(graph, "export-logical-witness-before", None);
             let Some(witness) =
-                super::super::source_facts::LogicalSourceWitness::from_normalized_source(
-                    graph.session,
-                    form,
-                )?
+                super::super::source_facts::LogicalSourceWitness::from_shared(graph.session, value)?
             else {
                 return admission_decline(graph, "export-logical-witness", None);
             };

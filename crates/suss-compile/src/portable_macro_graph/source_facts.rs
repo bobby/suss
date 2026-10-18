@@ -15,9 +15,12 @@ use crate::{
 };
 use suss_reader::forms::{Form, Kind};
 
+pub(super) mod shared;
+
 pub(crate) struct LogicalSourceWitness {
     // Built only from immutable native source; never refreshed from a guest read.
     expected: Form,
+    shared: Option<std::rc::Rc<shared::Node>>,
     small_unordered: bool,
 }
 
@@ -430,7 +433,20 @@ impl LogicalSourceWitness {
             return Ok(None);
         }
         let small_unordered = small_unordered(session, &expected)?;
-        Ok(Some(Self { expected, small_unordered }))
+        Ok(Some(Self { expected, small_unordered, shared: None }))
+    }
+    pub(super) fn from_shared(
+        session: &mut Session, expected: std::rc::Rc<shared::Node>,
+    ) -> Result<Option<Self>> {
+        session.charge_host_work(3)?;
+        if let Some(error) = expected.error() {
+            return Err(crate::portable_session::SessionError::Host(wasmtime::Error::msg(error)));
+        }
+        if !expected.admitted() { return Ok(None); }
+        // The legacy Form is unused on this private tagged path. Existing native
+        // Form callers retain their original representation and comparisons.
+        Ok(Some(Self { expected: Form { span: 0..0, metadata: vec![], kind: Kind::Nil },
+            small_unordered: expected.small(), shared: Some(expected) }))
     }
     pub(crate) fn matches_logical_source(
         &self,
@@ -442,6 +458,9 @@ impl LogicalSourceWitness {
         let (actual, source_valid) = bridge.read_finite(session, value)?;
         if !source_valid {
             return Ok(false);
+        }
+        if let Some(expected) = &self.shared {
+            return shared::matches(session, expected, &actual);
         }
         if self.small_unordered {
             return paired_logical_equal(session, &self.expected, &actual);

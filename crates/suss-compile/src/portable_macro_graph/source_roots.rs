@@ -880,6 +880,24 @@ impl AnalysisGraph<'_> {
         })))
     }
 }
+// Logical facts have already been independently projected from the frozen
+// recipe slice. Owner/child authority is still established from current native
+// captures, not from shared syntax, guest storage or an equality comparison.
+fn expectation_with_shared_witness(
+    session: &mut Session, roots: &Captures, id: usize, layout: &[Vec<usize>],
+    witness: super::source_facts::LogicalSourceWitness,
+) -> Result<Rc<Expectation>> {
+    session.charge_host_work(2)?;
+    let selected = layout.get(id).ok_or_else(|| invalid("Unknown source-root capture"))?;
+    let mut children = Vec::new(); reserve(session, &mut children, selected.len())?;
+    for child in selected {
+        session.charge_host_work(2)?; children.push(roots.roots[*child].owner.key(session)?);
+    }
+    let capture = roots.roots.get(id).ok_or_else(|| invalid("Unknown source-root capture"))?;
+    let key = capture.owner.key(session)?;
+    session.charge_host_work((std::mem::size_of::<Expectation>() + 2 * std::mem::size_of::<usize>()) as u64 + 1)?;
+    Ok(Rc::new(Expectation { owner: capture.owner.lease(session)?, key, witness, children }))
+}
 impl Certificate {
     fn owners_live(session: &mut Session, root: &Self) -> Result<bool> {
         let mut stack = Vec::new();

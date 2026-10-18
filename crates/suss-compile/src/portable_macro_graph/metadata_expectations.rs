@@ -868,3 +868,5 @@ mod project_legacy;
 #[cfg(test)]
 #[path = "metadata_expectations/project_tests.rs"]
 mod project_tests;
+
+pub(super) mod shared;

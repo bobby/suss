@@ -105,47 +105,48 @@ impl AnalysisGraph<'_> {
     ) -> Result<bool> {
         self.private_placement_for(root, aliases, true)
     }
-    fn private_placement_for(
-        &mut self,
-        root: Value,
-        aliases: &[Value],
-        source_inputs: bool,
-    ) -> Result<bool> {
-        let _request = self.session.operation_budget_scope()?;
-        let count = self.recipes.len();
+    fn private_placement_for(&mut self, root: Value, aliases: &[Value], source_inputs: bool) -> Result<bool> {
+        placement_in(self.session, &self.recipes, root, aliases, source_inputs)
+    }
+}
+
+// Split borrows keep finalized recipes immutable throughout shared projection.
+pub(super) fn placement_in(session: &mut Session, recipes: &[Option<Recipe>], root: Value,
+    aliases: &[Value], source_inputs: bool) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        let count = recipes.len();
         let mut states = Vec::new();
         let mut tainted = Vec::new();
-        reserve(self.session, &mut states, count)?;
-        reserve(self.session, &mut tainted, count)?;
-        self.session
+        reserve(session, &mut states, count)?;
+        reserve(session, &mut tainted, count)?;
+        session
             .charge_host_work((count as u64).saturating_mul(2))?;
         states.resize(count, 0u8);
         tainted.resize(count, false);
         for &alias in aliases {
-            self.session.charge_host_work(1)?;
-            if !matches!(self.recipes.get(alias), Some(Some(Recipe::Alias(_)))) {
+            session.charge_host_work(1)?;
+            if !matches!(recipes.get(alias), Some(Some(Recipe::Alias(_)))) {
                 return Err(invalid("Private metadata root needs a dedicated alias"));
             }
             tainted[alias] = true;
         }
         let mut pending = Vec::new();
-        reserve(self.session, &mut pending, 1)?;
+        reserve(session, &mut pending, 1)?;
         pending.push((root, false));
         let mut valid = true;
         while let Some((id, exit)) = pending.pop() {
-            self.session.charge_host_work(1)?;
-            let recipe = self
-                .recipes
+            session.charge_host_work(1)?;
+            let recipe = recipes
                 .get(id)
                 .and_then(Option::as_ref)
                 .ok_or_else(|| invalid("Missing private placement recipe"))?;
             if !exit && states[id] == 2 {
                 continue;
             }
-            let children = edges(self.session, recipe)?;
+            let children = edges(session, recipe)?;
             if exit {
                 for &child in &children {
-                    self.session.charge_host_work(1)?;
+                    session.charge_host_work(1)?;
                     let child_taint = tainted[child];
                     tainted[id] |= child_taint;
                 }
@@ -153,7 +154,7 @@ impl AnalysisGraph<'_> {
                 // source-root placeholder cannot stand in for that base. This
                 // restriction is separate from guest hash/equality exposure.
                 if source_inputs && let Recipe::Metadata { value, .. } = recipe {
-                    self.session.charge_host_work(1)?;
+                    session.charge_host_work(1)?;
                     valid &= !tainted[*value];
                 }
                 // FormBridge passes keys to hash/key-test, and set elements to
@@ -161,13 +162,13 @@ impl AnalysisGraph<'_> {
                 match recipe {
                     Recipe::Map(entries) | Recipe::ReaderMap(entries) => {
                         for (key, _) in entries {
-                            self.session.charge_host_work(1)?;
+                            session.charge_host_work(1)?;
                             valid &= !tainted[*key];
                         }
                     }
                     Recipe::Set(items) | Recipe::ReaderSet(items) => {
                         for item in items {
-                            self.session.charge_host_work(1)?;
+                            session.charge_host_work(1)?;
                             valid &= !tainted[*item];
                         }
                     }
@@ -177,7 +178,7 @@ impl AnalysisGraph<'_> {
                         ..
                     } => {
                         for item in set_items {
-                            self.session.charge_host_work(1)?;
+                            session.charge_host_work(1)?;
                             valid &= !tainted[*item];
                         }
                     }
@@ -204,7 +205,7 @@ impl AnalysisGraph<'_> {
                 }
                 states[id] = 1;
                 reserve(
-                    self.session,
+                    session,
                     &mut pending,
                     children
                         .len()
@@ -213,7 +214,7 @@ impl AnalysisGraph<'_> {
                 )?;
                 pending.push((id, true));
                 for child in children.into_iter().rev() {
-                    self.session.charge_host_work(1)?;
+                    session.charge_host_work(1)?;
                     if child >= count {
                         return Err(invalid("Private placement dependency out of bounds"));
                     }
@@ -222,7 +223,7 @@ impl AnalysisGraph<'_> {
             }
         }
         Ok(valid)
-    }
+
 }
 
 #[cfg(test)]

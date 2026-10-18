@@ -329,6 +329,66 @@ impl Interner {
     }
     // Logical source comparison only: unlike raw reader occurrence identity,
     // map entries and set elements have no specified iteration order.
+    // Same canonical encoding as unordered_plan, with already canonical native
+    // children. This accepts immutable expected nodes without expanding Forms.
+    pub(super) fn unordered_node<E>(
+        &mut self, kind: &Kind, metadata: &[KeyId], children: &[KeyId],
+        charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<KeyId, E> {
+        charge(std::mem::size_of::<Vec<u8>>() as u64 + 1)?;
+        let mut key = Vec::new();
+        size(&mut key, metadata.len(), charge)?;
+        for child in metadata { charge(1)?; size(&mut key, child.0, charge)?; }
+        let tag = match kind {
+            Kind::Nil => 0, Kind::Bool(_) => 1, Kind::Number(_) => 2,
+            Kind::String(_) => 3, Kind::Symbol(_) => 4, Kind::Keyword(_) => 5,
+            Kind::List(_) => 6, Kind::Vector(_) => 7, Kind::Set(_) => 8,
+            Kind::Map(_) => 9, Kind::Conditional(_) => 10, Kind::Discard(_) => 11,
+            Kind::Prefix { .. } => 12, Kind::SplicingConditional(_) => 13,
+        };
+        append(&mut key, &[tag], charge)?;
+        match kind {
+            Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
+            Kind::Number(v) => append(&mut key, &v.to_bits().to_le_bytes(), charge)?,
+            Kind::String(v) => {
+                size(&mut key, v.len(), charge)?;
+                reserve(&mut key, v.len().saturating_mul(2), charge)?;
+                for unit in v { append(&mut key, &unit.to_le_bytes(), charge)?; }
+            }
+            Kind::Symbol(v) => {
+                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                if let Some(ns) = &v.namespace { text(&mut key, ns, charge)?; }
+                text(&mut key, &v.name, charge)?;
+            }
+            Kind::Keyword(v) => {
+                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                if let Some(ns) = &v.namespace { text(&mut key, ns, charge)?; }
+                text(&mut key, &v.name, charge)?;
+            }
+            Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+            | Kind::Conditional(_) | Kind::SplicingConditional(_) => size(&mut key, children.len(), charge)?,
+            _ => {}
+        }
+        if matches!(kind, Kind::Map(_) | Kind::Set(_)) {
+            let paired = matches!(kind, Kind::Map(_));
+            let stride = if paired { 2 } else { 1 };
+            debug_assert!(children.len().is_multiple_of(stride));
+            let mut groups = Vec::new();
+            reserve(&mut groups, children.len() / stride, charge)?;
+            for group in children.chunks_exact(stride) {
+                charge(stride as u64)?;
+                groups.push((group[0].0, if paired { group[1].0 } else { 0 }));
+            }
+            sort_groups(&mut groups, charge)?;
+            for (first, second) in groups {
+                size(&mut key, first, charge)?;
+                if paired { size(&mut key, second, charge)?; }
+            }
+        } else {
+            for child in children { charge(1)?; size(&mut key, child.0, charge)?; }
+        }
+        self.intern_scratch(&mut key, charge)
+    }
     pub(super) fn unordered_plan<E>(
         &mut self,
         form: &Form,
