@@ -324,6 +324,169 @@ mod tests {
         }
     }
 
+
+    #[test]
+    fn private_slot_owner_invariant_many_tokens_gc_and_foreign_boundaries() {
+        let mut s = Session::new_macro().unwrap();
+        let op = s.operation_budget_scope().unwrap();
+        let log = PrivateSlotLog::new(&mut s).unwrap();
+        let mut tokens = Vec::new();
+        for id in 0..32 { tokens.push(log.borrow_mut().token(&mut s, id).unwrap()); }
+        let leaf = number(&mut s, 17.0);
+        let unrelated_empty = s.data_array(&[]).unwrap();
+        let unrelated_nonempty = s.data_array(&[&leaf]).unwrap();
+        // Adversarial exposure is test-only: even a genuine token whose logical
+        // length/backing is mutated must remain selected by exact identity.
+        let setter = s.eval("(fn [a x] (aset a 0 x))").unwrap();
+        s.invoke(&setter, &[&tokens[31], &leaf]).unwrap();
+        let getter = s.eval("(fn [a] (aget a 0))").unwrap();
+        let observed = s.invoke(&getter, &[&tokens[31]]).unwrap();
+        assert!(same_value(&mut s, &observed, &leaf));
+        drop(observed);
+        s.collect().unwrap();
+        let identity = s.identity;
+        let handles = s.handles.clone();
+        let raw_fields = {
+            let mut roots = RootScope::new(&mut s.store);
+            let raw = tokens[0].value.to_rooted(&mut roots);
+            let object = raw.as_struct(&roots).unwrap().unwrap();
+            let fields = object.field(&mut roots, 1).unwrap();
+            own(&mut roots, fields, identity, &handles).unwrap()
+        };
+        let nil = s.data_scalar(&crate::portable::hir::Literal::Nil).unwrap();
+        let args = [&leaf, &unrelated_empty, &tokens[31], &unrelated_nonempty, &tokens[0], &tokens[31], &raw_fields, &nil];
+        assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(), vec![(2,31),(4,0),(5,31)]);
+        assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(),
+            log.borrow().inputs_linear_owner_control(&mut s, &args).unwrap());
+        let count = log.borrow().tokens.len();
+        assert!(log.borrow_mut().register_created(&mut s, 32, &leaf).is_err());
+        assert!(log.borrow_mut().register_created(&mut s, 32, &raw_fields).is_err());
+        assert!(log.borrow_mut().register_created(&mut s, 32, &tokens[0]).is_err());
+        assert!(log.borrow_mut().register_created(&mut s, 0, &unrelated_empty).is_err());
+        assert_eq!(log.borrow().tokens.len(), count);
+        let mut foreign = Session::new_macro().unwrap();
+        let foreign_value = foreign.data_array(&[]).unwrap();
+        assert!(matches!(log.borrow_mut().register_created(&mut s, 32, &foreign_value), Err(SessionError::ForeignValue)));
+        assert!(log.borrow_mut().register_created(&mut foreign, 32, &foreign_value).is_err());
+        // A preceding negative must not conceal a later foreign input.
+        assert!(matches!(log.borrow().inputs(&mut s, &[&leaf, &foreign_value]), Err(SessionError::ForeignValue)));
+        assert_eq!(log.borrow().tokens.len(), count);
+        assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(), vec![(2,31),(4,0),(5,31)]);
+        drop(op);
+        s.reset().unwrap();
+        assert!(log.borrow().inputs(&mut s, &[]).is_err());
+        let fresh = s.data_array(&[]).unwrap();
+        assert!(log.borrow_mut().register_created(&mut s, 32, &fresh).is_err());
+        assert_eq!(log.borrow().tokens.len(), count);
+    }
+    #[test]
+    fn private_slot_owner_scan_inputs_fuel_cuts_irq_and_retry() {
+        let mut s = Session::new_macro().unwrap();
+        let op = s.operation_budget_scope().unwrap();
+        let log = PrivateSlotLog::new(&mut s).unwrap();
+        let mut tokens = Vec::new();
+        for id in 0..8 { tokens.push(log.borrow_mut().token(&mut s, id).unwrap()); }
+        let leaf = number(&mut s, 23.0);
+        let empty = s.data_array(&[]).unwrap();
+        let args = [&leaf, &tokens[7], &empty, &tokens[0]];
+        let before = s.operation_fuel_remaining().unwrap();
+        assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(), vec![(1,7),(3,0)]);
+        let cost = before - s.operation_fuel_remaining().unwrap();
+        drop(op);
+        let handles = s.stats().external_value_handles;
+        for allowance in 0..=cost {
+            let op = s.operation_budget_scope().unwrap();
+            s.store.set_fuel(allowance).unwrap();
+            match log.borrow().inputs(&mut s, &args) {
+                Ok(value) => { assert_eq!(allowance, cost); assert_eq!(value, vec![(1,7),(3,0)]); }
+                Err(error) => assert!(matches!(error, SessionError::Trap(ref e)
+                    if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error:?}"),
+            }
+            drop(op);
+            assert_eq!(s.stats().external_value_handles, handles);
+            let retry = s.operation_budget_scope().unwrap();
+            assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(), vec![(1,7),(3,0)]);
+            assert_eq!(log.borrow().tokens.len(), 8);
+            drop(retry);
+        }
+        let op = s.operation_budget_scope().unwrap();
+        s.interrupt_handle().interrupt();
+        assert!(log.borrow().inputs(&mut s, &args).unwrap_err().is_interrupt());
+        drop(op);
+        let retry = s.operation_budget_scope().unwrap();
+        s.collect().unwrap();
+        assert_eq!(log.borrow().inputs(&mut s, &args).unwrap(), vec![(1,7),(3,0)]);
+        drop(retry);
+        assert_eq!(s.stats().external_value_handles, handles);
+    }
+
+
+    #[test]
+    fn private_slot_immutable_shape_filter_wide_work_control() {
+        let mut s = Session::new_macro().unwrap();
+        let op = s.operation_budget_scope().unwrap();
+        let log = PrivateSlotLog::new(&mut s).unwrap();
+        let mut tokens = Vec::new();
+        for id in 0..64 { tokens.push(log.borrow_mut().token(&mut s, id).unwrap()); }
+        let leaf = number(&mut s, 23.0);
+        let unrelated_empty = s.data_array(&[]).unwrap();
+        let unrelated_nonempty = s.data_array(&[&leaf]).unwrap();
+        s.collect().unwrap();
+        let mut args = vec![&leaf; 96];
+        args.extend([&tokens[63], &unrelated_empty, &unrelated_nonempty, &tokens[0]]);
+        let before = s.operation_fuel_remaining().unwrap();
+        let old = log.borrow().inputs_linear_owner_control(&mut s, &args).unwrap();
+        let old_cost = before - s.operation_fuel_remaining().unwrap();
+        let before = s.operation_fuel_remaining().unwrap();
+        let new = log.borrow().inputs(&mut s, &args).unwrap();
+        let new_cost = before - s.operation_fuel_remaining().unwrap();
+        assert_eq!(old, vec![(96,63),(99,0)]);
+        assert_eq!(new, old);
+        eprintln!("private-slot-immutable-shape case=wide tokens=64 inputs=100 legacy={old_cost} candidate={new_cost}");
+        assert!(new_cost < old_cost, "wide native work must improve: legacy={old_cost} candidate={new_cost}");
+        // T1/T2 retain linear ref_eq with only fixed dispatch overhead;
+        // per-input shape classification runs only on the large-token route.
+        // Report the small fixed tradeoff; no universal saving is promised.
+        for token_count in [0usize, 1, 2] {
+            let small = PrivateSlotLog::new(&mut s).unwrap();
+            let mut small_tokens = Vec::new();
+            for id in 0..token_count {
+                small_tokens.push(small.borrow_mut().token(&mut s, 901 + id).unwrap());
+            }
+            let mut previous_delta = None;
+            for width in [8usize, 96] {
+                let mut compatible = vec![&unrelated_empty; width / 2];
+                compatible.extend(vec![&unrelated_nonempty; width / 2]);
+                for token in &small_tokens { compatible.push(token); }
+                s.collect().unwrap();
+                let before = s.operation_fuel_remaining().unwrap();
+                let old = small.borrow().inputs_linear_owner_control(&mut s, &compatible).unwrap();
+                let old_cost = before - s.operation_fuel_remaining().unwrap();
+                let before = s.operation_fuel_remaining().unwrap();
+                let new = small.borrow().inputs(&mut s, &compatible).unwrap();
+                let new_cost = before - s.operation_fuel_remaining().unwrap();
+                let expected = (0..token_count).map(|i| ((width + i) as u32, 901 + i)).collect::<Vec<_>>();
+                assert_eq!(old, expected);
+                assert_eq!(new, old);
+                let delta = new_cost as i128 - old_cost as i128;
+                if token_count > 0 {
+                    // Only fixed dispatch (3) minus the removed owner rescan
+                    // (T) differs: no per-input classification on this route.
+                    assert_eq!(delta, 3 - token_count as i128);
+                    if let Some(previous) = previous_delta { assert_eq!(delta, previous); }
+                    previous_delta = Some(delta);
+                } else {
+                    // Owner checks still traverse every input; only the old
+                    // pointless root/scan loop is absent for zero tokens.
+                    assert_eq!(delta, 3 - width as i128);
+                    assert!(new_cost < old_cost);
+                }
+                eprintln!("private-slot-immutable-shape case=compatible tokens={token_count} width={width} inputs={} selected={} legacy={old_cost} candidate={new_cost} delta={delta}", compatible.len(), new.len());
+            }
+        }
+        drop(op);
+    }
+
 }
 
 impl PrivateSlotLog {
@@ -357,7 +520,17 @@ impl PrivateSlotLog {
         }
         Ok(())
     }
+    // Negative identity filter only. Intrinsic GC kind and struct field count
+    // cannot change for an owned object. Never inspect mutable logical length,
+    // descriptor, class, backing or payload to decide token identity.
+    fn token_struct_shape(m: &mut Meter<'_>, value: &Rooted<AnyRef>) -> Result<bool> {
+        m.charge(2)?; // as_struct and Option branch, before inspection.
+        let Some(object) = value.as_struct(&m.store)? else { return Ok(false); };
+        m.charge(3)?; // intrinsic type query, field-count read and comparison.
+        Ok(object.ty(&m.store)?.fields().len() == 4)
+    }
     fn register_created(&mut self, s: &mut Session, id: usize, value: &SessionValue) -> Result<()> {
+        self.check_session(s)?;
         s.check(value)?;
         let irq = s.host_work_interrupt();
         let mut scope = RootScope::new(&mut s.store);
@@ -366,6 +539,9 @@ impl PrivateSlotLog {
             interrupt: &irq,
         };
         let v = value.value.to_rooted(&mut m.store);
+        if !Self::token_struct_shape(&mut m, &v)? {
+            return Err(invalid("Private slot token needs four-field OBJECT storage"));
+        }
         for t in &self.tokens {
             m.charge(2)?;
             let old = t.value.value.to_rooted(&mut m.store);
@@ -382,6 +558,64 @@ impl PrivateSlotLog {
         Ok(())
     }
     pub(crate) fn inputs(
+        &self,
+        s: &mut Session,
+        values: &[&SessionValue],
+    ) -> Result<Vec<(u32, usize)>> {
+        self.check_session(s)?;
+        for v in values {
+            s.charge_host_work(1)?;
+            s.check(v)?;
+        }
+        // register_created is the sole publisher: log Session and value owner
+        // were both checked before retain. SessionValue.identity is immutable;
+        // clone preserves it, GC never changes it, and reset replaces Session
+        // identity so check_session above rejects this old log before rooting.
+        // No guest callbacks occur between this check and the native scan.
+        // This removes repeated ownership work only, NOT token comparisons.
+        // Prepay length read, small/large decision and route dispatch once.
+        // No error retry; all input owners were checked before this decision.
+        s.charge_host_work(3)?;
+        match self.tokens.len() {
+            0 => Ok(Vec::new()),
+            1 | 2 => self.select_inputs::<false>(s, values),
+            _ => self.select_inputs::<true>(s, values),
+        }
+    }
+    fn select_inputs<const FILTER: bool>(
+        &self,
+        s: &mut Session,
+        values: &[&SessionValue],
+    ) -> Result<Vec<(u32, usize)>> {
+        let irq = s.host_work_interrupt();
+        let mut scope = RootScope::new(&mut s.store);
+        let mut m = Meter {
+            store: scope.as_context_mut(),
+            interrupt: &irq,
+        };
+        let mut selected = Vec::new();
+        for (i, v) in values.iter().enumerate() {
+            m.charge(1)?;
+            let actual = v.value.to_rooted(&mut m.store);
+            if FILTER && !Self::token_struct_shape(&mut m, &actual)? { continue; }
+            for t in &self.tokens {
+                m.charge(1)?;
+                let expected = t.value.value.to_rooted(&mut m.store);
+                if m.same(&actual, &expected)? {
+                    m.reserve(&mut selected, 1)?;
+                    m.charge(1)?;
+                    selected.push((
+                        u32::try_from(i).map_err(|_| invalid("Private slot index overflow"))?,
+                        t.id,
+                    ));
+                    break;
+                }
+            }
+        }
+        Ok(selected)
+    }
+    #[cfg(test)]
+    fn inputs_linear_owner_control(
         &self,
         s: &mut Session,
         values: &[&SessionValue],
