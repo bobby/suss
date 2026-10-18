@@ -8,6 +8,17 @@ use canonical_entries::Entries;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct KeyId(pub(super) usize);
+
+/// Native canonical-entry index encoded as index+1. Production owners come ONLY
+/// from Entries::prepare after checked next_len and native extent validation.
+/// This is a storage domain, not source/guest identity or provenance authority.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct HeadIndex(std::num::NonZeroUsize);
+impl HeadIndex {
+    // Caller must prepay the decode before using the resulting entry index.
+    fn index(self) -> usize { self.0.get() - 1 }
+}
 pub(super) struct Node {
     pub(super) key: KeyId,
     pub(super) metadata_count: usize,
@@ -236,7 +247,13 @@ impl Interner {
                 *work = work.saturating_add(units);
                 Ok(())
             };
-            self.heads.get(hash, &mut head_charge)?
+            match self.heads.get(hash, &mut head_charge)? {
+                Some(head) => {
+                    head_charge(1)?; // decode canonical index before use; included in lookup subtotal
+                    Some(head.index())
+                }
+                None => None,
+            }
         };
         let mut cursor = head;
         let mut tail = None;
@@ -264,13 +281,14 @@ impl Interner {
         // All fallible work precedes publication. A failed bucket insertion
         // can change capacity, but cannot consume an ID or publish an entry.
         if head.is_none() {
+            let head_index = prepared.head_index(charge, &mut self.entry_stats)?;
             let work = &mut self.profile_head_insert_work;
             let mut head_charge = |units| {
                 charge(units)?;
                 *work = work.saturating_add(units);
                 Ok(())
             };
-            self.heads.get_or_insert(hash, index, &mut head_charge)?;
+            self.heads.get_or_insert(hash, head_index, &mut head_charge)?;
         }
         #[cfg(test)]
         { self.key_bytes += key.len(); }
@@ -906,7 +924,7 @@ mod tests {
             table
         }
         fn state(table:&mut Interner)->(Vec<(Vec<u8>,Option<usize>)>,Option<usize>,Option<usize>) {
-            (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),table.heads.get(7,&mut |_|Ok::<_,Error>(())).unwrap(),table.heads.get(2000,&mut |_|Ok::<_,Error>(())).unwrap())
+            (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),table.heads.get(7,&mut |_|Ok::<_,Error>(())).unwrap().map(HeadIndex::index),table.heads.get(2000,&mut |_|Ok::<_,Error>(())).unwrap().map(HeadIndex::index))
         }
         let candidate=128u64.to_le_bytes().to_vec();
         for bucket in [7,2000] {
