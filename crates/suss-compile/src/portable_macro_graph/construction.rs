@@ -11,7 +11,7 @@ use std::rc::Rc;
 pub(super) struct RecordedMetadata {
     source: Rc<MetadataExpectation>,
     pub(super) value: SessionValue,
-    records: ConstructionRecords,
+    records: Rc<ConstructionRecords>,
 }
 impl AnalysisGraph<'_> {
     pub(super) fn record_metadata(&mut self, index: usize) -> Result<Option<RecordedMetadata>> {
@@ -36,14 +36,24 @@ impl AnalysisGraph<'_> {
         trace(self.session, "constructed")?;
         let records = bridge.into_records()?;
         trace(self.session, "recorded")?;
+        self.session.charge_host_work((std::mem::size_of::<ConstructionRecords>()
+            + 2 * std::mem::size_of::<usize>()) as u64 + 1)?;
         Ok(Some(RecordedMetadata {
             source,
             value,
-            records,
+            records: Rc::new(records),
         }))
     }
 }
 impl RecordedMetadata {
+    // Keep guest roots/certification facts, never a strong native revision. This
+    // also strips native ownership when a previously cached record is republished.
+    pub(super) fn cache_snapshot(&self, session: &mut Session) -> Result<Rc<Self>> {
+        let source = self.source.cache_snapshot(session)?;
+        session.charge_host_work((std::mem::size_of::<Self>()
+            + 2 * std::mem::size_of::<usize>()) as u64 + 3)?;
+        Ok(Rc::new(Self { source, value: self.value.clone(), records: self.records.clone() }))
+    }
     pub(super) fn has_source(&self, source: &Rc<MetadataExpectation>) -> bool {
         Rc::ptr_eq(&self.source, source)
     }

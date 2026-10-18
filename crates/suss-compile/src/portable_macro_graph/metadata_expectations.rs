@@ -9,7 +9,7 @@ use crate::{
     portable_macro_data::{FormBridge, MetadataShape},
     portable_session::{Session, SessionError, SessionValue},
 };
-use std::{rc::Rc, sync::Arc};
+use std::{rc::Rc, sync::{Arc, Weak}};
 use suss_reader::forms::{Form, Kind};
 
 pub(super) struct CapturedMetadata {
@@ -20,8 +20,12 @@ pub(super) struct CapturedMetadata {
 }
 pub(super) struct MetadataExpectation {
     global: Global,
-    revision: Arc<DefinitionInfo>,
-    witness: LogicalSourceWitness,
+    // Current invocation expectations own their compiler source. Persistent
+    // cache snapshots strip this strong reference; the weak allocation identity
+    // plus the independently projected witness cannot pin a native source DAG.
+    revision: Option<Arc<DefinitionInfo>>,
+    live_revision: Weak<DefinitionInfo>,
+    witness: Rc<LogicalSourceWitness>,
 }
 fn invalid(message: &str) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message.to_owned()))
@@ -369,10 +373,13 @@ impl super::AnalysisGraph<'_> {
         self.session.charge_host_work(0)?;
         self.session.charge_host_work((std::mem::size_of::<MetadataExpectation>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
+        self.session.charge_host_work((std::mem::size_of::<LogicalSourceWitness>()
+            + 2 * std::mem::size_of::<usize>()) as u64 + 2)?;
         Ok(Some(Rc::new(MetadataExpectation {
             global,
-            revision: source.revision.clone(),
-            witness,
+            revision: Some(source.revision.clone()),
+            live_revision: Arc::downgrade(&source.revision),
+            witness: Rc::new(witness),
         })))
     }
 }
@@ -380,8 +387,26 @@ impl MetadataExpectation {
     pub(super) fn global(&self) -> &Global {
         &self.global
     }
+    #[cfg(test)]
     pub(super) fn revision(&self) -> &Arc<DefinitionInfo> {
-        &self.revision
+        self.revision.as_ref().expect("invocation-owned expectation")
+    }
+    pub(super) fn externally_live(&self) -> bool {
+        self.live_revision.strong_count() != 0
+    }
+    pub(super) fn cache_snapshot(&self, session: &mut Session) -> Result<Rc<Self>> {
+        let count = self.global.namespace().len().checked_add(self.global.name().len())
+            .and_then(|n| n.checked_add(std::mem::size_of::<Self>()))
+            .and_then(|n| n.checked_add(2 * std::mem::size_of::<usize>() + 4))
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Metadata cache snapshot allocation overflow"))?;
+        session.charge_host_work(count)?;
+        Ok(Rc::new(Self {
+            global: self.global.clone(),
+            revision: None,
+            live_revision: self.live_revision.clone(),
+            witness: self.witness.clone(),
+        }))
     }
     pub(super) fn matches_logical_source(
         &self,

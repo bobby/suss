@@ -35,6 +35,20 @@ pub(crate) struct DeclarationValues {
     pub(super) roots: super::source_roots::RootCache,
     metadata: TryOrderedMap<Key, Option<Rc<RecordedMetadata>>>,
 }
+impl DeclarationValues {
+    fn prune_metadata(&mut self, session: &mut Session) -> Result<()> {
+        let work = u64::try_from(self.metadata.len()).ok()
+            .and_then(|n| n.checked_mul(3))
+            .ok_or_else(|| invalid("Metadata liveness scan overflow"))?;
+        session.charge_host_work(work)?;
+        // TryOrderedMap::retain stages decisions and all meter failures before
+        // its commit. Cache records have no strong native owner, including any
+        // namespace/initializer descendants of a DefinitionInfo revision.
+        self.metadata.retain(&mut Meter(session), |_, record| {
+            record.as_ref().is_some_and(|r| r.source().externally_live())
+        })
+    }
+}
 pub(super) fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Result<()> {
     session.charge_host_work(1)?;
     if extra > values.capacity() - values.len() {
@@ -91,13 +105,7 @@ pub(super) struct Build<'a> {
 }
 impl<'a> Build<'a> {
     fn new(graph: &mut AnalysisGraph<'_>, cache: &'a mut DeclarationValues) -> Result<Self> {
-        cache
-            .metadata
-            .retain(&mut Meter(graph.session), |_, record| {
-                record
-                    .as_ref()
-                    .is_some_and(|record| Arc::strong_count(record.source().revision()) > 1)
-            })?;
+        cache.prune_metadata(graph.session)?;
         let mut sources = Vec::new();
         reserve(graph.session, &mut sources, graph.recipes.len())?;
         graph.session.charge_host_work(graph.recipes.len() as u64)?;
@@ -315,9 +323,12 @@ impl<'a> Build<'a> {
         // Every entry is an independently complete certificate; budget failure
         // cannot publish a partially initialized record or compilation binding.
         for (pending, valid) in self.pending.into_iter().zip(certified) {
+            let record = if valid {
+                pending.record.as_ref().map(|record| record.cache_snapshot(graph.session)).transpose()?
+            } else { None };
             self.cache.metadata.insert(
                 pending.key,
-                if valid { pending.record } else { None },
+                record,
                 &mut Meter(graph.session),
             )?;
         }
@@ -337,21 +348,33 @@ impl AnalysisGraph<'_> {
         root: Value,
         cache: &mut DeclarationValues,
     ) -> Result<SessionValue> {
+        let _request = self.session.operation_budget_scope()?;
         trace_graph(self, "start")?;
         self.finish_recipes()?;
+        // Retire stale legacy cache roots even when the coherent fast route is
+        // used. This independent retain operation is itself meter/IRQ atomic.
+        cache.prune_metadata(self.session)?;
+        // Admission is callback-free. A supported coherent build owns ALL
+        // metadata/declaration/field exports; never run both controllers.
+        if let Some(value) = super::source_roots::materialize_coherent(self, root, &mut cache.roots)? {
+            return Ok(value);
+        }
         trace_graph(self, "recipes")?;
         let placed = !self.metadata_sources.is_empty() && self.private_metadata_placement(root)?;
         trace_graph(self, "placement")?;
-        if !placed {
-            return self.materialize_using(root, self.bridge);
-        }
-        let mut build = Build::new(self, cache)?;
-        let bridge = build.logged_parent_bridge(self)?;
-        trace_graph(self, "bridge")?;
-        trace_graph(self, "build")?;
-        let value = self.materialize_controlled(root, &bridge, Some(&mut build))?;
-        trace_graph(self, "materialized")?;
-        build.finish(self, root, value)
+        let value = if !placed {
+            self.materialize_using(root, self.bridge)?
+        } else {
+            let mut build = Build::new(self, cache)?;
+            let bridge = build.logged_parent_bridge(self)?;
+            trace_graph(self, "bridge")?;
+            trace_graph(self, "build")?;
+            let value = self.materialize_controlled(root, &bridge, Some(&mut build))?;
+            trace_graph(self, "materialized")?;
+            build.finish(self, root, value)?
+        };
+        cache.roots.retire_obsolete(self.session)?;
+        Ok(value)
     }
 }
 
@@ -759,6 +782,67 @@ mod tests {
             crate::portable_repl::display(&mut session, &calls).unwrap(),
             "1"
         );
+        assert_eq!(values.metadata.len(), 0);
+    }
+}
+
+
+#[cfg(test)]
+mod retirement_tests {
+    use super::*;
+    use crate::portable::hir::SourceNamespace;
+    use crate::portable_macro_data::FormBridge;
+
+    #[test]
+    fn legacy_cache_retirement_is_atomic_and_not_sustained_by_its_own_native_references() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit {:x 17}} legacy-retirement 17)").unwrap();
+        let (global, revision) = {
+            let snapshot = session.compilation_snapshot();
+            let ns = SourceNamespace::capture(&snapshot.environment, session.phase());
+            let (g, v) = ns.declarations.iter().find(|(g, _)| g.name() == "legacy-retirement").unwrap();
+            (g.clone(), Arc::new((**v).clone()))
+        };
+        let weak = Arc::downgrade(&revision);
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut values = DeclarationValues::default();
+        let key = (global.clone(), Arc::as_ptr(&revision) as usize);
+        session.with_operation_budget(|session| {
+            let mut graph = AnalysisGraph::new(&bridge, session);
+            graph.declaration(&global, Some(&revision), 0)?;
+            let record = graph.record_metadata(0)?.expect("recordable native metadata");
+            let cached = record.cache_snapshot(graph.session)?;
+            values.metadata.insert(key, Some(cached), &mut Meter(graph.session))?;
+            Ok(())
+        }).unwrap();
+        drop(revision);
+        assert!(weak.upgrade().is_none());
+        assert_eq!(values.metadata.len(), 1);
+        let work = session.with_operation_budget(|session| {
+            // Measure on a separate cache, preserving the actual populated map.
+            let mut probe = DeclarationValues::default();
+            let record = values.metadata.get(&(global.clone(), weak.as_ptr() as usize), &mut Meter(session))?
+                .unwrap().as_ref().unwrap().clone();
+            probe.metadata.insert((global.clone(), weak.as_ptr() as usize), Some(record), &mut Meter(session))?;
+            let before = session.operation_fuel_remaining()?;
+            probe.prune_metadata(session)?;
+            assert_eq!(probe.metadata.len(), 0);
+            Ok(before - session.operation_fuel_remaining()?)
+        }).unwrap();
+        for cut in 0..work {
+            session.set_operation_fuel(cut);
+            assert!(session.with_operation_budget(|session| values.prune_metadata(session)).is_err());
+            assert_eq!(values.metadata.len(), 1);
+        }
+        session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+        let error = session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            values.prune_metadata(session)
+        })
+            .err().expect("pruning checks cancellation before mutation");
+        assert!(error.is_interrupt());
+        assert_eq!(values.metadata.len(), 1);
+        session.with_operation_budget(|session| values.prune_metadata(session)).unwrap();
         assert_eq!(values.metadata.len(), 0);
     }
 }

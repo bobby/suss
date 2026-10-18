@@ -29909,3 +29909,28 @@ unexecuted. Archive SHA256
 The overlapping runs are not additive coverage. These are failing baselines,
 not readiness evidence; next source corrections need focused execution before
 a new required baseline and passing final-head CI.
+
+
+## Coherent retention on the current compiler base
+
+This candidate ports the reviewed V5 coherent source controller onto source
+`ae28db396ee3050dedca812ff6993d7998e3e27f` (compiler8a plus evidence).
+The three-way merge retains current primitive/bitwise/property-probe and
+dense/sparse materialization improvements. Its sole textual conflict is the
+materializer signature: keep the current control mutability and carry the
+private SourceSelection interface through both dispatcher and indexed helper.
+
+On the separate older be940 source, V5 normal bootstrap passed and17 guards
+returned12 passes/five fuel failures. Retirement and exact-node locals checks
+passed; four previously declined cases reached fuel failures. The new reader
+callback comparison failed in its ORIGINAL route before its coherent arm. Both
+unchanged callable/namespace CLI probes remained unexecuted. That result does
+not establish this newer-base candidate's outcome or the full identity contract.
+
+Before Session checks, run the normal bootstrap command:
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`.
+Then execute all17 coherent/legacy retirement guards, followed conditionally by
+the unchanged exact callable and namespace probes. Keep default allowances,
+all observations and metering. Current shipped bootstrap bytes are still the
+base dependencies until regeneration. No candidate execution, net saving,
+passing baseline/CI or integration readiness is established here.

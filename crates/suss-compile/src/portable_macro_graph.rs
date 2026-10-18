@@ -588,7 +588,7 @@ impl<'a> AnalysisGraph<'a> {
     fn materialize_with_inputs(
         &mut self, root: Value, bridge: &FormBridge,
         control: Option<&mut reuse::Build<'_>>,
-        source: Option<(&source_roots::SourceInputs, &FormBridge)>,
+        source: Option<(&dyn source_roots::SourceSelection, &FormBridge)>,
     ) -> Result<SessionValue> {
         let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
         if fuel_trace {
@@ -614,7 +614,7 @@ impl<'a> AnalysisGraph<'a> {
     fn materialize_indexed<I: materialization_index::Index>(
         &mut self, root: Value, bridge: &FormBridge,
         mut control: Option<&mut reuse::Build<'_>>,
-        source: Option<(&source_roots::SourceInputs, &FormBridge)>,
+        source: Option<(&dyn source_roots::SourceSelection, &FormBridge)>,
         mut index: I, fuel_trace: bool,
     ) -> Result<SessionValue> {
         let has_inputs = control.is_some() || source.is_some();
