@@ -23,17 +23,18 @@ fn same(store: &StoreContextMut<'_, ()>, a: &Val, b: &Val) -> wasmtime::Result<b
         _ => Ok(false),
     }
 }
-fn array_fields(store: &mut StoreContextMut<'_, ()>, value: &Val, count: usize, interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Vec<Val>>> {
-    Session::consume_host_work(store.as_context_mut(), count as u64 + 1, interrupt)?;
+// Both callers inspect fixed-size query-local arrays inside a live RootScope.
+// Keep the original guards and read order without a temporary Vec allocation.
+fn array_fields<const COUNT: usize>(store: &mut StoreContextMut<'_, ()>, value: &Val, interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<[Val; COUNT]>> {
+    Session::consume_host_work(store.as_context_mut(), COUNT as u64 + 1, interrupt)?;
     let Some(value) = value.anyref().flatten() else { return Ok(None); };
     let Some(array) = value.as_array(&*store)? else { return Ok(None); };
-    if array.len(&*store)? as usize != count { return Ok(None); }
-    Session::consume_host_work(store.as_context_mut(), (count * std::mem::size_of::<Val>()) as u64, interrupt)?;
-    let mut result = Vec::new();
-    result.try_reserve_exact(count).map_err(|_| wasmtime::Error::msg("Prototype input allocation failed"))?;
-    for i in 0..count {
+    if array.len(&*store)? as usize != COUNT { return Ok(None); }
+    Session::consume_host_work(store.as_context_mut(), COUNT as u64, interrupt)?;
+    let mut result = std::array::from_fn(|_| Val::null_any_ref());
+    for (i, field) in result.iter_mut().enumerate() {
         Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
-        result.push(array.get(&mut *store, i as u32)?);
+        *field = array.get(&mut *store, i as u32)?;
     }
     Ok(Some(result))
 }
@@ -112,7 +113,7 @@ impl Session {
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
         let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
-        let Some(values) = array_fields(&mut scope.as_context_mut(), &witness, 12, &interrupt)? else { return Ok(None); };
+        let Some(values) = array_fields::<12>(&mut scope.as_context_mut(), &witness, &interrupt)? else { return Ok(None); };
         Session::consume_host_work(scope.as_context_mut(), (12 * std::mem::size_of::<SessionValue>()) as u64, &interrupt)?;
         let mut fields = Vec::new();
         fields.try_reserve_exact(12).map_err(|_| invalid("Prototype witness allocation failed"))?;
@@ -162,9 +163,9 @@ impl PrototypeInputs {
             || !same(&scope.as_context_mut(), &storage, &f[4])?
             || !nil(&scope.as_context_mut(), &properties)?
             || !nil(&scope.as_context_mut(), &uid)? { return Ok(false); }
-        let Some(fields) = array_fields(&mut scope.as_context_mut(), &f[4], 2, &interrupt)? else { return Ok(false); };
-        let Some(pairs) = array_fields(&mut scope.as_context_mut(), &f[5], 2, &interrupt)? else { return Ok(false); };
-        let Some(property) = array_fields(&mut scope.as_context_mut(), &f[8], 2, &interrupt)? else { return Ok(false); };
+        let Some(fields) = array_fields::<2>(&mut scope.as_context_mut(), &f[4], &interrupt)? else { return Ok(false); };
+        let Some(pairs) = array_fields::<2>(&mut scope.as_context_mut(), &f[5], &interrupt)? else { return Ok(false); };
+        let Some(property) = array_fields::<2>(&mut scope.as_context_mut(), &f[8], &interrupt)? else { return Ok(false); };
         if !same(&scope.as_context_mut(), &fields[0], &f[5])? || !same(&scope.as_context_mut(), &fields[1], &f[6])?
             || !same(&scope.as_context_mut(), &pairs[0], &f[7])? || !same(&scope.as_context_mut(), &pairs[1], &f[8])?
             || !same(&scope.as_context_mut(), &property[1], &f[0])?
