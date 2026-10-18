@@ -464,3 +464,42 @@ fn scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout(
         check(&mut session, &records, false);
     }
 }
+#[test]
+fn scoped_memo_stores_delegated_canonical_write_keeps_extent_and_write_time_proof() {
+    use crate::portable_session::memo_leaf_test_support::Method;
+    let mut session = Session::new_macro().unwrap();
+    session.eval("(def leaf-original-method nil) (def scoped-delegate-calls 0)").unwrap();
+    let method = Method::capture(&mut session, "PersistentArrayMap").unwrap();
+    method.bind_delegate(&mut session).unwrap();
+    for mode in 0..4 {
+        let (values, records) = maps(&mut session, 1);
+        let body = match mode {
+            0 | 3 => "(do (set! scoped-delegate-calls (inc scoped-delegate-calls)) (leaf-original-method self))",
+            1 => "(let [a (.-arr self) old (aget a 1)] (aset a 1 99) (aset a 1 old) (leaf-original-method self))",
+            _ => "(let [a (.-arr self) old (aget a 1)] (aset a 1 99) (let [h (leaf-original-method self)] (aset a 1 old) h))",
+        };
+        replace(&mut session, body);
+        session.collect().unwrap();
+        let result = if mode == 3 {
+            // Same genuine implementation, but no live IHash dispatcher extent.
+            let direct = session.eval("(fn [self] (leaf-original-method self))").unwrap();
+            session.invoke(&direct, &[&values[0]]).unwrap()
+        } else {
+            run(&mut session, &values[0]).unwrap()
+        };
+        if mode != 2 {
+            assert_eq!(display(&mut session, &result), "1217894065");
+        }
+        // The rejected cases still execute the store and restore the payload;
+        // rejection concerns write-time authority, not missing guest effects.
+        let inspect = session.eval("(fn [x] [(some? (.-__hash x)) (aget (.-arr x) 1)])").unwrap();
+        let stored = session.invoke(&inspect, &[&values[0]]).unwrap();
+        assert_eq!(display(&mut session, &stored), "[true 17]");
+        check(&mut session, &records, mode < 2);
+        if mode == 0 {
+            let calls = session.eval("scoped-delegate-calls").unwrap();
+            assert_eq!(display(&mut session, &calls), "1");
+        }
+    }
+    method.restore(&mut session).unwrap();
+}
