@@ -180,6 +180,19 @@ impl Watch {
         Ok(Some(Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)))))
     }
     pub(super) fn slot(&self) -> usize { self.slot }
+    // Fresh transport may expose a guest's mutable numeric memo as data. This
+    // recognizes only a registered originally-nil slot; it never creates a
+    // receipt or makes that value eligible for retained-source reuse.
+    pub(super) fn fresh_memo_data(
+        &self, mut store: StoreContextMut<'_, ()>, index: usize, value: &Val,
+        irq: &AtomicBool,
+    ) -> wasmtime::Result<bool> {
+        Session::consume_host_work(store.as_context_mut(), 4, irq)?;
+        if !self.eligible_transition || index != self.slot { return Ok(false); }
+        Session::consume_host_work(store.as_context_mut(), 8, irq)?;
+        Ok(bits(store.as_context_mut(), value, &self.number_type)?.is_some())
+    }
+
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool, SessionError> {
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;

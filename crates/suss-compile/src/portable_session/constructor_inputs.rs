@@ -526,13 +526,25 @@ impl ConstructorInputs {
         self.fields.iter().filter_map(Option::as_ref)
     }
     pub(crate) fn matches(&self, session: &mut Session, value: &SessionValue) -> Result<bool> {
+        self.check_source_fields(session, value, false).map(|(_, certified)| certified)
+    }
+    // This is fresh data health, not a reusable-source certificate. Only an
+    // originally-nil registered numeric memo may differ without authorization.
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session, value: &SessionValue)
+        -> Result<(bool, bool)> {
+        self.check_source_fields(session, value, true)
+    }
+    fn check_source_fields(&self, session: &mut Session, value: &SessionValue, fresh: bool)
+        -> Result<(bool, bool)> {
         session.check(value)?;
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
+        session.charge_host_work(2)?; // validation mode and strict-result initialization
+        let mut certified = true;
         if !same(session, value, &self.receiver)?
             || !session.storage_matches(&self.schema, &self.schema_storage)?
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let descriptor = field(session, value, 0)?;
         let storage = field(session, value, 1)?;
@@ -541,7 +553,7 @@ impl ConstructorInputs {
             || !same(session, &storage, &self.field_storage)?
             || !same(session, &properties, &self.properties)?
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         // Revalidate receipt before borrowing the Store for the field walk.
         // Original input edges remain unchanged, including the original nil.
@@ -560,7 +572,7 @@ impl ConstructorInputs {
         let uid = object.field(&mut scope, 3)?;
         if !matches!(uid, Val::AnyRef(Some(value)) if value.as_i31(&scope)?.is_some_and(|value| value.get_u32()==0))
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let properties = properties
             .value
@@ -569,14 +581,14 @@ impl ConstructorInputs {
             .ok_or_else(|| invalid("Constructor properties need prototype storage"))?;
         Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
         if properties.len(&scope)? != 1 {
-            return Ok(false);
+            return Ok((false, false));
         }
         Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
         let prototype = properties.get(&mut scope, 0)?;
         let expected = self.prototype.value.to_rooted(&mut scope);
         if !matches!(prototype, Val::AnyRef(Some(value)) if Rooted::<AnyRef>::ref_eq(&scope, &value, &expected)?)
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let array = storage
             .value
@@ -584,7 +596,7 @@ impl ConstructorInputs {
             .as_array(&scope)?
             .ok_or_else(|| invalid("Constructor fields need array storage"))?;
         if array.len(&scope)? as usize != self.fields.len() {
-            return Ok(false);
+            return Ok((false, false));
         }
         for (index, expected) in self.fields.iter().enumerate() {
             Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
@@ -601,10 +613,23 @@ impl ConstructorInputs {
                     .is_some_and(|v| v.get_i32() == crate::runtime_abi::UNDEFINED)
             };
             if !equal && authenticated_slot != Some(index) {
-                return Ok(false);
+                Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                if fresh {
+                    let numeric_memo = match &self.memo_watch {
+                        Some(watch) => watch.fresh_memo_data(scope.as_context_mut(), index,
+                            &Val::AnyRef(Some(*found)), &interrupt)?,
+                        None => false,
+                    };
+                    if numeric_memo {
+                        Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
+                        certified = false;
+                        continue;
+                    }
+                }
+                return Ok((false, false));
             }
         }
-        Ok(true)
+        Ok((true, certified))
     }
 }
 
@@ -640,6 +665,76 @@ mod tests {
     ) {
         let _request = session.operation_budget_scope().unwrap();
         session.prepare_schema_witness(schema).unwrap()
+    }
+
+    #[test]
+    fn fresh_data_classification_never_mints_memo_or_accepts_other_mutations() {
+        fn put(s: &mut Session, value: &SessionValue, index: u32, replacement: &SessionValue) {
+            s.inspect(value, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = object.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                let replacement = replacement.value.to_rooted(&mut store);
+                fields.set(&mut store, index, Val::AnyRef(Some(replacement)))
+            }).unwrap();
+        }
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = schema_test_session(phase);
+            let class = s.eval("Keyword").unwrap();
+            let nil = s.eval("nil").unwrap();
+            let name = s.eval("\"fresh-source-data\"").unwrap();
+            let wrong = s.eval("\"different-name\"").unwrap();
+            let numeric = s.eval("91").unwrap();
+            let other_numeric = s.eval("92").unwrap();
+            let (value, fact) = s.data_construct_with_inputs(&class, &[&nil, &name, &name, &nil]).unwrap();
+            let fact = fact.unwrap();
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), (true, true));
+            put(&mut s, &value, 3, &numeric);
+            assert!(!fact.matches(&mut s, &value).unwrap());
+            let expected = if phase == Phase::Macro { (true, false) } else { (false, false) };
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), expected);
+            s.collect().unwrap();
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), expected);
+            if let Some(watch) = &fact.memo_watch { assert!(!watch.matches(&mut s).unwrap()); }
+            // A second field mutation cannot hide behind the numeric memo.
+            put(&mut s, &value, 1, &wrong);
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), (false, false));
+            put(&mut s, &value, 1, &name);
+            put(&mut s, &value, 3, &wrong);
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), (false, false));
+            put(&mut s, &value, 3, &nil);
+            assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), (true, true));
+            // Originally nonnil factory inputs never gain this classification.
+            let (warm, warm_fact) = s.data_construct_with_inputs(&class, &[&nil, &name, &name, &numeric]).unwrap();
+            let warm_fact = warm_fact.unwrap();
+            put(&mut s, &warm, 3, &other_numeric);
+            assert_eq!(warm_fact.fresh_direct_status(&mut s, &warm).unwrap(), (false, false));
+            let handles = s.stats().external_value_handles;
+            for (memo, expected_status) in [(&nil, (true, true)), (&numeric, expected)] {
+                put(&mut s, &value, 3, memo);
+                let work = s.with_operation_budget(|s| {
+                    let before = s.operation_fuel_remaining()?;
+                    assert_eq!(fact.fresh_direct_status(s, &value)?, expected_status);
+                    Ok(before - s.operation_fuel_remaining()?)
+                }).unwrap();
+                for cut in 0..work {
+                    s.set_operation_fuel(cut);
+                    let error = fact.fresh_direct_status(&mut s, &value).unwrap_err();
+                    assert!(matches!(error, SessionError::Trap(ref e)
+                        if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                        "cut={cut}/{work}: {error:?}");
+                    assert_eq!(s.stats().external_value_handles, handles);
+                }
+                s.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+                let request = s.operation_budget_scope().unwrap();
+                s.interrupt_handle().interrupt();
+                assert!(fact.fresh_direct_status(&mut s, &value).unwrap_err().is_interrupt());
+                drop(request);
+                assert_eq!(fact.fresh_direct_status(&mut s, &value).unwrap(), expected_status);
+                if let Some(watch) = &fact.memo_watch { assert!(!watch.matches(&mut s).unwrap()); }
+            }
+            s.reset().unwrap();
+            assert!(matches!(fact.fresh_direct_status(&mut s, &value), Err(SessionError::ForeignValue)));
+        }
     }
 
     #[test]

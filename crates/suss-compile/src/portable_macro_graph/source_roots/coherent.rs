@@ -404,8 +404,8 @@ fn finish_pending(
     graph: &mut AnalysisGraph<'_>,
     mut pending: Pending,
     plan: &Plan,
-    certificates: &[Option<Rc<Certificate>>],
-) -> Result<(SessionValue, ConstructionRecords, Vec<CheckedChild>, bool)> {
+    certificates: &[Option<FreshSourceProof>],
+) -> Result<(SessionValue, ConstructionRecords, Vec<FreshSourceProof>, bool)> {
     let mut children = Vec::new();
     reserve(graph.session, &mut children, pending.inputs.bindings.len())?;
     // No guest code may run from this point through publication. Recheck source
@@ -415,14 +415,10 @@ fn finish_pending(
         let certificate = certificates[binding.child]
             .as_ref()
             .ok_or_else(|| invalid("Uncertified coherent child"))?;
-        let child = Certificate::checked(
-            graph.session,
-            graph.bridge,
-            certificate,
-            plan.expectation(binding.child),
-        )?
-        .ok_or_else(|| invalid("Source child changed before final binding"))?;
-        children.push(child);
+        if !certificate.checked(graph.session, graph.bridge, plan.expectation(binding.child))? {
+            return Err(invalid("Source child changed before final binding"));
+        }
+        children.push(certificate.retain(graph.session)?);
     }
     if pending.alias_root {
         graph.session.charge_host_work(3)?;
@@ -451,7 +447,15 @@ fn finish_pending(
         .borrow()
         .apply(graph.session, &pending.value, &pairs)?;
     for child in &children {
-        pending.records.attach_source_child(graph.session, child)?;
+        graph.session.charge_host_work(1)?;
+        if let Some(certificate) = child.certificate() {
+            // Only strict certificates grant persistent domain membership.
+            // Uncached children are handled by the separate health-only input
+            // check and never become CheckedChild or write-domain authority.
+            graph.session.charge_host_work(2)?;
+            let checked = CheckedChild { certificate: certificate.clone() };
+            pending.records.attach_source_child(graph.session, &checked)?;
+        }
     }
     for factory in pending.deferred {
         graph.session.charge_host_work(1)?;
@@ -548,24 +552,15 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
                     plan.expectation(*id),
                 )?
                 .ok_or_else(|| invalid("Retained source changed during finalization"))?;
-                certificate
+                FreshSourceProof::certified(graph.session, certificate)?
             }
             State::Fresh(pending) => {
                 let (value, records, children, alias_root) =
                     finish_pending(graph, pending, &plan, &certificates)?;
                 admission_stage(graph, "finish-pending-after", Some(*id));
-                Certificate::finish_bound(
-                    graph.session,
-                    graph.bridge,
-                    BoundParent {
-                        source: plan.expectation(*id).clone(),
-                        value,
-                        records,
-                        children,
-                        alias_root,
-                    },
-                )?
-                .ok_or_else(|| invalid("Fresh coherent source failed certification"))?
+                graph.session.charge_host_work(2)?;
+                FreshSourceProof::finish(graph.session, graph.bridge,
+                    plan.expectation(*id).clone(), value, records, children, alias_root)?
             }
             State::Empty => return Err(invalid("Missing final coherent source root")),
         };
@@ -581,7 +576,9 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
             .unwrap()
             .matches_logical_source(graph.session, graph.bridge, &value)?;
         // Do not short-circuit malformed/owner/fuel/IRQ errors after false.
-        let direct = records.matches_direct_facts(graph.session)?;
+        let (direct, strict) = records.fresh_direct_status(graph.session)?;
+        graph.session.charge_host_work(children.len() as u64 + 1)?;
+        let all_certified = children.iter().all(|child| child.certificate().is_some());
         let inputs = if alias_root {
             graph.session.charge_host_work(3)?;
             if children.len() != 1 || records.len() != 0 {
@@ -591,8 +588,10 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
                     .session
                     .values_identical(&value, children[0].value())?
             }
-        } else {
+        } else if all_certified {
             records.matches_recorded_inputs(graph.session, &value)?
+        } else {
+            records.matches_fresh_source_inputs(graph.session, &value, &children)?
         };
         let classes = records.matches_class_schemas(graph.session)?;
         let prototypes = records.matches_prototype_origins(graph.session)?;
@@ -601,13 +600,13 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
                 "Coherent export failed final source/storage checks",
             ));
         }
-        records.seal_source_domain(graph.session)?;
+        if strict && all_certified { records.seal_source_domain(graph.session)?; }
         value
     } else {
         certificates[plan.root_alias.unwrap()]
             .as_ref()
             .unwrap()
-            .value
+            .value()
             .clone()
     };
     let mut updates = Vec::new();
@@ -615,14 +614,14 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
     for id in &plan.order {
         graph.session.charge_host_work(1)?;
         let certificate = certificates[*id].as_ref().unwrap();
-        Certificate::checked(
-            graph.session,
-            graph.bridge,
-            certificate,
-            plan.expectation(*id),
-        )?
-        .ok_or_else(|| invalid("Source changed before coherent publication"))?;
-        updates.push(certificate.clone());
+        if !certificate.checked(graph.session, graph.bridge, plan.expectation(*id))? {
+            return Err(invalid("Source changed before coherent publication"));
+        }
+        graph.session.charge_host_work(1)?;
+        if let Some(strict) = certificate.certificate() {
+            graph.session.charge_host_work(2)?;
+            updates.push(strict.clone());
+        }
     }
     let next = cache.replacement(graph.session, &updates)?;
     // Infallible single publication after ALL fallible preparation. No callback

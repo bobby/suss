@@ -601,6 +601,10 @@ impl CheckedChild {
         self.certificate.records.write_domain()
     }
 }
+#[path = "source_roots/fresh_source.rs"]
+mod fresh_source;
+pub(crate) use fresh_source::FreshSourceProof;
+
 // A private input is selected by a native recipe alias, not by comparing guest
 // values. Each distinct boundary owns a fresh token; repeated occurrences of the
 // same alias deliberately share that token. Only the materializer may inject it.
