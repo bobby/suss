@@ -47,8 +47,16 @@ enum Atom {
 enum Contents {
     // Each node owns the exact captured GC object. Its intrinsic type is
     // immutable; mutable nominal descriptors/prototypes remain captured atoms.
-    Struct(Vec<Atom>),
+    Struct { field_count: usize, values: Vec<(usize, Atom)> },
     Array(Vec<Atom>),
+    // Declared i8/i16/i32 arrays cannot contain reference edges. Preserve the
+    // exact I32 values returned by Wasmtime, including packed zero extension.
+    I32Array(Vec<i32>),
+}
+
+fn i32_array(ty: &wasmtime::ArrayType) -> bool {
+    matches!(ty.element_type(), wasmtime::StorageType::I8 | wasmtime::StorageType::I16
+        | wasmtime::StorageType::ValType(wasmtime::ValType::I32))
 }
 
 #[derive(Debug)]
@@ -66,6 +74,7 @@ pub(crate) struct StorageSnapshot {
     owner: u64,
     root: Atom,
     nodes: Vec<Node>,
+    immutable_members: Vec<Atom>,
 }
 
 struct Meter<'a> {
@@ -112,8 +121,8 @@ impl Context<u64> for Meter<'_> {
     }
 }
 
-// Raw, nested observational intervals only. No fields are added to Meter,
-// Capture, Atom or StorageSnapshot: their charged layouts stay unchanged.
+// Raw, nested observational intervals only: no trace-only fields in Meter.
+// Representation changes are charged by their actual layouts.
 macro_rules! snapshot_observed {
     ($meter:expr, $phase:literal, $count:expr, $operation:expr) => {{
         let enabled = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
@@ -267,6 +276,7 @@ struct Capture<'cuts> {
     owner: u64,
     handles: Arc<AtomicUsize>,
     nodes: Vec<Node>,
+    immutable_members: Vec<Atom>,
     index: Option<TryOrderedMap<u64, usize>>,
     cuts: Vec<Cut>,
     cut_index: Option<TryOrderedMap<u64, usize>>,
@@ -437,52 +447,103 @@ impl<'cuts> Capture<'cuts> {
     }
 
     fn finish(mut self, root: Val, meter: &mut Meter<'_>) -> Result<StorageSnapshot> {
+        // Snapshot membership vector move and eventual release; the Capture
+        // vector is prepaid before its production initialization.
+        meter.work(size_of::<Vec<Atom>>() as u64 + 2)?;
         let root = self.atom(root, meter)?;
         let mut id = 0;
         while id < self.nodes.len() {
             meter.work(1)?;
             let reference = self.nodes[id].value.value.to_rooted(&mut meter.store);
             let contents = if let Some(structure) = reference.as_struct(&meter.store)? {
+                meter.work(3)?;
                 let ty = structure.ty(&meter.store)?;
                 let count = ty.fields().len();
-                let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count, (|| -> Result<Vec<Atom>> {
-                    allocation::<Atom>(count, meter)?;
+                let mut mutable_count = 0usize;
+                for field in ty.fields() {
+                    meter.work(3)?; // field metadata, mutability and count selection
+                    if field.mutability().is_var() { mutable_count += 1; }
+                }
+                let mut values = snapshot_observed!(meter, "struct-slot-buffer-allocation", mutable_count, (|| -> Result<Vec<(usize, Atom)>> {
+                    allocation::<(usize, Atom)>(mutable_count, meter)?;
                     let mut values = Vec::new();
-                    values.try_reserve_exact(count).map_err(|error| {
+                    values.try_reserve_exact(mutable_count).map_err(|error| {
                         invalid(format!("Storage snapshot allocation failed: {error}"))
                     })?;
                     Ok(values)
                 })())?;
-                for field in 0..count {
-                    meter.work(1)?;
-                    let value = structure.field(&mut meter.store, field)?;
-                    values.push(self.atom(value, meter)?);
+                for (index, field) in ty.fields().enumerate() {
+                    meter.work(4)?; // original read plus indexed metadata/selection
+                    let value = structure.field(&mut meter.store, index)?;
+                    // Never omit conversion, unsupported-reference errors, cuts
+                    // or recursive discovery through an immutable edge.
+                    let atom = self.atom(value, meter)?;
+                    if field.mutability().is_var() {
+                        meter.work(2)?; // tuple initialization and eventual release
+                        values.push((index, atom));
+                    } else {
+                        meter.work(1)?;
+                        if matches!(&atom, Atom::I31(_) | Atom::Opaque(_)) {
+                            room(&mut self.immutable_members, meter)?;
+                            meter.work(2)?; // initialization/release even without growth
+                            self.immutable_members.push(atom);
+                        }
+                        // Const Node targets remain owned and checked in nodes;
+                        // Const scalar/function values cannot change in this object.
+                    }
                 }
-                Contents::Struct(values)
+                Contents::Struct { field_count: count, values }
             } else if let Some(array) = reference.as_array(&meter.store)? {
                 // Retain the original fallible type query, but no persistent
                 // wrapper is needed beside the owned original object.
-                let _ty = array.ty(&meter.store)?;
+                let ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
-                let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
-                    allocation::<Atom>(count as usize, meter)?;
-                    let mut values = Vec::new();
-                    values.try_reserve_exact(count as usize).map_err(|error| {
-                        invalid(format!("Storage snapshot allocation failed: {error}"))
-                    })?;
-                    Ok(values)
-                })())?;
-                for index in 0..count {
-                    meter.work(1)?;
-                    let value = array.get(&mut meter.store, index)?;
-                    values.push(self.atom(value, meter)?);
+                // Declared-type inspection and transient type/branch controls.
+                // Never infer an integer array from its current element values.
+                meter.work(8)?;
+                if i32_array(&ty) {
+                    let mut values = snapshot_observed!(meter, "i32-buffer-allocation", count as usize, (|| -> Result<Vec<i32>> {
+                        allocation::<i32>(count as usize, meter)?;
+                        let mut values = Vec::new();
+                        values.try_reserve_exact(count as usize).map_err(|error| {
+                            invalid(format!("Storage snapshot allocation failed: {error}"))
+                        })?;
+                        Ok(values)
+                    })())?;
+                    for index in 0..count {
+                        meter.work(1)?;
+                        let value = array.get(&mut meter.store, index)?;
+                        // Retain the original atom conversion/read/error path;
+                        // only its persistent backing representation changes.
+                        let atom = self.atom(value, meter)?;
+                        meter.work(1)?;
+                        let Atom::I32(value) = atom else {
+                            return Err(invalid("Integer array returned a non-I32 value"));
+                        };
+                        values.push(value);
+                    }
+                    Contents::I32Array(values)
+                } else {
+                    let mut values = snapshot_observed!(meter, "atom-buffer-allocation", count as usize, (|| -> Result<Vec<Atom>> {
+                        allocation::<Atom>(count as usize, meter)?;
+                        let mut values = Vec::new();
+                        values.try_reserve_exact(count as usize).map_err(|error| {
+                            invalid(format!("Storage snapshot allocation failed: {error}"))
+                        })?;
+                        Ok(values)
+                    })())?;
+                    for index in 0..count {
+                        meter.work(1)?;
+                        let value = array.get(&mut meter.store, index)?;
+                        values.push(self.atom(value, meter)?);
+                    }
+                    Contents::Array(values)
                 }
-                Contents::Array(values)
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };
             if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
-                let atoms = match &contents { Contents::Struct(atoms) | Contents::Array(atoms) => atoms.len() };
+                let atoms = match &contents { Contents::Struct { values, .. } => values.len(), Contents::Array(atoms) => atoms.len(), Contents::I32Array(values) => values.len() };
                 eprintln!("source-snapshot-node ordinal={id} atoms={atoms} event=complete remaining={:?}", meter.store.get_fuel().ok());
             }
             self.nodes[id].contents = Some(contents);
@@ -492,6 +553,7 @@ impl<'cuts> Capture<'cuts> {
             owner: self.owner,
             root,
             nodes: self.nodes,
+            immutable_members: self.immutable_members,
         })
     }
 }
@@ -517,13 +579,15 @@ impl StorageSnapshot {
             .map_err(|_| invalid("Snapshot retirement work overflow"))?;
         for node in &self.nodes {
             // Iteration, contents selection, length read and checked arithmetic.
-            meter(8)?;
-            let atoms = match &node.contents {
-                Some(Contents::Struct(atoms) | Contents::Array(atoms)) => Some(atoms),
+            meter(10)?; // original scan controls plus payload-stride selection
+            let payload = match &node.contents {
+                Some(Contents::Struct { values, .. }) => Some((values.len(), size_of::<(usize, Atom)>())),
+                Some(Contents::Array(atoms)) => Some((atoms.len(), size_of::<Atom>())),
+                Some(Contents::I32Array(values)) => Some((values.len(), size_of::<i32>())),
                 None => None,
             };
-            let atom_work = match atoms {
-                Some(atoms) => atoms.len().checked_mul(size_of::<Atom>())
+            let atom_work = match payload {
+                Some((count, bytes)) => count.checked_mul(bytes)
                     .and_then(|n| n.checked_add(1)) // atom-buffer release
                     .and_then(|n| u64::try_from(n).ok())
                     .ok_or_else(|| invalid("Snapshot retirement work overflow"))?,
@@ -533,6 +597,12 @@ impl StorageSnapshot {
                 .and_then(|n| n.checked_add(atom_work))
                 .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
         }
+        meter(5)?; // membership length/stride and checked retirement arithmetic
+        let members = self.immutable_members.len().checked_mul(size_of::<Atom>())
+            .and_then(|n| n.checked_add(1)).and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
+        work = work.checked_add(members)
+            .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
         meter(work)
     }
 
@@ -569,16 +639,32 @@ impl StorageSnapshot {
         if self.owner != owner { return Err(SessionError::ForeignValue) }
         let mut meter = Meter::new(store, interrupt);
         if self.atom_matches(&self.root, value.clone(), &mut meter)? { return Ok(true) }
+        // Immutable membership is captured data, not a current-health verdict.
+        // Root remains first; check these leaves before the complete node scan.
+        for atom in &self.immutable_members {
+            meter.work(1)?;
+            if self.atom_matches(atom, value.clone(), &mut meter)? { return Ok(true) }
+        }
         for (id, node) in self.nodes.iter().enumerate() {
             meter.work(1)?;
             if self.atom_matches(&Atom::Node(id), value.clone(), &mut meter)? { return Ok(true) }
-            let atoms = match node.contents.as_ref().expect("complete snapshot") {
-                Contents::Array(atoms) | Contents::Struct(atoms) => atoms,
-            };
-            for atom in atoms {
-                meter.work(1)?;
-                if matches!(atom, Atom::I31(_) | Atom::Opaque(_)) &&
-                    self.atom_matches(atom, value.clone(), &mut meter)? { return Ok(true) }
+            meter.work(1)?;
+            match node.contents.as_ref().expect("complete snapshot") {
+                Contents::Struct { values, .. } => {
+                    for (_, atom) in values {
+                        meter.work(2)?;
+                        if matches!(atom, Atom::I31(_) | Atom::Opaque(_)) &&
+                            self.atom_matches(atom, value.clone(), &mut meter)? { return Ok(true) }
+                    }
+                }
+                Contents::Array(atoms) => {
+                    for atom in atoms {
+                        meter.work(1)?;
+                        if matches!(atom, Atom::I31(_) | Atom::Opaque(_)) &&
+                            self.atom_matches(atom, value.clone(), &mut meter)? { return Ok(true) }
+                    }
+                }
+                Contents::I32Array(_) => continue,
             }
         }
         Ok(false)
@@ -633,7 +719,7 @@ impl StorageSnapshot {
                 .as_ref()
                 .expect("only complete snapshots escape capture")
             {
-                Contents::Struct(values) => {
+                Contents::Struct { field_count, values } => {
                     let Some(structure) = reference.as_struct(&meter.store)? else {
                         return Ok(false);
                     };
@@ -641,12 +727,12 @@ impl StorageSnapshot {
                     // owned node. That identity fixes the intrinsic Wasm type;
                     // retain current kind/count and every mutable field check.
                     meter.work(3)?;
-                    if structure.ty(&meter.store)?.fields().len() != values.len() {
+                    if structure.ty(&meter.store)?.fields().len() != *field_count {
                         return Ok(false);
                     }
-                    for (field, expected) in values.iter().enumerate() {
-                        meter.work(1)?;
-                        let actual = structure.field(&mut meter.store, field)?;
+                    for (field, expected) in values {
+                        meter.work(2)?; // indexed tuple access and original field read
+                        let actual = structure.field(&mut meter.store, *field)?;
                         if !self.atom_matches(expected, actual, meter)? {
                             return Ok(false);
                         }
@@ -664,6 +750,31 @@ impl StorageSnapshot {
                         meter.work(1)?;
                         let actual = array.get(&mut meter.store, index as u32)?;
                         if !self.atom_matches(expected, actual.clone(), meter)? {
+                            meter.work(1)?;
+                            if !allow(meter.store.as_context_mut(), Val::AnyRef(Some(reference)), index as u32, &actual)? {
+                                return Ok(false);
+                            }
+                        }
+                    }
+                }
+                Contents::I32Array(values) => {
+                    let Some(array) = reference.as_array(&meter.store)? else {
+                        return Ok(false);
+                    };
+                    // Capture selected integer storage from this exact owned
+                    // array. Its intrinsic element type cannot change. Keep the
+                    // original fallible type query without reclassifying it.
+                    let _ty = array.ty(&meter.store)?;
+                    if array.len(&meter.store)? as usize != values.len() {
+                        return Ok(false);
+                    }
+                    for (index, expected) in values.iter().enumerate() {
+                        meter.work(1)?;
+                        let actual = array.get(&mut meter.store, index as u32)?;
+                        // Same strict I32 comparison as atom_matches, without
+                        // reconstructing a generic Atom for a typed payload.
+                        meter.work(1)?;
+                        if !matches!(&actual, Val::I32(found) if found == expected) {
                             meter.work(1)?;
                             if !allow(meter.store.as_context_mut(), Val::AnyRef(Some(reference)), index as u32, &actual)? {
                                 return Ok(false);
@@ -727,8 +838,9 @@ impl Session {
         // Prepay the additional borrowed-slice metadata and its bounded
         // selection/publication/retirement controls before initialization.
         meter.work(size_of::<Option<&[&SessionValue]>>() as u64 + 3)?;
+        meter.work(size_of::<Vec<Atom>>() as u64 + 2)?;
         let mut capture = Capture { owner: self.identity, handles,
-            nodes: Vec::new(), index: None,
+            nodes: Vec::new(), immutable_members: Vec::new(), index: None,
             cuts: Vec::new(), cut_index: None, borrowed_cuts: None };
         let added = snapshot_observed!(meter, "add-cuts", cuts.len(), capture.prepare_cuts(cuts, &root, &mut meter));
         if std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some() {
@@ -867,6 +979,273 @@ mod tests {
         );
     }
 
+    fn sparse_fixture(session: &mut Session) -> (SessionValue, SessionValue, SessionValue, SessionValue) {
+        let child = structure(session, ValType::I32, Val::I32(17));
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        let cut = raw_array(session, &[&nil]);
+        let ty = StructType::new(&session.engine, [
+            FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)),
+            FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)),
+            FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)),
+            FieldType::new(Mutability::Var, StorageType::ValType(ValType::I32)),
+        ]).unwrap();
+        let wrapper_ty = StructType::new(&session.engine, [
+            FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)),
+        ]).unwrap();
+        let wrapper_allocator = StructRefPre::new(&mut session.store, wrapper_ty);
+        let allocator = StructRefPre::new(&mut session.store, ty);
+        let mut scope = RootScope::new(&mut session.store);
+        let child_root = child.value.to_rooted(&mut scope);
+        let wrapper = StructRef::new(&mut scope, &wrapper_allocator,
+            &[Val::AnyRef(Some(child_root))]).unwrap().to_anyref();
+        let cut_root = cut.value.to_rooted(&mut scope);
+        let nil_root = nil.value.to_rooted(&mut scope);
+        let value = StructRef::new(&mut scope, &allocator, &[
+            Val::AnyRef(Some(wrapper)), Val::AnyRef(Some(cut_root)),
+            Val::AnyRef(Some(nil_root)), Val::I32(23),
+        ]).unwrap().to_anyref();
+        let root = super::super::own(&mut scope, Val::AnyRef(Some(value)), session.identity, &session.handles).unwrap();
+        (root, child, cut, nil)
+    }
+
+    #[test]
+    fn sparse_struct_const_edges_keep_descendants_cuts_membership_and_gc_identity() {
+        let mut session = Session::new().unwrap();
+        let (root, child, cut, nil) = sparse_fixture(&mut session);
+        let snapshot = session.capture_storage_cut(&root, &[&cut]).unwrap();
+        let Contents::Struct { field_count, values } = snapshot.nodes[0].contents.as_ref().unwrap() else { panic!("struct"); };
+        assert_eq!(*field_count, 4);
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].0, 3);
+        assert_eq!(snapshot.nodes.len(), 3, "root, const-only wrapper and mutable child; cut stays opaque");
+        let Contents::Struct { field_count, values } = snapshot.nodes[1].contents.as_ref().unwrap() else { panic!("const wrapper"); };
+        assert_eq!(*field_count, 1);
+        assert!(values.is_empty(), "zero-expectation wrapper must not suppress descendant validation");
+        assert_eq!(snapshot.immutable_members.len(), 2, "cut and i31 nil retain initial membership");
+        for value in [&root, &child, &cut, &nil] {
+            assert!(session.storage_contains_reference(value, &snapshot).unwrap());
+        }
+        session.collect().unwrap();
+        assert!(session.storage_matches(&root, &snapshot).unwrap());
+        set_field(&mut session, &child, Val::I32(99));
+        assert!(!session.storage_matches(&root, &snapshot).unwrap());
+        set_field(&mut session, &child, Val::I32(17));
+        assert!(session.storage_matches(&root, &snapshot).unwrap());
+        // Cut payload health is deliberately outside this primitive's policy;
+        // the cut root remains an exact membership leaf.
+        let number = session.data_scalar(&Literal::Number(99.0)).unwrap();
+        set_array(&mut session, &cut, 0, &number);
+        assert!(session.storage_matches(&root, &snapshot).unwrap());
+        let (other, _, _, _) = sparse_fixture(&mut session);
+        assert!(!session.storage_matches(&other, &snapshot).unwrap());
+        assert!(!session.storage_contains_reference(&other, &snapshot).unwrap());
+        session.inspect(&root, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let nil = nil.value.to_rooted(&mut store);
+            let error = object.set_field(&mut store, 0, Val::AnyRef(Some(nil))).unwrap_err();
+            assert!(error.to_string().contains("not mutable"));
+            object.set_field(&mut store, 3, Val::I32(24))
+        }).unwrap();
+        assert!(!session.storage_matches(&root, &snapshot).unwrap());
+        session.inspect(&root, |mut store, value| {
+            value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap().set_field(&mut store, 3, Val::I32(23))
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(session.storage_matches(&root, &snapshot).unwrap());
+        eprintln!("sparse-struct-layout Node={} Snapshot={} Atom={} MutableSlot={} stored_slots=1 immutable_members=2", size_of::<Node>(), size_of::<StorageSnapshot>(), size_of::<Atom>(), size_of::<(usize, Atom)>());
+    }
+
+    #[test]
+    fn sparse_struct_unsupported_const_reference_still_fails_before_publication() {
+        let mut session = Session::new().unwrap();
+        let (child, _, _, _) = sparse_fixture(&mut session);
+        let root = {
+            let ty = StructType::new(&session.engine, [
+                FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)),
+                FieldType::new(Mutability::Const, StorageType::ValType(ValType::EXTERNREF)),
+            ]).unwrap();
+            let allocator = StructRefPre::new(&mut session.store, ty);
+            let mut scope = RootScope::new(&mut session.store);
+            let child = child.value.to_rooted(&mut scope);
+            let external = wasmtime::ExternRef::new(&mut scope, 17u32).unwrap();
+            let object = StructRef::new(&mut scope, &allocator, &[
+                Val::AnyRef(Some(child)), Val::ExternRef(Some(external)),
+            ]).unwrap().to_anyref();
+            super::super::own(&mut scope, Val::AnyRef(Some(object)), session.identity, &session.handles).unwrap()
+        };
+        let handles = session.stats().external_value_handles;
+        let error = session.capture_storage(&root).unwrap_err();
+        assert!(matches!(error, SessionError::Host(ref inner)
+            if inner.to_string().contains("Opaque host/exception/continuation reference")), "{error:?}");
+        assert_eq!(session.stats().external_value_handles, handles, "partial captured child roots are retired");
+        assert!(session.capture_storage(&child).is_ok());
+    }
+
+    #[test]
+    fn sparse_struct_small_capture_and_match_fuel_irq_failures_release_and_retry() {
+        let mut session = Session::new().unwrap();
+        let (root, _, cut, _) = sparse_fixture(&mut session);
+        let snapshot = session.capture_storage_cut(&root, &[&cut]).unwrap();
+        let handles = session.stats().external_value_handles;
+        for checking in [false, true] {
+            let cost = session.with_operation_budget(|session| {
+                let before = session.store.get_fuel()?;
+                if checking { assert!(session.storage_matches(&root, &snapshot)?); }
+                else { drop(session.capture_storage_cut(&root, &[&cut])?); }
+                Ok(before - session.store.get_fuel()?)
+            }).unwrap();
+            assert!(cost > 0);
+            for allowance in [0, 1, cost / 2, cost - 1] {
+                session.with_operation_budget(|session| {
+                    session.store.set_fuel(allowance)?;
+                    let error = if checking { session.storage_matches(&root, &snapshot).unwrap_err() }
+                        else { session.capture_storage_cut(&root, &[&cut]).unwrap_err() };
+                    exhausted(error, wasmtime::Trap::OutOfFuel);
+                    Ok(())
+                }).unwrap();
+                assert_eq!(session.stats().external_value_handles, handles);
+                assert!(session.storage_matches(&root, &snapshot).unwrap());
+                drop(session.capture_storage_cut(&root, &[&cut]).unwrap());
+            }
+            // Sweep actual charge boundaries on this small native graph only.
+            // No guest callback or global hook; original Meter test seam.
+            let mut completed = false;
+            for boundary in 0..512 {
+                let _request = session.operation_budget_scope().unwrap();
+                let irq = session.host_work_interrupt();
+                let mut scope = RootScope::new(&mut session.store);
+                let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                meter.cancel_after = Some(boundary);
+                let result = if checking { snapshot.matches(value, &mut meter) }
+                    else {
+                        let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
+                            nodes: Vec::new(), immutable_members: Vec::new(), index: None,
+                            cuts: Vec::new(), cut_index: None, borrowed_cuts: None };
+                        capture.prepare_cuts(&[&cut], &value, &mut meter)
+                            .and_then(|()| capture.finish(value, &mut meter)).map(|snapshot| { drop(snapshot); true })
+                    };
+                match result {
+                    Ok(true) => completed = true,
+                    Ok(false) => panic!("unchanged graph cannot mismatch"),
+                    Err(error) => exhausted(error, wasmtime::Trap::Interrupt),
+                }
+                drop(meter); drop(scope);
+                irq.store(false, AtomicOrdering::SeqCst);
+                drop(_request);
+                assert_eq!(session.stats().external_value_handles, handles);
+                assert!(session.storage_matches(&root, &snapshot).unwrap());
+                if completed { break; }
+            }
+            assert!(completed, "small fixture must finish within 512 charged boundaries");
+        }
+    }
+
+    #[test]
+    fn sparse_struct_immutable_members_grow_preserve_membership_and_fail_atomically() {
+        let mut session = Session::new().unwrap();
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        let cuts = (0..3).map(|_| raw_array(&mut session, &[&nil])).collect::<Vec<_>>();
+        let mut immediates = Vec::new();
+        for value in [11, 23, 47, 99] {
+            let mut scope = RootScope::new(&mut session.store);
+            let value = AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(value).unwrap());
+            immediates.push(super::super::own(&mut scope, Val::AnyRef(Some(value)),
+                session.identity, &session.handles).unwrap());
+        }
+        let root = {
+            let ty = StructType::new(&session.engine, (0..6).map(|_|
+                FieldType::new(Mutability::Const, StorageType::ValType(ValType::ANYREF)))).unwrap();
+            let pre = StructRefPre::new(&mut session.store, ty);
+            let mut scope = RootScope::new(&mut session.store);
+            let values = immediates[..3].iter().chain(cuts.iter()).map(|value|
+                Val::AnyRef(Some(value.value.to_rooted(&mut scope)))).collect::<Vec<_>>();
+            let root = StructRef::new(&mut scope, &pre, &values).unwrap().to_anyref();
+            super::super::own(&mut scope, Val::AnyRef(Some(root)), session.identity, &session.handles).unwrap()
+        };
+        let cut_refs = cuts.iter().collect::<Vec<_>>();
+        let handles = session.stats().external_value_handles;
+        let snapshot = session.capture_storage_cut(&root, &cut_refs).unwrap();
+        assert_eq!(snapshot.nodes.len(), 1, "all reference targets are opaque cuts");
+        let Contents::Struct { field_count, values } = snapshot.nodes[0].contents.as_ref().unwrap() else { panic!("struct"); };
+        assert_eq!(*field_count, 6);
+        assert!(values.is_empty());
+        assert_eq!(snapshot.immutable_members.len(), 6);
+        assert!(snapshot.immutable_members.capacity() >= 8, "fifth entry must cross initial capacity four");
+        session.collect().unwrap();
+        for value in immediates[..3].iter().chain(cuts.iter()) {
+            assert!(session.storage_contains_reference(value, &snapshot).unwrap());
+        }
+        assert!(!session.storage_contains_reference(&immediates[3], &snapshot).unwrap());
+        assert!(!session.storage_contains_reference(&nil, &snapshot).unwrap(), "cut descendants remain absent");
+        assert!(session.storage_matches(&root, &snapshot).unwrap());
+        drop(snapshot);
+        assert_eq!(session.stats().external_value_handles, handles);
+
+        // Measure and interrupt the FULL actual capture, including global
+        // immutable member appends and the fifth-member growth/retirement path.
+        let capture_cost = session.with_operation_budget(|session| {
+            let before = session.store.get_fuel()?;
+            drop(session.capture_storage_cut(&root, &cut_refs)?);
+            Ok(before - session.store.get_fuel()?)
+        }).unwrap();
+        assert!(capture_cost > 0);
+        for allowance in [0, 1, capture_cost / 4, capture_cost / 2,
+                          capture_cost * 3 / 4, capture_cost - 1] {
+            session.with_operation_budget(|session| {
+                session.store.set_fuel(allowance)?;
+                exhausted(session.capture_storage_cut(&root, &cut_refs).unwrap_err(),
+                    wasmtime::Trap::OutOfFuel);
+                Ok(())
+            }).unwrap();
+            assert_eq!(session.stats().external_value_handles, handles,
+                "partial capture handles after fuel={allowance}/{capture_cost}");
+            let retry = session.capture_storage_cut(&root, &cut_refs).unwrap();
+            assert_eq!(retry.immutable_members.len(), 6);
+            assert!(session.storage_matches(&root, &retry).unwrap());
+            drop(retry);
+            assert_eq!(session.stats().external_value_handles, handles);
+        }
+        let mut completed_at = None;
+        for boundary in 0..512 {
+            let request = session.operation_budget_scope().unwrap();
+            let irq = session.host_work_interrupt();
+            let mut scope = RootScope::new(&mut session.store);
+            let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+            let mut meter = Meter::new(scope.as_context_mut(), &irq);
+            meter.cancel_after = Some(boundary);
+            let result = (|| -> Result<StorageSnapshot> {
+                // Match production prepayment before Capture initialization.
+                meter.work(size_of::<Vec<Atom>>() as u64 + 2)?;
+                let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
+                    nodes: Vec::new(), immutable_members: Vec::new(), index: None,
+                    cuts: Vec::new(), cut_index: None, borrowed_cuts: None };
+                capture.prepare_cuts(&cut_refs, &value, &mut meter)?;
+                capture.finish(value, &mut meter)
+            })();
+            match result {
+                Ok(snapshot) => {
+                    assert_eq!(snapshot.immutable_members.len(), 6);
+                    drop(snapshot);
+                    completed_at = Some(boundary);
+                }
+                Err(error) => exhausted(error, wasmtime::Trap::Interrupt),
+            }
+            drop(meter); drop(scope);
+            irq.store(false, AtomicOrdering::SeqCst);
+            drop(request);
+            assert_eq!(session.stats().external_value_handles, handles,
+                "partial capture handles after IRQ boundary={boundary}");
+            let retry = session.capture_storage_cut(&root, &cut_refs).unwrap();
+            assert!(session.storage_matches(&root, &retry).unwrap());
+            drop(retry);
+            assert_eq!(session.stats().external_value_handles, handles);
+            if completed_at.is_some() { break; }
+        }
+        assert!(completed_at.is_some(), "one-node six-leaf capture must finish within 512 charge boundaries");
+        eprintln!("immutable-members-growth leaves=6 capacity_floor=8 capture-work={capture_cost} irq-charge-boundaries={completed_at:?}; fuel sampled, not exhaustive");
+    }
+
     #[test]
     fn native_storage_snapshot_hash_collisions_preserve_distinct_nodes() {
         let mut session = Session::new().unwrap();
@@ -885,7 +1264,7 @@ mod tests {
             Capture {
                 owner: session.identity,
                 handles: session.handles.clone(),
-                nodes: Vec::new(),
+                nodes: Vec::new(), immutable_members: Vec::new(),
                 index: None,
             cuts: Vec::new(),
             cut_index: None, borrowed_cuts: None,
@@ -1310,7 +1689,7 @@ mod tests {
                 Capture {
                     owner: session.identity,
                     handles: session.handles.clone(),
-                    nodes: Vec::new(),
+                    nodes: Vec::new(), immutable_members: Vec::new(),
                     index: None,
             cuts: Vec::new(),
             cut_index: None, borrowed_cuts: None,
@@ -1444,7 +1823,7 @@ mod tests {
             let mut meter = Meter::new(scope.as_context_mut(), &irq);
             meter.force_hash_collision = true;
             let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
-                nodes: Vec::new(), index: None, cuts: Vec::new(),
+                nodes: Vec::new(), immutable_members: Vec::new(), index: None, cuts: Vec::new(),
                 cut_index: None, borrowed_cuts: None };
             capture.add_cuts(&[&a, &b, &a, &nil], &value, &mut meter).unwrap();
             capture.finish(value, &mut meter).unwrap()
@@ -1490,7 +1869,7 @@ mod tests {
                 snapshot.matches_with_slots(value, &mut meter, &mut |_, _, _, _| Ok(false)).unwrap_err()
             } else {
                 let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
-                    nodes: Vec::new(), index: None, cuts: Vec::new(),
+                    nodes: Vec::new(), immutable_members: Vec::new(), index: None, cuts: Vec::new(),
                     cut_index: None, borrowed_cuts: None };
                 capture.add_cuts(&[&child], &value, &mut meter)
                     .and_then(|()| capture.finish(value, &mut meter)).unwrap_err()
@@ -1527,7 +1906,7 @@ mod tests {
         let mut capture = Capture {
             owner: session.identity,
             handles: session.handles.clone(),
-            nodes: Vec::new(),
+            nodes: Vec::new(), immutable_members: Vec::new(),
             index: indexed.then(TryOrderedMap::default),
             cuts: Vec::new(),
             cut_index: indexed.then(TryOrderedMap::default),
@@ -1691,7 +2070,7 @@ mod tests {
                 let mut capture = Capture {
                     owner: session.identity,
                     handles: session.handles.clone(),
-                    nodes: Vec::new(),
+                    nodes: Vec::new(), immutable_members: Vec::new(),
                     index: None,
                     cuts: Vec::new(),
                     cut_index: None, borrowed_cuts: None,
@@ -1756,6 +2135,204 @@ mod tests {
             assert!(completed, "promotion must eventually complete");
             let snapshot = adaptive_capture(&mut session, &root, &[], false);
             assert!(session.storage_matches(&root, &snapshot).unwrap());
+        }
+    }
+}
+
+#[cfg(test)]
+mod i32_array_tests {
+    use super::*;
+    use crate::portable::resolve::Phase;
+    use wasmtime::{ArrayRef, ArrayRefPre, ArrayType, FieldType, Mutability, StorageType, ValType};
+
+    fn session(phase: Phase) -> Session {
+        Session::with_options_in(Default::default(), phase).unwrap()
+    }
+    fn array(s: &mut Session, ty: StorageType, mutability: Mutability, values: &[Val]) -> SessionValue {
+        let _request = s.operation_budget_scope().unwrap();
+        let ty = ArrayType::new(&s.engine, FieldType::new(mutability, ty));
+        let pre = ArrayRefPre::new(&mut s.store, ty);
+        let mut scope = RootScope::new(&mut s.store);
+        let array = ArrayRef::new_fixed(&mut scope, &pre, values).unwrap();
+        super::super::own(&mut scope, Val::AnyRef(Some(array.to_anyref())), s.identity, &s.handles).unwrap()
+    }
+    fn set(s: &mut Session, root: &SessionValue, index: u32, value: i32) {
+        let mut scope = RootScope::new(&mut s.store);
+        let array = root.value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+        array.set(&mut scope, index, Val::I32(value)).unwrap();
+    }
+    // Independent old representation: read the actual array into I32 atoms,
+    // rather than deriving this control from the compact snapshot's payload.
+    fn generic_control(s: &mut Session, root: &SessionValue) -> StorageSnapshot {
+        let mut scope = RootScope::new(&mut s.store);
+        let array = root.value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+        let atoms = (0..array.len(&scope).unwrap()).map(|i| {
+            let Val::I32(value) = array.get(&mut scope, i).unwrap() else { panic!("integer fixture"); };
+            Atom::I32(value)
+        }).collect();
+        StorageSnapshot { owner: s.identity, root: Atom::Node(0), immutable_members: Vec::new(), nodes: vec![Node {
+            value: root.clone(), collision: None, contents: Some(Contents::Array(atoms)),
+        }] }
+    }
+    #[test]
+    fn i32_snapshot_packed_bits_empty_immutable_gc_and_replacement_match_generic_control() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = session(phase);
+            for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+                for mutability in [Mutability::Const, Mutability::Var] {
+                    for input in [vec![], vec![0, 1, 127, 128, 255, 256, 0xd800, 0xdc00, 65535, -1, i32::MIN, i32::MAX]] {
+                        let values = input.iter().copied().map(Val::I32).collect::<Vec<_>>();
+                        let root = array(&mut s, ty.clone(), mutability, &values);
+                        let other = array(&mut s, ty.clone(), mutability, &values);
+                        let compact = s.capture_storage(&root).unwrap();
+                        let legacy = generic_control(&mut s, &root);
+                        let Some(Contents::I32Array(payload)) = &compact.nodes[0].contents else { panic!("declared integer storage must compact"); };
+                        let expected = input.iter().map(|x| match &ty {
+                            StorageType::I8 => i32::from(*x as u8),
+                            StorageType::I16 => i32::from(*x as u16),
+                            _ => *x,
+                        }).collect::<Vec<_>>();
+                        assert_eq!(payload, &expected);
+                        assert_eq!(payload.len() * size_of::<i32>(), expected.len() * 4);
+                        s.collect().unwrap();
+                        for snapshot in [&compact, &legacy] {
+                            assert!(s.storage_matches(&root, snapshot).unwrap());
+                            assert!(!s.storage_matches(&other, snapshot).unwrap());
+                        }
+                        if mutability == Mutability::Var && !expected.is_empty() {
+                            for (index, original) in expected.iter().enumerate() {
+                                set(&mut s, &root, index as u32, original ^ 1);
+                                for snapshot in [&compact, &legacy] { assert!(!s.storage_matches(&root, snapshot).unwrap()); }
+                                set(&mut s, &root, index as u32, *original);
+                                for snapshot in [&compact, &legacy] { assert!(s.storage_matches(&root, snapshot).unwrap()); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        eprintln!("i32-snapshot-layout Node={} Contents={} Atom={} integer={}", size_of::<Node>(), size_of::<Contents>(), size_of::<Atom>(), size_of::<i32>());
+    }
+    fn hook_check(s: &mut Session, root: &SessionValue, snapshot: &StorageSnapshot,
+        accepted: bool, fail_at: Option<u32>,
+    ) -> (Result<bool>, Vec<(u32, i32)>) {
+        let _request = s.operation_budget_scope().unwrap();
+        let irq = s.host_work_interrupt();
+        let identity = s.identity;
+        let mut scope = RootScope::new(&mut s.store);
+        let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+        let mut seen = Vec::new();
+        let result = snapshot.matches_in_context_with_slots(scope.as_context_mut(), value.clone(), identity, &irq,
+            |store, supplied, index, current| {
+                let a = supplied.unwrap_anyref().unwrap();
+                let b = value.unwrap_anyref().unwrap();
+                assert!(Rooted::<AnyRef>::ref_eq(&store, a, b)?);
+                let Val::I32(current) = current else { panic!("integer hook value"); };
+                seen.push((index, *current));
+                if fail_at == Some(index) { return Err(invalid("deliberate integer hook error")); }
+                Ok(accepted)
+            });
+        (result, seen)
+    }
+    #[test]
+    fn i32_snapshot_mismatch_hooks_keep_order_value_error_and_root_guard() {
+        let mut s = Session::new().unwrap();
+        for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+            let root = array(&mut s, ty.clone(), Mutability::Var, &[Val::I32(1), Val::I32(2), Val::I32(3)]);
+            let compact = s.capture_storage(&root).unwrap();
+            let legacy = generic_control(&mut s, &root);
+            for index in 0..3 { set(&mut s, &root, index, 128 + index as i32); }
+            for (accepted, fail_at) in [(false, None), (true, None), (true, Some(1))] {
+                let (a, av) = hook_check(&mut s, &root, &compact, accepted, fail_at);
+                let (b, bv) = hook_check(&mut s, &root, &legacy, accepted, fail_at);
+                assert_eq!(av, bv);
+                match (a, b) {
+                    (Ok(a), Ok(b)) => assert_eq!(a, b),
+                    (Err(a), Err(b)) => assert_eq!(a.to_string(), b.to_string()),
+                    _ => panic!("compact/generic hook outcomes differ"),
+                }
+            }
+            let other = array(&mut s, ty, Mutability::Var, &[Val::I32(128), Val::I32(129), Val::I32(130)]);
+            let (result, seen) = hook_check(&mut s, &other, &compact, true, None);
+            assert!(!result.unwrap()); assert!(seen.is_empty());
+        }
+    }
+    #[test]
+    fn i32_snapshot_reference_arrays_keep_atoms_cuts_and_membership_distinctions() {
+        let mut s = Session::new().unwrap();
+        let nil = s.data_scalar(&crate::portable::hir::Literal::Nil).unwrap();
+        let references = {
+            let _request = s.operation_budget_scope().unwrap();
+            let mut scope = RootScope::new(&mut s.store);
+            let value = Val::AnyRef(Some(nil.value.to_rooted(&mut scope)));
+            let ty = ArrayType::new(&s.engine, FieldType::new(Mutability::Var, StorageType::ValType(ValType::ANYREF)));
+            let pre = ArrayRefPre::new(&mut scope, ty);
+            let array = ArrayRef::new_fixed(&mut scope, &pre, &[value]).unwrap();
+            super::super::own(&mut scope, Val::AnyRef(Some(array.to_anyref())), s.identity, &s.handles).unwrap()
+        };
+        let reference_snapshot = s.capture_storage(&references).unwrap();
+        assert!(matches!(&reference_snapshot.nodes[0].contents, Some(Contents::Array(_))));
+        assert!(s.storage_contains_reference(&nil, &reference_snapshot).unwrap());
+        let integer = array(&mut s, StorageType::I16, Mutability::Var, &[Val::I32(0)]);
+        let integer_snapshot = s.capture_storage(&integer).unwrap();
+        assert!(s.storage_contains_reference(&integer, &integer_snapshot).unwrap());
+        assert!(!s.storage_contains_reference(&nil, &integer_snapshot).unwrap(), "I32 zero is not an i31 nil reference");
+        let cut = s.capture_storage_cut_accounted(&references, &[&nil], s.handles.clone()).unwrap();
+        assert!(s.storage_matches(&references, &cut).unwrap());
+        let mut other = Session::new().unwrap();
+        let local = other.data_scalar(&crate::portable::hir::Literal::Nil).unwrap();
+        assert!(matches!(other.storage_matches(&local, &integer_snapshot), Err(SessionError::ForeignValue)));
+    }
+    #[test]
+    fn i32_snapshot_all_fuel_and_irq_cuts_release_roots_and_retry() {
+        let mut s = Session::new().unwrap();
+        for ty in [StorageType::I8, StorageType::I16, StorageType::ValType(ValType::I32)] {
+            let root = array(&mut s, ty, Mutability::Var, &[Val::I32(128), Val::I32(0xd800), Val::I32(-1)]);
+            let snapshot = s.capture_storage(&root).unwrap();
+            for checking in [false, true] {
+                let handles = s.stats().external_value_handles;
+                let cost = {
+                    let _request = s.operation_budget_scope().unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    let before = meter.store.get_fuel().unwrap();
+                    if checking { assert!(snapshot.matches(value, &mut meter).unwrap()); }
+                    else { drop(Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), immutable_members: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).unwrap()); }
+                    before - meter.store.get_fuel().unwrap()
+                };
+                assert!(cost > 0 && cost < 10_000);
+                for fuel in 0..cost {
+                    let _request = s.operation_budget_scope().unwrap();
+                    s.store.set_fuel(fuel).unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    let result = if checking { snapshot.matches(value, &mut meter).map(|x| assert!(x)) }
+                    else { Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), immutable_members: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).map(drop) };
+                    assert!(matches!(result, Err(SessionError::Trap(ref error)) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                }
+                let mut completed = false;
+                for cut in 0..200 {
+                    let _request = s.operation_budget_scope().unwrap();
+                    let irq = s.host_work_interrupt();
+                    let mut scope = RootScope::new(&mut s.store);
+                    let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+                    let mut meter = Meter::new(scope.as_context_mut(), &irq);
+                    meter.cancel_after = Some(cut);
+                    let result = if checking { snapshot.matches(value, &mut meter).map(|x| assert!(x)) }
+                    else { Capture { owner: s.identity, handles: s.handles.clone(), nodes: Vec::new(), immutable_members: Vec::new(), index: None,
+                        cuts: Vec::new(), cut_index: None, borrowed_cuts: None }.finish(value, &mut meter).map(drop) };
+                    match result { Ok(()) => { completed = true; break; }, Err(error) => assert!(error.is_interrupt(), "{error}") }
+                }
+                assert!(completed);
+                assert_eq!(s.stats().external_value_handles, handles);
+                assert!(s.storage_matches(&root, &snapshot).unwrap());
+            }
         }
     }
 }

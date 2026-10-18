@@ -1,0 +1,437 @@
+{
+  "verdict": "NO_COMMITTED_SOURCE_BLOCKER_FOR_PARTIAL_DRAFT_PUBLICATION",
+  "source": "4e21edfef1f61e39da563fbeeeb3abbf319e2793",
+  "source_boot_sha256": {
+    "crates/suss-compile/src/portable_session/storage_snapshot.rs": "cfc1a560d4d8b00cd3100b2b056f626b65d3fb15a4ed9df269bbe096fc0a2f84",
+    "runtime/bootstrap/macro.json": "5496556c540fe71432cd7f29fe1a93c95eade4b675db13cbf6303a6cc2286ac1",
+    "runtime/bootstrap/macro.wasm": "27522b6ff9349949f9fadd0ae60d9b786b759b43d26a5f1f4e32fbeaf39f537b",
+    "runtime/bootstrap/runtime.json": "a81949f3bfd84342d122ed1c28affabcbae6f57f3b071701e849390e09d21b0f",
+    "runtime/bootstrap/runtime.wasm": "9ea461b9c72971b779e2544c3b5f03fd06fd244d0824960cd980f3d33cbcb1c2"
+  },
+  "source_matches_reviewed_extra_test_variant": true,
+  "preservation_all3690_git_bindings": "Verified in preservation/independent-terminal-review.json",
+  "executions": {
+    "total": 131,
+    "passed": 121,
+    "failed": 10,
+    "ignored": 0
+  },
+  "distinct_full_names_and_source_definitions": {
+    "total": 128,
+    "passed": 119,
+    "failed": 9,
+    "ignored": 0
+  },
+  "repeats": {
+    "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo": [
+      "validation/source-child",
+      "preservation/source-child"
+    ],
+    "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations": [
+      "validation/callable",
+      "preservation/public-identity"
+    ],
+    "portable_macro_graph::source_roots::coherent::tests::coherent_later_callback_poisoned_fresh_authority_aborts_without_partial_publication": [
+      "preservation/strict-negatives",
+      "preservation/coherent-guards"
+    ]
+  },
+  "stages": [
+    {
+      "run": "validation",
+      "stage": "snapshots",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::storage_snapshot::i32_array_tests::i32_snapshot_all_fuel_and_irq_cuts_release_roots_and_retry",
+        "portable_session::storage_snapshot::i32_array_tests::i32_snapshot_mismatch_hooks_keep_order_value_error_and_root_guard",
+        "portable_session::storage_snapshot::i32_array_tests::i32_snapshot_packed_bits_empty_immutable_gc_and_replacement_match_generic_control",
+        "portable_session::storage_snapshot::i32_array_tests::i32_snapshot_reference_arrays_keep_atoms_cuts_and_membership_distinctions",
+        "portable_session::storage_snapshot::tests::adaptive_indexes_boundary_cycles_duplicates_and_wide_collisions_match_bfs",
+        "portable_session::storage_snapshot::tests::adaptive_node_and_cut_promotion_irq_is_atomic_and_recovers",
+        "portable_session::storage_snapshot::tests::borrowed_cut_boundaries_fuel_irq_unused_foreign_and_root_rejection_recover",
+        "portable_session::storage_snapshot::tests::borrowed_cuts_keep_snapshot_handle_accounting_and_owned_leaves_after_inputs_drop",
+        "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+        "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+        "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+        "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_compares_functions_not_only_their_signatures",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_covers_schema_and_reports_live_protocol_changes",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_owned_nodes_survive_external_type_and_module_drop",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_owner_check_precedes_any_foreign_root_access",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_float_bits_and_all_scalar_variants",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_rejects_opaque_payload_without_leaking_roots",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_reports_uid_warming_without_repairing_it",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+        "portable_session::storage_snapshot::tests::sparse_struct_const_edges_keep_descendants_cuts_membership_and_gc_identity",
+        "portable_session::storage_snapshot::tests::sparse_struct_small_capture_and_match_fuel_irq_failures_release_and_retry",
+        "portable_session::storage_snapshot::tests::sparse_struct_unsupported_const_reference_still_fails_before_publication"
+      ],
+      "failed_names": [],
+      "log_sha256": "389f82fc21142436d018723c7b62462c98a771cbe45bee2228477b9abc1a879a"
+    },
+    {
+      "run": "validation",
+      "stage": "source-child",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo"
+      ],
+      "failed_names": [],
+      "log_sha256": "7fb58b0cb1253ee75529399bcb66a80cc0397fbba027fae2e6a827749a2e5013"
+    },
+    {
+      "run": "validation",
+      "stage": "callable",
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "names": [
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "failed_names": [
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "log_sha256": "42176407040ab0057acf795dd437fd735c343aa1de61c5098cc4c0eb32d2fb0f"
+    },
+    {
+      "run": "preservation",
+      "stage": "growth",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::storage_snapshot::tests::sparse_struct_immutable_members_grow_preserve_membership_and_fail_atomically"
+      ],
+      "failed_names": [],
+      "log_sha256": "a27c6a4b9f378bc4032c52d6dc8222f961032b64f9e72e1f33d90dd3465bac12"
+    },
+    {
+      "run": "preservation",
+      "stage": "seed-and-method",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::canonical_methods::tests::fresh_seed_slot_every_direct_fuel_cut_is_typed_and_retryable",
+        "portable_session::canonical_methods::tests::fresh_seed_slot_interrupt_is_not_a_soft_mismatch_and_recovers",
+        "portable_session::canonical_methods::tests::fresh_seed_slot_preserves_strict_method_authority_and_exact_binding",
+        "portable_session::canonical_methods::tests::fresh_seed_slot_rejects_changed_key_owner_table_and_supplied_method",
+        "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+        "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+        "portable_session::canonical_seeds::tests::canonical_seeds_partial_capture_releases_roots_before_recovery",
+        "portable_session::canonical_seeds::tests::canonical_seeds_reject_mutation_before_a_bridge_can_observe_it",
+        "portable_session::canonical_seeds::tests::fresh_seed_hash_exception_does_not_excuse_prototype_or_other_protocol_poison",
+        "portable_session::canonical_seeds::tests::fresh_seed_method_data_fuel_irq_missing_authority_and_reset_do_not_certify",
+        "portable_session::canonical_seeds::tests::fresh_seed_method_data_preserves_pristine_membership_and_rejects_payload_poison"
+      ],
+      "failed_names": [],
+      "log_sha256": "73073afdddb07afce019e93b00c936bfbdf4c237cd5fcd405be62f1249ba43a0"
+    },
+    {
+      "run": "preservation",
+      "stage": "fresh-proof",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macro_graph::source_roots::fresh_source::tests::fresh_source_uncached_memo_keeps_value_and_sibling_but_rejects_poison_and_alias"
+      ],
+      "failed_names": [],
+      "log_sha256": "9c5b2aa941f115eef396a9ef055d07db43e2c99c642c105d6ebb5c8cfd93ccca"
+    },
+    {
+      "run": "preservation",
+      "stage": "prototypes",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::prototype_origin::tests::prototype_origin_binds_creator_descriptor_before_restore_and_generic_writes_do_not_mint",
+        "portable_session::prototype_origin::tests::prototype_origin_fuel_failures_recover_without_eager_getter_or_reconfiguration",
+        "portable_session::prototype_origin::tests::prototype_origin_is_default_off_and_custom_direct_facts_remain_usable",
+        "portable_session::prototype_origin::tests::prototype_origin_lazy_creation_and_copied_query_survive_gc_without_mint_export"
+      ],
+      "failed_names": [],
+      "log_sha256": "cc84aed8558894c1ce9682d57668d466e3d680c3999f82b85d6ce9b300246ea9"
+    },
+    {
+      "run": "preservation",
+      "stage": "strict-negatives",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macro_graph::source_roots::coherent::tests::coherent_later_callback_poisoned_fresh_authority_aborts_without_partial_publication",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_cold_canonical_child_inside_custom_parent",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_cold_named_field_helpers_and_shared_siblings",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_delegated_canonical_write_keeps_extent_and_write_time_proof",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_forced_gc_in_nested_protocol_scope",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_generic_writes_keep_exact_old_receipt_without_minting",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_nested_ihash_overrides_outer_receiver",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_payload_health_at_write_and_after_restore",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poststore_fuel_failure_publishes_none_and_recovers",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_private_raw_helpers_cannot_be_imported",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_throw_publishes_before_unwind_and_next_invocation",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unrecorded_watch_and_wrong_slot_never_mint",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+        "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+        "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+      ],
+      "failed_names": [],
+      "log_sha256": "40e9ea8ddcb53105f0cbb77faab396a2dff023ae382580135a7e8f1c214b3c40"
+    },
+    {
+      "run": "preservation",
+      "stage": "symbol-originals",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware"
+      ],
+      "failed_names": [],
+      "log_sha256": "f234e6949541bd36ab6a4581cc9fe763b11b870b287f89dedb99bf9fe15aa287"
+    },
+    {
+      "run": "preservation",
+      "stage": "keyword-and-effects",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware"
+      ],
+      "failed_names": [],
+      "log_sha256": "e7d3d3b165e84422e737a9af733b2efd7b3eaa89d069fed358bdbd96394db8b3"
+    },
+    {
+      "run": "preservation",
+      "stage": "replaced-hash",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "source_metadata_keeps_canonically_warmed_identity_after_hash_replacement",
+        "source_metadata_keeps_identity_with_a_replaced_hash_method"
+      ],
+      "failed_names": [],
+      "log_sha256": "947ca2bfa77dae486f42993704a186f962e708334c541843d9264e3cee1eff9d"
+    },
+    {
+      "run": "preservation",
+      "stage": "constructors",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::constructor_inputs::tests::checked_schema_cache_actual_constructor_stage_failures_do_not_publish",
+        "portable_session::constructor_inputs::tests::checked_schema_cache_fuel_irq_staging_rollback_and_retry",
+        "portable_session::constructor_inputs::tests::checked_schema_cache_retirement_failure_preserves_last_and_shared_owners_then_retries",
+        "portable_session::constructor_inputs::tests::checked_schema_cache_seventeen_roots_evict_without_rejecting_and_reset_is_foreign",
+        "portable_session::constructor_inputs::tests::checked_schema_cache_strict_hits_deep_mutation_distinct_roots_and_gc",
+        "portable_session::constructor_inputs::tests::checked_schema_private_roots_preserve_external_stats_failures_and_fact_lifetimes",
+        "portable_session::constructor_inputs::tests::constructor_inputs_bind_receiver_and_preconstruction_fields_after_gc",
+        "portable_session::constructor_inputs::tests::constructor_inputs_decline_special_identity_and_preserve_shared_budget",
+        "portable_session::constructor_inputs::tests::constructor_inputs_follow_padding_extras_duplicate_names_and_live_schema",
+        "portable_session::constructor_inputs::tests::constructor_inputs_reject_properties_and_uid_changes_without_field_changes",
+        "portable_session::constructor_inputs::tests::fresh_data_classification_never_mints_memo_or_accepts_other_mutations",
+        "portable_session::constructor_inputs::tests::private_constructor_route_rejects_actual_guest_argument_escape"
+      ],
+      "failed_names": [],
+      "log_sha256": "94a330b0e0fb7bff0e49cb9eec74b2ac27ade688f97dae4f04c3ccd7daf52630"
+    },
+    {
+      "run": "preservation",
+      "stage": "source-child",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo"
+      ],
+      "failed_names": [],
+      "log_sha256": "84689b7b3e772172541ee7af4a1d19f527ea2e3499c20003f1d7c32279d2e873"
+    },
+    {
+      "run": "preservation",
+      "stage": "pinned-map",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "pinned_map_declaration_executes_without_transport_loss"
+      ],
+      "failed_names": [],
+      "log_sha256": "8751d69f98b01dbf37f0df1c9fd5985821573e984d5b5cb216321bed8b1e4442"
+    },
+    {
+      "run": "preservation",
+      "stage": "cljs-observations",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+        "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+        "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers",
+        "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+      ],
+      "failed_names": [],
+      "log_sha256": "9ff2bc8b6ffcaba009b88a1122cef6809327ed9d525365ac65ceb3592aa74696"
+    },
+    {
+      "run": "preservation",
+      "stage": "core-import",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "bootstrap_nil_test_captures_values_across_fragments_and_loop_edges",
+        "bootstrap_nil_test_evaluates_once_and_propagates_exceptions",
+        "imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload",
+        "imported_boolean_port_arguments_run_once_before_arity_errors",
+        "imported_boolean_ports_keep_original_behavior_and_canonical_live_bindings",
+        "imported_boolean_ports_use_cljs_truthiness_for_primitives_and_objects",
+        "imported_core_aliases_and_captured_function_observe_live_redefinition",
+        "imported_core_matches_independently_decoded_pinned_scalar_corpus",
+        "imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity",
+        "imported_identity_preserves_exact_values_and_object_identity_across_gc",
+        "imported_inc_dec_alias_calls_capture_callee_before_mutating_operand",
+        "imported_inc_dec_array_conversion_and_unsupported_objects_recover",
+        "imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover",
+        "imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings",
+        "imported_some_distinguishes_nil_from_false_and_survives_gc",
+        "imported_some_evaluates_arguments_once_before_arity_error",
+        "imported_some_ignores_redefined_predicate_and_not_vars"
+      ],
+      "failed_names": [],
+      "log_sha256": "fc2374822d9227198bdabbe3c915b109edce97a936a64a6c94e3b977e2a19080"
+    },
+    {
+      "run": "preservation",
+      "stage": "public-identity",
+      "passed": 0,
+      "failed": 2,
+      "ignored": 0,
+      "names": [
+        "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "failed_names": [
+        "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "log_sha256": "ed8b0f9a5d0c418744eafce294a06d3cea37e2277d9f0cc749c671c4b52352aa"
+    },
+    {
+      "run": "preservation",
+      "stage": "coherent-guards",
+      "passed": 12,
+      "failed": 6,
+      "ignored": 0,
+      "names": [
+        "portable_macro_graph::reuse::retirement_tests::legacy_cache_retirement_is_atomic_and_not_sustained_by_its_own_native_references",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_changed_initial_class_authority_declines_before_any_construction_callback",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_current_child_owner_ordinals_reject_equal_reference_swaps_missing_and_extra",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_entrypoint_retains_raw_and_params_but_keeps_resolved_outer_fresh_after_gc",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_fuel_and_irq_failures_publish_no_partial_cache_then_retry",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_genuine_revision_distinguishes_equal_source_and_rejects_foreign_and_reset_handles",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_later_callback_poisoned_fresh_authority_aborts_without_partial_publication",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_later_reader_callback_rebinds_poisoned_old_raw_params_without_repair_or_replay",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_legacy_metadata_cache_snapshots_do_not_pin_native_revision_or_initializer_graph",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_locals_conflicting_nodes_and_reader_occurrences_still_decline_whole_plan",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_locals_repeated_owner_requires_exact_native_map_and_preserves_outer_context",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_native_alias_requires_exact_certified_child_not_equal_content_root",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_obsolete_revisions_retire_despite_cached_aliases_but_live_snapshots_survive",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_publication_preparation_is_atomic_at_every_fuel_irq_cut",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_reader_before_every_source_alias_preserves_original_effect_order",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_repeated_locals_views_preserve_reader_hash_effect_order_against_original_route",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_stack_population_prepays_every_fuel_irq_cut_with_reused_capacity",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_symbol_key_witnesses_cover_real_locals_defs_without_relaxing_duplicates_or_metadata"
+      ],
+      "failed_names": [
+        "portable_macro_graph::source_roots::coherent::tests::coherent_current_child_owner_ordinals_reject_equal_reference_swaps_missing_and_extra",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_entrypoint_retains_raw_and_params_but_keeps_resolved_outer_fresh_after_gc",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_later_reader_callback_rebinds_poisoned_old_raw_params_without_repair_or_replay",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_native_alias_requires_exact_certified_child_not_equal_content_root",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_reader_before_every_source_alias_preserves_original_effect_order",
+        "portable_macro_graph::source_roots::coherent::tests::coherent_repeated_locals_views_preserve_reader_hash_effect_order_against_original_route"
+      ],
+      "log_sha256": "80c7ceddb3cb020e43ace2ef09675e45f2c46a0afe3687cf5fde0a5cee6fa09a"
+    },
+    {
+      "run": "preservation",
+      "stage": "initializer",
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "names": [
+        "definition_initializer_plan_preserves_metadata_quote_barriers_and_source_values"
+      ],
+      "failed_names": [
+        "definition_initializer_plan_preserves_metadata_quote_barriers_and_source_values"
+      ],
+      "log_sha256": "a674dbb47bcc5f90f0dccdb95dd7b2363b100849cff2be9e88721c65fcf1371e"
+    },
+    {
+      "run": "preservation",
+      "stage": "prototype-extra",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "names": [
+        "portable_session::prototype_origin::certification_audit_tests::audit_prototype_uses_all_twelve_fields_and_survives_gc",
+        "portable_session::prototype_origin::prototype_buffer_tests::prototype_buffer_all_charge_boundaries_irq_retry_and_scoped_roots",
+        "portable_session::prototype_origin::prototype_buffer_tests::prototype_buffer_late_null_precedes_early_reference_mismatch",
+        "portable_session::prototype_origin::prototype_buffer_tests::prototype_buffer_real_origins_survive_gc_and_reject_mutated_key"
+      ],
+      "failed_names": [],
+      "log_sha256": "3a9e0280abbedccff4ded3b2e11d3b19e1511c5be194cebdcc1e2d1ab0e82c78"
+    }
+  ],
+  "failed_names": [
+    "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+    "definition_initializer_plan_preserves_metadata_quote_barriers_and_source_values",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_current_child_owner_ordinals_reject_equal_reference_swaps_missing_and_extra",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_entrypoint_retains_raw_and_params_but_keeps_resolved_outer_fresh_after_gc",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_later_reader_callback_rebinds_poisoned_old_raw_params_without_repair_or_replay",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_native_alias_requires_exact_certified_child_not_equal_content_root",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_reader_before_every_source_alias_preserves_original_effect_order",
+    "portable_macro_graph::source_roots::coherent::tests::coherent_repeated_locals_views_preserve_reader_hash_effect_order_against_original_route",
+    "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+  ],
+  "map": {
+    "ordered_assertions": 69,
+    "all_guest_verdicts_pass": true,
+    "skips": 0,
+    "failures": 0,
+    "host_independent_split": "62host/7guest is previously reported; not rederived by this final raw-verdict check"
+  },
+  "initializer": {
+    "runtime": "Fuel in caller &env input transport span1..39 before observations",
+    "macro": "UNEXECUTED",
+    "historical_regression": "Prior P010/fd passed;239 unexecuted;25b4 already failed. Not a new sparse-candidate failure; not fixed."
+  },
+  "limitations": [
+    "Initial validation and later extra-test preservation have distinct test-source/BOOT variants; no single final-commit claim for all131 executions. Production prefix identical and prior source review retained.",
+    "Eight other distinct failures: both public routes fuel with no identity rows, six candidate coherent guards fuel; these guards are not inherited passing base behavior.",
+    "Extra fixture still no exhaustive all-public-wrapper fuel/IRQ/retirement matrix; sampled fuel and internal capture charge cancellation only.",
+    "Public changed backtraces retained; raw JSON not equal to control.",
+    "No full workspace baseline, final-head CI success, readiness, promotion, closure or merge claim.",
+    "Final docs/archive commit scope and manifests require separate publication review."
+  ]
+}

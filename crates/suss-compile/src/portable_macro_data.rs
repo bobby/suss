@@ -24,6 +24,7 @@ macro_rules! materialize_observed {
         result
     }};
 }
+pub(crate) use materialize_observed;
 
 pub(crate) fn normalized_reader_metadata(
     session: &mut Session,
@@ -487,18 +488,8 @@ impl FormBridge {
             if let (Some(log),Some(selected))=(&self.private_slots,selected) {log.borrow_mut().capture_nominal(session,&value,&selected)?;}
             return Ok(value);
         }
-        if self.recording.is_some() {
-            let (value, fact) = materialize_observed!(session, "constructor-and-native-fact", session.data_construct_with_inputs(class, arguments))?;
-            let fact = match fact {
-                Some(fact) => {
-                    crate::portable_session::construction_records::Fact::constructor(session, fact)?
-                }
-                None => crate::portable_session::construction_records::Fact::ExternalSeed(
-                    "special constructor",
-                ),
-            };
-            self.record(session, &value, fact)?;
-            Ok(value)
+        if let Some(records) = &self.recording {
+            session.recording_constructor(class, arguments)?.record(records)
         } else {
             session.data_construct(class, arguments)
         }

@@ -1,0 +1,32 @@
+{
+  "verdict": "NO_BLOCKING_SOURCE_FINDING",
+  "source_commit": "9d2f19476959bc573c336871c746cbf9754adb19",
+  "scope": "Final committed source rebind only; prior full production review retained. No readiness, closure, or full acceptance approval.",
+  "sha256": {
+    "crates/suss-compile/src/portable_session/canonical_methods.rs": "f49658b28f2d5694de9d394a4087e36c79f5ecbc964e60345b87f7e764aa957c",
+    "crates/suss-compile/src/portable_session/canonical_seeds.rs": "a645cdc699bbeb31152d89d211775dcdbe45c419a3368aaba9c5ace5348a7a31",
+    "crates/suss-compile/src/portable_session/construction_records.rs": "6019cff5f096f2412174e5e477562b5b19317489dfb6af2bc6173ec16d63ddfd",
+    "runtime/bootstrap/macro.json": "1830455b5f5586c123bf286d432ed620976cf7d4ca06558d2fdb36f9012fb789",
+    "runtime/bootstrap/macro.wasm": "7646cedfa3bfb535bd1eb31fe7b3fad839a4c921ae60beb0c8f463c9b2a4e3ac",
+    "runtime/bootstrap/runtime.json": "bae94ae6511a8ae5720e5fa997e8e946b032a58d7e4f958b2487b3d196d0ec98",
+    "runtime/bootstrap/runtime.wasm": "136bd5e0732dc726a755838fad9afe695e91e0af2832562c415387f3cfaf595c"
+  },
+  "checks": {
+    "canonical_methods_matches_reviewed_v1": true,
+    "construction_records_matches_reviewed_v1": true,
+    "canonical_seeds_production_prefix_matches_reviewed_v1": true,
+    "canonical_seeds_exact_reviewed_fixture_with_ref_eq_correction": true
+  },
+  "test_correction": "Remove extra reference from found.unwrap_anyref().unwrap(); explicit Rooted::<AnyRef> type qualification. Test-only; production unchanged.",
+  "terminal_evidence": {
+    "receipt": "/home/bobby/.cache/suss-m4-work/pr271-fresh-seed-validation/extra-receipt.json",
+    "terminal": true,
+    "identity_exit": 0,
+    "extra_test_summary": "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 512 filtered out; finished in 42.81s",
+    "stages_changed": []
+  },
+  "limitations": [
+    "No tests/builds run by reviewer.",
+    "This bounded receipt does not replace full publication archive/document review."
+  ]
+}

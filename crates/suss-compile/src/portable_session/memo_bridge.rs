@@ -180,6 +180,19 @@ impl Watch {
         Ok(Some(Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)))))
     }
     pub(super) fn slot(&self) -> usize { self.slot }
+    // Fresh transport may expose a guest's mutable numeric memo as data. This
+    // recognizes only a registered originally-nil slot; it never creates a
+    // receipt or makes that value eligible for retained-source reuse.
+    pub(super) fn fresh_memo_data(
+        &self, mut store: StoreContextMut<'_, ()>, index: usize, value: &Val,
+        irq: &AtomicBool,
+    ) -> wasmtime::Result<bool> {
+        Session::consume_host_work(store.as_context_mut(), 4, irq)?;
+        if !self.eligible_transition || index != self.slot { return Ok(false); }
+        Session::consume_host_work(store.as_context_mut(), 8, irq)?;
+        Ok(bits(store.as_context_mut(), value, &self.number_type)?.is_some())
+    }
+
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool, SessionError> {
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
@@ -378,6 +391,8 @@ pub(super) fn install(
     let setter = runtime.get_func(&mut *store, "macro-memo-field-set")
         .or_else(|| runtime.get_func(&mut *store, "object-field-set"))
         .ok_or_else(|| wasmtime::Error::msg("Missing canonical memo setter"))?;
+    let scoped_setter = runtime.get_func(&mut *store, "object-field-set")
+        .ok_or_else(|| wasmtime::Error::msg("Missing scoped memo setter"))?;
     let ty = FuncType::new(store.engine(), [ValType::Ref(RefType::EQREF), ValType::I32,
         ValType::Ref(RefType::EQREF)], []);
     let bridge = Func::new(&mut *store, ty, move |mut caller, arguments, _results| {
@@ -396,6 +411,8 @@ pub(super) fn install(
         };
         let mut candidates = Vec::new();
         let mut proof_receivers = None;
+        Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
+        let mut scoped_route = false;
         if let Some(authority) = authority.as_ref() {
             for index in 0..count {
                 Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
@@ -406,7 +423,18 @@ pub(super) fn install(
                 if !(nil(&caller.as_context_mut(), &current)? ||
                     watch.authenticated(caller.as_context_mut(), &current, &interrupt)?) { continue }
                 let Some(bits) = bits(caller.as_context_mut(), &arguments[2], &watch.number_type)? else { continue };
-                if watch.canonical(caller.as_context_mut(), runtime, authority, &interrupt)? {
+                let canonical = watch.canonical(caller.as_context_mut(), runtime, authority, &interrupt)?;
+                Session::consume_host_work(caller.as_context_mut(), 1, &interrupt)?;
+                if !canonical {
+                    // A replacement may delegate to the genuine implementation.
+                    // Scope selects the ordinary physical-store hook; only that
+                    // hook's exact receiver and complete pre/post domain proof
+                    // can authorize this write. No new canonical authority.
+                    Session::consume_host_work(caller.as_context_mut(), 5, &interrupt)?;
+                    scoped_route |= observer.as_ref().is_some_and(|observer| observer.has_scope());
+                    continue;
+                }
+                {
                     reserve_candidate(caller.as_context_mut(), &mut candidates, &interrupt)?;
                     Session::consume_host_work(caller.as_context_mut(), std::mem::size_of::<Receipt>() as u64 + 1, &interrupt)?;
                     let value = {
@@ -428,6 +456,10 @@ pub(super) fn install(
         }
         // Exact ordinary setter, including the original language exception and
         // pending-exception state. Failure publishes no staged receipt.
+        // Never combine outer canonical publication with scoped publication,
+        // including when duplicate watches refer to the same physical receiver.
+        Session::consume_host_work(caller.as_context_mut(), 3, &interrupt)?;
+        let setter = if scoped_route && candidates.is_empty() { scoped_setter } else { setter };
         setter.call(&mut caller, &[arguments[0].clone(), Val::I32(field as i32), arguments[2].clone()], &mut [])?;
         for (watch, receipt, valid) in &mut candidates {
             Session::consume_host_work(caller.as_context_mut(), 8, &interrupt)?;

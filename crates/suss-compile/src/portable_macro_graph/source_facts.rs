@@ -15,9 +15,12 @@ use crate::{
 };
 use suss_reader::forms::{Form, Kind};
 
+pub(super) mod shared;
+
 pub(crate) struct LogicalSourceWitness {
     // Built only from immutable native source; never refreshed from a guest read.
     expected: Form,
+    shared: Option<std::rc::Rc<shared::Node>>,
     small_unordered: bool,
 }
 
@@ -151,13 +154,29 @@ fn keyword_equal(
     };
     Ok(namespace && text_equal(session, a.name.as_bytes(), b.name.as_bytes())?)
 }
-fn scalar_key(form: &Form, map: bool) -> bool {
-    match form.kind {
+fn scalar_key(session: &mut Session, form: &Form, map: bool) -> Result<bool> {
+    Ok(match &form.kind {
         Kind::String(_) | Kind::Keyword(_) => true,
+        Kind::Symbol(symbol) => {
+            // Contract: pinned c4295f3 core.cljs Symbol IEquiv compares str,
+            // excluding metadata (imported core.sus retains the same method).
+            // Compiler locals/defs use Symbol keys. Admit only a canonical
+            // namespace/name decomposition, so the text locator is injective
+            // with respect to the live Symbol's FQN equality. This is logical
+            // source admission ONLY; no physical/memo/domain proof is supplied.
+            let bytes = symbol.name.len().checked_add(symbol.namespace.as_ref().map_or(0, String::len))
+                .and_then(|n| n.checked_add(3)).and_then(|n| u64::try_from(n).ok())
+                .ok_or_else(|| crate::portable_session::SessionError::Host(wasmtime::Error::msg("Symbol key scan overflow")))?;
+            session.charge_host_work(bytes)?;
+            !symbol.name.is_empty() && match &symbol.namespace {
+                Some(ns) => !ns.is_empty() && !ns.contains('/'),
+                None => symbol.name == "/" || !symbol.name.contains('/'),
+            }
+        }
         Kind::Nil | Kind::Bool(_) => !map,
         Kind::Number(value) => !map && value.is_finite(),
         _ => false,
-    }
+    })
 }
 fn key_equal(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
     session.charge_host_work(1)?;
@@ -169,6 +188,16 @@ fn key_equal(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
         (Kind::Number(a), Kind::Number(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => text_equal(session, a, b)?,
         (Kind::Keyword(a), Kind::Keyword(b)) => keyword_equal(session, a, b)?,
+        (Kind::Symbol(a), Kind::Symbol(b)) => {
+            // Metadata is excluded only for key location/duplicate detection.
+            // The full paired comparison below still compares actual metadata.
+            let namespace = match (&a.namespace, &b.namespace) {
+                (None, None) => true,
+                (Some(a), Some(b)) => text_equal(session, a.as_bytes(), b.as_bytes())?,
+                _ => false,
+            };
+            namespace && text_equal(session, a.name.as_bytes(), b.name.as_bytes())?
+        }
         _ => false,
     })
 }
@@ -231,7 +260,7 @@ fn unambiguous(session: &mut Session, form: &Form) -> Result<bool> {
             let stride = if map { 2 } else { 1 };
             for index in (0..values.len()).step_by(stride) {
                 session.charge_host_work(1)?;
-                if !scalar_key(&values[index], map) {
+                if !scalar_key(session, &values[index], map)? {
                     return Ok(false);
                 }
                 for previous in (0..index).step_by(stride) {
@@ -404,7 +433,20 @@ impl LogicalSourceWitness {
             return Ok(None);
         }
         let small_unordered = small_unordered(session, &expected)?;
-        Ok(Some(Self { expected, small_unordered }))
+        Ok(Some(Self { expected, small_unordered, shared: None }))
+    }
+    pub(super) fn from_shared(
+        session: &mut Session, expected: std::rc::Rc<shared::Node>,
+    ) -> Result<Option<Self>> {
+        session.charge_host_work(3)?;
+        if let Some(error) = expected.error() {
+            return Err(crate::portable_session::SessionError::Host(wasmtime::Error::msg(error)));
+        }
+        if !expected.admitted() { return Ok(None); }
+        // The legacy Form is unused on this private tagged path. Existing native
+        // Form callers retain their original representation and comparisons.
+        Ok(Some(Self { expected: Form { span: 0..0, metadata: vec![], kind: Kind::Nil },
+            small_unordered: expected.small(), shared: Some(expected) }))
     }
     pub(crate) fn matches_logical_source(
         &self,
@@ -416,6 +458,9 @@ impl LogicalSourceWitness {
         let (actual, source_valid) = bridge.read_finite(session, value)?;
         if !source_valid {
             return Ok(false);
+        }
+        if let Some(expected) = &self.shared {
+            return shared::matches(session, expected, &actual);
         }
         if self.small_unordered {
             return paired_logical_equal(session, &self.expected, &actual);

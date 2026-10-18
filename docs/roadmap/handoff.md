@@ -29910,6 +29910,30 @@ The overlapping runs are not additive coverage. These are failing baselines,
 not readiness evidence; next source corrections need focused execution before
 a new required baseline and passing final-head CI.
 
+
+## Coherent retention on the current compiler base
+
+This candidate ports the reviewed V5 coherent source controller onto source
+`ae28db396ee3050dedca812ff6993d7998e3e27f` (compiler8a plus evidence).
+The three-way merge retains current primitive/bitwise/property-probe and
+dense/sparse materialization improvements. Its sole textual conflict is the
+materializer signature: keep the current control mutability and carry the
+private SourceSelection interface through both dispatcher and indexed helper.
+
+On the separate older be940 source, V5 normal bootstrap passed and17 guards
+returned12 passes/five fuel failures. Retirement and exact-node locals checks
+passed; four previously declined cases reached fuel failures. The new reader
+callback comparison failed in its ORIGINAL route before its coherent arm. Both
+unchanged callable/namespace CLI probes remained unexecuted. That result does
+not establish this newer-base candidate's outcome or the full identity contract.
+
+Before Session checks, run the normal bootstrap command:
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`.
+Then execute all17 coherent/legacy retirement guards, followed conditionally by
+the unchanged exact callable and namespace probes. Keep default allowances,
+all observations and metering. Current shipped bootstrap bytes are still the
+base dependencies until regeneration. No candidate execution, net saving,
+passing baseline/CI or integration readiness is established here.
 # Sparse-array setter focused evidence
 
 Tested source commit `290e20eb8fa925d3e00faf99def0d4b7388aa684` is ae28 plus the two reviewed source files and four normally regenerated BOOT artifacts. The setter reuses its complete first validation and performs one ordered sparse search; validation coverage and write order are retained.
@@ -29951,6 +29975,63 @@ Commands use CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic
 Full workspace command cargo test --workspace --locked -- --test-threads=2 remains required before promotion; it was not run for this partial update because focused acceptance still fails. No issue closure, full M4 completion or CI success claimed. Next: independent committed-head review, publish to existing Draft268 with Refs270, obtain exact-head CI and continue the remaining actual fuel/identity fixes. Raw source-bound evidence is linked in docs/roadmap/evidence/m4-source-boundary-index-2026-10-18.md.
 
 
+## Original public identity probes on coherent retention — 2026-10-18
+
+The isolated coherent candidate now includes production b846's compact captures and sparse setter at integration source0f7c81a. Both original public CLI probes actually execute with unchanged fixtures and default allowances: callable has six caller-&env fuel errors/no rows; namespace fails its first lexical call in both phases. Index4 passes. The b846 production control decodes all six callable rows but has four semantic mismatches (raw declaration and saved raw/resolved params), so candidate transport exhaustion is a regression in execution reach.
+
+Admission traces show8,249,382 units in completed expectation-projection intervals before the next fails. Sourceb1bfd86 reserves bounded child arities after first successful delivery; no tariff/quota/callback or proof changes. Native differential3 passes:45 separate projections6,500,173 legacy versus1,678,385 current, including earlier optimizations. Original callable still has six fuel errors/no rows, but completes admission with266,026–270,403 left. Namespace is unexecuted on b1bfd86. The reader-before-alias guard fails in its original-route control before coherent/effect assertions; initial zero-test exact filter and corrected one-test failure are both retained. All3651frozen inputs per variant stay unchanged and resolve to their tested source commits.
+
+Normal bootstrap regeneration/identity pass; exact commands, source/BOOT, raw positive/negative outcomes and independent merge/capacity reviews are in [the report](evidence/m4-coherent-identity-acceptance-2026-10-18.md) and its archive. No new oracle, full baseline, CI, issue closure, promotion or adoption is established. This experiment stays separate from Drafts263/268. Next implementation direction is a reviewed shared immutable native witness DAG keyed by exact recipe IDs, preserving normalization/error checks, metering, full guest validation, source authority and callback order. Its design obligations are archived; it has not been implemented.
+
+
+## Shared immutable native witnesses — 2026-10-18
+
+Source d781cdb shares completed native syntax by exact recipe ID across captured roots/export, without sharing a guest validation verdict. Native5 passes; exact44roots+export match the old projector and source/meta/number/UTF16/error outcomes. The45 projections cost196,791 in one default-budget operation versus1,678,385 in separate old native operations. Both original default-budget public identity tests still fail before decoded rows. Callable admission now leaves9.224–9.228M instead of0.266–0.270M; construction/certification still exhausts fuel. This is a prefix measurement, not total request success.
+
+Coherent17 guards return11PASS/6fuelFAIL; extra legacy retirement passes. Including native5 and public2,25selected Rust tests return17PASS/8fuelFAIL/0ignored. All3656frozen acceptance inputs stay unchanged and bind to source/BOOT d781cdb. Historical five failed guard names remain; the additional reader-before-alias failure was already known on b1bfd86. Both reader comparisons fail in their original-route controls before coherent/effect assertions. No old passed test name becomes failed in this historical comparison, which is not matched causal evidence.
+
+[The report](evidence/m4-shared-native-witnesses-2026-10-18.md) retains commands, source/bootstrap, exact source tuples, failures, unknowns and reviews. Normal bootstrap-v2 and identity pass; earlier failed compiler checks/bootstrap are qualified. No new oracle/full-baseline/CI/closure/promotion/adoption is established. Production drafts stay unchanged. Next: isolate constructor versus certificate-finalization work in the unchanged public requests, preserving complete live and postcallback proofs.
+
+
+## Coherent construction attribution — 2026-10-18
+
+The optional stage diagnostic and unchanged callable probe localize all six current default-budget failures before final coherent certification: 45 completed source-root constructions debit8.267–8.318M, then boundary23/native map94 exhausts fuel. Completed identifier dispatches211/80exactrecipeIDs debit3.190–3.203M; completed map dispatches1.661–1.678M. These are completed-prefix, nested-scope measurements, not additive total-operation estimates or permission to reuse mutable guest objects. The failing map's full cost remains unknown.
+
+Normal bootstrap/identity pass. One selected public test repeats twice diagnostically: each0PASS/1fuelFAIL/0ignored, six errors/no decoded rows; both public JSON receipts equal the prior shared-witness receipt exactly. All3658during-run tracked hashes stay unchanged, with no pre-run whole-tree freeze claim. No namespace/guard/oracle/full-baseline/CI/adoption/closure result. Commands, limitations, exact source/BOOT and independent review are retained in [the attribution report](evidence/m4-coherent-construction-stages-2026-10-18.md). The first Runtime identifier subtotal attributes1.700332M to domain enrollment,0.717413M to construction/native facts,0.602756M to ledger publication and0.135210M to scalar/native facts; these are nested inside3.202615M and are not additive to it. Next: investigate repeated source-domain enrollment/capture and native map94 live hash/construction costs before changing final certification. Continue on the existing shared-witness experiment; no new branch.
+
+
+## Boxed construction facts on the coherent candidate — 2026-10-18
+
+Sourcef9c8bc1 boxes large Array/Constructor fact owners with separately prepaid allocation/move and bounded Box release; page/pending-vector charges follow actual smaller slots. No factory/source/storage/memo checks or quotas changed. New fuel/IRQ owner-cleanup test passes in both phases and both payload kinds; full focused ownership/deferred/domain/seed cohort25/25passes. Standalone new-test repeat adds no unique coverage. Both original public probes still fuel-fail, giving25PASS/2FAIL/0ignored across27unique selectedtests; all3660tracked pre-run hashes remain unchanged. Bootstrap/identity pass; initial E0499/fixed check retained.
+
+Every callable request completes49rather than45source roots. The exact ordered first45construction intervals remove594802–594828units including new Box costs; later boundary1 still exhausts fuel before finalization, so this is no full-request success. Commands, source/BOOT, raw failures, matched comparison and independent reviews are in [the candidate report](evidence/m4-boxed-construction-facts-2026-10-18.md). No new oracle/full-baseline/CI/closure/coherent adoption. Next: finish isolated five-file transplant validation on production Draft268; its base and BOOT remain a separate tuple. No new branch.
+
+
+## Terminal boxed-fact CI and owned-node-type experiment — 2026-10-18
+
+Production010e8d1 exact CI39108881680 terminates FAILURE: foundation541RustPASS/1existingignore plus353PythonPASS/bootstrap; integrations111PASS/14fuelFAIL. All14failednames/spans/stages matchb846 within the same30completed/259planned integration targets;229unexecuted targets remain unknown. Nine actualcheckout SHAs match010e8d1. Raw terminal evidence is in [the audit](evidence/m4-pr268-010e-terminal-ci-2026-10-18.md). No CI success, broad regression-free or closure claim.
+
+An atom-alignment trial is rejected: Atom stays48bytes and allsix matched49constructor totals exactly equalf9c8bc1. Its native bit test passes but V128-specific fee-cut tests remain unexecuted; no adoption. Five dirty source/BOOT files, patch and34PASS/8fuelFAIL across42unique selectedtests are preserved in [the negative report](evidence/m4-rejected-atom-layout-2026-10-18.md); trial files restored before the next change.
+
+Separate sourcea504e95 removes retained per-node intrinsic type wrappers, relying on exact captured GC identity while retaining kind/count/value and independent source/class/prototype/memo checks. Locked49.0.1 primary/source review and new host/guest type/module-drop, replacement, mutation and GC test pass. Fullsnapshot21PASS, sourcechild1PASS, coherent/legacy12PASS6fuelFAIL and public2fuelFAIL yield34PASS/8FAIL/0ignored across42unique cases. Standalone new test overlaps21. Node136→88bytes; matchedfirst49constructors remove210422–215421units; allsix requests complete51roots then failboundary26 before finalization. All3662frozen tracked hashes stable. [Source-bound report](evidence/m4-snapshot-owned-types-2026-10-18.md) retains exact commands/BOOT, failures, unknowns and reviews. No new oracle/full-baseline/CI or production adoption. Next: source-bound review and isolated production validation, then remaining actual construction/identity repairs at unchanged allowances. No new branch, closure, promotion or merge.
+
+## Coherent construction attribution — 2026-10-18
+
+Unchanged source2d2275bc with existing metadata/materialization trace flags executes the original default-budget callable probe: exit101/oneRustFAIL; sixrequests each complete51roots then exhaustboundary26, no export/finalization/identityrows. All3668tracked hashes stay unchanged/Git-bound; public JSON exactly matches the previous owned-type candidate. This is separate from productionfd78441/Draft268.
+
+Firstrequest completedconstruction prefix9,205,330units: domain-enrollment3,637,122 is the largest aggregate bridge-call bucket; hash1,787,629 is another disjoint bridge-call bucket. Nested constructor snapshot1,270,143/prototype1,161,447 must not be added to enrollment. Largestboundary23 costs1,037,471;18hashes692,058. Nested hashdomain buckets leave407,064unattributedunits, not pureguest cost. These are measured costs, not removable-work claims.
+
+[Report and exact raw diagnostic](evidence/m4-coherent-construction-partition-2026-10-18.md) retain command/env/parser/sourcefreeze/negative receipts and independent review. No budgets or observations change; no new upstream oracle/fullbaseline/CIpass. Next: partition existing enrollment and residual hash labels to choose an actual work-removing fix; avoid another small representation experiment without attribution. Fullbaseline remains cargo test --workspace --locked -- --test-threads=2 after focused acceptance, with independent final-head review and CI before promotion.
+
+## Fixed prototype inspection buffers and production CI — 2026-10-18
+
+Candidate sourcea09ed87 replaces four temporary12/2-value Vec backings with prepaid stack arrays; persistent ownership, guard/read order, fresh origin queries and complete mutable storage/prototype checks remain. Normalbootstrap/identityPASS. Two captured focused drivers execute34uniqueRust:26PASS/8fuelFAIL/0ignored, all3670tracked hashes unchanged and Git-bound. Prototype8, complete source-child1, coherent12/18, CLJS/decoder4 and originalJankmap1 pass; public2 and coherent6 failfuel. Map69orderedIDs retain62host/7guest at existing200M. FourpinnedCLJScases match bothphases afterGC; no newupstreamoracle.
+
+Matched51-root callable prefixes use183804–183816fewerunits; allsix default requests still failconstruct26 beforeexport/finalization, no rows. Four rawerrorstrings gain guestbacktraces; do not claimreceipt equality. Namespace firstcall caller-&env46..82 fails bothphases. Fourcoherent failures occur during setup/materialization; twooriginalreadercontrols fail beforecoherent/effectarms. Existingbuffer cuts are not exhaustivecuts of the newgenerichelper. No productionadoption or identitysuccess.
+
+Exactcommands/sourceBOOT/freezes/rawpositive-negative/control/review evidence: [candidate report](evidence/m4-prototype-stack-arrays-2026-10-18.md). Drivers use sharedtarget/jobs1/Rayon1/inheritedRUSTFLAGS; normalbootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity python3 scripts/verify_bootstrap_identity.py. A retained conditional opaque-sidepool model shows ordinary growth adds47472allocation units beforeothercosts on the priortrace; it is unimplemented, not a measuredoptimization.
+
+Productionfd78441 [terminalCI](evidence/m4-pr268-fd78441-terminal-ci-2026-10-18.md) fails:542RustPASS/1existingignore+353Python foundation, integration111PASS/14fuelFAIL. Same14names/stages/spansas010e;30/259targets terminal,229unexecuted. Ninecheckoutproofs bind thehead, not perjobsourcefreezes. Keep this separate from candidate localexecution. Required fullbaseline cargo test --workspace --locked -- --test-threads=2 remains unexecuted oncandidate whilefocusedacceptancefails. Next: remove actual enrollment/snapshot/prototype work with complete validation/callback checks, then fullbaseline and passingfinalheadCI; no closure/promotion/merge.
 ## Boxed construction facts on production source — 2026-10-18
 
 Source014e0f0 extracts only five reviewed Rust changes plus four normally regenerated BOOT files onto b846; no coherent/shared-witness/native-field experiment is adopted. Array/constructor facts move intact into separately prepaid boxes, reducing actual ledger/pending-vector allocation and relocation. Full focused selection executes57unique Rust tests:53PASS/4FAIL/0ignored. Ownership25, capture4, complete source-child1, core-import17, pinned CLJS/decoder4 and pinned-map1 pass. Public identity2 fail semantically; collection-source remains1PASS/2fuelFAIL at40M851..882 invocation/default10M510..531 caller-&env. All3635tracked pre-run hashes stay unchanged, including251Jank vendor files.
@@ -29968,3 +30049,53 @@ The frozen production driver executes78unique Rust tests:74PASS/4FAIL/0ignored. 
 Complete source-child retains220events/allfive variants/bothphases/physical-memo tail. It leaves502185rather than508962fuel perphase:6777more units spent. Keep this adverse whole-request tradeoff; separate coherent constructor-prefix savings are not production measurements and are not offset against it.
 
 Commands: normal bootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; python3 scripts/verify_bootstrap_identity.py; exact focused argv, trace overrides, source/bootstrap bytes and raw failures in [the report and archive](evidence/m4-pr268-owned-types-2026-10-18.md). Environment uses the shared m4-cost-diagnostic-target, jobs1/Rayon1 and inherited RUSTFLAGS. Full cargo test --workspace --locked -- --test-threads=2 remains required before promotion and unexecuted on this head while focused acceptance fails. Previous010e CI failed; no new-head CI success, closure or promotion. Next: publish to existing Draft268, obtain exact-head CI, and resolve actual identity/collection acceptance without changing quotas or observations.
+
+## Closed constructor enrollment — commands and execution evidence
+
+Source9dcc4b0 holds an exclusive Session borrow/request scope from factory output through domain/ledger publication and reuses only the captured private provenance query. Fresh class/direct/post-watch checks, allphysicalprototype/key/parent predicates and firstreceiver snapshot stay live. Specialcallbacks and poisonedlock ordering remain. No accessor/token escapes or cross-callback epoch.
+
+Normalbootstrap/identityPASS; all3674tracked postbootstrap hashes bind9dcc and stayunchanged. Main/supplemental drivers execute56uniqueRust:48PASS/8fuelFAIL/0ignored. New4, constructor11, prototype8, complete source-child1, coherent12/18, watched-domain7, CLJS/decoder4 and originalJankmap1 pass; public2/coherent6failfuel. Map69orderedIDs retains62host/seven guestjudgments at existing200M. FourpinnedCLJS value/getter cases matchbothphases afterGC. Newexhaustive cuts are ArrayChunk/noWatch; watched7 is boundedpositive/negativecoverage, notexhaustivewatchedcuts. Unpublishednative staging is discarded onerror; earlier factory/schema effects are notrolledback.
+
+Matched51-root prefixes save105220–105228units versusb55/a09, but allsix callable requests still failconstruct26 beforeexport/finalization, no rows. Rawerrorstrings differfourways. Namespace hasnorows. Fourcoherent guards failsetup/materialization, twoORIGINALreadercontrols failbeforecoherent/effectarms. Fullcandidate losesexecutionreach versusproductionfd which decodeswrongidentityrows; do not labelthisidentitysuccess or callnewguardfailures inheritedbasefailures.
+
+Mergeee4e093 addsfd78441 asactualstackbase withonly5documentation/evidencepaths changedfrom9dcc; compiled/runtime/oracle/test inputs are unchanged, normalbootstrapreproduces and identityPASS. [Source-bound report/rawpacket](evidence/m4-fused-constructor-origin-2026-10-18.md) retainscommands, fees, effectsproof, failure/unknowns, source/bootstrap hashes and independentreviews. Fullbaseline remains cargo test --workspace --locked -- --test-threads=2 afterfocusedacceptance, thenpassingfinalheadCI. Next: completeequivalentphysicalcoveragebefore any receiver-capture replacement; currentgenericcapture includesprototype/tag subtrees, not just receiverfields. No closure/promotion/PRmerge.
+
+## Packed integer snapshot commands and evidence — 2026-10-18
+
+Sourceae50d2f retains all graph/source/storage guards while packing actual integer array elements; normal bootstrap reproduces allfive frozen bytes and identityPASS. Frozen selection70uniqueRust:57PASS/13fuelFAIL/0ignored. Fournewinteger,21old snapshot,11constructor,8prototype,1complete source-child and12coherent/retirement pass;6previouslypassingreplays/publiccallable1/coherent6failfuel. Bothphases source-child retain220orderedresults/fivevariants/physical-memotail and save111335units each fullrequest. Six51-constructor prefixes save207410–213836units but still failboundary26/noidentityrows. V1 rejected adverse whole-request381353extraunits preserved.
+
+[Source-bound report/rawarchive](evidence/m4-packed-snapshot-i32-v2-2026-10-18.md) containscommands/sourceBOOT/failures/controls/reviews. Sharedtarget/jobs1/Rayon1; normalbootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity python3 scripts/verify_bootstrap_identity.py. Watched/fused/namespace/CLJS/map and fullbaseline/CIunexecuted inthiscohort. Requiredbaseline cargo test --workspace --locked -- --test-threads=2 followsfocusedacceptance. Next: investigate actualdelegated-IHash directfactfalse without weakening receipts or replaying callbacks; currenttracefinds Keywordslot3/4 changed/noauthenticatedslot whilelogical/topology/inputs/classes/prototypespass. Transienttracesremoved; separatefix/testingtuple. No closure/promotion/merge.
+
+## Delegated canonical memo stores — commands, results and limitations
+
+Source53b206a routes eligible delegated canonical stores through the existing scoped hook, retaining exact receiver/slot and full pre/post domain proof; canonical candidates keep their prior route. Normal bootstrap and identity pass. A new mechanism regression fails before repair and passes after, including actual stored-memo/restored-payload negatives. Independent source review finds no blocker.
+
+Frozen checks execute18distinct Rust tests:16pass,2certification failures,0ignored. The14scoped tests include the new mechanism test; its standalone execution is not counted twice. Both original Keyword variants match24pinned rows of13fields across Runtime/Macro, cold/warm and allthree stages. Both Symbol variants still fail caller-&env certification at custom-write in alleight caller/warming subcases; baseline observations execute but later effect/identity observations do not. Exact Symbol predicate remains unproven.
+
+[Source-bound report and raw packet](evidence/m4-delegated-canonical-memo-routing-2026-10-18.md) retain commands, allsix source/BOOT images, raw before/after/negative logs, transient traces removed from source, freezes and independent reviews. Sharedtarget/jobs1/Rayon1; bootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity python3 scripts/verify_bootstrap_identity.py. Validation stops after Symbol failures: environment effects, two replaced-hash integrations, Jankmap and CLJS preservation are unexecuted here. Required full baseline cargo test --workspace --locked -- --test-threads=2 and passing final-head CI remain after focused acceptance. Next: bounded mixed-owner domain diagnostic before any further source/method policy change. Do not relax method, payload or foreign-ancestor guards; no closure, promotion or merge.
+
+## Fresh source data versus reuse authority — commands and results
+
+Source f76ad9a introduces a private, uncached fresh-source proof; the strict certificate remains the only reuse/domain/memo authority. Complete native owner/child binding, independent logical data, nonmemo fields, input closure, class and prototype checks remain. Originally-nil registered numeric memo differences may be fresh data but never certify themselves; uncachability propagates through parents. No method guards, old-object mutation or callback replay are introduced. Identity across uncached namespace/declaration parents remains unproven.
+
+Normal bootstrap/identity and independent source/terminal reviews pass. Frozen checks execute26distinct Rust:24PASS/2certificationFAIL/0ignored. Newproof2, existing strict negatives17, Symbol2 and Keyword/environment3 pass. All48original memo observation rows of13fields match in both caller phases, warming states and allthree stages. Both unchanged replaced-map-method integrations still fail non-memo certification; this is not fuel. Driver stops there. Constructor group, complete source-child, Jankmap, CLJS, public identity and full coherent/retirement cohort remain unexecuted on this tuple.
+
+[Source-bound report/raw packet](evidence/m4-fresh-source-proof-2026-10-18.md) preserves source/bootstrap, diagnostics including the first incorrect host-reference assumption, initial test-only compile failure, corrected positive/negative logs, commands, final freezes and reviews. All3685listed run hashes remain unchanged. Shared target/jobs1/Rayon1; normal bootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity python3 scripts/verify_bootstrap_identity.py. Require focused acceptance before cargo test --workspace --locked -- --test-threads=2, independent final-head review and passing CI. Next: a small EMPTY-seed diagnostic for the remaining replaced-method failures, then a provisioning-grounded data witness that never weakens pristine seed/reuse authority or payload/prototype checks. No closure, promotion or merge.
+
+## Fresh seed method data — commands and execution evidence
+
+Source9d2f194 binds the fresh-only IHash exception to the initial descriptor/table/key/value slot. Allowed replacement forces uncached data; pristine seed, membership and write-domain checks remain strict. Both unchanged replaced-hash integrations recover from certification failures, all48original memo rows match, constructor12/source-child/Jankmap/CLJS preservation pass. The complete source-child keeps220ordered events; new prototype-parent/other-protocol poison rejects and restores correctly. Independent source reviews find no blocker.
+
+Two frozen source/bootstrap tuples execute72distinctRust:64PASS/8fuelFAIL/0ignored, accounting for repeated seed tests and one overlapping callback guard. Finaltuple adds only a test and regenerated bootstrap identity. All3687listed hashes stay unchanged in eachrun. Both normalbootstrap/identityPASS; sharedtarget/jobs1/Rayon1/inheritedRUSTFLAGS. Commands, raw failures, exact source/bootstrap, diagnostic facts20/51 and limitations are in [the report/rawpacket](evidence/m4-fresh-seed-method-data-2026-10-18.md). Bootstrap: cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity: python3 scripts/verify_bootstrap_identity.py.
+
+Defaultpublicidentity2/coherent6 still exhaustfuel before requiredobservations; this is not #264 acceptance. Previous239a4aaCI39125469326fails; no new-head CI success. Required fullbaseline cargo test --workspace --locked -- --test-threads=2 remains unexecuted whilefocusedacceptancefails. Next: current complete-request attribution before another costrepair, then remaining issuecriteria/fullbaseline/independentreview/passingfinalheadCI. No closure/promotion/merge.
+
+## Sparse struct expectations — commands and execution evidence
+
+Source4e21edf keeps only mutable struct-slot expectations while reading/converting all capture fields, following immutable edges and checking every captured descendant. Const-only ancestry, I31/opaque-cut membership, unsupported references, actual member-vector growth and cleanup/cancellation fixtures pass. Exact owned GC identity/Wasmtime const-field enforcement justify omitted rereads; no source/class/prototype/memo authority, mutable guards, quotas or rates change. Node88/Atom48/slot64/Snapshot112 are measured.
+
+Two source/bootstrap tuples and supplements cover128distinct selected names:119PASS/9fuelFAIL/0ignored; repeated executions remain separate. Both replaced-hash integrations and all48memo rows pass; constructor12/prototype8/core-import17, full source-child, pinnedJankmap69IDs and CLJS/decoder preservation pass. Four omitted prototype tests were subsequently executed; initial intermediate prototype/fresh-proof counts were corrected. All3690listed hashes stay unchanged perrun; normalbootstrap/identityPASS. Sharedtarget/jobs1/Rayon1/inheritedRUSTFLAGS; bootstrap cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap; identity python3 scripts/verify_bootstrap_identity.py.
+
+Complete source-child preserves220ordered events/fivevariants/bothphases and saves333314units perphase versus25b4a57. Matched51construction prefixes save219934–220603units, still failboundary26/noidentityrows; rawerrorstrings differ. Rawdurations are longer and notcontrolledtimingbenchmarks; no wall-timespeedupclaim. Defaultpublic2/coherent6 plusinitializer1 remainfuel failures. The initializer is a genuine unchanged prior-production regression:010e/fdPASS,239unexecuted,25CI/currentcandidateFAILRuntimeinput1..39 beforevalueassertions; Macroiteration unexecuted.
+
+[Report/rawpacket](evidence/m4-sparse-struct-expectations-2026-10-18.md) retains exactcommands, tuples, rawnegative/unknown/unexecuted outcomes and independentreviews. Previous25b4CI39129238646fails (548/6Rust+353Python;79/19integration;24/259targetscompleted235unexecuted); new final-head CI remains required. Required fullbaseline cargo test --workspace --locked -- --test-threads=2 remains unexecuted whilefocusedacceptancefails. Next: explicitlydiagnostic complete-tail attribution before anothercostrepair; diagnostic allowances confer no defaultacceptance. No closure/promotion/merge.

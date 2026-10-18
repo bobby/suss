@@ -570,6 +570,51 @@ impl ConstructionRecords {
         }
         Ok(count)
     }
+    // The second component remains the full strict certificate predicate.
+    // A true first component alone grants no memo, child-domain or cache authority.
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session)
+        -> Result<(bool, bool), SessionError> {
+        let _request = session.operation_budget_scope()?;
+        let mut source = true;
+        let mut certified = true;
+        for id in 0..self.records.len() {
+            session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
+            let (data, reusable) = match &record.fact {
+                Fact::Constructor(fact) => fact.fresh_direct_status(session, &record.value)?,
+                Fact::Scalar(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
+                Fact::Array(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
+                Fact::CanonicalSeed(fact) => fact.fresh_direct_status(session, &record.value)?,
+                Fact::ExternalSeed(_) => (false, false),
+            };
+            session.charge_host_work(2)?;
+            source &= data;
+            certified &= reusable;
+        }
+        Ok((source, certified))
+    }
+    // Fresh proof values close only this transient input walk. They are never
+    // attached to a write domain or converted into a CheckedChild.
+    pub(crate) fn matches_fresh_source_inputs(
+        &self, session: &mut Session, root: &SessionValue,
+        children: &[crate::portable_macro_graph::source_roots::FreshSourceProof],
+    ) -> Result<bool, SessionError> {
+        let _request = session.operation_budget_scope()?;
+        let count = self.children.len().checked_add(children.len())
+            .ok_or_else(|| record_error("Fresh input coverage overflow"))?;
+        let bytes = record_bytes::<ChildBinding>(count)?;
+        session.charge_host_work(bytes.checked_add(count as u64)
+            .ok_or_else(|| record_error("Fresh input allocation overflow"))?)?;
+        let mut selected = Vec::new();
+        selected.try_reserve_exact(count)
+            .map_err(|_| record_error("Fresh input allocation failed"))?;
+        for child in &self.children { selected.push(ChildBinding { value: child.value.clone() }); }
+        for child in children {
+            session.check(child.value())?;
+            selected.push(ChildBinding { value: child.value().clone() });
+        }
+        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &selected)
+    }
     pub(crate) fn matches_direct_facts(&self, session: &mut Session) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut valid = true;
