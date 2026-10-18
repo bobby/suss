@@ -547,14 +547,22 @@ pub(super) fn functions(b: &mut Builder) {
             &body,
         );
     }
-    let mut body = vec![
-        LocalGet(0),
-        Call(fields),
-        LocalSet(3),
-        LocalGet(0),
-        Call(length),
+    // Keep the COMPLETE validator before every read-dependent decision/write.
+    // No callbacks, writes or suspension intervene: its returned backing already
+    // proves slot zero is the same finite uint32 NUMBER used by length().
+    let mut body = vec![LocalGet(0), Call(fields), LocalSet(3)];
+    args(&mut body, 3);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        I32TruncSatF64U,
         LocalSet(5),
-    ];
+    ]);
     body.push(LocalGet(1));
     buffer(&mut body, 3, 2, ARGS);
     body.extend([ArrayLen, I32LtU, If(BlockType::Empty)]);
@@ -579,17 +587,9 @@ pub(super) fn functions(b: &mut Builder) {
         Return,
         End,
     ]);
-    body.extend([
-        LocalGet(3),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        LocalGet(1),
-        Call(find_validated),
-        LocalTee(4),
-        I32Const(0),
-        RefI31,
-        RefEq,
-        If(BlockType::Empty),
-    ]);
+    // One ordered scan supplies both the exact match and its predecessor.
+    // The full validator above still rejects malformed LATER nodes/cycles even
+    // when this scan can stop at an early match. Keep lookup-only helpers intact.
     args(&mut body, 3);
     body.extend([
         I32Const(1),
@@ -627,6 +627,38 @@ pub(super) fn functions(b: &mut Builder) {
         Br(0),
         End,
         End,
+        I32Const(0),
+        RefI31,
+        LocalSet(4),
+        LocalGet(6),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    args(&mut body, 6);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        LocalGet(1),
+        F64ConvertI32U,
+        F64Eq,
+        If(BlockType::Empty),
+        LocalGet(6),
+        LocalSet(4),
+        End,
+        End,
+        LocalGet(4),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
         LocalGet(1),
         F64ConvertI32U,
         Call(b.names["number-box"]),
