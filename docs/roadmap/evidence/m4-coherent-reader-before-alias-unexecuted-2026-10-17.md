@@ -1,0 +1,13 @@
+# Reader before every source alias: unexecuted experiment control
+
+This source-only checkpoint appends one separate test to the coherent-retention V3 experiment, parent `2b1bd43c87ec332ccf85f9e3a32d774411229e90`. It changes no controller, production code, bootstrap, allowance, tariff, fixture or original assertion. The original coherent_tests.rs is retained byte-for-byte as the prefix of the appended file; the legacy retirement module is unchanged.
+
+The guard selection grows from **17 to18**. The new test and the18-test selection are **UNEXECUTED**. Earlier17-test outcomes belong solely to their earlier source tuple and must not be relabeled as an18-test result. No Cargo, bootstrap or guest execution was performed for this checkpoint.
+
+The new control preserves the existing nine-local original-versus-coherent workload, real body environment helper, delegated original public hash, numeric observations, complete callback key type/value/count/order comparison and default operation allowance. It changes the root to `[reader, expression-environment, statement-environment, reader]` and updates the corresponding result-inspection indices. The same reader recipe occurs twice; the first reader precedes every selected source alias.
+
+Source inspection identified a concern: preconstructing all selected boundaries before the export could hoist callbacks inside a selected source view ahead of the first ordinary reader. **This is an unexecuted concern, not a demonstrated semantic regression.** The existing original-route nine-local control itself exhausted fuel before the relevant comparison; this control is scheduled only after the sparse-setter work establishes that the original control actually passes, under unchanged allowances. If the new control fails or exhausts, preserve the raw result and do not reduce the workload or change the assertions.
+
+The archive contains exact before/after full source, the append-only patch, both17/18 selections, the new test, original proposal and application manifests, historical proposal plan and current provenance. Its publication snapshot selects only `crates/suss-compile/src/portable_macro_graph/source_roots/coherent_tests.rs`. The generic snapshot helper additionally adds this report and archive. No handoff or other source path is selected. Published Git parent is required for the rest of the experiment source; this small packet makes no whole-compiler self-contained claim.
+
+No new PR, readiness, issue acceptance or closure is claimed. Root may publish this on the existing experiment branch after artifact review; publication is not test execution.

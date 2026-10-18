@@ -1372,3 +1372,121 @@ fn coherent_repeated_locals_views_preserve_reader_hash_effect_order_against_orig
         );
     }
 }
+
+#[test]
+fn coherent_reader_before_every_source_alias_preserves_original_effect_order() {
+    use crate::portable::AnalysisContext;
+    let mut session = Session::new_macro().unwrap();
+    session
+        .eval("(def coherent-effects (fn [a b c d e f g h i] a))")
+        .unwrap();
+    let env = actual_body_environment(&session, "coherent-effects");
+    assert_eq!(env.locals.len(), 9);
+    session.enter_namespace("suss.core").unwrap();
+    session
+        .eval(
+            r#"
+      (def coherent-view-events (array))
+      (def coherent-view-all-events (array))
+      (def coherent-view-original-hash hash)
+      (def hash (fn [key]
+        (do (aset coherent-view-all-events (alength coherent-view-all-events)
+                  [(symbol? key) (keyword? key) (number? key) (string? key) (str key)])
+            (if (number? key)
+              (aset coherent-view-events (alength coherent-view-events) key) nil)
+            (coherent-view-original-hash key))))
+    "#,
+        )
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    let bridge = FormBridge::new(&mut session).unwrap();
+    let mut previous = None;
+    let mut previous_all = None;
+    for coherent in [false, true] {
+        session
+            .eval("(do (set! suss.core/coherent-view-events (array)) (set! suss.core/coherent-view-all-events (array)))")
+            .unwrap();
+        let value = {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = coherent;
+            let first = graph
+                .environment(
+                    &env.namespace_snapshot,
+                    &env.scope,
+                    &env.locals,
+                    &env.fields,
+                    &env.function_scopes,
+                    AnalysisContext::Expression,
+                    0,
+                )
+                .unwrap();
+            let mut items = Vec::new();
+            for key in 101..=109 {
+                items.push(graph.number(key).unwrap());
+            }
+            let reader = graph.recipe(Recipe::ReaderSet(items)).unwrap();
+            let second = graph
+                .environment(
+                    &env.namespace_snapshot,
+                    &env.scope,
+                    &env.locals,
+                    &env.fields,
+                    &env.function_scopes,
+                    AnalysisContext::Statement,
+                    0,
+                )
+                .unwrap();
+            // Reader comes BEFORE every source alias. The same reader recipe
+            // occurs again later; neither ordering nor occurrence may be lost.
+            let root = graph
+                .recipe(Recipe::Vector(vec![reader, first, second, reader]))
+                .unwrap();
+            if coherent {
+                materialize_coherent(&mut graph, root, &mut RootCache::default())
+                    .unwrap()
+                    .expect("coherent source view must admit")
+            } else {
+                graph.materialize_using(root, &bridge).unwrap()
+            }
+        };
+        let events = session
+            .eval("(seq suss.core/coherent-view-events)")
+            .unwrap();
+        let form = bridge.read(&mut session, &events, 0..1).unwrap();
+        let expected = "(101 102 103 104 105 106 107 108 109 101 102 103 104 105 106 107 108 109)";
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &events).unwrap(),
+            expected
+        );
+        if let Some(old) = &previous {
+            assert_eq!(old, &form, "actual callback values/count/order unchanged");
+        }
+        previous = Some(form);
+        let all_events = session
+            .eval("(seq suss.core/coherent-view-all-events)")
+            .unwrap();
+        let all_form = bridge.read(&mut session, &all_events, 0..1).unwrap();
+        if let Some(old) = &previous_all {
+            assert_eq!(
+                old, &all_form,
+                "ALL delegated public-hash callback key types/values/count/order preserved"
+            );
+        }
+        previous_all = Some(all_form);
+        let inspect = session
+            .eval(
+                r#"(fn [v]
+          [(identical? (:locals (nth v 1)) (:locals (nth v 2)))
+           (:context (nth v 1)) (:context (nth v 2))
+           (= (nth v 1) #{101 102 103 104 105 106 107 108 109})
+           (= (nth v 3) #{101 102 103 104 105 106 107 108 109})])"#,
+            )
+            .unwrap();
+        let observed = session.invoke(&inspect, &[&value]).unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &observed).unwrap(),
+            "[true :expr :statement true true]"
+        );
+    }
+}
