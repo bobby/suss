@@ -429,6 +429,15 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
     Ok(key)
 }
 
+// Diagnostic only: read the existing operation balance, without charging,
+// replenishing, propagating read errors or changing the observed operation.
+fn trace_native_preparation(session: &Session, form: &Form, phase: &str) {
+    if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {
+        eprintln!("native-preparation phase={phase} span={}:{} remaining={:?}",
+            form.span.start, form.span.end, session.operation_fuel_remaining().ok());
+    }
+}
+
 enum Recipe {
     Scalar(Literal),
     Identifier {
@@ -1067,7 +1076,9 @@ impl<'a> AnalysisGraph<'a> {
     ) -> Result<(Value, Option<Value>)> {
         // Exactly the existing full definition guard, before any correspondence
         // or recipe lookup. It also validates the candidate child and metadata.
+        trace_native_preparation(self.session, definition, "definition-start");
         validate_form_data(definition, &mut |units| self.session.charge_host_work(units))?;
+        trace_native_preparation(self.session, definition, "definition-guarded");
         let selected = match (&definition.kind, initializer) {
             (Kind::List(items), Some(initializer)) if !items.is_empty() => {
                 if initializer_plan::same(self.session, items.last().unwrap(), initializer)? {
@@ -1076,8 +1087,10 @@ impl<'a> AnalysisGraph<'a> {
             }
             _ => None,
         };
+        trace_native_preparation(self.session, definition, "initializer-correspondence");
         let mut child_key = None;
         let value = self.form_data_selected(definition, depth, selected, &mut child_key)?;
+        trace_native_preparation(self.session, definition, "definition-recipes");
         self.charge(1)?;
         let child = child_key.and_then(|key| self.forms.get(key.0).and_then(Option::as_ref).copied());
         Ok((value, child))
@@ -1093,9 +1106,11 @@ impl<'a> AnalysisGraph<'a> {
         // or failed reset drops its local Plan normally, retaining no entries
         // and preserving the original build error without fallible cleanup.
         let value = self.form_data_planned(form, reader_depth, selected, child_key, &mut plan)?;
+        trace_native_preparation(self.session, form, "form-recipes");
         plan.clear_metered(&mut |units| self.session.charge_host_work(units))?;
         self.charge(8)?;
         self.form_plan = plan;
+        trace_native_preparation(self.session, form, "form-reset");
         Ok(value)
     }
     fn form_data_planned(
@@ -1158,9 +1173,11 @@ impl<'a> AnalysisGraph<'a> {
 
         // Identity planning is native-only. Raw metadata participates in keys,
         // but only the existing normalized-metadata path builds guest recipes.
+        trace_native_preparation(self.session, form, "raw-plan-start");
         let root_plan = self.raw_keys.plan(form, plan, &mut |units| {
             self.session.charge_host_work(units)
         })?;
+        trace_native_preparation(self.session, form, "raw-plan-finished");
         if let Some(index) = selected {
             self.charge(2)?;
             let node = &plan.nodes[root_plan];
@@ -1973,12 +1990,14 @@ impl<'a> AnalysisGraph<'a> {
                 hir::declaration_tag(info)
                     .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
             };
+            trace(self.session, "completed-tag")?;
             let (definition, initializer_recipe) = self.definition_with_initializer(
                 &info.definition_form, info.initializer_form.as_ref(), depth + 1,
             )?;
             if tracing && info.initializer_form.is_some() {
                 eprintln!("metadata-initializer {}/{} reused={}", global.namespace(), global.name(), initializer_recipe.is_some());
             }
+            trace(self.session, "definition-plan")?;
             fields.push(("suss/definition-form", definition));
             fields.push((
                 "suss/analysis-completed",

@@ -29938,3 +29938,6 @@ Observed collection failures (both actual all-fuel-consumed diagnostics):
 - `empty_do_source_return_retains_context_and_nil_after_gc`: PASS.
 
 Archive SHA256: `974124ec9c17176039f145bbadc85a3070a7bde7622d5607316fd4e835a6b723`. Compiler and bootstrap bytes in the publication commit remain exactly those of the tested source commit above. No final-head CI or new full-baseline result is claimed.
+
+
+Native unordered planning diagnostic: base96bc8d70, normalbootstrap then cargo test --locked -p suss-cli --test compiled_macro_collection_source_asts unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order -- --exact --test-threads=1 --nocapture. Flags SUSS_MACRO_FUEL_TRACE/SUSS_METADATA_FUEL_TRACE/SUSS_SOURCE_MATERIALIZE_FUEL_TRACE and diagnostic SUSS_RAW_KEY_TRACE retained in driver. Baseline and diagnostic0PASS1typedfuelFAIL; all1067prior checkpoints equal. Completed rawplan4,546,273/recipes429,607/reset108,484 are nested against declaration totals; no whole-request saving/graph completion. Snapshot contains only Graph diagnostic+its normalBOOT4+this handoff append. Native-field artifact proof is separate work.
