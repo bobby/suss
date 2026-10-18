@@ -29938,3 +29938,14 @@ Observed collection failures (both actual all-fuel-consumed diagnostics):
 - `empty_do_source_return_retains_context_and_nil_after_gc`: PASS.
 
 Archive SHA256: `974124ec9c17176039f145bbadc85a3070a7bde7622d5607316fd4e835a6b723`. Compiler and bootstrap bytes in the publication commit remain exactly those of the tested source commit above. No final-head CI or new full-baseline result is claimed.
+
+
+## Source-boundary capture indexes — 2026-10-18
+
+The bounded two-file transplant on PR268 base96bc8d7 uses compact checked nonzero capture IDs and generation-marked boundary discovery, preserving the full DAG proof and all source/physical/memo checks. Native-field tables remain on the separate experiment branch. Normal bootstrap and compiler identity checks pass. Focused30selected execute:28PASS/2fuelFAIL/0ignored. Newnative4, core_import17, complete source-child1, CLJS-value/effect+decoder4 and pinned-map1 pass; collection-source remains1PASS/2fuelFAIL at the existing40M macro-invocation851..882/default10M caller-&env510..531 stages. All3633frozen inputs unchanged.
+
+Source-child includes5variants/bothphases,220events and physical/memo tail, final155874perphase. Native511-root layout comparison191924 versus1752494isolates reset work using the same new index helper; dormant rollovers and typed fuel/IRQ recovery pass. All69pinned-map IDs execute:62host/7guest judgments, no missing/fail/skip; existing200M allowances retained. Four pinned CLJS value/effect cases match afterGC in both phases. Initial target-less identity discovery failure and corrected target-aware success remain explicit.
+
+Commands use CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target CARGO_BUILD_JOBS=1 RAYON_NUM_THREADS=1, without setting RUSTFLAGS. Bootstrap: cargo run --profile test --locked -p suss-cli --bin suss-bootstrap -- runtime/bootstrap. Native: cargo test --locked -p suss-compile --lib source_roots::index_tests -- --test-threads=1 --nocapture. Acceptance driver (exact argv retained in archive) selects the complete unchanged source-child fixture, core_import, compiled_macro_collection_source_asts, portable_short_property_observations and pinned_map_declaration_executes_without_transport_loss, then independently compares every map assertion. Compiler identity: CARGO_TARGET_DIR set as above, python3 scripts/verify_bootstrap_identity.py.
+
+Full workspace command cargo test --workspace --locked -- --test-threads=2 remains required before promotion; it was not run for this partial update because focused acceptance still fails. No issue closure, full M4 completion or CI success claimed. Next: independent committed-head review, publish to existing Draft268 with Refs270, obtain exact-head CI and continue the remaining actual fuel/identity fixes. Raw source-bound evidence is linked in docs/roadmap/evidence/m4-source-boundary-index-2026-10-18.md.
