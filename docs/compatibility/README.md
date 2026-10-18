@@ -1242,3 +1242,18 @@ the latter includes actual metadata hash maps over eight entries. Preserved
 initialization-only public failure and diagnostic trace explain why initialization
 alone was insufficient. No full baseline, final CI, all-view oracle conformance,
 or whole-issue acceptance claim; see the cold-memo-ancestor handoff/archive.
+
+Analyzer-generated keyword literals now retain the initial hash memo emitted by
+the pinned ClojureScript compiler. Eligibility comes from explicit constructor
+positions and binding roles; reader values, dynamic keys and Suss extension
+keys remain cold. Separate literal and cold key tables preserve same-text
+distinctions. Collection construction still invokes live hashing methods, and
+an initially numeric memo cannot acquire originally-nil transition authority.
+Added native entry-buffer work is charged before allocation or growth.
+
+Focused execution passes eight new native tests, two compiled-macro tests in
+both caller phases, and seventeen existing slot/reuse guards. The unchanged
+invocation-tag integration regression now passes in both phases. Inference,
+complete core environment and collection-source tests still exhaust fuel;
+defaults and accounting rates are unchanged. See the dated analyzer-literal
+handoff and evidence for the complete selection and remaining limitations.

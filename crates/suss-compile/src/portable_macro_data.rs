@@ -252,6 +252,46 @@ pub struct FormBridge {
     private_arguments: bool,
     private_slots: Option<crate::portable_session::private_fixups::slot_log::SharedSlotLog>,
 }
+// Same pinned identifier mixing as hir::identifier_hash, streamed without its
+// temporary UTF16 Vec. Each iterator step is prepaid (UTF8 decode/control/count),
+// each arithmetic/mix block pays its listed primitive operations. No guest call.
+fn analyzer_literal_hash(session: &mut Session, name: &str) -> Result<i32, SessionError> {
+    let mut units = name.encode_utf16();
+    let mut length = 0u32;
+    let mut hash = 0u32;
+    loop {
+        session.charge_host_work(8)?; // iterator next, UTF decoding, branch, count
+        let Some(low) = units.next() else { break };
+        length = length.wrapping_add(1);
+        session.charge_host_work(8)?;
+        let high = units.next();
+        session.charge_host_work(2)?; // option match and loop branch
+        let word = if let Some(high) = high {
+            length = length.wrapping_add(1);
+            session.charge_host_work(4)?; // two widening conversions, shift/or
+            u32::from(low) | (u32::from(high) << 16)
+        } else { u32::from(low) };
+        session.charge_host_work(3)?; // multiply, rotate, multiply
+        let mixed = word.wrapping_mul(0xcc9e2d51).rotate_left(15).wrapping_mul(0x1b873593);
+        if high.is_some() {
+            session.charge_host_work(5)?; // xor, rotate, multiply, add, assignment
+            hash = (hash ^ mixed).rotate_left(13).wrapping_mul(5).wrapping_add(0xe6546b64);
+        } else {
+            session.charge_host_work(2)?; // xor/assignment; final unpaired unit
+            hash ^= mixed;
+            break;
+        }
+    }
+    session.charge_host_work(11)?; // length multiply/xor; three shift/xors, two multiplies, assignment
+    hash ^= length.wrapping_mul(2);
+    hash ^= hash >> 16; hash = hash.wrapping_mul(0x85ebca6b);
+    hash ^= hash >> 13; hash = hash.wrapping_mul(0xc2b2ae35); hash ^= hash >> 16;
+    session.charge_host_work(9)?; // signed shifts/casts, combine additions/xor, keyword offset
+    let shifted = ((hash as i32) >> 2) as u32;
+    let combined = hash ^ 0x9e3779b9u32.wrapping_add(hash << 6).wrapping_add(shifted);
+    Ok(combined.wrapping_add(0x9e3779b9) as i32)
+}
+
 impl FormBridge {
     /// Parents containing private analysis placeholders must use only the
     /// immediate native constructor route. The caller must separately exclude
@@ -889,6 +929,21 @@ impl FormBridge {
         keyword: bool,
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
+        self.identifier_with_memo(session, namespace, name, keyword, metadata, None)
+    }
+    pub(crate) fn analyzer_literal_keyword(
+        &self, session: &mut Session,
+        token: crate::portable_macro_graph::AnalyzerLiteralKeyword,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let name = token.name();
+        let hash = analyzer_literal_hash(session, name)?;
+        self.identifier_with_memo(session, None, name, true, None, Some(hash))
+    }
+    fn identifier_with_memo(
+        &self, session: &mut Session, namespace: Option<&str>, name: &str,
+        keyword: bool, metadata: Option<&SessionValue>, memo: Option<i32>,
+    ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let ns = if let Some(namespace) = namespace {
@@ -915,6 +970,9 @@ impl FormBridge {
         // CLJS. Let the live IHash method perform any warming; precomputing here
         // changes nil-aware callbacks and prevents witnessing their first write.
         // Compiled constant lowering has a separate initialization contract.
+        let memo = if let Some(hash) = memo {
+            self.scalar(session, &crate::portable::hir::Literal::Number(hash as f64))?
+        } else { nil.clone() };
         if keyword {
             if metadata.is_some() {
                 return Err(SessionError::Host(error(
@@ -923,7 +981,7 @@ impl FormBridge {
             }
             self.construct(session,
                 Class::Keyword,
-                &[&ns, &name_value, &fqn, &nil],
+                &[&ns, &name_value, &fqn, &memo],
             )
         } else {
             self.construct(session,
@@ -1257,6 +1315,38 @@ fn error(message: &str) -> wasmtime::Error {
 mod identity_tests {
     use super::*;
 
+    #[test]
+    fn analyzer_literal_stream_hash_matches_constants_and_recovers_after_fuel_irq() {
+        let mut session = Session::new_macro().unwrap();
+        let initial = session.operation_budget_scope().unwrap();
+        for name in ["op", "locals", "env", "tag", "name", "context", "ns", "fn-scope", "", "a", "abc", "é", "😀"] {
+            let expected = crate::portable::hir::identifier_hash(None, name, true);
+            assert_eq!(analyzer_literal_hash(&mut session, name).unwrap(), expected);
+        }
+        drop(initial);
+        session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+        let cost = {
+            let operation = session.operation_budget_scope().unwrap();
+            let before = session.operation_fuel_remaining().unwrap();
+            assert_eq!(analyzer_literal_hash(&mut session, "locals").unwrap(), 535295783);
+            let cost = before-session.operation_fuel_remaining().unwrap();drop(operation);cost
+        };
+        for fuel in 0..cost {
+            session.set_operation_fuel(fuel);
+            let operation = session.operation_budget_scope().unwrap();
+            let error = analyzer_literal_hash(&mut session, "locals").unwrap_err();
+            assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>()==Some(&wasmtime::Trap::OutOfFuel)), "{error:?}");
+            drop(operation);
+        }
+        session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+        let operation = session.operation_budget_scope().unwrap();
+        session.interrupt_handle().interrupt();
+        assert!(analyzer_literal_hash(&mut session, "locals").unwrap_err().is_interrupt());
+        drop(operation);
+        let recovery = session.operation_budget_scope().unwrap();
+        assert_eq!(analyzer_literal_hash(&mut session, "locals").unwrap(), 535295783);
+        drop(recovery);
+    }
     #[test]
     fn shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners() {
         use crate::portable::hir::Literal;

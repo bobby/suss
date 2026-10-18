@@ -658,9 +658,9 @@ mod tests {
             graph.declaration(global, Some(revision), 0).unwrap();
             let source = graph.metadata_sources[0].recipe;
             let alias = graph.recipe(Recipe::Alias(source)).unwrap();
-            let m = graph.recipe(Recipe::Identifier{namespace:None,name:"m".into(),keyword:true}).unwrap();
-            let branch_key = graph.recipe(Recipe::Identifier{namespace:None,name:"branch".into(),keyword:true}).unwrap();
-            let x = graph.recipe(Recipe::Identifier{namespace:None,name:"x".into(),keyword:true}).unwrap();
+            let m = graph.recipe(Recipe::Identifier{namespace:None,name:"m".into(),keyword:true,literal:None}).unwrap();
+            let branch_key = graph.recipe(Recipe::Identifier{namespace:None,name:"branch".into(),keyword:true,literal:None}).unwrap();
+            let x = graph.recipe(Recipe::Identifier{namespace:None,name:"x".into(),keyword:true,literal:None}).unwrap();
             let scalar = graph.recipe(Recipe::Scalar(Literal::Number(17.0))).unwrap();
             let branch = graph.recipe(Recipe::ReaderMap(vec![(x,scalar)])).unwrap();
             let occurrence = graph.recipe(Recipe::ReaderMap(vec![(m,alias),(branch_key,branch)])).unwrap();

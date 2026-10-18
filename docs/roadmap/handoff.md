@@ -28145,3 +28145,38 @@ first independent row/GC checks pass. Second request fails caller&env0..36 at2B;
 whole test0PASS1fuelFAIL, second row/Macro caller unexecuted, full cost unknown.
 All inputs unchanged; temporary test restored. This does not change defaults,
 rates or issue criteria. [Source-bound report and five archives](evidence/m4-pr256-private-slot-log-and-complete-prefix-2026-10-18.md).
+
+## Analyzer literal provenance and prepaid entry storage (2026-10-18)
+
+On base `c170e116216ba26d3cb9b48b7c778ae6f185d4c8`, apply the independently
+reviewed seven-file analyzer-literal dependency, then regenerate bootstrap with
+`cargo run --locked --profile test -p suss-cli --bin suss-bootstrap -- runtime/bootstrap`
+and run `python3 scripts/verify_bootstrap_identity.py`. Both commands pass.
+Commands use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`.
+
+The focused selection executes all32 tests:29PASS,3fuelFAIL,0ignored. Eight
+new native tests, two new CLI tests and seventeen existing slot/reuse guards
+pass. The original invocation-tag regression now passes unchanged in Runtime
+and Macro caller phases, including the original value assertions after GC.
+Inference still fails caller `&env` transport at382..414, core environment at
+0..33, and collection source during invocation at851..882. The unchanged
+pinned-map wrapper passes; independent comparison verifies69 ordered IDs with
+62host passes and7guest judgments, no failures/skips/unexecuted assertions.
+No budget, tariff, fixture or metadata reduction was used.
+
+The controller captured all tracked inputs plus the three new source files
+before the first Cargo command. Only the four normal bootstrap outputs changed
+during generation; subsequent test inputs remained fixed. All stages are
+terminal and the owned process group drained. Fuel/cancellation coverage is
+representative except for the existing exhaustive small slot capture/apply
+cuts; no whole-compiler exhaustive cancellation claim is made.
+
+The exact preceding c170 CI run39162616532 is red: foundation passes;
+integration124PASS/18fuelFAIL across31/251 targets,220unexecuted. Those results
+do not validate this new overlay. No full local baseline was repeated while
+focused acceptance remains red; `cargo test --workspace --locked -- --test-threads=2`
+and passing final-head CI remain required acceptance gates.
+
+Commands, source provenance, raw results and archived inputs are linked in the
+[analyzer-literal evidence report](evidence/m4-pr256-analyzer-literals-2026-10-18.md).
