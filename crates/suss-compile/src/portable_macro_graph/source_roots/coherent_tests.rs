@@ -1479,7 +1479,7 @@ fn coherent_reader_before_every_source_alias_preserves_original_effect_order() {
                 r#"(fn [v]
           [(identical? (:locals (nth v 1)) (:locals (nth v 2)))
            (:context (nth v 1)) (:context (nth v 2))
-           (= (nth v 1) #{101 102 103 104 105 106 107 108 109})
+           (= (nth v 0) #{101 102 103 104 105 106 107 108 109})
            (= (nth v 3) #{101 102 103 104 105 106 107 108 109})])"#,
             )
             .unwrap();
