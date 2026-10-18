@@ -28042,3 +28042,31 @@ not run on this reconciled source. Earlier CI does not validate these bytes.
 Next: measure the existing generic canonical-head allocation repair against
 current unchanged CoreEnv/source-tag/collection failures; preserve complete
 source/child/storage/memo checks and all raw failed or unexecuted outcomes.
+
+
+### 2026-10-18: d38 compact heads and terminal measurements
+
+Source d38b59c includes the checked compact canonical heads. Focused execution
+is 43 passes/four fuel failures, with all 3526 tracked frozen inputs unchanged.
+Pinned map keeps all 69 ordered IDs (62 host passes/seven guest judgments).
+CoreEnv and collection matched-prefix fuel gains do not establish completion.
+
+The exact command `cargo test --workspace --locked -- --test-threads=2` is now
+terminal: exit101, 86 passes/two fuel failures/zero ignored across17 harnesses;
+14/251 integration targets completed,237 unexecuted; doctests not reached.
+Collection invocation fails at709..738 and unordered caller &env at510..531.
+All frozen hashes match Git d38 and receipt changed[]. CI39149952174 is also
+terminal red: foundation398Rust passes/one existing ignore and353Python passes;
+integration124passes/18fuel failures,31/251targets completed220unexecuted.
+
+The separate CoreEnv diagnostic changes only Macro allowance to200M, retaining
+caller default and all original assertions. It still fails caller &env0..33
+before the first semantic row; start199999819, provenance199996363,
+caller-form199996362, later stages unobserved. Inputs unchanged, production test
+bytes restored. No default/rate/acceptance change or complete required-cost
+estimate follows. Use the independently reviewed parser only on terminal logs.
+
+Commands, raw outcomes, source freezes, qualification details and five archives:
+[evidence](evidence/m4-pr256-reconciliation-and-fuel-measurements-2026-10-18.md).
+The declaration observer is a separate diagnostic; its analysis will guide the
+next repair rather than inferring a whole-request cost from a failed prefix.
