@@ -120,10 +120,11 @@ fn dependency(session: &mut Session, recipe: &Recipe, index: usize) -> Result<Va
         _ => unreachable!("validated dependency cursor"),
     })
 }
-// Child count is checked before descent. Grow lazily only for a successful
-// child, never at frame entry: even huge/all-declined recipes stay allocation
-// free until the same delivery point as before. Generic stack/reference reserve
-// policy is deliberately unchanged.
+// Child count is checked before descent. Allocate only after a successful
+// child, never at frame entry, so all-declined recipes allocate no Form buffer.
+// Reserve the known arity for small collections to avoid repeatedly relocating
+// these large owned Forms. Larger collections retain bounded geometric growth;
+// the initial reservation never exceeds 64 children.
 fn reserve_child(session: &mut Session, values: &mut Vec<Form>, total: usize) -> Result<()> {
     session.charge_host_work(2)?; // checked next length and comparison with arity
     let needed = values.len().checked_add(1)
@@ -134,7 +135,7 @@ fn reserve_child(session: &mut Session, values: &mut Vec<Form>, total: usize) ->
     if values.len() == values.capacity() {
         let count = needed.max(values.capacity().checked_mul(2)
             .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?)
-            .max(4.min(total)).min(total);
+            .max(64.min(total)).min(total);
         let bytes = count.checked_mul(std::mem::size_of::<Form>())
             .ok_or_else(|| invalid("Metadata expectation allocation overflow"))?;
         let copied = values.len().checked_mul(std::mem::size_of::<Form>())
