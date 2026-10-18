@@ -698,10 +698,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.when-first (Some(\"<root>/clojure/core_test/when_first.cljc\")): Unresolved Runtime name when-first at bytes 241..1445"
   },
-  "clojure.core-test.when-let": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.when-let (Some(\"<root>/clojure/core_test/when_let.cljc\")): Unresolved Runtime name when-let at bytes 244..2234"
-  },
   "clojure.core-test.with-out-str": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478"

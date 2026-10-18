@@ -33,6 +33,7 @@ jobs:
           python3 scripts/apply_bootstrap.py --check
           python3 scripts/sequence_provenance.py
           python3 scripts/check_transducer_provenance.py
+          python3 scripts/check_when_let_provenance.py
           python3 scripts/bitwise_provenance.py
           python3 scripts/wasi_lock.py
           python3 scripts/numeric_runtime.py --check

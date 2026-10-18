@@ -27770,3 +27770,230 @@ Applied only the reviewed65b565f..bb444a7 entry-arena source delta onto f1ab36c,
 All432 frozen Rust/Suss/bootstrap paths remain unchanged. Independent map comparison confirms all69 ordered assertions:62host passes/7guest judgments and0fail/missing/skips/test/namespace failures. Raw commands, failures, observations, classification and snapshots are in `docs/roadmap/evidence/m4-combined-paged-entries-focused-2026-10-16.tar.gz`, SHA256 `6a446b450c6d4615548face53ff2d38b5ecf563250f801fb7682759d884e0749` (449 payloads). No full baseline or CI success is claimed at this combined source.
 
 Separately reviewed component bb444a7 evidence is retained in `docs/roadmap/evidence/m4-paged-canonical-entries-focused-2026-10-16.tar.gz`, SHA256 `5158c12b92b5e342e49d8c97c479af2a12e85a3220be5cba5d6eff821e2d7180`:42focusedpasses, two retained critical fuel failures,612048netstorage saving including85352extraaccess charges;matchedBitmap remainingfuel gain612860. These component savings are not additional combined acceptance evidence. Next: validate explicit analyzer-literal keyword provenance against pinned observations and repair the source-tag/default-fuel gaps; require full baseline, independent review and final-head CI for issue resolution.
+
+### Reader identifier cold memo contract (2026-10-16)
+
+Isolated portable/m4-cold-reader-identifiers fromd58e693; bounded issue260, Refs257. Production FormBridge.identifier now supplies nil for Symbol/Keyword hash memo. Constructors, namespace/name/fqn/metadata and compiled constant lowering are unchanged. No observer/cumulative-budget/receipt changes included.
+
+Actual main-based BEFORE: native0pass4fail,48rows16case-phase combinations, zero execution errors; bridge bytes identicald58 and396frozen Rust/source/bootstrap hashes unchanged. Initial memo values differ in all48rows; cold nil-aware values/writes differ. Parent/leaf identities remain true on main. Before archive m4-cold-reader-before-2026-10-16.tar.gz SHA256 f67dbb0ceb89c629555755a053c84dad837691c4da2757ca69ad500f7beb2bd4,21payloads independently reviewed. Fresh pinned CLJS probe exit0, eight cases exactly match the recorded observations.
+
+AFTER: matched native4/4, all48rows exact; compiled-constant initialization1/1 both phases; existing pinned cross-invocation identity1/1 both phases/GC/revisions/reset; provenance exit0. Bootstrap regeneration exit0. Commands use cargo test -p suss-compile --lib --locked native_memo_leaf_ (or compiled_identifier_constants_keep_pinned_warmed_memos), CLI target compiled_macro_cross_invocation_identity_probe, and -- --test-threads=2 --nocapture. Jobs2/cold-reader-identifiers-target, no quota change. Initial focus source freeze unchanged; later Jank-only source changes are explicit.
+
+Initial Jank keyword?/symbol? selections reject0N/0.0M at read: zero assertions executed,24unexecuted, two namespace failures. Raw observations, original gate source and logs retained in m4-cold-reader-initial-focused-2026-10-16.tar.gz SHA256 6a51df30af33e25fe5869e5e57fd8b31d1aa482645f4b55f2342a1f78aefa806. No predicate compatibility inferred. The new supplemental test selects full unchanged pinned name/namespace declarations:15/15 independently host-decided passes, exact ordered IDs, zero guest-judged/fail/skipped/not-executed/test/namespace failures. Gate also rejects throws after the final assertion. cargo test -p suss-compile --locked --test clojure_test_suite pinned_reader_identifier_names_keep_values -- --test-threads=2 --nocapture exits0.
+
+Final focused archive m4-cold-reader-focused-2026-10-16.tar.gz SHA256 b9184ac7e9e77d2d7f0e2b367a977f2f95da1fe06cd8c9b22bcd07a1554f3e54, 22payloads plus manifest, read back verified. Initial patch-context mismatch made no production change; initialization was ported explicitly on main afterward. New observations/test helpers are authored code; upstream Symbol/Keyword definitions retain EPL provenance. JVM/Node are development oracles only. Terminal baseline and CI evidence are recorded below; broader retained-storage and fuel contracts remain separate.
+
+The exact `cargo test --workspace --locked -- --test-threads=2` baseline at5aff6827 exited0 after25828.114s:1808 pass executions,0failures,22explicit ignores;398 frozen paths unchanged. Raw log, metadata, terminal receipt, target classification and frozen snapshot are retained in `evidence/m4-cold-reader-full-baseline-2026-10-16.tar.gz`, SHA256ece00358fd34fa0c6fdefcca00500c162a9832c3d64b7f3d413925eb03a9bb3d (406payloads). Ignore outcomes are not passes or broader conformance evidence.
+
+CI run38931494913 at5aff6827 passed foundation, all8 integration shards and aggregate test. Independent audit verified244/244 planned integration targets complete, no unexecuted targets,1812 Rust pass executions/0fail/22ignores and347 Python passes. Actual synthetic checkout tree equals5aff. Raw logs and retrieval receipts: `evidence/m4-cold-reader-ci-2026-10-16.tar.gz`, SHA256628822fe7d3e3d45ffc785d488e594ea49bfb69909ea866a5700468db095e5fd. The four extra CI pass executions are the same four compiled-bootstrap tests run once by foundation bootstrap verification and again by integration shard5; the local baseline executes them once. Raw name-multiset comparison has no local-only pass executions. Documentation/evidence changes require review and final-head CI. No merge.
+
+### When-let compiled source and binding prerequisite (Refs #266)
+
+Base `75e537b`. The immutable `when-let-before` capture kept all 1778 inputs
+unchanged: `compiled_when_let` had three decoder support passes and three
+unresolved-name failures; the complete pinned Jank body had zero executed
+assertions and all 12 IDs unexecuted due to the unresolved namespace. These
+failures are retained; they do not imply Macro-phase execution.
+
+The complete pinned when-let macro is registered in the existing compiled
+Macro pipeline. Ordered assert-args checks retain the pinned messages and
+phase data. Bootstrap let's former head-only rewrite could not lower vector/map
+bindings; it now reuses the existing EPL-derived binder for ordered pairs,
+retaining ordinary symbol validation, live extraction calls and the enclosing
+recur target. Ordinary symbol bindings and loop lowering retain their paths.
+
+`docs/compatibility/when-let/` retains exact upstream forms, EPL notices/license,
+adaptation patch, source hashes and executable oracle inputs. Two fresh pinned
+CLJS compiler/Node runs match the exact native 16-observation when-let guest.
+Two fresh self-host macro-function runs match all five malformed binding
+diagnostics and recovery. These underlying diagnostics do not promise analyzer
+wrapper diagnostics; the public negative test requires only the language
+exception category. Preparation failures and source-range metadata correction
+are retained separately. No Java/Node dependency was added to shipped code.
+
+`direct-let-oracle/` separately retains two fresh pinned compiler/Node runs of
+both exact direct-let guest substrings. Both match the explicit native expected
+values `[17 19 [17 19] 23 19 59 77 [1 4 2 3 5]]` and `[[11 7 18] 6]`, covering
+once-only ordered initializers, eager defaults, prior/outer scope, temporary
+hygiene and tail recur. The provenance record binds both current native fixture
+hashes; the checker also verifies their guest substrings against oracle inputs.
+All raw commands/logs/receipts and the direct-let payload manifest are retained.
+
+The original native test remains byte-identical at
+`f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02`.
+After the before capture, the Jank gate gained explicit reference schema=1,
+suite `95d4a9112cfc5fe6629be3d14bb99080ea00af2f` and CLJS
+`c4295f303100bbf5afac449242d30bca1126f1a1` assertions. Its before hash
+`e91a2bf283249e9279ddd4b341df5fb0df85d2d92145b51053311fd4c371ab6d`
+is preserved in provenance and the before snapshot. The whole original test
+body and complete 12 IDs remain selected. Jank uses Runtime and its existing
+200M harness budget; native feature tests execute both default caller phases.
+
+Actual post-pipeline commands, with `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target`:
+
+```sh
+python3 scripts/check_when_let_provenance.py
+python3 scripts/cljs_reviews.py
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --locked --lib portable_macros::when_let_validation_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-cli --locked --test compiled_when_let --test compiled_let_destructuring -- --test-threads=2 --nocapture
+SUSS_WHEN_LET_CAPTURE=/home/bobby/.cache/suss-m4-work/when-let-after cargo test -p suss-compile --locked --test clojure_test_suite pinned_when_let_complete_body_matches_reference -- --exact --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+```
+
+Every stage exited zero. Rust pass executions: private validation 1, native 11
+(5 feature tests and 6 decoder support tests), Jank wrapper 1, bootstrap verifier
+4: total 17, zero failures. Separately, all 12 complete ordered Jank IDs were
+host-decided passes, zero guest judgments/missing/errors/skips. The verifier also
+reproduced both phase artifacts byte-for-byte. The terminal receipt and raw
+stage logs are in `when-let-after`; all 1825 frozen inputs remained unchanged
+after allowing only the four regenerated bootstrap files. No quota was changed.
+
+The updated provenance checker passes and is included in the foundation CI
+commands. Required full `cargo test --workspace --locked -- --test-threads=2`
+and final-head CI remain pending. Focused passes do not establish broader
+source-sharing/integrity, cumulative fuel or M4 acceptance. No merge authorized.
+
+
+### When-let execution archive (2026-10-16)
+
+Archive `evidence/m4-when-let-execution-2026-10-16.tar.gz`, SHA256
+`a3bb34e4723ff815feeb126420a1dad132e0f8aadf43ba647976cbd2e56325cd`. PATHS.json maps 1286 original paths to
+458 content-addressed blobs; all 459 manifested payloads
+and mapped blob hashes were verified after packaging. Commands and immutable
+before/after source/artifact snapshots are included, with independent comparison
+and 419-input source correspondence.
+
+`run-when-let-before.py` retained three decoder passes and three unresolved-name
+feature failures, plus all12 Jank IDs unexecuted at namespace loading.
+`run-when-let-after.py` passed provenance/review checks, both bootstrap phases,
+private validation1, native11 (five feature tests and six decoder executions),
+the Jank wrapper1 and bootstrap execution4:17 Rust passes. The wrapper separately
+compared all12 ordered original assertion IDs with12 host passes and no skips,
+guest judgments, missing IDs or namespace/test failures. Native feature cases
+execute both default caller phases; the separate Runtime Jank harness retains
+its existing200M allowance. Bootstrap verification reproduces both phases twice
+without Java/Node and executes their artifacts.
+
+After these focused checks, the required
+`cargo test --workspace --locked -- --test-threads=2` was launched with jobs2
+on the same compiled tuple using `run-when-let-full-baseline.py`. Its archived
+launch receipt is partial, not a terminal outcome. Inspect the live producer
+receipt/log and final-head CI before claiming a workspace or acceptance pass.
+
+
+### Core-import manifest dependency refresh for when-let (2026-10-16)
+
+CI for41674a7 correctly rejected the stale core-import manifest reviews hash.
+Regeneration changes only reviews-sha256 in runtime/core-import/manifest.json;
+all imported source bytes remain unchanged. Both generated bootstrap JSON/Wasm
+pairs now bind that manifest. Independent review confirms unchanged non-custom
+Wasm sections and the exact post-bootstrap input freeze. No checker was weakened.
+
+The earlier required full baseline at41674a7 was stopped by authorized SIGINT
+after this confirmed provenance blocker:55 completed passing tests, two additional
+observed passes in an interrupted target, zero observed failures; remaining work
+is unexecuted. All1846 declared inputs, including419 compiled inputs, remain
+unchanged in its retained stop receipt. This is partial evidence, not a baseline pass.
+
+The isolated repair passes core-import/provenance checks and its15 checker
+regressions. Focused compiled validation, native let/when-let and selected Jank
+currently total13 Rust passes; all12 original Jank IDs execute and match host
+comparisons. The Java-free bootstrap verifier and subsequent required full
+workspace baseline/final-head CI are separate gates; no readiness is claimed.
+
+
+The corrected tuple now completes17 focused Rust passes,347 Python tests,
+all12 ordered Jank host assertions andtwo byte-exact Java-free bootstrap
+reproductions. Independently verified archive
+m4-when-let-ci-provenance-focused-2026-10-16.tar.gz, SHA256
+04e6fb45a897f0fe6678151b911389bb9a8add1ec65bbec3f05d3b715fc460d3,
+retains1874 manifested payloads andall1846 frozen inputs matchingd1c3c1e.
+The required full baseline started atd1c3c1e inwhen-let-d1-full-baseline with
+CARGO_BUILD_JOBS=2 andthe unchanged command above; its receipt is nonterminal.
+This evidence-only follow-up changes no declared baseline input. Full baseline
+andfinal-head CI outcomes remain pending; no merge or issue closure is claimed.
+
+
+### Executed reconciliation of obsolete destructuring failures (2026-10-16)
+
+CI at896b9bc passes foundation but exposes two obsolete expected-failure guards.
+The four original ignored let-destructuring tests execute unchanged at896b9bc:
+4passes/0fail/0ignore with1846 unchanged inputs. Only after that proof, four
+ignore attributes and their four obsolete unsupported rows are removed; original
+bodies/expected values remain byte-identical. All four re-enabled tests pass,
+andthe remaining unsupported-feature guard passes. Independent review confirms
+exactlythose changes. The known-failures JSON removes only thewhen-let namespace
+error, justified bythe prior12 ordered host comparisons andCI's sole namespace
+delta. No other unknown or failure is converted into success.
+
+The complete Jank baseline comparison is still running inwhen-let-reconcile-after;
+its unfinished result is not a pass. The priorfull baseline/CI at896b9bc retain
+stale-guard failures andpartial/unexecuted coverage separately. This checkpoint
+requires terminal Jank comparison, a newfull workspace baseline andfinal-head CI
+before readiness. No implementation/bootstrap bytes change inthis reconciliation.
+
+### Exact when-let expectation reconciliation (2026-10-16)
+
+The original four ignored destructuring tests pass unchanged with
+`cargo test -p suss-compile --locked --test compile_expr destructuring -- --ignored --test-threads=2`.
+Only their ignore attributes and four stale unsupported rows were removed;
+original bodies and assertions remain byte-identical. The four exact tests and
+remaining unsupported guard then pass five executions with1,846 frozen inputs
+unchanged. The known-failure catalog removes only the obsolete when-let namespace
+load error, backed by all12 complete unchanged Jank body assertions in order.
+
+`cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2 --nocapture`
+passes the full reviewed-failure comparison (568.51s test time). Raw results are
+943 pass,21 fail,17 guest-judged,188 failed namespaces,4,873 unexecuted and0 skipped.
+Those retained gaps do not become successes. The historical runner receipt names
+896b9bc; source correspondence proves its exact two-file candidate tuple matches
+all1,846 inputs committed at1a85c8d. Handoff is outside that frozen set.
+
+The previous required baseline was explicitly stopped after those concrete
+stale-test fixes were validated. It retains117 passes,0 failures/ignores across
+26 completed summaries; interrupted definitions and later targets remain
+unexecuted. SIGINT reached only its verified owned Cargo/child; exit-2 is not a
+baseline pass or timeout. All1,846 old inputs remained unchanged. Raw commands,
+source bytes, comparisons and stop receipts are in
+`m4-when-let-reconciliation-2026-10-16.tar.gz`; manifest maps deduplicated exact
+source bytes to each frozen path. The corrected1a85 baseline has started using
+`CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, with no
+RUSTFLAGS override. Its terminal result and final-head CI remain required.
+
+### When-let local baseline timeout investigation (2026-10-17)
+
+Required `CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`
+at corrected source1a85 (all1,846 inputs match published76a7971) terminated101:
+342pass/4fail/0ignored across75 summaries. Integration coverage is72/246targets;
+174 remain unexecuted. Four native_repl_async_io tests timed out after60seconds
+waiting for their first output (7001 or9001), with empty stdout/stderr, before
+their async semantic checks. Host resource observations are context, not proof
+of cause. The failed baseline remains a failure.
+
+Unchanged `cargo test -p suss-cli --locked --test native_repl_async_io --
+--test-threads=2` then passes8/8 in245.25seconds, same60-second wait deadlines,
+same1,846-input tuple. All four exact tests also pass in76a final-head
+CI39003344698 (all10checks green). Neither result replaces a full local baseline.
+A fresh exact workspace command is live with jobs2 and RAYON_NUM_THREADS=2 to
+bound compiler workers; testthreads2, deadlines and fuel allowances are unchanged.
+Its terminal result is not included in this checkpoint. No RUSTFLAGS set by drivers.
+
+Archive m4-when-let-local-timeouts-rerun-ci-2026-10-17.tar.gz, SHA256
+f1c6ef12c2d4a99dc2d6e86f0555d35eff123acf3be98cbbfb99cc0dd47a82b1,
+retains raw failed baseline, unchanged rerun, source bytes, CI logs/checkout proof,
+resource observations and launch-only new-run evidence. Independent criterion
+review found no additional focused-evidence gap; full local baseline acceptance
+remains unproven. Source/fixture/provenance bytes are unchanged by this documentation
+checkpoint; new documentation-head CI and archive review are separate gates.
+
+### When-let required full workspace command: terminal source-equivalent evidence (2026-10-17)
+
+Actualtestedhead `76a79718843741ead53f9432a2407cbcc4913c65`: `cargo test --workspace --locked -- --test-threads=2`, Cargojobs2/Rayon2/inheritedRUSTFLAGS, unchangedfuel/deadlines, exit0after24491.189741206006s. All1846recordedinputs unchanged. Raw256summaries independentlyreproduce **1825passingexecutions/0failed/18ignored**,246integrationbinaryinvocations+6unit+4doctestcrates. Passingexecutions are not independentlydeduplicated semanticcontracts; exact18existingignorednames remain unexecuted inreport/archive, notcountedaspassed. Fullpinnedwhen-letbody and reviewedJank-baseline matching execute; knownupstreamgaps are notconvertedtosuccess.
+
+IndependentCicero binds1846bytes toBOTH76a andpublished `69dcc2fc4379c5b5d9980e63247f2d489159f8d3`; only2priorDOCpaths differ. AfterROOTexplicitlocal-bytecheckrelease andactualoldPID394310absence/terminalreceiptcheck, archivalleafFFexact69d andall1846bytesrechecked. No source/test/bootstrapedits orCargo. Originaldriver hasno separatecontemporaneousafterfreeze.json; itsunchangedterminalreceipt+independentfinal1846hashproofarepreserved. Addedafter-FFmap is clearlyASSEMBLY-TIME, not fabricatedoldafterevidence. Fourupstreamsupportfiles are separatelypinnedc429andprovided, notsilentlyaddedtooriginal1846count.
+
+Newarchive `m4-when-let-full-workspace-baseline-2026-10-17.tar.gz`, SHA256 `7804c2ba433a21a06e85be7c385b009d5681fdaccf229f735ed834e851763b32`, **2078members /2077manifestedpayloads**, containsfullrawbaseline/driver/receipt/beforemap/terminalindependentverification, bothGitbindings/frozenbytes/ignoredinventory/assemblychecks/pinned4support andactual69dCI39013433075raw/terminalsourceproofs (all10checksSUCCESS). RawbaselinelogSHA `5a5e33b402cdaca430ebedc553374713691cf9dd9bcd6d32ba8834901b15e629`. Allretainedfreezehashes resolveinternally. Priorreviewedtimeout/retryarchivef1c6ef12...47a82b1 isincludedEXACTunchanged:342pass4timeout failure andunchanged8passrerunremain separatehistoricalresults, nohost-loadcausalityclaim. No rewrittentest/deadline/fuel criteria.
+
+The passingfullcommand ran76a, withsource-equivalentpublication69d, not a fabricatedrunonnewdochead. UpcomingdocsheadCI remainsseparateROOTgate; archived69dCIisnotautomaticallyitsresult. Report/commands/results/limits only; no merge, issueclose, universalcompatibility orM4completionclaim. IndependentCiceroarchive/finalscope review precedescommit/push267 byROOT; no duplicatecomments/tests orinterventioninliveE0baseline.

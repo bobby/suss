@@ -1,4 +1,4 @@
-//! Matched leaf evidence only. Expected differences stay failing until fixed.
+//! Matched pinned reader/analyzer identifier initialization and effects.
 //! Native observations cover &env metadata/leaf identity, not CLJS resolve/AST views.
 use super::*;
 use crate::portable::resolve::Phase;
@@ -197,4 +197,17 @@ fn native_memo_leaf_keyword_forcewrite() {
 #[test]
 fn native_memo_leaf_keyword_nil_aware() {
     run_group("keyword", true);
+}
+
+#[test]
+fn compiled_identifier_constants_keep_pinned_warmed_memos() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let value = session
+            .eval("[(.-_hash 'memo-symbol-leaf-warm) (.-_hash :memo-keyword-leaf-warm)]")
+            .unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &value).unwrap(),
+            "[1454146648 -24028250]"
+        );
+    }
 }
