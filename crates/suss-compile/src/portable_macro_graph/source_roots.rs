@@ -1056,10 +1056,17 @@ impl Certificate {
         let ordered_children = same_child_keys(session, &expected.children,
             &certificate.source.children)?;
         let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
-        let current =
-            expected
-                .witness
-                .matches_logical_source(session, bridge, &certificate.value)?;
+        // Prepay branch/identity selection before inspecting the native Rc.
+        // Full successful validation already checked this exact immutable
+        // expectation's logical predicate in this closed read-only pass.
+        session.charge_host_work(3)?;
+        let current = if valid && Rc::ptr_eq(&certificate.source, expected) {
+            true
+        } else {
+            // False health must still execute the original current read, and
+            // equal keys alone never substitute for an independent expectation.
+            expected.witness.matches_logical_source(session, bridge, &certificate.value)?
+        };
         if !(same && ordered_children && valid && current) {
             return Ok(None);
         }

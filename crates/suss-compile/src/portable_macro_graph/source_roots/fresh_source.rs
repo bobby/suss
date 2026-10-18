@@ -448,4 +448,63 @@ mod tests {
         drop(a_rev);
     }
 
+    #[test]
+    fn same_expectation_read_requires_valid_health_and_exact_native_expectation() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit-leaf :same-native-a} same-native-a 17) (def ^{:audit-leaf :different-native-b} different-native-b 18)").unwrap();
+        let source = hir::SourceNamespace::capture(&session.compilation_snapshot().environment, session.phase());
+        let select = |name: &str| source.declarations.iter().find(|(g, _)| g.name() == name)
+            .map(|(g, info)| (g.clone(), info.clone())).unwrap();
+        let a = select("same-native-a"); let b = select("different-native-b");
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (expected, value, records) = metadata(&mut session, &bridge, &a.0, &a.1);
+        let proof = FreshSourceProof::finish(&mut session, &bridge, expected.clone(),
+            value.clone(), records, vec![], false).unwrap();
+        let certificate = proof.certificate().expect("strict source fixture").clone();
+        let (mut independent, _, _) = metadata(&mut session, &bridge, &a.0, &a.1);
+        assert!(!Rc::ptr_eq(&expected, &independent));
+        assert!(expected.key == independent.key, "same real revision and field selected twice");
+        session.collect().unwrap();
+        let same_cost = session.with_operation_budget(|session| {
+            let before = session.operation_fuel_remaining()?;
+            assert!(Certificate::checked(session, &bridge, &certificate, &expected)?.is_some());
+            Ok(before - session.operation_fuel_remaining()?)
+        }).unwrap();
+        let independent_cost = session.with_operation_budget(|session| {
+            let before = session.operation_fuel_remaining()?;
+            assert!(Certificate::checked(session, &bridge, &certificate, &independent)?.is_some());
+            Ok(before - session.operation_fuel_remaining()?)
+        }).unwrap();
+        assert!(same_cost < independent_cost,
+            "exact expectation must remove performed logical read: same={same_cost}, independent={independent_cost}");
+        // Test-only predicate corruption: retain the independent expectation's
+        // genuine owner/key/children but substitute another native field's
+        // witness. Equal keys must never suppress its now-false logical read.
+        let (different, _, _) = metadata(&mut session, &bridge, &b.0, &b.1);
+        let different = Rc::try_unwrap(different).ok().expect("unshared native fixture expectation");
+        Rc::get_mut(&mut independent).expect("unshared independent native expectation").witness = different.witness;
+        assert!(expected.key == independent.key);
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &independent).unwrap().is_none());
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &expected).unwrap().is_some());
+        // Same Rc does not excuse physical UID corruption. Complete validation
+        // is still performed before considering any logical-read reuse.
+        let old_uid = session.inspect(&value, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let old = object.field(&mut store, 3)?.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32();
+            let bad = wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(42).unwrap());
+            object.set_field(&mut store, 3, wasmtime::Val::AnyRef(Some(bad)))?;
+            Ok(old)
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &expected).unwrap().is_none());
+        session.inspect(&value, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let old = wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(old_uid).unwrap());
+            object.set_field(&mut store, 3, wasmtime::Val::AnyRef(Some(old)))
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(Certificate::checked(&mut session, &bridge, &certificate, &expected).unwrap().is_some());
+        eprintln!("same-expectation-direct-check same={same_cost} independent={independent_cost}; not whole-request savings");
+    }
+
 }

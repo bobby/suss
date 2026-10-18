@@ -1,7 +1,7 @@
 name: prototype-baseline
 on:
   push:
-    branches: [main, 'portable/**']
+    branches: [main, 'portable/**', 'experiment/**']
   pull_request:
 
 concurrency:
