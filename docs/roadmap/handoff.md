@@ -29883,3 +29883,29 @@ SHA256 `9e8d0ed946c79f82347112c0d8eba4bd408443e322ae8a65f03cf649a4663fbd`, requi
 manifest. Rejected flat-edge trials and the unexecuted76-plan correction stay
 separate. The remaining task is to resolve actual default-budget failures,
 retain their value/effect evidence, then complete full baseline and final-head CI.
+
+
+## Checked property probe: exact-head terminal validation
+
+On source `8a110949f1c558ade6c38999e61aeeaffade6c2d`, the required
+`cargo test --workspace --locked -- --test-threads=2` finished exit101 after
+3653.23 seconds: 88 Rust passes, two fuel failures, zero ignored. All4,037
+frozen inputs stayed identical. Fifteen of259 integration targets reached
+terminal summaries;244 were unexecuted after Cargo fail-fast. The collection
+source-child case failed during macro invocation at851..882; unordered
+literal effects failed during caller-&env transport at510..531. The same
+harness's empty-do case passed. No later value/effect assertions in the failed
+tests or later harnesses receive success credit.
+
+[Local baseline report](evidence/m4-probe-preservation-full-baseline-2026-10-17.md)
+and its archive retain raw logs, command, freezes, target manifest and exact
+Git source bindings; archive SHA256
+`130c154222866fc8eacddff1bdf90c0fce350069ee4bb9f7c9d9b8586d1a6726`.
+Keep this separate from the [same-head CI report](evidence/m4-pr268-8a11094-terminal-ci-2026-10-17.md):
+536 Rust foundation passes/one existing ignored plus353 Python passes, then
+111 integration passes/14 fuel failures;30 of259 targets terminal and229
+unexecuted. Archive SHA256
+`36c8513ca16cee4ff26a5ce2897e497d8fe079be759c880da24c1006a9c40472`.
+The overlapping runs are not additive coverage. These are failing baselines,
+not readiness evidence; next source corrections need focused execution before
+a new required baseline and passing final-head CI.
