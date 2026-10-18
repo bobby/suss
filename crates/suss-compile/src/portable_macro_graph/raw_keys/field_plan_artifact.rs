@@ -734,3 +734,7 @@ fn artifact_decode_bind_and_publication_fault_cuts_leave_no_partial_install_and_
         retire(&mut slot,&mut Meter::default()).unwrap();assert!(slot.is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "field_plan_view.rs"]
+mod field_plan_view;
