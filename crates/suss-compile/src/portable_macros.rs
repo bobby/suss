@@ -795,7 +795,7 @@ impl ExpansionHost for CompiledMacros {
                 )?
             } else {
                 self.environment_materializations += 1;
-                let mut graph = AnalysisGraph::with_declaration_values(&self.bridge, session, &mut self.declaration_values);
+                let mut graph = AnalysisGraph::with_native_declaration_values(&self.bridge, session, &mut self.declaration_values, context.phase)?;
                 match self.compiler_catalog_macros.get(&target) {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?

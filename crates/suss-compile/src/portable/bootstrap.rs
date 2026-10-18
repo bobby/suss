@@ -92,6 +92,17 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
         Some(&super::SourceOrigin::new(SOURCE, None)),
     )
 }
+/// Development-only native table source generator. Uses the SAME private catalog
+/// as bootstrap generation/restoration, with a fresh byte interner per phase.
+/// Never calls shipped(), restores a Session, or embeds a compiler fingerprint.
+pub fn generate_native_field_tables() -> Result<String, Diagnostic> {
+    crate::portable_macro_graph::generate_native_field_tables(
+        |phase| Ok(catalog(phase)?.environment),
+        &sha256(SOURCE.as_bytes()),
+        &sha256(DEPENDENCIES),
+    )
+}
+
 /// Development generator; it does not execute source or invoke Java/Node.
 pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
     let analyzed = catalog(phase)?;
@@ -115,9 +126,9 @@ pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
 /// Validate all identity inputs before a host can install or initialize the artifact.
 /// Wasm validation/linking remains mandatory in the consuming host.
 pub fn restore(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<PreparedFragment, Diagnostic> {
-    restore_checked(phase, wasm, json).map(|(fragment, _)| fragment)
+    restore_checked(phase, wasm, json).map(|(fragment, _, _)| fragment)
 }
-fn restore_checked(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<(PreparedFragment, super::artifact_identity::Manifest), Diagnostic> {
+fn restore_checked(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<(PreparedFragment, super::artifact_identity::Manifest, NativeSourceIdentity), Diagnostic> {
     if wasm.len() > MAX_ARTIFACT_BYTES || json.len() > 1024 * 1024 {
         return Err(error("Bootstrap artifact exceeds bounded size"));
     }
@@ -148,7 +159,10 @@ fn restore_checked(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<(PreparedFr
         environment: analyzed.environment,
         cells: analyzed.cells,
         namespace_directive: analyzed.namespace_directive,
-    }, identity))
+    }, identity, NativeSourceIdentity {
+        source_sha256: found.source_sha256,
+        dependency_sha256: found.dependency_graph_sha256,
+    }))
 }
 /// Cache immutable compiler facts and bytes, never guest roots or initialized state.
 /// Every Session installs and executes these artifacts in its own Store.
@@ -169,32 +183,58 @@ impl IntegrityAuthority {
             && self.body_sha256 == identity.wasm_sha256
     }
 }
+struct NativeSourceIdentity {
+    source_sha256: String,
+    dependency_sha256: String,
+}
 struct ShippedBootstrap {
     fragment: PreparedFragment,
     authority: IntegrityAuthority,
+    source_identity: NativeSourceIdentity,
+}
+// Only the private shipped path supplies this exact restored environment. The
+// identity strings were already verified; no new source hashing/replanning is
+// hidden in a native-template lookup. Public restore does not return this handle.
+pub(crate) fn shipped_native_source(phase: Phase)
+    -> Result<(&'static Environment, &'static str, &'static str), Diagnostic>
+{
+    let bundle = shipped_bundle(phase)?;
+    Ok((&bundle.fragment.environment, &bundle.source_identity.source_sha256,
+        &bundle.source_identity.dependency_sha256))
 }
 pub(crate) fn shipped_authority(phase: Phase) -> Result<&'static IntegrityAuthority, Diagnostic> {
     shipped_bundle(phase).map(|bundle| &bundle.authority)
 }
+static SHIPPED_RUNTIME: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
+static SHIPPED_MACRO: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
+// Inspect only an ALREADY restored private bundle. A template optimization must
+// not secretly perform a new catalog analysis while looking for an eligible Arc.
+pub(crate) fn loaded_native_source(phase: Phase)
+    -> Option<(&'static Environment, &'static str, &'static str)>
+{
+    let cache = match phase { Phase::Runtime => &SHIPPED_RUNTIME, Phase::Macro => &SHIPPED_MACRO };
+    let bundle = cache.get()?.as_ref().ok()?;
+    Some((&bundle.fragment.environment, &bundle.source_identity.source_sha256,
+        &bundle.source_identity.dependency_sha256))
+}
 fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic> {
-    static RUNTIME: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
-    static MACRO: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
     let (cache, wasm, json): (_, &[u8], &[u8]) = match phase {
         Phase::Runtime => (
-            &RUNTIME,
+            &SHIPPED_RUNTIME,
             include_bytes!("../../../../runtime/bootstrap/runtime.wasm"),
             include_bytes!("../../../../runtime/bootstrap/runtime.json"),
         ),
         Phase::Macro => (
-            &MACRO,
+            &SHIPPED_MACRO,
             include_bytes!("../../../../runtime/bootstrap/macro.wasm"),
             include_bytes!("../../../../runtime/bootstrap/macro.json"),
         ),
     };
     cache
-        .get_or_init(|| restore_checked(phase, wasm, json).map(|(fragment, identity)| ShippedBootstrap {
+        .get_or_init(|| restore_checked(phase, wasm, json).map(|(fragment, identity, source_identity)| ShippedBootstrap {
             fragment,
             authority: IntegrityAuthority { phase, body_sha256: identity.wasm_sha256 },
+            source_identity,
         }).map_err(|failure| failure.message))
         .as_ref()
         .map_err(|message| error(message.clone()))

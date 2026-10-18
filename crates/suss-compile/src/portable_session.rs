@@ -542,10 +542,17 @@ impl Session {
         let fragment = portable::bootstrap::shipped(self.phase)
             .map_err(SessionError::Compile)?
             .clone();
-        self.eval_prepared_with_authority(portable::modules::PreparedInput {
-            modules: Vec::new(),
-            fragment,
-        }, Some(portable::bootstrap::shipped_authority(self.phase).map_err(SessionError::Compile)?))?;
+        let authority=portable::bootstrap::shipped_authority(self.phase).map_err(SessionError::Compile)?;
+        self.with_operation_budget(|session| {
+            // Cold native-table setup shares the existing core installation
+            // allowance. It cannot start a separate helper operation/refill.
+            let native=crate::portable_macro_graph::native_field_runtime::initialize(session.phase,session)?;
+            session.charge_host_work(1)?; // temporary registry retain retirement
+            drop(native);
+            session.eval_prepared_with_authority(portable::modules::PreparedInput {
+                modules:Vec::new(),fragment,
+            },Some(authority))
+        })?;
         self.enter_namespace(&namespace)?;
         // No caller can mutate the newly provisioned core before this point.
         // Stage every root/check before publishing the private registry.

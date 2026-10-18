@@ -1064,3 +1064,10 @@ mod native_prefix;
 #[cfg(test)]
 #[path = "raw_keys/field_plan_artifact.rs"]
 mod field_plan_artifact;
+
+// Development generator/schema only; does not change Interner or dispatch.
+#[path = "raw_keys/compiled_field_codegen.rs"]
+pub(super) mod compiled_field_codegen;
+
+#[path = "raw_keys/compiled_prefix.rs"]
+pub(super) mod compiled_prefix;

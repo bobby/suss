@@ -34,7 +34,23 @@ pub(crate) use reuse::DeclarationValues;
 #[path = "portable_macro_graph/occurrence_work.rs"]
 mod occurrence_work;
 mod materialization_index;
+pub(crate) mod native_field_runtime;
+mod form_plan_input;
+use form_plan_input::Plans;
+use raw_keys::compiled_prefix::GraphInterner;
 use raw_keys::{Interner, KeyId, Plan};
+
+// Compiler-generated native constants only. Source/runtime admission is separate.
+#[allow(dead_code)]
+mod generated_native_fields;
+pub(crate) fn generate_native_field_tables(
+    catalog: impl FnMut(portable::resolve::Phase) -> std::result::Result<portable::resolve::Environment, portable::Diagnostic>,
+    source: &str,
+    dependencies: &str,
+) -> std::result::Result<String, portable::Diagnostic> {
+    raw_keys::compiled_field_codegen::generate(catalog, source, dependencies)
+}
+
 
 // Private native provenance; neither source Forms nor guest values can mint it.
 // Only the explicitly annotated analyzer field positions below construct tokens.
@@ -479,10 +495,11 @@ enum Task {
 pub struct AnalysisGraph<'a> {
     bridge: &'a FormBridge,
     retained: Option<&'a mut DeclarationValues>,
+    native_registry: Option<Arc<native_field_runtime::Registry>>,
     session: &'a mut Session,
     keys: [BTreeMap<String, Value>; 2],
     symbols: BTreeMap<String, Value>,
-    raw_keys: Interner,
+    raw_keys: GraphInterner,
     // Invocation-local empty storage only: no live keys, nodes or form references.
     form_plan: Plan,
     forms: Vec<Option<Value>>,
@@ -528,10 +545,11 @@ impl<'a> AnalysisGraph<'a> {
         Self {
             bridge,
             retained: None,
+            native_registry: None,
             session,
             keys: std::array::from_fn(|_| BTreeMap::new()),
             symbols: BTreeMap::new(),
-            raw_keys: Interner::default(),
+            raw_keys: GraphInterner::default(),
             form_plan: Plan::default(),
             forms: Vec::new(),
             maps: BTreeMap::new(),
@@ -553,6 +571,17 @@ impl<'a> AnalysisGraph<'a> {
     }
     pub(crate) fn with_declaration_values(bridge: &'a FormBridge,session: &'a mut Session,values: &'a mut DeclarationValues)->Self {
         let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph.capture_roots=true;graph
+    }
+    pub(crate) fn with_native_declaration_values(bridge: &'a FormBridge, session: &'a mut Session,
+        values: &'a mut DeclarationValues, phase: portable::resolve::Phase) -> Result<Self>
+    {
+        let registry=native_field_runtime::initialize(phase,session)?;
+        let mut graph=Self::with_declaration_values(bridge,session,values);
+        if let Some(registry)=registry {
+            graph.raw_keys=GraphInterner::with_prefix(&registry.prefix,&mut |u|graph.session.charge_host_work(u))?;
+            graph.native_registry=Some(registry);
+        }
+        Ok(graph)
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
         self.charge(1)?;
@@ -1074,6 +1103,28 @@ impl<'a> AnalysisGraph<'a> {
     fn definition_with_initializer(
         &mut self, definition: &Form, initializer: Option<&Form>, depth: usize,
     ) -> Result<(Value, Option<Value>)> {
+        self.definition_with_native_owner(definition,initializer,depth,None)
+    }
+    fn native_plan_for(&mut self,global:&portable::resolve::Global,owner:&Arc<portable::resolve::DefinitionInfo>,
+        selector:native_field_runtime::Selector,form:&Form)->Result<Option<native_field_runtime::NativePlan>> {
+        self.charge(1)?;
+        let plan=match &self.native_registry {
+            Some(registry)=>registry.lookup(self.session,global,owner,selector,form)?,
+            None=>None,
+        };
+        if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some(){
+            eprintln!("compiled-native-field {}/{} hit={}",global.namespace(),global.name(),plan.is_some());
+        }
+        Ok(plan)
+    }
+    fn native_source_form(&mut self,global:&portable::resolve::Global,owner:&Arc<portable::resolve::DefinitionInfo>,
+        selector:native_field_runtime::Selector,form:&Form,depth:usize)->Result<Value> {
+        validate_form_data(form,&mut |units|self.session.charge_host_work(units))?;
+        let native=self.native_plan_for(global,owner,selector,form)?;
+        self.form_data_selected_native(form,depth,None,&mut None,native)
+    }
+    fn definition_with_native_owner(&mut self,definition:&Form,initializer:Option<&Form>,depth:usize,
+        owner:Option<(&portable::resolve::Global,&Arc<portable::resolve::DefinitionInfo>)>)->Result<(Value,Option<Value>)> {
         // Exactly the existing full definition guard, before any correspondence
         // or recipe lookup. It also validates the candidate child and metadata.
         trace_native_preparation(self.session, definition, "definition-start");
@@ -1089,7 +1140,11 @@ impl<'a> AnalysisGraph<'a> {
         };
         trace_native_preparation(self.session, definition, "initializer-correspondence");
         let mut child_key = None;
-        let value = self.form_data_selected(definition, depth, selected, &mut child_key)?;
+        let native=match owner {
+            Some((global,owner))=>self.native_plan_for(global,owner,native_field_runtime::Selector::Definition,definition)?,
+            None=>None,
+        };
+        let value = self.form_data_selected_native(definition, depth, selected, &mut child_key,native)?;
         trace_native_preparation(self.session, definition, "definition-recipes");
         self.charge(1)?;
         let child = child_key.and_then(|key| self.forms.get(key.0).and_then(Option::as_ref).copied());
@@ -1099,13 +1154,24 @@ impl<'a> AnalysisGraph<'a> {
         &mut self, form: &Form, reader_depth: usize, selected: Option<usize>,
         child_key: &mut Option<KeyId>,
     ) -> Result<Value> {
+        self.form_data_selected_native(form,reader_depth,selected,child_key,None)
+    }
+    fn form_data_selected_native(&mut self,form:&Form,reader_depth:usize,selected:Option<usize>,
+        child_key:&mut Option<KeyId>,native:Option<native_field_runtime::NativePlan>)->Result<Value>
+    {
         self.charge(8)?;
         let mut plan = std::mem::take(&mut self.form_plan);
         debug_assert!(plan.nodes.is_empty());
         // All early returns remain inside the original builder. A failed build
         // or failed reset drops its local Plan normally, retaining no entries
         // and preserving the original build error without fallible cleanup.
-        let value = self.form_data_planned(form, reader_depth, selected, child_key, &mut plan)?;
+        let value = if let Some(native)=native {
+            let mut input=form_plan_input::Native{plan:native,generated:form_plan_input::Legacy{plan:&mut plan}};
+            self.form_data_planned(form,reader_depth,selected,child_key,&mut input)?
+        } else {
+            let mut input=form_plan_input::Legacy{plan:&mut plan};
+            self.form_data_planned(form,reader_depth,selected,child_key,&mut input)?
+        };
         trace_native_preparation(self.session, form, "form-recipes");
         plan.clear_metered(&mut |units| self.session.charge_host_work(units))?;
         self.charge(8)?;
@@ -1113,9 +1179,9 @@ impl<'a> AnalysisGraph<'a> {
         trace_native_preparation(self.session, form, "form-reset");
         Ok(value)
     }
-    fn form_data_planned(
+    fn form_data_planned<P:Plans>(
         &mut self, form: &Form, _reader_depth: usize, selected: Option<usize>,
-        child_key: &mut Option<KeyId>, plan: &mut Plan,
+        child_key: &mut Option<KeyId>, plan: &mut P,
     ) -> Result<Value> {
         #[derive(Clone, Copy)]
         enum Shape {
@@ -1158,9 +1224,9 @@ impl<'a> AnalysisGraph<'a> {
                 }
             }
         }
-        enum Work<'a> {
-            Visit(Form, usize),
-            BorrowedVisit(&'a Form, usize),
+        enum Work<'a,I> {
+            Visit(Form, I),
+            BorrowedVisit(&'a Form, I),
             Finish {
                 key: KeyId,
                 shape: Shape,
@@ -1174,20 +1240,16 @@ impl<'a> AnalysisGraph<'a> {
         // Identity planning is native-only. Raw metadata participates in keys,
         // but only the existing normalized-metadata path builds guest recipes.
         trace_native_preparation(self.session, form, "raw-plan-start");
-        let root_plan = self.raw_keys.plan(form, plan, &mut |units| {
-            self.session.charge_host_work(units)
-        })?;
+        let root_plan = plan.root(form,&mut self.raw_keys,self.session)?;
         trace_native_preparation(self.session, form, "raw-plan-finished");
         if let Some(index) = selected {
             self.charge(2)?;
-            let node = &plan.nodes[root_plan];
-            *child_key = node.children.get(node.metadata_count + index)
-                .map(|id| plan.nodes[*id].key);
+            *child_key = plan.selected_key(root_plan,index,self.session)?;
         }
         // A recipe hit needs no owned payload. Plan the exact borrowed key
         // before copying, retaining full validation and source-data equality.
         self.charge(1)?;
-        let root_key = plan.nodes[root_plan].key;
+        let root_key = plan.key(root_plan,self.session)?;
         if let Some(value) = self.forms.get(root_key.0).and_then(Option::as_ref).copied() {
             self.charge(1)?;
             return Ok(value);
@@ -1257,7 +1319,7 @@ impl<'a> AnalysisGraph<'a> {
                 }
             };
             self.charge(1)?;
-            let key = plan.nodes[plan_id].key;
+            let key = plan.key(plan_id,self.session)?;
             if let Some(value) = self.forms.get(key.0).and_then(Option::as_ref).copied() {
                 self.charge(1)?;
                 values.push(value);
@@ -1323,7 +1385,7 @@ impl<'a> AnalysisGraph<'a> {
                 None
             } else { Some(input) };
             let metadata_plan = if let Some(form) = metadata_form {
-                let id = self.raw_keys.plan(&form, plan, &mut |units| self.session.charge_host_work(units))?;
+                let id = plan.generated(&form,&mut self.raw_keys,self.session)?;
                 Some((form, id))
             } else { None };
             work.push(Work::Finish {
@@ -1333,7 +1395,7 @@ impl<'a> AnalysisGraph<'a> {
             // LIFO: push metadata first, then reversed body children, preserving
             // textual body order followed by normalized metadata.
             if let Some((form, id)) = metadata_plan { work.push(Work::Visit(form, id)); }
-            let offset = plan.nodes[plan_id].metadata_count;
+            let offset = plan.metadata(plan_id,self.session)?;
             match body {
                 Some(Input::Borrowed(form)) => {
                     let items = match &form.kind {
@@ -1341,7 +1403,7 @@ impl<'a> AnalysisGraph<'a> {
                         _ => unreachable!("collection shape checked above"),
                     };
                     for (index, child) in items.iter().enumerate().rev() {
-                        work.push(Work::BorrowedVisit(child, plan.nodes[plan_id].children[offset + index]));
+                        work.push(Work::BorrowedVisit(child, plan.child(plan_id,offset+index,self.session)?));
                     }
                 }
                 Some(Input::Owned(mut form)) => {
@@ -1350,7 +1412,7 @@ impl<'a> AnalysisGraph<'a> {
                         _ => unreachable!("collection shape checked above"),
                     };
                     for (index, child) in items.into_iter().enumerate().rev() {
-                        work.push(Work::Visit(child, plan.nodes[plan_id].children[offset + index]));
+                        work.push(Work::Visit(child, plan.child(plan_id,offset+index,self.session)?));
                     }
                 }
                 None => {}
@@ -1991,8 +2053,8 @@ impl<'a> AnalysisGraph<'a> {
                     .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
             };
             trace(self.session, "completed-tag")?;
-            let (definition, initializer_recipe) = self.definition_with_initializer(
-                &info.definition_form, info.initializer_form.as_ref(), depth + 1,
+            let (definition, initializer_recipe) = self.definition_with_native_owner(
+                &info.definition_form, info.initializer_form.as_ref(), depth + 1,Some((global,info)),
             )?;
             if tracing && info.initializer_form.is_some() {
                 eprintln!("metadata-initializer {}/{} reused={}", global.namespace(), global.name(), initializer_recipe.is_some());
@@ -2003,12 +2065,13 @@ impl<'a> AnalysisGraph<'a> {
                 "suss/analysis-completed",
                 self.flag(info.analysis_completed)?,
             ));
-            fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
+            fields.push(("suss/declaration", self.native_source_form(global,info,
+                native_field_runtime::Selector::Declaration,&info.declaration,depth+1)?));
             fields.push(("suss/defonce", self.flag(info.once)?));
             if let Some(form) = &info.initializer_form {
                 let value = match initializer_recipe {
                     Some(value) => value,
-                    None => self.form(form, depth + 1)?,
+                    None => self.native_source_form(global,info,native_field_runtime::Selector::Initializer,form,depth+1)?,
                 };
                 fields.push(("suss/initializer-form", value));
             }

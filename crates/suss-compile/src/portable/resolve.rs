@@ -759,6 +759,13 @@ impl Environment {
         self.namespaces.iter().filter_map(move |(entry_phase, namespace)|
             (*entry_phase == phase).then_some(namespace.as_str()))
     }
+    /// Borrow immutable entries without allocating an intermediate namespace map.
+    /// Callers meter each visited entry and any phase/name comparisons themselves.
+    pub(crate) fn shared_definition_entries(&self)
+        -> impl Iterator<Item = (&Global, &std::sync::Arc<DefinitionInfo>)>
+    {
+        self.definitions.iter()
+    }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
         self.definitions.get(global).map(std::sync::Arc::as_ref)
     }

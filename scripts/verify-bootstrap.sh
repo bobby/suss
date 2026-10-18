@@ -17,6 +17,12 @@ if command -v java >/dev/null 2>&1 || command -v node >/dev/null 2>&1; then
     exit 1
 fi
 cd "$bootstrap_root"
+# Reproduce native BYTE-key/field tables without rewriting checked-in inputs.
+# Compare before bootstrap generation: generated Rust is itself fingerprinted.
+CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-native-fields --locked -- "$bootstrap_tmp/native-fields-first.rs"
+CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-native-fields --locked -- "$bootstrap_tmp/native-fields-second.rs"
+cmp "$bootstrap_tmp/native-fields-first.rs" "$bootstrap_tmp/native-fields-second.rs"
+cmp "$bootstrap_tmp/native-fields-first.rs" crates/suss-compile/src/portable_macro_graph/generated_native_fields.rs
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/first"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/second"
 for bootstrap_phase in runtime macro; do
