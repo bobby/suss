@@ -28070,3 +28070,41 @@ Commands, raw outcomes, source freezes, qualification details and five archives:
 [evidence](evidence/m4-pr256-reconciliation-and-fuel-measurements-2026-10-18.md).
 The declaration observer is a separate diagnostic; its analysis will guide the
 next repair rather than inferring a whole-request cost from a failed prefix.
+
+
+### 2026-10-18: canonical encoding scratch down-port
+
+The original reviewed5e0d9f2 raw-key scratch patch applies without context edits
+to e3a3850. One private encoding buffer per plan retains allocation on exact
+intern hits; misses move exact bytes into immutable canonical storage only
+after fallible preparation. Scratch initialization, clear and move/reset work
+remain prepaid. Full hashes/collision equality, stable IDs, compact heads,
+paged entries and publication ordering remain intact. Independent source review
+found no blocker; no quota, tariff, metadata or fixture change is made.
+
+Normal `cargo run --profile test --locked -p suss-cli --bin suss-bootstrap --
+runtime/bootstrap` and `python3 scripts/verify_bootstrap_identity.py` pass.
+Frozen focused commands/results are in
+~/.cache/suss-m4-work/pr256-raw-key-scratch-validation/receipt.json:
+raw_keys lib24PASS; initializer_plan lib3PASS; original CoreEnv1fuelFAIL;
+collection source1fuelFAIL; source tags2fuelFAIL; pinned map wrapper1PASS.
+Total28PASS4fuelFAIL0ignored, every stage executed and changed[]. Initial raw
+preflight also passes24 tests; this repetition is not counted as unique coverage.
+The map's independent ordered-ID comparison is being finalized separately.
+
+Compared with d38, all original metadata marker orders are retained. CoreEnv
+has371857more fuel at the last common IChunkedSeq definition-origin checkpoint
+and214vs182completed declarations, then stillfails. The collection route has
+7296fewer fuel at its last common checkpoint, at its unchanged40M allowance;
+it stillfails at709..738. The new bookkeeping has real costs on small/repeated
+plans. These are completed-prefix observations, not whole-request savings,
+wall-time speedups or default-budget acceptance. Both source-tag failures
+retain the original caller-&env stages/spans. No claim of general regression
+absence or issue completion follows. Full baseline and final-head CI for this
+candidate remain separate requirements; focused success does not replace them.
+
+The diagnostic inner observer is restored and separate:5342912/6145139units of
+completed definition-helper work are raw planning;2693574intern units are a
+subset, with2649338remaining traversal/encoding/scratch units. It observes22107
+exact intern hits. Recipe walk is540651. Every original ordered marker/fuel
+balance matches its control; failed request totals stay unknown.
