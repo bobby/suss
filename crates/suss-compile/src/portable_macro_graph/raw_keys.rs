@@ -344,161 +344,175 @@ impl Interner {
         unordered: bool,
         charge: &mut impl FnMut(u64) -> Result<(), E>,
     ) -> Result<usize, E> {
-        enum Work<'a> {
-            Enter(&'a Form, Option<usize>),
-            Finish(&'a Form, usize),
-        }
-        let root = plan.nodes.len();
-        let result = (|| {
-            // One private encoding buffer per plan. Hits retain its allocation;
-            // misses move it into immutable canonical storage.
-            charge(std::mem::size_of::<Vec<u8>>() as u64 + 1)?;
-            let mut key = Vec::new();
-            let mut pending = Vec::new();
-            push(&mut pending, Work::Enter(form, None), charge)?;
-            while let Some(work) = pending.pop() {
-                charge(1)?;
-                match work {
-                    Work::Enter(form, parent) => {
-                        let id = plan.nodes.len();
-                        push(
-                            &mut plan.nodes,
-                            Node {
-                                key: KeyId(0),
-                                metadata_count: form.metadata.len(),
-                                children: Vec::new(),
-                            },
-                            charge,
-                        )?;
-                        if let Some(parent) = parent {
-                            push(&mut plan.nodes[parent].children, id, charge)?;
-                        }
-                        push(&mut pending, Work::Finish(form, id), charge)?;
-                        // Push in reverse: metadata visits precede kind children.
-                        match &form.kind {
-                            Kind::List(v)
-                            | Kind::Vector(v)
-                            | Kind::Map(v)
-                            | Kind::Set(v)
-                            | Kind::Conditional(v)
-                            | Kind::SplicingConditional(v) => {
-                                for child in v.iter().rev() {
-                                    push(&mut pending, Work::Enter(child, Some(id)), charge)?;
-                                }
-                            }
-                            Kind::Discard(child) => {
-                                push(&mut pending, Work::Enter(child, Some(id)), charge)?
-                            }
-                            Kind::Prefix { operator, target } => {
-                                push(&mut pending, Work::Enter(target, Some(id)), charge)?;
-                                push(&mut pending, Work::Enter(operator, Some(id)), charge)?;
-                            }
-                            _ => {}
-                        }
-                        for child in form.metadata.iter().rev() {
-                            push(&mut pending, Work::Enter(child, Some(id)), charge)?;
-                        }
+        plan_with_intern(form, plan, unordered, charge,
+            &mut |key, meter| self.intern_scratch(key, meter))
+    }
+}
+
+// The original traversal, parameterized only by canonical storage. The legacy
+// interner retains the same operations, order, encoding and charges.
+fn plan_with_intern<E, C: FnMut(u64) -> Result<(), E>>(
+    form: &Form,
+    plan: &mut Plan,
+    unordered: bool,
+    charge: &mut C,
+    intern: &mut impl FnMut(&mut Vec<u8>, &mut C) -> Result<KeyId, E>,
+) -> Result<usize, E> {
+    enum Work<'a> {
+        Enter(&'a Form, Option<usize>),
+        Finish(&'a Form, usize),
+    }
+    let root = plan.nodes.len();
+    let result = (|| {
+        // One private encoding buffer per plan. Hits retain its allocation;
+        // misses move it into immutable canonical storage.
+        charge(std::mem::size_of::<Vec<u8>>() as u64 + 1)?;
+        let mut key = Vec::new();
+        let mut pending = Vec::new();
+        push(&mut pending, Work::Enter(form, None), charge)?;
+        while let Some(work) = pending.pop() {
+            charge(1)?;
+            match work {
+                Work::Enter(form, parent) => {
+                    let id = plan.nodes.len();
+                    push(
+                        &mut plan.nodes,
+                        Node {
+                            key: KeyId(0),
+                            metadata_count: form.metadata.len(),
+                            children: Vec::new(),
+                        },
+                        charge,
+                    )?;
+                    if let Some(parent) = parent {
+                        push(&mut plan.nodes[parent].children, id, charge)?;
                     }
-                    Work::Finish(form, id) => {
+                    push(&mut pending, Work::Finish(form, id), charge)?;
+                    // Push in reverse: metadata visits precede kind children.
+                    match &form.kind {
+                        Kind::List(v)
+                        | Kind::Vector(v)
+                        | Kind::Map(v)
+                        | Kind::Set(v)
+                        | Kind::Conditional(v)
+                        | Kind::SplicingConditional(v) => {
+                            for child in v.iter().rev() {
+                                push(&mut pending, Work::Enter(child, Some(id)), charge)?;
+                            }
+                        }
+                        Kind::Discard(child) => {
+                            push(&mut pending, Work::Enter(child, Some(id)), charge)?
+                        }
+                        Kind::Prefix { operator, target } => {
+                            push(&mut pending, Work::Enter(target, Some(id)), charge)?;
+                            push(&mut pending, Work::Enter(operator, Some(id)), charge)?;
+                        }
+                        _ => {}
+                    }
+                    for child in form.metadata.iter().rev() {
+                        push(&mut pending, Work::Enter(child, Some(id)), charge)?;
+                    }
+                }
+                Work::Finish(form, id) => {
+                    charge(1)?;
+                    key.clear();
+                    let node = &plan.nodes[id];
+                    size(&mut key, node.metadata_count, charge)?;
+                    for child in &node.children[..node.metadata_count] {
                         charge(1)?;
-                        key.clear();
-                        let node = &plan.nodes[id];
-                        size(&mut key, node.metadata_count, charge)?;
-                        for child in &node.children[..node.metadata_count] {
+                        size(&mut key, plan.nodes[*child].key.0, charge)?;
+                    }
+                    let tag = match &form.kind {
+                        Kind::Nil => 0,
+                        Kind::Bool(_) => 1,
+                        Kind::Number(_) => 2,
+                        Kind::String(_) => 3,
+                        Kind::Symbol(_) => 4,
+                        Kind::Keyword(_) => 5,
+                        Kind::List(_) => 6,
+                        Kind::Vector(_) => 7,
+                        Kind::Set(_) => 8,
+                        Kind::Map(_) => 9,
+                        Kind::Conditional(_) => 10,
+                        Kind::Discard(_) => 11,
+                        Kind::Prefix { .. } => 12,
+                        Kind::SplicingConditional(_) => 13,
+                    };
+                    append(&mut key, &[tag], charge)?;
+                    match &form.kind {
+                        Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
+                        Kind::Number(v) => {
+                            append(&mut key, &v.to_bits().to_le_bytes(), charge)?
+                        }
+                        Kind::String(v) => {
+                            size(&mut key, v.len(), charge)?;
+                            // The UTF-16 payload length is known. Allocate
+                            // once rather than repeatedly relocating bytes.
+                            reserve(&mut key, v.len().saturating_mul(2), charge)?;
+                            for unit in v {
+                                append(&mut key, &unit.to_le_bytes(), charge)?;
+                            }
+                        }
+                        Kind::Symbol(v) => {
+                            append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                            if let Some(ns) = &v.namespace {
+                                text(&mut key, ns, charge)?;
+                            }
+                            text(&mut key, &v.name, charge)?;
+                        }
+                        Kind::Keyword(v) => {
+                            append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
+                            if let Some(ns) = &v.namespace {
+                                text(&mut key, ns, charge)?;
+                            }
+                            text(&mut key, &v.name, charge)?;
+                        }
+                        Kind::List(v)
+                        | Kind::Vector(v)
+                        | Kind::Map(v)
+                        | Kind::Set(v)
+                        | Kind::Conditional(v)
+                        | Kind::SplicingConditional(v) => size(&mut key, v.len(), charge)?,
+                        _ => {}
+                    }
+                    let children = &node.children[node.metadata_count..];
+                    if unordered && matches!(form.kind, Kind::Map(_) | Kind::Set(_)) {
+                        let paired = matches!(form.kind, Kind::Map(_));
+                        let stride = if paired { 2 } else { 1 };
+                        debug_assert!(children.len().is_multiple_of(stride));
+                        let mut groups = Vec::new();
+                        reserve(&mut groups, children.len() / stride, charge)?;
+                        for group in children.chunks_exact(stride) {
+                            charge(stride as u64)?;
+                            groups.push((plan.nodes[group[0]].key.0,
+                                if paired { plan.nodes[group[1]].key.0 } else { 0 }));
+                        }
+                        sort_groups(&mut groups, charge)?;
+                        for (first, second) in groups {
+                            size(&mut key, first, charge)?;
+                            if paired { size(&mut key, second, charge)?; }
+                        }
+                    } else {
+                        for child in children {
                             charge(1)?;
                             size(&mut key, plan.nodes[*child].key.0, charge)?;
                         }
-                        let tag = match &form.kind {
-                            Kind::Nil => 0,
-                            Kind::Bool(_) => 1,
-                            Kind::Number(_) => 2,
-                            Kind::String(_) => 3,
-                            Kind::Symbol(_) => 4,
-                            Kind::Keyword(_) => 5,
-                            Kind::List(_) => 6,
-                            Kind::Vector(_) => 7,
-                            Kind::Set(_) => 8,
-                            Kind::Map(_) => 9,
-                            Kind::Conditional(_) => 10,
-                            Kind::Discard(_) => 11,
-                            Kind::Prefix { .. } => 12,
-                            Kind::SplicingConditional(_) => 13,
-                        };
-                        append(&mut key, &[tag], charge)?;
-                        match &form.kind {
-                            Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
-                            Kind::Number(v) => {
-                                append(&mut key, &v.to_bits().to_le_bytes(), charge)?
-                            }
-                            Kind::String(v) => {
-                                size(&mut key, v.len(), charge)?;
-                                // The UTF-16 payload length is known. Allocate
-                                // once rather than repeatedly relocating bytes.
-                                reserve(&mut key, v.len().saturating_mul(2), charge)?;
-                                for unit in v {
-                                    append(&mut key, &unit.to_le_bytes(), charge)?;
-                                }
-                            }
-                            Kind::Symbol(v) => {
-                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
-                                if let Some(ns) = &v.namespace {
-                                    text(&mut key, ns, charge)?;
-                                }
-                                text(&mut key, &v.name, charge)?;
-                            }
-                            Kind::Keyword(v) => {
-                                append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
-                                if let Some(ns) = &v.namespace {
-                                    text(&mut key, ns, charge)?;
-                                }
-                                text(&mut key, &v.name, charge)?;
-                            }
-                            Kind::List(v)
-                            | Kind::Vector(v)
-                            | Kind::Map(v)
-                            | Kind::Set(v)
-                            | Kind::Conditional(v)
-                            | Kind::SplicingConditional(v) => size(&mut key, v.len(), charge)?,
-                            _ => {}
-                        }
-                        let children = &node.children[node.metadata_count..];
-                        if unordered && matches!(form.kind, Kind::Map(_) | Kind::Set(_)) {
-                            let paired = matches!(form.kind, Kind::Map(_));
-                            let stride = if paired { 2 } else { 1 };
-                            debug_assert!(children.len().is_multiple_of(stride));
-                            let mut groups = Vec::new();
-                            reserve(&mut groups, children.len() / stride, charge)?;
-                            for group in children.chunks_exact(stride) {
-                                charge(stride as u64)?;
-                                groups.push((plan.nodes[group[0]].key.0,
-                                    if paired { plan.nodes[group[1]].key.0 } else { 0 }));
-                            }
-                            sort_groups(&mut groups, charge)?;
-                            for (first, second) in groups {
-                                size(&mut key, first, charge)?;
-                                if paired { size(&mut key, second, charge)?; }
-                            }
-                        } else {
-                            for child in children {
-                                charge(1)?;
-                                size(&mut key, plan.nodes[*child].key.0, charge)?;
-                            }
-                        }
-                        let canonical = self.intern_scratch(&mut key, charge)?;
-                        plan.nodes[id].key = canonical;
                     }
+                    let canonical = intern(&mut key, charge)?;
+                    plan.nodes[id].key = canonical;
                 }
             }
-            Ok(root)
-        })();
-        // Completed child keys remain valid canonical entries. Incomplete plan
-        // nodes are private scratch and must not escape a failed build.
-        if result.is_err() {
-            plan.nodes.truncate(root);
         }
-        result
+        Ok(root)
+    })();
+    // Completed child keys remain valid canonical entries. Incomplete plan
+    // nodes are private scratch and must not escape a failed build.
+    if result.is_err() {
+        plan.nodes.truncate(root);
     }
+    result
 }
+
 pub(super) fn bind<T: Copy, E>(
     values: &mut Vec<Option<T>>,
     key: KeyId,
@@ -1042,3 +1056,11 @@ mod tests {
     }
 
 }
+
+#[cfg(test)]
+#[path = "raw_keys/native_prefix.rs"]
+mod native_prefix;
+
+#[cfg(test)]
+#[path = "raw_keys/field_plan_artifact.rs"]
+mod field_plan_artifact;
