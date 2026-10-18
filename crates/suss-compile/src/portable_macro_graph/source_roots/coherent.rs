@@ -410,16 +410,33 @@ fn finish_pending(
     reserve(graph.session, &mut children, pending.inputs.bindings.len())?;
     // No guest code may run from this point through publication. Recheck source
     // and complete physical closure even if the candidate was checked earlier.
-    for binding in &pending.inputs.bindings {
-        graph.session.charge_host_work(1)?;
-        let certificate = certificates[binding.child]
-            .as_ref()
-            .ok_or_else(|| invalid("Uncertified coherent child"))?;
-        if !certificate.checked(graph.session, graph.bridge, plan.expectation(binding.child))? {
-            return Err(invalid("Source child changed before final binding"));
+    // Prepay the new length read and branch; no batch metadata for zero/one.
+    graph.session.charge_host_work(2)?;
+    if pending.inputs.bindings.len() >= 2 {
+        let mut reads = super::fresh_source::SiblingRead::new(graph.session, graph.bridge)?;
+        for binding in &pending.inputs.bindings {
+            reads.step()?;
+            let certificate = certificates[binding.child]
+                .as_ref()
+                .ok_or_else(|| invalid("Uncertified coherent child"))?;
+            if !reads.checked(certificate, plan.expectation(binding.child))? {
+                return Err(invalid("Source child changed before final binding"));
+            }
+            children.push(reads.retain(certificate)?);
         }
-        children.push(certificate.retain(graph.session)?);
-    }
+    } else {
+        // Preserve the original zero/one-child validator/retain route.
+        for binding in &pending.inputs.bindings {
+            graph.session.charge_host_work(1)?;
+            let certificate = certificates[binding.child]
+                .as_ref()
+                .ok_or_else(|| invalid("Uncertified coherent child"))?;
+            if !certificate.checked(graph.session, graph.bridge, plan.expectation(binding.child))? {
+                return Err(invalid("Source child changed before final binding"));
+            }
+            children.push(certificate.retain(graph.session)?);
+        }
+    } // Drop shared done/audit and exclusive Session borrow BEFORE native writes.
     if pending.alias_root {
         graph.session.charge_host_work(3)?;
         if children.len() != 1 || pending.records.len() != 0 || !pending.deferred.is_empty() {

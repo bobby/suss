@@ -17,6 +17,51 @@ struct UncachedSource {
 pub(crate) struct FreshSourceProof {
     inner: FreshKind,
 }
+// One closed sibling-read interval. No Store/Session accessor, getter,
+// arbitrary closure, or mutable construction/fixup operation can escape this API.
+// This guard must be dropped before any private native writes or enrollment.
+pub(super) struct SiblingRead<'a> {
+    session: &'a mut Session,
+    bridge: &'a crate::portable_macro_data::FormBridge,
+    done: Vec<(Rc<Certificate>, bool)>,
+    audit: crate::portable_session::certification_audit::CertificationAudit,
+    // Fields drop in declaration order: keep the operation live through roots.
+    _request: crate::portable_session::OperationBudgetScope,
+}
+impl<'a> SiblingRead<'a> {
+    pub(super) fn new(session: &'a mut Session,
+        bridge: &'a crate::portable_macro_data::FormBridge) -> Result<Self> {
+        let request = session.operation_budget_scope()?;
+        // Actual guard metadata initialization/move/retirement, including its
+        // Vec header. Existing checked_into retains/meters its normal DAG roots
+        // and backing; sharing changes only their lifetime within this guard.
+        session.charge_host_work(std::mem::size_of::<Self>() as u64 + 3)?;
+        let audit = crate::portable_session::certification_audit::CertificationAudit::new(session)?;
+        Ok(Self { session, bridge, done: Vec::new(), audit, _request: request })
+    }
+    pub(super) fn step(&mut self) -> Result<()> {
+        // Original per-binding fee, BEFORE caller indexes the certificate list.
+        self.session.charge_host_work(1)
+    }
+    pub(super) fn checked(&mut self, proof: &FreshSourceProof,
+        expected: &Rc<Expectation>) -> Result<bool> {
+        // Prepay this checker's mode dispatch BEFORE inspecting the enum.
+        // Uncached then also pays its unchanged checked() dispatch fee.
+        self.session.charge_host_work(1)?;
+        match &proof.inner {
+            FreshKind::Certified(certificate) => {
+                Ok(Certificate::checked_into(self.session, self.bridge, certificate,
+                    expected, &mut self.done, &mut self.audit)?.is_some())
+            }
+            // No Uncached memoization, policy change or authority conversion.
+            FreshKind::Uncached(_) => proof.checked(self.session, self.bridge, expected),
+        }
+    }
+    pub(super) fn retain(&mut self, proof: &FreshSourceProof) -> Result<FreshSourceProof> {
+        proof.retain(self.session) // original two retain/release fees
+    }
+}
+
 impl FreshSourceProof {
     pub(crate) fn value(&self) -> &crate::portable_session::SessionValue {
         match &self.inner {
@@ -268,4 +313,139 @@ mod tests {
             records, vec![], true).is_err(), "alias binding needs its exact sole child");
         original.restore(&mut session).unwrap();
     }
+    #[test]
+    fn sibling_read_overlap_keeps_per_binding_owner_and_drops_before_poison() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit-leaf :batch-good} sibling-a 17) (def ^{:audit-leaf :batch-good} sibling-b 17)").unwrap();
+        let source = hir::SourceNamespace::capture(&session.compilation_snapshot().environment, session.phase());
+        let select = |name: &str| source.declarations.iter().find(|(g, _)| g.name() == name)
+            .map(|(g, info)| (g.clone(), info.clone())).unwrap();
+        let a = select("sibling-a"); let b = select("sibling-b");
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (expected, value, records) = metadata(&mut session, &bridge, &a.0, &a.1);
+        let proof = FreshSourceProof::finish(&mut session, &bridge, expected.clone(),
+            value.clone(), records, vec![], false).unwrap();
+        assert!(proof.certificate().is_some());
+        let (wrong, _, _) = metadata(&mut session, &bridge, &b.0, &b.1);
+        {
+            let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+            reads.step().unwrap();
+            assert!(reads.checked(&proof, &expected).unwrap());
+            // The second sibling overlaps the entire genuine certified DAG.
+            reads.step().unwrap();
+            assert!(reads.checked(&proof, &expected).unwrap());
+            reads.step().unwrap();
+            assert!(!reads.checked(&proof, &wrong).unwrap(), "done hit cannot replace expected native owner");
+            assert!(reads.checked(&proof, &expected).unwrap());
+            drop(reads.retain(&proof).unwrap());
+        }
+        let get = session.eval("(fn [m] (:audit-leaf m))").unwrap();
+        let leaf = session.invoke(&get, &[&value]).unwrap();
+        session.inspect(&leaf, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = object.field(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            let name = fields.get(&mut store, 1)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            name.set(&mut store, 0, wasmtime::Val::I32('x' as i32))
+        }).unwrap();
+        session.collect().unwrap();
+        let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+        assert!(!reads.checked(&proof, &expected).unwrap(), "new interval must reject native poison after prior guard dropped");
+    }
+
+    #[test]
+    fn sibling_read_done_hit_fuel_irq_and_reset_are_typed_and_retryable() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit-leaf :batch-meter} sibling-meter 17)").unwrap();
+        let source = hir::SourceNamespace::capture(&session.compilation_snapshot().environment, session.phase());
+        let (global, revision) = source.declarations.iter().find(|(g, _)| g.name() == "sibling-meter")
+            .map(|(g, info)| (g.clone(), info.clone())).unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (expected, value, records) = metadata(&mut session, &bridge, &global, &revision);
+        let proof = FreshSourceProof::finish(&mut session, &bridge, expected.clone(),
+            value, records, vec![], false).unwrap();
+        let hit_cost = {
+            let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+            assert!(reads.checked(&proof, &expected).unwrap());
+            let before = reads.session.operation_fuel_remaining().unwrap();
+            assert!(reads.checked(&proof, &expected).unwrap());
+            before - reads.session.operation_fuel_remaining().unwrap()
+        };
+        assert!(hit_cost > 0);
+        for allowance in [0, 1, hit_cost / 2, hit_cost - 1] {
+            {
+                let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+                assert!(reads.checked(&proof, &expected).unwrap());
+                // Test-only fuel injection; guard's production API exposes no Store.
+                reads.session.inspect(proof.value(), |mut store, _| store.set_fuel(allowance)).unwrap();
+                let error = reads.checked(&proof, &expected).unwrap_err();
+                assert!(matches!(error, SessionError::Trap(ref inner)
+                    if inner.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                    "done-hit allowance={allowance}/{hit_cost}: {error:?}");
+            }
+            assert!(proof.checked(&mut session, &bridge, &expected).unwrap());
+        }
+        let irq = session.host_work_interrupt();
+        {
+            let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+            assert!(reads.checked(&proof, &expected).unwrap());
+            irq.store(true, std::sync::atomic::Ordering::SeqCst);
+            assert!(reads.checked(&proof, &expected).unwrap_err().is_interrupt());
+        }
+        assert!(proof.checked(&mut session, &bridge, &expected).unwrap());
+        session.reset().unwrap();
+        let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+        assert!(matches!(reads.checked(&proof, &expected), Err(SessionError::ForeignValue)));
+    }
+
+    #[test]
+    fn sibling_read_distinct_parent_and_descendant_share_completed_dag() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:audit-leaf :overlap-a} sibling-overlap 17)").unwrap();
+        let source = hir::SourceNamespace::capture(&session.compilation_snapshot().environment, session.phase());
+        let (global, revision) = source.declarations.iter()
+            .find(|(g, _)| g.name() == "sibling-overlap")
+            .map(|(g, info)| (g.clone(), info.clone())).unwrap();
+        // Strong genuine native owner remains live for the entire proof batch.
+        let a_rev = revision.clone();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut cache = RootCache::default();
+        let value = {
+            let request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            let raw = graph.declaration(&global, Some(&a_rev), 0).unwrap();
+            let value = super::super::coherent::materialize_coherent(&mut graph, raw, &mut cache)
+                .unwrap().expect("simple real declaration must admit coherent materialization");
+            drop(graph);
+            drop(request);
+            value
+        };
+        let parent = cache.entries.iter().find(|certificate| !certificate.children.is_empty())
+            .expect("real declaration must retain a strict parent with a native child").clone();
+        let child = parent.children[0].clone();
+        assert!(!Rc::ptr_eq(&parent, &child), "distinct sibling inputs, not a repeated root");
+        let parent_expected = parent.source.clone();
+        let child_expected = child.source.clone();
+        let parent_proof = FreshSourceProof::certified(&mut session, parent).unwrap();
+        let child_proof = FreshSourceProof::certified(&mut session, child.clone()).unwrap();
+        session.collect().unwrap();
+        {
+            let mut reads = SiblingRead::new(&mut session, &bridge).unwrap();
+            reads.step().unwrap();
+            assert!(reads.checked(&parent_proof, &parent_expected).unwrap());
+            assert!(reads.done.iter().any(|(done, valid)| *valid && Rc::ptr_eq(done, &child)),
+                "parent traversal must have validated the actual descendant");
+            let completed = reads.done.len();
+            reads.step().unwrap();
+            assert!(reads.checked(&child_proof, &child_expected).unwrap());
+            assert_eq!(reads.done.len(), completed, "distinct child root reuses completed DAG health only");
+            drop(reads.retain(&parent_proof).unwrap());
+            drop(reads.retain(&child_proof).unwrap());
+        }
+        assert!(parent_proof.checked(&mut session, &bridge, &parent_expected).unwrap());
+        assert!(child_proof.checked(&mut session, &bridge, &child_expected).unwrap());
+        drop(value);
+        drop(a_rev);
+    }
+
 }
