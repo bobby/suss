@@ -83,6 +83,8 @@ pub(super) struct Build<'a> {
     sources: Vec<Option<usize>>,
     pending: Vec<Pending>,
     cuts: Vec<SessionValue>,
+    slots: crate::portable_session::private_fixups::slot_log::SharedSlotLog,
+    logged_parent_route: bool,
 }
 impl<'a> Build<'a> {
     fn new(graph: &mut AnalysisGraph<'_>, cache: &'a mut DeclarationValues) -> Result<Self> {
@@ -101,12 +103,23 @@ impl<'a> Build<'a> {
             graph.session.charge_host_work(1)?;
             sources[source.recipe] = Some(index);
         }
+        let slots=crate::portable_session::private_fixups::slot_log::PrivateSlotLog::new(graph.session)?;
         Ok(Self {
+            slots,
+            logged_parent_route: false,
             cache,
             sources,
             pending: Vec::new(),
             cuts: Vec::new(),
         })
+    }
+    // Only this constructor establishes the shared-log parent route. Manual
+    // controller callers retain the walker unless they explicitly use this bridge.
+    fn logged_parent_bridge(&mut self, graph: &mut AnalysisGraph<'_>) -> Result<crate::portable_macro_data::FormBridge> {
+        let bridge = graph.bridge.private_parent_bridge_with_slots(graph.session, &self.slots)?;
+        graph.session.charge_host_work(1)?;
+        self.logged_parent_route = true;
+        Ok(bridge)
     }
     // An immediate untainted input of a tainted private factory parent cannot
     // contain this build's fresh, unexposed placeholder. Keep it opaque at fixup.
@@ -114,6 +127,10 @@ impl<'a> Build<'a> {
         reserve(session, &mut self.cuts, 1)?;
         self.cuts.push(value.clone());
         Ok(())
+    }
+    pub(super) fn note_slot_route(&mut self,session:&mut Session,covered:bool)->Result<()> {
+        session.charge_host_work(1)?;
+        if !covered {self.slots.borrow_mut().unsupported();}Ok(())
     }
     pub(super) fn last_is_private(&self, id: Value) -> bool {
         self.pending
@@ -162,7 +179,7 @@ impl<'a> Build<'a> {
             None => graph.materialize_using(alias, graph.bridge)?,
         };
         let placeholder = if old {
-            Some(graph.session.data_array(&[])?)
+            Some(self.slots.borrow_mut().token(graph.session,index)?)
         } else {
             None
         };
@@ -272,6 +289,10 @@ impl<'a> Build<'a> {
             graph.session.charge_host_work(1)?;
             if let Some(placeholder) = &pending.placeholder {
                 if pending.alias == root {
+                    // An intercepted root has no traversed dependencies: exactly
+                    // one pending/token exists, and no slot application follows.
+                    graph.session.charge_host_work(1)?;
+                    if self.pending.len()!=1 {return Err(invalid("Private root has unrelated pending bindings"));}
                     value = pending.value.clone();
                 } else {
                     pairs.push((placeholder, &pending.value));
@@ -280,7 +301,11 @@ impl<'a> Build<'a> {
         }
         trace(graph.session, "pairs")?;
         if !pairs.is_empty() {
-            graph.session.fixup_private_placeholders_with_cuts(&value, &pairs, &self.cuts)?;
+            if self.logged_parent_route && self.slots.borrow().complete() {
+                self.slots.borrow().apply(graph.session,&value,&pairs)?;
+            } else {
+                graph.session.fixup_private_placeholders_with_cuts(&value, &pairs, &self.cuts)?;
+            }
         }
         trace(graph.session, "fixed")?;
         // No guest callback occurs between certification, fixups and publication.
@@ -317,9 +342,9 @@ impl AnalysisGraph<'_> {
         if !placed {
             return self.materialize_using(root, self.bridge);
         }
-        let bridge = self.bridge.private_parent_bridge(self.session)?;
-        trace_graph(self, "bridge")?;
         let mut build = Build::new(self, cache)?;
+        let bridge = build.logged_parent_bridge(self)?;
+        trace_graph(self, "bridge")?;
         trace_graph(self, "build")?;
         let value = self.materialize_controlled(root, &bridge, Some(&mut build))?;
         trace_graph(self, "materialized")?;
@@ -394,6 +419,20 @@ mod tests {
     }
     #[test]
     fn reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh() {
+        rebuild_callback_routes(false);
+    }
+    #[test]
+    fn reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh() {
+        rebuild_callback_routes(true);
+    }
+    #[test]
+    fn reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved() {
+        rebuild_callback_routes_with_incomplete(true, true);
+    }
+    fn rebuild_callback_routes(logged: bool) {
+        rebuild_callback_routes_with_incomplete(logged, false);
+    }
+    fn rebuild_callback_routes_with_incomplete(logged: bool, incomplete: bool) {
         use super::super::Recipe;
 
         for poison_prototype in [false, true] {
@@ -500,7 +539,17 @@ mod tests {
             let fresh_c = build.pending[2].record.as_ref().unwrap().clone();
             // Genuine private parent, with the exact tokens produced above. Direct
             // controller access fixes pending order A/B/C/D without fabricating facts.
-            let private = bridge.private_parent_bridge(graph.session).unwrap();
+            let private = if logged {
+                build.logged_parent_bridge(&mut graph).unwrap()
+            } else {
+                bridge.private_parent_bridge(graph.session).unwrap()
+            };
+            assert_eq!(build.logged_parent_route, logged);
+            if incomplete {
+                assert!(build.logged_parent_route);
+                build.note_slot_route(graph.session, false).unwrap();
+                assert!(!build.slots.borrow().complete());
+            }
             let parent = private.vector_values(graph.session, &[a_token, b_token, c_value, d_token]).unwrap();
 
             let arm = graph.session.eval(r#"

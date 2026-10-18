@@ -35,7 +35,7 @@ mod memo_bridge;
 mod dispatch_observer;
 mod write_domain;
 mod prototype_origin;
-mod private_fixups;
+pub(crate) mod private_fixups;
 mod constructor_inputs;
 pub(crate) use constructor_inputs::ConstructorInputs;
 mod source_array_inputs;

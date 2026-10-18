@@ -19,6 +19,7 @@
 //! scanned edge uses O(log P) binding lookup, plus actual collision comparisons.
 //! Adversarial/all-forced collisions can still be quadratic, always metered.
 //! No source quotas or default allowances are changed by this helper.
+pub(crate) mod slot_log;
 use super::{Session, SessionError, SessionValue};
 use crate::portable::metered_map::{Context, TryOrderedMap};
 use std::{cmp::Ordering, collections::hash_map::DefaultHasher, hash::Hasher, mem};

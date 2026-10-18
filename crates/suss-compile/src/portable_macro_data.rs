@@ -250,6 +250,7 @@ pub struct FormBridge {
     core: Arc<BridgeCore>,
     recording: Option<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>,
     private_arguments: bool,
+    private_slots: Option<crate::portable_session::private_fixups::slot_log::SharedSlotLog>,
 }
 impl FormBridge {
     /// Parents containing private analysis placeholders must use only the
@@ -263,8 +264,13 @@ impl FormBridge {
         session.charge_host_work(2)?; // Arc increment and pointer copy.
         Ok(Self {
             core: self.core.clone(),
-            recording: None, private_arguments: true,
+            recording: None, private_arguments: true, private_slots: None,
         })
+    }
+    pub(crate) fn private_parent_bridge_with_slots(&self,session:&mut Session,log:&crate::portable_session::private_fixups::slot_log::SharedSlotLog)->Result<Self,SessionError>{
+        let mut bridge=self.private_parent_bridge(session)?;
+        session.charge_host_work(2)?;
+        bridge.private_slots=Some(log.clone());Ok(bridge)
     }
     pub(crate) fn recording(&self, session: &mut Session) -> Result<Self, SessionError> {
         if self.private_arguments {
@@ -295,7 +301,7 @@ impl FormBridge {
         Ok(Self {
             core: self.core.clone(),
             recording: Some(std::sync::Mutex::new(records)),
-            private_arguments: false,
+            private_arguments: false, private_slots: None,
         })
     }
     fn class_descriptor(&self, session: &mut Session, class: Class) -> Result<&SessionValue, SessionError> {
@@ -345,7 +351,10 @@ impl FormBridge {
         self.precheck_class(session, class)?;
         let class = &self.core.roots[self.core.constructors[&class]];
         if self.private_arguments {
-            return session.data_construct_without_guest_callbacks(class, arguments);
+            let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,arguments)?),None=>None};
+            let value=session.data_construct_without_guest_callbacks(class, arguments)?;
+            if let (Some(log),Some(selected))=(&self.private_slots,selected) {log.borrow_mut().capture_nominal(session,&value,&selected)?;}
+            return Ok(value);
         }
         if self.recording.is_some() {
             let (value, fact) = session.data_construct_with_inputs(class, arguments)?;
@@ -378,7 +387,10 @@ impl FormBridge {
             )?;
             Ok(value)
         } else {
-            session.data_array(values)
+            let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,values)?),None=>None};
+            let value=session.data_array(values)?;
+            if let (Some(log),Some(selected))=(&self.private_slots,selected) {log.borrow_mut().capture_dense(session,&value,values.len(),&selected)?;}
+            Ok(value)
         }
     }
     fn seed(
@@ -501,7 +513,7 @@ impl FormBridge {
         Ok(Self {
             core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
             recording: None,
-            private_arguments: false,
+            private_arguments: false, private_slots: None,
         })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {

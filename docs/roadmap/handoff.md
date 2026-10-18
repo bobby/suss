@@ -28108,3 +28108,40 @@ completed definition-helper work are raw planning;2693574intern units are a
 subset, with2649338remaining traversal/encoding/scratch units. It observes22107
 exact intern hits. Recipe walk is540651. Every original ordered marker/fuel
 balance matches its control; failed request totals stay unknown.
+
+
+### 2026-10-18: private factory slot log and 2B diagnostic
+
+The reviewed six-file4ab8a76 down-port records final private factory slots and
+retains the walker for incomplete routes. RefCell allocation extent is corrected
+(+8bytes on this host), and new late-slot/fallback/fuel-cut regressions strengthen
+the original tests. Normal bootstrap and identity pass. Focused results:
+private_fixups11PASS, reuse6PASS, source-tags2fuelFAIL, CoreEnv1fuelFAIL,
+collection1fuelFAIL, mapwrapper1PASS; total18PASS4fuelFAIL0ignored. Allstages
+executed,3533inputs frozen including untracked newslot_log before FIRSTCargo.
+Independent map comparison retains69orderedIDs62host/7guest,0fail/skips/unexecuted.
+
+CoreEnv cold checkpoint delta0; collection finalcommon checkpoint+2202066,
+earlieradverse91 retained. Collection invocation failslater851..882 vs709..738.
+Inference nowfailslater&env382..414; invocation-tags
+stillfails388..413. No whole-program/default-budget acceptance follows. Native
+capture/apply small-graph costs458/176 are tested at every lower integer fuel;
+partial private writes are discarded and public source remains unchanged. IRQ
+coverage is entry-only. Full baseline/final-head CI for this overlay are separate
+requirements;4f results do not validate all new behavior.
+
+Exact4f baseline `cargo test --workspace --locked -- --test-threads=2` completed
+exit101 after3556.25seconds:86PASS2fuelFAIL0ignored,14/251integrationtargets
+completed237unexecuted, doctests not reached,changed[]. CI39156456734 is terminal
+red:foundation400RustPASS/1existingignore and353PythonPASS; integration124PASS/
+18fuelFAIL,31/251completed220unexecuted. All18observed failure names/stages/spans
+matchd38; no general regression-free claim. No local full rerun is being started
+before repairing the focused failures; the full command and passing CI remain
+mandatory final acceptance gates.
+
+Separate diagnostic on4f sets only Macro budget2B. First Runtime macro completes
+start-to-decoded at1701285927units, caller-env1701066103 and transformer210097;
+first independent row/GC checks pass. Second request fails caller&env0..36 at2B;
+whole test0PASS1fuelFAIL, second row/Macro caller unexecuted, full cost unknown.
+All inputs unchanged; temporary test restored. This does not change defaults,
+rates or issue criteria. [Source-bound report and five archives](evidence/m4-pr256-private-slot-log-and-complete-prefix-2026-10-18.md).

@@ -677,6 +677,18 @@ impl<'a> AnalysisGraph<'a> {
                     if !tainted {control.as_mut().unwrap().cut(self.session, value)?;}
                 }
             }
+            if frame.tainted && !control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+                // Exhaustive route decision BEFORE construction, never an error retry.
+                // All allocating collection routes funnel through array/construct;
+                // aliases allocate nothing. Leaves cannot carry incoming tokens.
+                let covered=match self.recipes[frame.id].as_ref().unwrap() {
+                    Recipe::Alias(_) | Recipe::List(_) | Recipe::Vector(_) | Recipe::ReaderVector(_)
+                    | Recipe::Map(_) | Recipe::ReaderMap(_) | Recipe::Set(_) | Recipe::ReaderSet(_)
+                    | Recipe::Metadata{..}=>true,
+                    Recipe::Scalar(_) | Recipe::Identifier{..} | Recipe::Form(_)=>false,
+                };
+                control.as_mut().unwrap().note_slot_route(self.session,covered)?;
+            }
             let active_bridge=if control.is_some() && !frame.tainted {self.bridge}else{bridge};
             let value = if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_mut().unwrap().produce(self,frame.id)?
