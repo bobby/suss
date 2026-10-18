@@ -77,3 +77,16 @@ outputs, source freezes and terminal receipt are in the retained
 `when-let-after` capture. No broader namespace-sharing, source-integrity or M4
 acceptance follows from these focused results. The required full command is
 `cargo test --workspace --locked -- --test-threads=2`.
+
+
+### Diagnostic wrapper reconciliation
+
+Cumulative macro transport reports the failing stage in its public diagnostic.
+The invalid-binding regression therefore requires the precise compiled macro
+invocation wrapper while retaining every bad form and recovery assertion.
+`native-fixtures/compiled_when_let-captured.rs` preserves the whole original
+fixture hashed by the pinned oracle capture. The exact retained patch and current
+fixture hash are checked separately by `check_when_let_provenance.py`; historical
+capture inputs and receipts remain unchanged. The guest expressions continue to
+match the retained pinned guest source byte-for-byte. This adaptation changes no
+expected language value/effect observation or upstream form.

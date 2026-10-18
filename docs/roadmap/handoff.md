@@ -27997,3 +27997,48 @@ IndependentCicero binds1846bytes toBOTH76a andpublished `69dcc2fc4379c5b5d9980e6
 Newarchive `m4-when-let-full-workspace-baseline-2026-10-17.tar.gz`, SHA256 `7804c2ba433a21a06e85be7c385b009d5681fdaccf229f735ed834e851763b32`, **2078members /2077manifestedpayloads**, containsfullrawbaseline/driver/receipt/beforemap/terminalindependentverification, bothGitbindings/frozenbytes/ignoredinventory/assemblychecks/pinned4support andactual69dCI39013433075raw/terminalsourceproofs (all10checksSUCCESS). RawbaselinelogSHA `5a5e33b402cdaca430ebedc553374713691cf9dd9bcd6d32ba8834901b15e629`. Allretainedfreezehashes resolveinternally. Priorreviewedtimeout/retryarchivef1c6ef12...47a82b1 isincludedEXACTunchanged:342pass4timeout failure andunchanged8passrerunremain separatehistoricalresults, nohost-loadcausalityclaim. No rewrittentest/deadline/fuel criteria.
 
 The passingfullcommand ran76a, withsource-equivalentpublication69d, not a fabricatedrunonnewdochead. UpcomingdocsheadCI remainsseparateROOTgate; archived69dCIisnotautomaticallyitsresult. Report/commands/results/limits only; no merge, issueclose, universalcompatibility orM4completionclaim. IndependentCiceroarchive/finalscope review precedescommit/push267 byROOT; no duplicatecomments/tests orinterventioninliveE0baseline.
+
+
+## Cumulative-fuel reconciliation: commands and results (2026-10-18)
+
+Merged origin/main0d53908 into a3c158c at74d3ef9, preserving the checked
+construction/cold-memo route and all original map, identifier and when-let
+fixtures. Both handoff additions are retained; bootstrap artifacts were
+regenerated, not copied from either parent. a44800e borrows the imported
+validation test's Form fields and refreshes only the destructuring adaptation
+hash for the existing borrowed-HIR test. Upstream/oracle bytes remain intact.
+
+Commands use CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target,
+CARGO_BUILD_JOBS=1 and RAYON_NUM_THREADS=1, with inherited RUSTFLAGS. Normal
+bootstrap: cargo run --profile test --locked -p suss-cli --bin suss-bootstrap --
+runtime/bootstrap. python3 scripts/verify_bootstrap_identity.py passes.
+
+The first frozen driver stops at a stale when-let adaptation hash: zero Rust
+tests executed. After correction, compiled_when_let returns5PASS/1FAIL: the
+invalid-binding test expects the old diagnostic wrapper, whereas cumulative
+transport adds its stage. The corrected assertion requires the precise compiled
+macro invocation stage and language-exception class; bad forms, both phases and
+recovery checks are unchanged. The original oracle-captured fixture plus exact
+source delta/current hash are retained in when-let/native-fixtures and checked
+by check_when_let_provenance.py. Historical capture inputs/receipts are not
+rewritten. Five provenance unit checks pass (one positive/four negatives).
+
+Final focused source overlay on a44800e: compiled_when_let6/6 (three behavior
+tests and three decoder negatives); pinned_when_let_complete_body_matches_reference
+1/1, all12ordered IDs/12host passes, no fail/skips/unexecuted assertions;
+compiled_macro_source_tags0/2, both caller-&env fuel failures before their
+required observations. Exact cargo argv and terminal receipts are retained at
+~/.cache/suss-m4-work/pr256-main-reconciliation-2026-10-18. The tracked pre-run
+freeze is unchanged; three extra provenance/test files were additionally copied
+after driver start and hash-verified at the end, not claimed as initially frozen.
+The pinned Jank fixture uses its unchanged harness allowance; no new oracle or
+default-budget transport success is inferred. Imported CRLF license/oracle
+whitespace diagnostics are retained without changing their bytes; the authored
+source diff passes git diff --check.
+
+Source-bound archive packaging and broader first-PR preservation remain required.
+The exact full command cargo test --workspace --locked -- --test-threads=2 has
+not run on this reconciled source. Earlier CI does not validate these bytes.
+Next: measure the existing generic canonical-head allocation repair against
+current unchanged CoreEnv/source-tag/collection failures; preserve complete
+source/child/storage/memo checks and all raw failed or unexecuted outcomes.

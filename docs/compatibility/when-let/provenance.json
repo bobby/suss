@@ -59,7 +59,7 @@
     "crates/suss-compile/src/portable/hir/destructuring.rs": "a85643f5ddfdcf28ed9feaa158fc7499ee0d470afe8a7fbd0de9ee1489cf27a8",
     "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
     "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
-    "crates/suss-cli/tests/compiled_when_let.rs": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+    "crates/suss-cli/tests/compiled_when_let.rs": "3164302cac850756b1a5c2d2449b38331c943f786a2f24837ad8e5928ba08d3d",
     "crates/suss-cli/tests/compiled_let_destructuring.rs": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d"
   },
   "adaptations": [
@@ -152,5 +152,13 @@
     "direct-let-oracle/run2-observations.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
     "direct-let-oracle/run2-receipt.json": "17b6600e706a018ceb4833c487760d16bdb9b8ee159da124062448dfa0687a9f",
     "direct-let-oracle/src/suss_oracle/direct_let_probe.cljs": "5443fc4757671d7f2f92e64a7b11eeb65e9f744fd326de30244fc96e2b14cbf1"
+  },
+  "native_fixture_adaptations": {
+    "crates/suss-cli/tests/compiled_when_let.rs": {
+      "original": "native-fixtures/compiled_when_let-captured.rs",
+      "original_sha256": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+      "patch": "native-fixtures/compiled_when_let-stage-diagnostic.patch",
+      "patch_sha256": "d83b8c653535eac9390cb8566f57a3d31a2c3a39f363a7356e2a2d68f870e64a"
+    }
   }
 }
