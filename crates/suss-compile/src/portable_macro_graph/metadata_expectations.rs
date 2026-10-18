@@ -87,64 +87,70 @@ fn plain(kind: Kind) -> Form {
         kind,
     }
 }
-fn dependencies(session: &mut Session, recipe: &Recipe) -> Result<Vec<Value>> {
-    let count = match recipe {
+// Borrow the immutable recipe edges instead of copying them into every frame.
+// Counts are checked before descending, in the same source dependency order.
+fn dependency_count(recipe: &Recipe) -> Result<usize> {
+    Ok(match recipe {
         Recipe::Alias(_) => 1,
-        Recipe::List(v)
-        | Recipe::Vector(v)
-        | Recipe::ReaderVector(v)
-        | Recipe::Set(v)
-        | Recipe::ReaderSet(v) => v.len(),
-        Recipe::Map(v) | Recipe::ReaderMap(v) => v
-            .len()
-            .checked_mul(2)
+        Recipe::List(v) | Recipe::Vector(v) | Recipe::ReaderVector(v)
+        | Recipe::Set(v) | Recipe::ReaderSet(v) => v.len(),
+        Recipe::Map(v) | Recipe::ReaderMap(v) => v.len().checked_mul(2)
             .ok_or_else(|| invalid("Metadata expectation edge count overflow"))?,
-        Recipe::Metadata { set_items, .. } => set_items
-            .len()
-            .checked_add(2)
+        Recipe::Metadata { set_items, .. } => set_items.len().checked_add(2)
             .ok_or_else(|| invalid("Metadata expectation edge count overflow"))?,
         _ => 0,
-    };
-    let mut result = Vec::new();
-    reserve(session, &mut result, count)?;
-    match recipe {
-        Recipe::Alias(value) => push(session, &mut result, *value)?,
-        Recipe::List(v)
-        | Recipe::Vector(v)
-        | Recipe::ReaderVector(v)
-        | Recipe::Set(v)
-        | Recipe::ReaderSet(v) => {
-            for value in v {
-                push(session, &mut result, *value)?;
-            }
-        }
+    })
+}
+fn dependency(session: &mut Session, recipe: &Recipe, index: usize) -> Result<Value> {
+    // Pay for the actual borrowed edge read before accessing recipe storage.
+    session.charge_host_work(1)?;
+    Ok(match recipe {
+        Recipe::Alias(value) => *value,
+        Recipe::List(v) | Recipe::Vector(v) | Recipe::ReaderVector(v)
+        | Recipe::Set(v) | Recipe::ReaderSet(v) => v[index],
         Recipe::Map(v) | Recipe::ReaderMap(v) => {
-            for (key, value) in v {
-                push(session, &mut result, *key)?;
-                push(session, &mut result, *value)?;
-            }
+            let pair = &v[index / 2];
+            if index % 2 == 0 { pair.0 } else { pair.1 }
         }
-        Recipe::Metadata {
-            value,
-            metadata,
-            set_items,
-            ..
-        } => {
-            push(session, &mut result, *value)?;
-            for item in set_items {
-                push(session, &mut result, *item)?;
-            }
-            push(session, &mut result, *metadata)?;
+        Recipe::Metadata { value, metadata, set_items, .. } => {
+            if index == 0 { *value }
+            else if index <= set_items.len() { set_items[index - 1] }
+            else { *metadata }
         }
-        _ => {}
+        _ => unreachable!("validated dependency cursor"),
+    })
+}
+// One output buffer, retaining missing-position information until finish. A
+// declined child never prevents later siblings from being visited/validated.
+#[derive(Default)]
+struct Inputs {
+    values: Vec<Form>,
+    count: usize,
+    first_present: bool,
+    last_present: bool,
+}
+impl Inputs {
+    fn push(&mut self, session: &mut Session, value: Option<Form>) -> Result<()> {
+        // Presence/count bookkeeping plus moving the completed child. Allocation
+        // and relocation remain charged by reserve, including reused capacity.
+        session.charge_host_work(4)?;
+        let present = value.is_some();
+        if self.count == 0 { self.first_present = present; }
+        self.last_present = present;
+        self.count = self.count.checked_add(1)
+            .ok_or_else(|| invalid("Metadata expectation edge count overflow"))?;
+        if let Some(value) = value {
+            reserve(session, &mut self.values, 1)?;
+            self.values.push(value);
+        }
+        Ok(())
     }
-    Ok(result)
 }
 struct Frame {
     id: Value,
-    dependencies: Vec<Value>,
+    dependency_count: usize,
     next: usize,
-    inputs: Vec<Option<Form>>,
+    inputs: Inputs,
 }
 fn frame(
     session: &mut Session,
@@ -165,9 +171,9 @@ fn frame(
         .ok_or_else(|| invalid("Missing or unfinished metadata expectation recipe"))?;
     Ok(Frame {
         id,
-        dependencies: dependencies(session, recipe)?,
+        dependency_count: dependency_count(recipe)?,
         next: 0,
-        inputs: Vec::new(),
+        inputs: Inputs::default(),
     })
 }
 fn discard(session: &mut Session, value: Form) -> Result<()> {
@@ -186,9 +192,9 @@ fn agrees(shape: MetadataShape, kind: &Kind) -> bool {
 fn finish(
     session: &mut Session,
     recipe: &Recipe,
-    inputs: Vec<Option<Form>>,
+    inputs: Inputs,
 ) -> Result<Option<Form>> {
-    session.charge_host_work(inputs.len() as u64 + 1)?;
+    session.charge_host_work(inputs.count as u64 + 1)?;
     if let Recipe::Metadata {
         shape, set_items, ..
     } = recipe
@@ -197,32 +203,25 @@ fn finish(
         if !matches!(shape, MetadataShape::Set) && !set_items.is_empty() {
             return Err(invalid("Non-set metadata recipe has set operands"));
         }
-        if inputs
-            .first()
-            .and_then(Option::as_ref)
+        if inputs.first_present && inputs.values.first()
             .is_some_and(|base| !agrees(*shape, &base.kind))
         {
             return Err(invalid("Metadata recipe disagrees with its source shape"));
         }
-        if inputs
-            .last()
-            .and_then(Option::as_ref)
+        if inputs.last_present && inputs.values.last()
             .is_some_and(|meta| !matches!(meta.kind, Kind::Map(_) | Kind::Nil))
         {
             return Err(invalid("Expected source metadata must be a map or nil"));
         }
     }
-    if inputs.iter().any(Option::is_none) {
-        for value in inputs.into_iter().flatten() {
+    if inputs.values.len() != inputs.count {
+        for value in inputs.values {
             discard(session, value)?;
         }
         return Ok(None);
     }
-    let mut values = Vec::new();
-    reserve(session, &mut values, inputs.len())?;
-    for input in inputs {
-        values.push(input.unwrap());
-    }
+    // Move the existing child buffer directly into its output collection.
+    let mut values = inputs.values;
     let kind = match recipe {
         Recipe::Scalar(Literal::Undefined) => return Ok(None),
         Recipe::Scalar(Literal::Nil) => Kind::Nil,
@@ -296,8 +295,8 @@ pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: V
     push(session, &mut frames, first)?;
     while let Some(current) = frames.last_mut() {
         session.charge_host_work(1)?;
-        if current.next < current.dependencies.len() {
-            let id = current.dependencies[current.next];
+        if current.next < current.dependency_count {
+            let id = dependency(session, recipes[current.id].as_ref().unwrap(), current.next)?;
             current.next += 1;
             let next = frame(session, recipes, id, &frames)?;
             push(session, &mut frames, next)?;
@@ -306,7 +305,7 @@ pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: V
         let done = frames.pop().unwrap();
         let value = finish(session, recipes[done.id].as_ref().unwrap(), done.inputs)?;
         if let Some(parent) = frames.last_mut() {
-            push(session, &mut parent.inputs, value)?;
+            parent.inputs.push(session, value)?;
         } else {
             return Ok(value);
         }
@@ -814,3 +813,10 @@ mod tests {
             .unwrap();
     }
 }
+
+#[cfg(test)]
+#[path = "metadata_expectations/project_legacy.rs"]
+mod project_legacy;
+#[cfg(test)]
+#[path = "metadata_expectations/project_tests.rs"]
+mod project_tests;
