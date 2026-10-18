@@ -127,6 +127,13 @@ impl Session {
 impl PrototypeInputs {
     pub(super) fn expectation_fields(&self) -> &[SessionValue] { &self.fields }
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool> {
+        self.matches_query(session, None)
+    }
+    pub(super) fn matches_fresh_query(&self, session: &mut Session, fresh: &super::constructor_inputs::FreshOrigin<'_>) -> Result<bool> {
+        fresh.check_origin(session, self)?;
+        self.matches_query(session, Some(fresh))
+    }
+    fn matches_query(&self, session: &mut Session, fresh: Option<&super::constructor_inputs::FreshOrigin<'_>>) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
         let Some(authority) = session.prototype_origin.clone() else { return Ok(false); };
         // Same fresh private query and independent initial-constructor checks.
@@ -135,11 +142,37 @@ impl PrototypeInputs {
         let Some(query_authority) = session.prototype_origin.clone() else { return Ok(false); };
         let Some(methods) = session.canonical_methods.clone() else { return Ok(false); };
         if !methods.source_constructor_matches(session, &self.fields[0], &self.fields[1])? { return Ok(false); }
-        let witness = runtime(session, "prototype-origin-query", &[&self.fields[0], &self.fields[1], &self.fields[2]], &query_authority.handles)?;
+        session.charge_host_work(1)?;
+        let witness = if fresh.is_none() {
+            Some(runtime(session, "prototype-origin-query", &[&self.fields[0], &self.fields[1], &self.fields[2]], &query_authority.handles)?)
+        } else {
+            // The consuming constructor capability keeps an exclusive Session
+            // borrow from capture through enrollment. No callback, carrier or
+            // registry write can intervene; this is the actual private query
+            // observation, not a cached verdict or live guest-derived authority.
+            None
+        };
         let interrupt = session.host_work_interrupt();
         let mut scope = RootScope::new(&mut session.store);
-        let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
-        let Some(current) = scoped_prototype_fields(scope.as_context_mut(), &witness, &interrupt)? else { return Ok(false); };
+        let current = if let Some(witness) = witness {
+            let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+            let Some(current) = scoped_prototype_fields(scope.as_context_mut(), &witness, &interrupt)? else { return Ok(false); };
+            current
+        } else {
+            Session::consume_host_work(scope.as_context_mut(), 13, &interrupt)?;
+            if self.fields.len() != 12 { return Err(invalid("Incomplete fresh prototype query")); }
+            Session::consume_host_work(scope.as_context_mut(), 12, &interrupt)?;
+            let mut current = std::array::from_fn(|_| Val::null_any_ref());
+            for (field, observed) in current.iter_mut().zip(&self.fields) {
+                Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                *field = Val::AnyRef(Some(observed.value.to_rooted(&mut scope)));
+            }
+            for field in &current {
+                Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                field.anyref().flatten().ok_or_else(|| invalid("Expected non-null runtime Value"))?;
+            }
+            current
+        };
         drop(methods);
         drop(query_authority);
         drop(query_request);

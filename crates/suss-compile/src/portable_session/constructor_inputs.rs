@@ -8,6 +8,63 @@ use wasmtime::{AnyRef, ArrayType, AsContextMut, RootScope, Rooted, Val};
 
 type Result<T> = std::result::Result<T, SessionError>;
 
+// Own the exclusive Session borrow until enrollment and ledger publication.
+// No accessor, extraction or callback API may expose this interval to callers.
+// Only ordinary facts created below can receive a fresh-query token; deferred
+// facts and the ordinary public capture API never receive one.
+pub(crate) struct RecordingConstructor<'session> {
+    session: &'session mut Session,
+    request: super::OperationBudgetScope,
+    value: SessionValue,
+    fact: super::construction_records::Fact,
+}
+pub(super) struct FreshOrigin<'fact> {
+    inputs: &'fact ConstructorInputs,
+}
+impl FreshOrigin<'_> {
+    pub(super) fn check_inputs(&self, session: &mut Session, inputs: &ConstructorInputs) -> Result<()> {
+        session.charge_host_work(2)?;
+        if !std::ptr::eq(self.inputs, inputs) {
+            return Err(invalid("Fresh origin belongs to another constructor fact"));
+        }
+        Ok(())
+    }
+    pub(super) fn check_origin(&self, session: &mut Session, origin: &super::prototype_origin::PrototypeInputs) -> Result<()> {
+        session.charge_host_work(2)?;
+        if !self.inputs.prototype_origin.as_ref().is_some_and(|captured| std::ptr::eq(captured, origin)) {
+            return Err(invalid("Fresh query belongs to another prototype origin"));
+        }
+        Ok(())
+    }
+}
+impl RecordingConstructor<'_> {
+    pub(crate) fn record(self, records: &std::sync::Mutex<super::construction_records::ConstructionRecords>) -> Result<SessionValue> {
+        use super::construction_records::Fact;
+        let Self { session, request: _request, value, fact } = self;
+        // Preserve the old post-construction lock/error ordering. The remaining
+        // fixed native operations cannot write the provenance registry/carrier
+        // or invoke guest callbacks. Both factory and lazy getter precede this.
+        let domain = records.lock().map_err(|_| invalid("Poisoned construction records"))?.write_domain();
+        session.charge_host_work(1)?;
+        crate::portable_macro_data::materialize_observed!(session, "domain-enrollment", {
+            if let Fact::Constructor(inputs) = &fact {
+                session.charge_host_work((std::mem::size_of::<&ConstructorInputs>() + 2) as u64)?;
+                let fresh = FreshOrigin { inputs };
+                domain.record_fresh_constructor(session, &value, &fact, &fresh)
+            } else {
+                // Special constructors keep their original callback route and
+                // unverified ExternalSeed enrollment; they gain no fresh token.
+                domain.record(session, &value, &fact)
+            }
+        })?;
+        crate::portable_macro_data::materialize_observed!(session, "ledger-publication", {
+            records.lock().map_err(|_| invalid("Poisoned construction records"))?
+                .push_prepared(session, value.clone(), fact)
+        })?;
+        Ok(value)
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ConstructorInputs {
     descriptor: SessionValue,
@@ -71,6 +128,19 @@ fn cancel_schema_stage(session: &Session, stage: &'static str) {
 }
 
 impl Session {
+    pub(crate) fn recording_constructor<'session>(
+        &'session mut self, class: &SessionValue, arguments: &[&SessionValue],
+    ) -> Result<RecordingConstructor<'session>> {
+        let request = self.operation_budget_scope()?;
+        let (value, inputs) = crate::portable_macro_data::materialize_observed!(self,
+            "constructor-and-native-fact", self.data_construct_with_inputs(class, arguments))?;
+        let fact = match inputs {
+            Some(inputs) => super::construction_records::Fact::constructor(self, inputs)?,
+            None => super::construction_records::Fact::ExternalSeed("special constructor"),
+        };
+        self.charge_host_work((std::mem::size_of::<&mut Session>() + std::mem::size_of::<super::OperationBudgetScope>() + 4) as u64)?;
+        Ok(RecordingConstructor { session: self, request, value, fact })
+    }
     fn prepare_schema_witness(&mut self, schema: &SessionValue) -> Result<(
         std::sync::Arc<StorageSnapshot>, Option<SchemaWitnessPublication>,
     )> {
@@ -442,6 +512,13 @@ impl ConstructorInputs {
     pub(super) fn matches_prototype_origin(&self, session: &mut Session) -> Result<bool> {
         match &self.prototype_origin {
             Some(origin) => origin.matches(session),
+            None => Ok(false),
+        }
+    }
+    pub(super) fn matches_fresh_prototype_origin(&self, session: &mut Session, fresh: &FreshOrigin<'_>) -> Result<bool> {
+        fresh.check_inputs(session, self)?;
+        match &self.prototype_origin {
+            Some(origin) => origin.matches_fresh_query(session, fresh),
             None => Ok(false),
         }
     }
@@ -1344,5 +1421,167 @@ impl ConstructorInputs {
         cuts.extend(self.fields.iter().filter_map(Option::as_ref));
         if let Some(origin)=&self.prototype_origin {cuts.extend(origin.write_cuts());}
         cuts
+    }
+}
+
+#[cfg(test)]
+mod recording_constructor_tests {
+    use super::*;
+    use super::super::construction_records::{ConstructionRecords, Fact};
+    use crate::portable::resolve::Phase;
+    use std::sync::Mutex;
+
+    fn session(phase: Phase) -> Session {
+        match phase { Phase::Runtime => Session::new_repl().unwrap(), Phase::Macro => Session::new_macro().unwrap() }
+    }
+    fn records() -> Mutex<ConstructionRecords> {
+        Mutex::new(ConstructionRecords::with_bridge_classes(Vec::new()))
+    }
+    fn clear_carrier(s: &mut Session, class: &SessionValue) {
+        let _request = s.operation_budget_scope().unwrap();
+        let mut scope = RootScope::new(&mut s.store);
+        let class = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+        let function = s.runtime.get_func(&mut scope, "closure-internal-property-set").unwrap();
+        let nil = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(0).unwrap())));
+        super::super::call(&mut scope, s.runtime, function,
+            &[class, Val::I32(8), nil], s.identity, &s.handles).unwrap();
+    }
+    #[test]
+    fn recording_constructor_lazy_gc_drop_and_mutated_key_keep_independent_physical_checks() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = session(phase);
+            let class = s.eval("suss.core/ArrayChunk").unwrap();
+            let input = s.eval("17").unwrap();
+            clear_carrier(&mut s, &class);
+            let before = s.stats().external_value_handles;
+            drop(s.recording_constructor(&class, &[&input, &input, &input]).unwrap());
+            assert_eq!(s.stats().external_value_handles, before);
+            let ledger = records();
+            let pending = s.recording_constructor(&class, &[&input, &input, &input]).unwrap();
+            let key = match &pending.fact {
+                Fact::Constructor(f) => f.prototype_origin.as_ref().unwrap().expectation_fields()[7].clone(),
+                _ => panic!("ordinary source class needs constructor facts"),
+            };
+            let value = pending.record(&ledger).unwrap();
+            s.collect().unwrap();
+            assert!(ledger.lock().unwrap().matches_direct_facts(&mut s).unwrap());
+            assert!(ledger.lock().unwrap().matches_prototype_origins(&mut s).unwrap());
+            for field in s.data_fields(&value).unwrap() { assert!(same(&mut s, &field, &input).unwrap()); }
+            s.inspect(&key, |mut store, value| value.unwrap_anyref().unwrap().as_array(&store)?.unwrap()
+                .set(&mut store, 0, Val::I32(i32::from(b'X')))).unwrap();
+            assert!(!ledger.lock().unwrap().matches_prototype_origins(&mut s).unwrap());
+            let next = records();
+            let _value = s.recording_constructor(&class, &[&input, &input, &input]).unwrap().record(&next).unwrap();
+            assert!(!next.lock().unwrap().matches_prototype_origins(&mut s).unwrap(), "fresh capture must not bless a poisoned original key");
+            s.inspect(&key, |mut store, value| {
+                let key = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                assert!(matches!(key.get(&mut store, 0)?, Val::I32(x) if x == i32::from(b'X')));
+                Ok(())
+            }).unwrap();
+        }
+    }
+    #[test]
+    fn recording_constructor_fresh_token_rejects_other_inputs_and_origin() {
+        let mut s = Session::new_macro().unwrap();
+        let class = s.eval("suss.core/ArrayChunk").unwrap();
+        let input = s.eval("17").unwrap();
+        let (_, a) = s.data_construct_with_inputs(&class, &[&input, &input, &input]).unwrap();
+        let (value, b) = s.data_construct_with_inputs(&class, &[&input, &input, &input]).unwrap();
+        let a = a.unwrap();
+        let fact = Fact::constructor(&mut s, b.unwrap()).unwrap();
+        let Fact::Constructor(b) = &fact else { unreachable!() };
+        let token = FreshOrigin { inputs: &a };
+        let ledger = records();
+        let domain = ledger.lock().unwrap().write_domain();
+        assert!(domain.record_fresh_constructor(&mut s, &value, &fact, &token).is_err());
+        assert!(b.prototype_origin.as_ref().unwrap().matches_fresh_query(&mut s, &token).is_err());
+        assert_eq!(ledger.lock().unwrap().len(), 0);
+        clear_carrier(&mut s, &class);
+        assert!(!b.matches_prototype_origin(&mut s).unwrap(), "ordinary escaped facts must perform a fresh query");
+    }
+    #[test]
+    fn recording_constructor_special_effects_precede_poisoned_ledger_lock_without_replay() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = session(phase);
+            s.eval("(def recording-events 0)").unwrap();
+            let class = {
+                let mut scope = RootScope::new(&mut s.store);
+                let function = s.runtime.get_func(&mut scope, "error-constructor").unwrap();
+                super::super::call(&mut scope, s.runtime, function, &[], s.identity, &s.handles).unwrap()
+            };
+            let descriptor = s.data_descriptor(&class, true).unwrap();
+            let replacement = s.eval("(fn [x] (do (set! recording-events (+ recording-events 1)) x))").unwrap();
+            s.inspect(&descriptor, |mut store, value| {
+                let descriptor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let cache = descriptor.field(&mut store, 2)?.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                let original = class.value.to_rooted(&mut store);
+                let mut changed = 0;
+                for index in (1..cache.len(&store)?).step_by(2) {
+                    if let Some(entry) = cache.get(&mut store, index)?.unwrap_anyref() {
+                        if Rooted::<AnyRef>::ref_eq(&store, entry, &original)? {
+                            let replacement = replacement.value.to_rooted(&mut store);
+                            cache.set(&mut store, index, Val::AnyRef(Some(replacement)))?;
+                            changed += 1;
+                        }
+                    }
+                }
+                assert_eq!(changed, 1); Ok(())
+            }).unwrap();
+            let input = s.eval("17").unwrap();
+            let ledger = records();
+            let value = s.recording_constructor(&class, &[&input]).unwrap().record(&ledger).unwrap();
+            assert!(same(&mut s, &value, &input).unwrap());
+            assert_eq!(ledger.lock().unwrap().external_seeds(&mut s).unwrap(), 1);
+            let poisoned = records();
+            let pending = s.recording_constructor(&class, &[&input]).unwrap();
+            let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _lock = poisoned.lock().unwrap(); panic!("deliberate recording lock poison");
+            }));
+            assert!(panic.is_err());
+            assert!(pending.record(&poisoned).unwrap_err().to_string().contains("Poisoned construction records"));
+            match poisoned.lock() {
+                Err(error) => assert_eq!(error.into_inner().len(), 0),
+                Ok(_) => panic!("recording lock must remain poisoned"),
+            }
+            let events = s.eval("recording-events").unwrap();
+            assert_eq!(crate::portable_repl::display(&mut s, &events).unwrap(), "2");
+        }
+    }
+    #[test]
+    fn recording_constructor_every_enrollment_fuel_cut_and_irq_drop_staged_owners_then_retry() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut s = session(phase);
+            let class = s.eval("suss.core/ArrayChunk").unwrap();
+            let input = s.eval("17").unwrap();
+            let ledger = records();
+            let pending = s.recording_constructor(&class, &[&input, &input, &input]).unwrap();
+            let before = pending.session.operation_fuel_remaining().unwrap();
+            drop(pending.record(&ledger).unwrap());
+            let cost = before - s.operation_fuel_remaining().unwrap();
+            drop(ledger);
+            assert!(cost > 0 && cost < 30_000, "bounded real enrollment cost {cost}");
+            let handles = s.stats().external_value_handles;
+            for fuel in 0..cost {
+                let ledger = records();
+                let pending = s.recording_constructor(&class, &[&input, &input, &input]).unwrap();
+                pending.session.store.set_fuel(fuel).unwrap();
+                let error = pending.record(&ledger).unwrap_err();
+                assert!(matches!(error, SessionError::Trap(ref error) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error}");
+                assert_eq!(ledger.lock().unwrap().len(), 0, "fuel cut {fuel}");
+                drop(ledger); // Discard unpublished domain staging, as the bridge does on error.
+                assert_eq!(s.stats().external_value_handles, handles, "fuel cut {fuel}");
+            }
+            let ledger = records();
+            let pending = s.recording_constructor(&class, &[&input, &input, &input]).unwrap();
+            pending.session.interrupt_handle().interrupt();
+            assert!(pending.record(&ledger).unwrap_err().is_interrupt());
+            assert_eq!(ledger.lock().unwrap().len(), 0);
+            drop(ledger);
+            assert_eq!(s.stats().external_value_handles, handles);
+            let ledger = records();
+            drop(s.recording_constructor(&class, &[&input, &input, &input]).unwrap().record(&ledger).unwrap());
+            assert_eq!(ledger.lock().unwrap().len(), 1);
+            assert!(ledger.lock().unwrap().matches_prototype_origins(&mut s).unwrap());
+        }
     }
 }

@@ -99,6 +99,22 @@ impl WriteDomain {
         value: &SessionValue,
         fact: &Fact,
     ) -> Result<()> {
+        self.record_inner(session, value, fact, None)
+    }
+    pub(super) fn record_fresh_constructor(
+        self: &Arc<Self>, session: &mut Session, value: &SessionValue, fact: &Fact,
+        fresh: &super::constructor_inputs::FreshOrigin<'_>,
+    ) -> Result<()> {
+        let Fact::Constructor(inputs) = fact else {
+            return Err(wasmtime::Error::msg("Fresh origin needs ordinary constructor facts").into());
+        };
+        fresh.check_inputs(session, inputs)?;
+        self.record_inner(session, value, fact, Some(fresh))
+    }
+    fn record_inner(
+        self: &Arc<Self>, session: &mut Session, value: &SessionValue, fact: &Fact,
+        fresh: Option<&super::constructor_inputs::FreshOrigin<'_>>,
+    ) -> Result<()> {
         let fuel_trace = std::env::var_os("SUSS_SOURCE_MATERIALIZE_FUEL_TRACE").is_some();
         let fact_kind = if fuel_trace { match fact {
             Fact::Scalar(_) => "Scalar", Fact::Array(_) => "Array",
@@ -149,7 +165,13 @@ impl WriteDomain {
             Fact::Constructor(f) => {
                 let direct = record_observed!("direct-fact", f.matches(session, value), |valid: &bool| *valid)?;
                 if direct {
-                    record_observed!("prototype", f.matches_prototype_origin(session), |valid: &bool| *valid)?
+                    record_observed!("prototype", {
+                        session.charge_host_work(1)?;
+                        match fresh {
+                            Some(fresh) => f.matches_fresh_prototype_origin(session, fresh),
+                            None => f.matches_prototype_origin(session),
+                        }
+                    }, |valid: &bool| *valid)?
                 } else {
                     record_skipped!("prototype", "direct-fact-false");
                     false
