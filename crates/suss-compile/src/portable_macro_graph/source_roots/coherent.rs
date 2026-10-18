@@ -480,7 +480,9 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
     // retained, currently checked roots may skip their original construction.
     for id in &plan.order {
         let expected = plan.expectation(*id);
+        admission_stage(graph, "candidate-lookup-before", Some(*id));
         let candidate = cache.lookup(graph.session, graph.bridge, expected)?;
+        admission_stage(graph, "candidate-lookup-after", Some(*id));
         if let Some(child) = candidate {
             if same_children(graph, &child.certificate, &plan.layout[*id], &states)? {
                 states[*id] = State::Old(child.certificate);
@@ -488,10 +490,15 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
             }
         }
         let native = graph.source_roots.roots[*id].native;
+        admission_stage(graph, "construct-before", Some(*id));
         states[*id] = State::Fresh(construct(graph, native, &plan.layout[*id], &states)?);
+        admission_stage(graph, "construct-after", Some(*id));
     }
     let export = if plan.root_alias.is_none() {
-        Some(construct(graph, root, &plan.exports, &states)?)
+        admission_stage(graph, "export-construct-before", None);
+        let pending = construct(graph, root, &plan.exports, &states)?;
+        admission_stage(graph, "export-construct-after", None);
+        Some(pending)
     } else {
         None
     };
@@ -500,6 +507,7 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
     // owner transitions once. Fresh private parents keep tokens until the loop
     // ends; their physical edges can follow rebuilt children without rerunning
     // a constructor or repairing an exposed cached object.
+    admission_stage(graph, "postcallback-recheck-before", None);
     loop {
         let mut rebuilt = false;
         for id in &plan.order {
@@ -523,11 +531,13 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
             break;
         }
     }
+    admission_stage(graph, "postcallback-recheck-after", None);
     let mut certificates = Vec::new();
     reserve(graph.session, &mut certificates, plan.layout.len())?;
     graph.session.charge_host_work(plan.layout.len() as u64)?;
     certificates.resize_with(plan.layout.len(), || None);
     for id in &plan.order {
+        admission_stage(graph, "finalize-before", Some(*id));
         let state = std::mem::replace(&mut states[*id], State::Empty);
         let certificate = match state {
             State::Old(certificate) => {
@@ -543,6 +553,7 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
             State::Fresh(pending) => {
                 let (value, records, children, alias_root) =
                     finish_pending(graph, pending, &plan, &certificates)?;
+                admission_stage(graph, "finish-pending-after", Some(*id));
                 Certificate::finish_bound(
                     graph.session,
                     graph.bridge,
@@ -559,6 +570,7 @@ pub(in crate::portable_macro_graph) fn materialize_coherent(
             State::Empty => return Err(invalid("Missing final coherent source root")),
         };
         certificates[*id] = Some(certificate);
+        admission_stage(graph, "finalize-after", Some(*id));
     }
     let value = if let Some(export) = export {
         let (value, records, children, alias_root) =
