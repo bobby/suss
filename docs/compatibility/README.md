@@ -1257,3 +1257,18 @@ invocation-tag integration regression now passes in both phases. Inference,
 complete core environment and collection-source tests still exhaust fuel;
 defaults and accounting rates are unchanged. See the dated analyzer-literal
 handoff and evidence for the complete selection and remaining limitations.
+
+Recorded metadata now uses invocation-local scratch indexed by reachable native
+recipe IDs when its enclosing graph has more than4096 recipes. Smaller recorded
+graphs and ordinary/whole-graph materialization retain dense scratch. The
+threshold selects an implementation and rejects no form. Both routes share
+construction, callbacks and validation; added index work is metered, and guest
+values and source authority are not cached by the index.
+
+Focused guards preserve callback order and failures, GC, sharing, source-owner
+identity, typed exhaustion and recovery. Wide Runtime metadata still lacks the
+memo receipts needed for certification; Macro retains its existing permission.
+Logical payload poison is rejected in both phases. Sparse indexing can cost
+more for wide reached roots; the evidence retains those cases. The unchanged
+inference, core-environment and collection-source regressions remain fuel
+failures. See the recorded-scratch handoff and evidence for qualified run scopes.

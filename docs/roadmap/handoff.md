@@ -28180,3 +28180,59 @@ and passing final-head CI remain required acceptance gates.
 
 Commands, source provenance, raw results and archived inputs are linked in the
 [analyzer-literal evidence report](evidence/m4-pr256-analyzer-literals-2026-10-18.md).
+
+## Recorded metadata scratch and fuel-boundary evidence (2026-10-18)
+
+Adapt the preserved f56f1ab native index and occurrence planner to ad6bbcc.
+Only recorded metadata subroots choose sparse scratch above4096 enclosing
+recipes; small recorded graphs and ordinary/controlled materialization remain
+dense. All new index/allocation work is charged. No form limit, metadata
+omission, guest-value authority cache or error-triggered replay is introduced.
+
+The final V8 focused command cohort is30PASS/3fuelFAIL/0ignored, all33 tests
+executed. Separately, production-identical V3 runs pass eight index/occurrence
+tests and six existing construction guards; V4 passes the real-source matrix
+and three semantic/cost tests; V6 passes the exception/recovery test. Thus the
+selection covers52 unique tests with49 positive results and3 fuel failures,
+across explicitly separate source tuples, not one final-source52-test run.
+The original failures remain inference during caller `&env` at382..414, complete
+core environment during caller `&env` at0..33, and collection source during
+invocation at851..882. Original invocation tags and the pinned-map wrapper pass.
+
+Tests retain Runtime/Macro phases, widths2/128, padding0/20000, full source
+ownership/GC and nested-payload poison checks. Runtime-wide memo facts deny
+certification while Macro authenticates them; logical source is valid before
+poison and invalid afterward in all cases. New comparison fixtures explicitly
+use200M for diagnostics; existing regression allowances and payloads are unchanged.
+
+Raw failed new-test assumptions are retained: insufficient dense-control fuel,
+unconditional Runtime certification, debug-text exception matching, parsed versus
+inspection spans, a recovery bridge holding its captured throwing hash, and a
+strict final-unit fuel assumption. The repaired tests inspect actual language
+values, capture a fresh bridge for the explicit recovery request and keep all
+lower exhaustion cuts. At the final-unit boundary, all four phase/mode cases
+return with zero fuel and reject the next positive host debit in the same scope.
+Cold and warm costs are equal in that fixture; no cache-saving claim is made.
+
+Use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`.
+The archived controller plans contain exact test selectors, commands and source
+freezes. Normal `cargo run --locked --profile test -p suss-cli --bin suss-bootstrap -- runtime/bootstrap`
+and `python3 scripts/verify_bootstrap_identity.py` pass. A final correction of
+three test-comment lines regenerates only BOOT4; both Wasm modules retain exact
+noncustom sections. No additional semantic test run is credited to that refresh.
+
+The preceding ad6 diagnostic measures414848670 selected scratch debits within
+a1706480543-unit completed environment interval (825 calls,N100545,plain reached
+nodes4–117,median11). This24.310% fraction is not a predicted net improvement.
+Wide sparse controls can cost more. The following expansion still fails at2B;
+whole-program required cost is unknown. Published ad6 CI39166019279 has foundation
+success and integration127PASS/17fuelFAIL,32/252 targets completed,220unexecuted.
+These results are separate from the new port. The exact full workspace command
+and passing final-head CI remain acceptance gates; no full local rerun was
+started while original focused acceptance remains red.
+
+[Recorded-scratch evidence and complete raw history](evidence/m4-pr256-recorded-metadata-scratch-2026-10-18.md)
+bind the commands, source/bootstrap tuples, independent map replay and final
+comment-only artifact correspondence. Whole-request cost for the new port is
+not inferred from the preceding ad6 scratch census.

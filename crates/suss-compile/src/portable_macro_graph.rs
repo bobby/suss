@@ -31,6 +31,11 @@ mod reuse;
 pub(crate) use reuse::DeclarationValues;
 #[path = "portable_macro_graph/occurrence_work.rs"]
 mod occurrence_work;
+#[path = "portable_macro_graph/materialization_index.rs"]
+mod materialization_index;
+#[cfg(test)]
+#[path = "portable_macro_graph/recorded_scratch_tests.rs"]
+mod recorded_scratch_tests;
 #[macro_use]
 mod field_entry_work;
 use raw_keys::{Interner, KeyId, Plan};
@@ -528,7 +533,23 @@ impl<'a> AnalysisGraph<'a> {
     fn materialize_using(&mut self,root:Value,bridge:&FormBridge)->Result<SessionValue> {
         self.materialize_controlled(root,bridge,None)
     }
-    fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,mut control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
+    fn materialize_recorded_subroot(&mut self, root: Value, bridge: &FormBridge) -> Result<SessionValue> {
+        self.finish_recipes()?;
+        // Explicit recorded-root route only: len, comparison, branch and dispatch
+        // are prepaid. This is a performance choice, never a form-size limit.
+        self.session.charge_host_work(4)?;
+        if self.recipes.len() <= materialization_index::SPARSE_THRESHOLD {
+            return self.materialize_controlled(root, bridge, None);
+        }
+        let index = materialization_index::Sparse::new(&mut |n| self.session.charge_host_work(n))?;
+        self.materialize_indexed(root, bridge, None, index)
+    }
+    fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
+        self.session.charge_host_work(1)?; // same explicit adapter control
+        self.materialize_indexed(root, bridge, control, materialization_index::Dense)
+    }
+    fn materialize_indexed<I: materialization_index::Index>(&mut self, root: Value, bridge: &FormBridge,
+        mut control: Option<&mut reuse::Build<'_>>, mut index: I) -> Result<SessionValue> {
         self.finish_recipes()?;
         fn dependencies(recipe: &Recipe) -> Vec<Value> {
             match recipe {
@@ -567,17 +588,17 @@ impl<'a> AnalysisGraph<'a> {
                 _ => 0,
             }
         }
-        self.session.charge_host_work(self.recipes.len().saturating_mul(3) as u64)?;
-        // Check the compact DAG once. Compiler record recipes intentionally
-        // share immutable snapshots. Reader maps/sets can invoke captured user
-        // callbacks: each occurrence and its reader ancestors must execute.
-        let mut state = vec![0u8; self.recipes.len()];
-        let mut repeat = vec![false; self.recipes.len()];
-        self.session.charge_host_work(self.recipes.len() as u64)?;
-        let mut postorder = Vec::with_capacity(self.recipes.len());
+        // One shared traversal, addressed either by exact recipe ID or by a
+        // private native-ID ordinal. Dense retains its original 3N + N fees.
+        let (mut state, mut repeat) = index.states(self.recipes.len(),
+            &mut |n| self.session.charge_host_work(n))?;
+        let mut postorder = index.postorder(self.recipes.len(),
+            &mut |n| self.session.charge_host_work(n))?;
         let mut stack = vec![(root, false)];
         while let Some((id, finish)) = stack.pop() {
-            if state[id] == 2 {
+            let slot = index.enter(id, &mut state, &mut repeat,
+                &mut |n| self.session.charge_host_work(n))?;
+            if state[slot] == 2 {
                 // Its incoming edge was already charged when queued. A shared
                 // node that is fully checked needs no second validation visit;
                 // reader occurrences retain their separate cold work budget.
@@ -586,12 +607,12 @@ impl<'a> AnalysisGraph<'a> {
             self.session.charge_host_work(1)?;
             let recipe = self.recipes[id].as_ref().expect("all graph tasks filled");
             if !finish {
-                if state[id] == 1 {
+                if state[slot] == 1 {
                     return Err(SessionError::Host(wasmtime::Error::msg(
                         "Cyclic compiler analysis graph",
                     )));
                 }
-                state[id] = 1;
+                state[slot] = 1;
                 stack.push((id, true));
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
                 let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
@@ -601,7 +622,7 @@ impl<'a> AnalysisGraph<'a> {
             } else {
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
                 let dependencies = if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]} else {dependencies(recipe)};
-                repeat[id] = match recipe {
+                repeat[slot] = match recipe {
                     Recipe::ReaderMap(_) | Recipe::ReaderSet(_) => true,
                     Recipe::List(_) | Recipe::ReaderVector(_) | Recipe::Metadata { .. } => {
                         matches!(
@@ -610,14 +631,16 @@ impl<'a> AnalysisGraph<'a> {
                                 shape: MetadataShape::Set,
                                 ..
                             }
-                        ) || dependencies.iter().any(|id| repeat[*id])
+                        ) || index.any_repeat(&dependencies, &repeat,
+                            &mut |n| self.session.charge_host_work(n))?
                     }
                     // Immutable compiler record/namespace identities are sharing
                     // barriers, distinct from occurrences inside reader data.
                     _ => false,
                 };
-                state[id] = 2;
-                postorder.push(id);
+                state[slot] = 2;
+                index.push_postorder(&mut postorder, id,
+                    &mut |n| self.session.charge_host_work(n))?;
             }
         }
         struct Frame {
@@ -643,12 +666,20 @@ impl<'a> AnalysisGraph<'a> {
         // Count logical frame work on the compact DAG before any callbacks.
         // The actual traversal debits that work once; this planner debits only
         // its own counting/copying work, never a hypothetical expanded walk.
-        let work = occurrence_work::count(
-            self.recipes.len(), root, &postorder, &repeat,
-            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {0}else{dependency_count(self.recipes[id].as_ref().unwrap())},
-            |id| if control.as_ref().is_some_and(|b|b.intercepts(id)) {vec![]}else{dependencies(self.recipes[id].as_ref().unwrap())},
-            |units| self.session.charge_host_work(units),
-        )?;
+        // Seal membership before counting or entering any guest callback.
+        let index = &index;
+        let slots = state.len();
+        let degree = |id: Value| if control.as_ref().is_some_and(|b| b.intercepts(id)) {0}
+            else {dependency_count(self.recipes[id].as_ref().unwrap())};
+        let edges = |id: Value| if control.as_ref().is_some_and(|b| b.intercepts(id)) {vec![]}
+            else {dependencies(self.recipes[id].as_ref().unwrap())};
+        let mut charge = |n| self.session.charge_host_work(n);
+        let work = if I::DENSE {
+            occurrence_work::count(slots, root, &postorder, &repeat, degree, edges, &mut charge)?
+        } else {
+            occurrence_work::count_indexed(slots, root, &postorder, &repeat,
+                degree, edges, |id, charge| index.slot(id, charge), &mut charge)?
+        };
         let remaining = self.session.operation_fuel_remaining()?;
         if work.is_none_or(|work| work > remaining) {
             // Overflow proves that even a u64::MAX allowance cannot admit the
@@ -657,9 +688,11 @@ impl<'a> AnalysisGraph<'a> {
             self.session.charge_host_work(1)?;
             unreachable!("an insufficient or overflowing work count must exhaust fuel");
         }
-        let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
-        self.session.charge_host_work(if control.is_some() {self.recipes.len() as u64}else{0})?;
-        let mut value_taint=if control.is_some() {vec![false;self.recipes.len()]}else{Vec::new()};
+        // Dense prepaid cache initialization in 3N. Sparse pays its actual R.
+        if !I::DENSE { self.session.charge_host_work(slots as u64)?; }
+        let mut cached: Vec<Option<SessionValue>> = vec![None; slots];
+        self.session.charge_host_work(if control.is_some() {slots as u64}else{0})?;
+        let mut value_taint=if control.is_some() {vec![false;slots]}else{Vec::new()};
         let root_recipe = self.recipes[root].as_ref().unwrap();
         self.session
             .charge_host_work(dependency_count(root_recipe) as u64)?;
@@ -673,13 +706,14 @@ impl<'a> AnalysisGraph<'a> {
                 self.charge(1)?;
                 let id = frame.dependencies[frame.next];
                 frame.next += 1;
-                if !repeat[id]
-                    && let Some(value) = &cached[id]
+                let slot = index.slot(id, &mut |n| self.session.charge_host_work(n))?;
+                if !repeat[slot]
+                    && let Some(value) = &cached[slot]
                 {
                     if control.is_some() {
-                        frame.tainted |= value_taint[id];
+                        frame.tainted |= value_taint[slot];
                         reuse::reserve(self.session, &mut frame.input_taint, 1)?;
-                        frame.input_taint.push(value_taint[id]);
+                        frame.input_taint.push(value_taint[slot]);
                     }
                     frame.inputs.push(value.clone());
                 } else {
@@ -691,6 +725,7 @@ impl<'a> AnalysisGraph<'a> {
                 continue;
             }
             let frame = frames.pop().unwrap();
+            let slot = index.slot(frame.id, &mut |n| self.session.charge_host_work(n))?;
             self.charge(1)?;
             let inputs = frame.inputs;
             if frame.tainted && !control.as_ref().is_some_and(|b| b.intercepts(frame.id)) {
@@ -765,9 +800,9 @@ impl<'a> AnalysisGraph<'a> {
             let tainted=if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_ref().unwrap().last_is_private(frame.id)
             } else {frame.tainted};
-            if control.is_some() {value_taint[frame.id]=tainted;}
-            if !repeat[frame.id] {
-                cached[frame.id] = Some(value.clone());
+            if control.is_some() {value_taint[slot]=tainted;}
+            if !repeat[slot] {
+                cached[slot] = Some(value.clone());
             }
             if let Some(parent) = frames.last_mut() {
                 parent.tainted |= tainted;
