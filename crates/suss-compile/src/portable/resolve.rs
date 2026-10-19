@@ -10,6 +10,9 @@ use std::{
 };
 use suss_reader::Symbol;
 
+mod type_key_history;
+pub use type_key_history::TypeKeyHistory;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Phase {
     Runtime,
@@ -216,6 +219,8 @@ pub struct DefinitionInfo {
     pub type_fields: Option<usize>,
     /// The intrinsic declaration kind, independent of user metadata overrides.
     pub type_is_record: bool,
+    /// Bounded native key facts captured before type metadata is rebuilt.
+    pub type_key_history: Option<std::sync::Arc<TypeKeyHistory>>,
     pub once: bool,
 }
 impl DefinitionInfo {

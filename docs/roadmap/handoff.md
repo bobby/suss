@@ -29898,3 +29898,21 @@ cargo test --locked -p suss-compile --lib metadata_key_origin -- --test-threads=
 
 This command is a validation target, not a result. Preserve full prefix errors,
 first-key identity, independent occurrences and Runtime limits during wiring.
+
+
+## Native type key-history validation
+
+The nominal analyzer captures five parse-type key-origin facts before rebuilding
+metadata, without retaining previous declaration/initializer chains. Graph does
+not consume them yet. See the
+[source evidence](evidence/m4-pr263-native-type-key-history-2026-10-19.md)
+for bounded independent review, added charges and limitations. No native test
+result or bootstrap validity is established for this source. After normal
+bootstrap regeneration and identity checks, run:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+```
+
+These native-prepare tests do not replace actual both-phase macro transport,
+custom-hash/GC/restoration, full source-tags programs or final acceptance gates.

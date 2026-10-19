@@ -450,6 +450,8 @@ impl Analyzer<'_> {
         // parse-type preserves prior declaration fields independently of the
         // ordinary def/:declared rule. Capture that revision before def can
         // replace it, selecting only this namespace's actual declaration.
+        // New history Arc copy/read controls in the existing revision clones.
+        self.expander.charge_expansion_work(12, form.span.clone())?;
         let previous_type_info = if let Kind::Symbol(name) = &name.kind {
             self.environment.namespace_scope(self.phase).declarations.into_iter()
                 .find(|(global, _)| global.name() == name.name)
@@ -471,6 +473,11 @@ impl Analyzer<'_> {
         // A truthy :declared ordinary def can preserve an older revision.
         // A source type has its own current declaration and must not recover
         // its tag/metadata/origin from that ordinary-def preservation rule.
+        let previous_type_info_for_keys = previous_type_info.as_ref();
+        let key_history = super::super::resolve::TypeKeyHistory::capture(
+            &class_global, previous_type_info_for_keys,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+        )?;
         let mut type_info = previous_type_info.unwrap_or_else(|| {
             self.environment.definition_info(&class_global)
                 .expect("declared source type").clone()
@@ -498,6 +505,7 @@ impl Analyzer<'_> {
         type_info.origin = self.clone_origin_value(form.span.clone())?;
         type_info.type_fields = Some(declared_fields);
         type_info.type_is_record = record;
+        type_info.type_key_history = Some(key_history);
         type_info.analysis_completed = true;
         self.environment.record_definition(class_global.clone(), type_info);
         Ok((declaration, class_global))

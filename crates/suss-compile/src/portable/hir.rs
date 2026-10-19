@@ -1479,6 +1479,7 @@ impl Analyzer<'_> {
                     if key.namespace.is_none() && key.name == "declared")
                         && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
                 });
+        self.expander.charge_expansion_work(1, form.span.clone())?; // native history-field initialization
         let mut definition = super::resolve::DefinitionInfo {
             definition_form: form.clone(),
             analysis_completed: false,
@@ -1496,6 +1497,7 @@ impl Analyzer<'_> {
             initializer: None,
             type_fields: None,
             type_is_record: false,
+            type_key_history: None,
             once,
         };
         // Publish and retain the actual provisional revision before any
