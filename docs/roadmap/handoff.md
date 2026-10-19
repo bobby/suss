@@ -30283,3 +30283,15 @@ The unchanged canonical first-use DATA control still fails with `Host(Fresh firs
 The next source checkpoint includes the exact reviewed Alias V4 two-file repair. Only an actual Native `Recipe::Alias` forwards its single original input Evidence from the same producer, after unchanged production/recording completion. Generic input-root checks, source-owner handling, callback closure and cache-authority guards are unchanged. The prior Native payload lifecycle debit is conservatively retained; new selection/extraction controls are prepaid. The evidence JSON embeds the V4 manifest, Carver source GO, fee ledger and applied-source binding. One new Runtime/Macro GC/physical-identity regression is unexecuted. Exact applied-source library no-run compile/link passed in26.2434s, exit0, log SHA2569614e353b6c21970d1b985149d90cfe458f90ae0af4f458cc3c91443a199c2de; there is no new VM pass, generated BOOT result, repaired DATA result or acceptance claim.
 
 Both actual build-script builders returned fingerprint `53a2340547aa05a00a6f81eadbef7bfc2aab054a15676e92c06065fdfe39dd1f`; the receipt is embedded in the evidence JSON. This is source fingerprint evidence, not new generated BOOT identity or an Alias VM pass.
+
+
+## Bootstrap binding for transparent Alias evidence
+
+`sh scripts/verify-bootstrap.sh` at `446d4ad` produced identical normal phase
+pairs in 32.9371s, then exited1 at the older shipped comparison. Independent
+review verifies 219 Git inputs and fingerprint `53a23405`, all eight output hashes,
+and unchanged noncustom Wasm/catalog/ABI/cells. Exact four outputs are adopted;
+[raw generation and independent binding](evidence/m4-pr263-alias-evidence-bootstrap-2026-10-19.json) preserve that failed comparison.
+Next run the both-phase Alias regression and unchanged canonical-cold/retained-warm
+DATA controls. No Alias semantic, complete new-head verification or acceptance
+result is inferred from generation/adoption.
