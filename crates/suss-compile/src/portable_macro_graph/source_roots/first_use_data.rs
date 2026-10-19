@@ -653,6 +653,26 @@ impl Observer for Build<'_> {
             Scope::Native(recording) => {
                 let value = graph.produce_native_recipe(id, &recording, &values)?;
                 let records = recording.into_records()?;
+                // Alias forwards its one exact input without a factory call.
+                // Its empty recording cannot authenticate a newly invented
+                // Native root. Preserve the original input's complete evidence;
+                // all later source/native and post-callback checks still run.
+                graph.session.charge_host_work(6)?; // recipe/mode/extent controls
+                if matches!(graph.recipes[id].as_ref(), Some(Recipe::Alias(_))) {
+                    if inputs.len() != 1 || records.len() != 0 {
+                        return Err(invalid("Transparent DATA alias has unexpected construction"));
+                    }
+                    // Retain the existing Native payload lifecycle tariff even
+                    // though no new Native is allocated. In particular original
+                    // recording/class-input retirement does not become unpaid.
+                    graph.session.charge_host_work(
+                        (4 * std::mem::size_of::<Native>()
+                            + 2 * std::mem::size_of::<usize>() + 8) as u64,
+                    )?;
+                    graph.session.charge_host_work(3)?; // extraction/move/retirement
+                    let actual = inputs.into_iter().next().unwrap();
+                    return Ok(Observed { value, evidence: actual.evidence });
+                }
                 let mut children = Vec::new();
                 reserve(graph.session, &mut children, inputs.len())?;
                 graph.session.charge_host_work(inputs.len() as u64)?;

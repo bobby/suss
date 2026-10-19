@@ -297,3 +297,28 @@ fn selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_ex
         assert!(cache.entries.is_empty(), "DATA values never mint strict source capabilities");
     }
 }
+
+
+#[test]
+fn uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut cache = RootCache::default();
+        let result = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            let original = graph.symbol("alias-evidence").unwrap();
+            let first = graph.recipe(Recipe::Alias(original)).unwrap();
+            let second = graph.recipe(Recipe::Alias(first)).unwrap();
+            let outer = graph.vector(&[original, first, second]).unwrap();
+            graph.materialize_reader_controller(outer, &mut cache).unwrap()
+                .expect("healthy transparent alias DATA must not decline")
+        };
+        session.collect().unwrap();
+        let check = session.eval("(fn [v] (and (symbol? (nth v 0)) (identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))))").unwrap();
+        let passed = session.invoke(&check, &[&result]).unwrap();
+        assert!(matches!(bridge.read(&mut session, &passed, 0..0).unwrap().kind, suss_reader::forms::Kind::Bool(true)));
+        assert!(cache.data.is_empty(), "a request-only owner must not become persistent authority");
+    }
+}

@@ -30271,3 +30271,15 @@ catalog/ABI/cells. Exact four outputs are adopted; [raw log and source/hash revi
 preserve the failed comparison. Next execute the unchanged public tag control
 and a canonical failing DATA control with observational stage labels. No new VM
 pass, complete bootstrap-verification pass, performance or acceptance is inferred.
+
+
+## Metadata-order helper replay and remaining DATA failure (2026-10-19)
+
+[Exact grouped two-test receipt](evidence/m4-pr263-metadata-order-targeted-results-2026-10-19.json) retains argv, terminal receipt and raw log on `65ea6ebb8710bebab067731509419008e140b8e2`: 1PASS1FAIL0ignored, exit101, 69.2529s command/45.25s harness. The unchanged compiled Session / `Graph::declaration` tag control passes all five cases in both Runtime and Macro, including exact metadata order, eligible physical Symbol identity, GC and immutable native source. This is helper-route evidence, not full public macro-frame, namespace or callable acceptance.
+
+The unchanged canonical first-use DATA control still fails with `Host(Fresh first-use source failed complete DATA checks)`. Its root has binding/logical=true but audit=false. The first native record has inputs=1, children/direct/classes/prototypes=true and current_inputs=false; the second has inputs=2, children=false and current_inputs/direct/classes/prototypes=true. All labels are retained verbatim; no repaired behavior is inferred. Next: independently review the bounded Alias/original-evidence repair and replay the unchanged control. No full baseline, final CI, performance or acceptance claim.
+
+
+The next source checkpoint includes the exact reviewed Alias V4 two-file repair. Only an actual Native `Recipe::Alias` forwards its single original input Evidence from the same producer, after unchanged production/recording completion. Generic input-root checks, source-owner handling, callback closure and cache-authority guards are unchanged. The prior Native payload lifecycle debit is conservatively retained; new selection/extraction controls are prepaid. The evidence JSON embeds the V4 manifest, Carver source GO, fee ledger and applied-source binding. One new Runtime/Macro GC/physical-identity regression is unexecuted. Exact applied-source library no-run compile/link passed in26.2434s, exit0, log SHA2569614e353b6c21970d1b985149d90cfe458f90ae0af4f458cc3c91443a199c2de; there is no new VM pass, generated BOOT result, repaired DATA result or acceptance claim.
+
+Both actual build-script builders returned fingerprint `53a2340547aa05a00a6f81eadbef7bfc2aab054a15676e92c06065fdfe39dd1f`; the receipt is embedded in the evidence JSON. This is source fingerprint evidence, not new generated BOOT identity or an Alias VM pass.
