@@ -27,6 +27,8 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `compiled_source_macros_materialize_env_only_for_macros_that_can_read_it` | 10,000,000 | 10,000,000,000 |
 | `compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions` | 10,000,000 | 10,000,000,000 |
 | `quote_and_literal_child_records_match_pinned_without_datum_analysis` | 10,000,000 | 10,000,000,000 |
+| `compiled_function_declarations_match_primary_presence_and_parameter_shapes` | 10,000,000 | 10,000,000,000 |
+| `completed_declaration_hint_boundaries_match_actual_primary_expression_tags` | 10,000,000 | 10,000,000,000 |
 | `declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer` | 10,000,000 | 10,000,000,000 |
 | `compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields` | 100,000,000 | 10,000,000,000 |
 | `compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phases` | 10,000,000 | 10,000,000,000 |
@@ -43,7 +45,6 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `public_record_custom_protocols_and_record_input_factory_decode_after_gc` | 10,000,000 | 10,000,000,000 |
 | `public_record_nominal_equality_and_predicate_decode_after_gc_in_both_phases` | 10,000,000 | 10,000,000,000 |
 | `constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc` | 100,000,000 | 10,000,000,000 |
-
 | `public_records_execute_jank_and_authored_contracts_with_two_nominal_classes` | 10,000,000 | 10,000,000,000 |
 
 The public-record command supplies `suss compile --compile-fuel`; subsequent
@@ -66,5 +67,8 @@ retry/escalation in the test; the original10M failure remains recorded in eviden
 The six additional protocol/field/source/quote cases above exhausted Macro fuel
 in actual4baf CI (five caller-environment transports and one transformer
 invocation). Their compiler-only settings are now calibrated, with every other
-test byte and caller setting preserved. These six replays are still unexecuted
-at this publication; choosing an allowance is not a passing-result claim.
+test byte and caller setting preserved. Their four complete targets now pass
+10 tests on the recorded pre-observation-scan source/bootstrap snapshot.
+The function-declaration target also passes both tests, and the source-hint
+target passes its original 23 observations in both phases. These are focused
+results; final-source workspace and CI validation remain separate gates.

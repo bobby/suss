@@ -38,6 +38,9 @@ analysis/lowering and artifact generation, together with:
   argument transport. Proven-unobserved implicit inputs may use the existing nil
   fast paths; this does not authorize dropping observable metadata or arguments.
 - Guest constructors/helpers and the transformer invocation through Wasmtime fuel.
+- Definition scans for `&env` and `&form` observation, including node visits,
+  temporary reference storage and symbol comparisons, before replacement
+  evaluation and publication. Their host debits also check cancellation.
 - Expanded-result realization and decoding, including captured lazy-sequence
   realization calls on that same Store. This is not a fresh budget per lazy node.
 - Explicit conservative host charges for selected visits, byte/element reads,

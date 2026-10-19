@@ -28549,3 +28549,42 @@ the complete cumulative-fuel target. Both dependent controllers are waiting on
 verified live process identities; they start no parallel Cargo producer. Failed
 prerequisites stop the chain. Full baseline and final-head CI remain unexecuted
 acceptance gates, not implied by these selected passes.
+
+
+## Metered definition observation execution
+
+The preceding controller89334 completed0/drained: complete control-flow5PASS
+9.72s, hint-boundaries1PASS90.93s (all23 observations in both phases) and the
+completed-helper companion1PASS49.87s at unchanged100k Macro allowance. The
+companion proves a conservative lower bound greater than one completed transformer,
+with explicit zero reset readback, no pending definition, retained effects and
+same-budget recovery. Original512-call exhaustion regression is unchanged.
+
+The reviewed parameter-observation repair is now applied. It prepays visits,
+reference allocation/relocation/fills and equal-length symbol comparisons to the
+active Store; both scans retain original order and run before replacement
+publication. Normal bootstrap generation and identity pass. Focused command:
+
+```sh
+cargo test --locked -p suss-compile --lib parameter_observation_ -- --test-threads=2 --nocapture
+```
+
+Actual3PASS/0FAIL/0ignored,63.27s including compilation/45.99s execution. Real
+1000-unit scope decreases1000->919->838 before repeated scans exhaust it; typed
+IRQ and same-budget retry pass. The public API test reaches an actual &form scan
+OutOfFuel at40056 units,bytes0..998, preserves old17 definition/provenance/catalog
+and implicit-input policies, then expands the old definition at that same budget.
+Raw source patch, BOOT hashes, command receipts and logs are in
+`/home/bobby/.cache/suss-m4-work/pr252-metered-parameter-observation-validation-v1/`.
+
+The same sole producer now executes the entire12-test cumulative-fuel target:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_cumulative_fuel -- --test-threads=2
+```
+
+No terminal result for that target is claimed yet. The next gate after focused
+success is Java/Node-free bootstrap verification followed by the exact required
+workspace command. Final-head CI/review and all remaining issue criteria remain
+separate. Earlier10 calibrated-target passes and declaration2 remain attributed
+to their recorded pre-scan source/bootstrap; no new-source replay is inferred.
