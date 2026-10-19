@@ -30141,3 +30141,20 @@ TMPDIR and bounded workers. Keep the separate parent producer until terminal;
 no local concurrent Cargo/VM was used. Full type input capture costs, actual
 public retained-key identity, focused native results and complete-suite results
 remain unverified for these new sources.
+
+
+## Type-value Rust build feedback and evidence correction
+
+edc2e53 CI39295062658 fails library compilation with E0425/E0277 before
+bootstrap generation or tests. Two reviewed mechanical fixes pass the genuine
+current holder and forward the dynamic meter through a sized closure. A separate
+reviewed COW change avoids copying a shared lexical map for an absent removal;
+its actual default-core benefit is unknown. Source_info query elision was rejected
+because it could hide source errors and is not applied.
+
+[Raw failures, source reviews, authored controls and marker erratum](evidence/m4-pr263-type-value-build-repairs-2026-10-19.md)
+retain the original mislabeled namespace derivative and exact corrected markers.
+Raw320 outcomes/counts are unchanged. Regenerate/adopt normal BOOT before
+`sh scripts/verify-bootstrap.sh` and the focused selections listed in that
+evidence, then the exact full baseline. Keep root66a55ce's live producer intact;
+parsing/source review is not compilation, native acceptance or a budget waiver.

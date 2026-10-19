@@ -66,11 +66,12 @@ impl AnalysisGraph<'_> {
                 Some(TypeKeyOrigin::Unknown) | None => (),
             }
         }
-        self.seed_retained_type_keys(keys, global, history)?;
+        self.seed_retained_type_keys(keys, global, history, info)?;
         Ok(())
     }
     fn seed_retained_type_keys(&mut self, keys: &mut RetainedFieldKeys,
         global: &portable::resolve::Global, history: &portable::resolve::TypeKeyHistory,
+        info: &Arc<portable::resolve::DefinitionInfo>,
     ) -> Result<()> {
         for field in RetainedKey::ALL {
             self.charge(global.namespace().len().saturating_add(global.name().len()).saturating_mul(2).saturating_add(14))?;

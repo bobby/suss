@@ -347,7 +347,7 @@ impl AnalysisGraph<'_> {
         // repeated types; do not enrich an old value using the current origin.
         let form = if let Some(origin) = source.origin() {
             preserve_source_error(source.form().span.clone(), &mut |n| self.session.charge_host_work(n),
-                |meter| origin.macro_form_data_metered(source.form(), meter))?
+                |meter| origin.macro_form_data_metered(source.form(), &mut |work| meter(work)))?
         } else { self.clone_form(source.form())? };
         validate_form_data(&form, &mut |units| self.session.charge_host_work(units))?;
         let value = self.form(&form, depth)?;

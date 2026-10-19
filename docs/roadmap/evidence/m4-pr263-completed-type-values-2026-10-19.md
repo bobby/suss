@@ -77,3 +77,10 @@ from320 and are not yet regenerated for these new sources. Generate both
 normal phases twice, independently bind/adopt their complete tuples, then run
 Java/Node-free bootstrap validation/execution and the focused regressions before
 the exact full workspace baseline. Current source acceptance is unproven.
+
+
+## Derived marker erratum
+
+The archive above retains an incorrectly labeled namespace JSON derivative.
+Its raw log and recorded failure classifications remain authoritative and
+correct. See [the exact correction, preserved original and build diagnostics](m4-pr263-type-value-build-repairs-2026-10-19.md).
