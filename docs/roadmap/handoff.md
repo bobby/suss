@@ -28286,3 +28286,34 @@ Thus14 distinct positive outcomes exist across production-identical V3/V4 tuples
 Exactargv/environment/rawlogs/freezes/sourcebindings are in the configuration evidence. ArchiveSHA256 `3490a570cae944f5b8448c51dfca167c6e4103733cf9fcb62d7ca19860c0c253` (65 safe members,64 content-addressed payloads,135 logical paths); baseGit/bootstrap dependencies explicit, not standalonewhole-repository.
 
 [Configuration commands, raw outcomes and source binding](evidence/m4-pr252-repl-compile-fuel-2026-10-18.md).
+
+
+## Compilation-test fuel calibration, 2026-10-18
+
+The user authorized compiler-test allowance calibration. #252 and #241 now permit
+explicit compiler allowances while preserving Runtime limits and the original
+semantic assertions. `tests/support/compilation_fuel.rs` in suss-cli defines an
+initial 10B allowance for 16 in-process semantic tests (previously 10M, 40M or
+100M). The completed CoreEnv trace on source19def measured a largest request of
+2,630,830,814 units; this supports headroom for that fixture, not every corpus.
+See `docs/runtime/compilation-test-fuel.md` for the old/new settings.
+
+Independent source review verified only Macro-session allowance changes, with
+original sources/assertions, caller budgets, default-fit controls and explicit
+exhaustion tests preserved. No shipped default, metering tariff or bootstrap
+payload changed. `python3 scripts/verify_bootstrap_identity.py` passed. Cache:
+`/home/bobby/.cache/suss-m4-work/pr252-test-compilation-budget-audit/`.
+
+Focused command launched with CARGO_TARGET_DIR set to
+`/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`, CARGO_BUILD_JOBS=1,
+RAYON_NUM_THREADS=1, without setting RUSTFLAGS:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_source_tags --test compiled_macro_collection_source_asts --test compiled_macro_core_environment -- --test-threads=1
+```
+
+At publication the command is still executing; no terminal result or acceptance
+is claimed. Log: `/home/bobby/.cache/suss-m4-work/pr252-test-budget-calibration/focused.log`.
+The public-record AOT subprocess still needs an explicit compiler-fuel option;
+its Runtime invocation allowance must remain unchanged. Full baseline and final
+CI results have not been established by this calibration patch.

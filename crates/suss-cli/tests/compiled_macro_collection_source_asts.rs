@@ -1,4 +1,6 @@
 //! Genuine collection source nodes and child edges, independently decoded.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -202,10 +204,8 @@ fn collection_source_nodes_retain_original_children_before_factory_lowering() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(40_000_000);
         let mut macros = CompiledMacros::new().unwrap();
-        // Projecting 33 children and constructing all 14 quoted rows exceeds
-        // the default 10M operation budget. Keep an explicit finite test allowance;
-        // depth/shape checks and every semantic assertion remain unchanged.
-        macros.set_operation_fuel(40_000_000);
+        // Calibrated compilation allowance; Runtime keeps its existing 40M limit.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .enter_namespace("suss-oracle.collection-source-ast-runner")
             .unwrap();
@@ -250,6 +250,7 @@ fn collection_source_nodes_retain_original_children_before_factory_lowering() {
 fn unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(r#"(defmacro ordered-source [binding]
           (let [ast (get (get (get &env :locals) binding) :init)
                 collect (fn [nodes]

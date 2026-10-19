@@ -1,5 +1,7 @@
 //! Genuine compiler-catalog transport authoring gate. UNCOMPILED/UNEXECUTED.
 //! This exercises compiled source macros, not a host macro evaluator or reify.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -60,7 +62,7 @@ fn source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc(
         let mut macros = CompiledMacros::new().unwrap();
         // New authored finite allowance, not measured or certified yet.
         session.set_operation_fuel(100_000_000);
-        macros.set_operation_fuel(100_000_000);
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("record.live").unwrap();
         session.eval("(def ^{:doc \"first revision\"} value 17) (defprotocol Pair (-pair [this] [this x]))").unwrap();
         session.enter_namespace("record.caller").unwrap();
@@ -102,7 +104,7 @@ fn compiler_catalog_policy_is_opt_in_and_invalid_metadata_keeps_old_macro() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros
         .define("(defmacro policy [] (list 'quote (:suss/compiler-catalog &env)))")
         .unwrap();
@@ -136,7 +138,7 @@ fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() 
     .unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     session
         .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)
         .unwrap();
@@ -186,7 +188,7 @@ fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros.define("(defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
     let error = suss_cli::portable_repl::evaluate_script_compiled(
         &mut session,
@@ -233,6 +235,7 @@ fn compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phase
         (Session::new_macro().unwrap(), "macro"),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         caller.enter_namespace("record.caller").unwrap();
         macros.enter_namespace("record.caller").unwrap();
         macros.define(NATIVE_OBJECT_FACTS).unwrap();
