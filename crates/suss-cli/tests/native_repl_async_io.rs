@@ -25,10 +25,24 @@ impl Repl {
         Self::with_fuel(None)
     }
     fn with_fuel(fuel: Option<u64>) -> Self {
+        Self::with_budgets(fuel, None)
+    }
+    fn with_budgets(fuel: Option<u64>, compile_fuel: Option<u64>) -> Self {
+        Self::with_budget_order(fuel, compile_fuel, false)
+    }
+    fn with_budget_order(fuel: Option<u64>, compile_fuel: Option<u64>, compile_first: bool) -> Self {
         let mut command = Command::new(env!("CARGO_BIN_EXE_suss"));
         command.arg("repl");
-        if let Some(fuel) = fuel {
-            command.arg("--fuel").arg(fuel.to_string());
+        if compile_first {
+            if let Some(value) = compile_fuel { command.arg("--compile-fuel").arg(value.to_string()); }
+        }
+        if let Some(value) = fuel { command.arg("--fuel").arg(value.to_string()); }
+        if !compile_first {
+            if let Some(value) = compile_fuel { command.arg("--compile-fuel").arg(value.to_string()); }
+        }
+        if compile_fuel.is_some() {
+            // Only the new explicit-budget frontend fixture requests traces.
+            command.env("SUSS_MACRO_FUEL_TRACE", "1");
         }
         let mut child = command
             .stdin(Stdio::piped())
@@ -619,4 +633,55 @@ fn session_lifecycle_cli_reset_waits_for_pending_stream_cleanup_and_late_bytes_c
         repl.err
     );
     assert!(repl.err.contains("Uncaught language exception: 9701"));
+}
+
+
+#[test]
+fn session_lifecycle_compile_budget_override_preserves_runtime_in_both_flag_orders() {
+    const RUNTIME_FUEL: u64 = 50_000;
+    for compile_first in [false, true] {
+        let mut repl = Repl::with_budget_order(Some(RUNTIME_FUEL), Some(10_000_000), compile_first);
+        let generation = if compile_first { 1 } else { 0 };
+        let ready = 7101 + generation * 100;
+        repl.send(&format!("(+ {ready} 0)"));
+        repl.line(&ready.to_string());
+        // A bounded, environment-free real Macro computation. Actual trace
+        // below must prove it exceeds Runtime fuel; no phase/cost mock.
+        repl.send("(defmacro compile-budget-probe [] (loop [i 0] (if (< i 1024) (recur (+ i 1)) 42)))");
+        let start = repl.err.len();
+        let fortytwos = repl.out.lines().filter(|line| *line == "42").count();
+        repl.send("(compile-budget-probe)");
+        repl.wait("Macro expansion with the separate compile budget", |child| {
+            child.out.lines().filter(|line| *line == "42").count() > fortytwos
+                && child.err[start..].contains("macro-fuel user/compile-budget-probe decoded:")
+        });
+        let trace = &repl.err[start..];
+        assert!(!trace.contains("Error:"), "{trace}");
+        let checkpoint = |stage: &str| -> u64 {
+            let marker = format!("macro-fuel user/compile-budget-probe {stage}: ");
+            let values: Vec<u64> = trace.lines().filter_map(|line| {
+                line.split_once(&marker).map(|(_, value)| value.trim().parse().unwrap())
+            }).collect();
+            assert_eq!(values.len(), 1, "missing/duplicate {stage}: {trace}");
+            values[0]
+        };
+        let macro_cost = checkpoint("start") - checkpoint("decoded");
+        assert!(macro_cost > RUNTIME_FUEL,
+            "fixture did not establish independent budgets: {macro_cost} <= {RUNTIME_FUEL}");
+        eprintln!("repl-compile-fuel generation={generation} runtime={RUNTIME_FUEL} compile=10000000 actual_macro_cost={macro_cost}");
+        let errors = repl.err.len();
+        repl.send("(loop [] (recur))");
+        repl.wait("Runtime retains its own typed fuel trap", |child| {
+            let error = &child.err[errors..];
+            error.contains("Runtime trap:") && error.contains("all fuel consumed by WebAssembly")
+        });
+        let forty_threes = repl.out.lines().filter(|line| *line == "43").count();
+        repl.send("(+ 40 3)");
+        repl.wait("Runtime recovers after its fuel trap", |child| {
+            child.out.lines().filter(|line| *line == "43").count() > forty_threes
+        });
+        // Do not require reset at Runtime50k: bootstrap admission is separate.
+        // The real-API reset test checks distinct finite ample options instead.
+        repl.finish();
+    }
 }

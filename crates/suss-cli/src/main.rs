@@ -25,8 +25,8 @@ fn main() {
 
 fn run_command(cmd: args::Command) {
     match cmd {
-        args::Command::Repl { fuel } => {
-            run_repl(fuel);
+        args::Command::Repl { fuel, compile_fuel } => {
+            run_repl(fuel, compile_fuel);
         }
         args::Command::Eval { expr } => {
             run_eval(&expr);
@@ -667,18 +667,32 @@ mod repl_interrupt {
     }
 }
 
+/// Preserve legacy --fuel for both operation budgets, then apply the explicit
+/// compilation/Macro override independently of flag order. Defaults are unchanged.
+fn apply_repl_fuel_limits(
+    session: &mut suss_cli::portable_session::Session,
+    macros: &mut suss_cli::portable_macros::CompiledMacros,
+    fuel: Option<u64>,
+    compile_fuel: Option<u64>,
+) {
+    if let Some(fuel) = fuel {
+        session.set_operation_fuel(fuel);
+        macros.set_operation_fuel(fuel);
+    }
+    if let Some(compile_fuel) = compile_fuel {
+        macros.set_operation_fuel(compile_fuel);
+    }
+}
+
 /// Run each input in the same Store using independently compiled fragments.
 #[cfg(unix)]
-fn run_repl(fuel: Option<u64>) {
+fn run_repl(fuel: Option<u64>, compile_fuel: Option<u64>) {
     use std::{io::{self, IsTerminal}, os::fd::AsFd};
     use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
     let result = (|| -> Result<(), Box<dyn std::error::Error>> {
         let mut session = Session::new_repl()?;
         let mut macros = CompiledMacros::new()?;
-        if let Some(fuel) = fuel {
-            session.set_operation_fuel(fuel);
-            macros.set_operation_fuel(fuel);
-        }
+        apply_repl_fuel_limits(&mut session, &mut macros, fuel, compile_fuel);
         let stdin = io::stdin();
         if stdin.is_terminal() {
             println!("Suss v{} - compiled REPL", env!("CARGO_PKG_VERSION"));
@@ -706,7 +720,7 @@ fn run_repl(fuel: Option<u64>) {
 }
 
 #[cfg(not(unix))]
-fn run_repl(fuel: Option<u64>) {
+fn run_repl(fuel: Option<u64>, compile_fuel: Option<u64>) {
     use std::io::{self, BufRead, IsTerminal};
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
 
@@ -724,11 +738,7 @@ fn run_repl(fuel: Option<u64>) {
             return;
         }
     };
-    // Both phases share the budget; reset keeps it with the session options.
-    if let Some(fuel) = fuel {
-        session.set_operation_fuel(fuel);
-        macros.set_operation_fuel(fuel);
-    }
+    apply_repl_fuel_limits(&mut session, &mut macros, fuel, compile_fuel);
     // Reset replaces both sessions in place and keeps their interrupt handles.
     #[cfg(unix)]
     repl_interrupt::install(session.interrupt_handle(), macros.interrupt_handle());
@@ -855,5 +865,50 @@ fn run_repl(fuel: Option<u64>) {
                 portable_repl::error_display(&mut session, &error)
             );
         }
+    }
+}
+
+
+#[cfg(test)]
+mod repl_fuel_tests {
+    use super::apply_repl_fuel_limits;
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    use suss_compile::portable::{ExpansionHost, DEFAULT_OPERATION_FUEL};
+
+    #[test]
+    fn repl_limits_preserve_defaults_legacy_and_independent_compile_options() {
+        let mut runtime = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        assert_eq!(runtime.options().fuel_per_operation, 10_000_000);
+        assert_eq!(ExpansionHost::expansion_work_fuel(&macros), 10_000_000);
+        for (eval, compile, expected_eval, expected_compile) in [
+            (None, None, 10_000_000, 10_000_000),
+            (Some(37), None, 37, 37),
+            (None, Some(59), 10_000_000, 59),
+            (Some(37), Some(59), 37, 59),
+            (Some(0), None, 0, 0),
+            (Some(37), Some(0), 37, 0),
+            (Some(0), Some(59), 0, 59),
+        ] {
+            // Pure configuration cases; no guest operation at tiny/zero fuel.
+            runtime.set_operation_fuel(DEFAULT_OPERATION_FUEL);
+            macros.set_operation_fuel(DEFAULT_OPERATION_FUEL);
+            apply_repl_fuel_limits(&mut runtime, &mut macros, eval, compile);
+            assert_eq!(runtime.options().fuel_per_operation, expected_eval);
+            assert_eq!(ExpansionHost::expansion_work_fuel(&macros), expected_compile);
+        }
+    }
+
+    #[test]
+    fn repl_reset_preserves_distinct_finite_operation_budgets() {
+        let mut runtime = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        apply_repl_fuel_limits(&mut runtime, &mut macros, Some(10_000_000), Some(20_000_000));
+        assert_eq!(runtime.options().fuel_per_operation, 10_000_000);
+        assert_eq!(ExpansionHost::expansion_work_fuel(&macros), 20_000_000);
+        portable_repl::reset_compiled(&mut runtime, &mut macros).unwrap();
+        assert_eq!(runtime.options().fuel_per_operation, 10_000_000);
+        assert_eq!(ExpansionHost::expansion_work_fuel(&macros), 20_000_000);
+        assert_eq!(portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(+ 40 3)").unwrap(), "43");
     }
 }

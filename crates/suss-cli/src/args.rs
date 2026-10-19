@@ -8,8 +8,8 @@ use lexopt::prelude::*;
 /// Commands supported by the Suss CLI
 #[derive(Debug)]
 pub enum Command {
-    /// Start the REPL (default); `fuel` overrides each input's execution budget
-    Repl { fuel: Option<u64> },
+    /// Start the REPL; legacy `fuel` sets both budgets, then `compile_fuel` overrides compilation/Macro.
+    Repl { fuel: Option<u64>, compile_fuel: Option<u64> },
     /// Evaluate an expression and print the result
     Eval { expr: String },
     /// Run a file
@@ -74,11 +74,13 @@ pub enum Command {
 
 /// Parse command-line arguments into a Command
 pub fn parse_args() -> Result<Command, lexopt::Error> {
-    let mut parser = lexopt::Parser::from_env();
+    parse_command(lexopt::Parser::from_env())
+}
 
+fn parse_command(mut parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
     // Check for subcommand or flags first
     match parser.next()? {
-        None => Ok(Command::Repl { fuel: None }),
+        None => Ok(Command::Repl { fuel: None, compile_fuel: None }),
 
         Some(Short('h')) | Some(Long("help")) => Ok(Command::Help),
 
@@ -289,13 +291,15 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
 /// or function parameters (for explicit `--invoke`).
 fn parse_repl(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut fuel = None;
+    let mut compile_fuel = None;
     while let Some(arg) = parser.next()? {
         match arg {
             Long("fuel") => fuel = Some(parser.value()?.parse()?),
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
             _ => return Err(arg.unexpected()),
         }
     }
-    Ok(Command::Repl { fuel })
+    Ok(Command::Repl { fuel, compile_fuel })
 }
 
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
@@ -350,7 +354,9 @@ USAGE:
 
 OPTIONS:
     -r, repl        Start the REPL (default if no arguments)
-        --fuel <N>      Execution budget per input (default 10000000);
+        --fuel <N>      Set evaluation and compilation fuel (default 10000000 each)
+        --compile-fuel <N>
+                        Override compilation and macro-expansion fuel; evaluation fuel is unchanged
                         Ctrl-C interrupts a running input
     -e <EXPR>       Evaluate an expression and print the result
     -h, --help      Print this help message
@@ -398,4 +404,61 @@ EXAMPLES:
     suss run out.wasm --invoke add 3 5              (run specific function)
 "
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn budgets(args: &[&str]) -> (Option<u64>, Option<u64>) {
+        match parse_command(lexopt::Parser::from_args(args.iter().copied())).unwrap() {
+            Command::Repl { fuel, compile_fuel } => (fuel, compile_fuel),
+            command => panic!("expected REPL, got {command:?}"),
+        }
+    }
+
+    #[test]
+    fn repl_fuel_defaults_and_legacy_aliases_are_unchanged() {
+        for args in [&[][..], &["repl"][..], &["-r"][..]] {
+            assert_eq!(budgets(args), (None, None));
+        }
+        for mode in ["repl", "-r"] {
+            assert_eq!(budgets(&[mode, "--fuel", "21"]), (Some(21), None));
+        }
+    }
+
+    #[test]
+    fn repl_compile_fuel_is_independent_of_flag_order() {
+        for mode in ["repl", "-r"] {
+            assert_eq!(budgets(&[mode, "--compile-fuel", "1"]), (None, Some(1)));
+            assert_eq!(budgets(&[mode, "--fuel", "10000000", "--compile-fuel", "1"]),
+                (Some(10_000_000), Some(1)));
+            assert_eq!(budgets(&[mode, "--compile-fuel", "1", "--fuel", "10000000"]),
+                (Some(10_000_000), Some(1)));
+        }
+    }
+
+    #[test]
+    fn repl_repeated_budget_flags_only_replace_their_own_option() {
+        assert_eq!(budgets(&["repl", "--compile-fuel", "2", "--fuel", "7",
+            "--compile-fuel", "3", "--fuel", "11"]), (Some(11), Some(3)));
+    }
+
+    #[test]
+    fn repl_budget_values_reject_missing_invalid_negative_and_overflow() {
+        for flag in ["--fuel", "--compile-fuel"] {
+            assert!(parse_command(lexopt::Parser::from_args(["repl", flag])).is_err());
+            for value in ["nope", "-1", "18446744073709551616"] {
+                assert!(parse_command(lexopt::Parser::from_args(["repl", flag, value])).is_err(),
+                    "accepted {flag} {value}");
+            }
+        }
+        assert!(parse_command(lexopt::Parser::from_args(["repl", "--unknown"])).is_err());
+    }
+
+    #[test]
+    fn repl_budget_values_preserve_unsigned_boundaries() {
+        assert_eq!(budgets(&["repl", "--fuel", "0", "--compile-fuel", "18446744073709551615"]),
+            (Some(0), Some(u64::MAX)));
+    }
 }
