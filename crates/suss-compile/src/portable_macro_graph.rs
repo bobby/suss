@@ -42,6 +42,7 @@ mod field_entry_work;
 #[macro_use]
 mod retained_field_keys;
 mod reference_fields;
+mod type_key_history;
 use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
 
@@ -1730,6 +1731,8 @@ impl<'a> AnalysisGraph<'a> {
             let mut keys = RetainedFieldKeys::new(self)?;
             keys.remember_named(self, AnalyzerLiteralKeyword("name"))?;
             Some(keys)
+        } else if info.is_some_and(|info| info.type_fields.is_some()) {
+            Some(RetainedFieldKeys::type_history(self)?)
         } else { None };
         let mut fields = vec![("name", name)];
         if let Some(info) = info {
@@ -1789,7 +1792,7 @@ impl<'a> AnalysisGraph<'a> {
             // synthetic line/file entries appended by source-origin enrichment.
             // The original full guards/enrichment/normalization have run first.
             self.charge(2)?;
-            if let Some(keys) = retained.as_mut() {
+            if ordinary_def && let Some(keys) = retained.as_mut() {
                 let raw = preserve_source_error(info.declaration.span.clone(),
                     &mut |units| self.session.charge_host_work(units),
                     |meter| hir::reader_metadata_pairs_metered(&info.declaration, meter))?;
@@ -1807,6 +1810,10 @@ impl<'a> AnalysisGraph<'a> {
                     }
                     if let Some(key) = found { keys.remember_source(self, label, key)?; }
                 }
+            }
+            self.charge(2)?;
+            if info.type_fields.is_some() && let Some(keys) = retained.as_mut() {
+                self.seed_type_key_history(keys, global, info)?;
             }
             let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
             if let Some(count) = info.type_fields {

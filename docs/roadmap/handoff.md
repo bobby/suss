@@ -29916,3 +29916,21 @@ cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 -
 
 These native-prepare tests do not replace actual both-phase macro transport,
 custom-hash/GC/restoration, full source-tags programs or final acceptance gates.
+
+
+## Type-key transport validation
+
+The graph now consumes the five native type-key facts after full source guards,
+using a separate policy that leaves other type fields cold. The
+[evidence](evidence/m4-pr263-type-key-transport-2026-10-19.md) describes the
+construction checks and pre-delegation observer. Added native transport assertions
+are unexecuted; bootstrap artifacts still require normal regeneration.
+After normal generation and identity verification, run:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Preserve the original source-tags programs, caller Runtime limits, existing
+poisoning/authority controls and required full baseline/final-head CI.

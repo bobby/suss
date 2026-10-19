@@ -12,6 +12,7 @@ use suss_reader::Symbol;
 
 mod type_key_history;
 pub use type_key_history::TypeKeyHistory;
+pub(crate) use type_key_history::{TypeKey, KeyOrigin as TypeKeyOrigin, LiteralSite as TypeKeyLiteralSite};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Phase {

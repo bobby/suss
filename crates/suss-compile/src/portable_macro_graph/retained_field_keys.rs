@@ -15,6 +15,7 @@ struct Entry {
 /// Invocation/graph-local recipe IDs only. Never persistent cache authority.
 pub(super) struct RetainedFieldKeys {
     entries: Vec<Entry>,
+    ordinary_named: bool,
 }
 macro_rules! retained_decl_push {
     ($graph:ident, $retained:ident, $fields:ident; $label:expr, $token:expr, $value:expr) => {{
@@ -29,9 +30,15 @@ macro_rules! retained_decl_push {
 }
 impl RetainedFieldKeys {
     pub(super) fn new(graph: &mut AnalysisGraph<'_>) -> Result<Self> {
-        // Header acquisition/init AND retirement paid before Vec::new.
-        graph.charge(std::mem::size_of::<Self>().saturating_mul(2).saturating_add(4))?;
-        Ok(Self { entries: Vec::new() })
+        Self::with_named_policy(graph, true)
+    }
+    pub(super) fn type_history(graph: &mut AnalysisGraph<'_>) -> Result<Self> {
+        Self::with_named_policy(graph, false)
+    }
+    fn with_named_policy(graph: &mut AnalysisGraph<'_>, ordinary_named: bool) -> Result<Self> {
+        // Actual enlarged header, policy init and retirement before construction.
+        graph.charge(std::mem::size_of::<Self>().saturating_mul(2).saturating_add(5))?;
+        Ok(Self { entries: Vec::new(), ordinary_named })
     }
     fn find(&self, graph: &mut AnalysisGraph<'_>, label: &str) -> Result<Option<Key>> {
         graph.charge(4)?; // header read, iterator and result controls
@@ -66,6 +73,13 @@ impl RetainedFieldKeys {
     pub(super) fn remember_named(
         &mut self, graph: &mut AnalysisGraph<'_>, token: AnalyzerLiteralKeyword,
     ) -> Result<()> {
+        graph.charge(1)?; // new policy read/branch; ordinary token fees remain below
+        if !self.ordinary_named { return Ok(()); }
+        self.remember_proved_named(graph, token)
+    }
+    pub(super) fn remember_proved_named(
+        &mut self, graph: &mut AnalysisGraph<'_>, token: AnalyzerLiteralKeyword,
+    ) -> Result<()> {
         graph.charge(3)?; // token read, branch and entry selection
         let label = token.name();
         if self.find(graph, label)?.is_none() {
@@ -86,6 +100,18 @@ impl RetainedFieldKeys {
         if self.find(graph, label)?.is_none() {
             let value = graph.form(form, 0)?;
             self.push(graph, Entry { label, key: Key::Source(value) })?;
+        }
+        Ok(())
+    }
+    pub(super) fn remember_proved_occurrence(
+        &mut self, graph: &mut AnalysisGraph<'_>, label: &'static str, form: &Form, occurrence: Value,
+    ) -> Result<()> {
+        graph.charge(label.len().saturating_add(8))?;
+        if !matches!(&form.kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == label) {
+            return Err(SessionError::Host(wasmtime::Error::msg("Invalid retained native key")));
+        }
+        if self.find(graph, label)?.is_none() {
+            self.push(graph, Entry { label, key: Key::Source(occurrence) })?;
         }
         Ok(())
     }
