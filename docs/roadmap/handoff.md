@@ -29955,3 +29955,14 @@ cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 -
 Then execute the unchanged source-tags programs and remaining full acceptance
 gates. Partial source checks do not classify unknown mappings as success or
 replace final-head independent review/CI.
+
+
+## Reader task layout compilation check
+
+CI39269589242 reports E0080 in the reader Task queue-layout assertion, before
+bootstrap generation. A boxed, prepaid native ReaderMap payload corrects the
+inline size increase while retaining the assertion and original traversal order.
+See the [failure/model evidence](evidence/m4-pr263-reader-task-layout-2026-10-19.md).
+The std-only ABI model and Rust parsing are not Suss native execution results.
+Normal bootstrap generation followed by the reader-focused tests above and
+final-head CI must establish the actual target layout and runtime behavior.

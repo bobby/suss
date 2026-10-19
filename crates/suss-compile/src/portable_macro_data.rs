@@ -1122,8 +1122,12 @@ impl FormBridge {
         reader_origins: Option<&[crate::portable::hir::MetadataKeyOrigin]>,
     ) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
+        struct ReaderMap<'a> {
+            form: &'a Form,
+            origins: &'a [crate::portable::hir::MetadataKeyOrigin],
+        }
         enum Task<'a> {
-            ReaderMap(&'a Form, &'a [crate::portable::hir::MetadataKeyOrigin]),
+            ReaderMap(Box<ReaderMap<'a>>),
             ReaderKey(&'a Form),
             Visit(&'a Form),
             Finish {
@@ -1152,14 +1156,21 @@ impl FormBridge {
         // New dispatch/control paid before selecting the root task.
         session.charge_host_work(2)?;
         let root = match reader_origins {
-            Some(origins) => Task::ReaderMap(form, origins),
+            Some(origins) => {
+                // Keep the original queue slot extent. This three-word payload
+                // has its own allocation, copy/read and retirement prepayment.
+                session.charge_host_work((2 * std::mem::size_of::<ReaderMap<'_>>()
+                    + 2 * std::mem::size_of::<usize>() + 6) as u64)?;
+                Task::ReaderMap(Box::new(ReaderMap { form, origins }))
+            },
             None => Task::Visit(form),
         };
         let mut tasks = vec![root];
         let mut values = Vec::<SessionValue>::new();
         while let Some(task) = tasks.pop() {
             match task {
-                Task::ReaderMap(form, origins) => {
+                Task::ReaderMap(metadata) => {
+                    let ReaderMap { form, origins } = *metadata;
                     // The old synthetic-map visit, with only key-task origin
                     // annotations added. Do not prevalidate later children:
                     // their errors and any earlier construction effects retain
