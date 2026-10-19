@@ -28273,3 +28273,16 @@ Use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and the shared `CARGO_TARGET_DIR
 Ran original pinned map200M then a diagnostic-only10B Macro allowance on the unchanged complete CoreEnv fixture. Each test passed1/0/0; map has69 ordered IDs with62 independent host passes and7 guest judgments. Current four macro costs:1299517125,2630830814,1299587037,2630829234. Compared with c59 subtotal10131268096, current subtotal7860764210 removes2270503886 units (22.4108558%) across traced expansions only. Both second requests remove1135252659; Macro-first is adverse1432, retained. Harness637.42s/control694.26s are single uncontrolled samples, not a benchmark. All3553 input paths bind to19def and both stage freezes are fixed; CLI setter restored, source/BOOT unchanged. Commands/raw/checkpoints are in the evidence report/archive. The diagnostic does not establish default10M success, a full baseline or passing final-head CI. It changes no shipped allowance or reset policy.
 
 [Complete-cost report and replayable raw evidence](evidence/m4-pr256-private-slot-complete-cost-2026-10-18.md).
+
+
+## REPL compilation-fuel configuration evidence
+
+Source `49d7ea349dfb051cb1916b12ff07a7be21749ff3` adds explicit `--compile-fuel N`; legacy `--fuel N` still sets both evaluation and compilation allowances, then the explicit compilation option overrides only its side regardless of argument order. Both defaults remain10M. Both native frontends use one private startup helper. Accounted reader/HIR/expansion/Macro work uses that policy; engine JIT time and memory are outside this fuel accounting. No original allowance or reset policy changed.
+
+V3 actual14 test executions:13PASS/1 new-fixtureFAIL. Five parser and two real-options/reset tests pass, along with six unchanged legacy preservation regressions. Initial256-iteration macro returned42 but cost36346<=Runtime50000, correctly failing its own isolation criterion; remaining subprocess tail/order was unexecuted. V4 changes only that new bound to1024, then runs only the corrected process test:1PASS/0FAIL in98.19s. Both flag orders measureMacro134650 withCompile10M>Runtime50000; Runtime infinite loop traps typedOutOfFuel and next43 succeeds. A separate successful realAPI reset preservesRuntime10M/Compile20M via existing options/ExpansionHost reads. Low50k process reset is not required or claimed.
+
+Thus14 distinct positive outcomes exist across production-identical V3/V4 tuples, not a fresh14-test final-source run. Initialfailure and V1/V2 unexecuted design corrections remain archived. NormalBOOT/identity PASS bothruns; allBOOT4 fullbytes identical. No fullbaseline/finalCI/readiness/issuecompletion/promotion/merge claimed.
+
+Exactargv/environment/rawlogs/freezes/sourcebindings are in the configuration evidence. ArchiveSHA256 `3490a570cae944f5b8448c51dfca167c6e4103733cf9fcb62d7ca19860c0c253` (65 safe members,64 content-addressed payloads,135 logical paths); baseGit/bootstrap dependencies explicit, not standalonewhole-repository.
+
+[Configuration commands, raw outcomes and source binding](evidence/m4-pr252-repl-compile-fuel-2026-10-18.md).
