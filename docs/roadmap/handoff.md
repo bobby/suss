@@ -30006,3 +30006,17 @@ The receipt alone cannot authorize copying artifacts into the shipped tuple:
 verify source/tree/clean status, every digest and reproduction pair, current
 compiler/bootstrap identities and then normal artifact validation/execution.
 This is CI evidence retention, separate from the compiler-cache issue272.
+
+
+## Canonical bootstrap catalog analysis allowance
+
+Actual cd31fef CI compiled production Rust but normal generation exhausted the
+inherited10M native allowance. The private fixed-SOURCE catalog now has100M for
+both development generation and checked shipped-fact restoration. Ordinary user
+analysis/Session defaults remain10M and Runtime budgets/charges are unchanged.
+See the [source/failure boundary](evidence/m4-pr263-bootstrap-catalog-allowance-2026-10-19.md).
+Source review and parsing pass;100M sufficiency and native acceptance are unproven.
+Run normal Java/Node-free reproduction with diagnostic retention above, verify
+source/identity and then execute the existing complete compiled_bootstrap target
+before treating generated artifacts as usable. No quota/rate reduction or
+nested budget refill was introduced.
