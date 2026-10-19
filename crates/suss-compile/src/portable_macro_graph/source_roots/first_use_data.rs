@@ -279,18 +279,30 @@ impl Audit {
                             .ok_or_else(|| invalid("Missing first-use input check"))?;
                         inputs.push(child.value());
                     }
-                    valid &= node.records.fresh_direct_status(graph.session)?.0;
-                    valid &= node.records.matches_current_native_inputs(
+                    #[cfg(test)]
+                    let diagnostic_children = valid;
+                    let diagnostic_direct = node.records.fresh_direct_status(graph.session)?.0;
+                    valid &= diagnostic_direct;
+                    let diagnostic_inputs = node.records.matches_current_native_inputs(
                         graph.session,
                         &node.value,
                         &inputs,
                     )?;
-                    valid &= node
+                    valid &= diagnostic_inputs;
+                    let diagnostic_classes = node
                         .records
                         .matches_class_schemas_audited(graph.session, &mut self.native)?;
-                    valid &= node
+                    valid &= diagnostic_classes;
+                    let diagnostic_prototypes = node
                         .records
                         .matches_prototype_origins_audited(graph.session, &mut self.native)?;
+                    valid &= diagnostic_prototypes;
+                    #[cfg(test)]
+                    if !valid {
+                        eprintln!("FIRST_USE_DATA_NATIVE inputs={} children={} direct={} current_inputs={} classes={} prototypes={}",
+                            node.inputs.len(), diagnostic_children, diagnostic_direct,
+                            diagnostic_inputs, diagnostic_classes, diagnostic_prototypes);
+                    }
                 }
                 Evidence::Source(root) => {
                     graph.session.check_value_owner(root.actual().value())?;
@@ -374,14 +386,23 @@ impl Root {
         valid &= same_child_keys(graph.session, &self.expected.children, &expected.children)?;
         // The current expected witness remains independent of retained native
         // evidence; no same-text/current-holder shortcut substitutes for it.
-        valid &= expected.witness.matches_logical_source(
+        #[cfg(test)]
+        let diagnostic_binding = valid;
+        let diagnostic_logical = expected.witness.matches_logical_source(
             graph.session,
             graph.bridge,
             self.actual().value(),
         )?;
+        valid &= diagnostic_logical;
         graph.session.charge_host_work(2)?;
         let evidence = Evidence::Source(self.clone());
-        valid &= audit.check(graph, &evidence)?;
+        let diagnostic_audit = audit.check(graph, &evidence)?;
+        valid &= diagnostic_audit;
+        #[cfg(test)]
+        if !valid {
+            eprintln!("FIRST_USE_DATA_ROOT binding={} logical={} audit={} children={}",
+                diagnostic_binding, diagnostic_logical, diagnostic_audit, expected.children.len());
+        }
         Ok(valid)
     }
 }
@@ -614,6 +635,10 @@ impl Observer for Build<'_> {
                 let root = Root::allocate(graph.session, expected, actual)?;
                 let mut audit = Audit::new(graph.session)?;
                 if !root.checked_current(graph, expected, &mut audit)? {
+                    #[cfg(test)]
+                    eprintln!("FIRST_USE_DATA_FRESH_FAILURE source={} owner={} alias={} native={}",
+                        source, graph.source_roots.roots[source].owner.kind(), id,
+                        graph.source_roots.roots[source].native);
                     return Err(invalid(
                         "Fresh first-use source failed complete DATA checks",
                     ));

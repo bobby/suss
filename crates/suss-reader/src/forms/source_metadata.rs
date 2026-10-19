@@ -117,6 +117,15 @@ pub(super) fn attach_metered(
     let (line, column) = positions.position(source, form.span.start);
     let (end_line, end_column) = positions.position(source, form.span.end);
     let mut entries = vec![];
+    // Pinned loc-info merges the file map before the position map. Keep the
+    // generated prefix appended below: source-prefix selectors must not move.
+    if let Some(file) = file {
+        entries.extend(pair(
+            &form.span,
+            "file",
+            Kind::String(file.encode_utf16().collect()),
+        ));
+    }
     for (key, value) in [
         ("line", line),
         ("column", column),
@@ -124,13 +133,6 @@ pub(super) fn attach_metered(
         ("end-column", end_column),
     ] {
         entries.extend(pair(&form.span, key, Kind::Number(value as f64)));
-    }
-    if let Some(file) = file {
-        entries.extend(pair(
-            &form.span,
-            "file",
-            Kind::String(file.encode_utf16().collect()),
-        ));
     }
     form.metadata.push(data(&form.span, Kind::Map(entries)));
     Ok(())

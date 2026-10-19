@@ -515,11 +515,13 @@ fn merged_metadata_view_metered<'a, Origins: TrackMetadataOrigins>(
     }
     meter((entries.len() as u64)
         .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
-    // Only the tracked reader view has origin/coordinate payloads to move.
+    // Retain the existing conservative finalization debits; this change does
+    // not lower the established work tariff.
     Origins::sorting(entries.len(), meter)?;
-    // Each surviving entry has a distinct winning source position, so stable
-    // and unstable order coincide; this in-place sort needs no scratch backing.
-    entries.sort_unstable_by_key(|entry| entry.order);
+    // Pinned read-meta associates generated (last) metadata first, then outer
+    // explicit prefixes. Replacing a value keeps the first association/key.
+    // `order` still records the winning VALUE's source coordinate for selectors;
+    // it must not reorder the associations or relocate the first key.
     Ok(entries)
 }
 
@@ -803,13 +805,13 @@ mod metadata_reader_tests {
         let Kind::Map(inner) = &form.metadata[2].kind else { unreachable!() };
         assert!(matches!(&view[0].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &inner[0])));
         assert!(matches!(&view[0].value, MetadataForm::Borrowed(value) if std::ptr::eq(*value, &outer[1])));
-        assert!(matches!(&view[1].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &outer[2])));
-        assert!(matches!(&view[2].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &form.metadata[1])));
-        assert!(matches!(&view[2].value, MetadataForm::Synthesized(value) if matches!(value.kind, Kind::Bool(true))));
+        assert!(matches!(&view[2].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &outer[2])));
+        assert!(matches!(&view[1].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &form.metadata[1])));
+        assert!(matches!(&view[1].value, MetadataForm::Synthesized(value) if matches!(value.kind, Kind::Bool(true))));
         let output = reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap();
-        assert_eq!(output, vec![inner[0].clone(), outer[1].clone(), outer[2].clone(), outer[3].clone(), form.metadata[1].clone(), Form {
+        assert_eq!(output, vec![inner[0].clone(), outer[1].clone(), form.metadata[1].clone(), Form {
             kind: Kind::Bool(true), span: form.metadata[1].span.clone(), metadata: vec![],
-        }]);
+        }, outer[2].clone(), outer[3].clone()]);
         assert!(!std::ptr::eq(&output[1], view[0].value.as_ref()));
         let mut shorthand = read("value");
         shorthand.metadata = vec![read("string"), read("\"inner\"")];
@@ -818,6 +820,82 @@ mod metadata_reader_tests {
         assert!(matches!(&view[0].key, MetadataForm::Synthesized(value) if matches!(&value.kind, Kind::Keyword(key) if key.name == "tag")));
         assert!(std::ptr::eq(view[0].value.as_ref(), &shorthand.metadata[0]));
         assert_eq!(view[0].key.as_ref().span, shorthand.metadata[1].span);
+    }
+
+
+    #[test]
+    fn indexed_nested_symbol_metadata_retains_pinned_file_positions_then_explicit_associations() {
+        let source = "(def ^{:tag ^{:marker :kept} number} subject 17)";
+        let original = suss_reader::forms::read_forms(source).unwrap().remove(0);
+        for file in [None, Some("tag-oracle.cljs")] {
+            let origin = crate::portable::SourceOrigin::new(source, file.map(Into::into));
+            let located = origin.macro_form_data_metered(&original, &mut |_| Ok(())).unwrap();
+            let Kind::List(items) = &located.kind else { unreachable!() };
+            let declaration = reader_metadata_view_metered(&items[1], &mut |_| Ok(())).unwrap();
+            let tag = declaration.iter().find(|entry| matches!(&entry.key.as_ref().kind,
+                Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")).unwrap().value.as_ref();
+            let actual = reader_metadata_pairs_metered(tag, &mut |_| Ok(())).unwrap();
+            let expected_source = if file.is_some() {
+                "{:file \"tag-oracle.cljs\" :line 1 :column 30 :end-line 1 :end-column 36 :marker :kept}"
+            } else {
+                "{:line 1 :column 30 :end-line 1 :end-column 36 :marker :kept}"
+            };
+            let Kind::Map(expected) = suss_reader::forms::read_forms(expected_source).unwrap().remove(0).kind.clone()
+                else { unreachable!() };
+            let kinds = |forms: &[Form]| forms.iter().map(|form| form.kind.clone()).collect::<Vec<_>>();
+            assert_eq!(kinds(&actual), kinds(&expected));
+            let tracked = reader_metadata_view_metered(tag, &mut |_| Ok(())).unwrap();
+            let tracked_pairs: Vec<_> = tracked.iter().flat_map(|entry|
+                [entry.key.as_ref().clone(), entry.value.as_ref().clone()]).collect();
+            assert_eq!(actual, tracked_pairs);
+            assert_eq!(original, suss_reader::forms::read_forms(source).unwrap().remove(0));
+        }
+    }
+
+    #[test]
+    fn indexed_explicit_overrides_keep_first_keys_winning_value_selectors_and_retry() {
+        let source = "^{:line 77 :file \"explicit.cljs\" :marker :kept} number";
+        let original = suss_reader::forms::read_forms(source).unwrap().remove(0);
+        let origin = crate::portable::SourceOrigin::new(source, Some("source.cljs".into()));
+        let located = origin.macro_form_data_metered(&original, &mut |_| Ok(())).unwrap();
+        assert_eq!(original.metadata.len(), 1);
+        assert_eq!(located.metadata.len(), 2);
+        assert_eq!(located.metadata[0].span, original.metadata[0].span);
+        assert_eq!(located.metadata[0].kind, original.metadata[0].kind,
+            "generated metadata remains appended; nested indexing may enrich the original map's own metadata");
+        let Kind::Map(generated) = &located.metadata[1].kind else { unreachable!() };
+        let Kind::Map(explicit) = &located.metadata[0].kind else { unreachable!() };
+        let mut calls = 0;
+        let view = reader_metadata_view_metered(&located, &mut |_| { calls += 1; Ok(()) }).unwrap();
+        let expected_keys = ["file", "line", "column", "end-line", "end-column", "marker"];
+        assert_eq!(view.len(), expected_keys.len());
+        for (entry, expected) in view.iter().zip(expected_keys) {
+            assert!(matches!(&entry.key.as_ref().kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == expected));
+        }
+        assert!(std::ptr::eq(view[0].key.as_ref(), &generated[0]));
+        assert!(std::ptr::eq(view[1].key.as_ref(), &generated[2]));
+        assert!(std::ptr::eq(view[0].value.as_ref(), &explicit[3]));
+        assert!(std::ptr::eq(view[1].value.as_ref(), &explicit[1]));
+        assert_eq!(view[0].key_position(), (1, 0));
+        assert_eq!(view[1].key_position(), (1, 1));
+        assert_eq!(view[0].value_position(), (0, 1));
+        assert_eq!(view[1].value_position(), (0, 0));
+        assert_eq!(view[5].value_position(), (0, 2));
+        let expected: Vec<_> = view.iter().flat_map(|entry|
+            [entry.key.as_ref().clone(), entry.value.as_ref().clone()]).collect();
+        assert_eq!(reader_metadata_pairs_metered(&located, &mut |_| Ok(())).unwrap(), expected);
+        for stop in 0..calls {
+            let mut current = 0;
+            let error = reader_metadata_view_metered(&located, &mut |_| {
+                let hit = current == stop; current += 1;
+                if hit { Err(fail(7..11, "indexed metadata meter stopped")) } else { Ok(()) }
+            }).err().expect("every native meter failure must propagate");
+            assert_eq!(error.span, 7..11);
+            assert_eq!(error.message, "indexed metadata meter stopped");
+            assert_eq!(reader_metadata_pairs_metered(&located, &mut |_| Ok(())).unwrap(), expected);
+            assert_eq!(original, suss_reader::forms::read_forms(source).unwrap().remove(0));
+        }
     }
 
     #[test]
@@ -863,13 +941,14 @@ mod metadata_reader_tests {
         let mut charged = 0;
         let output = reader_metadata_pairs_metered(&form, &mut |work| { calls += 1; charged += work; Ok(()) }).unwrap();
         assert!(charged > 2048, "actual retained payload clone remains charged");
-        assert_eq!(output, vec![inner_key.clone(), outer_value.clone(), read(":other"), read("17"), read(":line"), read("91")]);
+        assert_eq!(output, vec![inner_key.clone(), outer_value.clone(), read(":line"), read("91"), read(":other"), read("17")]);
         // Reader equality ignores locations/key metadata, but association must
         // retain the first key object including its complete source metadata.
         assert_eq!(output[0].span, inner_key.span);
         assert_eq!(output[0].metadata, inner_key.metadata);
         assert_eq!(output[1].metadata, outer_value.metadata);
-        assert_eq!(merged_metadata_pairs_metered(&form, false, &mut |_| Ok(())).unwrap(), output[..4]);
+        assert_eq!(merged_metadata_pairs_metered(&form, false, &mut |_| Ok(())).unwrap(),
+            vec![inner_key.clone(), outer_value.clone(), read(":other"), read("17")]);
         for stop in [0, calls / 2, calls - 1] {
             let mut current = 0;
             let error = reader_metadata_pairs_metered(&form, &mut |_| {
