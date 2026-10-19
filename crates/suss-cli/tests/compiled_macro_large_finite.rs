@@ -28,6 +28,10 @@ fn metadata_number(form: &Form, name: &str) -> f64 {
 fn compiled_large_and_deep_inputs_and_generated_results_retain_all_data_after_gc() {
     const WIDTH: usize = 4097;
     const DEPTH: usize = 80;
+    // This new positive fixture constructs and reads a large Runtime value.
+    // Its first10M evaluation attempt exhausted after successful compilation;
+    // use an explicit execution allowance, separate from compiler fuel.
+    const RESULT_EVALUATION_FUEL: u64 = 100_000_000;
     let wide = (0..WIDTH)
         .map(|index| {
             if index == WIDTH / 2 {
@@ -44,7 +48,12 @@ fn compiled_large_and_deep_inputs_and_generated_results_retain_all_data_after_gc
         "[".repeat(DEPTH),
         "]".repeat(DEPTH)
     );
-    for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+    for (mut caller, phase) in [
+        (Session::new_repl().unwrap(), "Runtime"),
+        (Session::new_macro().unwrap(), "Macro"),
+    ] {
+        assert_eq!(caller.options().fuel_per_operation, 10_000_000);
+        caller.set_operation_fuel(RESULT_EVALUATION_FUEL);
         let caller_fuel = caller.options().fuel_per_operation;
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
@@ -55,14 +64,16 @@ fn compiled_large_and_deep_inputs_and_generated_results_retain_all_data_after_gc
         macros.define("(defmacro finite-generated-wide [] (loop [i 0 v []] (if (< i 4097) (recur (inc i) (conj v (if (= i 2048) (with-meta 'marker {:leaf 91}) i))) (list 'quote (with-meta v {:payload 17})))))").unwrap();
         macros.define("(defmacro finite-generated-deep [] (loop [i 0 v (with-meta 'marker {:leaf 91})] (if (< i 80) (recur (inc i) [v]) (list 'quote (with-meta v {:payload 17})))))").unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        for (source, is_wide) in [
-            (wide_input.as_str(), true),
-            (deep_input.as_str(), false),
-            ("(finite-generated-wide)", true),
-            ("(finite-generated-deep)", false),
+        for (label, source, is_wide) in [
+            ("wide argument", wide_input.as_str(), true),
+            ("deep argument", deep_input.as_str(), false),
+            ("generated wide", "(finite-generated-wide)", true),
+            ("generated deep", "(finite-generated-deep)", false),
         ] {
             // Actual compiled macro output -> caller compilation -> execution.
-            let value = caller.eval_with_macros(source, &mut macros).unwrap();
+            let value = caller
+                .eval_with_macros(source, &mut macros)
+                .unwrap_or_else(|error| panic!("{phase} {label}: {error:?}"));
             caller.collect().unwrap();
             let decoded = bridge.read(&mut caller, &value, 0..source.len()).unwrap();
             assert_eq!(metadata_number(&decoded, "payload"), 17.0);

@@ -28421,3 +28421,29 @@ Environment remains shared target/jobs1/Rayon1, no RUSTFLAGS setting. Log:
 The remaining builder cases and complete large/deep compiled pipeline are not yet
 terminal; no result is inferred. This CLI-test-only change does not regenerate
 compiler payloads. Full workspace and final-head CI remain separate commands.
+
+
+## Full finite transport execution
+
+The corrected full builder target finishes7PASS/0FAIL/0ignored226.15s. The new
+large-finite target in that same command fails its first wide-argument Runtime
+evaluation at its initial10M allowance, after successful compilation. Overall
+48802 is terminal101 and drained; raw failure and original fixture are preserved.
+Only the new positive fixture now chooses explicit100M evaluation, independently
+from10B compilation. Original programs/dimensions/metadata/assertions remain.
+Existing Runtime regressions/defaults are unchanged. Fresh55774 is terminal0 and
+drained:1PASS/0FAIL/0ignored75.73s, all four cases in both caller phases with full
+readback after GC. See the expanded evidence report for exact commands/logs.
+
+The next sole producer42764 executes the four full remaining targets:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_declaration_metadata --test compiled_macro_compiler_catalog --test compiled_macro_control_source_asts --test compiled_macro_constructor_source_asts -- --test-threads=2
+```
+
+Environment remains shared target/jobs1/Rayon1. Log:
+`/home/bobby/.cache/suss-m4-work/pr252-remaining-preservation.log`.
+Its executables were built before the subsequent provenance-source edit; its
+results are attributed to the pre-repair production/bootstrap bytes. BOOT remains
+unchanged until this producer drains. No result for unfinished targets, repaired
+provenance or the final full baseline is inferred.

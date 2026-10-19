@@ -133,3 +133,39 @@ Session budgets, resident-code counters and external-handle equality remain.
 The corrected selector has now passed in the ongoing full builder target; the
 remaining target cases and separate compiled large-result target are not yet
 terminal. No additional production or allowance change accompanies this repair.
+
+
+## Complete builder and large/deep pipeline results
+
+The full corrected builder target is now terminal:7passed/0failed/0ignored,
+226.15s, with original Session budgets and all old resource/handle checks. In the
+same Cargo command, the new large-result fixture's first Runtime wide-argument
+case completed compilation but returned an evaluation `SessionError::Trap` for
+fuel exhaustion at its initial10M caller allowance. The new target was0pass/1fail,
+47.82s; later cases/readback were unexecuted. The overall command exited101.
+This is distinct from a Macro expansion-stage Compile diagnostic and is not a
+4096-node rejection. Raw log: `pr252-builder-and-large-finite.log`; original new
+fixture and terminal classification: `pr252-large-finite-first-result/`.
+
+The new positive fixture now specifies100M evaluation, independently from its10B
+compilation allowance. No existing Runtime regression/default or original test
+program/value/metadata assertion is changed. A single fresh execution of this
+configured fixture is terminal0:1passed/0failed/0ignored,75.73s. All four cases
+(4097-wide/80-deep inputs and tiny-input transformer-generated wide/deep results)
+execute in both Runtime/Macro caller phases. Every element, nesting level, root
+metadata17 and leaf metadata91 survives full readback after GC. No dimensions,
+metadata or assertions are reduced. The explicit caller setting remains fixed
+throughout each phase; the test itself performs no retry or budget escalation.
+
+Commands use the same shared target/jobs1/Rayon1 environment without RUSTFLAGS:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_large_finite -- --test-threads=1 --nocapture
+```
+
+Raw log/receipt: `pr252-large-finite-explicit-evaluation.log` and
+`pr252-large-finite-explicit-evaluation-result.json` under the existing cache root.
+These results use the unchanged3e7 production/bootstrap bytes and the shown
+CLI-test configuration; the later declaration-provenance metering repair is not
+attributed these pre-repair executions. The remaining four preservation targets
+and required full baseline/CI are separate execution scopes.

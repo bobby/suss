@@ -46,3 +46,12 @@ The public-record command supplies `suss compile --compile-fuel`; subsequent
 The pinned map harness retains its existing 200M allowance. These changes do not
 alter default-fit controls in the same files or the dedicated cumulative-fuel suite.
 Validation commands and observed results are recorded in the handoff.
+
+
+The new `compiled_macro_large_finite` positive fixture separately uses100M for
+constructing and reading its returned Runtime value, and10B for compilation.
+Its first4097-element case compiled at10B but exhausted the new fixture's initial
+10M evaluation allowance. At explicit100M evaluation, all four cases in both
+caller phases complete with full data/metadata/GC checks. This changes no
+pre-existing Runtime regression limit or shipped default. There is no automatic
+retry/escalation in the test; the original10M failure remains recorded in evidence.
