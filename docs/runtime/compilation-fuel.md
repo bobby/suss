@@ -1,6 +1,6 @@
 # Compilation fuel boundaries
 
-This describes source `3e7bd63c21dbe16058df8752a77fac6016d366b7`.
+This describes the compiled Macro/Runtime preparation pipeline.
 Fuel is a work allowance, not a CPU-time, memory or whole-compilation cost measure.
 
 ## Request boundaries
@@ -77,10 +77,11 @@ and default-fit controls are retained. This is calibration, not a performance wi
 or proof that every corpus fits. See [test policy and exact selection](compilation-test-fuel.md).
 
 Native file/WIT I/O and parsing, engine JIT work and initial core/bridge setup are
-not all covered by this source-request allowance. Some Rust work remains unmetered:
-for example, macro declaration provenance formats the full Form/source and hashes
-that buffer in `define_form_with_origin` without a corresponding host debit.
-The source budget is therefore not a complete host-work bound.
+not all covered by this source-request allowance. Declaration provenance is hashed
+as a metered stream of the original Form/source/path bytes before publishing the
+new definition; host-debit failures retain typed errors and declaration context.
+Not every Rust operation has a separate debit, so this remains a performed-work
+model rather than a complete native-instruction or whole-compiler bound.
 
 Fuel also does not bound process memory, retained objects, total stack growth or
 allocation failure. Decoder `stacker::maybe_grow` calls provide stack-growth

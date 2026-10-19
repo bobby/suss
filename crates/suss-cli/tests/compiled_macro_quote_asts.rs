@@ -1,4 +1,7 @@
 //! Quote AST records preserve source data without resolving or executing it.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -105,6 +108,7 @@ fn quote_and_literal_child_records_match_pinned_without_datum_analysis() {
         .unwrap();
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro observe [label binding]

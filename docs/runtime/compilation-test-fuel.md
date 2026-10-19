@@ -21,6 +21,12 @@ settings, sources, metadata, expected values/effects and assertions are retained
 
 | Test | Previous compilation allowance | New allowance |
 | --- | ---: | ---: |
+| `actual_protocol_indexes_preserve_caller_phase_and_own_identity` | 10,000,000 | 10,000,000,000 |
+| `compact_membership_uses_real_bindings_and_failed_staging_restores_mode` | 10,000,000 | 10,000,000,000 |
+| `field_reference_asts_match_pinned_flags_tags_positions_and_identity` | 10,000,000 | 10,000,000,000 |
+| `compiled_source_macros_materialize_env_only_for_macros_that_can_read_it` | 10,000,000 | 10,000,000,000 |
+| `compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions` | 10,000,000 | 10,000,000,000 |
+| `quote_and_literal_child_records_match_pinned_without_datum_analysis` | 10,000,000 | 10,000,000,000 |
 | `declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer` | 10,000,000 | 10,000,000,000 |
 | `compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields` | 100,000,000 | 10,000,000,000 |
 | `compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phases` | 10,000,000 | 10,000,000,000 |
@@ -55,3 +61,10 @@ Its first4097-element case compiled at10B but exhausted the new fixture's initia
 caller phases complete with full data/metadata/GC checks. This changes no
 pre-existing Runtime regression limit or shipped default. There is no automatic
 retry/escalation in the test; the original10M failure remains recorded in evidence.
+
+
+The six additional protocol/field/source/quote cases above exhausted Macro fuel
+in actual4baf CI (five caller-environment transports and one transformer
+invocation). Their compiler-only settings are now calibrated, with every other
+test byte and caller setting preserved. These six replays are still unexecuted
+at this publication; choosing an allowance is not a passing-result claim.

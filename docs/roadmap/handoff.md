@@ -28447,3 +28447,29 @@ Its executables were built before the subsequent provenance-source edit; its
 results are attributed to the pre-repair production/bootstrap bytes. BOOT remains
 unchanged until this producer drains. No result for unfinished targets, repaired
 provenance or the final full baseline is inferred.
+
+
+## Provenance and lazy-result cancellation execution
+
+42764 completed15PASS/0FAIL/0ignored acrosscatalog5,constructor2,control5,decl3;
+source binding/log/terminal receipt are preserved. New metering runs normal BOOT
+and identity successfully. Initial19730 lib-test compilation failed E0433 in the
+new IRQ child's trait path; no runtime checks ran. One-linecrate::portable repair
+then fresh38624 passes provenance3(47.18s) and deterministiclazyIRQ1(73.11s), with
+exact count guards. Raw history/receipts are under
+`/home/bobby/.cache/suss-m4-work/pr252-provenance-and-lazy-irq-validation[-v2]/`.
+
+The SHA256 stream preserves old bytes, pays chunks and finalization, retains typed
+errors/span/path and completes before macro replacement evaluation/publication.
+The IRQ test uses actual guest thunk effects and native-channel acknowledgement,
+then delegates to the original guest spin. It requires source-stage/spans, no
+partial caller publication and same2M recovery; timeouts do not select the stage.
+Detailed commands/results/limitations are in the expanded calibration evidence.
+
+The next stages execute the originalgeneric-case control then five old quota
+selectors unchanged, retaining failures and an overall nonzero result. The eight-
+constant mixed-case guard itself remains unmodified; a direct CLI probe already
+records its rejection of valid nine-constant source. Six additional correctness
+Macro allowances identified by4baf CI are now explicitly10B; their Runtime/test
+content is unchanged, and their execution replay is not yet observed. Full baseline
+and final-head CI are still separate requirements.

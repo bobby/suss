@@ -1,3 +1,6 @@
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 use suss_cli::{
     portable_macros::CompiledMacros,
     portable_session::{Session, SessionError},
@@ -171,6 +174,7 @@ fn compiled_source_macros_preserve_true_loop_special_form_priority() {
 #[test]
 fn compiled_source_macros_materialize_env_only_for_macros_that_can_read_it() {
     let mut macros = CompiledMacros::new().unwrap();
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     // No &env reference: expansion never needs the caller's analysis graph.
     macros.define("(defmacro plain [x] (list '+ x 1))").unwrap();
     // A direct reference observes a genuine environment map.
@@ -223,6 +227,7 @@ fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansio
     )
     .unwrap();
     let mut macros = CompiledMacros::new().unwrap();
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     let mut runtime = suss_cli::portable_session::Session::with_options(
         suss_cli::portable_session::SessionOptions {
             source_paths: vec![root.path().to_owned()],

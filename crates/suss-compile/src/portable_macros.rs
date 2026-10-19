@@ -32,6 +32,78 @@ pub struct CompiledMacros {
     artifact_cache: crate::portable::artifact_cache::ArtifactCache,
     declaration_values: crate::portable_macro_graph::DeclarationValues,
 }
+// Hash the identical legacy Debug/source/path stream without retaining a copy of
+// that stream. The meter error must survive fmt::Error's intentionally tiny API.
+fn declaration_provenance_metered(
+    form: &Form,
+    origin: Option<&crate::portable::SourceOrigin>,
+    charge: &mut dyn FnMut(u64) -> Result<(), SessionError>,
+) -> Result<String, SessionError> {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write as _;
+    const CHUNK: usize = 1024;
+    struct Writer<'a> {
+        digest: Sha256,
+        charge: &'a mut dyn FnMut(u64) -> Result<(), SessionError>,
+        failure: Option<SessionError>,
+    }
+    impl std::fmt::Write for Writer<'_> {
+        fn write_str(&mut self, text: &str) -> std::fmt::Result {
+            if self.failure.is_some() {
+                return Err(std::fmt::Error);
+            }
+            for chunk in text.as_bytes().chunks(CHUNK) {
+                // Bounded byte slices do not copy. Charge before reading/hash
+                // update; +1 covers the reached chunk's fixed bookkeeping.
+                if let Err(error) = (self.charge)(chunk.len() as u64 + 1) {
+                    self.failure = Some(error);
+                    return Err(std::fmt::Error);
+                }
+                self.digest.update(chunk);
+            }
+            Ok(())
+        }
+    }
+    charge(std::mem::size_of::<Writer<'_>>() as u64 + 1)?;
+    let mut writer = Writer { digest: Sha256::new(), charge, failure: None };
+    let formatted = write!(&mut writer, "{form:?}:{}:{:?}",
+        origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
+    let Writer { digest, failure, .. } = writer;
+    if let Some(error) = failure {
+        return Err(error);
+    }
+    if formatted.is_err() {
+        return Err(SessionError::Host(wasmtime::Error::msg(
+            "Macro declaration provenance formatting failed")));
+    }
+    // SHA final padding/compression and the fixed64-byte lowercase hex result:
+    // reserve/write/key lookup work is paid before finalization/allocation.
+    charge(128 + 4 * 64 + std::mem::size_of::<String>() as u64)?;
+    let mut output = String::with_capacity(64);
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    for byte in digest.finalize() {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 15) as usize] as char);
+    }
+    Ok(output)
+}
+
+fn declaration_provenance_context(
+    error: SessionError,
+    span: &std::ops::Range<usize>,
+    origin: Option<&crate::portable::SourceOrigin>,
+) -> SessionError {
+    let context = || match origin.and_then(|origin| origin.path()) {
+        Some(path) => format!("Macro declaration provenance failed at bytes {span:?} [{}]", path.display()),
+        None => format!("Macro declaration provenance failed at bytes {span:?}"),
+    };
+    match error {
+        SessionError::Trap(error) => SessionError::Trap(error.context(context())),
+        SessionError::Host(error) => SessionError::Host(error.context(context())),
+        error => error,
+    }
+}
+
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
     Form {
         span,
@@ -505,6 +577,11 @@ impl CompiledMacros {
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
         let reads_environment = mentions_environment(form) || self.source_expansions != expansions;
         let reads_caller_form = mentions_parameter(form, "&form") || self.source_expansions != expansions;
+        // Complete all fallible provenance work before publishing this
+        // replacement. Effects already executed during preparation are retained.
+        let provenance = declaration_provenance_metered(form, origin,
+            &mut |work| self.session.charge_host_work(work))
+            .map_err(|error| declaration_provenance_context(error, &form.span, origin))?;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
@@ -524,14 +601,9 @@ impl CompiledMacros {
             self.compiler_catalog_macros.remove(&key);
         }
         self.definitions.insert(key, value.clone());
-        let provenance = format!(
-            "{form:?}:{}:{:?}",
-            origin.map_or("", |origin| origin.text()),
-            origin.and_then(|origin| origin.path())
-        );
         self.declaration_sources.insert(
             (namespace.clone(), name.name.clone()),
-            crate::portable::bootstrap::sha256(provenance.as_bytes()),
+            provenance,
         );
         let exports = self
             .definitions
@@ -863,3 +935,155 @@ mod when_let_validation_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod declaration_provenance_tests {
+    use super::*;
+    use crate::portable::SourceOrigin;
+
+    fn legacy(form: &Form, origin: Option<&SourceOrigin>) -> String {
+        crate::portable::bootstrap::sha256(format!("{form:?}:{}:{:?}",
+            origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()))
+            .as_bytes())
+    }
+    fn small() -> Form { Form { span: 2..7, metadata: vec![], kind: Kind::Nil } }
+    fn check_digest(form: &Form, origin: Option<&SourceOrigin>) {
+        let mut work = 0u64;
+        let got = declaration_provenance_metered(form, origin, &mut |units| {
+            work = work.checked_add(units).unwrap(); Ok(())
+        }).unwrap();
+        assert_eq!(got, legacy(form, origin));
+        assert_eq!(got.len(), 64);
+        assert!(work > 0);
+    }
+    #[test]
+    fn declaration_provenance_stream_matches_legacy_rich_deep_and_large_bytes() {
+        let source = "(defmacro ^{:doc \"λ雪\" :private true} rich \"doc\\ntext\" [x] (list 'quote ^{:tag Thing} x))";
+        let rich = read_forms(source).unwrap().remove(0);
+        let origin = SourceOrigin::new(source, Some("dir/λ\\quoted\"/source.sus".into()));
+        let no_path = SourceOrigin::new(source, None);
+        for origin in [None, Some(&origin), Some(&no_path)] { check_digest(&rich, origin); }
+        let mut deep = small();
+        for _ in 0..256 {
+            deep = Form { span: 3..11, metadata: vec![], kind: Kind::Vector(vec![deep]) };
+        }
+        check_digest(&deep, None);
+        let large = Form { span: 0..1, metadata: vec![rich],
+            kind: Kind::String([vec![0xd800, 0, 0xd83d, 0xde00], vec![65; 8192]].concat()) };
+        let text = format!("{}\r\nλ", "p".repeat(16384));
+        let origin = SourceOrigin::new(text.as_str(), Some("large.sus".into()));
+        check_digest(&large, Some(&origin));
+        // Path Debug is intentionally the native formatter, including non-UTF8.
+        #[cfg(unix)] {
+            use std::os::unix::ffi::OsStringExt;
+            let path = std::ffi::OsString::from_vec(vec![b'x', 0xff, b'"', b'\\']);
+            let origin = SourceOrigin::new("source", Some(path.into()));
+            check_digest(&small(), Some(&origin));
+        }
+    }
+    #[test]
+    fn declaration_provenance_low_fuel_and_midstream_irq_keep_typed_errors_and_recover() {
+        let mut session = Session::new_macro().unwrap();
+        let form = small();
+        let large_text = "x".repeat(16384);
+        let origin = SourceOrigin::new(large_text.as_str(), None);
+        // Same1000-unit policy: large source fails, the small exact digest fits.
+        session.set_operation_fuel(1000);
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let error = declaration_provenance_metered(&form, Some(&origin),
+                &mut |units| session.charge_host_work(units)).unwrap_err();
+            let error = declaration_provenance_context(error, &form.span, Some(&origin));
+            assert!(error.to_string().contains("Macro declaration provenance failed"));
+            assert!(matches!(error, SessionError::Trap(ref error)
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error:?}");
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let got = declaration_provenance_metered(&form, None,
+                &mut |units| session.charge_host_work(units)).unwrap();
+            assert_eq!(got, legacy(&form, None));
+        }
+        assert_eq!(session.options().fuel_per_operation, 1000);
+        // Raise only the explicit cancellation flag INSIDE an active scope,
+        // after a real formatting/hash prefix; preserve the configured allowance.
+        session.set_operation_fuel(100_000);
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let interrupt = session.interrupt_handle();
+            let mut total = 0;
+            let mut raised = false;
+            let error = declaration_provenance_metered(&form, Some(&origin), &mut |units| {
+                if total >= 2048 && !raised { interrupt.interrupt(); raised = true; }
+                session.charge_host_work(units)?;
+                total += units; Ok(())
+            }).unwrap_err();
+            assert!(raised && total >= 2048);
+            let error = declaration_provenance_context(error, &form.span, Some(&origin));
+            assert!(error.is_interrupt(), "fmt/context must retain the Session interrupt: {error:?}");
+            assert_eq!(error.to_string(), "Interrupted");
+            let SessionError::Trap(ref trap) = error else { panic!("typed interrupt") };
+            assert_eq!(trap.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::Interrupt));
+            assert!(format!("{trap:#}").contains("Macro declaration provenance failed"));
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert_eq!(declaration_provenance_metered(&form, Some(&origin),
+                &mut |units| session.charge_host_work(units)).unwrap(), legacy(&form, Some(&origin)));
+        }
+        assert_eq!(session.options().fuel_per_operation, 100_000);
+    }
+    #[test]
+    fn failed_macro_replacement_budget_preserves_old_definition_and_catalog_policy() {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro retained-policy [] 17)").unwrap();
+        let key = ("user".to_owned(), "retained-policy".to_owned());
+        let old_hash = macros.declaration_sources[&key].clone();
+        assert!(macros.environment_free.contains(&key));
+        assert!(macros.caller_form_free.contains(&key));
+        assert!(!macros.compiler_catalog_macros.contains_key(&key));
+        let replacement = "(defmacro ^{:suss/compiler-catalog true} retained-policy [] 99)";
+        let form = read_forms(replacement).unwrap().remove(0);
+        let text = format!("{replacement}\n;{}", "x".repeat(2_100_000));
+        let origin = SourceOrigin::new(text.as_str(), Some("replacement.sus".into()));
+        // Cold source metadata has its own legitimate reader work. Pay that
+        // setup using the real default-budget Session before isolating the
+        // per-declaration hash, then share only the immutable native snapshot.
+        {
+            let _scope = macros.session.operation_budget_scope().unwrap();
+            let before = macros.session.operation_fuel_remaining().unwrap();
+            origin.reader_tree_metered(&form, &mut |work| {
+                macros.session.charge_host_work(work).map_err(|error| Diagnostic {
+                    span: form.span.clone(), message: error.to_string(),
+                })
+            }).unwrap();
+            eprintln!("provenance paid-source-setup={} default={}",
+                before - macros.session.operation_fuel_remaining().unwrap(),
+                macros.session.options().fuel_per_operation);
+        }
+        macros.set_operation_fuel(2_000_000);
+        let error = macros.define_form_with_origin(form, 0..replacement.len(), Some(&origin)).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+            "only a typed trap is accepted: {error:?}");
+        let message = error.to_string();
+        assert!(message.contains("Macro declaration provenance failed"),
+            "an unrelated preparation failure is not provenance coverage: {message}");
+        assert!(message.contains("replacement.sus"), "{message}");
+        assert!(message.contains(&format!("bytes {:?}", 0..replacement.len())), "{message}");
+        assert_eq!(macros.declaration_sources[&key], old_hash);
+        assert!(macros.environment_free.contains(&key));
+        assert!(macros.caller_form_free.contains(&key));
+        assert!(!macros.compiler_catalog_macros.contains_key(&key));
+        // Actual public expansion of the old definition at the SAME2M policy.
+        let mut caller = Session::new_repl().unwrap();
+        let value = caller.eval_with_macros("(retained-policy)", &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut caller).unwrap();
+        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(macros.expansion_work_fuel(), 2_000_000);
+    }
+}
+
+
+#[cfg(test)]
+mod lazy_result_interrupt_tests;

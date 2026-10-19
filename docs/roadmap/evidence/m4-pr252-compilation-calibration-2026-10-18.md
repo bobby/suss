@@ -169,3 +169,81 @@ These results use the unchanged3e7 production/bootstrap bytes and the shown
 CLI-test configuration; the later declaration-provenance metering repair is not
 attributed these pre-repair executions. The remaining four preservation targets
 and required full baseline/CI are separate execution scopes.
+
+
+## Completed remaining preservation cohort
+
+Producer42764 is terminal0 and drained:15passed/0failed/0ignored over four full
+targets: compiler-catalog5(929.68s), constructor2(902.58s), control-source5(212.00s)
+and declaration-metadata3(234.21s). Original programs/assertions and caller limits
+remain. These executables were built before the subsequent provenance edit;
+results bind to pre-repair3e7 production/bootstrap, not the new metering code.
+Raw log/terminal receipt: `pr252-remaining-preservation.log` and
+`pr252-remaining-preservation-terminal.json` under the existing cache root.
+
+## Metered declaration provenance and deterministic lazy interruption
+
+The original declaration-provenance formatter/hash allocated and processed the
+full Form/source/path after publishing the replacement, without explicit billing.
+It now streams the identical legacy bytes through SHA256 with conservative host
+charges and cancellation polls before hash updates/finalization. All fallible
+provenance work completes before replacement evaluation/publication. Fuel/host
+errors retain their variants/downcasts and gain declaration span/path context;
+interrupt display/classification retain their existing behavior. Successful
+source-dependency hashes remain unchanged.
+
+Normal bootstrap regeneration and identity pass. The first lib-test compile
+stopped with E0433 in the new IRQ child's trait path; none of the four tests ran.
+Only that path was qualified with `crate::portable`; bootstrap was regenerated
+for the changed compiler-source identity. Raw failed run remains in
+`pr252-provenance-and-lazy-irq-validation/`.
+
+Fresh V2 execution passes the exact selected3provenance tests(47.18s), covering
+rich/deep/UTF16/native-path legacy digest equality; real typed fuel and IRQ failure
+with same-policy recovery; and a replacement failure that retains old hash,
+implicit-input/catalog policies and actual old17 expansion at2M. Source snapshot
+setup bills4,203,965units under the existing10M setup operation before that measured
+2M operation; no free parsing or cold2.1MiB-under2M claim is made.
+
+The exact deterministic lazy-result IRQ selector also passes1test(73.11s), both
+caller phases. A fresh correctly typed test-only native closure signals entry
+AFTER the lazy thunk's ordered effect12, waits for an interrupt acknowledgement,
+and calls the original guest spin; no interrupt error is fabricated. Channel
+synchronization selects the stage, while bounded receive timeouts only guard
+harness liveness. All paths join the thread. Assertions require exact call span,
+expanded-result-transport/Interrupted diagnostic, one callback, unchanged caller
+stats, absent pending binding, old7, effect12 and GC/42recovery at the same2M.
+The original macro/source APIs gain no production hook or widened visibility.
+
+Commands use the same shared target/jobs1/Rayon1 environment, without RUSTFLAGS:
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked -p suss-compile --lib portable_macros::declaration_provenance_tests:: -- --test-threads=1 --nocapture
+cargo test --locked -p suss-compile --lib portable_macros::lazy_result_interrupt_tests::lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers -- --exact --test-threads=1 --nocapture
+```
+
+Source patch, new child payload, bootstrap hashes, count-guarded receipts and raw
+logs: `pr252-provenance-and-lazy-irq-validation-v2/`. Independent reviews are in
+`pr252-metered-declaration-provenance-source-v3/` and
+`pr252-lazy-result-interrupt-provenance-v3-integration-independent-review.json`.
+Later unchanged stale-cap audit selectors are not included in these four passes.
+
+## Additional CI scope
+
+Head4baf run39187192555 has actual foundation success and completed integration
+job failures. Six newly reached correctness cases exhaust Macro fuel (five &env,
+one invocation); four CLI-test files now set only these six Macro allowances to
+10B. Other bytes, Runtime limits and explicit negative/default controls are
+retained. Replays are unexecuted at this publication. Six completed job logs and
+head/job metadata are retained under `pr252-4baf-ci/`; the overall run was still
+active when downloaded, so no complete-suite or unexecuted-scope count is inferred.
+
+CI also confirms stale finite display/map assertions, including a valid2049-pair
+nil-filled map with4098 backing slots. Original selectors are being executed
+unchanged before any test repair. A separate actual pre-repair CLI case with nine
+mixed constants returns the old eight-constant compiler error (exit1,22.142s),
+where the accepted expression should select default19. Its binary hash/argv/raw
+stderr are in `pr252-mixed-case-before/`. That production guard is still present
+at this publication; prepared repairs have no executed or completion credit.
