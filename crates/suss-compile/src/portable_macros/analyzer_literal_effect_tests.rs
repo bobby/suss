@@ -398,7 +398,7 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
         for (phase, mut caller) in [("runtime", Session::new_repl().unwrap()), ("macro", Session::new_macro().unwrap())] {
             let mut macros = CompiledMacros::new().unwrap();
             macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-            macros.session.eval("(def leaf-original-method nil) (def retained-key-events []) (def retained-top-diagnostic [])").unwrap();
+            macros.session.eval("(def leaf-original-method nil) (def retained-key-events [])").unwrap();
             let original = Method::capture(&mut macros.session, "Keyword").unwrap();
             original.bind_delegate(&mut macros.session).unwrap();
             macros.define(r#"(defmacro inspect-retained-key [stage which cold-doc]
@@ -420,26 +420,12 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
                                             (if (= stage 0) (and (seq hits) (nil? (second (first hits)))) (empty? hits))))) raw-fields)
                     name-hits (filter (fn [event] (identical? name-key (first event))) retained-key-events)
                     top-map (:top-fn meta-map)
-                    diagnostic-reset (set! retained-top-diagnostic [])
                     top-ok (if top
                              (every? (fn [text]
                                        (let [key (find-key decl text)
                                              hits (filter (fn [event] (identical? key (first event))) retained-key-events)]
-                                         (let [present (some? key)]
-                                           (do (set! retained-top-diagnostic
-                                                 (conj retained-top-diagnostic [text "present" present]))
-                                               (and present
-                                                 (let [same (identical? key (find-key top-map text))]
-                                                   (do (set! retained-top-diagnostic
-                                                         (conj retained-top-diagnostic [text "identity" same]))
-                                                       (and same
-                                                         (let [events (if (= stage 0)
-                                                                        (and (seq hits) (nil? (second (first hits))))
-                                                                        (empty? hits))]
-                                                           (do (set! retained-top-diagnostic
-                                                                 (conj retained-top-diagnostic
-                                                                       [text "events" events (count hits)]))
-                                                               events))))))))))
+                                         (and (some? key) (identical? key (find-key top-map text))
+                                              (if (= stage 0) (and (seq hits) (nil? (second (first hits)))) (empty? hits)))))
                                      [":variadic?" ":max-fixed-arity" ":method-params" ":arglists" ":arglists-meta"])
                              true)]
                 (list 'quote
@@ -473,11 +459,6 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
                     let form = bridge.read(&mut caller, &value, 0..1).map_err(|e| e.to_string())?;
                     eprintln!("retained-declaration-key {phase}/{label}/stage{stage}: {:?}", form.kind);
                     if !matches!(&form.kind, Kind::Vector(values) if values.len()==9 && values.iter().all(|v|v.kind==Kind::Bool(true))) {
-                        // DIAGNOSTIC ONLY: original nine-result witness failed.
-                        // Read the separate vector only now; never as an acceptance oracle.
-                        let diagnostic = macros.session.eval("retained-top-diagnostic")
-                            .and_then(|value| crate::portable_repl::display(&mut macros.session, &value));
-                        eprintln!("retained-top-subchecks {phase}/{label}/stage{stage}: {diagnostic:?}");
                         return Err(format!("{phase}/{label}/stage{stage}: {form:?}"));
                     }
                 }
