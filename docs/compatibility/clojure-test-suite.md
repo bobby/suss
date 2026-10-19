@@ -65,6 +65,14 @@ every namespace, in the oracle's order, through the production `Session` and
 `CompiledMacros` with the shipped compiled core, then runs each namespace's tests
 as one group under its `:once`/`:each` fixtures in the oracle's test order.
 
+The full corpus uses the shared semantic-test compilation allowance of ten
+billion fuel units, independently of its unchanged 200-million-unit Runtime
+operation limit. This allows finite corpus compilation to reach semantic
+checks; it does not relax their expected results. Harness initialization, the
+self-test fixtures and the separate pinned-map regression retain their original
+200-million-unit compilation and Runtime controls. Shipped fuel defaults and
+dedicated exhaustion/cancellation tests are unchanged.
+
 The suite requires `clojure.test` and its portability helpers, which define
 macros beside functions and are referred with `:refer-macros` or `:refer`. A Suss
 runtime namespace cannot yet define macros, and Suss lacks `clojure.*`/`cljs.*`
@@ -132,6 +140,18 @@ assertion is not executed and the oracle's skip is a recorded mismatch. The
 Python unit tests cover the remaining failure paths.
 
 ## Current suite result
+
+The [2026-10-19 raw capture and independent delta review](../roadmap/evidence/m4-pr256-suite-calibration-2026-10-19.md)
+records 1,144 host-decided passes, 25 guest-judged observations, two assertion
+errors and 4,663 assertions not executed because 185 namespaces fail to load.
+The comparator's 22 failures include the two errors and 20 existing oracle skip
+mismatches. All previously passing/guest-judged observations remain unchanged.
+The reviewed baseline keeps the newly reached `update/test-update#48` error
+explicit; its actual exception message is `Wrong arity`, tracked in
+[the public-core issue](https://github.com/bobby/suss/issues/28#issuecomment-6260403428).
+These results do not establish full collection or core conformance.
+
+### Historical PR231 checkpoint
 
 PR231 at the integrated working head loads 15 suite namespaces: the original
 13 (`bit-clear`, `bit-flip`, `bit-not`, `bit-shift-left`, `bit-shift-right`,

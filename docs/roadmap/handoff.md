@@ -28721,3 +28721,43 @@ postimages and two later-evolved files); it remains archival and was not reappli
 The next focused acceptance action is an unchanged200M pinned-map capture and
 independent69-ID/verdict comparison before the fresh required workspace baseline.
 No pending full-baseline/CI/map result is claimed by these focused passes.
+
+## Full upstream-suite compilation calibration and exact failure-map review
+
+At base c0c9c45, a fresh original200M Macro/Runtime raw suite capture terminates101
+against stale transport-cap diagnostics:1067host passes/25guest judged/22failures,
+4740unexecuted/186failed namespaces. Compiler-only10B in `check("suite")` leaves
+Runtime, Harness::new, fixtures and pinned-map200M untouched; actual second
+capture terminates101 against the old map in318.97s including build, with
+1144host passes/25guest judged/22failures,4663unexecuted/185failed namespaces.
+The extra77contains? assertions pass. Independent review preserves all960old
+baseline successfulIDs and all1092original-capture successes; no existing raw
+assertion/skip records change. Eight namespace entries now describe actual
+execution; new update#48 remains explicitly kind:error, with all existing
+failures/skips retained. The reviewed map compares equal to the complete raw
+capture with the existing Python comparator; no oracle/reference/source rewrite.
+
+Commands (CARGO_BUILD_JOBS=1/RAYON_NUM_THREADS=1, existing external target dir):
+
+```sh
+SUSS_CLOJURE_TEST_SUITE_CAPTURE=<capture-dir> cargo test --locked -p suss-compile --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=1 --nocapture
+python3 scripts/clojure_test_suite.py compare --suite suite --observations <capture-dir>/suite-observations.json
+cargo test --locked -p suss-compile --test clojure_test_suite -- --test-threads=2 --nocapture
+```
+
+The last complete-target command is still running; no terminal pass is claimed.
+Two direct actual CLI probes establish update#48's underlying message: original
+apply-update expression exits1 with uncaught language exception30.117s; the same
+expression inside catch/ex-message returns"Wrong arity",exit0,28.960s. This
+newly reachable portable-core discrepancy is tracked in issue28; it was formerly
+namespace-blocked, is retained as an error, and has not been fixed by calibration.
+Raw captures, source patch, terminal receipts and independent classifications:
+[evidence report](evidence/m4-pr256-suite-calibration-2026-10-19.md).
+
+Base-source workspace run42160 was explicitly cancelled143after53completedPASS
+once same-tree CI1 established the stale baseline failure; it is not a full pass.
+Current base CI foundation and integration0/3/4 pass; integration1 fails on this
+old baseline, integration6 and7 reveal additional semantic-fixture Macro fuel
+failures in public_compiled_command and compiled_record_factories respectively.
+Those two repairs are separately prepared; they are not credited executed here.
+Fresh complete workspace and committed-head CI remain required.

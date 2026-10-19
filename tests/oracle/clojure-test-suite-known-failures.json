@@ -106,10 +106,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 506..511"
   },
-  "clojure.core-test.contains-qmark": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.contains-qmark (Some(\"<root>/clojure/core_test/contains_qmark.cljc\")): Compiled macro expansion failed: Invalid or unsupported compiled macro data: Map count disagrees with bounded pair storage at bytes 250..4815 at bytes 250..4815"
-  },
   "clojure.core-test.counted-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.counted-qmark (Some(\"<root>/clojure/core_test/counted_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 882..884"
@@ -151,8 +147,8 @@
    "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Unresolved Runtime name distinct at bytes 244..1776"
   },
   "clojure.core-test.doseq": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.doseq (Some(\"<root>/clojure/core_test/doseq.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 232..2382"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.doseq (Some(\"<root>/clojure/core_test/doseq.cljc\")): Unresolved Runtime name doseq at bytes 232..2382"
   },
   "clojure.core-test.double": {
    "stage": "read",
@@ -163,8 +159,8 @@
    "diagnostic": "clojure.core-test.double-qmark (Some(\"<root>/clojure/core_test/double_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1958..1960"
   },
   "clojure.core-test.drop-last": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Compiled macro expansion failed: Invalid or unsupported compiled macro data: Map count disagrees with bounded pair storage at bytes 245..3362 at bytes 245..3362"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Unresolved Runtime name drop-last at bytes 245..3362"
   },
   "clojure.core-test.empty": {
    "stage": "read",
@@ -283,8 +279,8 @@
    "diagnostic": "clojure.core (Some(\"<root>/clojure/core_test/last.cljc\")): No source for namespace clojure.core at bytes 37..49"
   },
   "clojure.core-test.lazy-seq": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 244..4118"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Unresolved Runtime name assert at bytes 244..4118"
   },
   "clojure.core-test.list": {
    "stage": "read",
@@ -310,10 +306,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.make-hierarchy (Some(\"<root>/clojure/core_test/make_hierarchy.cljc\")): Unresolved Runtime name make-hierarchy at bytes 226..366"
   },
-  "clojure.core-test.map": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 239..5926"
-  },
   "clojure.core-test.map-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.map-qmark (Some(\"<root>/clojure/core_test/map_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 673..675"
@@ -327,8 +319,8 @@
    "diagnostic": "clojure.core-test.max (Some(\"<root>/clojure/core_test/max.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 340..342"
   },
   "clojure.core-test.merge": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 237..4689"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Unresolved Runtime name any? at bytes 237..4689"
   },
   "clojure.core-test.min": {
    "stage": "read",
@@ -519,8 +511,8 @@
    "diagnostic": "clojure.core-test.rationalize (Some(\"<root>/clojure/core_test/rationalize.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 565..567"
   },
   "clojure.core-test.realized-qmark": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.realized-qmark (Some(\"<root>/clojure/core_test/realized_qmark.cljc\")): Compiled macro expansion failed: Host error: Macro data traversal exceeds 4096 nodes at bytes 406..3747"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.realized-qmark (Some(\"<root>/clojure/core_test/realized_qmark.cljc\")): Unresolved Runtime name promise at bytes 406..3747"
   },
   "clojure.core-test.reduce": {
    "stage": "namespace",
@@ -674,10 +666,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.underive (Some(\"<root>/clojure/core_test/underive.cljc\")): Auto-resolved keywords require namespace resolution at bytes 294..302"
   },
-  "clojure.core-test.update": {
-   "stage": "macro",
-   "diagnostic": "clojure.core-test.update (Some(\"<root>/clojure/core_test/update.cljc\")): Compiled macro expansion failed: Invalid or unsupported compiled macro data: Macro data traversal exceeds 4096 nodes at bytes 239..4125 at bytes 239..4125"
-  },
   "clojure.core-test.uuid-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unsupported reader dispatch at bytes 345..347"
@@ -757,7 +745,8 @@
  },
  "tests": {},
  "assertions": {
-  "clojure.core-test.partial/test-partial#2": "kind:error"
+  "clojure.core-test.partial/test-partial#2": "kind:error",
+  "clojure.core-test.update/test-update#48": "kind:error"
  },
  "skip-mismatches": [
   [

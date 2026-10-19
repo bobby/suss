@@ -12,6 +12,8 @@
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -570,7 +572,15 @@ fn check(suite: &str) {
         "{}",
         String::from_utf8_lossy(&generated.stderr)
     );
-    let observations = Harness::new(&source_root).run(&reference, &source_root);
+    let mut harness = Harness::new(&source_root);
+    if suite == "suite" {
+        // The corpus tests semantics; keep Runtime and the pinned-map control
+        // at OPERATION_FUEL while allowing compilation to finish independently.
+        harness
+            .macros
+            .set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+    }
+    let observations = harness.run(&reference, &source_root);
     let output = workspace.path().join("observations.json");
     std::fs::write(&output, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
     // Retain actual raw evidence before the temporary workspace is dropped,
