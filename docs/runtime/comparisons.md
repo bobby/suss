@@ -52,9 +52,9 @@ Public numeric== support is certified for numbers; non-number behavior remains
 outside its documented upstream guarantee, and complete IEquiv/collection equality
 is separate work; the public -equiv protocol hook and its redefinition are not
 connected by this primitive bootstrap. Arbitrary object coercion and complete source/core/macro import
-remain unfinished. Recursive macro expansion is limited to256 operands with a
-located diagnostic; runtime first-class calls use constant callback code and a
-loop. Full baseline, independent review/pushed fixes and exact-head CI are required
+remain unfinished. Recursive macro expansion consumes the configured compilation
+allowance rather than a fixed256-operand cap; runtime first-class calls use
+constant callback code and a loop. Full baseline, independent review/pushed fixes and exact-head CI are required
 before PR readiness. No acceptance gate is complete from this prerequisite slice.
 
 A separate ten-case pinned/native referral corpus certifies all five operators:

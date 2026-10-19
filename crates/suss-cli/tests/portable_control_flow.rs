@@ -122,10 +122,26 @@ fn malformed_control_macros_have_located_errors_and_do_not_publish_definitions()
             .collect::<Vec<_>>()
             .join(" ")
     );
-    let SessionError::Compile(error) = session.eval(&excessive).unwrap_err() else {
-        panic!("expected expansion guard");
-    };
-    assert!(error.message.contains("expansion limit"));
+    let value = session.eval(&excessive).unwrap();
+    session.inspect(&value, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 4);
+        Ok(())
+    }).unwrap();
+    session.eval("(def finite-and-effects 0)").unwrap();
+    let ordered = (1..=257).map(|step| format!(
+        "(do (if (== finite-and-effects {}) (set! finite-and-effects {step}) (throw 91)) true)",
+        step - 1)).collect::<Vec<_>>().join(" ");
+    let value = session.eval(&format!("(and {ordered})")).unwrap();
+    session.inspect(&value, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 4);
+        Ok(())
+    }).unwrap();
+    let value = session.eval("finite-and-effects").unwrap();
+    session.inspect(&value, |mut store, value| {
+        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+        assert_eq!(object.field(&mut store, 0)?.unwrap_f64().to_bits(), 257.0f64.to_bits());
+        Ok(())
+    }).unwrap();
     assert!(matches!(
         session.eval("(def control-ghost 7) (when)"),
         Err(SessionError::Compile(_))
@@ -197,5 +213,80 @@ fn control_macro_aliases_exclusions_and_macro_phase_are_resolved_explicitly() {
             phase,
         )
         .unwrap();
+    }
+}
+
+
+// Execute the two direct control-tail recursion edges, not only their encodings.
+// Minimal sessions avoid unrelated core provisioning; both artifact phases run.
+fn assert_deep_control_number(session: &mut Session, value: &suss_cli::portable_session::SessionValue, expected: f64) {
+    session.collect().unwrap();
+    session.inspect(value, |mut store, value| {
+        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
+        assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == expected.to_bits()));
+        Ok(())
+    }).unwrap();
+}
+
+#[test]
+fn deep_or_257_operands_execute_in_order_and_short_circuit_in_both_phases() {
+    use suss_cli::portable_session::SessionOptions;
+    use suss_compile::portable::resolve::Phase;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        assert_eq!(session.phase(), phase);
+        let fuel = session.options().fuel_per_operation;
+        for selected in [257, 1] {
+            session.eval("(def deep-control-order 0)").unwrap();
+            // The late case reaches every operand; the early case must not run
+            // any later operand's effect, even though all257 are compiled.
+            let operands = (1..=257).map(|step| format!(
+                "(do (if (== deep-control-order {}) (set! deep-control-order {step}) (throw 91)) {})",
+                step - 1, if step == selected { "42" } else { "false" },
+            )).collect::<Vec<_>>().join(" ");
+            let source = format!("(or {operands})");
+            let value = session.eval(&source)
+                .unwrap_or_else(|error| panic!("{phase:?}/selected{selected}: {error:?}"));
+            assert_deep_control_number(&mut session, &value, 42.0);
+            let order = session.eval("deep-control-order").unwrap();
+            assert_deep_control_number(&mut session, &order, selected as f64);
+            assert_eq!(session.options().fuel_per_operation, fuel);
+        }
+    }
+}
+
+#[test]
+fn deep_cond_257_pairs_execute_tests_in_order_and_only_selected_arm_in_both_phases() {
+    use suss_cli::portable_session::SessionOptions;
+    use suss_compile::portable::resolve::Phase;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        assert_eq!(session.phase(), phase);
+        let fuel = session.options().fuel_per_operation;
+        for selected in [257, 1] {
+            session.eval("(def deep-control-order 0) (def deep-control-arms 0)").unwrap();
+            let pairs = (1..=257).map(|step| {
+                let predicate = format!(
+                    "(do (if (== deep-control-order {}) (set! deep-control-order {step}) (throw 91)) {})",
+                    step - 1, if step == selected { "true" } else { "false" },
+                );
+                let arm = if step == selected {
+                    "(do (set! deep-control-arms (+ deep-control-arms 1)) 42)"
+                } else {
+                    "(throw 92)"
+                };
+                format!("{predicate} {arm}")
+            }).collect::<Vec<_>>().join(" ");
+            let source = format!("(cond {pairs})");
+            let value = session.eval(&source)
+                .unwrap_or_else(|error| panic!("{phase:?}/selected{selected}: {error:?}"));
+            assert_deep_control_number(&mut session, &value, 42.0);
+            let order = session.eval("deep-control-order").unwrap();
+            assert_deep_control_number(&mut session, &order, selected as f64);
+            let arms = session.eval("deep-control-arms").unwrap();
+            assert_deep_control_number(&mut session, &arms, 1.0);
+            assert_eq!(session.options().fuel_per_operation, fuel);
+        }
     }
 }

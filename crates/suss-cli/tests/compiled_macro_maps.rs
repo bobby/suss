@@ -82,18 +82,47 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
         "(suss.core/PersistentArrayMap. nil 1.5 (array :a 1) nil)",
         "(suss.core/PersistentArrayMap. nil 1 (js-obj) nil)",
         "(suss.core/PersistentArrayMap. true 1 (array :a 1) nil)",
-        "(suss.core/PersistentArrayMap. nil 2049 (make-array 4098) nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 1 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 2 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a) 0 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) -1 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 0.5 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 0 true)",
-        "(suss.core/PersistentArrayMapSeq. (make-array 4098) 0 nil)",
     ] {
         let value = session.eval(source).unwrap();
         session.collect().unwrap();
         assert!(bridge.read(&mut session, &value, 0..1).is_err(), "{source}");
+    }
+    // These two original count-only negatives have valid finite storage.
+    // Literal make-array4098 is nil-filled; no arbitrary transport cap remains.
+    for (source, is_map) in [
+        ("(suss.core/PersistentArrayMap. nil 2049 (make-array 4098) nil)", true),
+        ("(suss.core/PersistentArrayMapSeq. (make-array 4098) 0 nil)", false),
+    ] {
+        let value = session.eval(source).unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+        assert_eq!(decoded.span, 0..1);
+        if is_map {
+            let Kind::Map(entries) = &decoded.kind else { panic!("finite map syntax") };
+            assert_eq!(entries.len(), 4098);
+            for (index, entry) in entries.iter().enumerate() {
+                assert_eq!(entry.span, 0..1);
+                assert_eq!(entry.kind, Kind::Nil, "entry {index}");
+            }
+        } else {
+            let Kind::List(entries) = &decoded.kind else { panic!("finite map sequence") };
+            assert_eq!(entries.len(), 2049);
+            for (index, entry) in entries.iter().enumerate() {
+                assert_eq!(entry.span, 0..1);
+                let Kind::Vector(pair) = &entry.kind else { panic!("entry vector {index}") };
+                assert_eq!(pair.len(), 2);
+                for item in pair {
+                    assert_eq!(item.span, 0..1);
+                    assert_eq!(item.kind, Kind::Nil, "entry {index}");
+                }
+            }
+        }
     }
     session.eval("(def saved-map {:a 1})").unwrap();
     session.enter_namespace("suss.core").unwrap();
@@ -203,25 +232,52 @@ fn compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw(
 
 #[test]
 fn compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound() {
+    fn assert_map_entry(entry: &suss_reader::forms::Form) {
+        assert_eq!(entry.span, 0..1);
+        let Kind::Vector(pair) = &entry.kind else { panic!("map entry vector") };
+        assert_eq!(pair.len(), 2);
+        assert_eq!(pair[0].span, 0..1);
+        assert_eq!(pair[1].span, 0..1);
+        assert!(matches!(&pair[0].kind, Kind::Keyword(key)
+            if key.namespace.is_none() && key.name == "a"));
+        assert_eq!(pair[1].kind, Kind::Number(1.0));
+    }
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
         let bridge = FormBridge::new(&mut session).unwrap();
-        for (wrappers, accepted) in [(61, true), (62, false)] {
+        for wrappers in [61, 62] {
             let source = format!(
                 "(loop [v (seq {{:a 1}}) i 0] (if (< i {wrappers}) (recur (cons v nil) (inc i)) v))"
             );
             let value = session.eval(&source).unwrap();
             session.collect().unwrap();
-            let result = bridge.read(&mut session, &value, 0..1);
-            assert_eq!(result.is_ok(), accepted, "{wrappers} wrappers");
+            let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+            let mut cursor = &decoded;
+            for level in 0..wrappers {
+                assert_eq!(cursor.span, 0..1);
+                let Kind::List(items) = &cursor.kind else { panic!("wrapper {level}") };
+                assert_eq!(items.len(), 1, "wrapper {level}");
+                cursor = &items[0];
+            }
+            assert_eq!(cursor.span, 0..1);
+            let Kind::List(entries) = &cursor.kind else { panic!("map sequence") };
+            assert_eq!(entries.len(), 1);
+            assert_map_entry(&entries[0]);
         }
         let value = session.eval("(loop [v (seq {:a 1}) i 0] (if (< i 1500) (recur (cons (seq {:a 1}) v) (inc i)) v))").unwrap();
         session.collect().unwrap();
-        let error = bridge.read(&mut session, &value, 0..1).unwrap_err();
-        assert!(
-            format!("{error}").contains("bounded array map sequence pair storage"),
-            "{error}"
-        );
+        let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+        assert_eq!(decoded.span, 0..1);
+        let Kind::List(items) = &decoded.kind else { panic!("complete cons sequence") };
+        assert_eq!(items.len(), 1501);
+        for item in &items[..1500] {
+            assert_eq!(item.span, 0..1);
+            let Kind::List(entries) = &item.kind else { panic!("nested map sequence") };
+            assert_eq!(entries.len(), 1);
+            assert_map_entry(&entries[0]);
+        }
+        // The original tail is the initial (seq {:a 1}), not another cons head.
+        assert_map_entry(&items[1500]);
         let value = session.eval("(seq {:recovered 7})").unwrap();
         assert!(bridge.read(&mut session, &value, 0..1).is_ok());
     }

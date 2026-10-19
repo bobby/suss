@@ -22,9 +22,10 @@ not macro body replay.
 The current transported types are nil, booleans, boxed binary64, exact UTF16
 strings, source-backed Symbol/Keyword and List/EmptyList/Cons/IndexedSeq sequences. Actual
 class descriptor identities, object/field layouts, identifier encoding, metadata
-and list counts are checked. Flat sequence tails are traversed iteratively; nested
-forms use a depth limit of64. A4096-visit budget also rejects cycles, and a shared
-1,048,576-code-unit budget bounds the total copied string/identifier storage.
+and list counts are checked. Flat sequence tails are traversed iteratively;
+nested reads use stack growth and active-path cycle checks. Visits and copied
+string/identifier units consume the operation allowance, without fixed64-level,
+4096-node or1,048,576-code-unit transport caps.
 Unknown objects, null/invalid storage, malformed counts and unsupported metadata
 produce located compile diagnostics rather than successful placeholder forms.
 New result forms inherit the explicitly supplied macro call-site span; no source
@@ -33,7 +34,7 @@ bytes or original result locations are invented.
 IndexedSeq transport validates the captured private source-array descriptor or
 exact I16 string storage, boxed finite integral index, field layout and metadata.
 It reads only the suffix, preserves UTF16 one-unit string elements (including lone
-surrogates), and bounds remaining entries before reading them. Cons tails can end
+surrogates), and validates the remaining range before reading it. Cons tails can end
 in an IndexedSeq. Raw arrays and structurally similar nominal types remain errors.
 Empty valid suffixes become empty lists, without inventing missing data.
 
@@ -49,7 +50,7 @@ Cancellation/pending I/O/live GC accounting remain #15 work. No M3 completion.
 located/metadata/compile-atomic failures, phase dependencies and reader conditional
 selection, compiled transformer result execution in the Runtime Store, captured
 nominal identities, malformed data, reset/foreign roots, cycles, wide/deep data and
-total UTF16 allocation bounds. Existing phase/session/quote suites remain enabled.
+metered UTF16 reads and allocation work. Existing phase/session/quote suites remain enabled.
 Implementation is original Rust using existing retained source types and the ABI;
 no new source selection, ABI, dependency or shipped JVM/Node requirement is added.
 

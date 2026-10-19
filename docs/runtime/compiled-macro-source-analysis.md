@@ -79,8 +79,8 @@ are rejected.
 Four executing builder regressions check exact numeric bits and UTF-16 units,
 shared identity after GC, duplicate keys, vector trie boundaries, Store/reset
 checks, traversal limits and unchanged resident fragment/byte counts and external
-handle counts. Transport is bounded to 4,096 form nodes, 64 levels and 1,048,576
-UTF-16 units. Persistent set data initially failed explicitly; retained canonical
+handle counts. Transport charges traversal and UTF-16 reads to the operation
+allowance rather than fixed node-count, nesting-depth or string-unit caps. Persistent set data initially failed explicitly; retained canonical
 set support now has the separate evidence recorded in the compatibility inventory.
 Unresolved reader prefixes still fail explicitly. The second-level vector stress fixture uses an
 explicit 100,000,000-fuel allowance after the default allowance was exhausted.

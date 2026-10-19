@@ -475,8 +475,8 @@ remain unfinished. Full baseline, independent review and final-head CI still
 gate PR readiness; no issue or milestone is complete from this work alone.
 
 
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
-boolean/nil equality tables with selector-once evaluation and live qualified
+Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and
+boolean/nil equality tables without fixed constant-count caps with selector-once evaluation and live qualified
 core equality. There are 40 fresh pinned/native value matches and one separately
 asserted pinned empty-group parse failure; native rejects that input with a
 located compile diagnostic. Actual fragments execute in Runtime and Macro
@@ -1003,8 +1003,10 @@ default printing remains unfinished. Provenance verifies316 files; overlay413
 reviewed/652 unassessed declarations. Rich retained-core macro environments exposed
 an aggregate graph-capacity failure: the complete graph measures66,474 recipes.
 A compile-only two-phase regression failed the old65,536 limit and passes the new
-bounded131,072 aggregate limit. Per-form, depth, string-storage, key-storage and
-materialization-work guards are unchanged; no full printing/M3 claim follows.
+bounded131,072 aggregate limit in that historical validation. These fixed graph,
+per-form, depth, string-storage, key-storage and traversal-work caps have since
+been replaced by metered operation work; structural validation remains. No full
+printing/M3 claim follows.
 
 
 Current default printer continuation supersedes the earlier unresolved-entrypoint

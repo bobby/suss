@@ -21,8 +21,8 @@ core.cljc cond159, if-not359, when392, when-not427, and901 and or912. Six hash-b
 partial reviews retain the recorded :cljs reader contexts where present. This
 original Rust lowering copies no upstream forms; original source/notices remain
 in the pinned submodule. Licensed generated core source retains its25 files with
-an updated review overlay hash. The bootstrap has a256-operand expansion limit
-with located diagnostics; this is not the reference language's arity limit.
+an updated review overlay hash. Expansion consumes the configured compilation
+allowance rather than imposing a fixed256-operand cap.
 
 A separate59-case corpus is freshly compiled/executed by the pinned development
 runner, then independently decoded from actual native Wasm. Exact binary64,

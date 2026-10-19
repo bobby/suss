@@ -1,4 +1,6 @@
 //! Execute the selected function declaration projection from the pinned oracle.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -222,6 +224,7 @@ fn expected(label: &str, name: &str) -> Form {
 fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(DEFINITION).unwrap();
         session.eval_with_macros("(def fixed (fn [x] x)) (def multiple (fn self ([x] x) ([x y & more] y))) (def alias fixed) (def duplicate (fn ([x] 1) ([y] 2))) (declare declared) (def declared (fn [x] x)) (def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x)) (def ^{:top-fn {}} empty-top-fn (fn [x] x)) (def ^{:top-fn {:variadic? false :max-fixed-arity 1 :method-params [[override]] :arglists [[override]] :arglists-meta [nil]}} overridden (fn [x] x)) (def ^{:declared true :arglists '([given])} declared-meta (fn [x] x)) (def ^{:top-fn nil} nil-top-fn (fn [x] x)) (def ^{:top-fn [:fn-var false]} entry-top-fn (fn [x] x)) (def ^{:top-fn ()} empty-seq-top-fn (fn [x] x))", &mut macros).unwrap();
         for (label, name) in [

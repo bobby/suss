@@ -28473,3 +28473,43 @@ records its rejection of valid nine-constant source. Six additional correctness
 Macro allowances identified by4baf CI are now explicitly10B; their Runtime/test
 content is unchanged, and their execution replay is not yet observed. Full baseline
 and final-head CI are still separate requirements.
+
+
+## Finite-limit audit and native control recursion
+
+The unchanged quota audit preserved four obsolete rejection failures and an actual
+native stack overflow in the original257-operand `and` case. The latter is a
+compiler defect, not an obsolete assertion. Its repaired full-target replay also
+aborted; tests after that abort remain unexecuted. The completed targets in
+`pr252-finite-cap-removal-validation-v1` are maps6, native entrypoints10, case8
+and Murmur5, all passing; control flow completed one case before SIGABRT.
+
+Core process2252453 identifies repeated `Analyzer::control_form` frames bypassing
+the outer growable-stack boundary. The diagnostic receipt and backtrace are in
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-crash/`; the extracted temporary
+core was removed. The repair guards direct `and`/`or` and `cond` tail recursion
+with the existing analyzer stack-growth pattern. Charges, evaluation order,257
+operands and default budgets remain unchanged. Normal bootstrap generation and
+identity pass for this repair. Execution is ongoing in the single producer:
+
+```sh
+cargo test --locked -p suss-cli --test portable_control_flow -- --test-threads=2
+```
+
+Subsequent stages in
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-fix-validation-v1/`
+run the six calibrated Macro correctness cases across four complete targets and
+the full declaration-functions target. They have no results yet. Full baseline,
+independent final review and passing final-head CI remain required.
+
+
+The stack repair's complete control-flow target is terminal3PASS/0FAIL/0ignored
+(22.51s including build,2.83s test execution), including original257-and, ordered
+257-and, all81 pinned observations and malformed/publication controls. Added
+both-phase257-operand `or` and257-pair `cond` late/early selection regressions
+have independent source review but remain unexecuted at publication. They check
+ordered effects, short circuiting, selected-arm count and readback after GC at
+unchanged default budgets. Compiler payload identity passes again. The ongoing
+calibration stage has completed the field-reference target1PASS75.95s; subsequent
+targets and the seventh calibrated declaration case remain pending. These are
+focused results, not final-head workspace/CI acceptance.

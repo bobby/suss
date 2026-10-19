@@ -13,12 +13,9 @@ ordering, source spans/metadata and tail context. as-> uses separate immutable
 lexical bindings for successive results; closures keep old bindings and the last
 form preserves statement/tail context. zero? expands to strict primitive equality
 with numeric zero. Local calls, aliases, exclusions and both phases are explicit.
-The recursive bootstrap analyzer currently checks a total depth of 24; longer
-source syntax or generated expansions report located compile errors atomically,
-including single and nested threading chains.
-The 256-argument macro bound alone was insufficient to prevent a Rust stack
-overflow. Sequential as-> still executes 254 steps within that argument boundary.
-Stack-safe general analysis/expansion remains follow-up work.
+Single and nested threading expansions consume the configured compilation
+allowance; the former fixed analyzer-depth and256-argument caps are not current
+finite-form limits. This does not establish unbounded stack or memory safety.
 Binding destructuring, full callable collections, general metadata/privacy and
 complete compiled macro bootstrap remain unfinished; this is not full macro API
 acceptance.
