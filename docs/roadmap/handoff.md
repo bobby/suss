@@ -28364,3 +28364,33 @@ actual options1 and the strict AOT publication/filename/span/default-recovery1
 no result is inferred for them. Source bindings, commands and limitations are in
 `docs/roadmap/evidence/m4-pr252-compilation-calibration-2026-10-18.md`.
 No full baseline or final-head CI success is inferred.
+
+
+## Compilation boundary documentation and large generated-result regression
+
+`docs/runtime/compilation-fuel.md` documents actual3e7 request scopes, host/guest
+charging, AOT's pre-request parse and per-top-level staging, same-budget recovery,
+and native/JIT/memory limits. It explicitly records the unmetered declaration
+provenance formatting/hash limitation rather than claiming all Rust work is fueled.
+
+The independently source-reviewed `compiled_macro_large_finite` test adds actual
+compilation/execution of4097-wide and80-deep inputs and transformer-generated
+results in both caller phases, followed by GC and complete ordered data/metadata
+readback. It uses the shared10B compilation setting and asserts caller limits
+remain unchanged. At publication it is UNEXECUTED; typecheck and behavior are not
+inferred from source review. After the current producer drains, execute:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_large_finite -- --test-threads=1 --nocapture
+```
+
+Use the existing shared target/jobs1/Rayon1 environment, without setting RUSTFLAGS.
+The new file is CLI-test-only; `python3 scripts/verify_bootstrap_identity.py` passes
+without regenerated payload changes. Source/review cache:
+`/home/bobby/.cache/suss-m4-work/pr252-large-finite-coverage-audit/`.
+
+The ongoing3e7 validation now also passes the real file/namespace target1(202.94s),
+main target1(98.96s) and project target1(100.60s). All four modes check default
+success, explicit-zero failure with prior output retained, and explicit-budget
+compile plus actual component/command execution. Async/public-record/lazy/IRQ
+stages remain separate, unfinished execution in that same producer.
