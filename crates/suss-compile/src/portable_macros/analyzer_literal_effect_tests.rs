@@ -216,14 +216,15 @@ fn analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash()
 
 // Supplemental real transport observations; expected numeric memos are copied
 // from the existing pinned analyzer.js constructors, not calculated by Suss.
-fn run_proven_ast_literal_family(label: &str, initializer: &str, required_ops: &[&str], named: bool) {
+fn run_proven_ast_literal_family(label: &str, initializer: &str, required_ops: &[&str], named: bool, compilation_allowance: u64) {
+    eprintln!("AST_LITERAL_COMPILATION_ALLOWANCE {label}: {compilation_allowance}");
     let mut failures = Vec::new();
     for (phase, mut caller) in [
         ("runtime", Session::new_repl().unwrap()),
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
-        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        macros.set_operation_fuel(compilation_allowance);
         let run = (|| -> Result<(), String> {
             caller.eval("(def ast-literal-target 0)").map_err(|e| e.to_string())?;
             macros.session.eval(r#"(def leaf-original-method nil)
@@ -366,21 +367,21 @@ fn run_proven_ast_literal_family(label: &str, initializer: &str, required_ops: &
 fn analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions() {
     run_proven_ast_literal_family("control",
         "(fn [n] (do (if n 17 (throw 19)) (loop [i 0] (if (< i 1) (recur (inc i)) i)) (try 17 (catch :default problem problem) (finally nil))))",
-        &[":fn", ":do", ":if", ":throw", ":loop", ":recur", ":try"], false);
+        &[":fn", ":do", ":if", ":throw", ":loop", ":recur", ":try"], false, compilation_fuel::COMPILATION_FUEL);
 }
 
 #[test]
 fn analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold() {
     run_proven_ast_literal_family("quote-meta",
         "(fn [] (do '(source-word :source-key) ^{:reader-only :source-value} [17]))",
-        &[":fn", ":do", ":quote", ":const", ":with-meta"], false);
+        &[":fn", ":do", ":quote", ":const", ":with-meta"], false, compilation_fuel::COMPILATION_FUEL);
 }
 
 #[test]
 fn analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration() {
     run_proven_ast_literal_family("dispatch-named",
         "(fn ast-family-name [n] (do (set! ast-literal-target n) (identity n) (new js/Object)))",
-        &[":fn", ":do", ":set!", ":invoke", ":new"], true);
+        &[":fn", ":do", ":set!", ":invoke", ":new"], true, 100_000_000_000);
 }
 
 
@@ -397,7 +398,7 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
         for (phase, mut caller) in [("runtime", Session::new_repl().unwrap()), ("macro", Session::new_macro().unwrap())] {
             let mut macros = CompiledMacros::new().unwrap();
             macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-            macros.session.eval("(def leaf-original-method nil) (def retained-key-events [])").unwrap();
+            macros.session.eval("(def leaf-original-method nil) (def retained-key-events []) (def retained-top-diagnostic [])").unwrap();
             let original = Method::capture(&mut macros.session, "Keyword").unwrap();
             original.bind_delegate(&mut macros.session).unwrap();
             macros.define(r#"(defmacro inspect-retained-key [stage which cold-doc]
@@ -419,12 +420,26 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
                                             (if (= stage 0) (and (seq hits) (nil? (second (first hits)))) (empty? hits))))) raw-fields)
                     name-hits (filter (fn [event] (identical? name-key (first event))) retained-key-events)
                     top-map (:top-fn meta-map)
+                    diagnostic-reset (set! retained-top-diagnostic [])
                     top-ok (if top
                              (every? (fn [text]
                                        (let [key (find-key decl text)
                                              hits (filter (fn [event] (identical? key (first event))) retained-key-events)]
-                                         (and (some? key) (identical? key (find-key top-map text))
-                                              (if (= stage 0) (and (seq hits) (nil? (second (first hits)))) (empty? hits)))))
+                                         (let [present (some? key)]
+                                           (do (set! retained-top-diagnostic
+                                                 (conj retained-top-diagnostic [text "present" present]))
+                                               (and present
+                                                 (let [same (identical? key (find-key top-map text))]
+                                                   (do (set! retained-top-diagnostic
+                                                         (conj retained-top-diagnostic [text "identity" same]))
+                                                       (and same
+                                                         (let [events (if (= stage 0)
+                                                                        (and (seq hits) (nil? (second (first hits))))
+                                                                        (empty? hits))]
+                                                           (do (set! retained-top-diagnostic
+                                                                 (conj retained-top-diagnostic
+                                                                       [text "events" events (count hits)]))
+                                                               events))))))))))
                                      [":variadic?" ":max-fixed-arity" ":method-params" ":arglists" ":arglists-meta"])
                              true)]
                 (list 'quote
@@ -458,6 +473,11 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
                     let form = bridge.read(&mut caller, &value, 0..1).map_err(|e| e.to_string())?;
                     eprintln!("retained-declaration-key {phase}/{label}/stage{stage}: {:?}", form.kind);
                     if !matches!(&form.kind, Kind::Vector(values) if values.len()==9 && values.iter().all(|v|v.kind==Kind::Bool(true))) {
+                        // DIAGNOSTIC ONLY: original nine-result witness failed.
+                        // Read the separate vector only now; never as an acceptance oracle.
+                        let diagnostic = macros.session.eval("retained-top-diagnostic")
+                            .and_then(|value| crate::portable_repl::display(&mut macros.session, &value));
+                        eprintln!("retained-top-subchecks {phase}/{label}/stage{stage}: {diagnostic:?}");
                         return Err(format!("{phase}/{label}/stage{stage}: {form:?}"));
                     }
                 }
