@@ -29966,3 +29966,22 @@ See the [failure/model evidence](evidence/m4-pr263-reader-task-layout-2026-10-19
 The std-only ABI model and Rust parsing are not Suss native execution results.
 Normal bootstrap generation followed by the reader-focused tests above and
 final-head CI must establish the actual target layout and runtime behavior.
+
+
+## Retained type-field history validation
+
+The fixed native history now covers five parse-type fields and seventeen other
+existing declaration fields. See the
+[evidence](evidence/m4-pr263-retained-type-field-history-2026-10-19.md) for
+source review, corrected array charges, cold/warm failure trials and remaining
+identity/performance limits. Added tests and stronger meta-memo assertions are
+unexecuted; normal bootstrap generation and identity checks must precede:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_declaration_metadata --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Preserve all original assertion programs, Runtime allowances, deliberate fuel
+controls and final full-baseline/head gates. Source parsing and review do not
+establish observable transport or complete type inner metadata identity.

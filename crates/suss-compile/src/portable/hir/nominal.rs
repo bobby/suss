@@ -474,8 +474,8 @@ impl Analyzer<'_> {
         // A source type has its own current declaration and must not recover
         // its tag/metadata/origin from that ordinary-def preservation rule.
         let previous_type_info_for_keys = previous_type_info.as_ref();
-        let key_history = super::super::resolve::TypeKeyHistory::capture(
-            &class_global, previous_type_info_for_keys,
+        let mut key_history = super::super::resolve::TypeKeyHistory::capture_type(
+            &class_global, previous_type_info_for_keys, name,
             &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
         )?;
         let mut type_info = previous_type_info.unwrap_or_else(|| {
@@ -505,6 +505,10 @@ impl Analyzer<'_> {
         type_info.origin = self.clone_origin_value(form.span.clone())?;
         type_info.type_fields = Some(declared_fields);
         type_info.type_is_record = record;
+        super::super::resolve::TypeKeyHistory::finish_type(
+            &mut key_history, &class_global, &type_info,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
+        )?;
         type_info.type_key_history = Some(key_history);
         type_info.analysis_completed = true;
         self.environment.record_definition(class_global.clone(), type_info);

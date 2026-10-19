@@ -7,6 +7,10 @@ use std::sync::Arc;
 
 type Meter<'a> = dyn FnMut(u64) -> Result<(), Diagnostic> + 'a;
 
+mod retained;
+pub(crate) use retained::{RetainedKey, RetainedSite};
+use retained::RetainedHistory;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum TypeKey {
     Name, Tag, Type, NumFields, Record,
@@ -23,6 +27,7 @@ pub(crate) enum LiteralSite {
     OrdinaryName,
     CompletedTag,
     ParseType(TypeKey),
+    Retained(RetainedSite),
 }
 #[derive(Debug, Clone)]
 pub(crate) enum KeyOrigin {
@@ -32,15 +37,37 @@ pub(crate) enum KeyOrigin {
     Unknown,
 }
 /// Opaque, immutable native provenance. Actual Global includes caller phase.
-/// Exactly five key facts; redefinitions copy these facts, never a history chain.
+/// Five parse-type fields plus seventeen bounded retained-field slots.
 #[derive(Debug)]
 pub struct TypeKeyHistory {
     global: Global,
     keys: [KeyOrigin; 5],
+    retained: RetainedHistory,
 }
 impl TypeKeyHistory {
     pub(crate) fn key(&self, global: &Global, field: TypeKey) -> Option<&KeyOrigin> {
         (self.global == *global).then(|| &self.keys[field as usize])
+    }
+    pub(crate) fn retained_key(&self, global: &Global, field: RetainedKey) -> Option<&KeyOrigin> {
+        if self.global == *global { self.retained.keys[field as usize].as_ref() } else { None }
+    }
+    pub(crate) fn capture_type(global: &Global, previous: Option<&DefinitionInfo>, incoming: &Form, meter: &mut Meter<'_>)
+        -> Result<Arc<Self>, Diagnostic>
+    {
+        let mut history = Self::capture(global, previous, meter)?;
+        meter(4)?;
+        let owned = Arc::get_mut(&mut history).expect("fresh unpublished type history");
+        owned.retained.merge_metadata(incoming, meter)?;
+        Ok(history)
+    }
+    pub(crate) fn finish_type(history: &mut Arc<Self>, global: &Global, info: &DefinitionInfo, meter: &mut Meter<'_>)
+        -> Result<(), Diagnostic>
+    {
+        meter((global.namespace().len() + global.name().len() + 4) as u64)?;
+        if history.global != *global {
+            return Err(Diagnostic { span: info.declaration.span.clone(), message: "Type history binding mismatch".into() });
+        }
+        Arc::get_mut(history).expect("unpublished type history").retained.source_info(info, global, meter)
     }
     pub(crate) fn capture(global: &Global, previous: Option<&DefinitionInfo>, meter: &mut Meter<'_>)
         -> Result<Arc<Self>, Diagnostic>
@@ -49,22 +76,38 @@ impl TypeKeyHistory {
         // Global backing are prepaid. Source Form payloads are separately metered.
         meter((std::mem::size_of::<Self>() + 4 * std::mem::size_of::<usize>()
             + global.namespace().len() + global.name().len() + 32) as u64)?;
+        // Additional stack-array init + move/retirement, separate from the
+        // larger final Arc backing above. Every new slot's controls are paid.
+        meter((2 * std::mem::size_of::<RetainedHistory>() + 17 * 4 + 4) as u64)?;
+        let mut retained = RetainedHistory::empty();
         let mut keys = TypeKey::ALL.map(|field| KeyOrigin::Literal(LiteralSite::ParseType(field)));
         if let Some(previous) = previous {
             meter(8)?;
             if let Some(history) = &previous.type_key_history {
                 // A foreign native snapshot cannot authorize this binding.
                 meter((history.global.namespace().len() + history.global.name().len() + 5) as u64)?;
-                keys = if history.global == *global { history.keys.clone() }
-                    else { std::array::from_fn(|_| KeyOrigin::Unknown) };
+                if history.global == *global {
+                    keys = history.keys.clone();
+                    // Read/copy payload plus per-slot Option/Arc retain and
+                    // eventual release controls before cloning the new array.
+                    meter((std::mem::size_of::<RetainedHistory>() + 17 * 8 + 8) as u64)?;
+                    retained = history.retained.clone();
+                } else {
+                    keys = std::array::from_fn(|_| KeyOrigin::Unknown);
+                    meter((2 * std::mem::size_of::<RetainedHistory>() + 17 * 6 + 8) as u64)?;
+                    retained = RetainedHistory::unknown();
+                }
             } else if previous.type_fields.is_some() {
                 // An older/unproved type producer is not a fresh parse-type site.
                 keys = std::array::from_fn(|_| KeyOrigin::Unknown);
+                meter((2 * std::mem::size_of::<RetainedHistory>() + 17 * 6 + 8) as u64)?;
+                retained = RetainedHistory::unknown();
             } else {
                 Self::ordinary_keys(previous, &mut keys, meter)?;
+                retained = RetainedHistory::ordinary(global, previous, meter)?;
             }
         }
-        Ok(Arc::new(Self { global: global.clone(), keys }))
+        Ok(Arc::new(Self { global: global.clone(), keys, retained }))
     }
     fn source(key: &Form, shorthand: bool, meter: &mut Meter<'_>) -> Result<KeyOrigin, Diagnostic> {
         meter((std::mem::size_of::<Form>() + 4 * std::mem::size_of::<usize>() + 4) as u64)?;
@@ -262,4 +305,91 @@ mod tests {
             assert!(TypeKey::ALL.into_iter().all(|field| matches!(copied.key(&foreign, field), Some(KeyOrigin::Unknown))));
         }
     }
+    #[test]
+    fn type_key_history_retains_all_selected_fields_without_predecessor_chains() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut environment = analyze("(def ^{:doc raw-doc :meta :raw :fn-var false :method-params [x]} subject (fn* [x] x))", &Environment::default(), phase);
+            environment = analyze("(deftype* subject [] nil nil)", &environment, phase);
+            let (global, info) = subject(&environment, phase);
+            let first = info.type_key_history.as_ref().unwrap().clone();
+            assert_eq!(first.retained.keys.len(), 17);
+            for field in [RetainedKey::Doc, RetainedKey::Meta, RetainedKey::FnVar, RetainedKey::MethodParams] {
+                assert!(matches!(first.retained_key(&global, field), Some(KeyOrigin::Source(_))), "{}", field.name());
+            }
+            assert!(matches!(first.retained_key(&global, RetainedKey::Variadic), Some(KeyOrigin::Literal(LiteralSite::Retained(RetainedSite::FunctionField(RetainedKey::Variadic))))));
+            for _ in 0..8 {
+                environment = analyze("(deftype* ^{:doc replacement :meta :new :fn-var true} subject [x] nil nil)", &environment, phase);
+                let (global, info) = subject(&environment, phase);
+                let next = info.type_key_history.as_ref().unwrap();
+                assert_eq!(next.retained.keys.len(), 17);
+                for field in [RetainedKey::Doc, RetainedKey::Meta, RetainedKey::FnVar, RetainedKey::MethodParams] {
+                    let (Some(KeyOrigin::Source(old)), Some(KeyOrigin::Source(new))) = (first.retained_key(&global, field), next.retained_key(&global, field)) else { panic!("lost retained key"); };
+                    assert!(Arc::ptr_eq(old, new), "native first owner survives value update");
+                }
+            }
+            let fresh = analyze("(deftype* ^{:doc first-doc} subject [] nil nil)", &Environment::default(), phase);
+            let (global, info) = subject(&fresh, phase);
+            let history = info.type_key_history.as_ref().unwrap();
+            assert!(matches!(history.retained_key(&global, RetainedKey::Doc), Some(KeyOrigin::Source(_))));
+            assert!(history.retained_key(&global, RetainedKey::Meta).is_none(), "fresh type cannot fabricate prior completed meta constructor");
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn type_key_history_proof_query_defers_unsupported_paths_but_never_meter_errors() {
+        use std::os::unix::ffi::OsStringExt;
+        let source = "(def subject 17)";
+        let environment = analyze(source, &Environment::default(), Phase::Runtime);
+        let (global, info) = subject(&environment, Phase::Runtime);
+        let mut info = info.clone();
+        let path = std::ffi::OsString::from_vec(vec![b'x', 255]);
+        info.origin = Some(portable::SourceOrigin::new(source, Some(std::path::PathBuf::from(path))));
+        let history = TypeKeyHistory::capture(&global, Some(&info), &mut |_| Ok(())).unwrap();
+        for field in [RetainedKey::Line, RetainedKey::Column, RetainedKey::File] {
+            assert!(matches!(history.retained_key(&global, field), Some(KeyOrigin::Unknown)));
+        }
+        // Existing metadata realization must still report its semantic failure.
+        let error = info.origin.as_ref().unwrap().macro_form_root_metadata_metered(&info.definition_form, &mut |_| Ok(())).unwrap_err();
+        assert!(error.message.contains("not Unicode"));
+        for valid_path in [false, true] {
+            let path = if valid_path { None } else { info.origin.as_ref().unwrap().path().map(std::path::Path::to_path_buf) };
+            let fresh = || {
+                let mut trial = info.clone();
+                trial.origin = Some(portable::SourceOrigin::new(source, path.clone()));
+                trial
+            };
+            for warm in [false, true] {
+                let measured = fresh();
+                if warm { RetainedHistory::empty().source_info(&measured, &global, &mut |_| Ok(())).unwrap(); }
+                let mut calls = 0;
+                RetainedHistory::empty().source_info(&measured, &global, &mut |_| { calls += 1; Ok(()) }).unwrap();
+                for stop in 0..calls {
+                    // Match the measured cold/warm state for EVERY trial.
+                    let trial = fresh();
+                    if warm { RetainedHistory::empty().source_info(&trial, &global, &mut |_| Ok(())).unwrap(); }
+                    let mut current = 0;
+                    let error = RetainedHistory::empty().source_info(&trial, &global, &mut |_| {
+                        let hit = current == stop; current += 1;
+                        if hit { Err(Diagnostic { span: 81..85, message: "retained source-info meter failure".into() }) } else { Ok(()) }
+                    }).unwrap_err();
+                    assert!(error.message.contains("retained source-info meter failure"));
+                    // Recovery uses the SAME native source owner after failure,
+                    // including trials interrupted during cold initialization.
+                    let mut retry = RetainedHistory::empty();
+                    retry.source_info(&trial, &global, &mut |_| Ok(())).unwrap();
+                    if valid_path {
+                        assert!(matches!(retry.keys[RetainedKey::Line as usize], Some(KeyOrigin::Literal(LiteralSite::Retained(RetainedSite::SourceInfo(RetainedKey::Line))))));
+                        assert!(matches!(retry.keys[RetainedKey::Column as usize], Some(KeyOrigin::Literal(LiteralSite::Retained(RetainedSite::SourceInfo(RetainedKey::Column))))));
+                        assert!(retry.keys[RetainedKey::File as usize].is_none());
+                    } else {
+                        for field in [RetainedKey::Line, RetainedKey::Column, RetainedKey::File] {
+                            assert!(matches!(retry.keys[field as usize], Some(KeyOrigin::Unknown)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

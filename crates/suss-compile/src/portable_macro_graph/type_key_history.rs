@@ -1,6 +1,6 @@
 //! Transport only the explicit native parse-type facts, never blanket type keys.
 use super::*;
-use crate::portable::resolve::{TypeKey, TypeKeyOrigin, TypeKeyLiteralSite};
+use crate::portable::resolve::{TypeKey, TypeKeyOrigin, TypeKeyLiteralSite, RetainedKey, RetainedSite};
 
 impl AnalysisGraph<'_> {
     pub(super) fn seed_type_key_history(
@@ -28,6 +28,7 @@ impl AnalysisGraph<'_> {
                         TypeKeyLiteralSite::OrdinaryName => field == TypeKey::Name,
                         TypeKeyLiteralSite::CompletedTag => field == TypeKey::Tag,
                         TypeKeyLiteralSite::ParseType(original) => *original == field,
+                        TypeKeyLiteralSite::Retained(_) => false,
                     };
                     if !valid { return Err(SessionError::Host(wasmtime::Error::msg("Invalid native type key site"))); }
                     keys.remember_proved_named(self, token)?;
@@ -51,6 +52,57 @@ impl AnalysisGraph<'_> {
                 Some(TypeKeyOrigin::Unknown) | None => (),
             }
         }
+        self.seed_retained_type_keys(keys, global, history)?;
+        Ok(())
+    }
+    fn seed_retained_type_keys(&mut self, keys: &mut RetainedFieldKeys,
+        global: &portable::resolve::Global, history: &portable::resolve::TypeKeyHistory,
+    ) -> Result<()> {
+        for field in RetainedKey::ALL {
+            self.charge(global.namespace().len().saturating_add(global.name().len()).saturating_mul(2).saturating_add(14))?;
+            let token = match field {
+                RetainedKey::Ns => AnalyzerLiteralKeyword("ns"),
+                RetainedKey::Private => AnalyzerLiteralKeyword("private"),
+                RetainedKey::Dynamic => AnalyzerLiteralKeyword("dynamic"),
+                RetainedKey::Doc => AnalyzerLiteralKeyword("doc"),
+                RetainedKey::Declared => AnalyzerLiteralKeyword("declared"),
+                RetainedKey::RetTag => AnalyzerLiteralKeyword("ret-tag"),
+                RetainedKey::FnVar => AnalyzerLiteralKeyword("fn-var"),
+                RetainedKey::Variadic => AnalyzerLiteralKeyword("variadic?"),
+                RetainedKey::MaxFixedArity => AnalyzerLiteralKeyword("max-fixed-arity"),
+                RetainedKey::MethodParams => AnalyzerLiteralKeyword("method-params"),
+                RetainedKey::Arglists => AnalyzerLiteralKeyword("arglists"),
+                RetainedKey::ArglistsMeta => AnalyzerLiteralKeyword("arglists-meta"),
+                RetainedKey::Export => AnalyzerLiteralKeyword("export"),
+                RetainedKey::Meta => AnalyzerLiteralKeyword("meta"),
+                RetainedKey::Line => AnalyzerLiteralKeyword("line"),
+                RetainedKey::Column => AnalyzerLiteralKeyword("column"),
+                RetainedKey::File => AnalyzerLiteralKeyword("file"),
+            };
+            match history.retained_key(global, field) {
+                Some(TypeKeyOrigin::Literal(TypeKeyLiteralSite::Retained(site))) => {
+                    self.charge(8)?;
+                    let valid = match site {
+                        RetainedSite::CompletedMeta => field == RetainedKey::Meta,
+                        RetainedSite::Docstring => field == RetainedKey::Doc,
+                        RetainedSite::SourceInfo(original) => *original == field
+                            && matches!(field, RetainedKey::Line | RetainedKey::Column | RetainedKey::File),
+                        RetainedSite::CoreFile => field == RetainedKey::File,
+                        RetainedSite::FunctionField(original) => *original == field
+                            && (RetainedKey::FUNCTION.contains(&field) || field == RetainedKey::RetTag),
+                        RetainedSite::ForwardDeclared(original) => *original == field
+                            && matches!(field, RetainedKey::Declared | RetainedKey::FnVar | RetainedKey::MethodParams),
+                    };
+                    if !valid { return Err(SessionError::Host(wasmtime::Error::msg("Invalid retained declaration constructor"))); }
+                    keys.remember_proved_named(self, token)?;
+                }
+                Some(TypeKeyOrigin::Source(form)) => keys.remember_source(self, field.name(), form)?,
+                Some(TypeKeyOrigin::Literal(_)) | Some(TypeKeyOrigin::ReaderShorthandTag(_)) => {
+                    return Err(SessionError::Host(wasmtime::Error::msg("Invalid retained declaration key origin")));
+                }
+                Some(TypeKeyOrigin::Unknown) | None => (),
+            }
+        }
         Ok(())
     }
 }
@@ -60,7 +112,7 @@ mod tests {
     use super::*;
     use crate::portable::resolve::Phase;
     #[test]
-    fn type_key_history_transport_uses_native_sites_preserves_raw_keys_and_keeps_other_fields_cold() {
+    fn type_key_history_transport_uses_native_sites_preserves_raw_keys_and_keeps_unproved_fields_cold() {
         for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
             let bridge = FormBridge::new(&mut session).unwrap();
             use crate::portable_session::memo_leaf_test_support::Method;
@@ -76,14 +128,14 @@ mod tests {
                     (let [key (reduce (fn [found k] (if (= (str k) label) k found)) nil (keys info))
                           events (filter (fn [event] (identical? key (first event))) type-key-events)]
                         (if (seq events) (second (first events)) (.-_hash key))))
-                    [":name" ":tag" ":type" ":num-fields" ":record"]))"#).unwrap();
-            for (source, tag_literal, raw_flags) in [
-                ("(deftype* subject [] nil nil)", true, false),
-                ("(defrecord* subject [] nil nil)", true, false),
-                ("(deftype* ^{:tag override :type false :num-fields 99 :record true} subject [] nil nil)", true, false),
-                ("(def ^{:tag original :type false :num-fields 99 :record true} subject 17) (deftype* subject [] nil nil)", false, true),
-                ("(def ^number subject 17) (deftype* subject [] nil nil)", true, false),
-                ("(def ^{:tag original} subject 17) (defrecord* subject [] nil nil) (deftype* subject [x] nil nil)", false, false),
+                    [":name" ":tag" ":type" ":num-fields" ":record" ":meta"]))"#).unwrap();
+            for (source, tag_literal, raw_flags, meta_literal) in [
+                ("(deftype* subject [] nil nil)", true, false, false),
+                ("(defrecord* subject [] nil nil)", true, false, false),
+                ("(deftype* ^{:tag override :type false :num-fields 99 :record true} subject [] nil nil)", true, false, false),
+                ("(def ^{:tag original :type false :num-fields 99 :record true} subject 17) (deftype* subject [] nil nil)", false, true, true),
+                ("(def ^number subject 17) (deftype* subject [] nil nil)", true, false, true),
+                ("(def ^{:tag original} subject 17) (defrecord* subject [] nil nil) (deftype* subject [x] nil nil)", false, false, true),
             ] {
                 session.eval("(set! type-key-events [])").unwrap();
                 let forms = suss_reader::forms::read_forms(source).unwrap();
@@ -99,7 +151,9 @@ mod tests {
                     // literal provenance merely because this is a type record.
                     for (key, _) in entries {
                         if let Some(Recipe::Identifier { name, literal, .. }) = graph.recipes[*key].as_ref() {
-                            if name == "meta" { assert!(literal.is_none()); }
+                            if name == "meta" {
+                                assert_eq!(literal.is_some(), meta_literal, "only an actual prior meta constructor qualifies");
+                            }
                         }
                     }
                     graph.materialize(root).unwrap()
@@ -108,12 +162,13 @@ mod tests {
                 let result = session.invoke(&project, &[&actual]).unwrap();
                 let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
                 let Kind::Vector(memos) = &decoded.kind else { panic!("memo vector"); };
-                assert_eq!(memos.len(), 5);
+                assert_eq!(memos.len(), 6);
                 // Exact initial literal memos independently observed in the
                 // pinned type-history reference, not merely "some number".
+                assert_eq!(memos[5].kind, if meta_literal { Kind::Number(1499536964.0) } else { Kind::Nil }, "{source}");
                 assert_eq!(memos[0].kind, Kind::Number(1843675177.0), "{source}");
                 assert_eq!(memos[1].kind, if tag_literal { Kind::Number(-1290361223.0) } else { Kind::Nil }, "{source}");
-                for (memo, expected) in memos[2..].iter().zip([1174270348.0, 1529154024.0, -779106859.0]) {
+                for (memo, expected) in memos[2..5].iter().zip([1174270348.0, 1529154024.0, -779106859.0]) {
                     assert_eq!(memo.kind, if raw_flags { Kind::Nil } else { Kind::Number(expected) }, "{source}");
                 }
             }
@@ -123,4 +178,49 @@ mod tests {
             assert_eq!(bridge.read(&mut session, &restored, 0..0).unwrap().kind, Kind::Number(-1290361223.0));
         }
     }
+    #[test]
+    fn type_key_history_retained_projection_matches_independent_ordinary_graph_keys() {
+        let cases = [
+            "(def ^{:doc raw-doc :meta {:x 1} :fn-var false :variadic? false} subject 17)",
+            "(def ^{:doc raw-doc} subject \"computed doc\" 17)",
+            "(def subject (fn* [x] x))",
+            "(def ^{:top-fn {:variadic? false :max-fixed-arity 7}} subject (fn* [] 17))",
+            "(def ^{:declared true :arglists '([x])} subject)",
+        ];
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            for source in cases {
+                let forms = suss_reader::forms::read_forms(source).unwrap();
+                let (_, environment) = portable::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
+                let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
+                let global = binding.global();
+                let info = environment.shared_definition_info(global).unwrap();
+                let history = portable::resolve::TypeKeyHistory::capture(global, Some(info), &mut |_| Ok(())).unwrap();
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                // This is the unchanged ordinary-def graph route. It does NOT
+                // consume the new type snapshot: it independently establishes
+                // the previous declaration's real key-construction policy.
+                let root = graph.declaration(global, Some(info), 0).unwrap();
+                let Some(Recipe::Map(entries)) = graph.recipes[root].as_ref() else { panic!("ordinary declaration"); };
+                let entries = entries.clone();
+                for field in RetainedKey::ALL {
+                    let position = graph.declaration_field_position(&entries, field.name()).unwrap();
+                    match history.retained_key(global, field) {
+                        Some(TypeKeyOrigin::Literal(_)) => {
+                            let slot = entries[position.expect(field.name())].0;
+                            assert!(matches!(graph.recipes[slot].as_ref(), Some(Recipe::Identifier { literal: Some(_), .. })), "{source}/{}", field.name());
+                        }
+                        Some(TypeKeyOrigin::Source(_)) => {
+                            let slot = entries[position.expect(field.name())].0;
+                            assert!(!matches!(graph.recipes[slot].as_ref(), Some(Recipe::Identifier { literal: Some(_), .. })), "{source}/{}", field.name());
+                        }
+                        Some(TypeKeyOrigin::Unknown) => (),
+                        Some(TypeKeyOrigin::ReaderShorthandTag(_)) => panic!("shorthand only constructs tag"),
+                        None => assert!(position.is_none(), "missing previous key fact {source}/{}", field.name()),
+                    }
+                }
+            }
+        }
+    }
+
 }
