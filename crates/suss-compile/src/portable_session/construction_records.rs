@@ -361,11 +361,19 @@ impl ConstructionRecords {
         }
         trace(&meter, "built");
         let mut valid = meter.contains_explicit(&index, &collisions, records, root)?;
+        #[cfg(test)]
+        let diagnostic_root = valid;
         trace(&meter, "root");
         let edges = Self::check_selected_edges(&mut meter, &index, &collisions, records, children);
         trace(&meter, "edges-return");
         if tracing { eprintln!("input-index edge-result={:?}", edges.as_ref().map_err(|e| e.to_string())); }
-        valid &= edges?;
+        let edges = edges?;
+        valid &= edges;
+        #[cfg(test)]
+        if !valid {
+            eprintln!("RETAINED_INPUT_CLOSURE test={:?} records={} children={} root={} edges={}",
+                std::thread::current().name(), records.len(), children.len(), diagnostic_root, edges);
+        }
         Ok(valid)
     }
     fn check_input_edges(

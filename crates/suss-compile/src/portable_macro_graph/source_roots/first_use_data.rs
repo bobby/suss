@@ -299,8 +299,8 @@ impl Audit {
                     valid &= diagnostic_prototypes;
                     #[cfg(test)]
                     if !valid {
-                        eprintln!("FIRST_USE_DATA_NATIVE inputs={} children={} direct={} current_inputs={} classes={} prototypes={}",
-                            node.inputs.len(), diagnostic_children, diagnostic_direct,
+                        eprintln!("FIRST_USE_DATA_NATIVE test={:?} node={:p} inputs={} children={} direct={} current_inputs={} classes={} prototypes={}",
+                            std::thread::current().name(), Rc::as_ptr(node), node.inputs.len(), diagnostic_children, diagnostic_direct,
                             diagnostic_inputs, diagnostic_classes, diagnostic_prototypes);
                     }
                 }
@@ -678,6 +678,16 @@ impl Observer for Build<'_> {
                 graph.session.charge_host_work(inputs.len() as u64)?;
                 children.extend(inputs.into_iter().map(|input| input.evidence));
                 let native = Native::allocate(graph.session, &value, records, children)?;
+                #[cfg(test)]
+                eprintln!("RETAINED_DATA_NODE test={:?} node={:p} recipe={} kind={:?} inputs={} records={}",
+                    std::thread::current().name(), Rc::as_ptr(&native), id,
+                    match graph.recipes[id].as_ref().unwrap() {
+                        Recipe::Metadata { .. } => "Metadata", Recipe::Form(_) => "Form",
+                        Recipe::Identifier { .. } => "Identifier", Recipe::Map(_) => "Map",
+                        Recipe::Vector(_) => "Vector", other => {
+                            eprintln!("RETAINED_DATA_OTHER recipe={} discriminant={:?}", id, std::mem::discriminant(other)); "Other"
+                        } },
+                    native.inputs.len(), native.records.len());
                 Ok(Observed {
                     value,
                     evidence: Evidence::Native(native),

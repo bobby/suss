@@ -590,6 +590,8 @@ mod reader_property_value_tests {
     fn retained_values(session: &mut Session, bridge: &FormBridge, cache: &mut source_roots::RootCache,
         global: &Global, prior: &Info, current: &Info, current_first: bool, metadata_first: bool)
         -> crate::portable_session::SessionValue {
+        eprintln!("RETAINED_READER_CASE test={:?} current_first={} metadata_first={}",
+            std::thread::current().name(), current_first, metadata_first);
         let owner = prior.completed_values.as_ref().unwrap();
         let mut graph = AnalysisGraph::new(bridge, session);
         graph.capture_roots = true;
@@ -623,6 +625,8 @@ mod reader_property_value_tests {
             (Phase::Macro, Session::new_macro().unwrap())] {
             let bridge = FormBridge::new(&mut session).unwrap();
             for indexed in [false, true] {
+                eprintln!("RETAINED_READER_VARIANT test={:?} phase={:?} indexed={}",
+                    std::thread::current().name(), phase, indexed);
                 let (prior_environment, global, prior) = prepare("(def ^number subject (fn* [] 17))",
                     phase, &Environment::default(), indexed);
                 let (_current_environment, same_global, current) = prepare("(deftype* subject [] nil nil)",

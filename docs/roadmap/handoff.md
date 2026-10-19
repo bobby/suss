@@ -30302,3 +30302,15 @@ result is inferred from generation/adoption.
 [Three-test raw result receipt](evidence/m4-pr263-alias-targeted-results-2026-10-19.json) binds `7b56177c8fcf112155e299909ad8bb60efc755d5`, full argv/log and terminal exit101: 2PASS1FAIL0ignored, 225.5490s command/191.54s harness. The new uncaptured-native Alias regression passes in both Runtime and Macro with GC/physical identity and request-only cache checks. The unchanged canonical cold inline-callback poison/restoration control also passes. These are two Rust test passes, not a full DATA-suite result.
 
 The unchanged retained/warm reader-property control still fails at completed_type_values.rs616 with `Host(Fresh first-use source failed complete DATA checks)`. Its last reported Native has inputs=2 and current_inputs=false while children/direct/classes/prototypes=true; the ReaderSource root has binding/logical=true but audit=false (source0, alias14, native13). The failing phase/row is unlogged. Earlier false flags may belong to intentional poison observations in the concurrently passing control; the raw emission order is retained without inventing per-test attribution. A with-meta/evidence explanation remains unproved. This is a discussion/review stopping point, with no claim that all twelve DATA cases, public macro-frame/namespace/callable acceptance, full baseline or final CI pass. Existing assertions and all remaining gates are retained.
+
+
+## Serial retained-reader input attribution
+
+The reviewed three-file diagnostic labels native recipe IDs/kinds, separates
+existing root-membership and edge-closure results, and identifies phase/indexed/
+producer-order attempts. It adds no validation, guest calls, quota changes or
+exception recovery. `cargo test -p suss-compile --locked --lib --no-run` passed
+in 29.2766s; [exact source/review and raw compile log](evidence/m4-pr263-retained-input-attribution-source-2026-10-19.json)
+record compile-only evidence. Next regenerate the matching normal bootstrap and
+run only the unchanged retained/warm test with one test thread. No new execution
+or metadata-copy cause is inferred from the diagnostic source.
