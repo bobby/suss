@@ -28803,3 +28803,64 @@ fixture-preservation checks and independent reviews are in the
 Fresh Java/Node-free byte-exact bootstrap verification, the unfiltered required
 workspace command and final committed-head CI remain separate required gates.
 No issue closure, promotion or merge follows from these focused results alone.
+
+
+## Temporary storage for local verification
+
+On source65e9718, an exact workspace invocation stopped with41passing tests
+and2failures when the async-command fixtures' first source-file writes returned
+OS122, `Disk quota exceeded`. Compilation and guest invocation had not started
+in either failed fixture. `/tmp` was a tmpfs with per-user quotas; filesystem
+free-space alone did not establish available user quota. The natural exit101 and
+later unexecuted scope remain recorded, not converted into a successful baseline.
+
+A private writable directory on the Suss work-cache filesystem, supplied through
+process `TMPDIR`, avoids that exhausted temporary-filesystem quota.
+Choose an existing writable cache parent before running the commands below. No unrelated
+files were deleted, and no source, fuel/default, Runtime or assertion changed.
+The unchanged complete async target then passed2/0/0in193.28s:
+
+```sh
+suss_test_tmp="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/suss-tests.XXXXXX")" || exit 1
+TMPDIR="$suss_test_tmp" cargo test --locked -p suss-cli --test compiled_aot_async_command -- --test-threads=2
+TMPDIR="$suss_test_tmp" cargo test --workspace --locked -- --test-threads=2
+```
+
+Use the existing bounded Cargo/Wasmtime worker settings. Only the focused async
+result is credited above; it does not replace the full unfiltered workspace
+verdict. Java/Node-free byte-exact bootstrap verification already passed for the
+unchanged native source. Commands, actual failure/recovery and their limits are
+also recorded in [issue252](https://github.com/bobby/suss/issues/252#issuecomment-6261123567).
+
+
+## Public file and uncached-expression compilation allowances
+
+The remaining three failures in source65e9718 CI39207507722 are retained in the
+[final calibration evidence](evidence/m4-pr252-final-compilation-calibration-2026-10-19.md),
+including all254integration targets (1716PASS/3FAIL/17existingignored). The local
+workspace retry was cancelled after that same-tree terminal evidence:102complete
+passes, actual exit143; the interrupted compiler-catalog scope remains unverified.
+
+New explicit compilation-fuel entry points for file and uncached-expression
+compilation preserve legacy None defaults, explicit-zero exhaustion, typed
+preflight errors and Runtime budgets. Only the original two exhausted semantic
+fixtures receive the shared10B compiler allowance. The300-argument comparison
+now executes direct and alias forms, plus a false final-pair case.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --workspace --locked --no-fail-fast --test portable_comparisons --test public_compiled_files --test uncached_expression_artifacts -- --test-threads=2
+```
+
+With the private cache TMPDIR above and bounded worker settings, normal bootstrap
+generation passes18.67s and identity1.01s. Corrected focused validation exits0 in
+464.20s: both comparison harnesses7+2PASS, public files14PASS, uncached expressions
+4PASS; zero failures/ignores/filtered tests. Both phases retain all six non-custom
+Wasm sections; source/custom identity is refreshed. An initial author build's
+E0308 namespace/fuel forwarding error is retained separately; it executed no
+tests and was corrected through the existing typed AotOptions route.
+
+These are focused results. Fresh committed-source Java/Node-free reproduction,
+the exact workspace command and final-head CI remain required; no closure,
+promotion, merge or whole-core conformance is claimed.

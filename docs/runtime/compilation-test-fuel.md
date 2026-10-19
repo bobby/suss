@@ -36,6 +36,8 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `public_reduce_dispatch_and_source_order_match_pinned_cljs_after_gc` | 10,000,000 | 10,000,000,000 |
 | `captured_global_declarations_supply_var_ast_fields_without_catalog_mutation` | 10,000,000 | 10,000,000,000 |
 | `public_command_executes_compiled_lexical_macros_and_ordered_user_arguments` | 10,000,000 | 10,000,000,000 |
+| `public_file_preserves_macro_filename_lexical_environment_and_retained_effects` | 10,000,000 | 10,000,000,000 |
+| `uncached_expression_executes_lexical_macro_and_keeps_live_bindings` | 10,000,000 | 10,000,000,000 |
 | `compiled_map_factory_preserves_missing_nil_false_values_and_extension_entries` | 10,000,000 | 10,000,000,000 |
 | Full upstream corpus via `check("suite")` | 200,000,000 | 10,000,000,000 |
 | `declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer` | 10,000,000 | 10,000,000,000 |

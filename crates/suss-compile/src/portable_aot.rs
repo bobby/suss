@@ -90,19 +90,20 @@ pub fn compile_file(
     )
 }
 
-pub(crate) fn compile_file_typed(
+pub(crate) fn compile_file_typed_with_compile_fuel(
     source_path: &Path,
     wit_path: &Path,
     wit_world: Option<&str>,
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
+    compile_fuel: Option<u64>,
 ) -> CompileResult<Vec<u8>> {
-    compile_input(
+    compile_input_with_options(
         source_path,
         wit_path,
         wit_world,
         source_paths,
-        mappings,
+        &AotOptions { exports: mappings.to_vec(), compile_fuel, ..Default::default() },
         None,
     )
 }

@@ -174,7 +174,16 @@ impl Compiler {
     /// reproducible compiled core bootstrap is shared with the cached entrypoint.
     #[cfg(not(target_family = "wasm"))]
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        self.compile_expression_with_fuel(expr_source, None)
+        self.compile_expr_with_compile_fuel(expr_source, None)
+    }
+
+    /// Prepare an uncached expression with an explicit compilation allowance.
+    /// None preserves the default; Some(0) is explicit. Runtime fuel is unchanged.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn compile_expr_with_compile_fuel(
+        &mut self, expr_source: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<CompiledExpr> {
+        self.compile_expression_with_fuel(expr_source, compile_fuel)
     }
 
     #[cfg(not(target_family = "wasm"))]
@@ -250,19 +259,28 @@ impl Compiler {
     /// isolated compiled macros, preserving the original source filename.
     /// Dependencies resolve from `src`; Runtime initializers execute in the host.
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
+        self.compile_files_with_compile_fuel(source_path, wit_path, None)
+    }
+
+    /// Compile a file with an explicit compilation allowance, retaining filename
+    /// provenance and typed I/O/WIT errors. None and Runtime defaults are unchanged.
+    pub fn compile_files_with_compile_fuel(
+        &mut self, source_path: &str, wit_path: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<Vec<u8>> {
         #[cfg(not(target_family = "wasm"))]
         {
-            portable_aot::compile_file_typed(
+            portable_aot::compile_file_typed_with_compile_fuel(
                 std::path::Path::new(source_path),
                 std::path::Path::new(wit_path),
                 None,
                 &[std::path::PathBuf::from("src")],
                 &[],
+                compile_fuel,
             )
         }
         #[cfg(target_family = "wasm")]
         {
-            let _ = (source_path, wit_path);
+            let _ = (source_path, wit_path, compile_fuel);
             Err(CompileError::Unsupported(
                 "Public file compilation requires the native compiled macro host".into(),
             ))
