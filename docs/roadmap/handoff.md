@@ -30107,3 +30107,15 @@ After normal regeneration/adoption, run focused `analyzer_function_and_reference
 identity and namespace aliases still require a real production repair. Retain
 the separate parent workspace producer until it terminates; no local concurrent
 Cargo/VM execution was performed for these parsing/source reviews.
+
+
+## Regenerated bootstrap after bounded native-feedback repairs
+
+CI39289196572 produced both complete normal tuples twice on4112c7c. Independent
+source/integrity review permits the four exact outputs now adopted; see
+[evidence and limits](evidence/m4-pr263-bounded-repair-bootstrap-2026-10-19.md).
+Their non-custom code matches48de, but the native compiler source changed.
+Run `python3 scripts/verify_bootstrap_identity.py`, normal Java/Node-free
+`scripts/verify-bootstrap.sh` and focused tests listed above, then the full
+baseline when the separate parent producer actually drains. Generation stopped
+at stale shipped comparison; it supplies no new library execution verdict.
