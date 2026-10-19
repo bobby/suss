@@ -34,6 +34,7 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `compiled_defn_preserves_docs_attributes_arities_and_lexical_shadowing` | 10,000,000 | 10,000,000,000 |
 | `compiled_macro_artifact_retains_runtime_state_and_roots` | 10,000,000 | 10,000,000,000 |
 | `public_reduce_dispatch_and_source_order_match_pinned_cljs_after_gc` | 10,000,000 | 10,000,000,000 |
+| `captured_global_declarations_supply_var_ast_fields_without_catalog_mutation` | 10,000,000 | 10,000,000,000 |
 | `declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer` | 10,000,000 | 10,000,000,000 |
 | `compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields` | 100,000,000 | 10,000,000,000 |
 | `compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phases` | 10,000,000 | 10,000,000,000 |
@@ -87,3 +88,10 @@ recovery and actual artifact execution controls. The reduction fixture also had
 a recorded &env fuel failure on that source; its complete four-test target passes
 with the same compiler-only policy and unchanged pinned observations. These
 focused results do not establish the required workspace or final-head CI gates.
+
+
+The global-reference fixture has a separately retained old-head integration7
+&env fuel failure586..621. Only that fixture now uses the same10B compilation
+allowance; the full two-test target passes with all11 oracle cases, revision/effect
+checks, Runtime settings and GC assertions retained. The other case keeps its
+original compiler allowance. Whole-workspace and final-head CI gates remain.

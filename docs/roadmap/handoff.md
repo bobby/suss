@@ -28693,3 +28693,31 @@ The new test-only setting uses the established CLI support constant. Receipts ar
 in `pr252-reduction-dispatch-calibration-validation-v1/`. CI shard-planner tests
 also pass4/4 after the integration-only120-minute window change. These focused
 results do not replace fresh committed-head workspace/CI or pinned-map evidence.
+
+
+## Global-reference compilation allowance execution
+
+Old2caae8c integration7 reports one pass and one &env fuel failure586..621 in
+`captured_global_declarations_supply_var_ast_fields_without_catalog_mutation`.
+Its actual checkout is the same53829b5 tree. Raw log and parsed harness summaries
+are retained in `pr252-2caae8c-ci-failure-main/job-117871020656*`; no whole-run
+verdict is inferred. Only this fixture's Macro allowance now uses the shared10B;
+an exact inverse matches the entire old file. The independent source review is
+in `pr252-global-reference-compilation-fuel-review/`.
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_global_reference_asts -- --test-threads=2
+```
+
+Complete target2PASS/0FAIL/0ignored116.59s execution/117.24s including build;
+11 oracle cases, captured revisions, one-time initializer effects, fields/GC and
+both caller phases remain checked. The second case's original compiler allowance
+is unchanged. Native compiler/source and all four bootstrap payloads are unchanged
+fromd7c49a6, which has independent16-path committed-head review; the source-only
+library/CI repair already records public25 and reduction4 complete passes. The
+literal-buffer cache proposal was verified already adopted inad6bbcc (five exact
+postimages and two later-evolved files); it remains archival and was not reapplied.
+
+The next focused acceptance action is an unchanged200M pinned-map capture and
+independent69-ID/verdict comparison before the fresh required workspace baseline.
+No pending full-baseline/CI/map result is claimed by these focused passes.
