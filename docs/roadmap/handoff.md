@@ -30337,3 +30337,15 @@ The live matched node is recipe12 `Metadata`, records1/inputs2. Original input r
 The next source checkpoint adds the exact five-file peer-reviewed descendant V2 repair, including two new modules. DATA-only missing input-edge closure consults relevant original input Evidence already healthy in the same Audit and bound to the current ledger; output-root membership remains explicit/current. Legacy/strict callers and all source/memo/domain authority guards remain unchanged. No guest-field recapture or callback replay is introduced. New inventory/lookup/allocation/retirement work is prepaid, with no old tariff reduction or performance claim. The JSON retains the V2 source manifest, Carver source GO, fee ledger and explicit221-input freeze. Five authored regressions and repaired-source VM controls remain unexecuted. No-run compile/link returned exit0 in28.4610s (raw SHA256f32c7629a3d2465804736c8aec391ad0fdcc464ce67bd607901b816224c1e721); both actual builders returned `b812d0c6106334ff5e5d96af1ae9d9c4888afa78c28747468198467ed79bf0a4`, matching the retained prediction. This is actual source-fingerprint evidence, not normal generated BOOT identity or a VM result. Matching normal generation/identity and source-bound focused execution remain next.
 
 Next: commit the exact five-file source checkpoint, obtain matching normal BOOT/fresh identity, then execute the five new regressions and unchanged retained/warm control. All six repaired-source tests remain pending; the earlier serial0PASS1FAIL labels and limitations are unchanged.
+
+
+## Bootstrap binding for original DATA descendants
+
+`sh scripts/verify-bootstrap.sh` at `c3476c1` generated identical normal phase
+pairs in 35.5716s, then exited1 against the older shipped tuple. Independent
+review verifies 221 Git inputs, fingerprint `b812d0c6`, all eight hashes and
+unchanged noncustom Wasm/catalog/ABI/cells. Four outputs are adopted exactly;
+[raw generation and binding](evidence/m4-pr263-original-data-descendants-bootstrap-2026-10-19.json)
+preserve the failed comparison and brief package-cache wait. Execute the five
+new rejection/health/meter tests and unchanged retained/warm regression next.
+No repaired-source execution or acceptance is inferred from generation.
