@@ -239,7 +239,7 @@ impl DefinitionInfo {
         Ok(match value.kind {
             Kind::Nil | Kind::Bool(false) => None,
             Kind::Bool(true) => Some(Form {
-                span: value.span,
+                span: value.span.clone(),
                 metadata: vec![],
                 kind: Kind::Symbol(Symbol {
                     namespace: Some(if global.namespace() == "suss.core" {

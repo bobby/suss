@@ -78,7 +78,7 @@ fn source_artifact_identity_keeps_external_macro_provenance_unknown() {
             form: &Form,
             _: portable::ExpansionContext<'_>,
         ) -> Result<Option<Form>, portable::Diagnostic> {
-            if matches!(form.kind, Kind::List(_)) {
+            if matches!(&form.kind, Kind::List(_)) {
                 self.calls += 1;
                 Ok(Some(Form {
                     kind: Kind::Number(42.0),

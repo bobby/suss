@@ -4,7 +4,7 @@ use suss_compile::portable::{self, hir::Expression};
 fn if_let_keeps_reader_metadata_and_distinct_scoped_binding_identities() {
     let source = "(let [x 17] (if-let [^:bound x x] ^:then x ^:else x))";
     let hir = portable::analyze(source).unwrap();
-    let Expression::Do(top) = hir.kind else {
+    let Expression::Do(top) = &hir.kind else {
         panic!()
     };
     let Expression::Let {

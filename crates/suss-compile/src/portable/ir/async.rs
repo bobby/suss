@@ -58,33 +58,96 @@ pub struct Continuation {
 /// Nested futures retain their own compiled plans; try/dynamic regions are
 /// lowered inline with rooted unwind state rather than synchronous closures.
 pub fn lower(body: &Hir, captures: &[(BindingId, Type)]) -> Result<Continuation, Diagnostic> {
-    let mut lowerer = Lowerer::new(body.span.clone());
+    let mut remaining = crate::portable::DEFAULT_OPERATION_FUEL;
+    let span = body.span.clone();
+    let mut meter = |work: u64| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: span.clone(),
+            message: "Async continuation lowering fuel exhausted".into(),
+        })?;
+        Ok(())
+    };
+    lower_metered(body, captures, &mut meter)
+}
+
+pub(crate) fn lower_metered(
+    body: &Hir,
+    captures: &[(BindingId, Type)],
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Continuation, Diagnostic> {
+    let mut lowerer = Lowerer::new(body.span.clone(), meter)?;
     lowerer.suspendable = true;
     for (id, ty) in captures {
         lowerer.parameter(*id, *ty, body.span.clone())?;
     }
-    normalize(lowerer.finish(body)?)
+    let function = lowerer.finish(body)?;
+    normalize_metered(function, meter)
 }
 
 /// Split each await after evaluating its operand once. Keep the original value
 /// ID space so GC slots, closure captures and parallel loop-edge assignments
 /// refer to exactly the same evaluated values before and after suspension.
 pub fn normalize(function: Function) -> Result<Continuation, Diagnostic> {
-    let live = liveness::analyze(&function)?;
+    let mut remaining = crate::portable::DEFAULT_OPERATION_FUEL;
+    let span = function.span.clone();
+    let mut meter = |work: u64| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: span.clone(),
+            message: "Async continuation normalization fuel exhausted".into(),
+        })?;
+        Ok(())
+    };
+    normalize_metered(function, &mut meter)
+}
+
+pub(crate) fn normalize_metered(
+    function: Function,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Continuation, Diagnostic> {
+    let live = liveness::analyze_metered(&function, meter)?;
+    normalize_with_live_metered(function, live, meter)
+}
+
+fn charge(
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    amount: usize,
+    span: &Range<usize>,
+) -> Result<(), Diagnostic> {
+    if amount == 0 {
+        return Ok(());
+    }
+    meter(u64::try_from(amount).unwrap_or(u64::MAX)).map_err(|mut error| {
+        error.span = span.clone();
+        error
+    })
+}
+
+fn normalize_with_live_metered(
+    function: Function,
+    live: liveness::Liveness,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Continuation, Diagnostic> {
+    let span = &function.span;
+    charge(meter, function.blocks.len(), span)?;
     let mut states = Vec::new();
     let mut entries = Vec::with_capacity(function.blocks.len());
     for (block_id, block) in function.blocks.iter().enumerate() {
+        charge(meter, 1, span)?;
         entries.push(states.len());
         let mut start = 0;
         let mut entry = true;
         for (index, instruction) in block.instructions.iter().enumerate() {
+            charge(meter, 1, &instruction.span)?;
             if let Operation::Await { future } = &instruction.operation {
-                let mut spill = live.blocks[block_id].live_after[index].clone();
+                let live_after = &live.blocks[block_id].live_after[index];
+                charge(meter, live_after.len().saturating_add(1), &instruction.span)?;
+                let mut spill = live_after.clone();
                 spill.remove(&instruction.result.0);
                 // Retain the dependency independently of later source uses: it
                 // supplies the event and must survive while the task is pending.
                 spill.insert(future.0);
                 let resume = states.len() + 1;
+                charge(meter, 1, &instruction.span)?;
                 states.push(State {
                     block: block_id,
                     entry,
@@ -101,6 +164,7 @@ pub fn normalize(function: Function) -> Result<Continuation, Diagnostic> {
                 start = index + 1;
             }
         }
+        charge(meter, 1, span)?;
         states.push(State {
             block: block_id,
             entry,
@@ -109,38 +173,82 @@ pub fn normalize(function: Function) -> Result<Continuation, Diagnostic> {
             span: function.span.clone(),
         });
     }
-    let backedges = cooperative_backedges(&function)?;
+    let backedges = cooperative_backedges_metered(&function, meter)?;
     let result = Continuation {
         function,
         states,
         block_entries: entries,
         backedges,
     };
-    verify(&result)?;
+    verify_with_live_metered(&result, &live, meter)?;
     Ok(result)
 }
 
 pub fn verify(continuation: &Continuation) -> Result<(), Diagnostic> {
+    let span = continuation.function.span.clone();
+    let mut remaining = crate::portable::DEFAULT_OPERATION_FUEL;
+    let mut meter = |work: u64| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: span.clone(),
+            message: "Async continuation verification fuel exhausted".into(),
+        })?;
+        Ok(())
+    };
+    // Public validation must verify an arbitrary supplied function. The
+    // metered internal entry point is reserved for callers that just verified
+    // this exact immutable function graph.
+    let live = liveness::analyze_metered(&continuation.function, &mut meter)?;
+    verify_with_live_metered(continuation, &live, &mut meter)
+}
+
+/// Verify continuation structure using the caller's cumulative meter. The
+/// caller must already have IR-verified `continuation.function` and retains
+/// ownership of that same immutable graph during this call.
+pub(crate) fn verify_metered(
+    continuation: &Continuation,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<(), Diagnostic> {
+    let live = liveness::analyze_verified_metered(&continuation.function, meter)?;
+    verify_with_live_metered(continuation, &live, meter)
+}
+
+fn verify_with_live_metered(
+    continuation: &Continuation,
+    live: &liveness::Liveness,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<(), Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: continuation.function.span.clone(),
         message: message.into(),
     };
-    let live = liveness::analyze(&continuation.function)?;
+    let span = &continuation.function.span;
+    charge(meter, 1, span)?;
     if continuation.block_entries.len() != continuation.function.blocks.len()
         || continuation.states.is_empty()
     {
         return Err(fail("Invalid continuation state catalog"));
     }
-    if continuation.backedges != cooperative_backedges(&continuation.function)? {
+    let expected_backedges = cooperative_backedges_metered(&continuation.function, meter)?;
+    charge(
+        meter,
+        continuation
+            .backedges
+            .len()
+            .saturating_add(expected_backedges.len()),
+        span,
+    )?;
+    if continuation.backedges != expected_backedges {
         return Err(fail("Invalid continuation cooperative checkpoints"));
     }
     let mut next = 0;
     for (block_id, block) in continuation.function.blocks.iter().enumerate() {
+        charge(meter, 1, span)?;
         if continuation.block_entries[block_id] != next {
             return Err(fail("Invalid continuation block entry"));
         }
         let mut original_start = 0;
         for (index, instruction) in block.instructions.iter().enumerate() {
+            charge(meter, 1, &instruction.span)?;
             let Operation::Await { future } = &instruction.operation else {
                 continue;
             };
@@ -157,13 +265,22 @@ pub fn verify(continuation: &Continuation) -> Result<(), Diagnostic> {
             else {
                 return Err(fail("Missing suspension edge"));
             };
-            let mut expected = live.blocks[block_id].live_after[index].clone();
+            let live_after = &live.blocks[block_id].live_after[index];
+            charge(meter, live_after.len().saturating_add(1), &instruction.span)?;
+            let mut expected = live_after.clone();
             expected.remove(&instruction.result.0);
             expected.insert(future.0);
+            charge(meter, spill.len(), &instruction.span)?;
+            let actual_spill: BTreeSet<_> = spill.iter().map(|v| v.0).collect();
+            charge(
+                meter,
+                actual_spill.len().saturating_add(expected.len()),
+                &instruction.span,
+            )?;
             if *actual != *future
                 || *result != instruction.result
                 || *resume != next + 1
-                || spill.iter().map(|v| v.0).collect::<BTreeSet<_>>() != expected
+                || actual_spill != expected
                 || spill.len() != expected.len()
             {
                 return Err(fail("Invalid continuation spill or resume result"));
@@ -178,6 +295,7 @@ pub fn verify(continuation: &Continuation) -> Result<(), Diagnostic> {
             original_start = index + 1;
             next += 1;
         }
+        charge(meter, 1, span)?;
         let state = continuation
             .states
             .get(next)
@@ -194,6 +312,7 @@ pub fn verify(continuation: &Continuation) -> Result<(), Diagnostic> {
         )?;
         next += 1;
     }
+    charge(meter, 1, span)?;
     if next != continuation.states.len() {
         return Err(fail("Extra continuation states"));
     }
@@ -213,25 +332,46 @@ fn destinations(terminator: &Terminator) -> Vec<usize> {
 }
 /// Verified structured task graphs yield at every natural loop backedge. Reject
 /// an irreducible cycle rather than silently permitting a non-yielding cycle.
-fn cooperative_backedges(function: &Function) -> Result<BTreeSet<(usize, usize)>, Diagnostic> {
+fn cooperative_backedges_metered(
+    function: &Function,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<BTreeSet<(usize, usize)>, Diagnostic> {
     let count = function.blocks.len();
+    let span = &function.span;
+    charge(meter, count.saturating_mul(4), span)?;
     let all: BTreeSet<_> = (0..count).collect();
     let mut predecessors = vec![Vec::new(); count];
     for (from, block) in function.blocks.iter().enumerate() {
+        charge(meter, 1, span)?;
+        charge(meter, 2, span)?;
         for to in destinations(&block.terminator) {
+            if to >= count {
+                return Err(Diagnostic {
+                    span: span.clone(),
+                    message: "Async control-flow target is out of range".into(),
+                });
+            }
             predecessors[to].push(from);
         }
     }
+    charge(meter, count.saturating_mul(count), span)?;
     let mut dominators = vec![all; count];
     dominators[0] = BTreeSet::from([0]);
     loop {
         let mut changed = false;
         for block in 1..count {
+            charge(meter, count, span)?;
             let mut next: BTreeSet<_> = (0..count).collect();
             for from in &predecessors[block] {
+                charge(meter, next.len(), span)?;
                 next.retain(|id| dominators[*from].contains(id));
             }
             next.insert(block);
+            charge(
+                meter,
+                next.len().saturating_add(dominators[block].len()),
+                span,
+            )?;
             if next != dominators[block] {
                 dominators[block] = next;
                 changed = true;
@@ -242,21 +382,30 @@ fn cooperative_backedges(function: &Function) -> Result<BTreeSet<(usize, usize)>
         }
     }
     let mut backedges = BTreeSet::new();
+    charge(meter, count.saturating_mul(2), span)?;
     let mut indegree = vec![0; count];
     for (from, block) in function.blocks.iter().enumerate() {
+        charge(meter, 1, span)?;
+        charge(meter, 2, span)?;
         for to in destinations(&block.terminator) {
+            charge(meter, dominators[from].len(), span)?;
             if dominators[from].contains(&to) {
+                charge(meter, 1, span)?;
                 backedges.insert((from, to));
             } else {
                 indegree[to] += 1;
             }
         }
     }
+    charge(meter, count, span)?;
     let mut ready: Vec<_> = (0..count).filter(|id| indegree[*id] == 0).collect();
     let mut visited = 0;
     while let Some(from) = ready.pop() {
+        charge(meter, 1, span)?;
         visited += 1;
+        charge(meter, 2, span)?;
         for to in destinations(&function.blocks[from].terminator) {
+            charge(meter, 1, span)?;
             if !backedges.contains(&(from, to)) {
                 indegree[to] -= 1;
                 if indegree[to] == 0 {
@@ -360,6 +509,37 @@ mod tests {
         spill.clear();
         assert!(verify(&plan).is_err());
     }
+
+    #[test]
+    fn metered_continuation_verification_charges_liveness_and_recovers() {
+        let plan = normalize(two_awaits()).unwrap();
+        let mut charged = 0u64;
+        verify_metered(&plan, &mut |work| {
+            charged += work;
+            Ok(())
+        })
+        .unwrap();
+        assert!(charged > plan.states.len() as u64);
+
+        let mut calls = 0;
+        let error = verify_metered(&plan, &mut |_| {
+            calls += 1;
+            if calls == 3 {
+                Err(Diagnostic {
+                    span: 99..100,
+                    message: "test continuation cancellation".into(),
+                })
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err();
+        assert_eq!(error.message, "test continuation cancellation");
+        assert_eq!(error.span, 0..1);
+        // A rejected metered inspection does not modify the immutable plan.
+        verify(&plan).unwrap();
+    }
+
     #[test]
     fn checkpoints_true_backedges_and_verifies_the_catalog() {
         let function = Function {
@@ -545,7 +725,7 @@ mod tests {
     }
 }
 
-impl Lowerer {
+impl Lowerer<'_> {
     /// Inline genuine analyzed regions into the task CFG. Latent exceptional
     /// branches make handler/cleanup locals and reachability visible to normal
     /// IR verification; native emission bypasses them only during unwind.
@@ -559,11 +739,20 @@ impl Lowerer {
         dynamic: Vec<ValueId>,
     ) -> Result<Option<ValueId>, Diagnostic> {
         use crate::portable::{hir::Literal, ir::Terminator};
+        self.charge(self.bindings.len(), &hir.span)?;
         let bindings = self.bindings.clone();
-        let body_block = self.block(Vec::new());
-        let handler_block = handler.map(|_| self.block(Vec::new()));
-        let cleanup_block = cleanup.map(|_| self.block(Vec::new()));
-        let end = self.block(Vec::new());
+        let body_block = self.block(Vec::new())?;
+        let handler_block = if handler.is_some() {
+            Some(self.block(Vec::new())?)
+        } else {
+            None
+        };
+        let cleanup_block = if cleanup.is_some() {
+            Some(self.block(Vec::new())?)
+        } else {
+            None
+        };
+        let end = self.block(Vec::new())?;
         let flag = self.emit(
             Operation::RegionPush {
                 handler: handler_block,
@@ -573,9 +762,15 @@ impl Lowerer {
             },
             Type::Bool,
             hir.span.clone(),
-        );
+        )?;
+        let exceptional_count = usize::from(handler_block.is_some())
+            .saturating_add(usize::from(cleanup_block.is_some()));
+        self.charge(exceptional_count.saturating_mul(2), &hir.span)?;
         let exceptional: Vec<_> = handler_block.into_iter().chain(cleanup_block).collect();
-        let selectors: Vec<_> = exceptional.iter().map(|_| self.block(Vec::new())).collect();
+        let mut selectors = Vec::with_capacity(exceptional.len());
+        for _ in &exceptional {
+            selectors.push(self.block(Vec::new())?);
+        }
         self.function.blocks[self.current].terminator = Terminator::Branch {
             condition: flag,
             consequent: end,
@@ -583,7 +778,7 @@ impl Lowerer {
         };
         for (index, selector) in selectors.iter().enumerate() {
             self.current = *selector;
-            let flag = self.literal(Literal::Bool(false), hir.span.clone());
+            let flag = self.literal(Literal::Bool(false), hir.span.clone())?;
             self.function.blocks[*selector].terminator = Terminator::Branch {
                 condition: flag,
                 consequent: exceptional[index],
@@ -599,17 +794,19 @@ impl Lowerer {
                 },
                 Type::Value,
                 body.span.clone(),
-            );
+            )?;
             self.function.blocks[self.current].terminator = Terminator::Jump {
                 target: cleanup_block.unwrap_or(end),
                 arguments: Vec::new(),
             };
         }
         if let (Some(handler), Some(block)) = (handler, handler_block) {
+            self.charge(bindings.len(), &hir.span)?;
             self.bindings = bindings.clone();
             self.current = block;
             if let Some(payload) = payload {
-                let value = self.emit(Operation::RegionValue, Type::Value, payload.span.clone());
+                let value = self.emit(Operation::RegionValue, Type::Value, payload.span.clone())?;
+                self.charge(1, &payload.span)?;
                 self.bindings.insert(payload.id, value);
             }
             if let Some(value) = self.expression(handler)? {
@@ -620,7 +817,7 @@ impl Lowerer {
                     },
                     Type::Value,
                     handler.span.clone(),
-                );
+                )?;
                 self.function.blocks[self.current].terminator = Terminator::Jump {
                     target: cleanup_block.unwrap_or(end),
                     arguments: Vec::new(),
@@ -628,6 +825,7 @@ impl Lowerer {
             }
         }
         if let (Some(cleanup), Some(block)) = (cleanup, cleanup_block) {
+            self.charge(bindings.len(), &hir.span)?;
             self.bindings = bindings.clone();
             self.current = block;
             if let Some(value) = self.expression(cleanup)? {
@@ -638,7 +836,7 @@ impl Lowerer {
                     },
                     Type::Value,
                     cleanup.span.clone(),
-                );
+                )?;
                 self.function.blocks[self.current].terminator = Terminator::Jump {
                     target: end,
                     arguments: Vec::new(),
@@ -651,6 +849,6 @@ impl Lowerer {
             Operation::RegionValue,
             Type::Value,
             hir.span.clone(),
-        )))
+        )?))
     }
 }

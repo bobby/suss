@@ -8,8 +8,8 @@ use lexopt::prelude::*;
 /// Commands supported by the Suss CLI
 #[derive(Debug)]
 pub enum Command {
-    /// Start the REPL (default); `fuel` overrides each input's execution budget
-    Repl { fuel: Option<u64> },
+    /// Start the REPL; legacy `fuel` sets both budgets, then `compile_fuel` overrides compilation/Macro.
+    Repl { fuel: Option<u64>, compile_fuel: Option<u64> },
     /// Evaluate an expression and print the result
     Eval { expr: String },
     /// Run a file
@@ -23,6 +23,7 @@ pub enum Command {
         exports: Vec<String>,
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile a source file to a CLI command component (main mode)
     CompileMain {
@@ -31,6 +32,7 @@ pub enum Command {
         src_paths: Vec<String>,
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile from a namespace with multi-file support
     CompileNamespace {
@@ -45,6 +47,7 @@ pub enum Command {
         /// Output path
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile a project from deps.sus
     CompileProject {
@@ -53,6 +56,7 @@ pub enum Command {
         /// Optional config file path (defaults to deps.sus)
         config_path: Option<String>,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Run a compiled WASM component
     Run {
@@ -74,11 +78,13 @@ pub enum Command {
 
 /// Parse command-line arguments into a Command
 pub fn parse_args() -> Result<Command, lexopt::Error> {
-    let mut parser = lexopt::Parser::from_env();
+    parse_command(lexopt::Parser::from_env())
+}
 
+fn parse_command(mut parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
     // Check for subcommand or flags first
     match parser.next()? {
-        None => Ok(Command::Repl { fuel: None }),
+        None => Ok(Command::Repl { fuel: None, compile_fuel: None }),
 
         Some(Short('h')) | Some(Long("help")) => Ok(Command::Help),
 
@@ -122,6 +128,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
     let mut optimize = false;
+    let mut compile_fuel = None;
     let mut wit_world = None;
     let mut exports = Vec::new();
 
@@ -147,6 +154,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
                 // --world for world name in project mode
                 world_target = Some(parser.value()?.string()?);
             }
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
             Long("wit-world") => wit_world = Some(parser.value()?.string()?),
             Long("export") => exports.push(parser.value()?.string()?),
             Short('o') | Long("output") => {
@@ -220,6 +228,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             exports,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_some() && main_ns.is_some() {
         // Main mode: compile with -main function
@@ -231,6 +240,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             src_paths,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_some() && world_wit.is_some() {
         // File mode: explicit source and WIT
@@ -244,6 +254,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             exports,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_none() || world_wit.is_none() {
         // Project mode: no source file, or source without -w/-m
@@ -270,6 +281,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             world: world_target,
             config_path,
             optimize,
+            compile_fuel,
         })
     } else {
         // Invalid combination
@@ -289,13 +301,15 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
 /// or function parameters (for explicit `--invoke`).
 fn parse_repl(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut fuel = None;
+    let mut compile_fuel = None;
     while let Some(arg) = parser.next()? {
         match arg {
             Long("fuel") => fuel = Some(parser.value()?.parse()?),
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
             _ => return Err(arg.unexpected()),
         }
     }
-    Ok(Command::Repl { fuel })
+    Ok(Command::Repl { fuel, compile_fuel })
 }
 
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
@@ -350,7 +364,9 @@ USAGE:
 
 OPTIONS:
     -r, repl        Start the REPL (default if no arguments)
-        --fuel <N>      Execution budget per input (default 10000000);
+        --fuel <N>      Set evaluation and compilation fuel (default 10000000 each)
+        --compile-fuel <N>
+                        Override compilation and macro-expansion fuel; evaluation fuel is unchanged
                         Ctrl-C interrupts a running input
     -e <EXPR>       Evaluate an expression and print the result
     -h, --help      Print this help message
@@ -365,6 +381,7 @@ COMMANDS:
         -c, --config <FILE>  Config file path (default: deps.sus)
 
     compile - Shared options:
+        --compile-fuel <N>  Set compilation and macro-expansion fuel (default 10000000); artifact execution is unchanged
         -O, --optimize       Run wasm-opt on output (requires wasm-opt in PATH)
 
     compile - File mode (single file compilation):
@@ -398,4 +415,100 @@ EXAMPLES:
     suss run out.wasm --invoke add 3 5              (run specific function)
 "
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn budgets(args: &[&str]) -> (Option<u64>, Option<u64>) {
+        match parse_command(lexopt::Parser::from_args(args.iter().copied())).unwrap() {
+            Command::Repl { fuel, compile_fuel } => (fuel, compile_fuel),
+            command => panic!("expected REPL, got {command:?}"),
+        }
+    }
+
+    #[test]
+    fn repl_fuel_defaults_and_legacy_aliases_are_unchanged() {
+        for args in [&[][..], &["repl"][..], &["-r"][..]] {
+            assert_eq!(budgets(args), (None, None));
+        }
+        for mode in ["repl", "-r"] {
+            assert_eq!(budgets(&[mode, "--fuel", "21"]), (Some(21), None));
+        }
+    }
+
+    #[test]
+    fn repl_compile_fuel_is_independent_of_flag_order() {
+        for mode in ["repl", "-r"] {
+            assert_eq!(budgets(&[mode, "--compile-fuel", "1"]), (None, Some(1)));
+            assert_eq!(budgets(&[mode, "--fuel", "10000000", "--compile-fuel", "1"]),
+                (Some(10_000_000), Some(1)));
+            assert_eq!(budgets(&[mode, "--compile-fuel", "1", "--fuel", "10000000"]),
+                (Some(10_000_000), Some(1)));
+        }
+    }
+
+    #[test]
+    fn repl_repeated_budget_flags_only_replace_their_own_option() {
+        assert_eq!(budgets(&["repl", "--compile-fuel", "2", "--fuel", "7",
+            "--compile-fuel", "3", "--fuel", "11"]), (Some(11), Some(3)));
+    }
+
+    #[test]
+    fn repl_budget_values_reject_missing_invalid_negative_and_overflow() {
+        for flag in ["--fuel", "--compile-fuel"] {
+            assert!(parse_command(lexopt::Parser::from_args(["repl", flag])).is_err());
+            for value in ["nope", "-1", "18446744073709551616"] {
+                assert!(parse_command(lexopt::Parser::from_args(["repl", flag, value])).is_err(),
+                    "accepted {flag} {value}");
+            }
+        }
+        assert!(parse_command(lexopt::Parser::from_args(["repl", "--unknown"])).is_err());
+    }
+
+    #[test]
+    fn repl_budget_values_preserve_unsigned_boundaries() {
+        assert_eq!(budgets(&["repl", "--fuel", "0", "--compile-fuel", "18446744073709551615"]),
+            (Some(0), Some(u64::MAX)));
+    }
+    fn aot_budget(args: &[&str]) -> Option<u64> {
+        match parse_command(lexopt::Parser::from_args(args.iter().copied())).unwrap() {
+            Command::CompileFile { compile_fuel, .. }
+            | Command::CompileNamespace { compile_fuel, .. }
+            | Command::CompileMain { compile_fuel, .. }
+            | Command::CompileProject { compile_fuel, .. } => compile_fuel,
+            other => panic!("expected compile command: {other:?}"),
+        }
+    }
+    #[test]
+    fn aot_compile_fuel_defaults_and_all_modes_are_explicit() {
+        for mode in [
+            vec!["compile", "app.sus", "-w", "api.wit"],
+            vec!["compile", "-n", "app", "-w", "api.wit"],
+            vec!["compile", "app.sus", "-m", "app"],
+            vec!["compile"],
+        ] {
+            assert_eq!(aot_budget(&mode), None);
+            let mut configured = mode.clone();
+            configured.extend(["--compile-fuel", "10000000000"]);
+            assert_eq!(aot_budget(&configured), Some(10_000_000_000));
+            let mut before = vec!["compile", "--compile-fuel", "10000000000"];
+            before.extend_from_slice(&mode[1..]);
+            assert_eq!(aot_budget(&before), Some(10_000_000_000));
+        }
+    }
+    #[test]
+    fn aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries() {
+        for value in ["-1", "no", "18446744073709551616"] {
+            assert!(parse_command(lexopt::Parser::from_args(
+                ["compile", "--compile-fuel", value])).is_err());
+        }
+        assert!(parse_command(lexopt::Parser::from_args(
+            ["compile", "--compile-fuel"])).is_err());
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "0"]), Some(0));
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "18446744073709551615"]), Some(u64::MAX));
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "1", "--compile-fuel", "2"]), Some(2));
+    }
+
 }

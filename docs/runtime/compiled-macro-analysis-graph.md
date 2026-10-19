@@ -20,9 +20,9 @@ discovering dependencies; an iterative ordering then constructs canonical rooted
 values through `FormBridge`. Each shared record is constructed once. Dependency
 cycles fail explicitly. Analysis dependency depth does not consume recursive Rust
 stack frames: each initializer can reference the environment of earlier bindings,
-even when the reader syntax itself is shallow. The aggregate planning budget is
-65,536 nodes and 1,048,576 UTF-16 units. Reader data construction retains its separate
-nesting and per-form bounds. Budgets are checked before graph materialization.
+even when the reader syntax itself is shallow. Planning and reader construction
+charge performed work to the operation allowance rather than fixed graph-node,
+reader-depth or UTF-16-unit caps.
 
 Source forms and their actual contexts are preserved alongside explicit native
 lowering records. Compiler-only operations stay under `suss` extension keys rather

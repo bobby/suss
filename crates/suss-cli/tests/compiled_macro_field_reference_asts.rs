@@ -1,4 +1,7 @@
 //! Field AST facts are observed from actual analyzed source in both phases.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -102,6 +105,7 @@ fn field_reference_asts_match_pinned_flags_tags_positions_and_identity() {
     let source = format!("(ns user)\n;; oracle header padding\n{body}\nresults");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro observe [label binding field-name]

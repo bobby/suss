@@ -27,6 +27,23 @@ remain mandatory. Unknown external expansion-host provenance bypasses reuse.
 The internal IR Debug representation is qualified by compiler identity and is
 only a process-local key encoding, never a portable serialized artifact format.
 
+Optional key construction has a 64K charged-work admission allowance across source
+text, reader forms, dependency comparisons, IR Debug encoding and numeric-bit
+visits. Full IR verification runs before this allowance applies. Each attempted
+operation first debits the caller's shared budget; real fuel and cancellation
+errors propagate even on the operation crossing admission. Decline discards the
+partial key and emits the fully verified IR fresh, without looking up, inserting
+or evicting entries. It imposes no source-size rejection or new operation fuel.
+Completed small keys retain their encoding and total charged work. Cache counters
+include these successful fresh emissions as bypasses.
+
+Admitted key work is capped at 64K; the crossing attempt is additionally billed
+in full, and a produced Debug fragment may exceed that allowance by itself.
+This is not a byte-size or wall-clock bound. Formatting, framing and
+hashing overhead and the existing fresh-emission/cached-byte validation and copy
+accounting gaps remain separately documented in
+[computation budgets](macro-computation-budgets.md).
+
 Each host retains at most64 entries and32MiB of Wasm, evicting oldest unused
 entries first. Oversized artifacts execute without being retained. Reset creates
 a fresh host/cache. Cache counters describe artifact reuse, not resident code or

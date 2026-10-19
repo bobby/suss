@@ -2,7 +2,7 @@
 use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use crate::{
     portable_macro_data::FormBridge,
-    portable_macro_graph::{AnalysisGraph, DeclarationValues},
+    portable_macro_graph::AnalysisGraph,
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::{BTreeMap, BTreeSet};
@@ -15,10 +15,11 @@ pub(crate) enum CompilerCatalogMode {
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
-    declaration_values: DeclarationValues,
     definitions: BTreeMap<(String, String), SessionValue>,
     // Macros whose definitions cannot read their implicit &env parameter.
     environment_free: BTreeSet<(String, String)>,
+    // Conservatively proven definitions that cannot read their implicit &form.
+    caller_form_free: BTreeSet<(String, String)>,
     // Explicit source compiler helpers need cross-namespace/protocol revisions.
     // This transport policy is rolled back with the corresponding macro binding.
     compiler_catalog_macros: BTreeMap<(String, String), CompilerCatalogMode>,
@@ -29,7 +30,80 @@ pub struct CompiledMacros {
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
     artifact_cache: crate::portable::artifact_cache::ArtifactCache,
+    declaration_values: crate::portable_macro_graph::DeclarationValues,
 }
+// Hash the identical legacy Debug/source/path stream without retaining a copy of
+// that stream. The meter error must survive fmt::Error's intentionally tiny API.
+fn declaration_provenance_metered(
+    form: &Form,
+    origin: Option<&crate::portable::SourceOrigin>,
+    charge: &mut dyn FnMut(u64) -> Result<(), SessionError>,
+) -> Result<String, SessionError> {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write as _;
+    const CHUNK: usize = 1024;
+    struct Writer<'a> {
+        digest: Sha256,
+        charge: &'a mut dyn FnMut(u64) -> Result<(), SessionError>,
+        failure: Option<SessionError>,
+    }
+    impl std::fmt::Write for Writer<'_> {
+        fn write_str(&mut self, text: &str) -> std::fmt::Result {
+            if self.failure.is_some() {
+                return Err(std::fmt::Error);
+            }
+            for chunk in text.as_bytes().chunks(CHUNK) {
+                // Bounded byte slices do not copy. Charge before reading/hash
+                // update; +1 covers the reached chunk's fixed bookkeeping.
+                if let Err(error) = (self.charge)(chunk.len() as u64 + 1) {
+                    self.failure = Some(error);
+                    return Err(std::fmt::Error);
+                }
+                self.digest.update(chunk);
+            }
+            Ok(())
+        }
+    }
+    charge(std::mem::size_of::<Writer<'_>>() as u64 + 1)?;
+    let mut writer = Writer { digest: Sha256::new(), charge, failure: None };
+    let formatted = write!(&mut writer, "{form:?}:{}:{:?}",
+        origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
+    let Writer { digest, failure, .. } = writer;
+    if let Some(error) = failure {
+        return Err(error);
+    }
+    if formatted.is_err() {
+        return Err(SessionError::Host(wasmtime::Error::msg(
+            "Macro declaration provenance formatting failed")));
+    }
+    // SHA final padding/compression and the fixed64-byte lowercase hex result:
+    // reserve/write/key lookup work is paid before finalization/allocation.
+    charge(128 + 4 * 64 + std::mem::size_of::<String>() as u64)?;
+    let mut output = String::with_capacity(64);
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    for byte in digest.finalize() {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 15) as usize] as char);
+    }
+    Ok(output)
+}
+
+fn declaration_provenance_context(
+    error: SessionError,
+    span: &std::ops::Range<usize>,
+    origin: Option<&crate::portable::SourceOrigin>,
+) -> SessionError {
+    let context = || match origin.and_then(|origin| origin.path()) {
+        Some(path) => format!("Macro declaration provenance failed at bytes {span:?} [{}]", path.display()),
+        None => format!("Macro declaration provenance failed at bytes {span:?}"),
+    };
+    match error {
+        SessionError::Trap(error) => SessionError::Trap(error.context(context())),
+        SessionError::Host(error) => SessionError::Host(error.context(context())),
+        error => error,
+    }
+}
+
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
     Form {
         span,
@@ -46,38 +120,107 @@ fn failure(form: &Form, message: &str) -> SessionError {
         message: message.into(),
     })
 }
+fn trace_fuel(session: &Session, target: &(String, String), stage: &str) -> Result<(), SessionError> {
+    if std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
+        eprintln!("macro-fuel {}/{} {stage}: {}", target.0, target.1,
+            session.operation_fuel_remaining()?);
+    }
+    Ok(())
+}
 pub(crate) type MacroCheckpoint = (
     crate::portable_session::BindingCheckpoint,
     BTreeMap<(String, String), SessionValue>,
     BTreeMap<(String, String), String>,
     BTreeSet<(String, String)>,
     BTreeMap<(String, String), CompilerCatalogMode>,
+    BTreeSet<(String, String)>,
 );
 
-/// Whether a definition contains a symbol named &env anywhere, including in
-/// quoted or syntax-quoted data. Together with source-macro expansions observed
-/// while its body compiles, this decides whether a macro may read &env.
-fn mentions_environment(form: &Form) -> bool {
-    let mut pending = vec![form];
-    while let Some(form) = pending.pop() {
-        pending.extend(&form.metadata);
+/// Whether the definition contains the named implicit parameter, including raw
+/// reader children and metadata. Both observation scans retain their old order.
+fn mentions_environment(
+    form: &Form,
+    charge: &mut dyn FnMut(u64) -> Result<(), SessionError>,
+) -> Result<bool, SessionError> {
+    mentions_parameter(form, "&env", charge)
+}
+fn mentions_parameter(
+    form: &Form,
+    name: &str,
+    charge: &mut dyn FnMut(u64) -> Result<(), SessionError>,
+) -> Result<bool, SessionError> {
+    fn overflow() -> SessionError {
+        SessionError::Host(wasmtime::Error::msg("Macro parameter observation storage overflow"))
+    }
+    fn append<'a>(
+        pending: &mut Vec<&'a Form>,
+        forms: &'a [Form],
+        charge: &mut dyn FnMut(u64) -> Result<(), SessionError>,
+    ) -> Result<(), SessionError> {
+        let needed = pending.len().checked_add(forms.len()).ok_or_else(overflow)?;
+        let bytes = forms.len().checked_mul(std::mem::size_of::<&Form>()).ok_or_else(overflow)?;
+        // Bookkeeping and reference reads/copies are paid even with reused capacity.
+        charge(u64::try_from(bytes).map_err(|_| overflow())?.checked_add(1).ok_or_else(overflow)?)?;
+        if needed > pending.capacity() {
+            let capacity = needed.max(pending.capacity().checked_mul(2).ok_or_else(overflow)?).max(4);
+            let allocation = capacity.checked_mul(std::mem::size_of::<&Form>()).ok_or_else(overflow)?;
+            let relocation = pending.len().checked_mul(std::mem::size_of::<&Form>()).ok_or_else(overflow)?;
+            let units = allocation.checked_add(relocation).and_then(|n| n.checked_add(1)).ok_or_else(overflow)?;
+            // Same byte allocation/relocation convention as other native work
+            // vectors; the fixed unit prepays allocation/cleanup bookkeeping.
+            charge(u64::try_from(units).map_err(|_| overflow())?)?;
+            pending.try_reserve_exact(capacity - pending.len()).map_err(|_| {
+                SessionError::Host(wasmtime::Error::msg("Macro parameter observation allocation failed"))
+            })?;
+        }
+        pending.extend(forms.iter());
+        Ok(())
+    }
+    charge(std::mem::size_of::<Vec<&Form>>() as u64 + 1)?;
+    let mut pending = Vec::new();
+    append(&mut pending, std::slice::from_ref(form), charge)?;
+    while !pending.is_empty() {
+        charge(1)?;
+        let form = pending.pop().unwrap();
+        // Old code enqueued metadata before testing this node. Preserve that,
+        // including allocation/error order when a symbol itself is a match.
+        append(&mut pending, &form.metadata, charge)?;
         match &form.kind {
-            Kind::Symbol(symbol) if symbol.name == "&env" => return true,
+            Kind::Symbol(symbol) => {
+                charge(1)?;
+                if symbol.name.len() == name.len() {
+                    let bytes = symbol.name.len().checked_mul(2).ok_or_else(overflow)?;
+                    charge(u64::try_from(bytes).map_err(|_| overflow())?)?;
+                    if symbol.name == name { return Ok(true); }
+                }
+            }
             Kind::List(items)
             | Kind::Vector(items)
             | Kind::Set(items)
             | Kind::Map(items)
             | Kind::Conditional(items)
-            | Kind::SplicingConditional(items) => pending.extend(items),
-            Kind::Discard(target) => pending.push(target.as_ref()),
+            | Kind::SplicingConditional(items) => append(&mut pending, items, charge)?,
+            Kind::Discard(target) => append(&mut pending, std::slice::from_ref(target.as_ref()), charge)?,
             Kind::Prefix { operator, target } => {
-                pending.push(operator.as_ref());
-                pending.push(target.as_ref());
+                append(&mut pending, std::slice::from_ref(operator.as_ref()), charge)?;
+                append(&mut pending, std::slice::from_ref(target.as_ref()), charge)?;
             }
             _ => {}
         }
     }
-    false
+    Ok(false)
+}
+fn declaration_observation_context(
+    error: SessionError,
+    span: &std::ops::Range<usize>,
+    name: &str,
+) -> SessionError {
+    let context = || format!("Macro declaration parameter observation ({name}) failed at bytes {span:?}");
+    match error {
+        SessionError::Trap(error) => SessionError::Trap(error.context(context())),
+        SessionError::Host(error) => SessionError::Host(error.context(context())),
+        error => error,
+    }
 }
 
 #[cfg(test)]
@@ -88,11 +231,11 @@ fn environment_observation_traverses_raw_splicing_children_and_metadata() {
         metadata: vec![],
         kind: Kind::SplicingConditional(vec![symbol("&env", 0..1)]),
     };
-    assert!(mentions_environment(&form));
+    assert!(mentions_environment(&form, &mut |_| Ok(())).unwrap());
     form.kind = Kind::SplicingConditional(vec![symbol("ordinary", 0..1)]);
-    assert!(!mentions_environment(&form));
+    assert!(!mentions_environment(&form, &mut |_| Ok(())).unwrap());
     form.metadata.push(symbol("&env", 0..1));
-    assert!(mentions_environment(&form));
+    assert!(mentions_environment(&form, &mut |_| Ok(())).unwrap());
 }
 fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, SessionError> {
     let Some(parameters) = parts.first() else {
@@ -127,9 +270,9 @@ impl CompiledMacros {
         let mut macros = Self {
             session,
             bridge,
-            declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             environment_free: BTreeSet::new(),
+            caller_form_free: BTreeSet::new(),
             compiler_catalog_macros: BTreeMap::new(),
             environment_materializations: 0,
             source_expansions: 0,
@@ -137,6 +280,7 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
+            declaration_values: Default::default(),
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
@@ -168,6 +312,7 @@ impl CompiledMacros {
             self.declaration_sources.clone(),
             self.environment_free.clone(),
             self.compiler_catalog_macros.clone(),
+            self.caller_form_free.clone(),
         ))
     }
     pub(crate) fn restore_bindings(
@@ -187,6 +332,11 @@ impl CompiledMacros {
                 self.environment_free.insert(key.clone());
             } else {
                 self.environment_free.remove(&key);
+            }
+            if checkpoint.5.contains(&key) {
+                self.caller_form_free.insert(key.clone());
+            } else {
+                self.caller_form_free.remove(&key);
             }
             if let Some(mode) = checkpoint.4.get(&key) {
                 self.compiler_catalog_macros.insert(key.clone(), *mode);
@@ -208,7 +358,13 @@ impl CompiledMacros {
         self.session.enter_namespace(namespace)
     }
     pub fn define(&mut self, source: &str) -> Result<(), SessionError> {
-        let forms = read_forms(source).map_err(|error| {
+        let _budget = self.session.operation_budget_scope()?;
+        self.session.charge_host_work(source.len() as u64)?;
+        let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
+            self.session.charge_host_work(work).map_err(|error| suss_reader::ParseError {
+                span: 0..source.len(), message: error.to_string(), expected: vec![],
+            })
+        }).map_err(|error| {
             SessionError::Compile(Diagnostic {
                 span: error.span,
                 message: error.message,
@@ -233,6 +389,7 @@ impl CompiledMacros {
         policy: crate::portable::MacroReload,
     ) -> Result<Vec<String>, SessionError> {
         use crate::portable::{modules, resolve::Phase};
+        let _budget = self.session.operation_budget_scope()?;
         if matches!(namespace, "suss.core" | "cljs.core")
             && policy != crate::portable::MacroReload::Once
         {
@@ -256,12 +413,16 @@ impl CompiledMacros {
                     .retain(|identity| identity.namespace() == "suss.core");
             }
         }
-        let graph = modules::discover_phase_modules(
+        let graph = modules::discover_phase_modules_metered(
             namespace,
             &snapshot.source_paths,
             &snapshot.environment,
             Phase::Macro,
             &snapshot.provided,
+            &mut |work| self.session.charge_host_work(work).map_err(|error| Diagnostic {
+                span: 0..0,
+                message: format!("Namespace discovery budget exhausted: {error}"),
+            }),
         )
         .map_err(SessionError::Module)?;
         // Discovery errors preserve previous loaded identities. Once execution
@@ -283,6 +444,7 @@ impl CompiledMacros {
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
+                self.session.charge_host_work(unit.source.len() as u64)?;
                 let source_identity = crate::portable::bootstrap::sha256(
                     format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes(),
                 );
@@ -364,6 +526,7 @@ impl CompiledMacros {
         span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
+        let _budget = self.session.operation_budget_scope()?;
         let form = &form;
         let Kind::List(items) = &form.kind else {
             return Err(failure(form, "Expected source defmacro"));
@@ -424,8 +587,7 @@ impl CompiledMacros {
                 });
             }
         }
-        let metadata = crate::portable::hir::reader_metadata_pairs(&name_form)
-            .map_err(SessionError::Compile)?;
+        let metadata = crate::portable_macro_data::normalized_reader_metadata(&mut self.session, &name_form)?;
         let mut compiler_catalog = None;
         for pair in metadata.chunks_exact(2) {
             if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.as_deref() == Some("suss") && key.name == "compiler-catalog")
@@ -471,10 +633,27 @@ impl CompiledMacros {
         let expansions = self.source_expansions;
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
-        let reads_environment = mentions_environment(form) || self.source_expansions != expansions;
+        let reads_environment = mentions_environment(form,
+            &mut |work| self.session.charge_host_work(work))
+            .map_err(|error| declaration_observation_context(error, &form.span, "&env"))?
+            || self.source_expansions != expansions;
+        let reads_caller_form = mentions_parameter(form, "&form",
+            &mut |work| self.session.charge_host_work(work))
+            .map_err(|error| declaration_observation_context(error, &form.span, "&form"))?
+            || self.source_expansions != expansions;
+        // Complete all fallible provenance work before publishing this
+        // replacement. Effects already executed during preparation are retained.
+        let provenance = declaration_provenance_metered(form, origin,
+            &mut |work| self.session.charge_host_work(work))
+            .map_err(|error| declaration_provenance_context(error, &form.span, origin))?;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
+        if reads_caller_form {
+            self.caller_form_free.remove(&key);
+        } else {
+            self.caller_form_free.insert(key.clone());
+        }
         if reads_environment || compiler_catalog.is_some() {
             self.environment_free.remove(&key);
         } else {
@@ -486,14 +665,9 @@ impl CompiledMacros {
             self.compiler_catalog_macros.remove(&key);
         }
         self.definitions.insert(key, value.clone());
-        let provenance = format!(
-            "{form:?}:{}:{:?}",
-            origin.map_or("", |origin| origin.text()),
-            origin.and_then(|origin| origin.path())
-        );
         self.declaration_sources.insert(
             (namespace.clone(), name.name.clone()),
-            crate::portable::bootstrap::sha256(provenance.as_bytes()),
+            provenance,
         );
         let exports = self
             .definitions
@@ -515,6 +689,26 @@ impl CompiledMacros {
     }
 }
 impl ExpansionHost for CompiledMacros {
+    fn expansion_work_fuel(&self) -> u64 {
+        self.session.options().fuel_per_operation
+    }
+    fn begin_expansion_request(&mut self, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
+        self.session.begin_operation_budget().map_err(|error| Diagnostic {
+            span,
+            message: format!("Unable to start macro expansion budget: {error}"),
+        })
+    }
+    fn end_expansion_request(&mut self) {
+        self.session.end_operation_budget();
+    }
+
+    fn charge_expansion_work(&mut self, work: u64, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
+        self.session.charge_host_work(work).map_err(|error| Diagnostic {
+            span,
+            message: format!("Macro expansion analysis budget exhausted: {error}"),
+        })
+    }
+
     fn emit_fragment(
         &mut self,
         function: &crate::portable::ir::Function,
@@ -523,8 +717,14 @@ impl ExpansionHost for CompiledMacros {
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
         let dependencies = self.artifact_dependencies();
-        self.artifact_cache
-            .emit(function, phase, forms, origin, dependencies.as_deref())
+        let session = &mut self.session;
+        self.artifact_cache.emit_metered(
+            function, phase, forms, origin, dependencies.as_deref(),
+            &mut |work| session.charge_host_work(work).map_err(|error| Diagnostic {
+                span: function.span.clone(),
+                message: format!("Artifact preparation budget exhausted: {error}"),
+            }),
+        )
     }
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         if !self.incomplete_sources.is_empty() {
@@ -678,17 +878,36 @@ impl ExpansionHost for CompiledMacros {
             return Ok(None);
         };
         self.source_expansions += 1;
-        let result = (|| -> Result<Form, SessionError> {
-            let caller_data = context
-                .origin
-                .map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
-                .map_err(SessionError::Compile)?;
-            let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
+        let mut stage = String::from("caller form provenance");
+        let result = self.session.with_operation_budget(|session| -> Result<Form, SessionError> {
+            trace_fuel(session, &target, "start")?;
+            let mut meter = |work| {
+                    session.charge_host_work(work).map_err(|error| Diagnostic {
+                        span: form.span.clone(),
+                        message: error.to_string(),
+                    })
+                };
+            let caller_data = match context.origin {
+                Some(origin) => origin.macro_form_data_metered(form, &mut meter),
+                None => crate::portable::clone_form_metered(form, &mut meter),
+            }.map_err(SessionError::Compile)?;
+            trace_fuel(session, &target, "provenance")?;
+            stage = "caller &form input transport".into();
+            // Keep complete provenance for explicit arguments and &env. Only
+            // the unused implicit parameter can be replaced with nil. Any
+            // source expansion while compiling the body disables this proof.
+            let caller_form = if self.caller_form_free.contains(&target) {
+                self.bridge.quote(session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
+            } else {
+                self.bridge.quote_ref(session, &caller_data)?
+            };
+            trace_fuel(session, &target, "caller-form")?;
             // A macro that cannot read &env receives nil instead of a
             // materialized analysis graph; nothing else can observe it.
+            stage = "caller &env input transport".into();
             let caller_environment = if self.environment_free.contains(&target) {
                 self.bridge.quote(
-                    &mut self.session,
+                    session,
                     Form {
                         span: form.span.clone(),
                         metadata: vec![],
@@ -697,11 +916,7 @@ impl ExpansionHost for CompiledMacros {
                 )?
             } else {
                 self.environment_materializations += 1;
-                let mut graph = AnalysisGraph::with_declaration_values(
-                    &self.bridge,
-                    &mut self.session,
-                    &mut self.declaration_values,
-                );
+                let mut graph = AnalysisGraph::with_declaration_values(&self.bridge, session, &mut self.declaration_values);
                 match self.compiler_catalog_macros.get(&target) {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?
@@ -713,26 +928,34 @@ impl ExpansionHost for CompiledMacros {
                 }
             };
             let mut arguments = vec![caller_form, caller_environment];
+            trace_fuel(session, &target, "caller-environment")?;
             let Kind::List(caller_items) = &caller_data.kind else {
                 unreachable!("matched macro call")
             };
-            for argument in &caller_items[1..] {
-                arguments.push(self.bridge.quote(&mut self.session, argument.clone())?);
+            for (index, argument) in caller_items[1..].iter().enumerate() {
+                stage = format!("explicit argument {} input transport", index + 1);
+                arguments.push(self.bridge.quote_ref(session, argument)?);
             }
+            trace_fuel(session, &target, "arguments")?;
             let arguments = arguments.iter().collect::<Vec<_>>();
-            let result = self.session.invoke(&function, &arguments)?;
-            self.bridge
-                .read(&mut self.session, &result, form.span.clone())
-        })();
+            stage = "compiled macro invocation".into();
+            let result = session.invoke(&function, &arguments)?;
+            trace_fuel(session, &target, "invoked")?;
+            stage = "expanded result transport".into();
+            let expanded = self.bridge.read(session, &result, form.span.clone())?;
+            trace_fuel(session, &target, "decoded")?;
+            Ok(expanded)
+        });
         result.map(Some).map_err(|error| Diagnostic {
             span: form.span.clone(),
-            message: format!("Compiled macro expansion failed: {error}"),
+            message: format!("Compiled macro expansion failed during {stage}: {error}"),
         })
     }
 }
 
 #[cfg(test)]
 mod memo_leaf_tests;
+
 
 #[cfg(test)]
 mod when_let_validation_tests {
@@ -763,7 +986,7 @@ mod when_let_validation_tests {
             let value = macros.session.invoke(&capture, &[&function, &form, &bindings]).unwrap();
             macros.session.collect().unwrap();
             let observed = macros.bridge.read(&mut macros.session, &value, 0..source.len()).unwrap();
-            let Kind::Vector(fields) = observed.kind else { panic!("validation result") };
+            let Kind::Vector(fields) = &observed.kind else { panic!("validation result") };
             assert_eq!(fields.len(), 2);
             let Kind::String(message) = &fields[0].kind else { panic!("exception message") };
             assert_eq!(String::from_utf16(message).unwrap(), case["message"].as_str().unwrap());
@@ -774,5 +997,315 @@ mod when_let_validation_tests {
             let recovered = macros.bridge.read(&mut macros.session, &recovered, 0..1).unwrap();
             assert!(matches!(recovered.kind, Kind::Number(n) if n == 42.0));
         }
+    }
+}
+
+#[cfg(test)]
+mod declaration_provenance_tests {
+    use super::*;
+    use crate::portable::SourceOrigin;
+
+    fn legacy(form: &Form, origin: Option<&SourceOrigin>) -> String {
+        crate::portable::bootstrap::sha256(format!("{form:?}:{}:{:?}",
+            origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()))
+            .as_bytes())
+    }
+    fn small() -> Form { Form { span: 2..7, metadata: vec![], kind: Kind::Nil } }
+    fn check_digest(form: &Form, origin: Option<&SourceOrigin>) {
+        let mut work = 0u64;
+        let got = declaration_provenance_metered(form, origin, &mut |units| {
+            work = work.checked_add(units).unwrap(); Ok(())
+        }).unwrap();
+        assert_eq!(got, legacy(form, origin));
+        assert_eq!(got.len(), 64);
+        assert!(work > 0);
+    }
+    #[test]
+    fn declaration_provenance_stream_matches_legacy_rich_deep_and_large_bytes() {
+        let source = "(defmacro ^{:doc \"λ雪\" :private true} rich \"doc\\ntext\" [x] (list 'quote ^{:tag Thing} x))";
+        let rich = read_forms(source).unwrap().remove(0);
+        let origin = SourceOrigin::new(source, Some("dir/λ\\quoted\"/source.sus".into()));
+        let no_path = SourceOrigin::new(source, None);
+        for origin in [None, Some(&origin), Some(&no_path)] { check_digest(&rich, origin); }
+        let mut deep = small();
+        for _ in 0..256 {
+            deep = Form { span: 3..11, metadata: vec![], kind: Kind::Vector(vec![deep]) };
+        }
+        check_digest(&deep, None);
+        let large = Form { span: 0..1, metadata: vec![rich],
+            kind: Kind::String([vec![0xd800, 0, 0xd83d, 0xde00], vec![65; 8192]].concat()) };
+        let text = format!("{}\r\nλ", "p".repeat(16384));
+        let origin = SourceOrigin::new(text.as_str(), Some("large.sus".into()));
+        check_digest(&large, Some(&origin));
+        // Path Debug is intentionally the native formatter, including non-UTF8.
+        #[cfg(unix)] {
+            use std::os::unix::ffi::OsStringExt;
+            let path = std::ffi::OsString::from_vec(vec![b'x', 0xff, b'"', b'\\']);
+            let origin = SourceOrigin::new("source", Some(path.into()));
+            check_digest(&small(), Some(&origin));
+        }
+    }
+    #[test]
+    fn declaration_provenance_low_fuel_and_midstream_irq_keep_typed_errors_and_recover() {
+        let mut session = Session::new_macro().unwrap();
+        let form = small();
+        let large_text = "x".repeat(16384);
+        let origin = SourceOrigin::new(large_text.as_str(), None);
+        // Same1000-unit policy: large source fails, the small exact digest fits.
+        session.set_operation_fuel(1000);
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let error = declaration_provenance_metered(&form, Some(&origin),
+                &mut |units| session.charge_host_work(units)).unwrap_err();
+            let error = declaration_provenance_context(error, &form.span, Some(&origin));
+            assert!(error.to_string().contains("Macro declaration provenance failed"));
+            assert!(matches!(error, SessionError::Trap(ref error)
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error:?}");
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let got = declaration_provenance_metered(&form, None,
+                &mut |units| session.charge_host_work(units)).unwrap();
+            assert_eq!(got, legacy(&form, None));
+        }
+        assert_eq!(session.options().fuel_per_operation, 1000);
+        // Raise only the explicit cancellation flag INSIDE an active scope,
+        // after a real formatting/hash prefix; preserve the configured allowance.
+        session.set_operation_fuel(100_000);
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let interrupt = session.interrupt_handle();
+            let mut total = 0;
+            let mut raised = false;
+            let error = declaration_provenance_metered(&form, Some(&origin), &mut |units| {
+                if total >= 2048 && !raised { interrupt.interrupt(); raised = true; }
+                session.charge_host_work(units)?;
+                total += units; Ok(())
+            }).unwrap_err();
+            assert!(raised && total >= 2048);
+            let error = declaration_provenance_context(error, &form.span, Some(&origin));
+            assert!(error.is_interrupt(), "fmt/context must retain the Session interrupt: {error:?}");
+            assert_eq!(error.to_string(), "Interrupted");
+            let SessionError::Trap(ref trap) = error else { panic!("typed interrupt") };
+            assert_eq!(trap.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::Interrupt));
+            assert!(format!("{trap:#}").contains("Macro declaration provenance failed"));
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert_eq!(declaration_provenance_metered(&form, Some(&origin),
+                &mut |units| session.charge_host_work(units)).unwrap(), legacy(&form, Some(&origin)));
+        }
+        assert_eq!(session.options().fuel_per_operation, 100_000);
+    }
+    #[test]
+    fn failed_macro_replacement_budget_preserves_old_definition_and_catalog_policy() {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro retained-policy [] 17)").unwrap();
+        let key = ("user".to_owned(), "retained-policy".to_owned());
+        let old_hash = macros.declaration_sources[&key].clone();
+        assert!(macros.environment_free.contains(&key));
+        assert!(macros.caller_form_free.contains(&key));
+        assert!(!macros.compiler_catalog_macros.contains_key(&key));
+        let replacement = "(defmacro ^{:suss/compiler-catalog true} retained-policy [] 99)";
+        let form = read_forms(replacement).unwrap().remove(0);
+        let text = format!("{replacement}\n;{}", "x".repeat(2_100_000));
+        let origin = SourceOrigin::new(text.as_str(), Some("replacement.sus".into()));
+        // Cold source metadata has its own legitimate reader work. Pay that
+        // setup using the real default-budget Session before isolating the
+        // per-declaration hash, then share only the immutable native snapshot.
+        {
+            let _scope = macros.session.operation_budget_scope().unwrap();
+            let before = macros.session.operation_fuel_remaining().unwrap();
+            origin.reader_tree_metered(&form, &mut |work| {
+                macros.session.charge_host_work(work).map_err(|error| Diagnostic {
+                    span: form.span.clone(), message: error.to_string(),
+                })
+            }).unwrap();
+            eprintln!("provenance paid-source-setup={} default={}",
+                before - macros.session.operation_fuel_remaining().unwrap(),
+                macros.session.options().fuel_per_operation);
+        }
+        macros.set_operation_fuel(2_000_000);
+        let error = macros.define_form_with_origin(form, 0..replacement.len(), Some(&origin)).unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+            "only a typed trap is accepted: {error:?}");
+        let message = error.to_string();
+        assert!(message.contains("Macro declaration provenance failed"),
+            "an unrelated preparation failure is not provenance coverage: {message}");
+        assert!(message.contains("replacement.sus"), "{message}");
+        assert!(message.contains(&format!("bytes {:?}", 0..replacement.len())), "{message}");
+        assert_eq!(macros.declaration_sources[&key], old_hash);
+        assert!(macros.environment_free.contains(&key));
+        assert!(macros.caller_form_free.contains(&key));
+        assert!(!macros.compiler_catalog_macros.contains_key(&key));
+        // Actual public expansion of the old definition at the SAME2M policy.
+        let mut caller = Session::new_repl().unwrap();
+        let value = caller.eval_with_macros("(retained-policy)", &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut caller).unwrap();
+        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(macros.expansion_work_fuel(), 2_000_000);
+    }
+}
+
+
+#[cfg(test)]
+mod lazy_result_interrupt_tests;
+
+#[cfg(test)]
+mod parameter_observation_tests {
+    use super::*;
+
+    fn form(kind: Kind) -> Form { Form { span: 0..1, metadata: vec![], kind } }
+    fn nil() -> Form { form(Kind::Nil) }
+    fn vector(items: Vec<Form>) -> Form {
+        Form { span: 0..1, metadata: vec![], kind: Kind::Vector(items) }
+    }
+    fn out_of_fuel(error: &SessionError) -> bool {
+        matches!(error, SessionError::Trap(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))
+    }
+    #[test]
+    fn parameter_observation_retains_raw_children_metadata_and_name_matching() {
+        let fixtures = [
+            (symbol("&env", 0..1), true, false),
+            (form(Kind::Symbol(suss_reader::Symbol { namespace: Some("qualified".into()), name: "&env".into() })), true, false),
+            (symbol("&env-suffix", 0..1), false, false),
+            (form(Kind::SplicingConditional(vec![symbol("&form", 0..1)])), false, true),
+            (form(Kind::Conditional(vec![symbol("&env", 0..1)])), true, false),
+            (form(Kind::Discard(Box::new(symbol("&env", 0..1)))), true, false),
+            (form(Kind::Prefix { operator: Box::new(symbol("&form", 0..1)), target: Box::new(nil()) }), false, true),
+            (form(Kind::Prefix { operator: Box::new(nil()), target: Box::new(symbol("&env", 0..1)) }), true, false),
+            (Form { span: 0..1, metadata: vec![symbol("&env", 0..1)], kind: Kind::Nil }, true, false),
+            (form(Kind::Map(vec![symbol("&form", 0..1), nil()])), false, true),
+            (form(Kind::Set(vec![symbol("&env", 0..1)])), true, false),
+            (form(Kind::List(vec![symbol("&form", 0..1)])), false, true),
+        ];
+        let mut session = Session::new().unwrap();
+        for (input, env, caller_form) in fixtures {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert_eq!(mentions_environment(&input, &mut |n| session.charge_host_work(n)).unwrap(), env);
+            assert_eq!(mentions_parameter(&input, "&form", &mut |n| session.charge_host_work(n)).unwrap(), caller_form);
+        }
+        // Both have identical metadata and child-reference storage. LIFO visits
+        // the matching final child first; its preceding large sibling is not scanned.
+        let long = vector((0..1024).map(|_| nil()).collect());
+        let early = vector(vec![long.clone(), symbol("&env", 0..1)]);
+        let late = vector(vec![symbol("&env", 0..1), long]);
+        let mut costs = Vec::new();
+        for form in [early, late] {
+            let _scope = session.operation_budget_scope().unwrap();
+            let before = session.operation_fuel_remaining().unwrap();
+            assert!(mentions_environment(&form, &mut |n| session.charge_host_work(n)).unwrap());
+            costs.push(before - session.operation_fuel_remaining().unwrap());
+        }
+        assert!(costs[0] > 0 && costs[1] > costs[0], "preserve LIFO short circuit: {costs:?}");
+    }
+
+    #[test]
+    fn parameter_observation_real_counter_fuel_irq_and_same_budget_recovery() {
+        let small = vector(vec![symbol("ordinary", 0..1)]);
+        let mut session = Session::new().unwrap();
+        session.set_operation_fuel(1_000);
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            let initial = session.operation_fuel_remaining().unwrap();
+            assert!(!mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap());
+            let first = session.operation_fuel_remaining().unwrap();
+            assert!(!mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap());
+            let second = session.operation_fuel_remaining().unwrap();
+            assert!(second < first && first < initial, "actual same-Store counters: {initial}/{first}/{second}");
+            eprintln!("parameter-observation fuel initial={initial} first={first} second={second}");
+            let mut completed = 2;
+            let error = loop {
+                match mentions_environment(&small, &mut |n| session.charge_host_work(n)) {
+                    Ok(false) => { completed += 1; assert!(completed < 128); }
+                    Ok(true) => panic!("no implicit parameter"),
+                    Err(error) => break error,
+                }
+            };
+            assert!(out_of_fuel(&error), "{error:?}");
+            assert!(completed > 2);
+            assert_eq!(session.operation_fuel_remaining().unwrap(), 0);
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert!(!mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap());
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert!(!mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap());
+            session.interrupt_handle().interrupt();
+            let error = mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap_err();
+            let error = declaration_observation_context(error, &small.span, "&env");
+            assert!(error.is_interrupt());
+            assert_eq!(error.to_string(), "Interrupted");
+            let SessionError::Trap(ref trap) = error else { panic!("typed IRQ") };
+            assert_eq!(trap.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::Interrupt));
+            assert!(format!("{trap:#}").contains("parameter observation (&env)"));
+        }
+        {
+            let _scope = session.operation_budget_scope().unwrap();
+            assert!(!mentions_environment(&small, &mut |n| session.charge_host_work(n)).unwrap());
+        }
+        assert_eq!(session.options().fuel_per_operation, 1_000);
+    }
+
+    #[test]
+    fn parameter_observation_public_replacement_failure_preserves_definition_and_policies() {
+        const OLD: &str = "(defmacro retained-observation [] 17)";
+        let payload = (0..256).map(|n| n.to_string()).collect::<Vec<_>>().join(" ");
+        let replacement = format!("(defmacro ^{{:suss/compiler-catalog true :scan-payload [{payload}]}} retained-observation [] 99)");
+        let mut macros = CompiledMacros::new().unwrap();
+        let allowance = macros.expansion_work_fuel();
+        // Establish that this finite replacement really succeeds at the same
+        // ordinary default; no larger allowance or production hook is introduced.
+        macros.define(&replacement).unwrap();
+        macros.define(OLD).unwrap();
+        let key = ("user".to_owned(), "retained-observation".to_owned());
+        let old_hash = macros.declaration_sources[&key].clone();
+        let (mut low, mut high) = (replacement.len() as u64, allowance);
+        let mut reached = None;
+        // Locate a genuine scan debit using public define calls, not a copied
+        // preparation implementation or a test-only production stage hook.
+        for _ in 0..24 {
+            if high <= low + 1 { break; }
+            macros.set_operation_fuel(allowance);
+            macros.define(OLD).unwrap();
+            let budget = low + (high - low) / 2;
+            macros.set_operation_fuel(budget);
+            match macros.define(&replacement) {
+                Ok(_) => high = budget,
+                Err(error) => {
+                    let message = error.to_string();
+                    if message.contains("Macro declaration parameter observation (") {
+                        assert!(out_of_fuel(&error), "actual scan Trap::OutOfFuel required: {error:?}");
+                        assert!(message.contains("bytes"));
+                        reached = Some((budget, message));
+                        break;
+                    }
+                    assert!(message.contains("out of fuel") || message.contains("all fuel consumed"),
+                        "unrelated public setup error: {error:?}");
+                    match error {
+                        // Preparation/reader errors precede the scan. Direct
+                        // provenance/evaluation traps follow it in this fixture.
+                        SessionError::Compile(_) => low = budget,
+                        SessionError::Trap(_) => high = budget,
+                        _ => panic!("unexpected error class: {message}"),
+                    }
+                }
+            }
+        }
+        let (budget, stage) = reached.expect("must observe an actual scan-stage typed debit; no unrelated failure earns credit");
+        eprintln!("parameter-observation public budget={budget} stage={stage}");
+        assert_eq!(macros.declaration_sources[&key], old_hash);
+        assert!(macros.environment_free.contains(&key));
+        assert!(macros.caller_form_free.contains(&key));
+        assert!(!macros.compiler_catalog_macros.contains_key(&key));
+        let mut caller = Session::new_repl().unwrap();
+        let value = caller.eval_with_macros("(retained-observation)", &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut caller).unwrap();
+        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(macros.expansion_work_fuel(), budget);
     }
 }

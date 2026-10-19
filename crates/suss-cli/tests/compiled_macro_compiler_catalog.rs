@@ -1,5 +1,7 @@
 //! Genuine compiler-catalog transport authoring gate. UNCOMPILED/UNEXECUTED.
 //! This exercises compiled source macros, not a host macro evaluator or reify.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -60,7 +62,7 @@ fn source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc(
         let mut macros = CompiledMacros::new().unwrap();
         // New authored finite allowance, not measured or certified yet.
         session.set_operation_fuel(100_000_000);
-        macros.set_operation_fuel(100_000_000);
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("record.live").unwrap();
         session.eval("(def ^{:doc \"first revision\"} value 17) (defprotocol Pair (-pair [this] [this x]))").unwrap();
         session.enter_namespace("record.caller").unwrap();
@@ -102,26 +104,26 @@ fn compiler_catalog_policy_is_opt_in_and_invalid_metadata_keeps_old_macro() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros
         .define("(defmacro policy [] (list 'quote (:suss/compiler-catalog &env)))")
         .unwrap();
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Nil));
     macros.define("(defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
     assert!(
-        matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
+        matches!(&decode(&mut session, &value).kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
     );
     let error = macros
         .define("(defmacro ^{:suss/compiler-catalog 1} policy [] nil)")
         .unwrap_err();
     assert!(error.to_string().contains("must be Boolean or nil"));
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
     macros.define("(defmacro ^{:suss/compiler-catalog false} policy [] (list 'quote (:suss/compiler-catalog &env)))").unwrap();
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Nil));
 }
 
 #[test]
@@ -136,12 +138,12 @@ fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() 
     .unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     session
         .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)
         .unwrap();
     let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Symbol(name) if name.name == "user"));
     // The replacement publishes a false policy before a later runtime failure.
     // Namespace initialization is not a binding transaction: the replacement remains published.
     std::fs::write(
@@ -159,7 +161,7 @@ fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() 
     );
     assert_eq!(session.current_namespace(), "user");
     let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Nil));
     std::fs::write(&source, "(ns tools) (defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote [(:phase (:suss/compiler-catalog &env)) (:current (:suss/compiler-catalog &env))]))").unwrap();
     session
         .eval_with_macros(
@@ -169,7 +171,7 @@ fn failed_macro_reload_keeps_published_policy_then_successful_reload_recovers() 
         .unwrap();
     let value = session.eval_with_macros("(t/policy)", &mut macros).unwrap();
     let form = decode(&mut session, &value);
-    let Kind::Vector(items) = form.kind else {
+    let Kind::Vector(items) = form.into_parts().2 else {
         panic!("recovered catalog facts")
     };
     assert_eq!(items.len(), 2);
@@ -186,7 +188,7 @@ fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     session.set_operation_fuel(100_000_000);
-    macros.set_operation_fuel(100_000_000);
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros.define("(defmacro ^{:suss/compiler-catalog true} policy [] (list 'quote (:current (:suss/compiler-catalog &env))))").unwrap();
     let error = suss_cli::portable_repl::evaluate_script_compiled(
         &mut session,
@@ -200,7 +202,7 @@ fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
     assert_eq!(macros.current_namespace(), "user");
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
     assert!(
-        matches!(decode(&mut session, &value).kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
+        matches!(&decode(&mut session, &value).kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "user")
     );
     suss_cli::portable_repl::evaluate_script_compiled(
         &mut session,
@@ -210,7 +212,7 @@ fn failed_script_staging_restores_callable_and_catalog_policy_after_gc() {
     )
     .unwrap();
     let value = session.eval_with_macros("(policy)", &mut macros).unwrap();
-    assert!(matches!(decode(&mut session, &value).kind, Kind::Nil));
+    assert!(matches!(&decode(&mut session, &value).kind, Kind::Nil));
 }
 
 const NATIVE_OBJECT_FACTS: &str = r#"(defmacro ^{:suss/compiler-catalog true} native-object-facts []
@@ -233,6 +235,7 @@ fn compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phase
         (Session::new_macro().unwrap(), "macro"),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         caller.enter_namespace("record.caller").unwrap();
         macros.enter_namespace("record.caller").unwrap();
         macros.define(NATIVE_OBJECT_FACTS).unwrap();
@@ -240,7 +243,7 @@ fn compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phase
             .eval_with_macros("(native-object-facts)", &mut macros)
             .unwrap();
         let form = decode(&mut caller, &value);
-        let Kind::Vector(items) = form.kind else {
+        let Kind::Vector(items) = form.into_parts().2 else {
             panic!("compiled wrapper returns native interface projection")
         };
         assert_eq!(items.len(), 8);

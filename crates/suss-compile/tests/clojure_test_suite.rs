@@ -12,6 +12,8 @@
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -570,7 +572,15 @@ fn check(suite: &str) {
         "{}",
         String::from_utf8_lossy(&generated.stderr)
     );
-    let observations = Harness::new(&source_root).run(&reference, &source_root);
+    let mut harness = Harness::new(&source_root);
+    if suite == "suite" {
+        // The corpus tests semantics; keep Runtime and the pinned-map control
+        // at OPERATION_FUEL while allowing compilation to finish independently.
+        harness
+            .macros
+            .set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+    }
+    let observations = harness.run(&reference, &source_root);
     let output = workspace.path().join("observations.json");
     std::fs::write(&output, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
     // Retain actual raw evidence before the temporary workspace is dropped,
@@ -761,6 +771,57 @@ fn observation_tokens_do_not_drift_after_capture_then_fuel_trap() {
         captured[0]["operands"][1]["items"][0]["bits"], "401c000000000000",
         "An orphan capture must not replace the next assertion's payload"
     );
+}
+
+/// #241 acceptance: keep the complete pinned declaration and all reader metadata.
+/// This test deliberately does not accept the reviewed namespace-load failure.
+/// Assertion-level compatibility results are retained separately from transport.
+#[test]
+fn pinned_map_declaration_executes_without_transport_loss() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root)
+        .output()
+        .unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let namespace = "clojure.core-test.map";
+    let test_name = "clojure.core-test.map/test-map";
+    let pinned: Value = serde_json::from_str(&std::fs::read_to_string(
+        repository.join("tests/oracle/clojure-test-suite-observations.json")
+    ).unwrap()).unwrap();
+    assert_eq!(pinned["suite"], SUITE_COMMIT);
+    let expected_ids: Vec<_> = pinned["assertions"].as_array().unwrap().iter()
+        .filter(|entry| entry["test"] == test_name)
+        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone()))
+        .collect();
+    assert!(!expected_ids.is_empty(), "pinned test-map assertion catalog is missing");
+    let original = repository.join("vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc");
+    assert_eq!(std::fs::read(&original).unwrap(), std::fs::read(source_file(&source_root, namespace)).unwrap(),
+        "the original map test must not be shortened or rewritten");
+    let reference = json!({"namespaces": [namespace], "tests": [test_name]});
+    let observations = Harness::new(&source_root).run(&reference, &source_root);
+    if let Some(directory) = std::env::var_os("SUSS_CLOJURE_TEST_SUITE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("map-transport-observations.json"),
+            serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    }
+    assert_eq!(observations["namespaces"][0]["status"], "loaded",
+        "complete pinned map declaration did not compile: {observations}");
+    assert!(observations["test-failures"].as_array().unwrap().is_empty(),
+        "the original test-map must not stop at a test-level failure: {observations}");
+    let actual_ids: Vec<_> = observations["assertions"].as_array().unwrap().iter()
+        .filter(|entry| entry["test"] == test_name)
+        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone()))
+        .collect();
+    assert_eq!(actual_ids, expected_ids,
+        "the complete pinned test-map assertion sequence must execute: {observations}");
+    assert!(observations["skips"].as_array().unwrap().is_empty(),
+        "transport acceptance must not skip source: {observations}");
 }
 
 /// #260 supplemental cases execute unchanged pinned identifier name and namespace cases.

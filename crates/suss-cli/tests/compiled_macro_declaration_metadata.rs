@@ -1,4 +1,6 @@
 //! Compare actual compiled macro declaration records with the pinned corpus.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -51,6 +53,7 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro projection [name]
@@ -450,7 +453,7 @@ fn compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields
         let mut macros = CompiledMacros::new().unwrap();
         // The observer constructs up to 12 records of 18 three-element field
         // projections. Keep a finite budget appropriate to this real workload.
-        macros.set_operation_fuel(100_000_000);
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session
             .load_namespace_with_macros("suss-oracle.declaration-runner", &mut macros)
             .unwrap();

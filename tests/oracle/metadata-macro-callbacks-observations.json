@@ -1,0 +1,143 @@
+{
+  "schema": 1,
+  "clojurescript-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "node-version": "v26.8.2",
+  "source": "tests/oracle/src/suss_oracle/metadata_macro_callbacks.cljs",
+  "source-sha256": "7a55c6e5a5057ac6e23535e185331cece647cbdf25195e126e3c97f9807353a4",
+  "runner": "scripts/probe-metadata-macro-callbacks.sh",
+  "runner-sha256": "49a3678def29be5df42eba2ae09ac3d9fb136d10a7dacaadf6031fd2c294013d",
+  "limits": [
+    "Bootstrap Namespace/Var registration of a compiled CLJS macro; not defmacro loading acceptance.",
+    "Pinned analyzer and macroexpander execute in Node; no Suss transport.",
+    "Selected public hash trace covers numeric values 101 through 109 only.",
+    "Total analyzer hash counts are raw observations, not portable acceptance targets.",
+    "Macro windows include reading the invocation, observer assertions and nested analysis; total counts describe that whole window."
+  ],
+  "execution": {
+    "returncode": 0,
+    "command": "PATH=/home/bobby/.cache/suss-m4-oracle-tools/bin:/home/bobby/.cache/suss-m4-oracle-tools/jdk-21.0.8+9-jre/bin:$PATH sh scripts/probe-metadata-macro-callbacks.sh",
+    "prior-environment-failure-returncode": 127
+  },
+  "observations": {
+    "schema": 1,
+    "boundary": "Pinned CLJS macroexpander with a bootstrap-registered compiled CLJS macro; no Suss transport",
+    "windows": [
+      {
+        "stage": "read-declaration",
+        "selected-numeric-hash-calls": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109
+        ],
+        "total-hash-calls": 9
+      },
+      {
+        "stage": "analyze-pre-read-declaration",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 66
+      },
+      {
+        "stage": "macro-first",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 181
+      },
+      {
+        "stage": "macro-second",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 44
+      },
+      {
+        "stage": "explicit-hash-warming",
+        "selected-numeric-hash-calls": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109
+        ],
+        "total-hash-calls": 10
+      },
+      {
+        "stage": "macro-after-warming",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 44
+      },
+      {
+        "stage": "read-fresh-set-occurrence",
+        "selected-numeric-hash-calls": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109
+        ],
+        "total-hash-calls": 9
+      },
+      {
+        "stage": "analyze-pre-read-set-occurrence",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 17
+      },
+      {
+        "stage": "read-new-revision",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 0
+      },
+      {
+        "stage": "analyze-new-revision",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 82
+      },
+      {
+        "stage": "macro-new-revision",
+        "selected-numeric-hash-calls": [],
+        "total-hash-calls": 44
+      }
+    ],
+    "macro-calls": 4,
+    "identity": {
+      "first-env-meta": true,
+      "second-env-meta": true,
+      "resolved-meta": true,
+      "ast-meta": true,
+      "ast-info-fresh": true,
+      "after-warming": true,
+      "new-revision": true,
+      "new-current-meta": true
+    },
+    "values": {
+      "old-audit": [
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109
+      ],
+      "new-audit": [
+        101,
+        109
+      ]
+    }
+  },
+  "clojure-version": "1.12.1",
+  "clojure-cli-version": "1.12.1.1550",
+  "java-version": "Temurin 21.0.8+9-LTS"
+}

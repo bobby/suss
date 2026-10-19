@@ -75,11 +75,11 @@ fn compiled_macro_transient_hash_map_rejects_lookup_after_persistence() {
             .eval("[(get saved-map 1) (alength seen) (aget seen 0) (aget seen 1)]")
             .unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-        let suss_reader::forms::Kind::Vector(items) = decoded.kind else {
+        let suss_reader::forms::Kind::Vector(items) = decoded.into_parts().2 else {
             panic!("Vector result")
         };
         for (item, expected) in items.iter().zip([101.0, 2.0, 1.0, 2.0]) {
-            assert!(matches!(item.kind, suss_reader::forms::Kind::Number(n) if n == expected));
+            assert!(matches!(&item.kind, suss_reader::forms::Kind::Number(n) if *n == expected));
         }
         assert_eq!(items.len(), 4);
     }
@@ -97,7 +97,7 @@ fn compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations()
             let value = session.eval(case["source"].as_str().unwrap()).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-            let actual = match decoded.kind {
+            let actual = match decoded.into_parts().2 {
                 suss_reader::forms::Kind::Bool(value) => {
                     serde_json::json!({"tag":"bool", "value":value})
                 }

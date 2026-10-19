@@ -91,13 +91,13 @@ fn public_subvectors_match_pinned_facts_in_both_phases() {
             } else {
                 let result = session.eval(source).unwrap();
                 let form = bridge.read(&mut session, &result, 0..0).unwrap();
-                let suss_reader::forms::Kind::Vector(items) = form.kind else {
+                let suss_reader::forms::Kind::Vector(items) = form.into_parts().2 else {
                     panic!("actual projected vector")
                 };
                 let items: Vec<_> = items
                     .into_iter()
                     .map(|item| {
-                        let suss_reader::forms::Kind::Number(n) = item.kind else {
+                        let suss_reader::forms::Kind::Number(n) = item.into_parts().2 else {
                             panic!("actual numeric element")
                         };
                         serde_json::json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())})
@@ -169,13 +169,13 @@ fn subvector_retains_actual_backing_and_rooted_contents_across_gc() {
         session.collect().unwrap();
         let projected = session.invoke(&project, &[&original]).unwrap();
         let form = bridge.read(&mut session, &projected, 0..0).unwrap();
-        let Kind::Vector(items) = form.kind else {
+        let Kind::Vector(items) = form.into_parts().2 else {
             panic!("canonical projected vector")
         };
         assert_eq!(items.len(), 33);
         for (i, item) in items.iter().enumerate() {
             assert!(
-                matches!(item.kind, Kind::Number(n) if n.to_bits() == ((i+31) as f64).to_bits())
+                matches!(&item.kind, Kind::Number(n) if n.to_bits() == ((i+31) as f64).to_bits())
             );
         }
     }

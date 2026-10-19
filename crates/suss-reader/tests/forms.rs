@@ -119,11 +119,11 @@ fn reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth() {
         resolve_conditionals(read_forms("#?(:suss '#?(:jvm ignored)) retained").unwrap()).is_err()
     );
     let flat = format!("{}retained", "'#?(:jvm ignored) ".repeat(65));
-    assert!(
+    assert_eq!(
         resolve_conditionals(read_forms(&flat).unwrap())
-            .unwrap_err()
-            .message
-            .contains("nesting limit")
+            .unwrap()
+            .len(),
+        1
     );
 }
 
@@ -325,9 +325,15 @@ fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
     assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "js-obj"));
     assert_eq!(items[1].kind, Kind::String("get".encode_utf16().collect()));
     assert_eq!(items[2].kind, Kind::Number(1.0));
-    assert_eq!(items[3].kind, Kind::String("configurable".encode_utf16().collect()));
+    assert_eq!(
+        items[3].kind,
+        Kind::String("configurable".encode_utf16().collect())
+    );
     assert_eq!(items[4].kind, Kind::Bool(true));
-    assert_eq!(items[5].kind, Kind::String("answer".encode_utf16().collect()));
+    assert_eq!(
+        items[5].kind,
+        Kind::String("answer".encode_utf16().collect())
+    );
     assert_eq!(items[6].kind, Kind::Number(42.0));
     assert!(read_forms("#js {:odd}").is_err());
     assert!(read_forms("#js {1 :value}").is_err());
@@ -359,14 +365,160 @@ fn malformed_forms_fail_with_located_diagnostics_and_bounded_nesting() {
         );
     }
     let nested = format!("{}0{}", "[".repeat(65), "]".repeat(65));
-    assert!(
-        read_forms(&nested)
-            .unwrap_err()
-            .message
-            .contains("nesting limit")
-    );
+    assert_eq!(read_forms(&nested).unwrap().len(), 1);
     assert_eq!(
         read_forms(r#""\123z\7 \b\f""#).unwrap()[0].kind,
         Kind::String(vec![83, 122, 7, 32, 8, 12])
     );
+}
+
+#[test]
+fn deep_reader_clone_selection_and_cleanup_are_stack_safe() {
+    let depth = 2000;
+    let source = format!("{}0{}", "[".repeat(depth), "]".repeat(depth));
+    let forms = read_forms(&source).unwrap();
+    let copied = forms.clone();
+    assert_eq!(copied, forms);
+    let selected = resolve_conditionals(copied).unwrap();
+    let mut item = &selected[0];
+    for _ in 0..depth {
+        let Kind::Vector(items) = &item.kind else {
+            panic!("lost nesting")
+        };
+        assert_eq!(items.len(), 1);
+        item = &items[0];
+    }
+    assert_eq!(item.kind, Kind::Number(0.0));
+    drop(forms);
+    drop(selected);
+    // Partial nested trees must also clean up when parsing stops at EOF.
+    assert!(
+        read_forms(&source[..source.len() - 1])
+            .unwrap_err()
+            .expected
+            .contains(&"more input".to_owned())
+    );
+}
+
+#[test]
+fn reader_and_selection_share_a_supplied_budget_and_recover_after_errors() {
+    use suss_reader::forms::{read_forms_metered, resolve_conditionals_metered};
+    let source = "[^:tag #?@(:suss [x y]) #_ #?(:jvm ignored) discarded retained]";
+    let mut remaining = 3_u64;
+    let mut meter = |units| {
+        remaining = remaining
+            .checked_sub(units)
+            .ok_or_else(|| suss_reader::ParseError {
+                message: "caller budget exhausted".into(),
+                span: 0..0,
+                expected: vec![],
+            })?;
+        Ok(())
+    };
+    assert_eq!(
+        read_forms_metered(source, &mut meter).unwrap_err().message,
+        "caller budget exhausted"
+    );
+    let raw = read_forms(source).unwrap();
+    let mut remaining = 2_u64;
+    let mut meter = |units| {
+        remaining = remaining
+            .checked_sub(units)
+            .ok_or_else(|| suss_reader::ParseError {
+                message: "selection budget exhausted".into(),
+                span: 0..0,
+                expected: vec![],
+            })?;
+        Ok(())
+    };
+    assert_eq!(
+        resolve_conditionals_metered(raw, &mut meter)
+            .unwrap_err()
+            .message,
+        "selection budget exhausted"
+    );
+    let resolved = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+    let Kind::Vector(items) = &resolved[0].kind else {
+        panic!()
+    };
+    assert_eq!(items.len(), 3);
+    assert_eq!(items[0].metadata.len(), 1);
+    assert!(matches!(&items[2].kind, Kind::Symbol(x) if x.name == "retained"));
+}
+
+#[test]
+fn reader_cancellation_preserves_callback_error_and_next_read_recovers() {
+    use suss_reader::forms::read_forms_metered;
+    let mut calls = 0;
+    let error = read_forms_metered("[\"many characters\" 2]", &mut |_| {
+        calls += 1;
+        if calls == 7 {
+            Err(suss_reader::ParseError {
+                message: "cancelled by caller".into(),
+                span: 1..2,
+                expected: vec!["cancellation-token".into()],
+            })
+        } else {
+            Ok(())
+        }
+    })
+    .unwrap_err();
+    assert_eq!(error.message, "cancelled by caller");
+    assert_eq!(error.span, 1..2);
+    assert_eq!(error.expected, vec!["cancellation-token"]);
+    assert_eq!(calls, 7, "no further callback work after cancellation");
+    assert_eq!(read_forms("[1]").unwrap().len(), 1);
+}
+
+#[test]
+fn large_anonymous_indices_are_metered_before_generated_slot_allocation() {
+    use suss_reader::forms::read_forms_with_work_allowance;
+    assert!(
+        read_forms_with_work_allowance("#(%2147483647)", 1000)
+            .unwrap_err()
+            .message
+            .contains("work budget")
+    );
+    assert!(
+        read_forms("#(%2147483648)")
+            .unwrap_err()
+            .message
+            .contains("representable as i32")
+    );
+    let forms = read_forms_with_work_allowance("#(%65536)", 1_000_000).unwrap();
+    let Kind::List(items) = &forms[0].kind else {
+        panic!()
+    };
+    let Kind::Vector(params) = &items[1].kind else {
+        panic!()
+    };
+    assert_eq!(params.len(), 65536);
+    assert!(matches!(&params[65535].kind, Kind::Symbol(s) if s.name.starts_with("p65536__")));
+}
+
+#[test]
+fn source_metadata_meter_preserves_locations_and_checks_work() {
+    use suss_reader::forms::{
+        read_forms_with_source_metadata, read_forms_with_source_metadata_metered,
+    };
+    let source = format!("{}^:tag x{}", "[".repeat(100), "]".repeat(100));
+    let ordinary = read_forms_with_source_metadata(&source, Some("located.sus")).unwrap();
+    let mut used = 0_u64;
+    let metered =
+        read_forms_with_source_metadata_metered(&source, Some("located.sus"), &mut |units| {
+            used += units;
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(ordinary, metered);
+    assert!(used > source.len() as u64);
+    let error = read_forms_with_source_metadata_metered(&source, Some("located.sus"), &mut |_| {
+        Err(suss_reader::ParseError {
+            message: "metadata cancelled".into(),
+            span: 0..0,
+            expected: vec![],
+        })
+    })
+    .unwrap_err();
+    assert_eq!(error.message, "metadata cancelled");
 }

@@ -84,12 +84,7 @@ impl Analyzer<'_> {
                 if !seen.insert(key) {
                     return Err(fail(syntax.span.clone(), "Duplicate case test constant"));
                 }
-                if seen.len() > 256 {
-                    return Err(fail(
-                        form.span.clone(),
-                        "Case constant expansion limit exceeded",
-                    ));
-                }
+                self.expander.charge_expansion_work(1, syntax.span.clone())?;
                 group.push((syntax, value));
             }
             groups.push((group, &pair[1]));
@@ -108,12 +103,6 @@ impl Analyzer<'_> {
                     .iter()
                     .all(|(_, value)| matches!(value, CaseConstant::Keyword(_)))
             });
-        if !primitive && !keywords && seen.len() > 8 {
-            return Err(fail(
-                form.span.clone(),
-                "Case equality bootstrap supports at most eight constants",
-            ));
-        }
         // Analyze user expressions in source order, then build branching from
         // the already analyzed arms. Selector effects happen exactly once even
         // with no clauses.

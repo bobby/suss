@@ -133,6 +133,20 @@ pub(crate) fn compile_project_typed(
     config: &SussConfig,
     selected: Option<&str>,
 ) -> CompileResult<BTreeMap<String, Vec<u8>>> {
+    compile_project_typed_with_compile_fuel(config, selected, None)
+}
+
+/// Apply the explicit compilation limit to the existing compilation session for each selected world.
+pub fn compile_project_with_compile_fuel(
+    config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>,
+) -> Result<BTreeMap<String, Vec<u8>>, String> {
+    compile_project_typed_with_compile_fuel(config, selected, compile_fuel)
+        .map_err(|error| error.to_string())
+}
+
+fn compile_project_typed_with_compile_fuel(
+    config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>,
+) -> CompileResult<BTreeMap<String, Vec<u8>>> {
     if !config.deps.is_empty() {
         return Err(CompileError::Unsupported("Published project dependency loading remains unimplemented; project :deps cannot be ignored".into()));
     }
@@ -213,12 +227,14 @@ pub(crate) fn compile_project_typed(
                 )));
             }
         }
-        let bytes = portable_aot::compile_inputs_typed(
+        let bytes = portable_aot::compile_inputs_with_options(
             &inputs,
             &config.wit_path(&name)?,
             world.wit_world.as_deref(),
             &config.src_paths,
-            &world.exports,
+            &portable_aot::AotOptions {
+                exports: world.exports.clone(), compile_fuel, ..Default::default()
+            },
         )?;
         result.insert(name, bytes);
     }

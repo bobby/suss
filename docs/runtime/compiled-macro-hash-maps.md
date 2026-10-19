@@ -19,8 +19,9 @@ ArrayNode and HashCollisionNode descriptor roots. It traverses actual source
 storage in pinned inode order, including the separate nil-key entry first,
 without executing arbitrary collection protocols. It checks field widths,
 bitmap populations, child counts, collision counts, canonical storage identities
-and the declared map count. Signed bit 31 is accepted. The shared 4096-node
-budget and bounded hash path reject cycles; class redefinition does not change
+and the declared map count. Signed bit 31 is accepted. Metered traversal, cycle
+checks and hash-path validation replace a fixed4096-node transport cap; class
+redefinition does not change
 previously captured descriptor roots. Existing metadata transport accepts the
 resulting canonical map syntax.
 

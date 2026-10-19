@@ -166,13 +166,10 @@ fn display_traversal_bound_reports_failure_and_recovers() {
     session.set_operation_fuel(fuel);
     session.collect().unwrap();
     let mut display = NativeDisplay::default();
-    let error = display.display(&mut session, &value).unwrap_err();
-    assert!(
-        error
-            .to_string()
-            .contains("Vector integer field exceeds transport bounds"),
-        "{error}"
-    );
+    let actual = display.display(&mut session, &value).unwrap();
+    // Compare every element and delimiter, not a prefix or reported count.
+    assert_eq!(actual, source);
+    assert_eq!(session.options().fuel_per_operation, fuel);
     let value = session.eval("[42]").unwrap();
     assert_eq!(display.display(&mut session, &value).unwrap(), "[42]");
 }

@@ -84,14 +84,9 @@ impl Analyzer<'_> {
             );
             let body = node(operation, operands);
             dimensions.push(size);
-            return Ok(Hir {
-                source: None,
-                kind: Expression::Let {
-                    bindings: dimensions,
-                    body: Box::new(body),
-                },
-                ..node(operation, vec![])
-            });
+            let mut result = node(operation, vec![]);
+            result.kind = Expression::Let { bindings: dimensions, body: Box::new(body) };
+            return Ok(result);
         }
         let mut arguments = Vec::new();
         if operation == ArrayOperation::Make && args.len() == 1 {

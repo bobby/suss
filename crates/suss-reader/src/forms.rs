@@ -2,8 +2,8 @@
 //!
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates; numbers are ordinary binary64, never JVM ratios.
-//! Reader metadata remains syntax until phase analysis interprets it. Nesting is
-//! bounded to 64 forms to keep diagnostics safe on ordinary thread stacks.
+//! Reader metadata remains syntax until phase analysis interprets it. Reader work
+//! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
 use std::{
     collections::{BTreeMap, VecDeque},
@@ -12,12 +12,129 @@ use std::{
 };
 static ANONYMOUS_IDS: AtomicU64 = AtomicU64::new(1);
 
-#[derive(Debug, Clone, PartialEq)]
 pub struct Form {
     pub span: Range<usize>,
     /// Prefix metadata in source order, with each metadata form's own span.
     pub metadata: Vec<Form>,
     pub kind: Kind,
+}
+
+impl std::fmt::Debug for Form {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+            f.debug_struct("Form").field("span", &self.span)
+                .field("metadata", &self.metadata).field("kind", &self.kind).finish()
+        })
+    }
+}
+impl Form {
+    /// Move the kind out while leaving a valid, shallow value for Drop.
+    pub fn take_kind(&mut self) -> Kind {
+        std::mem::replace(&mut self.kind, Kind::Nil)
+    }
+    pub fn into_parts(mut self) -> (Range<usize>, Vec<Form>, Kind) {
+        (
+            std::mem::take(&mut self.span),
+            std::mem::take(&mut self.metadata),
+            self.take_kind(),
+        )
+    }
+    pub fn clone_metered(&self, meter: &mut WorkMeter<'_>) -> Result<Self, ParseError> {
+        let text = match &self.kind {
+            Kind::String(x) => x.len() as u64,
+            Kind::Symbol(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
+            Kind::Keyword(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
+            _ => 0,
+        };
+        charge(meter, 1 + text, self.span.clone())?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            let metadata = clone_items(&self.metadata, meter)?;
+            let kind = match &self.kind {
+                Kind::List(x) => Kind::List(clone_items(x, meter)?),
+                Kind::Vector(x) => Kind::Vector(clone_items(x, meter)?),
+                Kind::Set(x) => Kind::Set(clone_items(x, meter)?),
+                Kind::Map(x) => Kind::Map(clone_items(x, meter)?),
+                Kind::Conditional(x) => Kind::Conditional(clone_items(x, meter)?),
+                Kind::SplicingConditional(x) => Kind::SplicingConditional(clone_items(x, meter)?),
+                Kind::Discard(x) => Kind::Discard(Box::new(x.clone_metered(meter)?)),
+                Kind::Prefix { operator, target } => Kind::Prefix {
+                    operator: Box::new(operator.clone_metered(meter)?),
+                    target: Box::new(target.clone_metered(meter)?),
+                },
+                other => other.clone(),
+            };
+            Ok(Self {
+                span: self.span.clone(),
+                metadata,
+                kind,
+            })
+        })
+    }
+}
+impl PartialEq for Form {
+    fn eq(&self, other: &Self) -> bool {
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            self.span == other.span && self.metadata == other.metadata && self.kind == other.kind
+        })
+    }
+}
+impl Clone for Form {
+    fn clone(&self) -> Self {
+        self.clone_metered(&mut |_| Ok(()))
+            .expect("infallible Form clone")
+    }
+}
+fn clone_items(items: &[Form], meter: &mut WorkMeter<'_>) -> Result<Vec<Form>, ParseError> {
+    items.iter().map(|item| item.clone_metered(meter)).collect()
+}
+impl Drop for Form {
+    fn drop(&mut self) {
+        fn children(kind: Kind, pending: &mut Vec<Form>) {
+            match kind {
+                Kind::List(x)
+                | Kind::Vector(x)
+                | Kind::Set(x)
+                | Kind::Map(x)
+                | Kind::Conditional(x)
+                | Kind::SplicingConditional(x) => pending.extend(x),
+                Kind::Discard(x) => pending.push(*x),
+                Kind::Prefix { operator, target } => {
+                    pending.push(*operator);
+                    pending.push(*target);
+                }
+                _ => {}
+            }
+        }
+        if self.metadata.is_empty() && matches!(self.kind, Kind::Nil) {
+            return;
+        }
+        let mut pending = std::mem::take(&mut self.metadata);
+        children(self.take_kind(), &mut pending);
+        while let Some(mut form) = pending.pop() {
+            pending.append(&mut form.metadata);
+            children(form.take_kind(), &mut pending);
+            // This now-empty Form drops without recursive ownership traversal.
+        }
+    }
+}
+
+pub type WorkMeter<'a> = dyn FnMut(u64) -> Result<(), ParseError> + 'a;
+pub const DEFAULT_WORK_ALLOWANCE: u64 = 10_000_000;
+fn charge(meter: &mut WorkMeter<'_>, units: u64, span: Range<usize>) -> Result<(), ParseError> {
+    meter(units).map_err(|mut failure| {
+        // Preserve a caller-supplied cancellation/error, assigning a location
+        // only when its callback deliberately has no reader location.
+        if failure.span == (0..0) {
+            failure.span = span;
+        }
+        failure
+    })
+}
+fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
+    *remaining = remaining
+        .checked_sub(units)
+        .ok_or_else(|| error(0..0, "Reader work budget exhausted"))?;
+    Ok(())
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -49,62 +166,116 @@ pub enum Kind {
 /// Unsupported dispatch/numeric syntax fails explicitly, including ratios and
 /// arbitrary-precision suffixes. Empty/comment-only sources yield no forms.
 pub fn read_forms(source: &str) -> Result<Vec<Form>, ParseError> {
-    read_forms_internal(source, None).map(|(forms, _)| forms)
+    read_forms_with_work_allowance(source, DEFAULT_WORK_ALLOWANCE)
+}
+pub fn read_forms_with_work_allowance(
+    source: &str,
+    mut work: u64,
+) -> Result<Vec<Form>, ParseError> {
+    read_forms_metered(source, &mut |units| allowance(&mut work, units))
+}
+pub fn read_forms_metered(
+    source: &str,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Vec<Form>, ParseError> {
+    read_forms_internal(source, None, false, meter).map(|(forms, _, _, _)| forms)
 }
 
-/// Indexing-reader data for compiled macro input. Ordinary compiler forms keep
-/// explicit reader metadata only; this opt-in path adds source metadata as data.
+/// Indexing-reader data with the complete ordinary source metadata retained.
 pub fn read_forms_with_source_metadata(
     source: &str,
     file: Option<&str>,
 ) -> Result<Vec<Form>, ParseError> {
-    let (forms, carets) = read_forms_internal(source, Some(file))?;
-    let mut forms = resolve_conditionals(forms)?;
-    source_metadata::list_prefixes(&mut forms, &carets);
+    let mut work = DEFAULT_WORK_ALLOWANCE;
+    read_forms_with_source_metadata_metered(source, file, &mut |units| allowance(&mut work, units))
+}
+pub fn read_forms_with_source_metadata_metered(
+    source: &str,
+    file: Option<&str>,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Vec<Form>, ParseError> {
+    let (forms, carets, _, _) = read_forms_internal(source, Some(file), false, meter)?;
+    let mut forms = resolve_conditionals_metered(forms, meter)?;
+    source_metadata::list_prefixes_metered(&mut forms, &carets, meter)?;
     Ok(forms)
 }
 
 mod source_metadata;
+mod source_snapshot;
+pub use source_snapshot::{SourceMetadata, SourceMetadataNode};
 
 fn read_forms_internal(
     source: &str,
     locations: Option<Option<&str>>,
-) -> Result<(Vec<Form>, source_metadata::Carets), ParseError> {
+    capture_sites: bool,
+    meter: &mut WorkMeter<'_>,
+) -> Result<(Vec<Form>, source_metadata::Carets, source_snapshot::Capture, Vec<((usize,usize),usize)>), ParseError> {
+    let source_positions = if locations.is_some() {
+        charge(meter, source.len() as u64, 0..source.len())?;
+        Some(source_metadata::Positions::new(source))
+    } else {
+        None
+    };
     let mut reader = Reader {
         source,
         offset: 0,
-        depth: 0,
         delimited_depth: 0,
         anonymous: None,
         logical_pending: VecDeque::new(),
         locations,
+        capture: capture_sites.then(source_snapshot::Capture::default),
+        raw_carets: Vec::new(),
         carets: source_metadata::Carets::new(),
-        source_positions: locations.map(|_| source_metadata::Positions::new(source)),
+        source_positions,
+        meter,
+        work_failure: None,
     };
-    let mut forms = Vec::new();
-    loop {
-        reader.padding();
-        if reader.peek().is_none() {
-            return Ok((forms, reader.carets));
+    let result = (|| {
+        let mut forms = Vec::new();
+        loop {
+            reader.padding();
+            if reader.peek().is_none() {
+                return Ok(forms);
+            }
+            if let Some(form) = reader.form()? {
+                forms.push(form);
+            }
         }
-        if let Some(form) = reader.form()? {
-            forms.push(form);
-        }
+    })();
+    if let Some(failure) = reader.work_failure {
+        return Err(failure);
     }
+    result.map(|forms| (forms, reader.carets, reader.capture.unwrap_or_default(), reader.raw_carets))
 }
 
-/// Resolve portable :suss/:cljs conditionals, taking the first matching clause
-/// in source order. Unmatched forms disappear. :default matches where written.
-/// Syntax quoting, namespace aliases and phase imports belong to later phases.
+/// Resolve the first matching portable clause in source order, cumulatively metered.
 pub fn resolve_conditionals(forms: Vec<Form>) -> Result<Vec<Form>, ParseError> {
-    resolve_sequence(forms, 0)
+    resolve_conditionals_with_work_allowance(forms, DEFAULT_WORK_ALLOWANCE)
+}
+pub fn resolve_conditionals_with_work_allowance(
+    forms: Vec<Form>,
+    mut work: u64,
+) -> Result<Vec<Form>, ParseError> {
+    resolve_conditionals_metered(forms, &mut |units| allowance(&mut work, units))
+}
+pub fn resolve_conditionals_metered(
+    forms: Vec<Form>,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Vec<Form>, ParseError> {
+    resolve_sequence(forms, 0, meter)
 }
 
-fn resolve_sequence(forms: Vec<Form>, depth: usize) -> Result<Vec<Form>, ParseError> {
+fn resolve_sequence(
+    forms: Vec<Form>,
+    depth: usize,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Vec<Form>, ParseError> {
     let mut following = VecDeque::from(forms);
     let mut resolved = Vec::new();
     while let Some(form) = following.pop_front() {
-        if let Some(form) = select(form, &mut following, depth).map_err(closed_selection_error)? {
+        if let Some(form) =
+            select(form, &mut following, depth, meter).map_err(closed_selection_error)?
+        {
             resolved.push(form);
         }
     }
@@ -122,9 +293,10 @@ fn required_selected(
     following: &mut VecDeque<Form>,
     depth: usize,
     span: Range<usize>,
+    meter: &mut WorkMeter<'_>,
 ) -> Result<Form, ParseError> {
     while let Some(form) = following.pop_front() {
-        if let Some(form) = select(form, following, depth)? {
+        if let Some(form) = select(form, following, depth, meter)? {
             return Ok(form);
         }
     }
@@ -135,11 +307,20 @@ fn required_selected(
     })
 }
 
-fn pending_prefix(kind: &Kind) -> bool {
-    match kind {
-        Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) => true,
-        Kind::Prefix { target, .. } => pending_prefix(&target.kind),
-        _ => false,
+fn pending_prefix(
+    mut kind: &Kind,
+    meter: &mut WorkMeter<'_>,
+    span: Range<usize>,
+) -> Result<bool, ParseError> {
+    loop {
+        charge(meter, 1, span.clone())?;
+        match kind {
+            Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) => {
+                return Ok(true);
+            }
+            Kind::Prefix { target, .. } => kind = &target.kind,
+            _ => return Ok(false),
+        }
     }
 }
 
@@ -149,9 +330,10 @@ fn skip_required(
     following: &mut VecDeque<Form>,
     depth: usize,
     span: Range<usize>,
+    meter: &mut WorkMeter<'_>,
 ) -> Result<(), ParseError> {
     while let Some(form) = following.pop_front() {
-        if skip_target(form, following, depth)? {
+        if skip_target(form, following, depth, meter)? {
             return Ok(());
         }
     }
@@ -163,30 +345,39 @@ fn skip_required(
 }
 
 fn skip_target(
-    form: Form,
+    mut form: Form,
     following: &mut VecDeque<Form>,
     depth: usize,
+    meter: &mut WorkMeter<'_>,
 ) -> Result<bool, ParseError> {
-    if depth >= 64 {
-        return Err(error(form.span, "Reader selection nesting limit exceeded"));
-    }
-    let present = match form.kind {
+    charge(meter, 1, form.span.clone())?;
+    stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        skip_target_inner(form, following, depth, meter)
+    })
+}
+fn skip_target_inner(
+    mut form: Form,
+    following: &mut VecDeque<Form>,
+    depth: usize,
+    meter: &mut WorkMeter<'_>,
+) -> Result<bool, ParseError> {
+    let present = match form.take_kind() {
         Kind::Prefix { target, .. } => {
-            if !skip_target(*target, following, depth + 1)? {
-                skip_required(following, depth + 1, form.span.clone())?;
+            if !skip_target(*target, following, depth + 1, meter)? {
+                skip_required(following, depth + 1, form.span.clone(), meter)?;
             }
             true
         }
         Kind::Discard(target) => {
-            if !skip_target(*target, following, depth + 1)? {
-                skip_required(following, depth + 1, form.span.clone())?;
+            if !skip_target(*target, following, depth + 1, meter)? {
+                skip_required(following, depth + 1, form.span.clone(), meter)?;
             }
             false
         }
         _ => true,
     };
     if !present && !form.metadata.is_empty() {
-        skip_required(following, depth + 1, form.span)?;
+        skip_required(following, depth + 1, form.span.clone(), meter)?;
         return Ok(true);
     }
     Ok(present)
@@ -203,21 +394,30 @@ fn select(
     mut form: Form,
     following: &mut VecDeque<Form>,
     depth: usize,
+    meter: &mut WorkMeter<'_>,
 ) -> Result<Option<Form>, ParseError> {
-    if depth >= 64 {
-        return Err(error(form.span, "Reader selection nesting limit exceeded"));
-    }
+    charge(meter, 1, form.span.clone())?;
+    stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+        select_inner(form, following, depth, meter)
+    })
+}
+fn select_inner(
+    mut form: Form,
+    following: &mut VecDeque<Form>,
+    depth: usize,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Option<Form>, ParseError> {
     let span = form.span.clone();
     let metadata = std::mem::take(&mut form.metadata);
-    let selected = match form.kind {
+    let selected = match form.take_kind() {
         Kind::SplicingConditional(clauses) => {
             let raw = Form {
                 span: span.clone(),
                 metadata: vec![],
                 kind: Kind::Conditional(clauses),
             };
-            if let Some(selected) = select(raw, following, depth + 1)? {
-                let items = match selected.kind {
+            if let Some(mut selected) = select(raw, following, depth + 1, meter)? {
+                let items = match selected.take_kind() {
                     Kind::List(items) | Kind::Vector(items) => items,
                     _ => {
                         return Err(error(
@@ -236,33 +436,41 @@ fn select(
             let mut clauses = VecDeque::from(clauses);
             let mut selected = None;
             while let Some(feature) = clauses.pop_front() {
-                let Some(feature) = select(feature, &mut clauses, depth + 1)? else {
+                let Some(mut feature) = select(feature, &mut clauses, depth + 1, meter)? else {
                     continue;
                 };
-                let Kind::Keyword(key) = feature.kind else {
-                    return Err(error(feature.span, "Reader feature must be a keyword"));
+                let Kind::Keyword(key) = feature.take_kind() else {
+                    return Err(error(
+                        feature.span.clone(),
+                        "Reader feature must be a keyword",
+                    ));
                 };
                 if key.namespace.is_none()
                     && matches!(key.name.as_str(), "suss" | "cljs" | "default")
                 {
-                    selected = Some(required_selected(&mut clauses, depth + 1, span.clone())?);
+                    selected = Some(required_selected(
+                        &mut clauses,
+                        depth + 1,
+                        span.clone(),
+                        meter,
+                    )?);
                     break;
                 }
-                skip_required(&mut clauses, depth + 1, span.clone())?;
+                skip_required(&mut clauses, depth + 1, span.clone(), meter)?;
             }
             Ok(selected)
         })()
         .map_err(closed_selection_error)?,
         Kind::Discard(target) => {
-            if select(*target, following, depth + 1)?.is_none() {
-                required_selected(following, depth + 1, span.clone())?;
+            if select(*target, following, depth + 1, meter)?.is_none() {
+                required_selected(following, depth + 1, span.clone(), meter)?;
             }
             None
         }
         Kind::Prefix { operator, target } => {
-            let target = match select(*target, following, depth + 1)? {
+            let target = match select(*target, following, depth + 1, meter)? {
                 Some(target) => target,
-                None => required_selected(following, depth + 1, span.clone())?,
+                None => required_selected(following, depth + 1, span.clone(), meter)?,
             };
             form.span.end = target.span.end;
             form.kind = Kind::List(vec![*operator, target]);
@@ -270,11 +478,11 @@ fn select(
         }
         kind => {
             form.kind = match kind {
-                Kind::List(items) => Kind::List(resolve_sequence(items, depth + 1)?),
-                Kind::Vector(items) => Kind::Vector(resolve_sequence(items, depth + 1)?),
-                Kind::Set(items) => Kind::Set(resolve_sequence(items, depth + 1)?),
+                Kind::List(items) => Kind::List(resolve_sequence(items, depth + 1, meter)?),
+                Kind::Vector(items) => Kind::Vector(resolve_sequence(items, depth + 1, meter)?),
+                Kind::Set(items) => Kind::Set(resolve_sequence(items, depth + 1, meter)?),
                 Kind::Map(items) => {
-                    let items = resolve_sequence(items, depth + 1)?;
+                    let items = resolve_sequence(items, depth + 1, meter)?;
                     if items.len() % 2 != 0 {
                         return Err(error(span, "Conditional leaves an incomplete map entry"));
                     }
@@ -290,17 +498,17 @@ fn select(
     }
     let mut selected = match selected {
         Some(selected) => selected,
-        None => required_selected(following, depth + 1, span.clone())?,
+        None => required_selected(following, depth + 1, span.clone(), meter)?,
     };
     if !metadata_target(&selected.kind) {
         return Err(error(
-            selected.span,
+            selected.span.clone(),
             "Metadata requires a symbol or collection",
         ));
     }
     selected
         .metadata
-        .splice(0..0, resolve_sequence(metadata, depth + 1)?);
+        .splice(0..0, resolve_sequence(metadata, depth + 1, meter)?);
     selected.span.start = span.start;
     Ok(Some(selected))
 }
@@ -320,18 +528,21 @@ fn delimiter(c: char) -> bool {
         )
 }
 
-struct Reader<'a> {
+struct Reader<'a, 'm, 'f> {
     source: &'a str,
     offset: usize,
-    depth: usize,
     delimited_depth: usize,
     anonymous: Option<(u64, BTreeMap<i32, Symbol>)>,
     logical_pending: VecDeque<Form>,
     locations: Option<Option<&'a str>>,
+    capture: Option<source_snapshot::Capture>,
+    raw_carets: Vec<((usize,usize),usize)>,
     carets: source_metadata::Carets,
     source_positions: Option<source_metadata::Positions>,
+    meter: &'m mut WorkMeter<'f>,
+    work_failure: Option<ParseError>,
 }
-impl Reader<'_> {
+impl Reader<'_, '_, '_> {
     fn anonymous_symbol(&mut self, index: i32) -> Symbol {
         let (id, arguments) = self.anonymous.as_mut().unwrap();
         arguments
@@ -371,13 +582,12 @@ impl Reader<'_> {
         let value = i64::from_str_radix(digits, radix)
             .map_err(|_| self.fail(start, "Invalid anonymous argument index"))?;
         let value = if negative { -value } else { value };
-        if !(-65535..=65535).contains(&value) {
-            return Err(self.fail(
+        i32::try_from(value).map_err(|_| {
+            self.fail(
                 start,
-                "Anonymous argument index exceeds reader resource limit",
-            ));
-        }
-        Ok(value as i32)
+                "Anonymous argument index is not representable as i32",
+            )
+        })
     }
     fn anonymous_argument(&mut self, start: usize) -> Result<Symbol, ParseError> {
         let index = match self.peek() {
@@ -395,8 +605,11 @@ impl Reader<'_> {
                         None => self.required()?,
                     };
                     let selected = loop {
-                        let mut trial = pending.clone();
-                        match select(raw.clone(), &mut trial, 0) {
+                        let mut trial = pending
+                            .iter()
+                            .map(|form| form.clone_metered(self.meter))
+                            .collect::<Result<VecDeque<_>, _>>()?;
+                        match select(raw.clone_metered(self.meter)?, &mut trial, 0, self.meter) {
                             Ok(selected) => {
                                 pending = trial;
                                 break selected;
@@ -420,7 +633,7 @@ impl Reader<'_> {
                 if !matches!(selected.kind, Kind::Number(_)) {
                     return Err(self.fail(start, "Anonymous argument index requires an integer"));
                 }
-                self.anonymous_index_value(&self.source[selected.span], start)?
+                self.anonymous_index_value(&self.source[selected.span.clone()], start)?
             }
             _ => {
                 let token = self.token().to_owned();
@@ -433,6 +646,10 @@ impl Reader<'_> {
         if self.anonymous.is_some() {
             return Err(self.fail(start, "Nested anonymous function literals are not allowed"));
         }
+        // Preserve the legacy provenance reader's anonymous-ID replay effects.
+        // Until separately proven, anonymous source uses its eager fallback.
+        if let Some(capture)=&mut self.capture {capture.unsupported();}
+        let body_site=self.capture.as_mut().map(|capture|capture.begin(start+1,self.meter)).transpose()?;
         self.anonymous = Some((
             ANONYMOUS_IDS.fetch_add(1, Ordering::Relaxed),
             BTreeMap::new(),
@@ -452,6 +669,17 @@ impl Reader<'_> {
             .max()
             .unwrap_or(0)
             .max(0);
+        // Charge all generated slots before allocating or populating the vector.
+        let rest_slots = if self.anonymous.as_ref().unwrap().1.contains_key(&-1) {
+            2
+        } else {
+            0
+        };
+        charge(
+            self.meter,
+            maximum as u64 + rest_slots + 3,
+            start..self.offset,
+        )?;
         let mut arguments = Vec::new();
         for index in 1..=maximum {
             let symbol = self.anonymous_symbol(index);
@@ -492,23 +720,36 @@ impl Reader<'_> {
                     kind: Kind::List(body),
                 };
                 if let Some(file) = self.locations {
-                    source_metadata::attach(
+                    source_metadata::attach_metered(
                         self.source,
                         self.source_positions.as_ref().unwrap(),
                         file,
                         &mut form,
-                    );
+                        self.meter,
+                    )?;
                 }
+                if let Some(capture)=&mut self.capture {capture.finish(body_site,&form,self.meter)?;}
                 form
             },
         ]))
     }
 
     fn peek(&self) -> Option<char> {
+        if self.work_failure.is_some() {
+            return None;
+        }
         self.source[self.offset..].chars().next()
     }
     fn take(&mut self) -> Option<char> {
         let c = self.peek()?;
+        if let Err(failure) = charge(
+            self.meter,
+            c.len_utf8() as u64,
+            self.offset..self.offset + c.len_utf8(),
+        ) {
+            self.work_failure = Some(failure);
+            return None;
+        }
         self.offset += c.len_utf8();
         Some(c)
     }
@@ -556,19 +797,17 @@ impl Reader<'_> {
             return Ok(Some(form));
         }
         self.padding();
-        if self.depth >= 64 {
-            return Err(self.fail(self.offset, "Reader nesting limit exceeded"));
-        }
-        self.depth += 1;
-        let result = self.form_inner();
-        self.depth -= 1;
-        result
+        charge(self.meter, 1, self.offset..self.offset)?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.form_inner())
     }
     fn form_inner(&mut self) -> Result<Option<Form>, ParseError> {
         let start = self.offset;
         let Some(c) = self.take() else {
             return Err(self.fail(start, "Expected a form"));
         };
+        let capture_slot=if matches!(c,'('| '[' | '{' | '#' | '^') {
+            self.capture.as_mut().map(|capture|capture.begin(start,self.meter)).transpose()?
+        } else {None};
         let kind = match c {
             '(' => Kind::List(self.items(start, ')')?),
             '[' => Kind::Vector(self.items(start, ']')?),
@@ -594,6 +833,11 @@ impl Reader<'_> {
             '\\' => Kind::String(vec![self.character(start)?]),
             '^' => {
                 let metadata = self.required()?;
+                if self.capture.is_some() {
+                    charge(self.meter,3,metadata.span.clone())?;
+                    source_snapshot::reserve(&mut self.raw_carets,1,self.meter,metadata.span.clone())?;
+                    self.raw_carets.push(((metadata.span.start,metadata.span.end),start));
+                }
                 if self.locations.is_some() {
                     self.carets.insert(
                         (metadata.span.start, metadata.span.end),
@@ -608,7 +852,7 @@ impl Reader<'_> {
                     Kind::Keyword(_) | Kind::Symbol(_) | Kind::String(_) | Kind::Map(_)
                 ) {
                     return Err(error(
-                        metadata.span,
+                        metadata.span.clone(),
                         "Metadata must be a keyword, symbol, string or map",
                     ));
                 }
@@ -626,12 +870,15 @@ impl Reader<'_> {
                         | Kind::Prefix { .. }
                 ) {
                     return Err(error(
-                        target.span,
+                        target.span.clone(),
                         "Metadata requires a symbol or collection",
                     ));
                 }
                 target.metadata.insert(0, metadata);
                 target.span.start = start;
+                if let Some(capture)=&mut self.capture {
+                    capture.retarget(capture_slot.expect("metadata slot"),&target,self.meter)?;
+                }
                 return Ok(Some(target));
             }
             '\'' | '`' | '~' | '@' => {
@@ -667,7 +914,7 @@ impl Reader<'_> {
                 Some('{') => Kind::Set(self.items(start, '}')?),
                 Some('_') => {
                     let target = self.required()?;
-                    if pending_prefix(&target.kind) {
+                    if pending_prefix(&target.kind, self.meter, target.span.clone())? {
                         Kind::Discard(Box::new(target))
                     } else {
                         return Ok(None);
@@ -819,13 +1066,15 @@ impl Reader<'_> {
             kind,
         };
         if let Some(file) = self.locations {
-            source_metadata::attach(
+            source_metadata::attach_metered(
                 self.source,
                 self.source_positions.as_ref().unwrap(),
                 file,
                 &mut form,
-            );
+                self.meter,
+            )?;
         }
+        if let Some(capture)=&mut self.capture {capture.finish(capture_slot,&form,self.meter)?;}
         Ok(Some(form))
     }
     fn wrapper(&mut self, start: usize, name: &str) -> Result<Kind, ParseError> {

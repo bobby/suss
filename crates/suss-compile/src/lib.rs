@@ -133,7 +133,17 @@ impl Compiler {
         source: &str,
         source_paths: &[std::path::PathBuf],
     ) -> CompileResult<portable_expression::ExpressionArtifact> {
-        portable_expression::prepare(source, source_paths)
+        self.prepare_expression_with_compile_fuel(source, source_paths, None)
+    }
+    /// Prepare an expression with an explicit compilation-only allowance.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn prepare_expression_with_compile_fuel(
+        &mut self,
+        source: &str,
+        source_paths: &[std::path::PathBuf],
+        compile_fuel: Option<u64>,
+    ) -> CompileResult<portable_expression::ExpressionArtifact> {
+        portable_expression::prepare_with_compile_fuel(source, source_paths, compile_fuel)
             .map_err(|error| CompileError::Semantic(error.to_string()))
     }
     /// Create a new compiler instance.
@@ -146,7 +156,15 @@ impl Compiler {
     /// is deferred. This is a fresh compilation, not a source-replaying REPL.
     #[cfg(not(target_family = "wasm"))]
     pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        self.compile_expr_with_info(expr_source)
+        self.compile_expression_with_fuel(expr_source, None)
+    }
+
+    /// Compile a cached expression bundle with an explicit compilation allowance.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn compile_expr_cached_with_compile_fuel(
+        &mut self, expr_source: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<CompiledExpr> {
+        self.compile_expression_with_fuel(expr_source, compile_fuel)
     }
 
     /// Prepare a native expression through the common compiled macro pipeline.
@@ -156,7 +174,25 @@ impl Compiler {
     /// reproducible compiled core bootstrap is shared with the cached entrypoint.
     #[cfg(not(target_family = "wasm"))]
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        let prepared = self.prepare_expression(expr_source, &[std::path::PathBuf::from("src")])?;
+        self.compile_expr_with_compile_fuel(expr_source, None)
+    }
+
+    /// Prepare an uncached expression with an explicit compilation allowance.
+    /// None preserves the default; Some(0) is explicit. Runtime fuel is unchanged.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn compile_expr_with_compile_fuel(
+        &mut self, expr_source: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<CompiledExpr> {
+        self.compile_expression_with_fuel(expr_source, compile_fuel)
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    fn compile_expression_with_fuel(
+        &mut self, expr_source: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<CompiledExpr> {
+        let prepared = self.prepare_expression_with_compile_fuel(
+            expr_source, &[std::path::PathBuf::from("src")], compile_fuel,
+        )?;
         let wasm = prepared
             .modules()
             .last()
@@ -180,6 +216,14 @@ impl Compiler {
     ///
     /// The compiled WASM component bytes
     pub fn compile(&mut self, source: &str, wit_source: &str) -> CompileResult<Vec<u8>> {
+        self.compile_with_compile_fuel(source, wit_source, None)
+    }
+
+    /// Compile with an explicit cumulative compilation allowance. Runtime execution
+    /// fuel and the default used by `compile` are unchanged; Some(0) is explicit.
+    pub fn compile_with_compile_fuel(
+        &mut self, source: &str, wit_source: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<Vec<u8>> {
         #[cfg(not(target_family = "wasm"))]
         {
             // Resolve the world before entering the effectful Macro phase.
@@ -193,7 +237,9 @@ impl Compiler {
             portable::aot::validate_boundary(&resolve, world)
                 .map_err(|error| CompileError::Unsupported(error.to_string()))?;
             let fragments =
-                portable_aot::prepare_source(source, None, &[std::path::PathBuf::from("src")])
+                portable_aot::prepare_source_with_compile_fuel(
+                    source, None, &[std::path::PathBuf::from("src")], compile_fuel,
+                )
                     .map_err(|error| CompileError::Semantic(error.to_string()))?;
             let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, &[])
                 .map_err(|error| CompileError::ExportMismatch(error.to_string()))?;
@@ -202,7 +248,7 @@ impl Compiler {
         }
         #[cfg(target_family = "wasm")]
         {
-            let _ = (source, wit_source);
+            let _ = (source, wit_source, compile_fuel);
             Err(CompileError::Unsupported(
                 "Compiled source macro execution requires the native compiler host".into(),
             ))
@@ -213,19 +259,28 @@ impl Compiler {
     /// isolated compiled macros, preserving the original source filename.
     /// Dependencies resolve from `src`; Runtime initializers execute in the host.
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
+        self.compile_files_with_compile_fuel(source_path, wit_path, None)
+    }
+
+    /// Compile a file with an explicit compilation allowance, retaining filename
+    /// provenance and typed I/O/WIT errors. None and Runtime defaults are unchanged.
+    pub fn compile_files_with_compile_fuel(
+        &mut self, source_path: &str, wit_path: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<Vec<u8>> {
         #[cfg(not(target_family = "wasm"))]
         {
-            portable_aot::compile_file_typed(
+            portable_aot::compile_file_typed_with_compile_fuel(
                 std::path::Path::new(source_path),
                 std::path::Path::new(wit_path),
                 None,
                 &[std::path::PathBuf::from("src")],
                 &[],
+                compile_fuel,
             )
         }
         #[cfg(target_family = "wasm")]
         {
-            let _ = (source_path, wit_path);
+            let _ = (source_path, wit_path, compile_fuel);
             Err(CompileError::Unsupported(
                 "Public file compilation requires the native compiled macro host".into(),
             ))
@@ -267,19 +322,28 @@ impl Compiler {
     /// the artifact host. Ordinary completion succeeds; explicit exit uses the
     /// command status policy.
     pub fn compile_for_main(&mut self, source: &str, main_ns: &str) -> CompileResult<Vec<u8>> {
+        self.compile_for_main_with_compile_fuel(source, main_ns, None)
+    }
+
+    /// Compile an official command with an explicit compilation allowance.
+    /// None preserves the default; Some(0) is explicit. Runtime fuel is unchanged.
+    pub fn compile_for_main_with_compile_fuel(
+        &mut self, source: &str, main_ns: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<Vec<u8>> {
         #[cfg(not(target_family = "wasm"))]
         {
-            portable_aot::compile_main_source(
+            portable_aot::compile_main_source_with_compile_fuel(
                 source,
                 None,
                 main_ns,
                 &[std::path::PathBuf::from("src")],
+                compile_fuel,
             )
             .map_err(CompileError::Semantic)
         }
         #[cfg(target_family = "wasm")]
         {
-            let _ = (source, main_ns);
+            let _ = (source, main_ns, compile_fuel);
             Err(CompileError::Unsupported(
                 "Public command compilation requires the native compiled macro host".into(),
             ))

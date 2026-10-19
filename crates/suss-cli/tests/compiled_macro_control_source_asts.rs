@@ -1,4 +1,6 @@
 //! Genuine control source nodes and child edges, independently decoded.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -171,7 +173,7 @@ fn check_source_cases() {
         // shipped operation defaults and projection depth remain unchanged.
         session.set_operation_fuel(40_000_000);
         let mut macros = CompiledMacros::new().unwrap();
-        macros.set_operation_fuel(40_000_000);
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .enter_namespace("suss-oracle.control-source-ast-runner")
             .unwrap();
@@ -217,7 +219,7 @@ fn check_source_cases() {
         session.collect().unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
         assert!(
-            matches!(actual.kind, Kind::Number(value) if value.to_bits() == 2.0_f64.to_bits()),
+            matches!(&actual.kind, Kind::Number(value) if value.to_bits() == 2.0_f64.to_bits()),
             "cleanup state: {actual:?}"
         );
     }

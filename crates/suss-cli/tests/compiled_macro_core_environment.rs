@@ -1,4 +1,6 @@
 //! The full retained core namespace must fit the bounded analysis graph.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -8,6 +10,7 @@ use suss_reader::forms::Kind;
 fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro declaration-facts [name]
@@ -23,7 +26,7 @@ fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
             .unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
         caller.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().into_parts().2 else {
             panic!("Expected declaration projection");
         };
         assert_eq!(items.len(), 3);
@@ -36,7 +39,7 @@ fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
             .eval_with_macros("(user/declaration-facts graph-owned)", &mut macros)
             .unwrap();
         caller.collect().unwrap();
-        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().kind else {
+        let Kind::Vector(items) = bridge.read(&mut caller, &value, 0..1).unwrap().into_parts().2 else {
             panic!("Expected fresh declaration projection");
         };
         assert_eq!(items[1].kind, Kind::Bool(true));

@@ -1,4 +1,6 @@
 //! Executed inference boundaries compared with pinned primary observations.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -27,10 +29,10 @@ fn row(form: &Form) -> Value {
     let Kind::String(label) = &fields[0].kind else {
         panic!("Expected label")
     };
-    let Kind::Bool(tag_present) = fields[1].kind else {
+    let Kind::Bool(tag_present) = &fields[1].kind else {
         panic!("Expected tag presence")
     };
-    let Kind::Bool(return_present) = fields[3].kind else {
+    let Kind::Bool(return_present) = &fields[3].kind else {
         panic!("Expected return presence")
     };
     json!([
@@ -83,6 +85,7 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
     let mut differences = Vec::new();
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro hint-row [label name]

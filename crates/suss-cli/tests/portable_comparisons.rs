@@ -197,17 +197,18 @@ fn comparison_utf16_prefix_loop_has_fuel_recovery_and_typed_coercion_errors() {
 }
 
 #[test]
-fn runtime_comparison_large_arity_uses_bounded_callback_code_without_macro_expansion() {
+fn large_comparisons_execute_runtime_alias_and_direct_form_without_truncating_arguments() {
     let mut session = Session::new().unwrap();
     let args = (0..300)
         .map(|n| n.to_string())
         .collect::<Vec<_>>()
         .join(" ");
     assert!(eval_bool(&mut session, &format!("(let [f <] (f {args}))")));
-    assert!(matches!(
-        session.eval(&format!("(< {args})")),
-        Err(SessionError::Compile(_))
-    ));
+    assert!(eval_bool(&mut session, &format!("(< {args})")));
+    // The final pair must participate too; a truncated prefix would be true.
+    let late_equal = (0..299).chain(std::iter::once(298))
+        .map(|n| n.to_string()).collect::<Vec<_>>().join(" ");
+    assert!(!eval_bool(&mut session, &format!("(< {late_equal})")));
     assert!(eval_bool(&mut session, "(< 1 2)"));
 }
 

@@ -80,7 +80,7 @@ fn compiled_source_macro_form_retains_reader_positions_on_nested_syntax() {
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..source.len()).unwrap();
             assert_primary(label, &decoded);
-            let Kind::Vector(rows) = decoded.kind else {
+            let Kind::Vector(rows) = decoded.into_parts().2 else {
                 panic!("source metadata rows")
             };
             assert_eq!(rows.len(), 4);
@@ -91,7 +91,7 @@ fn compiled_source_macro_form_retains_reader_positions_on_nested_syntax() {
                 assert_eq!(fields.len(), if index == 1 { 5 } else { 6 });
                 for (field, value) in fields[..4].iter().enumerate() {
                     assert!(
-                        matches!(value.kind, Kind::Number(n) if n > 0.0 && n.fract() == 0.0),
+                        matches!(&value.kind, Kind::Number(n) if *n > 0.0 && n.fract() == 0.0),
                         "actual reader position missing at row {index}, field {field}: {value:?}"
                     );
                 }
@@ -119,7 +119,7 @@ fn compiled_source_macro_form_preserves_explicit_location_overrides() {
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..source.len()).unwrap();
         assert_primary("overrides", &decoded);
-        let Kind::Vector(rows) = decoded.kind else {
+        let Kind::Vector(rows) = decoded.into_parts().2 else {
             panic!("metadata rows")
         };
         for (row, expected) in [
@@ -159,7 +159,7 @@ fn compiled_source_macro_generated_syntax_does_not_invent_reader_locations() {
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
         assert_primary("generated", &decoded);
-        let Kind::Vector(rows) = decoded.kind else {
+        let Kind::Vector(rows) = decoded.into_parts().2 else {
             panic!("generated metadata rows")
         };
         assert_eq!(rows.len(), 4);
@@ -220,7 +220,7 @@ fn compiled_source_macro_file_metadata_uses_the_loaded_source_path() {
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::Vector(rows) = decoded.kind else {
+        let Kind::Vector(rows) = decoded.into_parts().2 else {
             panic!("file metadata rows")
         };
         assert_eq!(rows.len(), 4);
@@ -337,7 +337,7 @@ fn compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax() 
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
-        let Kind::List(items) = decoded.kind else {
+        let Kind::List(items) = decoded.into_parts().2 else {
             panic!("assignment syntax remains data")
         };
         assert_eq!(items.len(), 3);
@@ -355,7 +355,7 @@ fn compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax() 
 }
 
 #[test]
-fn compiled_source_macro_metadata_bound_failure_preserves_bindings_and_recovers() {
+fn large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros
@@ -365,18 +365,24 @@ fn compiled_source_macro_metadata_bound_failure_preserves_bindings_and_recovers(
             .eval("(def metadata-keep 7) (def metadata-effects 0)")
             .unwrap();
         let source = format!(
-            "(def metadata-keep (do (set! metadata-effects 1) (metadata-data)))\n;{}",
+            "(def metadata-keep (do (set! metadata-effects (+ metadata-effects 1)) ^{{:payload 42}} (metadata-data)))\n;{}",
             "x".repeat(1_048_576)
         );
-        let error = session.eval_with_macros(&source, &mut macros).unwrap_err();
+        let value = session.eval_with_macros(&source, &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(42.0));
+        // Keep the large source valid; a smaller computation allowance, rather
+        // than a text-size ceiling, must reject the next attempted definition.
+        macros.set_operation_fuel(100_000);
+        let failing_source = source.replace(":payload 42", ":payload 99");
+        let error = session.eval_with_macros(&failing_source, &mut macros).unwrap_err();
         let suss_cli::portable_session::SessionError::Compile(error) = error else {
             panic!("located compile diagnostic")
         };
-        assert!(error.message.contains("snapshot exceeds 1 MiB"));
-        assert_eq!(&source[error.span], "(metadata-data)");
-        let bridge = FormBridge::new(&mut session).unwrap();
+        assert!(error.message.to_lowercase().contains("fuel"), "{error}");
+        assert!(failing_source.get(error.span.clone()).is_some());
         session.collect().unwrap();
-        for (name, expected) in [("metadata-keep", 7.0), ("metadata-effects", 0.0)] {
+        for (name, expected) in [("metadata-keep", 42.0), ("metadata-effects", 1.0)] {
             let value = session.eval(name).unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,

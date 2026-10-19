@@ -103,10 +103,14 @@ The [source and license policy](PROVENANCE.md) applies before importing core for
 The vendored [jank-lang/clojure-test-suite](clojure-test-suite.md) is the
 function-level conformance corpus: 248 namespaces and 5,834 assertions recorded
 from the pinned ClojureScript oracle, judged host-side against Suss with an exact
-known-failure baseline. With retained-source printing, 13 namespaces load and all 101 of their
-assertions pass; 235 fail before running (mostly reader gaps and missing core
-vars), with each first blocker recorded. A harness self-test fixture passes 22 of
-23 assertions; the remaining one demonstrates the skip-mismatch path.
+known-failure baseline. The [2026-10-19 full raw capture](../roadmap/evidence/m4-pr256-suite-calibration-2026-10-19.md)
+records 1,144 host-decided passes, 25 guest-judged observations, two assertion
+errors and 4,663 unexecuted assertions behind 185 namespace failures. The
+comparator also retains 20 existing skip mismatches, for 22 failures overall.
+Compilation uses the semantic-test 10B allowance; Runtime remains 200M and the
+separate pinned-map control retains 200M for both. No blocked assertion counts
+as a pass. A harness self-test fixture passes 22 of 23 assertions; the remaining
+one demonstrates the skip-mismatch path.
 
 ## Prototype baseline
 
@@ -475,8 +479,8 @@ remain unfinished. Full baseline, independent review and final-head CI still
 gate PR readiness; no issue or milestone is complete from this work alone.
 
 
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
-boolean/nil equality tables with selector-once evaluation and live qualified
+Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and
+boolean/nil equality tables without fixed constant-count caps with selector-once evaluation and live qualified
 core equality. There are 40 fresh pinned/native value matches and one separately
 asserted pinned empty-group parse failure; native rejects that input with a
 located compile diagnostic. Actual fragments execute in Runtime and Macro
@@ -1003,8 +1007,10 @@ default printing remains unfinished. Provenance verifies316 files; overlay413
 reviewed/652 unassessed declarations. Rich retained-core macro environments exposed
 an aggregate graph-capacity failure: the complete graph measures66,474 recipes.
 A compile-only two-phase regression failed the old65,536 limit and passes the new
-bounded131,072 aggregate limit. Per-form, depth, string-storage, key-storage and
-materialization-work guards are unchanged; no full printing/M3 claim follows.
+bounded131,072 aggregate limit in that historical validation. These fixed graph,
+per-form, depth, string-storage, key-storage and traversal-work caps have since
+been replaced by metered operation work; structural validation remains. No full
+printing/M3 claim follows.
 
 
 Current default printer continuation supersedes the earlier unresolved-entrypoint
@@ -1184,3 +1190,93 @@ rooted descriptor and owner-type comparisons verify the concrete input classes.
 The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
 is an uncommitted-source execution snapshot; it does not establish a new full
 workspace baseline, committed-head review, CI, or whole-suite conformance.
+
+
+## Macro IHash dispatch observation infrastructure
+
+Macro sessions privately observe already-selected protocol methods with their
+prepared arguments. The public dispatcher closure and live bindings remain
+unchanged; Runtime/AOT ABI modules have no observer callback or new imports.
+Exact sealed IHash key storage identifies an observation scope. Unrelated
+protocol callbacks inherit its nearest receiver; nested actual IHash dispatch
+overrides that receiver until return, exception or fuel trap. These scopes
+grant no memo-write authorization and publish no receipts. Physical store
+observation and independent write-time source-domain authentication remain
+necessary for cold custom-IHash metadata identity (#257).
+
+## Scoped Macro memo stores (2026-10-16)
+
+A bounded source-fact witness now covers originally-nil nominal memo stores in
+an actual IHash dispatch scope. Physical field/named stores match the nearest
+actual receiver, captured storage and slot, with full source-domain proof before
+and after the store. The active exact descriptor permits a valid live method
+layout (including same-descriptor siblings); other descriptors retain canonical
+method obligations. Generic outside-scope stores do not mint or erase receipts.
+Existing receipt validation still requires the exact authenticated Number
+reference/bits and healthy source facts. Canonical bootstrap writes keep their
+independent checked setter and publication policy.
+
+Focused execution passes ten new native regressions, including nested protocol
+callbacks, original thrown-object identity, forced GC, source poison/restore and
+post-store fuel failure. The existing public compiled_macro_cumulative_fuel
+selection passes10/10, including cold Map identity that failed on observer-only
+3485718. This does not establish all #257 criteria, full workspace results or
+final-head CI. Original-nonnil captured memo transitions remain unsupported
+by this new path. At that checkpoint the native bridge precomputed identifier
+memos, unlike pinned CLJS cold leaves; the matched investigation below addresses
+that eager-warming difference. No unsupported
+nominal aset behavior was added. See the scoped-store handoff and evidence.
+
+Matched native leaf evidence now preserves an expected-red8case comparison in
+both caller phases: initial native identifier memo precomputation differs from
+pinned CLJS nil and changes cold nil-aware callback writes/results. Force writes
+also lose later identity. All48native windows complete; the four grouped tests
+failed in the preserved before-fix run. Warm canonical numbers match. That evidence added no initialization
+or receipt-eligibility fix and observes only &env identity, not resolve/AST views.
+See the dated native memo-leaf handoff/archive for exact results and limitations.
+
+The isolated cold-leaf/ancestor checkpoint now initializes FormBridge identifiers
+with nil, preserving live canonical hashing and its actual callback effects.
+All48 matched native windows pass without broadening receipt eligibility. Full
+pre/post source-domain proofs permit live method layout for descriptors anchored
+by actual IHash receiver frames with exact watches in the same domain; unrelated
+descriptors retain canonical obligations. This supports a cold canonical child
+hash inside a custom parent method without upgrading a prior unsafe receipt.
+Exact nearest receiver/storage/slot still gates physical-store authorization.
+Focused scoped tests13, public cumulative10, and cross-invocation tests2 pass;
+the latter includes actual metadata hash maps over eight entries. Preserved
+initialization-only public failure and diagnostic trace explain why initialization
+alone was insufficient. No full baseline, final CI, all-view oracle conformance,
+or whole-issue acceptance claim; see the cold-memo-ancestor handoff/archive.
+
+Analyzer-generated keyword literals now retain the initial hash memo emitted by
+the pinned ClojureScript compiler. Eligibility comes from explicit constructor
+positions and binding roles; reader values, dynamic keys and Suss extension
+keys remain cold. Separate literal and cold key tables preserve same-text
+distinctions. Collection construction still invokes live hashing methods, and
+an initially numeric memo cannot acquire originally-nil transition authority.
+Added native entry-buffer work is charged before allocation or growth.
+
+Focused execution passes eight new native tests, two compiled-macro tests in
+both caller phases, and seventeen existing slot/reuse guards. The unchanged
+invocation-tag integration regression now passes in both phases. Inference,
+complete core environment and collection-source tests still exhaust fuel;
+defaults and accounting rates are unchanged. See the dated analyzer-literal
+handoff and evidence for the complete selection and remaining limitations.
+
+Recorded metadata now uses invocation-local scratch indexed by reachable native
+recipe IDs when its enclosing graph has more than4096 recipes. Smaller recorded
+graphs and ordinary/whole-graph materialization retain dense scratch. The
+threshold selects an implementation and rejects no form. Both routes share
+construction, callbacks and validation; added index work is metered, and guest
+values and source authority are not cached by the index.
+
+Focused guards preserve callback order and failures, GC, sharing, source-owner
+identity, typed exhaustion and recovery. Wide Runtime metadata still lacks the
+memo receipts needed for certification; Macro retains its existing permission.
+Logical payload poison is rejected in both phases. Sparse indexing can cost
+more for wide reached roots; the evidence retains those cases. The unchanged
+inference, core-environment and collection-source regressions remain fuel
+failures. See the recorded-scratch handoff and evidence for qualified run scopes.
+
+Private compiler placeholder lookup now uses checked token ownership, exact identity and an immutable GC kind/arity negative filter, with direct routes for small token sets. The [private-token evidence](../roadmap/evidence/m4-pr256-private-slot-token-scans-2026-10-18.md) records12 focused passes, GC/foreign/reset/fuel/IRQ controls and both favorable/adverse cost history. This changes no language contract or allowance and does not establish complete core-environment execution at default fuel, full-suite compatibility or final CI.

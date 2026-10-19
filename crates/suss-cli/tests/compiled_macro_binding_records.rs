@@ -454,7 +454,7 @@ fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_mac
         assert_eq!(scalar(&mut session, "result"), 41.0);
         let init = snapshot(&host, "expanded")["x"].initializer.as_ref().unwrap();
         let analyzed = init.source.as_ref().unwrap();
-        assert!(matches!(analyzed.form.kind, Kind::Number(41.0)));
+        assert!(matches!(&analyzed.form.kind, Kind::Number(41.0)));
         // The original text contains a call, not a numeric source token. The
         // record retains actual expansion syntax and only call-site provenance.
         assert_eq!(&source[analyzed.form.span.clone()], "(expanded-initializer)");
@@ -474,6 +474,6 @@ fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_mac
         let analyzed = init.source.as_ref().unwrap();
         assert!(analyzed.origin.is_none());
         assert_eq!(analyzed.phase, phase);
-        assert!(matches!(analyzed.form.kind, Kind::Number(41.0)));
+        assert!(matches!(&analyzed.form.kind, Kind::Number(41.0)));
     }
 }

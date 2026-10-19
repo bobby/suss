@@ -7,12 +7,7 @@ impl Analyzer<'_> {
         args: &[Form],
         operation: Comparison,
     ) -> Result<Hir, Diagnostic> {
-        if args.len() > 256 {
-            return Err(fail(
-                form.span.clone(),
-                "Comparison macro expansion limit exceeded",
-            ));
-        }
+        self.expander.charge_expansion_work(args.len() as u64, form.span.clone())?;
         if args.is_empty() {
             return Err(fail(
                 form.span.clone(),
@@ -38,7 +33,9 @@ impl Analyzer<'_> {
         }
         // Expand the remaining syntax afresh: the pin repeats middle expressions,
         // while the If avoids effects in comparisons after the first false pair.
-        let rest = self.comparison_form(form, &args[1..], operation)?;
+        let rest = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            self.comparison_form(form, &args[1..], operation)
+        })?;
         Ok(Hir {
             source: None,
             span: form.span.clone(),

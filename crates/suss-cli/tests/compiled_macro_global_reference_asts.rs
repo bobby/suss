@@ -1,4 +1,6 @@
 //! Global-reference AST facts come from retained declaration revisions.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -48,6 +50,7 @@ fn captured_global_declarations_supply_var_ast_fields_without_catalog_mutation()
     }
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session
             .enter_namespace("suss-oracle.global-reference-ast-runner")
             .unwrap();

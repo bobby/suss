@@ -18,30 +18,8 @@ impl Method {
                 .collect::<String>()
         );
         let handles = session.handles.clone();
-        let key = {
-            let global = session
-                .cells
-                .iter()
-                .find(|(identity, _)| {
-                    identity.phase() == session.phase
-                        && identity.namespace() == "suss.internal.protocol-keys"
-                        && identity.name() == name
-                })
-                .map(|(_, value)| *value)
-                .ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg("Missing test IHash key"))
-                })?;
-            let mut scope = RootScope::new(&mut session.store);
-            let cell = global
-                .get(&mut scope)
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&scope)?
-                .unwrap();
-            assert_ne!(cell.field(&mut scope, 1)?.unwrap_i32(), 0);
-            let value = cell.field(&mut scope, 0)?;
-            own(&mut scope, value, session.identity, &handles)?
-        };
+        let key =
+            canonical_methods::binding(session, "suss.internal.protocol-keys", &name, &handles)?;
         let implementation = {
             let mut scope = RootScope::new(&mut session.store);
             let descriptor = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));

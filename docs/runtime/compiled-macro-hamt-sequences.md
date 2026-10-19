@@ -8,10 +8,10 @@ collection protocols or rebuild a sequence from the original map.
 
 Field widths, source-array ownership, cursor bounds and pair alignment are
 checked. Sparse unused slots honor the pinned nil? treatment of nil and undefined;
-undefined remains unsupported as a standalone syntax value. The shared traversal
-budget and explicit recursive sequence depth limit reject corrupt or cyclic child
-cursors with the original supplied source location. Entry children retain the
-existing syntax depth and metadata rules.
+undefined remains unsupported as a standalone syntax value. Traversal consumes
+the operation allowance; explicit cycle and cursor checks reject corrupt data
+with the original supplied source location. Entry children retain metadata and
+structural validation without a fixed syntax-depth cap.
 
 The collision corpus exposed a separate missing dependency: persistent array-map
 assoc at its ninth entry called an uninitialized `into`. Complete pinned public

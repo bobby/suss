@@ -46,7 +46,7 @@ fn compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc() {
             session.collect().unwrap();
             let output = bridge.read(&mut session, &value, 50..60).unwrap();
             assert_eq!(output.span, 50..60);
-            let Kind::Map(entries) = output.kind else {
+            let Kind::Map(entries) = output.into_parts().2 else {
                 panic!("Map syntax")
             };
             assert_eq!(entries.len(), size * 2);
@@ -213,7 +213,7 @@ fn compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition() {
         session.collect().unwrap();
         assert!(bridge.read(&mut session, &foreign, 0..1).is_err());
         let decoded = bridge.read(&mut session, &saved, 50..60).unwrap();
-        assert!(matches!(decoded.kind, Kind::Map(entries) if entries.len() == 18));
+        assert!(matches!(&decoded.kind, Kind::Map(entries) if entries.len() == 18));
         assert_eq!(decoded.metadata.len(), 1);
     }
 }
@@ -246,13 +246,13 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
         let value = session.eval("(PersistentHashMap. nil 2 (BitmapIndexedNode. nil -2147483648 (array 7 8)) true 9 nil)").unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 70..80).unwrap();
-        let Kind::Map(entries) = decoded.kind else {
+        let Kind::Map(entries) = decoded.into_parts().2 else {
             panic!("map")
         };
-        assert!(matches!(entries[0].kind, Kind::Nil));
-        assert!(matches!(entries[1].kind, Kind::Number(9.0)));
-        assert!(matches!(entries[2].kind, Kind::Number(7.0)));
-        assert!(matches!(entries[3].kind, Kind::Number(8.0)));
+        assert!(matches!(&entries[0].kind, Kind::Nil));
+        assert!(matches!(&entries[1].kind, Kind::Number(9.0)));
+        assert!(matches!(&entries[2].kind, Kind::Number(7.0)));
+        assert!(matches!(&entries[3].kind, Kind::Number(8.0)));
     }
 }
 

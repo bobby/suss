@@ -10,7 +10,7 @@ fn boolean(session: &mut Session, value: &SessionValue, expected: bool) {
     session.collect().unwrap();
     let bridge = FormBridge::new(session).unwrap();
     let actual = bridge.read(session, value, 0..0).unwrap();
-    assert!(matches!(actual.kind, Kind::Bool(value) if value == expected));
+    assert!(matches!(&actual.kind, Kind::Bool(value) if *value == expected));
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
         session.collect().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &effects, 0..0).unwrap();
-        assert!(matches!(actual.kind, Kind::Number(value) if value.to_bits() == 0.0_f64.to_bits()));
+        assert!(matches!(&actual.kind, Kind::Number(value) if value.to_bits() == 0.0_f64.to_bits()));
         let result = session
             .eval("(binding [publication-value (let [make make-array] (aget (make 1) 0))] (suss.compiler/cell-defined? user/publication-value))");
         // Preserve the existing binding kernel's selected dynamic value.

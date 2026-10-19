@@ -209,23 +209,31 @@ fn retained_murmur_functions_observe_live_globals_and_old_values_survive_gc() {
 
 #[test]
 fn threading_expansion_limits_are_located_atomic_and_recover() {
-    use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    for body in [
-        format!("(-> 1 {})", "(+ 1) ".repeat(256)),
-        format!("(as-> 1 n {})", "(+ n 1) ".repeat(255)),
-        // Each macro is within its own expansion budget, but their combined
-        // expansion exceeds the guarded 64-level analyzer boundary.
-        format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(40), "(+ 1) ".repeat(40)),
+    for (body, expected) in [
+        (format!("(-> 1 {})", "(+ 1) ".repeat(256)), 257.0),
+        (format!("(as-> 1 n {})", "(+ n 1) ".repeat(255)), 256.0),
+        (format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(40), "(+ 1) ".repeat(40)), 81.0),
     ] {
         let source = format!("(do (def threading_limit_unpublished 7) {body})");
-        let SessionError::Compile(error) = session.eval(&source).unwrap_err() else {
-            panic!("expected located expansion limit");
-        };
-        assert!(error.message.contains("expansion limit"), "{error:?}");
-        assert!(error.span.start < error.span.end && error.span.end <= source.len());
-        assert!(session.eval("threading_limit_unpublished").is_err());
+        assert_eq!(murmur_number(&mut session, &source), expected);
+        // The formerly rejected fragment now succeeds, including its definition.
+        assert_eq!(murmur_number(&mut session, "threading_limit_unpublished"), 7.0);
         assert_eq!(murmur_number(&mut session, "(as-> 7 n (+ n 3))"), 10.0);
+    }
+    session.eval("(def finite-thread-order 0) (def finite-thread-step (fn [x marker] (do (if (== marker (+ finite-thread-order 1)) (set! finite-thread-order marker) (throw 91)) (+ x 1))))").unwrap();
+    let steps = |start, count, threaded: bool| (start..start + count)
+        .map(|step| if threaded { format!("(finite-thread-step {step})") }
+             else { format!("(finite-thread-step n {step})") })
+        .collect::<Vec<_>>().join(" ");
+    for (source, expected, count) in [
+        (format!("(-> 1 {})", steps(1, 256, true)), 257.0, 256.0),
+        (format!("(as-> 1 n {})", steps(1, 255, false)), 256.0, 255.0),
+        (format!("(-> (-> 1 {}) {})", steps(1, 40, true), steps(41, 40, true)), 81.0, 80.0),
+    ] {
+        session.eval("(set! finite-thread-order 0)").unwrap();
+        assert_eq!(murmur_number(&mut session, &source), expected);
+        assert_eq!(murmur_number(&mut session, "finite-thread-order"), count);
     }
     // Sequential as-> keeps its argument boundary; modest threading executes.
     assert_eq!(

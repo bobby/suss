@@ -19,6 +19,26 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def captured_fixture_hash(record, path):
+    current = (ROOT / path).read_bytes()
+    assert digest(current) == record['files'][path], path
+    adaptation = record.get('native_fixture_adaptations', {}).get(path)
+    if adaptation is None:
+        return record['files'][path]
+    assert set(adaptation) == {'original', 'original_sha256', 'patch', 'patch_sha256'}
+    for key in ['original', 'patch']:
+        relative = Path(adaptation[key])
+        assert not relative.is_absolute() and '..' not in relative.parts
+    original = (DIRECTORY / adaptation['original']).read_bytes()
+    assert digest(original) == adaptation['original_sha256'], path
+    patch = ''.join(difflib.unified_diff(
+        original.decode().splitlines(True), current.decode().splitlines(True),
+        fromfile='captured/' + path, tofile='current/' + path)).encode()
+    retained = (DIRECTORY / adaptation['patch']).read_bytes()
+    assert retained == patch and digest(retained) == adaptation['patch_sha256'], path
+    return adaptation['original_sha256']
+
+
 def main():
     record = json.loads((DIRECTORY / 'provenance.json').read_text())
     actual = subprocess.check_output(
@@ -68,14 +88,15 @@ def main():
     assert (ROOT / 'tests/oracle/when-let-validation-observations.json').read_bytes() == (oracle / 'validation1-observations.json').read_bytes()
     positive_inputs = json.loads((oracle / 'provenance-inputs.json').read_text())
     positive_fixture = 'crates/suss-cli/tests/compiled_when_let.rs'
-    assert record['files'][positive_fixture] == positive_inputs['files'][positive_fixture]
+    assert captured_fixture_hash(record, positive_fixture) == positive_inputs['files'][positive_fixture]
     positive_guest = re.findall(r'observe\(&mut session, &mut macros, r#"(.*?)"#\)',
                                 (ROOT / positive_fixture).read_text(), re.S)[0]
     assert (oracle / 'guest.cljs').read_text() == positive_guest
     direct = DIRECTORY / 'direct-let-oracle'
     direct_inputs = json.loads((direct / 'inputs.json').read_text())
     fixture = direct_inputs['native_fixture']
-    assert record['files'][fixture] == direct_inputs['native_fixture_sha256']
+    assert captured_fixture_hash(record, fixture) == direct_inputs['native_fixture_sha256']
+    assert set(record.get('native_fixture_adaptations', {})) <= {positive_fixture, fixture}
     guests = re.findall(r'eval_with_macros\(r#"(.*?)"#, &mut macros\)',
                         (ROOT / fixture).read_text(), re.S)
     assert len(guests) == 2

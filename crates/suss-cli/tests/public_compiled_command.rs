@@ -6,7 +6,10 @@ use std::{
     process::{Command, Output},
     sync::OnceLock,
 };
-use suss_compile::Compiler;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
+use suss_compile::{CompileError, Compiler};
 use wasmtime::{
     Config, Engine,
     component::{
@@ -34,6 +37,17 @@ fn engine() -> &'static Engine {
 
 fn compile(root: &Path, source: &str) {
     let bytes = Compiler::new().compile_for_main(source, "app").unwrap();
+    write_command(root, bytes);
+}
+
+fn compile_with_compile_fuel(root: &Path, source: &str) {
+    let bytes = Compiler::new()
+        .compile_for_main_with_compile_fuel(source, "app", Some(COMPILATION_FUEL))
+        .unwrap();
+    write_command(root, bytes);
+}
+
+fn write_command(root: &Path, bytes: Vec<u8>) {
     let component = Component::new(engine(), &bytes).unwrap();
     let interface = component
         .get_export_index(None, "wasi:cli/run@0.3.1")
@@ -91,7 +105,7 @@ fn public_command_validates_requested_namespace_before_macro_effects() {
 #[test]
 fn public_command_executes_compiled_lexical_macros_and_ordered_user_arguments() {
     let root = tempfile::tempdir().unwrap();
-    compile(
+    compile_with_compile_fuel(
         root.path(),
         r#"
         (ns app)
@@ -191,4 +205,35 @@ fn public_command_does_not_grant_runtime_exit_to_macro_phase() {
         .unwrap_err()
         .to_string();
     assert!(error.contains("Macro"), "{error}");
+}
+
+#[test]
+fn public_command_compile_fuel_preserves_zero_namespace_order_and_default_recovery() {
+    let mut compiler = Compiler::new();
+    for allowance in [None, Some(0)] {
+        let error = compiler.compile_for_main_with_compile_fuel(
+            "(ns wrong) (defmacro fail [] (throw 99)) (defn -main [] (fail))",
+            "app", allowance,
+        ).unwrap_err().to_string();
+        assert!(error.contains("Declared namespace wrong does not match requested app"), "{error}");
+        assert!(!error.contains("Macro exception"), "{error}");
+    }
+    const SOURCE: &str = "(ns app) (defn -main [] (wasi.cli/exit-with-code 73))";
+    let error = compiler.compile_for_main_with_compile_fuel(SOURCE, "app", Some(0)).unwrap_err();
+    let CompileError::Semantic(message) = error else { panic!("unexpected error: {error}") };
+    assert!(message.contains("fuel"), "{message}");
+    // Explicit zero publishes no component and does not affect later requests.
+    for allowance in [None, Some(COMPILATION_FUEL)] {
+        let bytes = compiler.compile_for_main_with_compile_fuel(SOURCE, "app", allowance).unwrap();
+        let root = tempfile::tempdir().unwrap();
+        write_command(root.path(), bytes);
+        let output = run(root.path(), &[]);
+        assert_eq!(output.status.code(), Some(73), "{}", String::from_utf8_lossy(&output.stderr));
+        assert!(output.stdout.is_empty());
+        assert!(output.stderr.is_empty());
+    }
+    let bytes = compiler.compile_for_main(SOURCE, "app").unwrap();
+    let root = tempfile::tempdir().unwrap();
+    write_command(root.path(), bytes);
+    assert_eq!(run(root.path(), &[]).status.code(), Some(73));
 }
