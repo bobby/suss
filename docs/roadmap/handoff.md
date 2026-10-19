@@ -30241,3 +30241,15 @@ Source d16198173d94aa58df1c47795121bca88db6e63a: normal two-generation verificat
 ## Four reader-controller repairs and initial focused evidence (2026-10-19)
 
 [Evidence](evidence/m4-pr263-four-reader-controller-repairs-2026-10-19.md) retains pre-repair558095c seven-filter19PASS17FAIL0ignored, plus prior567c4f7 bootstrap4PASS separately. Four reviewed repair postimages compile/link PASS24.7733s; 534 is library inventory, not PASS count. Current-source test bodies remain unexecuted; fresh generation/identity and focused replay are next. Known indexed metadata-order failure remains unfixed. No full baseline/final CI/readiness/closure claim. Archive SHA256 f7057d55306531bf081a88c55b4d79e3e635624757c9da979bd30e0d0fbdb6e5.
+
+
+## Provisioned reader controller bootstrap source binding
+
+`sh scripts/verify-bootstrap.sh` on901fa9d generated both normal phase pairs
+identically in28.0836s, then exited1 against the older shipped tuple. Independent
+review verified219 Git source inputs/fingerprint498b1286, all8 hashes and unchanged
+noncustom Wasm sections/catalog/ABI/cells. The exact four generated outputs are
+adopted; [raw log, hashes and independent source binding](evidence/m4-pr263-provisioned-controller-bootstrap-2026-10-19.json)
+retain that failed comparison accurately. Fresh identity/reproduction/bootstrap
+execution and repaired-source focused tests remain subsequent checks; no pass is
+inferred. Indexed metadata ordering remains a known separate failure.
