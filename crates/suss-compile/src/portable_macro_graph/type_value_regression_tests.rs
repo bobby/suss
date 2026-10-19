@@ -67,7 +67,7 @@ fn actual_type_value_projection_preserves_shallow_meta_and_prior_function_policy
             for source in *sources {
                 previous = current.take();
                 let forms = suss_reader::forms::read_forms(source).unwrap();
-                let origin = portable::SourceOrigin::new(source, None);
+                let origin = portable::SourceOrigin::new(*source, None);
                 environment = hir::prepare_with_origin(&forms, 0..source.len(), &environment, phase,
                     &mut portable::NoExpansion, Some(&origin)).unwrap().1;
                 let binding = environment.resolve(phase, &suss_reader::Symbol::new("watched"), 0..0).unwrap();

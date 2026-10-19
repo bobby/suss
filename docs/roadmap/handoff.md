@@ -30174,3 +30174,16 @@ COW/source_roots controls and unchanged core_import/source-tags acceptance
 remain necessary before the exact full workspace baseline. No default-budget
 or public alias result is inferred. Root66a55ce's same workspace producer
 continues separately; no concurrent local Cargo/VM was used for adoption.
+
+
+## Type-value test compilation after successful bootstrap replay
+
+3c0ed52 CI39297273041 reproduces all four shipped files exactly, passes identity
+and compiled_bootstrap4/0/0 (40.66s). The subsequent library-test build fails
+E0277 at type_value_regression_tests.rs70: source slice iteration yields&&str.
+The independently reviewed one-character dereference fixes that call without
+changing source bytes, assertions or budgets. [Raw log, receipts and scope](evidence/m4-pr263-type-value-test-build-2026-10-19.md)
+retain the failed build; no library test verdict is inferred. Test source is
+part of the compiler fingerprint, so regenerate/adopt both normal phases before
+fresh `sh scripts/verify-bootstrap.sh`, focused tests and the exact full baseline.
+No local concurrent Cargo/VM was used; root66a55ce's producer continues intact.
