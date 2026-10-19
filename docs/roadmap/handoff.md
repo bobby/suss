@@ -29882,3 +29882,19 @@ cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-thre
 Then run the required full baseline and final-head CI. Reader shorthand and
 prior type-declaration key provenance still need transport integration and
 actual execution; the new field selector does not establish those properties.
+
+
+## Reader metadata construction-fact validation
+
+The native metadata view retains first-key constructor facts for symbol/string
+shorthand. Its owned adapter remains unchanged; Graph/FormBridge wiring and
+native execution are not established. See the
+[source review](evidence/m4-pr263-reader-key-view-2026-10-19.md).
+After normal bootstrap regeneration and identity checks, run:
+
+```sh
+cargo test --locked -p suss-compile --lib metadata_key_origin -- --test-threads=2 --nocapture
+```
+
+This command is a validation target, not a result. Preserve full prefix errors,
+first-key identity, independent occurrences and Runtime limits during wiring.
