@@ -30214,3 +30214,15 @@ No production code or fuel limit changes. Corrected native execution is pending;
 regenerate the normal source-fingerprint bootstrap tuple before focused replay and
 the exact workspace baseline. Original strict core/source-child and pinned-map
 exhaustions remain explicit failures. Root66a55ce's existing producer is untouched.
+
+
+## Normal bootstrap for indexed metadata test controls
+
+CI39308835115 completes two normal generations froma1d3c61, then stops against
+the older shipped bytes before test execution. The independently reviewed four
+outputs are adopted exactly; [receipts, raw log, hashes and scope](evidence/m4-pr263-indexing-controls-bootstrap-2026-10-19.md)
+bind204source inputs and both equal phase pairs. Non-custom executable sections
+match the previous tuple, and the actual existing compiled identity probe passes.
+No new native test success is inferred. Run committed-head normal reproduction
+and all focused original acceptance before the exact workspace gate. Root66a55ce's
+existing producer remains untouched; no local concurrent Cargo/Suss VM ran.
