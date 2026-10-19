@@ -34,8 +34,8 @@ fn run_command(cmd: args::Command) {
         args::Command::RunFile { path } => {
             run_file(&path);
         }
-        args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize } => {
-            compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
+        args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize, compile_fuel } => {
+            compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize, compile_fuel);
         }
         args::Command::CompileMain {
             source,
@@ -43,14 +43,15 @@ fn run_command(cmd: args::Command) {
             src_paths,
             output,
             optimize,
+            compile_fuel,
         } => {
-            compile_main(&source, &namespace, &src_paths, &output, optimize);
+            compile_main(&source, &namespace, &src_paths, &output, optimize, compile_fuel);
         }
-        args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, output, optimize } => {
-            compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
+        args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, output, optimize, compile_fuel } => {
+            compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize, compile_fuel);
         }
-        args::Command::CompileProject { world, config_path, optimize } => {
-            compile_project(world.as_deref(), config_path.as_deref(), optimize);
+        args::Command::CompileProject { world, config_path, optimize, compile_fuel } => {
+            compile_project(world.as_deref(), config_path.as_deref(), optimize, compile_fuel);
         }
         args::Command::Run { component_path, invoke, command_mode, args } => {
             run_component(&component_path, &invoke, command_mode, &args);
@@ -138,6 +139,7 @@ fn compile_source(
     exports: &[String],
     output_path: &str,
     optimize: bool,
+    compile_fuel: Option<u64>,
 ) {
     #[cfg(not(target_family = "wasm"))]
     let result = (|| -> Result<Vec<u8>, String> {
@@ -164,21 +166,26 @@ fn compile_source(
             })
             .collect::<Result<Vec<_>, String>>()?;
         let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
+        let options = suss_cli::portable_aot::AotOptions {
+            exports: mappings,
+            compile_fuel,
+            ..Default::default()
+        };
         if let Some(namespace) = namespace {
-            suss_cli::portable_aot::compile_namespace(
+            suss_cli::portable_aot::compile_namespace_with_options(
                 namespace,
                 Path::new(wit_path),
                 wit_world,
                 &source_paths,
-                &mappings,
+                &options,
             )
         } else {
-            suss_cli::portable_aot::compile_file(
+            suss_cli::portable_aot::compile_file_with_options(
                 Path::new(source_path.expect("file input")),
                 Path::new(wit_path),
                 wit_world,
                 &source_paths,
-                &mappings,
+                &options,
             )
         }
     })();
@@ -219,15 +226,17 @@ fn compile_main(
     source_paths: &[String],
     output_path: &str,
     optimize: bool,
+    compile_fuel: Option<u64>,
 ) {
     #[cfg(not(target_family = "wasm"))]
-    let result = suss_cli::portable_aot::compile_main(
+    let result = suss_cli::portable_aot::compile_main_with_compile_fuel(
         std::path::Path::new(source_path),
         namespace,
         &source_paths
             .iter()
             .map(std::path::PathBuf::from)
             .collect::<Vec<_>>(),
+        compile_fuel,
     );
     #[cfg(target_family = "wasm")]
     let result: Result<Vec<u8>, String> = Err(
@@ -262,7 +271,7 @@ fn compile_main(
 }
 
 /// Compile a project from deps.sus configuration
-fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: bool) {
+fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: bool, compile_fuel: Option<u64>) {
     use std::path::Path;
 
     let config_path = config_path.unwrap_or("deps.sus");
@@ -277,7 +286,7 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
     };
 
     #[cfg(not(target_family = "wasm"))]
-    let result = suss_cli::portable_project::compile_project(&config, world);
+    let result = suss_cli::portable_project::compile_project_with_compile_fuel(&config, world, compile_fuel);
     #[cfg(target_family = "wasm")]
     let result: Result<std::collections::BTreeMap<String, Vec<u8>>, String> = Err(
         "Portable project compilation in the component-host target remains unimplemented".into(),

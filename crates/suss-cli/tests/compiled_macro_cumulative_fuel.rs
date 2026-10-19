@@ -596,3 +596,43 @@ fn source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration(
             "restored data cannot retroactively authorize a memo written while poisoned");
     }
 }
+
+
+#[test]
+fn infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effects() {
+    for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro lazy-spin [] (do (defonce lazy-realization-effects (atom 0)) (reset! lazy-realization-effects 1) (new cljs.core/LazySeq nil (fn [] (do (reset! lazy-realization-effects (+ (* @lazy-realization-effects 10) 2)) (loop [] (recur)))) nil nil)))").unwrap();
+        macros.define("(defmacro lazy-effects [] @lazy-realization-effects)").unwrap();
+        macros.define("(defmacro lazy-recover [] 42)").unwrap();
+        // Dedicated negative allowance, not the semantic-corpus calibration.
+        // Recovery and effect inspection retain this exact configured budget.
+        macros.set_operation_fuel(2_000_000);
+        caller.eval("(def lazy-stable 7)").unwrap();
+        let warm = caller.eval_with_macros("(lazy-recover)", &mut macros).unwrap();
+        assert_eq!(number(&mut caller, &warm), 42.0f64.to_bits());
+        let source = "(def lazy-unpublished 99) (lazy-spin)";
+        let start = source.find("(lazy-spin)").unwrap();
+        let before = caller.stats();
+        let error = caller.eval_with_macros(source, &mut macros).unwrap_err();
+        let SessionError::Compile(diagnostic) = &error else {
+            panic!("expected source-located compilation failure: {error}");
+        };
+        assert_eq!(diagnostic.span, start..source.len());
+        assert!(diagnostic.message.contains("during expanded result transport"),
+                "transformer must return before realization fails: {diagnostic:?}");
+        fuel_failure(error);
+        assert_eq!(caller.stats(), before, "failed result must not publish code/bindings");
+        let missing = caller.eval("lazy-unpublished").unwrap_err();
+        assert!(missing.to_string().contains("Unresolved"), "{missing}");
+        let stable = caller.eval("lazy-stable").unwrap();
+        assert_eq!(number(&mut caller, &stable), 7.0f64.to_bits());
+        // 12 proves ordered transformer effect 1 then thunk effect (1*10)+2.
+        // Prior Macro effects survive; Runtime compilation is not published.
+        let effects = caller.eval_with_macros("(lazy-effects)", &mut macros).unwrap();
+        assert_eq!(number(&mut caller, &effects), 12.0f64.to_bits());
+        caller.collect().unwrap();
+        let recovered = caller.eval_with_macros("(lazy-recover)", &mut macros).unwrap();
+        assert_eq!(number(&mut caller, &recovered), 42.0f64.to_bits());
+    }
+}

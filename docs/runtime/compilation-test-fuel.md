@@ -38,6 +38,11 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `public_record_nominal_equality_and_predicate_decode_after_gc_in_both_phases` | 10,000,000 | 10,000,000,000 |
 | `constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc` | 100,000,000 | 10,000,000,000 |
 
+| `public_records_execute_jank_and_authored_contracts_with_two_nominal_classes` | 10,000,000 | 10,000,000,000 |
+
+The public-record command supplies `suss compile --compile-fuel`; subsequent
+`suss run` invocations retain their existing Runtime settings.
+
 The pinned map harness retains its existing 200M allowance. These changes do not
 alter default-fit controls in the same files or the dedicated cumulative-fuel suite.
 Validation commands and observed results are recorded in the handoff.

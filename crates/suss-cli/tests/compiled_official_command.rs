@@ -321,3 +321,31 @@ fn invalid_official_command_shape_is_rejected_before_guest_initialization() {
         }
     }
 }
+
+
+#[test]
+fn main_compile_fuel_preserves_failed_output_and_executes_explicit_budget() {
+    let root = tempfile::tempdir().unwrap();
+    // Use the existing official-command fixture and run helper. The explicit
+    // exit status proves the generated main actually evaluates the macro value.
+    compile(root.path(), "(ns app) (defmacro result [] 42) (def -main (fn [] (if (= (result) 42) (wasi.cli/exit-with-code 23) (wasi.cli/exit-with-code 24))))");
+    std::fs::write(root.path().join("app.wasm"), b"prior main artifact").unwrap();
+    let compile_budget = |fuel: &str| {
+        Command::new(env!("CARGO_BIN_EXE_suss"))
+            .current_dir(root.path())
+            .args(["compile", "app.sus", "--main", "app", "-o", "app.wasm",
+                   "--compile-fuel", fuel])
+            .output().unwrap()
+    };
+    let output = compile_budget("0");
+    assert!(!output.status.success(), "zero compilation limit must not be ignored");
+    assert!(String::from_utf8_lossy(&output.stderr).to_ascii_lowercase().contains("fuel"),
+            "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(std::fs::read(root.path().join("app.wasm")).unwrap(), b"prior main artifact");
+    let output = compile_budget("10000000000");
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let output = run(root.path(), &[]);
+    assert_eq!(output.status.code(), Some(23),
+               "actual main execution: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(output.stdout.is_empty());
+}

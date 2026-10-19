@@ -23,6 +23,7 @@ pub enum Command {
         exports: Vec<String>,
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile a source file to a CLI command component (main mode)
     CompileMain {
@@ -31,6 +32,7 @@ pub enum Command {
         src_paths: Vec<String>,
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile from a namespace with multi-file support
     CompileNamespace {
@@ -45,6 +47,7 @@ pub enum Command {
         /// Output path
         output: String,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Compile a project from deps.sus
     CompileProject {
@@ -53,6 +56,7 @@ pub enum Command {
         /// Optional config file path (defaults to deps.sus)
         config_path: Option<String>,
         optimize: bool,
+        compile_fuel: Option<u64>,
     },
     /// Run a compiled WASM component
     Run {
@@ -124,6 +128,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
     let mut optimize = false;
+    let mut compile_fuel = None;
     let mut wit_world = None;
     let mut exports = Vec::new();
 
@@ -149,6 +154,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
                 // --world for world name in project mode
                 world_target = Some(parser.value()?.string()?);
             }
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
             Long("wit-world") => wit_world = Some(parser.value()?.string()?),
             Long("export") => exports.push(parser.value()?.string()?),
             Short('o') | Long("output") => {
@@ -222,6 +228,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             exports,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_some() && main_ns.is_some() {
         // Main mode: compile with -main function
@@ -233,6 +240,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             src_paths,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_some() && world_wit.is_some() {
         // File mode: explicit source and WIT
@@ -246,6 +254,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             exports,
             output,
             optimize,
+            compile_fuel,
         })
     } else if source.is_none() || world_wit.is_none() {
         // Project mode: no source file, or source without -w/-m
@@ -272,6 +281,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             world: world_target,
             config_path,
             optimize,
+            compile_fuel,
         })
     } else {
         // Invalid combination
@@ -371,6 +381,7 @@ COMMANDS:
         -c, --config <FILE>  Config file path (default: deps.sus)
 
     compile - Shared options:
+        --compile-fuel <N>  Set compilation and macro-expansion fuel (default 10000000); artifact execution is unchanged
         -O, --optimize       Run wasm-opt on output (requires wasm-opt in PATH)
 
     compile - File mode (single file compilation):
@@ -461,4 +472,43 @@ mod tests {
         assert_eq!(budgets(&["repl", "--fuel", "0", "--compile-fuel", "18446744073709551615"]),
             (Some(0), Some(u64::MAX)));
     }
+    fn aot_budget(args: &[&str]) -> Option<u64> {
+        match parse_command(lexopt::Parser::from_args(args.iter().copied())).unwrap() {
+            Command::CompileFile { compile_fuel, .. }
+            | Command::CompileNamespace { compile_fuel, .. }
+            | Command::CompileMain { compile_fuel, .. }
+            | Command::CompileProject { compile_fuel, .. } => compile_fuel,
+            other => panic!("expected compile command: {other:?}"),
+        }
+    }
+    #[test]
+    fn aot_compile_fuel_defaults_and_all_modes_are_explicit() {
+        for mode in [
+            vec!["compile", "app.sus", "-w", "api.wit"],
+            vec!["compile", "-n", "app", "-w", "api.wit"],
+            vec!["compile", "app.sus", "-m", "app"],
+            vec!["compile"],
+        ] {
+            assert_eq!(aot_budget(&mode), None);
+            let mut configured = mode.clone();
+            configured.extend(["--compile-fuel", "10000000000"]);
+            assert_eq!(aot_budget(&configured), Some(10_000_000_000));
+            let mut before = vec!["compile", "--compile-fuel", "10000000000"];
+            before.extend_from_slice(&mode[1..]);
+            assert_eq!(aot_budget(&before), Some(10_000_000_000));
+        }
+    }
+    #[test]
+    fn aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries() {
+        for value in ["-1", "no", "18446744073709551616"] {
+            assert!(parse_command(lexopt::Parser::from_args(
+                ["compile", "--compile-fuel", value])).is_err());
+        }
+        assert!(parse_command(lexopt::Parser::from_args(
+            ["compile", "--compile-fuel"])).is_err());
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "0"]), Some(0));
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "18446744073709551615"]), Some(u64::MAX));
+        assert_eq!(aot_budget(&["compile", "--compile-fuel", "1", "--compile-fuel", "2"]), Some(2));
+    }
+
 }

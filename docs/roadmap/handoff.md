@@ -28317,3 +28317,50 @@ is claimed. Log: `/home/bobby/.cache/suss-m4-work/pr252-test-budget-calibration/
 The public-record AOT subprocess still needs an explicit compiler-fuel option;
 its Runtime invocation allowance must remain unchanged. Full baseline and final
 CI results have not been established by this calibration patch.
+
+
+## AOT compilation budgets and failure diagnostics — source preparation
+
+The independently reviewed follow-on supplies optional `--compile-fuel` to native
+file/namespace/main/project compilation and `AotOptions::compile_fuel` to library
+preparation. Existing wrappers/defaults and generated Runtime execution limits
+are preserved. The public-record command fixture now supplies the shared10B
+compilation allowance. New real-command tests exercise omitted, explicit zero
+and explicit10B options, failed-output preservation and actual artifact execution.
+Their source packets/reviews are under
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-source-v2/`.
+
+An actual pre-change CLI probe on the already-built binary failed with code1 in
+16.0055s: macro invocation exhausted the original10M default at bytes97..110,
+retaining the prior artifact, but stderr omitted `app.sus`. Raw stderr, binary
+hash, fixture/argv and terminal receipt are in
+`/home/bobby/.cache/suss-m4-work/pr252-aot-filename-before/`.
+A reviewed AOT error-context fix adds the selected source path to Compile errors
+while retaining their span, stage and variant; this is outer compilation context,
+not a claim to recover missing dependency-specific span ownership. The strict
+command regression still requires filename/span, prior/absent output behavior
+and executed42 recovery at the same original defaults.
+
+An additional focused regression returns an infinite lazy macro result and
+requires exhaustion at expanded-result transport, prior ordered Macro effects,
+no partial Runtime publication and same2M-budget recovery in both caller phases.
+It does not establish interruption specifically during lazy realization. The
+existing macro-interrupt regression's expected diagnostic now includes the
+production stage label; its budgets and recovery assertions are unchanged.
+These source changes have not yet been typechecked or executed. Next sequence:
+normal bootstrap generation, identity verification, focused parser/options and
+real-command tests, async controls, public-record execution, lazy-result negative
+and macro-interrupt test. Prepared commands are in
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-validation/stages.json`.
+
+The earlier6d calibration command is terminal exit0:6passed/0failed/0ignored
+across collection3(360.27s), complete CoreEnv1(470.29s) and source-tags2(128.74s).
+Original assertions/caller budgets and both caller phases are retained. Later AOT
+source edits are not attributed to those already-built binaries.
+
+The AOT follow-on has now passed normal bootstrap generation, identity, parser2,
+actual options1 and the strict AOT publication/filename/span/default-recovery1
+(105.06s). Remaining stages are still executing in the sole producer session35563;
+no result is inferred for them. Source bindings, commands and limitations are in
+`docs/roadmap/evidence/m4-pr252-compilation-calibration-2026-10-18.md`.
+No full baseline or final-head CI success is inferred.

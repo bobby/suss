@@ -1,4 +1,4 @@
-//! Actual public record source -> component -> execution under normal CLI limits.
+//! Actual public record source -> component -> execution with calibrated compilation fuel.
 //! Fixture includes separate MPL-2.0 Jank excerpts; see its retained provenance.
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
@@ -42,6 +42,9 @@ fn public_records_execute_jank_and_authored_contracts_with_two_nominal_classes()
         "-o",
         "records.wasm",
     ]);
+    command
+        .arg("--compile-fuel")
+        .arg(compilation_fuel::COMPILATION_FUEL.to_string());
     for export in exports {
         command
             .arg("--export")
