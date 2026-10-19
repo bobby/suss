@@ -28524,3 +28524,28 @@ exhausts compiler fuel in caller &env transport23..62. It now uses the same shar
 remain byte-identical. Independent tiny-diff review passes; calibrated execution
 is pending before the baseline. Failed logs/metadata remain in
 `/home/bobby/.cache/suss-m4-work/pr252-8ae-ci-failed-jobs-refresh/`.
+
+
+## Additional calibrated semantic execution
+
+The existing producer44278 has completed field-reference1PASS75.95s,
+quote-AST1PASS74.63s and record-projection2PASS779.28s, each with original
+observations and Runtime limits. These executables bind to the recorded
+pre-scanner source/bootstrap snapshot under
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-fix-validation-v1/`.
+The full source-macro target and subsequent declaration-functions target remain
+running/pending; no result is inferred. A dependent controller queues complete
+control-flow5, source-hint1 and the new repeated-helper companion1 only after
+this run succeeds. The companion checks real guest increments, explicitly reads
+zero after warmup reset, conservatively subtracts one potentially incomplete
+transformer, requires more than one completed transformer, and checks retained
+effects/no publication/same100k-budget recovery. It is unexecuted at this capture;
+the original512-call negative remains unchanged.
+
+A second dependent controller applies the independently reviewed native
+parameter-observation metering patch only after those checks succeed, regenerates
+BOOT normally, verifies identity, and executes its three focused regressions and
+the complete cumulative-fuel target. Both dependent controllers are waiting on
+verified live process identities; they start no parallel Cargo producer. Failed
+prerequisites stop the chain. Full baseline and final-head CI remain unexecuted
+acceptance gates, not implied by these selected passes.

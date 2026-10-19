@@ -636,3 +636,7 @@ fn infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effe
         assert_eq!(number(&mut caller, &recovered), 42.0f64.to_bits());
     }
 }
+
+
+#[path = "support/completed_macro_work.rs"]
+mod completed_macro_work;
