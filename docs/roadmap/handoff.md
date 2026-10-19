@@ -30314,3 +30314,14 @@ in 29.2766s; [exact source/review and raw compile log](evidence/m4-pr263-retaine
 record compile-only evidence. Next regenerate the matching normal bootstrap and
 run only the unchanged retained/warm test with one test thread. No new execution
 or metadata-copy cause is inferred from the diagnostic source.
+
+
+## Bootstrap binding for serial retained-input attribution
+
+`sh scripts/verify-bootstrap.sh` at `3addbd2` generated identical phase pairs
+in 28.4580s, then exited1 against the older shipped files. The exact four
+outputs are adopted after independent review of 219 inputs, fingerprint
+`0b432794`, all eight hashes and unchanged noncustom Wasm/catalog/ABI/cells.
+[Raw generation and binding](evidence/m4-pr263-retained-input-attribution-bootstrap-2026-10-19.json)
+retain the failed comparison. Execute the unchanged retained/warm fixture
+serially next; generation and diagnostic labels do not establish a semantic pass.
