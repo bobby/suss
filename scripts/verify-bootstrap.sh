@@ -19,6 +19,11 @@ fi
 cd "$bootstrap_root"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/first"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/second"
+# Optional CI diagnostics survive the private generation directory's cleanup.
+# Retention precedes comparison; all comparison/execution failures still fail.
+if [ -n "${SUSS_BOOTSTRAP_DIAGNOSTICS_DIR:-}" ]; then
+    python3 scripts/bootstrap_diagnostics.py "$bootstrap_tmp/first" "$bootstrap_tmp/second" "$SUSS_BOOTSTRAP_DIAGNOSTICS_DIR"
+fi
 for bootstrap_phase in runtime macro; do
     for bootstrap_suffix in wasm json; do
         cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "$bootstrap_tmp/second/$bootstrap_phase.$bootstrap_suffix"

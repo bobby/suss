@@ -29985,3 +29985,24 @@ cargo test --locked -p suss-cli --test compiled_macro_declaration_metadata --tes
 Preserve all original assertion programs, Runtime allowances, deliberate fuel
 controls and final full-baseline/head gates. Source parsing and review do not
 establish observable transport or complete type inner metadata identity.
+
+
+## Inspecting bootstrap mismatches from CI
+
+The normal verifier can retain both complete generated tuples before its unchanged
+comparison/identity/execution gates. CI uploads those diagnostics even if a mismatch
+fails foundation. See the
+[diagnostic interface and test scope](evidence/m4-pr263-bootstrap-ci-diagnostics-2026-10-19.md).
+Local shell syntax and four Python/synthetic-generator tests pass; no actual Cargo
+or Suss execution is credited to those harness tests.
+
+```sh
+python3 -m unittest discover -s scripts -p test_bootstrap_diagnostics.py -v
+SUSS_BOOTSTRAP_DIAGNOSTICS_DIR=/absolute/fresh/diagnostic-directory sh scripts/verify-bootstrap.sh
+```
+
+Use the existing writable private TMPDIR/worker settings for actual verification.
+The receipt alone cannot authorize copying artifacts into the shipped tuple:
+verify source/tree/clean status, every digest and reproduction pair, current
+compiler/bootstrap identities and then normal artifact validation/execution.
+This is CI evidence retention, separate from the compiler-cache issue272.
