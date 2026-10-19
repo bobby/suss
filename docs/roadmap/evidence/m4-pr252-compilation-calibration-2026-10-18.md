@@ -83,3 +83,53 @@ Bootstrap payload hashes:
 - `runtime/bootstrap/macro.wasm`: `4e015e2a346541cbcfc800b3222dc1f872a0c9150848711174330a89cbadcb3d`
 - `runtime/bootstrap/runtime.json`: `071be5deb9dfa603d5572a68fddc2ecbd3cb4458bc9118337112da86dfadd9aa`
 - `runtime/bootstrap/runtime.wasm`: `195db91e00c8d6b1efe7a71370c0cd4a272dbafbb6760017276c570cfe569cc7`
+
+
+## Completed follow-on execution
+
+The same one-shot source3e7 pipeline has now finished, terminal exit0:
+**23passed/0failed/0ignored** across ten Rust test selections, plus bootstrap
+and identity success. Production/bootstrap bytes also match the laterf4 commit;
+f4's new large-finite test was not selected in this run. This23 includes the
+four earlier Rust positives above; the cohorts are not additive.
+
+| Selection | Passed | Harness seconds |
+| --- | ---: | ---: |
+| CLI parser options | 2 | 0.00 |
+| Actual Macro options | 1 | 28.30 |
+| Original-default AOT publication/recovery | 1 | 105.06 |
+| File/namespace compiler-only command configuration | 1 | 202.94 |
+| Main compiler-only command configuration | 1 | 98.96 |
+| Project compiler-only command configuration | 1 | 100.60 |
+| Existing async-import file controls | 7 | 53.71 |
+| Calibrated public-record target | 7 | 284.70 |
+| Infinite lazy expanded-result exhaustion/recovery | 1 | 46.96 |
+| Macro interruption/span/recovery | 1 | 47.26 |
+
+Public-record execution includes all nine real CLI export invocations, three
+in-process semantic tests in both phases and three adversarial decoder guards.
+The lazy-result test requires `expanded result transport`, exact call span,
+ordered Macro effects12, absent pending Runtime binding, retained old value7,
+unchanged caller stats and subsequent42 at the same2M compiler setting. The IRQ
+test retains its originalu64MAX configuration and actual same-setting recovery.
+This does not establish cancellation specifically during lazy realization.
+Raw stage logs/counts/terminal receipt remain in the cache path above. Full
+workspace/final-head CI are separate validation, not inferred from23 positives.
+
+## Obsolete builder-guard assertion
+
+On unchangedf4 the exact selector
+`compiled_macro_data_builders::native_macro_form_transport_is_bounded_data_and_adds_no_resident_code`
+failed at the depth64 quote: `unwrap_err()` received `Ok(SessionValue)`.
+Terminal101,0passed/1failed/0ignored,41.54s. Later vector/string expectations and
+the second caller phase were unexecuted in that failed run. Raw log and source
+hash receipt: `/home/bobby/.cache/suss-m4-work/pr252-stale-builder-before.log`
+and `pr252-stale-builder-before.json`.
+
+Only its three obsolete structural-rejection expectations are replaced by actual
+same-size finite quote/GC/full readback:64 list levels with nil leaf,4096 nil
+vector elements and1048577 UTF16 units65. Original metadata, effects, source spans,
+Session budgets, resident-code counters and external-handle equality remain.
+The corrected selector has now passed in the ongoing full builder target; the
+remaining target cases and separate compiled large-result target are not yet
+terminal. No additional production or allowance change accompanies this repair.

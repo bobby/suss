@@ -360,33 +360,53 @@ fn native_macro_form_transport_is_bounded_data_and_adds_no_resident_code() {
             metadata: vec![],
             kind,
         };
-        let mut deep = form(Kind::Nil);
-        for _ in 0..64 {
-            deep = form(Kind::List(vec![deep]));
+        // Former structural ceilings are finite data, charged to the existing
+        // Session allowance. These are bridge roundtrips, not macro execution.
+        {
+            let mut deep = form(Kind::Nil);
+            for _ in 0..64 {
+                deep = form(Kind::List(vec![deep]));
+            }
+            let value = bridge.quote(&mut session, deep).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 100..120).unwrap();
+            assert_eq!(decoded.span, 100..120);
+            let mut cursor = &decoded;
+            for level in 0..64 {
+                let Kind::List(items) = &cursor.kind else {
+                    panic!("retain list at level {level}");
+                };
+                assert_eq!(items.len(), 1, "level {level}");
+                cursor = &items[0];
+            }
+            assert_eq!(cursor.kind, Kind::Nil);
         }
-        assert!(
-            bridge
-                .quote(&mut session, deep)
-                .unwrap_err()
-                .to_string()
-                .contains("64")
-        );
-        let wide = form(Kind::Vector(vec![form(Kind::Nil); 4096]));
-        assert!(
-            bridge
-                .quote(&mut session, wide)
-                .unwrap_err()
-                .to_string()
-                .contains("4096")
-        );
-        let large = form(Kind::String(vec![65; 1_048_577]));
-        assert!(
-            bridge
-                .quote(&mut session, large)
-                .unwrap_err()
-                .to_string()
-                .contains("UTF-16")
-        );
+        {
+            let wide = form(Kind::Vector(vec![form(Kind::Nil); 4096]));
+            let value = bridge.quote(&mut session, wide).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 100..120).unwrap();
+            assert_eq!(decoded.span, 100..120);
+            let Kind::Vector(items) = &decoded.kind else {
+                panic!("retain complete vector");
+            };
+            assert_eq!(items.len(), 4096);
+            for (index, item) in items.iter().enumerate() {
+                assert_eq!(item.kind, Kind::Nil, "index {index}");
+            }
+        }
+        {
+            let large = form(Kind::String(vec![65; 1_048_577]));
+            let value = bridge.quote(&mut session, large).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 100..120).unwrap();
+            assert_eq!(decoded.span, 100..120);
+            let Kind::String(units) = &decoded.kind else {
+                panic!("retain complete UTF16 string");
+            };
+            assert_eq!(units.len(), 1_048_577);
+            assert!(units.iter().all(|unit| *unit == 65));
+        }
         let empty_set = bridge.quote(&mut session, form(Kind::Set(vec![]))).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &empty_set, 100..120).unwrap();

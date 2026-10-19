@@ -28394,3 +28394,30 @@ main target1(98.96s) and project target1(100.60s). All four modes check default
 success, explicit-zero failure with prior output retained, and explicit-budget
 compile plus actual component/command execution. Async/public-record/lazy/IRQ
 stages remain separate, unfinished execution in that same producer.
+
+
+## Completed AOT pipeline and corrected finite bridge expectations
+
+The one-shot35563 producer is terminal0 and drained:23Rust passes,0failures,
+0ignored; normal bootstrap/identity pass. This includes all four real AOT modes,
+async7/public-record7, actual lazy-result exhaustion/effects/no-publication and
+macroIRQ recovery. Full commands, source qualifications and harness times are in
+`docs/roadmap/evidence/m4-pr252-compilation-calibration-2026-10-18.md` and
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-validation/test-counts.json`.
+
+The unchanged obsolete builder selector then failed101 at `unwrap_err` because
+depth64 quotation succeeds (0pass/1fail,41.54s). Raw log/source receipt retained.
+The corrected test replaces only old depth64/vector4096/string1048577 rejection
+assertions with quote/GC/full-content readback at original Session budgets,
+retaining all old metadata/effect/resource/handle checks. The corrected case has
+passed inside the ongoing48802 producer. Exact command:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_data_builders --test compiled_macro_large_finite -- --test-threads=1 --nocapture
+```
+
+Environment remains shared target/jobs1/Rayon1, no RUSTFLAGS setting. Log:
+`/home/bobby/.cache/suss-m4-work/pr252-builder-and-large-finite.log`.
+The remaining builder cases and complete large/deep compiled pipeline are not yet
+terminal; no result is inferred. This CLI-test-only change does not regenerate
+compiler payloads. Full workspace and final-head CI remain separate commands.
