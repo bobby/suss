@@ -285,6 +285,24 @@ impl ConstructionRecords {
     }
     // This closes only recorded constructor/array input edges, not all physical
     // storage. Descriptor state, seeds and memo transitions need separate proof.
+    // A query over ORIGINAL immutable ledger values/private initial seed
+    // membership only. Caller must separately establish this ledger's complete
+    // current DATA health and relevance; no receipt/child/domain is returned.
+    pub(crate) fn contains_original_data_reference(
+        &self, session: &mut Session, value: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        session.charge_host_work((2 * std::mem::size_of::<InputIndex<'_>>() + 6) as u64)?;
+        let mut meter = InputIndex { session, hash_mask: u64::MAX };
+        for record in &self.records {
+            meter.charge(3)?; // record read, kind/loop and eventual scan control
+            if meter.same(value, &record.value)? { return Ok(true); }
+            if let Fact::CanonicalSeed(seed) = &record.fact {
+                meter.charge(1)?;
+                if seed.contains_initial_reference(meter.session, value)? { return Ok(true); }
+            }
+        }
+        Ok(false)
+    }
     pub(crate) fn matches_recorded_inputs(
         &self,
         session: &mut Session,
@@ -299,6 +317,27 @@ impl ConstructionRecords {
     pub(crate) fn matches_current_native_inputs(
         &self, session: &mut Session, root: &SessionValue, inputs: &[&SessionValue],
     ) -> Result<bool, SessionError> {
+        self.matches_native_inputs(session, root, inputs, None)
+    }
+    // Only an unforgeable, call-local original DATA evidence borrow can extend
+    // missing EDGE membership. The root still requires a local explicit record.
+    pub(crate) fn matches_current_native_inputs_with_descendants(
+        &self, session: &mut Session, root: &SessionValue, inputs: &[&SessionValue],
+        descendants: &mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>,
+    ) -> Result<bool, SessionError> {
+        session.charge_host_work(2)?; // exact current-ledger borrow binding
+        if descendants.belongs_to(self) {
+            self.matches_native_inputs(session, root, inputs, Some(descendants))
+        } else {
+            // A mismatched frontier grants nothing; retain ordinary full checks.
+            self.matches_native_inputs(session, root, inputs, None)
+        }
+    }
+    fn matches_native_inputs(
+        &self, session: &mut Session, root: &SessionValue, inputs: &[&SessionValue],
+        descendants: Option<&mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>>,
+    ) -> Result<bool, SessionError> {
+        session.charge_host_work(2)?; // new optional edge-policy dispatch
         let count = inputs.len();
         session.charge_host_work(record_bytes::<ChildBinding>(count)?
             .checked_add((count as u64).checked_mul(4)
@@ -310,7 +349,7 @@ impl ConstructionRecords {
             session.check(value)?;
             children.push(ChildBinding { value: (*value).clone() });
         }
-        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &children)
+        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &children, descendants)
     }
     fn check_recorded_inputs(
         &self,
@@ -318,11 +357,12 @@ impl ConstructionRecords {
         root: &SessionValue,
         hash_mask: u64,
     ) -> Result<bool, SessionError> {
-        Self::check_selected_inputs(session, root, hash_mask, &self.records, &self.children)
+        Self::check_selected_inputs(session, root, hash_mask, &self.records, &self.children, None)
     }
     fn check_selected_inputs<R: AsRef<Record>>(
         session: &mut Session, root: &SessionValue, hash_mask: u64,
         records: &[R], children: &[ChildBinding],
+        descendants: Option<&mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>>,
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut meter = InputIndex { session, hash_mask };
@@ -364,7 +404,7 @@ impl ConstructionRecords {
         #[cfg(test)]
         let diagnostic_root = valid;
         trace(&meter, "root");
-        let edges = Self::check_selected_edges(&mut meter, &index, &collisions, records, children);
+        let edges = Self::check_selected_edges(&mut meter, &index, &collisions, records, children, descendants);
         trace(&meter, "edges-return");
         if tracing { eprintln!("input-index edge-result={:?}", edges.as_ref().map_err(|e| e.to_string())); }
         let edges = edges?;
@@ -382,11 +422,12 @@ impl ConstructionRecords {
         index: &InputHeads,
         collisions: &[Option<usize>],
     ) -> Result<bool, SessionError> {
-        Self::check_selected_edges(meter, index, collisions, &self.records, &self.children)
+        Self::check_selected_edges(meter, index, collisions, &self.records, &self.children, None)
     }
     fn check_selected_edges<R: AsRef<Record>>(
         meter: &mut InputIndex<'_>, index: &InputHeads, collisions: &[Option<usize>],
         records: &[R], children: &[ChildBinding],
+        mut descendants: Option<&mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>>,
     ) -> Result<bool, SessionError> {
         let mut valid = true;
         for record in records {
@@ -402,6 +443,12 @@ impl ConstructionRecords {
                                 if meter.same(value,&child.value)? {member=true;break;}
                             }
                         }
+                        meter.charge(2)?; // added edge-policy/missing-edge branch
+                        if !member {
+                            if let Some(original) = descendants.as_deref_mut() {
+                                member = original.contains_original(meter.session, value)?;
+                            }
+                        }
                         valid &= member;
                     }
                 }
@@ -412,6 +459,12 @@ impl ConstructionRecords {
                             for child in children {
                                 meter.charge(1)?;
                                 if meter.same(value,&child.value)? {member=true;break;}
+                            }
+                        }
+                        meter.charge(2)?; // added edge-policy/missing-edge branch
+                        if !member {
+                            if let Some(original) = descendants.as_deref_mut() {
+                                member = original.contains_original(meter.session, value)?;
                             }
                         }
                         valid &= member;
@@ -492,6 +545,10 @@ impl ConstructionRecords {
     pub(crate) fn len(&self) -> usize {
         self.records.len()
     }
+    #[cfg(test)]
+    pub(crate) fn canonical_seed_fact_count_for_test(&self) -> usize {
+        self.records.iter().filter(|record| matches!(&record.fact, Fact::CanonicalSeed(_))).count()
+    }
     pub(crate) fn external_seeds(&self, session: &mut Session) -> Result<usize, SessionError> {
         let mut count = 0;
         for record in &self.records {
@@ -543,7 +600,7 @@ impl ConstructionRecords {
             session.check(child.value())?;
             selected.push(ChildBinding { value: child.value().clone() });
         }
-        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &selected)
+        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &selected, None)
     }
     pub(crate) fn matches_direct_facts(&self, session: &mut Session) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;

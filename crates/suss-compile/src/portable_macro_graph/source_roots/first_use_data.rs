@@ -9,6 +9,10 @@ use crate::portable_macro_data::FormBridge;
 use crate::portable_session::construction_records::ConstructionRecords;
 use std::cmp::Ordering;
 
+#[path = "first_use_data/original_inputs.rs"]
+mod original_inputs;
+pub(crate) use original_inputs::OriginalDataInputs;
+
 type SessionValue = crate::portable_session::SessionValue;
 #[derive(Clone)]
 enum Evidence {
@@ -283,11 +287,17 @@ impl Audit {
                     let diagnostic_children = valid;
                     let diagnostic_direct = node.records.fresh_direct_status(graph.session)?.0;
                     valid &= diagnostic_direct;
-                    let diagnostic_inputs = node.records.matches_current_native_inputs(
-                        graph.session,
-                        &node.value,
-                        &inputs,
-                    )?;
+                    let diagnostic_inputs = {
+                        // This borrow cannot outlive this closed Audit check.
+                        // Its private constructor accepts only the exact current
+                        // node's original inputs and this pass's checked map.
+                        let mut descendants = OriginalDataInputs::new(
+                            graph.session, &node.inputs, &mut self.checked, &node.records,
+                        )?;
+                        node.records.matches_current_native_inputs_with_descendants(
+                            graph.session, &node.value, &inputs, &mut descendants,
+                        )?
+                    };
                     valid &= diagnostic_inputs;
                     let diagnostic_classes = node
                         .records
@@ -859,3 +869,7 @@ mod tests;
 #[cfg(test)]
 #[path = "first_use_data/lifecycle_tests.rs"]
 mod lifecycle_tests;
+
+#[cfg(test)]
+#[path = "first_use_data/original_inputs_tests.rs"]
+mod original_inputs_tests;

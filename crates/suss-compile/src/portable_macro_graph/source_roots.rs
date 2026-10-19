@@ -27,6 +27,7 @@ mod transient_inputs;
 mod first_use_walk;
 #[path = "source_roots/first_use_data.rs"]
 mod first_use_data;
+pub(crate) use first_use_data::OriginalDataInputs;
 use reader_keys::{ReaderSourceOwner, ReaderSelector};
 use reader_plan::populate;
 
