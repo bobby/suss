@@ -30236,3 +30236,8 @@ See [source/build evidence](evidence/m4-pr263-shared-reader-controller-source-20
 ## Shared-reader normal bootstrap generation (2026-10-19)
 
 Source d16198173d94aa58df1c47795121bca88db6e63a: normal two-generation verification ran 25.7853s and exited1 only at stale shipped comparison. Eight hashes/four identical pairs and 219 committed input hashes are retained in [evidence](evidence/m4-pr263-shared-reader-bootstrap-2026-10-19.md). Adoption peer status: Included peer-review.json SHA256 94344c00d6ddcdac7afe9a38110331b8bb983113a4038d4a64814d2143dd98e3. Copy scope is four bootstrap outputs only. Fresh identity and four bootstrap tests are pending; generation gives no execution/acceptance credit. Archive SHA256 a434fc559aee553bd0d3f53b4cb5a23e2e7a29a33b1eae0f1c922349c08bfff8.
+
+
+## Four reader-controller repairs and initial focused evidence (2026-10-19)
+
+[Evidence](evidence/m4-pr263-four-reader-controller-repairs-2026-10-19.md) retains pre-repair558095c seven-filter19PASS17FAIL0ignored, plus prior567c4f7 bootstrap4PASS separately. Four reviewed repair postimages compile/link PASS24.7733s; 534 is library inventory, not PASS count. Current-source test bodies remain unexecuted; fresh generation/identity and focused replay are next. Known indexed metadata-order failure remains unfixed. No full baseline/final CI/readiness/closure claim. Archive SHA256 f7057d55306531bf081a88c55b4d79e3e635624757c9da979bd30e0d0fbdb6e5.

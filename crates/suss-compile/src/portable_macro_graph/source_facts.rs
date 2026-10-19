@@ -151,9 +151,40 @@ fn keyword_equal(
     };
     Ok(namespace && text_equal(session, a.name.as_bytes(), b.name.as_bytes())?)
 }
+// Pinned Symbol IEquiv compares its rendered `str`, not a pair of native
+// namespace/name fields. Compare that exact constructor spelling without a
+// temporary String; full paired validation STILL checks namespace/name/meta.
+// This is only native duplicate detection/key location, never guest authority.
+fn symbol_key_equal(
+    session: &mut Session,
+    a: &suss_reader::Symbol,
+    b: &suss_reader::Symbol,
+) -> Result<bool> {
+    session.charge_host_work(8)?; // namespace options, lengths, dispatch/overflow controls
+    let rendered_len = |v: &suss_reader::Symbol| -> Result<usize> {
+        v.namespace.as_ref().map_or(Some(v.name.len()), |ns|
+            ns.len().checked_add(1).and_then(|n| n.checked_add(v.name.len())))
+            .ok_or_else(|| crate::portable_session::SessionError::Host(
+                wasmtime::Error::msg("Symbol key spelling length overflow")))
+    };
+    if rendered_len(a)? != rendered_len(b)? { return Ok(false); }
+    fn bytes(v: &suss_reader::Symbol) -> impl Iterator<Item = u8> + '_ {
+        v.namespace.iter().flat_map(|ns| ns.bytes().chain(std::iter::once(b'/')))
+            .chain(v.name.bytes())
+    }
+    // Prepay all byte reads/comparisons before traversing their iterators.
+    // No allocation, guest hash/equality call, or retained identity is involved.
+    let work = u64::try_from(rendered_len(a)?).ok()
+        .and_then(|n| n.checked_mul(3)).ok_or_else(||
+            crate::portable_session::SessionError::Host(wasmtime::Error::msg(
+                "Symbol key comparison work overflow")))?;
+    session.charge_host_work(work)?;
+    Ok(bytes(a).eq(bytes(b)))
+}
 fn scalar_key(form: &Form, map: bool) -> bool {
     match form.kind {
         Kind::String(_) | Kind::Keyword(_) => true,
+        Kind::Symbol(_) => map,
         Kind::Nil | Kind::Bool(_) => !map,
         Kind::Number(value) => !map && value.is_finite(),
         _ => false,
@@ -169,6 +200,7 @@ fn key_equal(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
         (Kind::Number(a), Kind::Number(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => text_equal(session, a, b)?,
         (Kind::Keyword(a), Kind::Keyword(b)) => keyword_equal(session, a, b)?,
+        (Kind::Symbol(a), Kind::Symbol(b)) => symbol_key_equal(session, a, b)?,
         _ => false,
     })
 }
@@ -1078,4 +1110,70 @@ fn paired_source_comparison_shared_fuel_irq_and_recovery() {
 }
 
 
+}
+
+
+#[cfg(test)]
+mod symbol_map_admission_tests {
+    use super::*;
+    fn symbol(namespace: Option<&str>, name: &str) -> Form {
+        Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol {
+            namespace: namespace.map(str::to_owned), name: name.to_owned(),
+        }) }
+    }
+    fn nil() -> Form { Form { span: 0..0, metadata: vec![], kind: Kind::Nil } }
+    fn map(keys: Vec<Form>) -> Form {
+        let mut values = Vec::new();
+        for key in keys { values.push(key); values.push(nil()); }
+        Form { span: 0..0, metadata: vec![], kind: Kind::Map(values) }
+    }
+    #[test]
+    fn symbol_map_duplicate_detection_uses_full_constructor_spelling_without_joining_owners() {
+        let mut session = Session::new_macro().unwrap();
+        for keys in [
+            vec![symbol(None, "watched"), symbol(None, "watched")],
+            vec![symbol(Some("space"), "watched"), symbol(None, "space/watched")],
+            vec![symbol(Some(""), "watched"), symbol(None, "/watched")],
+            vec![symbol(Some("a/b"), "c"), symbol(Some("a"), "b/c")],
+            vec![symbol(None, "λ"), symbol(None, "λ")],
+        ] {
+            assert!(LogicalSourceWitness::from_normalized_source(&mut session, map(keys)).unwrap().is_none());
+        }
+        for keys in [
+            vec![symbol(None, "watched"), symbol(Some(""), "watched")],
+            vec![symbol(Some("a"), "watched"), symbol(Some("b"), "watched")],
+            vec![symbol(None, "λ"), symbol(None, "Λ")],
+            vec![symbol(None, "watched"), Form { span: 0..0, metadata: vec![],
+                kind: Kind::Keyword(suss_reader::Keyword {namespace:None, name:"watched".into()}) }],
+        ] {
+            assert!(LogicalSourceWitness::from_normalized_source(&mut session, map(keys)).unwrap().is_some());
+        }
+        let mut first = symbol(None, "watched");
+        first.metadata.push(Form { span: 0..0, metadata: vec![], kind: Kind::Map(vec![]) });
+        assert!(LogicalSourceWitness::from_normalized_source(&mut session,
+            map(vec![first, symbol(None, "watched")])).unwrap().is_none(),
+            "metadata cannot distinguish equal Symbol keys");
+        // A Symbol set is intentionally outside this map-only admission change.
+        let set = Form { span:0..0, metadata:vec![], kind:Kind::Set(vec![symbol(None,"watched")]) };
+        assert!(LogicalSourceWitness::from_normalized_source(&mut session,set).unwrap().is_none());
+    }
+    #[test]
+    fn symbol_map_witness_reads_current_values_and_metadata_in_both_phases_after_gc() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let forms = suss_reader::forms::read_forms("{watched 17 space/other 23}").unwrap();
+            let source = &forms[0];
+            let witness = LogicalSourceWitness::from_source(&mut session, source).unwrap().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let value = bridge.quote_ref(&mut session, source).unwrap();
+            session.collect().unwrap();
+            assert!(witness.matches_logical_source(&mut session,&bridge,&value).unwrap());
+            let changed = session.eval("(quote {space/other 24 watched 17})").unwrap();
+            assert!(!witness.matches_logical_source(&mut session,&bridge,&changed).unwrap());
+            let reordered = session.eval("(quote {space/other 23 watched 17})").unwrap();
+            assert!(witness.matches_logical_source(&mut session,&bridge,&reordered).unwrap());
+            let with_meta = session.eval("(quote {^:changed watched 17 space/other 23})").unwrap();
+            assert!(!witness.matches_logical_source(&mut session,&bridge,&with_meta).unwrap());
+            assert!(witness.matches_logical_source(&mut session,&bridge,&value).unwrap());
+        }
+    }
 }

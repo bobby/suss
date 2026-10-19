@@ -884,6 +884,32 @@ impl Default for ConstructionRecords {
 impl Session {
     pub(crate) fn source_controller_ready(&mut self) -> Result<bool, SessionError> {
         self.charge_host_work(6)?;
-        Ok(!self.bootstrap_core && self.canonical_methods.is_some() && self.canonical_seeds.is_some())
+        Ok(self.bootstrap_core && self.canonical_methods.is_some() && self.canonical_seeds.is_some())
+    }
+}
+
+
+#[cfg(test)]
+mod controller_provisioning_tests {
+    use super::*;
+
+    #[test]
+    fn source_controller_requires_installed_core_and_both_original_private_registries() {
+        // A minimal Store has neither shipped provisioning nor private witnesses.
+        let mut idle = Session::new().unwrap();
+        assert!(!idle.source_controller_ready().unwrap());
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            // Only actual normal provisioning may establish this state. Never
+            // synthesize a flag, registry, canonical binding or source receipt.
+            assert!(session.source_controller_ready().unwrap());
+            let methods = session.canonical_methods.take().unwrap();
+            assert!(!session.source_controller_ready().unwrap());
+            session.canonical_methods = Some(methods);
+            assert!(session.source_controller_ready().unwrap());
+            let seeds = session.canonical_seeds.take().unwrap();
+            assert!(!session.source_controller_ready().unwrap());
+            session.canonical_seeds = Some(seeds);
+            assert!(session.source_controller_ready().unwrap());
+        }
     }
 }

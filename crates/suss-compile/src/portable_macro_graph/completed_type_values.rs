@@ -525,7 +525,8 @@ mod reader_property_value_tests {
 
     fn prepare(source: &str, phase: Phase, environment: &Environment, indexed: bool)
         -> (Environment, Global, Info) {
-        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let forms = suss_reader::forms::resolve_conditionals(
+            suss_reader::forms::read_forms(source).unwrap()).unwrap();
         let origin = indexed.then(|| portable::SourceOrigin::new(source, Some("value-owner.cljs".into())));
         let environment = hir::prepare_with_origin(&forms, 0..source.len(), environment, phase,
             &mut portable::NoExpansion, origin.as_ref()).unwrap().1;

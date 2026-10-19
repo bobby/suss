@@ -111,10 +111,18 @@ mod tests {
         environment
     }
     fn fixture(source: &str) -> (Global, Arc<DefinitionInfo>) {
+        fixture_in_namespace(source, None)
+    }
+    fn fixture_in_namespace(source: &str, namespace: Option<&str>) -> (Global, Arc<DefinitionInfo>) {
         let forms = suss_reader::forms::resolve_conditionals(
             suss_reader::forms::read_forms(source).unwrap()).unwrap();
         let origin = portable::SourceOrigin::new(source, None);
-        let baseline = native_fixture_environment(Phase::Macro);
+        let mut baseline = native_fixture_environment(Phase::Macro);
+        if let Some(namespace) = namespace {
+            // NoExpansion intentionally cannot expand the public ns macro.
+            // Establish a real native namespace before analyzing the same def.
+            baseline.enter_namespace(Phase::Macro, namespace).unwrap();
+        }
         let env = hir::prepare_with_origin(&forms, 0..source.len(), &baseline,
             Phase::Macro, &mut portable::NoExpansion, Some(&origin)).unwrap().1;
         let binding = env.resolve(Phase::Macro, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
@@ -184,7 +192,10 @@ mod tests {
         let source = "(def ^number subject 17)";
         let (global, info) = fixture(source);
         let owner = info.completed_values.as_ref().unwrap().clone();
-        let (foreign_global, foreign_info) = fixture("(ns foreign) (def subject 17)");
+        let (foreign_global, foreign_info) = fixture_in_namespace("(def subject 17)", Some("foreign"));
+        assert_eq!(foreign_global.namespace(), "foreign");
+        assert_eq!(foreign_global.phase(), Phase::Macro);
+        assert_ne!(foreign_global, global);
         let mut session = Session::new_macro().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.with_operation_budget(|session| {
@@ -294,7 +305,16 @@ mod tests {
             assert!(error.is_interrupt());
             assert_eq!(graph.completed_bindings.as_ref().unwrap().len(), 1);
             irq.store(false, std::sync::atomic::Ordering::SeqCst);
+            // Cancellation exhausts this operation: clearing its flag cannot
+            // authorize a refill or make even a memo hit succeed here.
+            let error = graph.completed_owner_binding(&global, &owner, &info).unwrap_err();
+            assert!(fuel(&error), "{error:?}");
+            assert_eq!(graph.completed_bindings.as_ref().unwrap().len(), 1);
+        }
+        {
+            let _request = graph.session.operation_budget_scope().unwrap();
             graph.completed_owner_binding(&global, &owner, &info).unwrap();
+            assert_eq!(graph.completed_bindings.as_ref().unwrap().len(), 1);
         }
         // New ordinary operation scope installs the configured allowance;
         // no refill inside an active request or inspection hook is needed.
