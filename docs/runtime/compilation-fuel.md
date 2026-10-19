@@ -74,6 +74,13 @@ sets both; explicit `--compile-fuel` overrides compilation independently of flag
 order. AOT `compile --compile-fuel` configures source compilation, not subsequent
 artifact execution. See [compiled REPL configuration](compiled-repl.md).
 
+Native library callers can use `Compiler::compile_with_compile_fuel`,
+`prepare_expression_with_compile_fuel` and
+`compile_expr_cached_with_compile_fuel` with an `Option<u64>` allowance.
+`None` preserves the default; `Some(0)` is an explicit zero allowance.
+The original methods keep their defaults. These options do not configure the
+Runtime Store that executes the returned component or expression artifact.
+
 Selected semantic tests use a shared 10B compilation allowance so their complete
 programs can execute. Caller Runtime allowances, dedicated exhaustion/IRQ tests
 and default-fit controls are retained. This is calibration, not a performance win

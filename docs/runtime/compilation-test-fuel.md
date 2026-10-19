@@ -6,7 +6,8 @@ can execute their complete programs. Explicit exhaustion, cancellation, recovery
 and default-budget tests keep their own limits.
 
 The initial common allowance is **10,000,000,000 units per outer compilation
-operation**, supplied through `CompiledMacros::set_operation_fuel`. Nested work
+operation**, supplied through `CompiledMacros::set_operation_fuel` or the public
+Compiler's explicit compilation-fuel variants. Nested work
 continues to consume that same cumulative budget; there is no retry/escalation.
 The completed core-environment measurement on source `19defbf` used at most
 2,630,830,814 units for one traced expansion. The 10B allowance gives that
@@ -29,6 +30,10 @@ settings, sources, metadata, expected values/effects and assertions are retained
 | `quote_and_literal_child_records_match_pinned_without_datum_analysis` | 10,000,000 | 10,000,000,000 |
 | `compiled_function_declarations_match_primary_presence_and_parameter_shapes` | 10,000,000 | 10,000,000,000 |
 | `completed_declaration_hint_boundaries_match_actual_primary_expression_tags` | 10,000,000 | 10,000,000,000 |
+| `public_compiler_macros_receive_real_lexical_bindings_and_runtime_effects_do_not_replay` | 10,000,000 | 10,000,000,000 |
+| `compiled_defn_preserves_docs_attributes_arities_and_lexical_shadowing` | 10,000,000 | 10,000,000,000 |
+| `compiled_macro_artifact_retains_runtime_state_and_roots` | 10,000,000 | 10,000,000,000 |
+| `public_reduce_dispatch_and_source_order_match_pinned_cljs_after_gc` | 10,000,000 | 10,000,000,000 |
 | `declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer` | 10,000,000 | 10,000,000,000 |
 | `compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields` | 100,000,000 | 10,000,000,000 |
 | `compiled_wrapper_serializes_only_the_genuine_native_object_fact_in_both_phases` | 10,000,000 | 10,000,000,000 |
@@ -72,3 +77,13 @@ test byte and caller setting preserved. Their four complete targets now pass
 The function-declaration target also passes both tests, and the source-hint
 target passes its original 23 observations in both phases. These are focused
 results; final-source workspace and CI validation remain separate gates.
+
+The three public Compiler cases above also have recorded default-fuel failures:
+two in integration0 on2caae8c, and one unchanged expression-API probe on that
+same source. Only their compilation calls use the new allowance; all original
+Runtime settings, programs, state/GC observations and assertions remain.
+Their two complete targets now pass 25 tests, including new None/zero/preflight,
+recovery and actual artifact execution controls. The reduction fixture also had
+a recorded &env fuel failure on that source; its complete four-test target passes
+with the same compiler-only policy and unchanged pinned observations. These
+focused results do not establish the required workspace or final-head CI gates.

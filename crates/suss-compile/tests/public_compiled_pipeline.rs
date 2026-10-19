@@ -11,6 +11,10 @@ use suss_compile::{CompileError, Compiler};
 use wasmtime::component::{Component, Linker};
 use wasmtime::{AsContextMut, Config, Engine, Store};
 
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
+
 fn engine() -> Engine {
     static ENGINE: OnceLock<Engine> = OnceLock::new();
     ENGINE
@@ -65,9 +69,10 @@ fn public_compiler_macros_receive_real_lexical_bindings_and_runtime_effects_do_n
             (require-local answer)))
     "#;
     let bytes = Compiler::new()
-        .compile(
+        .compile_with_compile_fuel(
             source,
             "package test:public-compiler; world api { export calculate: func(x: f64) -> f64; }",
+            Some(COMPILATION_FUEL),
         )
         .unwrap();
     let engine = engine();
@@ -287,9 +292,10 @@ fn compiled_defn_preserves_docs_attributes_arities_and_lexical_shadowing() {
             (+ (helper x) (helper 0 0 1 2) (defn 0))))
     "#;
     let bytes = Compiler::new()
-        .compile(
+        .compile_with_compile_fuel(
             source,
             "package test:public-defn; world api { export calculate: func(x: f64) -> f64; }",
+            Some(COMPILATION_FUEL),
         )
         .unwrap();
     let engine = engine();
@@ -375,4 +381,46 @@ fn compiled_core_defn_survives_atomic_two_phase_reset() {
         portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(after 40)").unwrap(),
         "42"
     );
+}
+
+
+#[test]
+fn public_compiler_compile_fuel_preserves_none_zero_wit_order_and_execution() {
+    const SOURCE: &str = "(defmacro answer [] 42) (def ^:export calculate (fn [] (answer)))";
+    const WIT: &str = "package test:public-fuel; world api { export calculate: func() -> f64; }";
+    let mut compiler = Compiler::new();
+    for allowance in [None, Some(0)] {
+        let error = compiler.compile_with_compile_fuel(
+            "(defmacro fail [] (throw 99)) (fail)", "invalid WIT", allowance,
+        ).unwrap_err();
+        assert!(matches!(error, CompileError::Wit(_)), "{error}");
+        let error = compiler.compile_with_compile_fuel(
+            "(defmacro fail [] (throw 99)) (fail)",
+            "package test:public-fuel-unsupported; world api { export echo: func(x: list<map<string, u32>>); }",
+            allowance,
+        ).unwrap_err();
+        assert!(matches!(error, CompileError::Unsupported(_)), "{error}");
+    }
+    let error = compiler.compile_with_compile_fuel(SOURCE, WIT, Some(0)).unwrap_err();
+    let CompileError::Semantic(message) = error else { panic!("unexpected compile error: {error}") };
+    assert!(message.contains("fuel"), "{message}");
+    // Same compiler object recovers after explicit zero. Exercise legacy default,
+    // explicit None, and explicit calibrated compilation through the public API.
+    for mode in 0..3 {
+        let bytes = match mode {
+            0 => compiler.compile(SOURCE, WIT),
+            1 => compiler.compile_with_compile_fuel(SOURCE, WIT, None),
+            _ => compiler.compile_with_compile_fuel(SOURCE, WIT, Some(COMPILATION_FUEL)),
+        }.unwrap();
+        let engine = engine();
+        let component = Component::new(&engine, bytes).unwrap();
+        assert_eq!(component.component_type().imports(&engine).count(), 0);
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(100_000_000).unwrap(); // Existing component-execution allowance.
+        let instance = Linker::new(&engine).instantiate(&mut store, &component).unwrap();
+        let calculate = instance.get_typed_func::<(), (f64,)>(&mut store, "calculate").unwrap();
+        assert_eq!(calculate.call(&mut store, ()).unwrap().0.to_bits(), 42.0_f64.to_bits());
+        calculate.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+    }
 }

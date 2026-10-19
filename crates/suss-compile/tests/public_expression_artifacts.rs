@@ -2,6 +2,9 @@
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
 use suss_compile::{
     Compiler,
     portable_session::{Session, SessionError, SessionOptions},
@@ -19,7 +22,7 @@ fn number(session: &mut Session, value: &suss_compile::portable_session::Session
 #[test]
 fn compiled_macro_artifact_retains_runtime_state_and_roots() {
     let artifact = Compiler::new()
-        .compile_expr_cached(
+        .compile_expr_cached_with_compile_fuel(
             r#"
         (defmacro require-local [local]
           (if (get (:locals &env) local) local (throw 17)))
@@ -28,6 +31,7 @@ fn compiled_macro_artifact_retains_runtime_state_and_roots() {
           (let [answer (+ x (swap! seen inc))] (require-local answer)))
         (calculate 41)
     "#,
+            Some(COMPILATION_FUEL),
         )
         .unwrap();
     assert!(artifact.prepared.as_ref().unwrap().modules().count() > 1);
@@ -195,4 +199,38 @@ fn empty_macro_session_rejects_runtime_bundle_before_core_callback() {
     assert_eq!(session.stats().resident_fragments, 0);
     let value = session.eval("42").unwrap();
     assert_eq!(number(&mut session, &value), 42.0);
+}
+
+
+#[test]
+fn public_expression_compile_fuel_preserves_none_zero_roots_and_recovery() {
+    const SOURCE: &str = "(defmacro answer [] 42) (def seen (atom 41)) (swap! seen inc) (answer)";
+    let mut compiler = Compiler::new();
+    let error = compiler.prepare_expression_with_compile_fuel(SOURCE, &[], Some(0))
+        .err().expect("explicit zero must not become the default");
+    assert!(matches!(error, suss_compile::CompileError::Semantic(_)), "{error}");
+    assert!(error.to_string().contains("fuel"), "{error}");
+    let error = compiler.compile_expr_cached_with_compile_fuel(SOURCE, Some(0))
+        .err().expect("cached explicit zero must not become the default");
+    assert!(matches!(error, suss_compile::CompileError::Semantic(_)), "{error}");
+    assert!(error.to_string().contains("fuel"), "{error}");
+    // Recover through both option-aware entry points, with default and explicit
+    // compilation fuel. Runtime session options remain the original defaults.
+    for (cached, allowance) in [(false, None), (true, None),
+        (false, Some(COMPILATION_FUEL)), (true, Some(COMPILATION_FUEL))] {
+        let mut session = Session::new().unwrap();
+        let result = if cached {
+            compiler.compile_expr_cached_with_compile_fuel(SOURCE, allowance)
+                .unwrap().execute(&mut session).unwrap().unwrap()
+        } else {
+            compiler.prepare_expression_with_compile_fuel(SOURCE, &[], allowance)
+                .unwrap().execute(&mut session).unwrap().unwrap()
+        };
+        session.collect().unwrap();
+        assert_eq!(number(&mut session, &result), 42.0);
+        let seen = session.eval("@seen").unwrap();
+        assert_eq!(number(&mut session, &seen), 42.0, "initializer executes exactly once");
+        session.collect().unwrap();
+        assert_eq!(number(&mut session, &result), 42.0, "result root survives GC");
+    }
 }

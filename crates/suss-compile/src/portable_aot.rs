@@ -446,9 +446,19 @@ pub fn prepare_source(
     path: Option<PathBuf>,
     source_paths: &[PathBuf],
 ) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_source_with_compile_fuel(source, path, source_paths, None)
+}
+
+/// Prepare source with an explicit compilation-only allowance; None retains defaults.
+pub fn prepare_source_with_compile_fuel(
+    source: &str,
+    path: Option<PathBuf>,
+    source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
+) -> Result<Vec<PreparedFragment>, SessionError> {
     // Parse the complete input before constructing the effectful Macro session.
     let forms = read_script_forms(source)?;
-    prepare_forms(source, path, source_paths, forms)
+    prepare_forms(source, path, source_paths, forms, compile_fuel)
 }
 
 fn prepare_forms(
@@ -456,8 +466,9 @@ fn prepare_forms(
     path: Option<PathBuf>,
     source_paths: &[PathBuf],
     forms: Vec<suss_reader::forms::Form>,
+    compile_fuel: Option<u64>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    prepare_inputs(
+    prepare_inputs_with_command(
         &[SourceInput {
             source: source.into(),
             path,
@@ -465,6 +476,8 @@ fn prepare_forms(
             namespace: None,
         }],
         source_paths,
+        false,
+        compile_fuel,
     )
 }
 

@@ -2,6 +2,9 @@
 //! Raw values are decoded from ABI storage; representation is verified independently.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
 
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
@@ -158,6 +161,7 @@ fn public_reduce_dispatch_and_source_order_match_pinned_cljs_after_gc() {
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(COMPILATION_FUEL);
         let mut decoder = Decoder::capture(&mut session, 65536).unwrap();
 
         // Root known core descriptors before loading the user fixture; these

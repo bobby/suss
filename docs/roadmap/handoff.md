@@ -28588,3 +28588,108 @@ success is Java/Node-free bootstrap verification followed by the exact required
 workspace command. Final-head CI/review and all remaining issue criteria remain
 separate. Earlier10 calibrated-target passes and declaration2 remain attributed
 to their recorded pre-scan source/bootstrap; no new-source replay is inferred.
+
+
+## Public compiler compilation-budget diagnostics
+
+On2caae8c, complete cumulative-fuel12 passes356.95s including build/336.03s
+execution. Java/Node-free reproduction is terminal0 in121.99s (both byte-exact
+reproductions, identity and bootstrap4). Python foundation passes353 unittests
+plus13 inventory/provenance/lock/runtime checks. Final-head CI foundation passes
+444Rust/0FAIL/1existingignored plus353Python, with actual checkout53829b5 tree
+identical to API/local2caae8c. Raw receipts are under
+`pr252-2caae8c-python-foundation/` and
+`pr252-2caae8c-foundation-117871020476/` in the external work cache.
+
+The exact required workspace command compiled every test target. Its completed
+nonempty harnesses pass48tests: CLImain36(774.41s), AOTsource4(138.71s), compiled
+AOT1(66.35s), async command2(235.22s), file command5(491.85s). The compile-fuel
+command test was running without a verdict when the run was deliberately stopped.
+CI integration0 on the same tree establishes two default compilation-fuel failures
+in `public_compiled_pipeline`: docs/arities/lexical-shadowing449..610 and real
+lexical bindings137..249. Its completed scope is135PASS/2FAIL/3ignored across28of31
+planned targets; three later targets are unexecuted. Integration3 is152PASS/0FAIL
+across all31 targets. Other jobs are not included in these counts. Logs, hashes,
+per-harness audit and checkout/tree proof are in
+`pr252-2caae8c-ci-failure-main/`; no whole-CI result is inferred.
+
+The old local baseline was then cancelled with SIGTERM only to its verified owned
+process group2310496. Actual outer session82293 exits143; the group is observed
+drained. Completed log, cancellation reason, process list and post-drain freeze are
+retained in `pr252-observation-full-baseline-v1/`. This is a cancelled baseline,
+not a full success or a naturally completed test failure; later scope remains
+unexecuted/unknown. No unrelated producer was signalled.
+
+A targeted unchanged expression API control then establishes another real default
+compilation-fuel failure at &env137..228:
+
+```sh
+cargo test --locked -p suss-compile --test public_expression_artifacts compiled_macro_artifact_retains_runtime_state_and_roots -- --exact --test-threads=1
+```
+
+It is terminal101/drained,0PASS/1FAIL/0ignored40.06s execution/60.88s including
+build; source/command/log/receipt are in `pr252-public-expression-before/`.
+The public Compiler APIs do not yet offer per-method compilation overrides for
+these cases. A minimal source/component and expression API configuration repair
+is being prepared; no repaired execution is claimed. Original programs, Runtime
+limits and assertions remain the target. New-source focused checks, normal BOOT,
+required workspace replay, pinned-map verdict capture and final-head CI remain
+separate future commands.
+
+
+The public Compiler source repair is applied after independent V3 review:
+explicit optional-fuel variants for component/source and prepared/cached
+expressions retain all old None defaults, WIT-before-Macro validation and deferred
+Runtime initialization. Only the three demonstrated semantic failures receive the
+same10B policy; all old Runtime settings/programs/assertions are byte-preserved.
+Normal BOOT generation and identity pass. The complete13-test public component
+and12-test public expression targets are executing in the sole local producer;
+new controls and repaired results remain pending except individually logged cases.
+Commands/patch/BOOT hashes are in `pr252-public-compiler-fuel-validation-v1/`.
+
+CI jobs1/2 were separately cancelled by their configured45-minute integration
+limit, explicitly confirmed by API annotations. Completed harness scopes are
+69PASS and131PASS respectively, with no assertion failure observed before
+cancellation. Shard1's portable_indexing and shard2's compile_expr were interrupted;
+16 and8 later targets respectively remain unexecuted. These are not all-run counts.
+Raw logs/annotations/audit are in `pr252-2caae8c-cancelled-jobs/`. A reviewed
+integration-only45->120minute window is now applied; tests, fuel/defaults,
+parallelism4, eight shards and foundation/gate timeouts are unchanged. The new
+window is bounded headroom, not a demonstrated completion guarantee.
+
+
+## Public compiler configuration execution
+
+Normal BOOT/identity and the complete public component/expression command finish0:
+
+```sh
+cargo test --no-fail-fast --locked -p suss-compile --test public_compiled_pipeline --test public_expression_artifacts -- --test-threads=2
+```
+
+Actual25PASS/0FAIL/0ignored: component13(306.75s), expression12(99.37s),
+421.04s including compilation. All three former default-fuel failures now execute
+their original values/state/metadata/arity/effect/GC assertions. New controls
+execute actual42 artifacts and retain None/default, explicit zero, WIT/boundary
+preflight, recovery and rooted state. Session Runtime settings remain unchanged.
+Raw patch, commands, BOOT hashes and terminal receipt are in
+`pr252-public-compiler-fuel-validation-v1/`.
+
+The same old-head CI integration4 subsequently establishes another &env fuel
+failure1026..1069 during the pinned reduction fixture, before any observation rows.
+Its completed scope is71PASS/1FAIL across18of32 targets, with14 later targets
+unexecuted; tree proof/raw audit are in
+`pr252-2caae8c-integration4-117871020816/`. Only that fixture's CompiledMacros
+allowance changes to10B; an exact inverse matches the entire original file,
+including every Runtime setting, original source/oracle, descriptor checks and
+assertion. Complete replay:
+
+```sh
+cargo test --locked -p suss-cli --test portable_reduction_dispatch -- --test-threads=2
+```
+
+Actual4PASS/0FAIL/0ignored73.83s execution, including both caller phases, seven
+original plus three source-order cases and three retained adversarial decoders.
+The new test-only setting uses the established CLI support constant. Receipts are
+in `pr252-reduction-dispatch-calibration-validation-v1/`. CI shard-planner tests
+also pass4/4 after the integration-only120-minute window change. These focused
+results do not replace fresh committed-head workspace/CI or pinned-map evidence.
