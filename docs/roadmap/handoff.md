@@ -30158,3 +30158,19 @@ Raw320 outcomes/counts are unchanged. Regenerate/adopt normal BOOT before
 `sh scripts/verify-bootstrap.sh` and the focused selections listed in that
 evidence, then the exact full baseline. Keep root66a55ce's live producer intact;
 parsing/source review is not compilation, native acceptance or a budget waiver.
+
+
+## Regenerated bootstrap after completed-value build repairs
+
+CI39296185995 builds sourcef8776e7 and completes two normal generations
+of both bootstrap phases. The independently reviewed exact four outputs are adopted;
+[source, byte hashes, raw comparison failure and limits](evidence/m4-pr263-completed-value-bootstrap-2026-10-19.md)
+retain all receipts. Non-custom executable sections match320 and the actual
+compiled build-script identity probe passes. The generation job stops at old
+shipped comparison before any compiled_bootstrap or library execution.
+
+Fresh normal `sh scripts/verify-bootstrap.sh`, focused source/type-value/literal/
+COW/source_roots controls and unchanged core_import/source-tags acceptance
+remain necessary before the exact full workspace baseline. No default-budget
+or public alias result is inferred. Root66a55ce's same workspace producer
+continues separately; no concurrent local Cargo/VM was used for adoption.
