@@ -1773,7 +1773,7 @@ impl<'a> AnalysisGraph<'a> {
             })?;
             trace(self.session, "guarded")?;
             self.charge(3)?;
-            let (mut declaration, mut original_metadata_prefixes) = if let Some(origin) = &info.origin {
+            let (mut declaration, mut owned_reader_prefixes) = if let Some(origin) = &info.origin {
                 origin
                     .macro_form_data_with_metadata_origins_metered(&info.declaration, &mut |units| {
                         charge_origin_work(self.session, info.declaration.span.clone(), units)
@@ -1800,7 +1800,7 @@ impl<'a> AnalysisGraph<'a> {
                             })
                             .map_err(SessionError::Compile)?;
                         self.charge(1)?;
-                        original_metadata_prefixes = None;
+                        owned_reader_prefixes = None;
                         declaration.metadata = std::mem::take(&mut original.metadata);
                         for metadata in &info.declaration.metadata {
                             declaration.metadata.push(self.clone_form(metadata)?);
@@ -1825,11 +1825,11 @@ impl<'a> AnalysisGraph<'a> {
             self.charge(2)?;
             if ordinary_def && let Some(keys) = retained.as_mut() {
                 // Consume ONE owned normalized view. The source clone recorded
-                // which root prefix slots came from the verified original;
-                // normalization retained the KEY's original (prefix,pair)
+                // which prefix slots belong to the actual selected reader
+                // clone input. Normalization retains the KEY's (prefix,pair)
                 // selector even when a later prefix replaced its VALUE.
                 self.charge(3)?;
-                if let Some(original_count) = original_metadata_prefixes {
+                if let Some(original_count) = owned_reader_prefixes {
                     for label in ["name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
                         "fn-var", "variadic?", "max-fixed-arity", "method-params", "arglists", "arglists-meta",
                         "export", "type", "num-fields", "record", "meta"] {
@@ -1862,10 +1862,10 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     }
                 } else {
-                    // Legacy expanded/eager mappings have no root-prefix clone
-                    // proof. Do not join equal keys from separate views. Keep
-                    // the pre-existing source registration policy for those
-                    // unclassified native mappings; no alias claim is made.
+                    // Only non-Symbol/unsupported native root shapes can lack
+                    // a Symbol prefix-owner proof. All selected Symbol readers,
+                    // including eager/paired mappings, take the owned path.
+                    // Do not join equal keys from separate views here.
                     let raw = preserve_source_error(info.declaration.span.clone(),
                         &mut |units| self.session.charge_host_work(units),
                         |meter| hir::reader_metadata_pairs_metered(&info.declaration, meter))?;

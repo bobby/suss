@@ -30057,3 +30057,21 @@ These changes retain the actual preparation, observation and assertion paths.
 They require a refreshed normal bootstrap tuple because source identity includes
 test files, followed by the same CI gates; no new library execution is claimed.
 The separate parent workspace baseline remains live and must not be restarted.
+
+
+## Selected borrowed reader metadata owners
+
+The selected immutable borrowed Symbol reader now supplies its metadata prefix
+extent before cloning, following the existing full source/expansion selection
+guards. This extends occurrence transport to eager and paired reader mappings.
+It uses one normalized owned view for outer/inner keys; it does not infer origin
+from matching output contents. The new controls are prepaid before kind/extent
+inspection; unsupported non-Symbol shapes retain their previous policy.
+
+Focused regression names for the next available native test run:
+`borrowed_metadata_occurrence` and
+`eager_and_paired_reader_declarations_share_retained_key_after_gc_and_live_hash`.
+Source parsing and independent source review pass; native compilation, metering
+failures/retry, collection and live IHash execution remain unverified. Preserve
+the existing ordinary reader metadata cases and refresh/reproduce bootstrap
+outputs after these source edits before interpreting Session results.

@@ -239,4 +239,65 @@ mod tests {
         assert_eq!(graph.recipes.len(), before);
     }
 
+    #[test]
+    fn eager_and_paired_reader_declarations_share_retained_key_after_gc_and_live_hash() {
+        use crate::portable::resolve::Phase;
+        use crate::portable_session::memo_leaf_test_support::Method;
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            session.eval("(def leaf-original-method nil) (def eager-reader-events [])").unwrap();
+            let original = Method::capture(&mut session, "Keyword").unwrap();
+            original.bind_delegate(&mut session).unwrap();
+            session.eval(r#"(extend-type Keyword IHash (-hash [self]
+                (let [memo (.-_hash self)]
+                    (do (set! eager-reader-events (conj eager-reader-events [self memo]))
+                        (if (nil? memo) (leaf-original-method self) memo)))))"#).unwrap();
+            let project = session.eval(r#"(fn [decl]
+                (let [find-key (fn [m] (reduce (fn [found k] (if (= (str k) ":tag") k found)) nil (keys m)))
+                      key (find-key decl) inner (find-key (:meta decl))
+                      hits (filter (fn [event] (identical? key (first event))) eager-reader-events)]
+                    [(identical? key inner)
+                     (if (seq hits) (second (first hits)) (.-_hash key))
+                     (str (get decl key))]))"#).unwrap();
+            for paired in [false, true] {
+                for (declaration, literal, expected_value) in [
+                    ("(def ^number watched 17)", true, "number"),
+                    ("(def ^\"number\" watched 17)", true, "number"),
+                    ("(def ^{:tag source-tag} ^number watched 17)", true, "source-tag"),
+                    ("(def ^number ^{:tag source-tag} watched 17)", false, "number"),
+                ] {
+                    session.eval("(set! eager-reader-events [])").unwrap();
+                    let source = format!("#(+ % 17)\n{declaration}");
+                    let prepared = portable::prepare_fragment(&source, &portable::resolve::Environment::default(), phase).unwrap();
+                    let binding = prepared.environment.resolve(phase, &suss_reader::Symbol::new("watched"), 0..0).unwrap();
+                    let global = binding.global();
+                    let mut info = prepared.environment.shared_definition_info(global).unwrap().as_ref().clone();
+                    if paired {
+                        let native = info.origin.as_ref().unwrap();
+                        let reader = native.macro_form_data_metered(&info.declaration, &mut |_| Ok(())).unwrap();
+                        info.origin = Some(native.with_reader_expansion(info.declaration.clone(), reader));
+                    }
+                    let owner = Arc::new(info);
+                    let actual = {
+                        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                        let root = graph.declaration(global, Some(&owner), 0).unwrap();
+                        graph.materialize(root).unwrap()
+                    };
+                    session.collect().unwrap();
+                    let result = session.invoke(&project, &[&actual]).unwrap();
+                    let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
+                    let Kind::Vector(values) = &decoded.kind else { panic!("projection vector") };
+                    assert_eq!(values.len(), 3);
+                    assert_eq!(values[0].kind, Kind::Bool(true), "{paired}/{declaration}");
+                    assert_eq!(values[1].kind, if literal { Kind::Number(-1290361223.0) } else { Kind::Nil }, "{paired}/{declaration}");
+                    assert!(matches!(&values[2].kind,Kind::String(units) if units.iter().copied().eq(expected_value.encode_utf16())), "{paired}/{declaration}");
+                }
+            }
+            original.restore(&mut session).unwrap();
+            session.collect().unwrap();
+            let restored = session.eval("(hash :tag)").unwrap();
+            assert_eq!(bridge.read(&mut session, &restored, 0..0).unwrap().kind, Kind::Number(-1290361223.0));
+        }
+    }
+
 }

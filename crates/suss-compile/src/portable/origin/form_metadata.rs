@@ -762,7 +762,11 @@ impl SourceOrigin {
     /// For a verified original Symbol, clone_attached copies the original root
     /// prefixes in place/order then appends indexing metadata. This count is
     /// recorded BEFORE that clone; no output key/content/address join is used.
-    /// Borrowed expanded/eager mappings are explicitly unclassified here.
+    /// For a selected borrowed reader Symbol (eager or paired expansion),
+    /// clone_form_metered copies THAT immutable reader owner's prefixes without
+    /// alteration. Record its own extent before cloning. It need not equal the
+    /// lowered/unindexed owner's prefix count. Indexing position fields remain
+    /// on their independent old Graph policy; no origin is inferred by spelling.
     pub(crate) fn macro_form_data_with_metadata_origins_metered(
         &self, form: &Form,
         meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
@@ -778,7 +782,12 @@ impl SourceOrigin {
                 Ok((copied, prefixes))
             }
             Some(MacroFormSource::Borrowed(reader)) => {
-                Ok((clone_form_metered(reader, meter)?, None))
+                // The existing selector has already checked the complete
+                // lowered input or selected the actual indexed source owner.
+                // This proof is the clone's input owner, NOT output equality.
+                charge(meter, 3, &form.span)?;
+                let prefixes = matches!(&reader.kind, Kind::Symbol(_)).then_some(reader.metadata.len());
+                Ok((clone_form_metered(reader, meter)?, prefixes))
             }
             None => {
                 let prefixes = matches!(&form.kind, Kind::Symbol(_)).then_some(form.metadata.len());
@@ -1452,4 +1461,77 @@ mod tests {
         assert_eq!(observed.kind, form.kind);
         assert!(work > 2_200_000);
     }
+    #[test]
+    fn borrowed_metadata_occurrence_proof_covers_eager_symbol_reader_owners() {
+        let cases = ["(def ^number watched 17)", "(def ^\"number\" watched 17)",
+            "(def ^:private watched 17)", "(def ^{:tag source-tag} watched 17)",
+            "(def ^number ^{:tag source-tag} watched 17)", "(def ^{:tag source-tag} ^number watched 17)",
+            "(def ^\"number\" ^{:tag source-tag} watched 17)", "(def ^{:tag source-tag} ^\"number\" watched 17)"];
+        for prefix in ["#(+ % 17)\n", "^:x #?(:cljs [kept])\n"] {
+            for tail in cases {
+                let source = format!("{prefix}{tail}");
+                let forms = suss_reader::forms::resolve_conditionals(read_forms(&source).unwrap()).unwrap();
+                let Kind::List(items) = &forms.last().unwrap().kind else { unreachable!() };
+                let owner = &items[1];
+                let origin = SourceOrigin::new(source.clone(), None);
+                let (copied, extent) = origin.macro_form_data_with_metadata_origins_metered(owner, &mut |_| Ok(())).unwrap();
+                let snapshot = origin.metadata_forms.get().unwrap().as_ref().unwrap();
+                assert!(snapshot.source.requires_eager(), "fixture must actually exercise eager source: {source}");
+                assert!(snapshot.located.get().is_some());
+                let selected = match origin.macro_form_source_metered(owner, &mut |_| Ok(())).unwrap().unwrap() {
+                    MacroFormSource::Borrowed(reader) => reader,
+                    _ => panic!("eager fixture must select an actual borrowed reader"),
+                };
+                assert_eq!(extent, Some(selected.metadata.len()));
+                assert_eq!(&copied, selected);
+                assert_eq!(copied, origin.macro_form_data_metered(owner, &mut |_| Ok(())).unwrap());
+                let view = crate::portable::hir::reader_metadata_owned_view_metered(&copied, &mut |_| Ok(())).unwrap();
+                let label = if tail.contains(":private") { "private" } else { "tag" };
+                let index = view.pairs.chunks_exact(2).position(|pair|
+                    matches!(&pair[0].kind,Kind::Keyword(key) if key.name == label)).unwrap();
+                assert!(view.key_positions[index].0 < extent.unwrap());
+            }
+        }
+    }
+    #[test]
+    fn borrowed_metadata_occurrence_proof_uses_actual_paired_reader_not_lowered_content() {
+        let lowered = read_forms("^number owner").unwrap().remove(0);
+        let mut reader = SourceOrigin::new("^number owner", None)
+            .macro_form_data_metered(&lowered, &mut |_| Ok(())).unwrap();
+        // Distinct native reader slot extent and spans demonstrate why an
+        // output/input content equality join would be the wrong mechanism.
+        reader.span = 200..300;
+        let origin = SourceOrigin::new("", None).with_reader_expansion(lowered.clone(), reader.clone());
+        let (copied, extent) = origin.macro_form_data_with_metadata_origins_metered(&lowered, &mut |_| Ok(())).unwrap();
+        assert_eq!(copied, reader);
+        assert_eq!(extent, Some(reader.metadata.len()));
+        assert!(reader.metadata.len() > lowered.metadata.len());
+        assert!(origin.metadata_forms.get().is_none(), "paired proof must not replay a text/source parse");
+        let mut changed = lowered.clone();
+        changed.kind = Kind::Symbol(suss_reader::Symbol::new("other"));
+        let (fallback, extent) = origin.macro_form_data_with_metadata_origins_metered(&changed, &mut |_| Ok(())).unwrap();
+        assert_eq!(fallback, changed, "the full original input matching guard remains active");
+        assert_eq!(extent, Some(changed.metadata.len()));
+    }
+    #[test]
+    fn borrowed_metadata_occurrence_meter_errors_propagate_and_retry_without_owner_mutation() {
+        let lowered = read_forms("^number owner").unwrap().remove(0);
+        let reader = SourceOrigin::new("^number owner", None)
+            .macro_form_data_metered(&lowered, &mut |_| Ok(())).unwrap();
+        let origin = SourceOrigin::new("", None).with_reader_expansion(lowered.clone(), reader.clone());
+        let mut calls = 0;
+        let baseline = origin.macro_form_data_with_metadata_origins_metered(&lowered, &mut |_| {calls += 1; Ok(())}).unwrap();
+        for stop in 0..calls {
+            let mut at = 0;
+            let error = origin.macro_form_data_with_metadata_origins_metered(&lowered, &mut |_| {
+                let hit = at == stop; at += 1;
+                if hit { Err(Diagnostic {span:81..85,message:"borrowed occurrence meter error".into()}) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "borrowed occurrence meter error");
+            assert_eq!(origin.macro_form_data_with_metadata_origins_metered(&lowered, &mut |_| Ok(())).unwrap(), baseline);
+        }
+        assert_eq!(origin.reader_forms.as_ref().unwrap().0, lowered);
+        assert_eq!(origin.reader_forms.as_ref().unwrap().1, reader);
+    }
+
 }
