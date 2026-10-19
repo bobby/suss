@@ -190,7 +190,10 @@ mod tests {
         for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
             let bridge = FormBridge::new(&mut session).unwrap();
             for source in cases {
-                let forms = suss_reader::forms::read_forms(source).unwrap();
+                // Use the production reader-selection stage, including quote
+                // prefixes inside metadata. The source program is unchanged.
+                let forms = suss_reader::forms::resolve_conditionals(
+                    suss_reader::forms::read_forms(source).unwrap()).unwrap();
                 let (_, environment) = portable::hir::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
                 let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
                 let global = binding.global();

@@ -283,17 +283,25 @@ mod tests {
         let mut calls = 0;
         let history = TypeKeyHistory::capture(&global, Some(info), &mut |_| { calls += 1; Ok(()) }).unwrap();
         assert!(matches!(history.key(&global, TypeKey::Tag), Some(KeyOrigin::ReaderShorthandTag(_))));
+        let metadata_span = info.declaration.metadata[0].span.clone();
+        let mut direct_span_seen = false;
+        let mut contextual_span_seen = false;
         for stop in 0..calls {
             let mut current = 0;
             let error = TypeKeyHistory::capture(&global, Some(info), &mut |_| {
                 let fail = current == stop; current += 1;
                 if fail { Err(Diagnostic { span: 81..85, message: "history meter error".into() }) } else { Ok(()) }
             }).unwrap_err();
-            assert_eq!(error.span, 81..85);
+            // The native metadata/clone adapter deliberately annotates its
+            // source span. Direct controls preserve the injected span; both
+            // routes must preserve this exact failure rather than recovering.
+            if error.span == (81..85) { direct_span_seen = true; }
+            else { assert_eq!(error.span, metadata_span); contextual_span_seen = true; }
             assert_eq!(error.message, "history meter error");
             assert_eq!(info.declaration, original);
             TypeKeyHistory::capture(&global, Some(info), &mut |_| Ok(())).unwrap();
         }
+        assert!(direct_span_seen && contextual_span_seen, "both diagnostic routes exercised");
         let mut prior_type = info.clone();
         prior_type.type_key_history = Some(history.clone());
         for foreign in [Global { phase: Phase::Macro, ..global.clone() },

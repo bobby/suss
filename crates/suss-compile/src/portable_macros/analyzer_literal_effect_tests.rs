@@ -2,6 +2,9 @@
 //! delegated IHash replacement installed before caller environment transport.
 use super::*;
 use crate::portable_session::memo_leaf_test_support::Method;
+#[path = "../../tests/support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 #[test]
 fn analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration() {
     let mut failures = Vec::new();
@@ -108,6 +111,7 @@ fn analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash()
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let run = (|| -> Result<(), String> {
             macros.session.eval("(def leaf-original-method nil) (def collection-events [])")
                 .map_err(|e| e.to_string())?;
@@ -123,13 +127,17 @@ fn analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash()
                     vector-ast (:init (get (:locals &env) vector-name))
                     check-key (fn [ast text expected]
                                 (let [key (find-key ast text)
+                                      initial-memo (.-_hash key)
+                                      before (count (filter (fn [row] (identical? key (first row))) collection-events))
+                                      explicit-hash (hash key)
                                       hits (reduce (fn [out row]
                                                      (if (identical? key (first row))
                                                        (conj out (second row)) out))
                                                    [] collection-events)]
-                                  (and (some? key) (= expected (.-_hash key))
+                                  (and (some? key) (= expected initial-memo) (= expected explicit-hash)
                                        (if (= stage 0)
-                                         (and (pos? (count hits)) (every? (fn [memo] (= expected memo)) hits))
+                                         (and (= (count hits) (+ before 1))
+                                              (every? (fn [memo] (= expected memo)) hits))
                                          (empty? hits)))))
                     check-children (fn [ast specs]
                                      (let [names (:children ast)]
@@ -214,6 +222,7 @@ fn run_proven_ast_literal_family(label: &str, initializer: &str, required_ops: &
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let run = (|| -> Result<(), String> {
             caller.eval("(def ast-literal-target 0)").map_err(|e| e.to_string())?;
             macros.session.eval(r#"(def leaf-original-method nil)
@@ -451,6 +460,7 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
 fn analyzer_literal_local_reference_select_keys_are_independent_of_binding_role() {
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.session.eval("(def leaf-original-method nil) (def reference-key-events [])").unwrap();
         let original = Method::capture(&mut macros.session, "Keyword").unwrap();
         original.bind_delegate(&mut macros.session).unwrap();

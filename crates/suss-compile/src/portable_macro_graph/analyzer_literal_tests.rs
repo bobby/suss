@@ -216,3 +216,117 @@ fn analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch
         original.restore(&mut session).unwrap();
     }
 }
+
+// Constructor policy: pinned analyzer.cljc2362-2368 and4108-4116,
+// c4295f303100bbf5afac449242d30bca1126f1a1 (EPL-1.0).
+#[test]
+fn analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls() {
+    use crate::portable_session::memo_leaf_test_support::Method;
+    fn select(node: &Hir, role: &str) -> Option<Hir> {
+        if let Some(source) = &node.source {
+            let matched = match role {
+                "function" => source.node.is_none() && source.callable.is_some(),
+                "local" => matches!(&source.form.kind, Kind::Symbol(_))
+                    && matches!(source.resolved, Some(hir::SourceBinding::Local(_))),
+                "global" => matches!(&source.form.kind, Kind::Symbol(_))
+                    && matches!(source.resolved, Some(hir::SourceBinding::Global { .. })),
+                "future" => matches!(source.node.as_deref(), Some(hir::SourceNode::Future(_))),
+                _ => unreachable!(),
+            };
+            if matched { return Some(node.clone()); }
+            if let Some(hir::SourceNode::Bindings { body, .. }) = source.node.as_deref()
+                && let Some(found) = select(body, role) { return Some(found); }
+        }
+        if let Expression::Do(items) = &node.kind {
+            return items.iter().rev().find_map(|node| select(node, role));
+        }
+        None
+    }
+    let actual = |text: &str, role: &str| {
+        let forms = suss_reader::forms::read_forms(text).unwrap();
+        let hir = hir::analyze(&forms, 0..text.len()).unwrap();
+        select(&hir, role).expect("genuine native constructor must be reached")
+    };
+    let function = actual("(fn* [] 17)", "function");
+    let local = actual("(let* [watched 17] watched)", "local");
+    let global = actual("(def watched 17) watched", "global");
+    let future = actual("(suss.async/future* 17)", "future");
+    let mut unknown = function.clone();
+    let mut source = unknown.source.as_ref().unwrap().as_ref().clone();
+    source.callable = None;
+    source.resolved = None;
+    unknown.source = Some(Arc::new(source));
+    // Pinned emitted analyzer JS constructs :env with this numeric memo.
+    let literal_memo = -1815813235.0;
+    for mut session in [Session::new_macro().unwrap(), Session::new_repl().unwrap()] {
+        session.eval("(def leaf-original-method nil) (def ast-env-events [])").unwrap();
+        let original = Method::capture(&mut session, "Keyword").unwrap();
+        original.bind_delegate(&mut session).unwrap();
+        let project = session.eval(r#"(fn [ast reader]
+          (let [key (reduce (fn [found k] (if (= (str k) ":env") k found)) nil (keys ast))
+                before (.-_hash key)
+                construction-events (filter (fn [event] (identical? key (first event))) ast-env-events)
+                construction-count (count construction-events)
+                first-memo (if (seq construction-events) (second (first construction-events)) before)
+                explicit-hash (hash key)
+                events (filter (fn [event] (identical? key (first event))) ast-env-events)]
+            [(not (nil? key)) construction-count first-memo before
+             (second (nth events construction-count)) (count events)
+             (nil? (.-_hash reader)) (identical? key reader)]))"#).unwrap();
+        session.eval(r#"(extend-type Keyword IHash (-hash [self]
+          (let [memo (.-_hash self)]
+            (do (set! ast-env-events (conj ast-env-events [self memo]))
+                (if (nil? memo) (leaf-original-method self) memo)))))"#).unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut observed = Vec::new();
+        for (label, hir, expected) in [
+            ("function", &function, Kind::Number(literal_memo)),
+            ("local", &local, Kind::Number(literal_memo)),
+            ("global", &global, Kind::Number(literal_memo)),
+            ("future", &future, Kind::Nil),
+            ("unknown", &unknown, Kind::Nil),
+        ] {
+            session.eval("(set! ast-env-events [])").unwrap();
+            let scope = session.operation_budget_scope().unwrap();
+            let (root, reader) = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let reader = suss_reader::forms::read_forms(":env").unwrap().remove(0);
+                let reader = graph.form(&reader, 0).unwrap();
+                let reader = graph.materialize(reader).unwrap();
+                let root = graph.ast(hir, 0).unwrap();
+                (graph.materialize(root).unwrap(), reader)
+            };
+            drop(scope);
+            session.collect().unwrap();
+            let result = session.invoke(&project, &[&root, &reader]).unwrap();
+            let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
+            observed.push((label, decoded, expected));
+        }
+        original.restore(&mut session).unwrap();
+        // Restoration is exercised by a new actual AST materialization, rather
+        // than only checking the method descriptor or reusing a built guest map.
+        session.eval("(set! ast-env-events [])").unwrap();
+        let root = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.ast(&function, 0).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        session.collect().unwrap();
+        let restored = session.eval("ast-env-events").unwrap();
+        assert!(matches!(bridge.read(&mut session, &restored, 0..0).unwrap().kind,
+            Kind::Vector(ref events) if events.is_empty()));
+        assert!(matches!(bridge.read(&mut session, &root, 0..0).unwrap().kind, Kind::Map(_)));
+        for (label, decoded, expected) in observed {
+            let Kind::Vector(values) = &decoded.kind else { panic!("projection vector: {label}") };
+            assert_eq!(values.len(), 8, "{label}");
+            assert_eq!(values[0].kind, Kind::Bool(true), "{label}: actual env key");
+            let Kind::Number(construction_count) = &values[1].kind else { panic!("construction event count") };
+            assert_eq!(values[2].kind, expected, "{label}: initial/first construction receiver memo");
+            assert_eq!(values[4].kind, values[3].kind, "{label}: explicit receiver entry preserves prior memo");
+            assert_eq!(values[5].kind, Kind::Number(*construction_count + 1.0),
+                "{label}: one explicit receiver dispatch, separate from observed construction events");
+            assert_eq!(values[6].kind, Kind::Bool(true), "{label}: same-text reader stays cold");
+            assert_eq!(values[7].kind, Kind::Bool(false), "{label}: source and literal domains remain distinct");
+        }
+    }
+}

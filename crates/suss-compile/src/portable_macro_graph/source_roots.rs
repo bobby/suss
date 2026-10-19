@@ -876,6 +876,44 @@ mod tests {
         portable::resolve::Phase, portable_macro_data::FormBridge, portable_session::SessionValue,
     };
 
+    #[derive(Clone, Copy)]
+    enum FixtureKeyOrigin {
+        AnalyzerLiteral,
+        RetainedReader,
+    }
+    // Select the actual final native entry, never mint a same-spelling cold
+    // keyword and compare its recipe ID with a different provenance domain.
+    // Each fixture declares the exact expected representation: no fallback
+    // between literal and reader keys is permitted.
+    fn retained_field(
+        graph: &mut AnalysisGraph<'_>,
+        entries: &[(Value, Value)],
+        label: &str,
+        expected: FixtureKeyOrigin,
+    ) -> Value {
+        let slot = graph.declaration_field_position(entries, label)
+            .unwrap().expect("actual retained declaration field must exist");
+        let (key, value) = entries[slot];
+        match (expected, graph.recipes[key].as_ref().unwrap()) {
+            (FixtureKeyOrigin::AnalyzerLiteral, Recipe::Identifier {
+                namespace: None, name, keyword: true, literal: Some(token),
+            }) => {
+                assert_eq!(name, label, "actual literal key label");
+                assert_eq!(token.name(), label, "actual analyzer constructor token");
+            }
+            (FixtureKeyOrigin::RetainedReader, Recipe::Form(form)) => {
+                let suss_reader::forms::Kind::Keyword(key) = &form.kind else {
+                    panic!("retained reader field key must be a keyword");
+                };
+                assert!(key.namespace.is_none(), "retained field is unqualified");
+                assert_eq!(key.name, label, "actual retained reader key label");
+                assert!(form.metadata.is_empty(), "fixture reader keyword has no metadata");
+            }
+            _ => panic!("retained declaration field has the wrong recipe/provenance domain: {label}"),
+        }
+        value
+    }
+
     // Real analyzed declaration selection, not a caller-supplied owner/value
     // pair. The native final map determines both the source slot and recipe.
     fn declaration(
@@ -924,8 +962,9 @@ mod tests {
             Recipe::Map(entries) => entries.clone(),
             _ => panic!("native declaration must remain a map"),
         };
-        let meta_key = graph.keyword("meta").unwrap();
-        let meta = entries.iter().find(|(key, _)| *key == meta_key).unwrap().1;
+        // Completed ordinary def creates :meta at the analyzer literal site;
+        // this is not the cold keyword("meta") recipe domain.
+        let meta = retained_field(graph, &entries, "meta", FixtureKeyOrigin::AnalyzerLiteral);
         let meta_id = graph
             .source_roots
             .index(graph.session, meta)
@@ -1438,9 +1477,10 @@ mod tests {
                 source_phase,
                 "source-child-b",
             );
-            let doc_key = graph.keyword("doc").unwrap();
-            let a_doc = entries.iter().find(|(key, _)| *key == doc_key).unwrap().1;
-            let b_doc = bentries.iter().find(|(key, _)| *key == doc_key).unwrap().1;
+            // These explicit ^{:doc ...} occurrences remain reader Form keys,
+            // even though both selected values are equal strings.
+            let a_doc = retained_field(&mut graph, &entries, "doc", FixtureKeyOrigin::RetainedReader);
+            let b_doc = retained_field(&mut graph, &bentries, "doc", FixtureKeyOrigin::RetainedReader);
             let ad = graph
                 .source_roots
                 .index(graph.session, a_doc)

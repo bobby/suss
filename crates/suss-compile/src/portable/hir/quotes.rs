@@ -315,7 +315,9 @@ fn merged_metadata_pairs_metered(
     reader_data: bool,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<Form>, Diagnostic> {
-    let entries = merged_metadata_view_metered(form, reader_data, meter)?;
+    // Pair-only callers need source keys/values/order, not reader origin facts.
+    // Use a genuinely smaller carrier rather than discounting the tracked view.
+    let entries = merged_metadata_view_metered::<()>(form, reader_data, meter)?;
     let len = entries.len().checked_mul(2)
         .ok_or_else(|| fail(form.span.clone(), "Metadata output capacity overflow"))?;
     let mut output = Vec::new();
@@ -352,17 +354,43 @@ pub(crate) enum MetadataKeyOrigin {
     SourceSyntax,
     ReaderShorthandTag,
 }
-pub(crate) struct MetadataEntry<'a> {
+pub(crate) struct MetadataOrigins {
+    kind: MetadataKeyOrigin,
+    position: (usize, usize),
+}
+pub(crate) struct MetadataEntry<'a, Origins = MetadataOrigins> {
     pub key: MetadataForm<'a>,
     pub value: MetadataForm<'a>,
     order: (usize, usize),
-    key_origin: MetadataKeyOrigin,
-    key_position: (usize, usize),
+    origins: Origins,
 }
-impl MetadataEntry<'_> {
+impl MetadataEntry<'_, MetadataOrigins> {
     /// Caller meters its own selection/read work. No guest or spelling proof.
-    pub(crate) fn key_origin(&self) -> MetadataKeyOrigin { self.key_origin }
-    pub(crate) fn key_position(&self) -> (usize, usize) { self.key_position }
+    pub(crate) fn key_origin(&self) -> MetadataKeyOrigin { self.origins.kind }
+    pub(crate) fn key_position(&self) -> (usize, usize) { self.origins.position }
+}
+// Both views use the identical association and ordering algorithm. Only readers
+// requesting provenance allocate/store/move the immutable origin coordinates.
+trait TrackMetadataOrigins: Sized {
+    fn new(kind: MetadataKeyOrigin, position: (usize, usize),
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic>;
+    fn sorting(count: usize, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic>;
+}
+impl TrackMetadataOrigins for () {
+    fn new(_: MetadataKeyOrigin, _: (usize, usize),
+        _: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> { Ok(()) }
+    fn sorting(_: usize, _: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic> { Ok(()) }
+}
+impl TrackMetadataOrigins for MetadataOrigins {
+    fn new(kind: MetadataKeyOrigin, position: (usize, usize),
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        meter(3)?;
+        Ok(Self { kind, position })
+    }
+    fn sorting(count: usize, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic> {
+        meter(((count as u64).saturating_mul(3))
+            .saturating_mul(u64::from(usize::BITS - count.leading_zeros())))
+    }
 }
 
 fn metadata_reserve<T>(
@@ -421,18 +449,18 @@ pub(crate) fn reader_metadata_owned_view_metered(
     Ok(ReaderMetadata { pairs, origins, key_positions })
 }
 
-fn merged_metadata_view_metered<'a>(
+fn merged_metadata_view_metered<'a, Origins: TrackMetadataOrigins>(
     form: &'a Form, reader_data: bool,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
-) -> Result<Vec<MetadataEntry<'a>>, Diagnostic> {
-    fn associate<'a>(
-        entries: &mut Vec<MetadataEntry<'a>>, key: MetadataForm<'a>, value: MetadataForm<'a>,
+) -> Result<Vec<MetadataEntry<'a, Origins>>, Diagnostic> {
+    fn associate<'a, Origins: TrackMetadataOrigins>(
+        entries: &mut Vec<MetadataEntry<'a, Origins>>, key: MetadataForm<'a>, value: MetadataForm<'a>,
         key_origin: MetadataKeyOrigin, order: (usize, usize), reader_data: bool,
         meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, span: &Range<usize>,
     ) -> Result<(), Diagnostic> {
-        // Prepay the new origin control/store before filtering or publishing.
-        // Vec backing/relocation below uses the actual enlarged entry layout.
-        meter(3)?; // origin and immutable retained-key position initialization
+        // Reader-only origin work is prepaid; Vec backing/relocation below
+        // always uses this instantiation's actual carrier layout.
+        let origins = Origins::new(key_origin, order, meter)?;
         if !reader_data && irrelevant_metadata_key(key.as_ref()) { return Ok(()) }
         let mut previous = None;
         for (index, entry) in entries.iter().enumerate() {
@@ -448,7 +476,7 @@ fn merged_metadata_view_metered<'a>(
             entries[index].order = order;
         } else {
             metadata_reserve(entries, 1, meter, span)?;
-            entries.push(MetadataEntry { key, value, order, key_origin, key_position: order });
+            entries.push(MetadataEntry { key, value, order, origins });
         }
         Ok(())
     }
@@ -483,9 +511,8 @@ fn merged_metadata_view_metered<'a>(
     }
     meter((entries.len() as u64)
         .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
-    // Prepay origin and retained-key-position moves with the existing sort-work bound.
-    meter(((entries.len() as u64).saturating_mul(3))
-        .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
+    // Only the tracked reader view has origin/coordinate payloads to move.
+    Origins::sorting(entries.len(), meter)?;
     // Each surviving entry has a distinct winning source position, so stable
     // and unstable order coincide; this in-place sort needs no scratch backing.
     entries.sort_unstable_by_key(|entry| entry.order);
@@ -979,4 +1006,41 @@ mod metadata_reader_tests {
         }
     }
 
+}
+
+
+#[cfg(test)]
+mod pair_only_metadata_tests {
+    use super::*;
+    #[test]
+    fn pair_only_metadata_preserves_both_normalization_modes_without_unused_origin_storage() {
+        fn tracked_pairs(form: &Form, reader_data: bool,
+            meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Vec<Form> {
+            let entries = merged_metadata_view_metered::<MetadataOrigins>(form, reader_data, meter).unwrap();
+            let mut output = Vec::new();
+            metadata_reserve(&mut output, entries.len() * 2, meter, &form.span).unwrap();
+            for entry in entries {
+                output.push(super::super::super::clone_form_metered(entry.key.as_ref(), meter).unwrap());
+                output.push(super::super::super::clone_form_metered(entry.value.as_ref(), meter).unwrap());
+            }
+            output
+        }
+        assert!(std::mem::size_of::<MetadataEntry<'_, ()>>()
+            < std::mem::size_of::<MetadataEntry<'_, MetadataOrigins>>());
+        for source in ["^:private x", "^number ^{:tag override :doc false} x",
+            "^{:tag first :meta {:leaf x}} ^number x", "^{:line 7 :file \"raw\" :tag hint} x"] {
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            for reader_data in [false, true] {
+                let mut compact_work = 0u64;
+                let compact = merged_metadata_pairs_metered(&form, reader_data,
+                    &mut |n| { compact_work += n; Ok(()) }).unwrap();
+                let mut tracked_work = 0u64;
+                let tracked = tracked_pairs(&form, reader_data,
+                    &mut |n| { tracked_work += n; Ok(()) });
+                assert_eq!(compact, tracked, "{source}, reader_data={reader_data}");
+                assert!(compact_work < tracked_work,
+                    "same selected forms, actual smaller carrier and no unused coordinate stores");
+            }
+        }
+    }
 }

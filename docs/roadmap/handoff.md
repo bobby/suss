@@ -30088,3 +30088,22 @@ the focused borrowed-reader/type-history/body-origin regressions and full baseli
 when the separate parent producer has terminated. No current native test success
 is inferred from this adoption. The original generation job stopped at the expected
 stale-shipped comparison before downstream execution; retain that failure.
+
+
+## Native feedback after reader-owner bootstrap adoption
+
+48de55e CI39281973631 passes normal reproduction/identity and compiled_bootstrap
+4/0 (62.86s); CLI library36/0, compiler library447/13. The
+[raw results and bounded repairs](evidence/m4-pr263-native-feedback-repairs-2026-10-19.md)
+retain all failures and distinguish source fixes from unexecuted native outcomes.
+Five macro-observation fixtures use10B compilation fuel; caller Runtime and
+default/exhaustion controls remain. Pair-only normalization eliminates unused
+provenance storage while retaining tracked-reader fees and semantics. Default
+core-import17 adequacy remains unknown; its source/limits were not changed.
+
+After normal regeneration/adoption, run focused `analyzer_function_and_reference_env_keys`,
+`pair_only_metadata`, `type_key_history`, `source_roots`, and
+`analyzer_literal_collection_keys` before the full baseline. Existing reader macro
+identity and namespace aliases still require a real production repair. Retain
+the separate parent workspace producer until it terminates; no local concurrent
+Cargo/VM execution was performed for these parsing/source reviews.

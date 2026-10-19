@@ -2726,6 +2726,10 @@ impl<'a> AnalysisGraph<'a> {
         let lowering = self.lowering(hir, depth + 1)?;
         // Only proved retained source-node routes authorize this literal key.
         // Unknown routes, including Suss-only Future/Await, stay cold.
+        // Pinned fn2362-2368 and analyze-symbol4108-4116 construct their
+        // own literal :env, independently of the :form payload. Pay the new
+        // callable/form/resolution checks before inspecting native facts.
+        self.charge(8)?;
         let env_key = match source.node.as_deref() {
             Some(hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_)
                 | hir::SourceNode::Do { .. } | hir::SourceNode::If { .. }
@@ -2739,6 +2743,12 @@ impl<'a> AnalysisGraph<'a> {
                     | Kind::String(_) | Kind::Keyword(_)) =>
                 FieldKey::Literal(AnalyzerLiteralKeyword("env")),
             None if quoted_datum.is_some() => FieldKey::Literal(AnalyzerLiteralKeyword("env")),
+            None if source.callable.is_some() => FieldKey::Literal(AnalyzerLiteralKeyword("env")),
+            None if matches!(&source.form.kind, Kind::Symbol(_))
+                && matches!(&source.resolved, Some(hir::SourceBinding::Global { .. }
+                    | hir::SourceBinding::JavaScript { .. }
+                    | hir::SourceBinding::Local(_) | hir::SourceBinding::Field(_))) =>
+                FieldKey::Literal(AnalyzerLiteralKeyword("env")),
             _ => FieldKey::Cold("env"),
         };
         // Pinned analyzer constructors: control1838–1903/2450–2768,
