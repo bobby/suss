@@ -139,7 +139,7 @@ mod tests {
             ] {
                 session.eval("(set! type-key-events [])").unwrap();
                 let forms = suss_reader::forms::read_forms(source).unwrap();
-                let (_, environment) = portable::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
+                let (_, environment) = portable::hir::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
                 let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
                 let global = binding.global();
                 let info = environment.shared_definition_info(global).unwrap();
@@ -191,7 +191,7 @@ mod tests {
             let bridge = FormBridge::new(&mut session).unwrap();
             for source in cases {
                 let forms = suss_reader::forms::read_forms(source).unwrap();
-                let (_, environment) = portable::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
+                let (_, environment) = portable::hir::prepare(&forms, 0..source.len(), &portable::resolve::Environment::default(), phase).unwrap();
                 let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
                 let global = binding.global();
                 let info = environment.shared_definition_info(global).unwrap();

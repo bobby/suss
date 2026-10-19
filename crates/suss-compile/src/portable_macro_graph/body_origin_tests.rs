@@ -28,7 +28,7 @@ fn actual_body(text: &str) -> Arc<hir::SourceAnalysis> {
 
 fn memo(session: &mut Session, bridge: &FormBridge, value: &SessionValue) -> Kind {
     let fields = session.data_fields(value).unwrap();
-    bridge.read(session, &fields[3], 0..0).unwrap().kind
+    bridge.read(session, &fields[3], 0..0).unwrap().into_parts().2
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn analyzer_literal_body_key_requires_actual_origin_and_preserves_live_hash_afte
             let result = session.invoke(&hash, &[&value]).unwrap();
             assert_eq!(bridge.read(&mut session, &result, 0..0).unwrap().kind, Kind::Number(-1333761917.0));
             let events = session.eval("body-origin-events").unwrap();
-            let Kind::Vector(events) = bridge.read(&mut session, &events, 0..0).unwrap().kind else { panic!("event vector") };
+            let Kind::Vector(events) = bridge.read(&mut session, &events, 0..0).unwrap().into_parts().2 else { panic!("event vector") };
             assert_eq!(events.len(), 1, "{label} exact live IHash dispatch");
             assert_eq!(events[0].kind, expected, "{label} memo before delegate");
         }

@@ -30042,3 +30042,18 @@ Only the first command has a new local result here; CI establishes two normal
 complete generation tuples, not the later compiled_bootstrap tests. Fresh-head
 reproduction, actual bootstrap validation/execution and the remaining focused/full
 gates are still required. Preserve the separate parent baseline source and process.
+
+
+## Native bootstrap execution and test compilation diagnostics
+
+CI run39280069179, foundation job118152445923 on ca8c074 completed normal
+bootstrap reproduction and the compiled build-script identity check. The complete
+`compiled_bootstrap` target executed with4PASS/0FAIL (63.30s), including syntax
+quote, isolated guest state, identity/corruption rejection and phase reproduction.
+The later library test compilation failed with3E0425 references to nonexistent
+`portable::prepare` and2E0509 moves from Drop-bearing reader Forms. Test helpers
+now call `portable::hir::prepare` and consume Forms through `into_parts().2`.
+These changes retain the actual preparation, observation and assertion paths.
+They require a refreshed normal bootstrap tuple because source identity includes
+test files, followed by the same CI gates; no new library execution is claimed.
+The separate parent workspace baseline remains live and must not be restarted.

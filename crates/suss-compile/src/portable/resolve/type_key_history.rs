@@ -198,7 +198,7 @@ mod tests {
     use crate::portable::{self, resolve::{Environment, Phase}};
     fn analyze(source: &str, environment: &Environment, phase: Phase) -> Environment {
         let forms = suss_reader::forms::read_forms(source).unwrap();
-        portable::prepare(&forms, 0..source.len(), environment, phase).unwrap().1
+        portable::hir::prepare(&forms, 0..source.len(), environment, phase).unwrap().1
     }
     fn subject(environment: &Environment, phase: Phase) -> (Global, &DefinitionInfo) {
         let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
