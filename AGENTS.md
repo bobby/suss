@@ -17,15 +17,18 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 * Use `cargo test --workspace --locked -- --test-threads=2` for the full baseline.
   Run focused tests first. Shared Wasmtime engines and lean test profiles keep
   local resource use bounded. Do not delete unrelated files to make disk space.
-* Link PRs to issues: use `Closes #N` only when all issue acceptance criteria
-  are fulfilled; use `Refs #N` for partial progress. Dispatch an independent
-  subagent review for each PR, push significant fixes and require final-head CI.
-  Do not merge PRs without a later explicit user instruction.
-* Each PR must fully resolve at least one issue and include its `Closes #N`
-  reference. Split broad work into bounded issues with meaningful acceptance
-  criteria before opening the PR; partial progress may additionally `Refs`
-  umbrella issues. Do not weaken criteria or create bookkeeping-only issues
-  merely to satisfy this rule.
+* Open Draft PRs early to publish meaningful progress before an issue is fully
+  addressed. Link them with `Refs #N` while acceptance criteria remain unmet.
+  Push subsequent work to the appropriate existing draft until it fully resolves
+  one or more issues, keeping its description and evidence current.
+* Before reviewing a draft for promotion, satisfy all acceptance criteria for at
+  least one issue and add its `Closes #N` reference. Then dispatch an independent
+  subagent review, push fixes to the same PR and require passing final-head CI
+  before marking it ready for review. Partial progress may additionally `Refs`
+  umbrella issues. Do not merge PRs without a later explicit user instruction.
+* Split broad work into bounded issues with meaningful acceptance criteria.
+  Do not weaken criteria or create bookkeeping-only issues merely to satisfy
+  the requirement to resolve an issue before promoting a draft.
 * No Java dependency in shipped code. JVM/Node may be development test oracles.
 * Completion state lives only in GitHub milestones and issues. Do not record
   milestone or work-package status in repository files. Post progress, evidence

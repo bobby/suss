@@ -604,10 +604,23 @@ pub enum SourceNode {
         inner: Option<std::sync::Arc<SourceNode>>,
     },
 }
+/// Native origin of an analyzer-generated body. Guest metadata cannot mint it.
+/// Keep extension bodies distinct even when their source node is an ordinary Do.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceBodyOrigin {
+    FunctionMethod,
+    Bindings,
+    TryBody,
+    FinallyBody,
+    ThisAsBinding,
+    SussFuture,
+}
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
     /// Set only for analyzer-generated body regions, before runtime lowering.
     pub is_body: bool,
+    /// Set at the actual body-construction call site, not inferred from its form.
+    pub body_origin: Option<SourceBodyOrigin>,
     pub tags: SourceTags,
     pub form: Form,
     pub resolved: Option<SourceBinding>,
@@ -882,6 +895,7 @@ impl Analyzer<'_> {
         span: Range<usize>,
         context: super::AnalysisContext,
         tail: bool,
+        origin: SourceBodyOrigin,
     ) -> Result<Hir, Diagnostic> {
         // Analyzer-generated do syntax has genuine source facts and context,
         // while its children retain their ordinary bounded analysis frames.
@@ -905,10 +919,15 @@ impl Analyzer<'_> {
             self.expand_or_analyze(&body_form, context, tail, None, None)
         });
         self.analysis_contexts.pop();
-        result.map(|mut body| {
+        result.and_then(|mut body| {
+            // Added immutable provenance: role copy, source/tag access and store.
+            // Preserve the existing body/source clone behavior and its effects.
+            self.expander.charge_expansion_work(4, body.span.clone())?;
             let source = body.source.as_mut().expect("analyzed source body");
-            std::sync::Arc::make_mut(source).is_body = true;
-            body
+            let source = std::sync::Arc::make_mut(source);
+            source.is_body = true;
+            source.body_origin = Some(origin);
+            Ok(body)
         })
     }
     fn form_in(
@@ -1029,7 +1048,9 @@ impl Analyzer<'_> {
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
                         return self.form_in_named(&expanded, context, tail, name_hint);
                     }
-                    // Original bounded bootstrap for simple binding vectors.
+                    // Bootstrap binding forms lower before source facts are
+                    // recorded. let shares the pinned function-pattern binder;
+                    // loop keeps its existing primitive lowering.
                     // Pinned EPL-1.0 core.cljc772–813 expands let/loop to their
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
@@ -1040,7 +1061,11 @@ impl Analyzer<'_> {
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
-                        let mut expanded = form.clone();
+                        let mut expanded = if primitive == "let*" {
+                            self.destructured_let(form)?
+                        } else {
+                            form.clone()
+                        };
                         let Kind::List(items) = &mut expanded.kind else {
                             unreachable!()
                         };
@@ -1173,8 +1198,11 @@ impl Analyzer<'_> {
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                     )?
                 };
+                // Prepay initialization of the added native provenance fact.
+                self.expander.charge_expansion_work(1, form.span.clone())?;
                 let mut source = SourceAnalysis {
                     is_body: false,
+                    body_origin: None,
                     tags,
                     form: form.clone(),
                     resolved,
@@ -1205,6 +1233,8 @@ impl Analyzer<'_> {
                     // The child uses the original entry snapshot and form,
                     // but the expression context of analyze-wrap-meta.
                     let mut value = value.as_ref().clone();
+                    // Prepay the added immutable body-origin fact copy too.
+                    self.expander.charge_expansion_work(1, form.span.clone())?;
                     let mut child = source.clone();
                     child.context = super::AnalysisContext::Expression;
                     child.node = inner.clone();
@@ -2021,6 +2051,7 @@ impl Analyzer<'_> {
             form.span.clone(),
             super::AnalysisContext::Return,
             true,
+            SourceBodyOrigin::FunctionMethod,
         )?;
         let (method_target, recurred) = self
             .method_recurrence
@@ -2147,6 +2178,7 @@ impl Analyzer<'_> {
                 form.span.clone(),
                 context.returning(),
                 tail,
+                SourceBodyOrigin::ThisAsBinding,
             );
             self.locals = outer;
             let body = Box::new(body?);
@@ -2189,6 +2221,7 @@ impl Analyzer<'_> {
                     form.span.clone(),
                     super::AnalysisContext::Return,
                     false,
+                    SourceBodyOrigin::SussFuture,
                 );
                 self.suspendable = suspendable;
                 self.target = target;
@@ -2840,6 +2873,7 @@ impl Analyzer<'_> {
                     form.span.clone(),
                     context.returning(),
                     is_loop || tail,
+                    SourceBodyOrigin::Bindings,
                 )?);
                 *self.source_nodes.last_mut().expect("source node fact slot") =
                     Some(std::sync::Arc::new(SourceNode::Bindings {

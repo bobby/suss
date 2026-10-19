@@ -112,3 +112,26 @@ and rejects project-only `--world`/`--config` options in namespace mode. Actual
 before regressions exposed legacy project fallback and ignored selection options;
 all four namespace checks and four parent file checks pass after the guards.
 Required full baseline and exact final-head CI remain pending.
+
+
+## Compilation fuel
+
+All native `suss compile` modes (file, namespace, main and project) accept
+`--compile-fuel N`. For example:
+
+```sh
+suss compile app.sus -w api.wit --compile-fuel 10000000000 -o app.wasm
+```
+
+Omitting the option retains the shipped 10,000,000-unit compilation allowance.
+An explicit zero is honored. The override configures the existing Macro Session
+before selected-source preparation, covering its accounted reader/HIR/IR and
+macro work; nested work consumes the same cumulative operation budget. Each
+project world retains its own compilation session. This is not a whole-build
+aggregate budget or a bound on native file/WIT parsing, JIT time or process memory.
+It does not change the generated component's Runtime execution limits.
+
+Library callers can set `AotOptions::compile_fuel` for file/namespace compilation,
+or use `compile_main_with_compile_fuel` and `compile_project_with_compile_fuel`.
+Existing default wrappers preserve their prior behavior. Exhaustive `AotOptions`
+struct literals must supply the new optional field or use `..Default::default()`.

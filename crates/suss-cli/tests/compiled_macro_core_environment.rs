@@ -1,4 +1,6 @@
 //! The full retained core namespace must fit the bounded analysis graph.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -8,6 +10,7 @@ use suss_reader::forms::Kind;
 fn compiled_macro_core_namespace_keeps_complete_declaration_records() {
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro declaration-facts [name]

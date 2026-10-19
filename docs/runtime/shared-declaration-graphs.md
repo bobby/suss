@@ -29,13 +29,11 @@ Pure reader leaves can still share. Compiler snapshot records are explicit shari
 barriers; this does not replay unchanged declaration snapshots merely to preserve
 old host allocation counts.
 
-The graph retains its 65,536-node and 1,048,576-UTF-16-unit limits. Independent
-per-form validation preserves 4,096 logical transport nodes, including normalized
-metadata, and 64 reader levels. Stored reader keys additionally have a 32 MiB
-byte limit. Limits are checked before graph materialization or macro invocation.
-The preliminary DAG walk and occurrence execution each have an independent
-1,048,576-step work bound, charged before callbacks. No exported field is omitted
-to fit the core graph.
+Graph planning, normalized metadata, reader-key storage and occurrence execution
+charge performed work to the configured operation allowance. The former fixed
+node, reader-depth, UTF-16, key-storage and traversal-step caps are not current
+finite-form limits. Structural/cycle checks remain, and no exported field is
+omitted to fit the core graph. Fuel does not provide a complete memory bound.
 
 The actual full core-namespace declaration projection passes in both caller
 phases, before and after a new `defonce`. Snapshot identity/revision tests pass.

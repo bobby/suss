@@ -32,6 +32,16 @@ mod reuse;
 pub(crate) use reuse::DeclarationValues;
 #[path = "portable_macro_graph/occurrence_work.rs"]
 mod occurrence_work;
+#[path = "portable_macro_graph/materialization_index.rs"]
+mod materialization_index;
+#[cfg(test)]
+#[path = "portable_macro_graph/recorded_scratch_tests.rs"]
+mod recorded_scratch_tests;
+#[macro_use]
+mod field_entry_work;
+#[macro_use]
+mod retained_field_keys;
+use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
 
 // Private native provenance; neither source Forms nor guest values can mint it.
@@ -531,13 +541,40 @@ impl<'a> AnalysisGraph<'a> {
     fn materialize_using(&mut self,root:Value,bridge:&FormBridge)->Result<SessionValue> {
         self.materialize_controlled(root,bridge,None)
     }
+    fn materialize_recorded_subroot(&mut self, root: Value, bridge: &FormBridge) -> Result<SessionValue> {
+        self.finish_recipes()?;
+        // Preserve the current recorded-root sparse admission and its fee.
+        self.session.charge_host_work(4)?;
+        if self.recipes.len() <= materialization_index::SPARSE_THRESHOLD {
+            return self.materialize_controlled(root, bridge, None);
+        }
+        let index = materialization_index::Sparse::new(&mut |n| self.session.charge_host_work(n))?;
+        self.materialize_indexed(root, bridge, None, index)
+    }
     fn materialize_controlled(&mut self,root:Value,bridge:&FormBridge,control:Option<&mut reuse::Build<'_>>)->Result<SessionValue> {
-        self.materialize_with_inputs(root, bridge, control, None)
+        self.session.charge_host_work(1)?; // current explicit dense adapter
+        self.materialize_indexed(root, bridge, control, materialization_index::Dense)
+    }
+    // Preserve the current generic interface used by recorded_scratch_tests.
+    fn materialize_indexed<I: materialization_index::Index>(
+        &mut self, root: Value, bridge: &FormBridge,
+        control: Option<&mut reuse::Build<'_>>, index: I,
+    ) -> Result<SessionValue> {
+        self.session.charge_host_work(1)?; // new forwarding adapter work
+        self.materialize_indexed_with_inputs(root, bridge, control, None, index)
     }
     fn materialize_with_inputs(
         &mut self, root: Value, bridge: &FormBridge,
-        mut control: Option<&mut reuse::Build<'_>>,
+        control: Option<&mut reuse::Build<'_>>,
         source: Option<(&source_roots::SourceInputs, &FormBridge)>,
+    ) -> Result<SessionValue> {
+        self.session.charge_host_work(1)?; // source-aware dense adapter work
+        self.materialize_indexed_with_inputs(root, bridge, control, source, materialization_index::Dense)
+    }
+    fn materialize_indexed_with_inputs<I: materialization_index::Index>(
+        &mut self, root: Value, bridge: &FormBridge,
+        mut control: Option<&mut reuse::Build<'_>>,
+        source: Option<(&source_roots::SourceInputs, &FormBridge)>, mut index: I,
     ) -> Result<SessionValue> {
         self.finish_recipes()?;
         if source.is_some() && control.is_some() {
@@ -581,17 +618,17 @@ impl<'a> AnalysisGraph<'a> {
                 _ => 0,
             }
         }
-        self.session.charge_host_work(self.recipes.len().saturating_mul(3) as u64)?;
-        // Check the compact DAG once. Compiler record recipes intentionally
-        // share immutable snapshots. Reader maps/sets can invoke captured user
-        // callbacks: each occurrence and its reader ancestors must execute.
-        let mut state = vec![0u8; self.recipes.len()];
-        let mut repeat = vec![false; self.recipes.len()];
-        self.session.charge_host_work(self.recipes.len() as u64)?;
-        let mut postorder = Vec::with_capacity(self.recipes.len());
+        // One shared traversal, addressed either by exact recipe ID or by a
+        // private native-ID ordinal. Dense retains its original 3N + N fees.
+        let (mut state, mut repeat) = index.states(self.recipes.len(),
+            &mut |n| self.session.charge_host_work(n))?;
+        let mut postorder = index.postorder(self.recipes.len(),
+            &mut |n| self.session.charge_host_work(n))?;
         let mut stack = vec![(root, false)];
         while let Some((id, finish)) = stack.pop() {
-            if state[id] == 2 {
+            let slot = index.enter(id, &mut state, &mut repeat,
+                &mut |n| self.session.charge_host_work(n))?;
+            if state[slot] == 2 {
                 // Its incoming edge was already charged when queued. A shared
                 // node that is fully checked needs no second validation visit;
                 // reader occurrences retain their separate cold work budget.
@@ -600,12 +637,12 @@ impl<'a> AnalysisGraph<'a> {
             self.session.charge_host_work(1)?;
             let recipe = self.recipes[id].as_ref().expect("all graph tasks filled");
             if !finish {
-                if state[id] == 1 {
+                if state[slot] == 1 {
                     return Err(SessionError::Host(wasmtime::Error::msg(
                         "Cyclic compiler analysis graph",
                     )));
                 }
-                state[id] = 1;
+                state[slot] = 1;
                 stack.push((id, true));
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
                 let dependencies = if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]} else {dependencies(recipe)};
@@ -615,7 +652,7 @@ impl<'a> AnalysisGraph<'a> {
             } else {
                 self.session.charge_host_work(dependency_count(recipe) as u64)?;
                 let dependencies = if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]} else {dependencies(recipe)};
-                repeat[id] = match recipe {
+                repeat[slot] = match recipe {
                     Recipe::ReaderMap(_) | Recipe::ReaderSet(_) => true,
                     Recipe::List(_) | Recipe::ReaderVector(_) | Recipe::Metadata { .. } => {
                         matches!(
@@ -624,14 +661,16 @@ impl<'a> AnalysisGraph<'a> {
                                 shape: MetadataShape::Set,
                                 ..
                             }
-                        ) || dependencies.iter().any(|id| repeat[*id])
+                        ) || index.any_repeat(&dependencies, &repeat,
+                            &mut |n| self.session.charge_host_work(n))?
                     }
                     // Immutable compiler record/namespace identities are sharing
                     // barriers, distinct from occurrences inside reader data.
                     _ => false,
                 };
-                state[id] = 2;
-                postorder.push(id);
+                state[slot] = 2;
+                index.push_postorder(&mut postorder, id,
+                    &mut |n| self.session.charge_host_work(n))?;
             }
         }
         struct Frame {
@@ -657,12 +696,20 @@ impl<'a> AnalysisGraph<'a> {
         // Count logical frame work on the compact DAG before any callbacks.
         // The actual traversal debits that work once; this planner debits only
         // its own counting/copying work, never a hypothetical expanded walk.
-        let work = occurrence_work::count(
-            self.recipes.len(), root, &postorder, &repeat,
-            |id| if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {0}else{dependency_count(self.recipes[id].as_ref().unwrap())},
-            |id| if (control.as_ref().is_some_and(|b|b.intercepts(id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(id))) {vec![]}else{dependencies(self.recipes[id].as_ref().unwrap())},
-            |units| self.session.charge_host_work(units),
-        )?;
+        // Seal membership before counting or entering any guest callback.
+        let index = &index;
+        let slots = state.len();
+        let degree = |id: Value| if control.as_ref().is_some_and(|b| b.intercepts(id)) || source.is_some_and(|(inputs,_)| inputs.intercepts(id)) {0}
+            else {dependency_count(self.recipes[id].as_ref().unwrap())};
+        let edges = |id: Value| if control.as_ref().is_some_and(|b| b.intercepts(id)) || source.is_some_and(|(inputs,_)| inputs.intercepts(id)) {vec![]}
+            else {dependencies(self.recipes[id].as_ref().unwrap())};
+        let mut charge = |n| self.session.charge_host_work(n);
+        let work = if I::DENSE {
+            occurrence_work::count(slots, root, &postorder, &repeat, degree, edges, &mut charge)?
+        } else {
+            occurrence_work::count_indexed(slots, root, &postorder, &repeat,
+                degree, edges, |id, charge| index.slot(id, charge), &mut charge)?
+        };
         let remaining = self.session.operation_fuel_remaining()?;
         if work.is_none_or(|work| work > remaining) {
             // Overflow proves that even a u64::MAX allowance cannot admit the
@@ -671,9 +718,11 @@ impl<'a> AnalysisGraph<'a> {
             self.session.charge_host_work(1)?;
             unreachable!("an insufficient or overflowing work count must exhaust fuel");
         }
-        let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
-        self.session.charge_host_work(if has_inputs {self.recipes.len() as u64}else{0})?;
-        let mut value_taint=if has_inputs {vec![false;self.recipes.len()]}else{Vec::new()};
+        // Dense prepaid cache initialization in 3N. Sparse pays its actual R.
+        if !I::DENSE { self.session.charge_host_work(slots as u64)?; }
+        let mut cached: Vec<Option<SessionValue>> = vec![None; slots];
+        self.session.charge_host_work(if has_inputs {slots as u64}else{0})?;
+        let mut value_taint=if has_inputs {vec![false;slots]}else{Vec::new()};
         let root_recipe = self.recipes[root].as_ref().unwrap();
         self.session
             .charge_host_work(dependency_count(root_recipe) as u64)?;
@@ -687,13 +736,14 @@ impl<'a> AnalysisGraph<'a> {
                 self.charge(1)?;
                 let id = frame.dependencies[frame.next];
                 frame.next += 1;
-                if !repeat[id]
-                    && let Some(value) = &cached[id]
+                let slot = index.slot(id, &mut |n| self.session.charge_host_work(n))?;
+                if !repeat[slot]
+                    && let Some(value) = &cached[slot]
                 {
                     if has_inputs {
-                        frame.tainted |= value_taint[id];
+                        frame.tainted |= value_taint[slot];
                         reuse::reserve(self.session, &mut frame.input_taint, 1)?;
-                        frame.input_taint.push(value_taint[id]);
+                        frame.input_taint.push(value_taint[slot]);
                     }
                     frame.inputs.push(value.clone());
                 } else {
@@ -705,6 +755,7 @@ impl<'a> AnalysisGraph<'a> {
                 continue;
             }
             let frame = frames.pop().unwrap();
+            let slot = index.slot(frame.id, &mut |n| self.session.charge_host_work(n))?;
             self.charge(1)?;
             let inputs = frame.inputs;
             if control.is_some() && frame.tainted && !(control.as_ref().is_some_and(|b| b.intercepts(frame.id)) || source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id))) {
@@ -786,9 +837,9 @@ impl<'a> AnalysisGraph<'a> {
             } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_ref().unwrap().last_is_private(frame.id)
             } else {frame.tainted};
-            if has_inputs {value_taint[frame.id]=tainted;}
-            if !repeat[frame.id] {
-                cached[frame.id] = Some(value.clone());
+            if has_inputs {value_taint[slot]=tainted;}
+            if !repeat[slot] {
+                cached[slot] = Some(value.clone());
             }
             if let Some(parent) = frames.last_mut() {
                 parent.tainted |= tainted;
@@ -884,7 +935,6 @@ impl<'a> AnalysisGraph<'a> {
         Ok(value)
     }
     fn map<'k, K: Into<FieldKey<'k>>>(&mut self, entries: Vec<(K, Value)>) -> Result<Value> {
-        self.charge(entries.len().saturating_mul(std::mem::size_of::<K>().saturating_sub(std::mem::size_of::<&str>())))?;
         let entries = entries
             .into_iter()
             .map(|(key, value)| Ok((self.keyword(key)?, value)))
@@ -905,7 +955,6 @@ impl<'a> AnalysisGraph<'a> {
     /// occupy that slot directly; a cache hit keeps an alias to the canonical
     /// map recipe so runtime identity sharing remains unchanged.
     fn map_in_task_slot<'k, K: Into<FieldKey<'k>>>(&mut self, slot: Value, entries: Vec<(K, Value)>) -> Result<Value> {
-        self.charge(entries.len().saturating_mul(std::mem::size_of::<K>().saturating_sub(std::mem::size_of::<&str>())))?;
         let entries = entries
             .into_iter()
             .map(|(key, value)| Ok((self.keyword(key)?, value)))
@@ -1451,7 +1500,7 @@ impl<'a> AnalysisGraph<'a> {
             .map(|scope| self.scope(scope, depth + 1))
             .collect::<Result<Vec<_>>>()?;
         let scopes = self.vector(&scopes)?;
-        self.map(vec![
+        field_map!(self; [
             (FieldKey::Literal(AnalyzerLiteralKeyword("context")), context),
             (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), namespace),
             (FieldKey::Cold("suss/catalog"), catalog),
@@ -1612,9 +1661,7 @@ impl<'a> AnalysisGraph<'a> {
         // compiler namespace state. :defs is created by ensure-defs 5091
         // (also parse :def assoc-in 2093), not inferred from lookup spelling.
         // This proof applies only to this namespace-record constructor.
-        self.map_in_task_slot(
-            slot,
-            vec![
+        field_map_in_task_slot!(self, slot; [
                 (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("requires")), aliases),
                 (FieldKey::Cold("suss/refers"), refers),
@@ -1625,8 +1672,7 @@ impl<'a> AnalysisGraph<'a> {
                 (FieldKey::Literal(AnalyzerLiteralKeyword("rename-macros")), macro_renames),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("excludes")), exclusions),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("defs")), declarations),
-            ],
-        )
+            ])
     }
     // Copyright (c) Rich Hickey. All rights reserved.
     // The use and distribution terms for this software are covered by the
@@ -1666,6 +1712,24 @@ impl<'a> AnalysisGraph<'a> {
         };
         trace(self.session, "start")?;
         let name = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
+        self.charge(24)?; // native definition/shape/role reads and sidecar branch
+        let prefixes = info.map_or(0, |info| info.declaration.metadata.len());
+        self.charge(prefixes.saturating_mul(3))?; // all prefix-kind reads/checks before scanning
+        let ordinary_def = info.is_some_and(|info| info.type_fields.is_none()
+            // Only original borrowed-key metadata forms are covered here.
+            // Symbol/string shorthand synthesizes a :tag key; its independent
+            // reader constructor proof is pending, not guessed from its name.
+            && info.declaration.metadata.iter().all(|prefix|
+                matches!(&prefix.kind, Kind::Map(_) | Kind::Keyword(_)))
+            && matches!(&info.definition_form.kind, Kind::List(items)
+                if matches!(items.first().map(|head| &head.kind), Some(Kind::Symbol(head))
+                    if head.namespace.is_none() && matches!(head.name.as_str(), "def" | "defonce"))
+                && matches!(items.get(1).map(|name| &name.kind), Some(Kind::Symbol(_)))));
+        let mut retained = if ordinary_def {
+            let mut keys = RetainedFieldKeys::new(self)?;
+            keys.remember_named(self, AnalyzerLiteralKeyword("name"))?;
+            Some(keys)
+        } else { None };
         let mut fields = vec![("name", name)];
         if let Some(info) = info {
             // Preserve the transport guard before requesting reader enrichment.
@@ -1720,6 +1784,29 @@ impl<'a> AnalysisGraph<'a> {
                     .then_some(&pair[1])
                 })
             };
+            // Source KEY facts come from the original owned declaration, not
+            // synthetic line/file entries appended by source-origin enrichment.
+            // The original full guards/enrichment/normalization have run first.
+            self.charge(2)?;
+            if let Some(keys) = retained.as_mut() {
+                let raw = preserve_source_error(info.declaration.span.clone(),
+                    &mut |units| self.session.charge_host_work(units),
+                    |meter| hir::reader_metadata_pairs_metered(&info.declaration, meter))?;
+                for label in ["name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
+                    "fn-var", "variadic?", "max-fixed-arity", "method-params", "arglists", "arglists-meta",
+                    "export", "type", "num-fields", "record", "meta", "line", "column", "file"] {
+                    self.charge(2)?;
+                    let mut found = None;
+                    for pair in raw.chunks_exact(2) {
+                        self.charge(label.len().saturating_add(4))?;
+                        if matches!(&pair[0].kind, Kind::Keyword(key)
+                            if key.namespace.is_none() && key.name == label) {
+                            found = Some(&pair[0]); break;
+                        }
+                    }
+                    if let Some(key) = found { keys.remember_source(self, label, key)?; }
+                }
+            }
             let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
             if let Some(count) = info.type_fields {
                 fields.extend([
@@ -1784,7 +1871,7 @@ impl<'a> AnalysisGraph<'a> {
                     ]);
                     *items = pairs;
                 }
-                fields.push(("meta", self.form(&meta, depth + 1)?));
+                retained_decl_push!(self, retained, fields; "meta", AnalyzerLiteralKeyword("meta"), self.form(&meta, depth + 1)?);
             } else if let Some(value) = property("meta") {
                 fields.push(("meta", self.form(value, depth + 1)?));
             }
@@ -1806,17 +1893,26 @@ impl<'a> AnalysisGraph<'a> {
                             if key.namespace.is_none() && key.name == field)
                         .then_some(&pair[1])
                     }) {
-                        fields.push((field, self.form(value, depth + 1)?));
+                    let value = self.form(value, depth + 1)?;
+                        self.charge(2)?;
+                        if let Some(keys) = retained.as_mut() {
+                            let token = match field {
+                                "line" => AnalyzerLiteralKeyword("line"),
+                                "column" => AnalyzerLiteralKeyword("column"),
+                                "file" => AnalyzerLiteralKeyword("file"),
+                                _ => unreachable!("fixed source-info positions"),
+                            };
+                            keys.remember_named(self, token)?;
+                        }
+                        fields.push((field, value));
                     }
                 }
             }
             trace(self.session, "definition-origin")?;
             if global.namespace() == "suss.core" {
                 fields.retain(|(name, _)| *name != "file");
-                fields.push((
-                    "file",
-                    self.scalar(Literal::String("cljs/core.cljs".encode_utf16().collect()))?,
-                ));
+                retained_decl_push!(self, retained, fields; "file", AnalyzerLiteralKeyword("file"),
+                    self.scalar(Literal::String("cljs/core.cljs".encode_utf16().collect()))?);
             }
             let source = info
                 .initializer
@@ -1878,7 +1974,7 @@ impl<'a> AnalysisGraph<'a> {
             ));
             if !provisional && let Some(doc) = &info.docstring {
                 fields.retain(|(name, _)| *name != "doc");
-                fields.push(("doc", self.scalar(Literal::String(doc.clone()))?));
+                retained_decl_push!(self, retained, fields; "doc", AnalyzerLiteralKeyword("doc"), self.scalar(Literal::String(doc.clone()))?);
             }
             if let Some(callable) = callable {
                 fields.push(("suss/source-function", self.callable(callable)?));
@@ -1923,7 +2019,7 @@ impl<'a> AnalysisGraph<'a> {
                     };
                     let macro_flag = property("macro").is_some_and(truthy);
                     fields.retain(|(name, _)| *name != "fn-var");
-                    fields.push(("fn-var", self.flag(!macro_flag)?));
+                    retained_decl_push!(self, retained, fields; "fn-var", AnalyzerLiteralKeyword("fn-var"), self.flag(!macro_flag)?);
                     for field in [
                         "name",
                         "ns",
@@ -1950,7 +2046,23 @@ impl<'a> AnalysisGraph<'a> {
                             .then_some(*value)
                         }) {
                             fields.retain(|(name, _)| *name != field);
-                            fields.push((field, self.form(form, depth + 1)?));
+                            let value = self.form(form, depth + 1)?;
+                            self.charge(2)?;
+                            if let Some(keys) = retained.as_mut() {
+                                // `pairs` is verified native top-fn reader data.
+                                // First equal KEY survives; the value above is
+                                // still selected by the original reverse scan.
+                                let mut source_key = None;
+                                for (key, _) in &pairs {
+                                    self.charge(field.len().saturating_add(4))?;
+                                    if matches!(&key.kind, Kind::Keyword(key)
+                                        if key.namespace.is_none() && key.name == field) {
+                                        source_key = Some(*key); break;
+                                    }
+                                }
+                                if let Some(key) = source_key { keys.remember_source(self, field, key)?; }
+                            }
+                            fields.push((field, value));
                         }
                     }
                 } else {
@@ -1959,14 +2071,14 @@ impl<'a> AnalysisGraph<'a> {
                     fields.retain(|(name, _)| !FUNCTION_FIELDS.contains(name));
                     let macro_flag = property("macro")
                         .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
-                    fields.push(("fn-var", self.flag(!macro_flag)?));
-                    fields.push(("variadic?", self.flag(callable.variadic())?));
+                    retained_decl_push!(self, retained, fields; "fn-var", AnalyzerLiteralKeyword("fn-var"), self.flag(!macro_flag)?);
+                    retained_decl_push!(self, retained, fields; "variadic?", AnalyzerLiteralKeyword("variadic?"), self.flag(callable.variadic())?);
                     let fixed = callable.max_fixed_arity().ok_or_else(|| {
                         SessionError::Host(wasmtime::Error::msg(
                             "Invalid source function declaration",
                         ))
                     })?;
-                    fields.push(("max-fixed-arity", self.number(fixed)?));
+                    retained_decl_push!(self, retained, fields; "max-fixed-arity", AnalyzerLiteralKeyword("max-fixed-arity"), self.number(fixed)?);
                     // Preserve every analyzed source signature, including duplicate
                     // arities. Emitted dispatch methods are a separate contract.
                     let mut methods = Vec::new();
@@ -1979,7 +2091,7 @@ impl<'a> AnalysisGraph<'a> {
                         methods.push(self.vector(&parameters)?);
                     }
                     self.charge(0)?;
-                    fields.push(("method-params", self.recipe(Recipe::List(methods))?));
+                    retained_decl_push!(self, retained, fields; "method-params", AnalyzerLiteralKeyword("method-params"), self.recipe(Recipe::List(methods))?);
                     // The pinned analyzer retains the reader value of :arglists,
                     // including its quote, and maps meta over that value's elements.
                     let arglists = property("arglists");
@@ -1988,7 +2100,7 @@ impl<'a> AnalysisGraph<'a> {
                     } else {
                         self.scalar(Literal::Nil)?
                     };
-                    fields.push(("arglists", argument_data));
+                    retained_decl_push!(self, retained, fields; "arglists", AnalyzerLiteralKeyword("arglists"), argument_data);
                     let mut argument_metadata = Vec::new();
                     if let Some(form) = arglists {
                         let items = match &form.kind {
@@ -2035,10 +2147,8 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     }
                     self.charge(0)?;
-                    fields.push((
-                        "arglists-meta",
-                        self.recipe(Recipe::List(argument_metadata))?,
-                    ));
+                    retained_decl_push!(self, retained, fields; "arglists-meta", AnalyzerLiteralKeyword("arglists-meta"),
+                        self.recipe(Recipe::List(argument_metadata))?);
                 }
             }
             if !provisional
@@ -2077,14 +2187,21 @@ impl<'a> AnalysisGraph<'a> {
                 };
                 fields
                     .retain(|(name, _)| !matches!(*name, "declared" | "fn-var" | "method-params"));
-                fields.push(("declared", self.flag(true)?));
-                fields.push(("fn-var", self.flag(true)?));
-                fields.push(("method-params", self.form(&parameters, depth + 1)?));
+                retained_decl_push!(self, retained, fields; "declared", AnalyzerLiteralKeyword("declared"), self.flag(true)?);
+                retained_decl_push!(self, retained, fields; "fn-var", AnalyzerLiteralKeyword("fn-var"), self.flag(true)?);
+                retained_decl_push!(self, retained, fields; "method-params", AnalyzerLiteralKeyword("method-params"), self.form(&parameters, depth + 1)?);
             }
             if let Some(tag) = completed_tag {
                 let field = if callable.is_some() { "ret-tag" } else { "tag" };
                 fields.retain(|(name, _)| *name != field);
-                fields.push((field, self.form(&tag, depth + 1)?));
+                let value = self.form(&tag, depth + 1)?;
+                self.charge(2)?;
+                if let Some(keys) = retained.as_mut() {
+                    let token = if callable.is_some() { AnalyzerLiteralKeyword("ret-tag") }
+                        else { AnalyzerLiteralKeyword("tag") };
+                    keys.remember_named(self, token)?;
+                }
+                fields.push((field, value));
             }
         }
         // Share the final metadata value of this captured declaration revision,
@@ -2104,7 +2221,9 @@ impl<'a> AnalysisGraph<'a> {
                     global.clone(), revision.clone(), slot), *value)?;
             }
         }
-        let native = self.map(fields)?;
+        self.charge(2)?;
+        let native = if let Some(keys) = retained { keys.finish(self, fields)? }
+            else { self.map(fields)? };
         let value = if let Some(revision) = info {
             self.source_boundary(source_roots::Owner::Declaration(global.clone(), revision.clone()), native)?
         } else { native };
@@ -2156,6 +2275,15 @@ impl<'a> AnalysisGraph<'a> {
             _ => FieldKey::Cold(token.name()),
         })
     }
+    // Independent fn-name-var2285–2297 constructor proof. Do not broaden
+    // parameter/let binding_literal_key or turn adapted source_kind into proof.
+    fn name_var_literal_key(&mut self, binding: &LocalBinding, token: AnalyzerLiteralKeyword) -> Result<FieldKey<'static>> {
+        self.charge(6)?;
+        if matches!((&binding.source_role, binding.kind),
+            (SourceRole::FunctionName { .. }, hir::LocalKind::FunctionName)) {
+            Ok(FieldKey::Literal(token))
+        } else { self.binding_literal_key(binding, token) }
+    }
     fn local_record(&mut self, slot: Value, binding: &LocalBinding, depth: usize) -> Result<Value> {
         let name = self.form(&binding.declaration, depth + 1)?;
         let kind = self.keyword(match binding.source_kind() {
@@ -2166,24 +2294,24 @@ impl<'a> AnalysisGraph<'a> {
             hir::LocalKind::Catch => "catch",
         })?;
         let id = self.number(binding.id.0)?;
-        let mut entries = vec![
+        let mut entries = field_entries!(self; [
             (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name.clone()),
-            (self.binding_literal_key(binding, AnalyzerLiteralKeyword("form"))?, name),
-            (self.binding_literal_key(binding, AnalyzerLiteralKeyword("local"))?, kind),
+            (self.name_var_literal_key(binding, AnalyzerLiteralKeyword("form"))?, name),
+            (self.name_var_literal_key(binding, AnalyzerLiteralKeyword("local"))?, kind),
             (FieldKey::Cold("suss/id"), id),
-        ];
+        ]);
         if let Some(tag) = hir::local_tag(binding)
             .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
         {
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.form(&tag, depth + 1)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.form(&tag, depth + 1)?));
         } else if binding.initializer.is_some()
             || matches!(binding.source_kind(), hir::LocalKind::Argument { .. })
         {
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.scalar(Literal::Nil)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.scalar(Literal::Nil)?));
         }
         if !matches!(binding.source_role, SourceRole::PrivateCatch { .. }) {
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("binding")?));
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("binding-form?"))?, self.flag(true)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("binding")?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("binding-form?"))?, self.flag(true)?));
         }
         let position = binding
             .origin
@@ -2192,19 +2320,19 @@ impl<'a> AnalysisGraph<'a> {
             .transpose()?
             .flatten();
         if let Some(position) = position {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("line"))?, self.number(position.line)?));
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("column"))?, self.number(position.column)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("line"))?, self.number(position.line)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("column"))?, self.number(position.column)?));
         }
         if let hir::LocalKind::Argument { index, rest } = binding.source_kind() {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("arg-id"))?, self.number(index)?));
-            entries.push((FieldKey::Cold("suss/rest-parameter"), self.flag(rest)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("arg-id"))?, self.number(index)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/rest-parameter"), self.flag(rest)?));
         }
         if let SourceRole::FunctionName { variadic, methods } = &binding.source_role {
-            entries.push((FieldKey::Cold("suss/variadic"), self.flag(*variadic)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/variadic"), self.flag(*variadic)?));
             if let Some(methods) = methods {
-                entries.push((FieldKey::Cold("fn-var"), self.flag(true)?));
-                entries.push((FieldKey::Cold("variadic?"), self.flag(*variadic)?));
-                entries.push((FieldKey::Cold("max-fixed-arity"), self.number(methods.max_fixed_arity())?));
+                field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("fn-var")), self.flag(true)?));
+                field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("variadic?")), self.flag(*variadic)?));
+                field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("max-fixed-arity")), self.number(methods.max_fixed_arity())?));
                 let mut parameters = Vec::new();
                 for method in &methods.methods {
                     let bindings = method
@@ -2214,19 +2342,19 @@ impl<'a> AnalysisGraph<'a> {
                         .collect::<Result<Vec<_>>>()?;
                     parameters.push(self.vector(&bindings)?);
                 }
-                entries.push((FieldKey::Cold("method-params"), self.recipe(Recipe::List(parameters))?));
+                field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("method-params")), self.recipe(Recipe::List(parameters))?));
             }
         }
         if let Some(initializer) = &binding.initializer {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?, self.ast(initializer, depth + 1)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?, self.ast(initializer, depth + 1)?));
             let init_key = self.binding_literal_key(binding, AnalyzerLiteralKeyword("init"))?;
             let init = self.keyword(init_key)?;
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("children"))?, self.vector(&[init])?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("children"))?, self.vector(&[init])?));
         }
         if let Some(shadow) = &binding.shadow {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(shadow, depth + 1)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(shadow, depth + 1)?));
         } else if let Some(field) = &binding.shadow_field {
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.field(field, depth + 1)?));
+            field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.field(field, depth + 1)?));
         }
         if matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
             let shadow = if let Some((_, shadow)) = entries.iter().find(|(key, _)| key.name() == "shadow")
@@ -2234,20 +2362,20 @@ impl<'a> AnalysisGraph<'a> {
                 *shadow
             } else {
                 let nil = self.scalar(Literal::Nil)?;
-                entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, nil));
+                field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, nil));
                 nil
             };
-            let mut env = vec![(FieldKey::Literal(AnalyzerLiteralKeyword("context")), self.context(binding.declaration_context)?)];
+            let mut env = field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("context")), self.context(binding.declaration_context)?)]);
             for token in [AnalyzerLiteralKeyword("line"), AnalyzerLiteralKeyword("column")] {
                 let key = token.name();
                 if let Some((_, value)) = entries.iter().find(|(name, _)| name.name() == key) {
-                    env.push((FieldKey::Literal(token), *value));
+                    field_push!(self, env; (FieldKey::Literal(token), *value));
                 }
             }
             let shadow_key = self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?;
-            let info = self.map(vec![(FieldKey::Literal(AnalyzerLiteralKeyword("name")), entries[0].1), (shadow_key, shadow)])?;
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("env")), self.map(env)?));
-            entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("info"))?, info));
+            let info = field_map!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("name")), entries[0].1), (shadow_key, shadow)])?;
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("env")), self.map(env)?));
+            field_push!(self, entries; (self.name_var_literal_key(binding, AnalyzerLiteralKeyword("info"))?, info));
         }
         if let SourceRole::MethodThis {
             type_declaration,
@@ -2258,22 +2386,22 @@ impl<'a> AnalysisGraph<'a> {
             ..
         } = &binding.source_role
         {
-            entries.push((FieldKey::Cold("suss/type-declaration"),
+            field_push!(self, entries; (FieldKey::Cold("suss/type-declaration"),
                 self.form(type_declaration, depth + 1)?,
             ));
-            entries.push((FieldKey::Cold("suss/declaration-namespace"), self.symbol(namespace)?));
-            entries.push((FieldKey::Cold("suss/protocol-receiver"), self.flag(*protocol_receiver)?));
-            entries.push((FieldKey::Cold("suss/receiver-access"), self.lowering(access, depth + 1)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/declaration-namespace"), self.symbol(namespace)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/protocol-receiver"), self.flag(*protocol_receiver)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/receiver-access"), self.lowering(access, depth + 1)?));
             if let Some(argument) = argument {
-                entries.push((self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(argument, depth + 1)?));
+                field_push!(self, entries; (self.binding_literal_key(binding, AnalyzerLiteralKeyword("shadow"))?, self.local(argument, depth + 1)?));
             }
         }
         if let SourceRole::CatchBinding { hidden, access } = &binding.source_role {
-            entries.push((FieldKey::Cold("suss/private-payload"), self.local(hidden, depth + 1)?));
-            entries.push((FieldKey::Cold("suss/payload-access"), self.lowering(access, depth + 1)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/private-payload"), self.local(hidden, depth + 1)?));
+            field_push!(self, entries; (FieldKey::Cold("suss/payload-access"), self.lowering(access, depth + 1)?));
         }
         let context = self.context(binding.declaration_context)?;
-        entries.push((FieldKey::Cold("suss/declaration-context"), context));
+        field_push!(self, entries; (FieldKey::Cold("suss/declaration-context"), context));
         self.map_in_task_slot(slot, entries)
     }
     fn field(&mut self, field: &Arc<FieldBinding>, depth: usize) -> Result<Value> {
@@ -2294,13 +2422,13 @@ impl<'a> AnalysisGraph<'a> {
         let is_field = self.flag(true)?;
         let index = self.number(field.index)?;
         let access = self.lowering(&field.access, depth + 1)?;
-        let mut entries = vec![
+        let mut entries = field_entries!(self; [
             (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
             (FieldKey::Literal(AnalyzerLiteralKeyword("local")), kind),
             (FieldKey::Literal(AnalyzerLiteralKeyword("field")), is_field),
             (FieldKey::Cold("suss/index"), index),
             (FieldKey::Cold("suss/access"), access),
-        ];
+        ]);
         // Pinned parse-type retains raw nullable flags, independently of the
         // lowered mutability boolean. Unique source fields have no shadow;
         // duplicate declarations are rejected by the compiler before this path.
@@ -2324,9 +2452,9 @@ impl<'a> AnalysisGraph<'a> {
             } else {
                 self.scalar(Literal::Nil)?
             };
-            entries.push((FieldKey::Literal(token), value));
+            field_push!(self, entries; (FieldKey::Literal(token), value));
         }
-        entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.scalar(Literal::Nil)?));
+        field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.scalar(Literal::Nil)?));
         let position = field
             .origin
             .as_ref()
@@ -2334,8 +2462,8 @@ impl<'a> AnalysisGraph<'a> {
             .transpose()?
             .flatten();
         if let Some(position) = position {
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("line")), self.number(position.line)?));
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("column")), self.number(position.column)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("line")), self.number(position.line)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("column")), self.number(position.column)?));
         }
         self.map_in_task_slot(slot, entries)
     }
@@ -2380,7 +2508,7 @@ impl<'a> AnalysisGraph<'a> {
             portable::resolve::Phase::Macro => "macro",
         })?;
         // c4295f3 analyzer.cljc2285-2297 fn-name-var.
-        let mut info = vec![
+        let mut info = field_entries!(self; [
             (FieldKey::Literal(AnalyzerLiteralKeyword("fn-self-name")), self.flag(true)?),
             (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), self.symbol(&scope.namespace)?),
             (FieldKey::Literal(AnalyzerLiteralKeyword("fn-scope")), parents),
@@ -2389,30 +2517,30 @@ impl<'a> AnalysisGraph<'a> {
                 self.form(scope.function_form.as_form(), depth + 1)?,
             ),
             (FieldKey::Cold("suss/phase"), phase),
-        ];
+        ]);
         if let Some(shadow) = &scope.shadow {
-            info.push((FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.local(shadow, depth + 1)?));
+            field_push!(self, info; (FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.local(shadow, depth + 1)?));
         } else if let Some(shadow) = &scope.shadow_field {
-            info.push((FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.field(shadow, depth + 1)?));
+            field_push!(self, info; (FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.field(shadow, depth + 1)?));
         } else {
-            info.push((FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.scalar(Literal::Nil)?));
+            field_push!(self, info; (FieldKey::Literal(AnalyzerLiteralKeyword("shadow")), self.scalar(Literal::Nil)?));
         }
         let info = self.map(info)?;
-        let mut entries = vec![
+        let mut entries = field_entries!(self; [
             (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("binding")?),
             (FieldKey::Literal(AnalyzerLiteralKeyword("form")), name),
             (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
             (FieldKey::Literal(AnalyzerLiteralKeyword("local")), kind),
             (FieldKey::Literal(AnalyzerLiteralKeyword("env")), env),
             (FieldKey::Literal(AnalyzerLiteralKeyword("info")), info),
-        ];
+        ]);
         let metadata =
             crate::portable_macro_data::normalized_reader_metadata(self.session, &scope.declaration)?;
         if let Some(tag) = metadata.chunks_exact(2).find_map(|pair| {
             matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")
                 .then_some(&pair[1])
         }).filter(|tag| !matches!(tag.kind, Kind::Nil)) {
-            entries.push((FieldKey::Literal(AnalyzerLiteralKeyword("ret-tag")), self.form(tag, depth + 1)?));
+            field_push!(self, entries; (FieldKey::Literal(AnalyzerLiteralKeyword("ret-tag")), self.form(tag, depth + 1)?));
         }
         self.map_in_task_slot(slot, entries)
     }
@@ -2488,6 +2616,21 @@ impl<'a> AnalysisGraph<'a> {
             ],
         )
     }
+    // Pinned analyzer.cljc1934/1966/2273/2590 marks these body maps using
+    // literal :body?. The actual this-as expansion is a lexical binding body
+    // (core.cljc1438-1443). A Suss future body has no such pinned origin.
+    fn source_body_key(&mut self, source: &hir::SourceAnalysis) -> Result<FieldKey<'static>> {
+        self.charge(5)?; // flag/origin reads, native match and key selection
+        Ok(if source.is_body && matches!(source.body_origin,
+            Some(hir::SourceBodyOrigin::FunctionMethod | hir::SourceBodyOrigin::Bindings
+                | hir::SourceBodyOrigin::TryBody | hir::SourceBodyOrigin::FinallyBody
+                | hir::SourceBodyOrigin::ThisAsBinding))
+        {
+            FieldKey::Literal(AnalyzerLiteralKeyword("body?"))
+        } else {
+            FieldKey::Cold("body?")
+        })
+    }
     fn ast_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         let source = hir.source.as_ref().expect("source AST task");
         let quote = if source.form.metadata.is_empty()
@@ -2544,9 +2687,37 @@ impl<'a> AnalysisGraph<'a> {
             None if quoted_datum.is_some() => FieldKey::Literal(AnalyzerLiteralKeyword("env")),
             _ => FieldKey::Cold("env"),
         };
-        let mut fields = vec![(FieldKey::Cold("form"), form), (env_key, env), (FieldKey::Cold("suss/lowering"), lowering)];
+        // Pinned analyzer constructors: control1838–1903/2450–2768,
+        // fn2362–2379, resolved symbols4113–4163, collections4369–4400,
+        // metadata4453–4461 and scalar const4592. The payload stays source data.
+        // Unknown/generated/extension nodes and copied local/field references
+        // do not acquire a literal token merely by having a source form.
+        self.charge(20)?; // prepaid node/role/shape reads and bounded key selection
+        let form_key = match source.node.as_deref() {
+            Some(hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_)
+                | hir::SourceNode::Do { .. } | hir::SourceNode::If { .. }
+                | hir::SourceNode::Bindings { .. } | hir::SourceNode::Recur(_)
+                | hir::SourceNode::Throw(_) | hir::SourceNode::Try { .. }
+                | hir::SourceNode::Assign { .. } | hir::SourceNode::Invoke { .. }
+                | hir::SourceNode::Construct { .. } | hir::SourceNode::WithMeta { .. }) =>
+                FieldKey::Literal(AnalyzerLiteralKeyword("form")),
+            None if quoted_datum.is_some() => FieldKey::Literal(AnalyzerLiteralKeyword("form")),
+            None if source.form.metadata.is_empty()
+                && matches!(&source.form.kind, Kind::Nil | Kind::Bool(_) | Kind::Number(_)
+                    | Kind::String(_) | Kind::Keyword(_)) =>
+                FieldKey::Literal(AnalyzerLiteralKeyword("form")),
+            None if source.callable.is_some() => FieldKey::Literal(AnalyzerLiteralKeyword("form")),
+            None if matches!(&source.form.kind, Kind::Symbol(_))
+                && matches!(&source.resolved, Some(hir::SourceBinding::Global { .. }
+                    | hir::SourceBinding::JavaScript { .. }
+                    | hir::SourceBinding::Local(_) | hir::SourceBinding::Field(_))) =>
+                FieldKey::Literal(AnalyzerLiteralKeyword("form")),
+            _ => FieldKey::Cold("form"),
+        };
+        let mut fields = field_entries!(self; [(form_key, form), (env_key, env), (FieldKey::Cold("suss/lowering"), lowering)]);
         if source.is_body {
-            fields.push((FieldKey::Cold("body?"), self.flag(true)?));
+            let body_key = self.source_body_key(source)?;
+            field_push!(self, fields; (body_key, self.flag(true)?));
         }
         // Genuine scalar source constants follow pinned analyzer.cljc's
         // analyze-keyword/analyze-form contract, not the physical HIR value.
@@ -2558,8 +2729,8 @@ impl<'a> AnalysisGraph<'a> {
                 Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) | Kind::Keyword(_)
             )
         {
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("const")?));
-            fields.push((FieldKey::Cold("val"), form));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("const")?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("val")), form));
         }
         // Source entries were analyzed exactly once before physical collection
         // construction. Empty and factory literals keep these same source ops.
@@ -2573,10 +2744,10 @@ impl<'a> AnalysisGraph<'a> {
         {
             let (operation, children) = match collection.as_ref() {
                 hir::SourceNode::Vector(items) => {
-                    ("vector", vec![(FieldKey::Literal(AnalyzerLiteralKeyword("items")), items.iter().collect::<Vec<_>>())])
+                    ("vector", field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("items")), items.iter().collect::<Vec<_>>())]))
                 }
                 hir::SourceNode::Set(items) => {
-                    ("set", vec![(FieldKey::Cold("items"), items.iter().collect::<Vec<_>>())])
+                    ("set", field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("items")), items.iter().collect::<Vec<_>>())]))
                 }
                 hir::SourceNode::Map(items) => {
                     if items.len() % 2 != 0 {
@@ -2586,15 +2757,15 @@ impl<'a> AnalysisGraph<'a> {
                     }
                     (
                         "map",
-                        vec![
-                            (FieldKey::Cold("keys"), items.iter().step_by(2).collect::<Vec<_>>()),
-                            (FieldKey::Cold("vals"), items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
-                        ],
+                        field_entries!(self; [
+                            (FieldKey::Literal(AnalyzerLiteralKeyword("keys")), items.iter().step_by(2).collect::<Vec<_>>()),
+                            (FieldKey::Literal(AnalyzerLiteralKeyword("vals")), items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
+                        ]),
                     )
                 }
                 _ => unreachable!("non-collection handled separately"),
             };
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword(operation)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword(operation)?));
             let mut names = Vec::new();
             for (name, children) in children {
                 names.push(self.keyword(name)?);
@@ -2602,15 +2773,13 @@ impl<'a> AnalysisGraph<'a> {
                 for child in children {
                     records.push(self.ast(child, depth + 1)?);
                 }
-                fields.push((name, self.vector(&records)?));
+                field_push!(self, fields; (name, self.vector(&records)?));
             }
-            // c4295f3 analyzer.cljc4392: vector keys AND [:items] are literals.
-            // Map/set routes are outside this correction and retain Cold.
-            let children_key = match collection.as_ref() {
-                hir::SourceNode::Vector(_) => FieldKey::Literal(AnalyzerLiteralKeyword("children")),
-                _ => FieldKey::Cold("children"),
-            };
-            fields.push((children_key, self.vector(&names)?));
+            // c4295f3 analyzer.cljc4369–4400: all three collection
+            // builders emit literal :children and literal child-name keywords.
+            // `name` above carries that same explicit construction-site token.
+            let children_key = FieldKey::Literal(AnalyzerLiteralKeyword("children"));
+            field_push!(self, fields; (children_key, self.vector(&names)?));
         }
         if let Some(node) = &source.node
             && let hir::SourceNode::Bindings {
@@ -2619,16 +2788,16 @@ impl<'a> AnalysisGraph<'a> {
                 body,
             } = node.as_ref()
         {
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword(if *is_loop { "loop" } else { "let" })?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword(if *is_loop { "loop" } else { "let" })?));
             let mut records = Vec::new();
             for binding in bindings.iter() {
                 records.push(self.local(binding, depth + 1)?);
             }
-            fields.push((FieldKey::Cold("bindings"), self.vector(&records)?));
-            fields.push((FieldKey::Cold("body"), self.ast(body, depth + 1)?));
-            let bindings = self.keyword("bindings")?;
-            let body = self.keyword("body")?;
-            fields.push((FieldKey::Cold("children"), self.vector(&[bindings, body])?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("bindings")), self.vector(&records)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("body")), self.ast(body, depth + 1)?));
+            let bindings = self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("bindings")))?;
+            let body = self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("body")))?;
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("children")), self.vector(&[bindings, body])?));
         }
         if let Some(hir::SourceNode::Try {
             body,
@@ -2637,24 +2806,24 @@ impl<'a> AnalysisGraph<'a> {
             payload,
         }) = source.node.as_deref()
         {
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("try")?));
-            fields.push((FieldKey::Cold("body"), self.ast(body, depth + 1)?));
-            fields.push((FieldKey::Cold("catch"), self.ast(handler, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("try")?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("body")), self.ast(body, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("catch")), self.ast(handler, depth + 1)?));
             let name = if let Some(payload) = payload {
                 self.form(&payload.declaration, depth + 1)?
             } else {
                 self.scalar(Literal::Nil)?
             };
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("name")), name));
-            let mut children = vec![self.keyword("body")?, self.keyword("catch")?];
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name));
+            let mut children = vec![self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("body")))?, self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("catch")))?];
             let finally = if let Some(cleanup) = cleanup {
-                children.push(self.keyword("finally")?);
+                children.push(self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("finally")))?);
                 self.ast(cleanup, depth + 1)?
             } else {
                 self.scalar(Literal::Nil)?
             };
-            fields.push((FieldKey::Cold("finally"), finally));
-            fields.push((FieldKey::Cold("children"), self.vector(&children)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("finally")), finally));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("children")), self.vector(&children)?));
         }
         if let Some(node) = &source.node {
             // These are original analyzed operands retained before dispatch or
@@ -2662,8 +2831,8 @@ impl<'a> AnalysisGraph<'a> {
             let (operation, many, one) = match node.as_ref() {
                 hir::SourceNode::Do { statements, result } => (
                     "do",
-                    vec![(FieldKey::Cold("statements"), statements.as_ref())],
-                    vec![(FieldKey::Cold("ret"), result.as_ref())],
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("statements")), statements.as_ref())]),
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("ret")), result.as_ref())]),
                 ),
                 hir::SourceNode::If {
                     condition,
@@ -2672,38 +2841,38 @@ impl<'a> AnalysisGraph<'a> {
                 } => (
                     "if",
                     vec![],
-                    vec![
-                        (FieldKey::Cold("test"), condition.as_ref()),
-                        (FieldKey::Cold("then"), consequent.as_ref()),
-                        (FieldKey::Cold("else"), alternative.as_ref()),
-                    ],
+                    field_entries!(self; [
+                        (FieldKey::Literal(AnalyzerLiteralKeyword("test")), condition.as_ref()),
+                        (FieldKey::Literal(AnalyzerLiteralKeyword("then")), consequent.as_ref()),
+                        (FieldKey::Literal(AnalyzerLiteralKeyword("else")), alternative.as_ref()),
+                    ]),
                 ),
                 hir::SourceNode::Recur(arguments) => {
-                    ("recur", vec![(FieldKey::Cold("exprs"), arguments.as_ref())], vec![])
+                    ("recur", field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("exprs")), arguments.as_ref())]), vec![])
                 }
                 hir::SourceNode::Throw(exception) => {
-                    ("throw", vec![], vec![(FieldKey::Cold("exception"), exception.as_ref())])
+                    ("throw", vec![], field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("exception")), exception.as_ref())]))
                 }
                 hir::SourceNode::Assign { target, value } => (
                     "set!",
                     vec![],
-                    vec![(FieldKey::Cold("target"), target.as_ref()), (FieldKey::Cold("val"), value.as_ref())],
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("target")), target.as_ref()), (FieldKey::Literal(AnalyzerLiteralKeyword("val")), value.as_ref())]),
                 ),
                 hir::SourceNode::Invoke { callee, arguments } => (
                     "invoke",
-                    vec![(FieldKey::Cold("args"), arguments.as_ref())],
-                    vec![(FieldKey::Cold("fn"), callee.as_ref())],
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("args")), arguments.as_ref())]),
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("fn")), callee.as_ref())]),
                 ),
                 hir::SourceNode::Construct { class, arguments } => (
                     "new",
-                    vec![(FieldKey::Cold("args"), arguments.as_ref())],
-                    vec![(FieldKey::Cold("class"), class.as_ref())],
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("args")), arguments.as_ref())]),
+                    field_entries!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("class")), class.as_ref())]),
                 ),
                 hir::SourceNode::Future(body) => {
-                    ("suss/future", vec![], vec![(FieldKey::Cold("body"), body.as_ref())])
+                    ("suss/future", vec![], field_entries!(self; [(FieldKey::Cold("body"), body.as_ref())]))
                 }
                 hir::SourceNode::Await(value) => {
-                    ("suss/await", vec![], vec![(FieldKey::Cold("value"), value.as_ref())])
+                    ("suss/await", vec![], field_entries!(self; [(FieldKey::Cold("value"), value.as_ref())]))
                 }
                 _ => ("", vec![], vec![]),
             };
@@ -2715,35 +2884,38 @@ impl<'a> AnalysisGraph<'a> {
                     | hir::SourceNode::Construct { .. } => FieldKey::Literal(AnalyzerLiteralKeyword("op")),
                     _ => FieldKey::Cold("op"),
                 };
-                fields.push((op_key, self.keyword(operation)?));
-                // Preserve the public analyzer's declared edge order.
-                let names: &[&str] = match operation {
-                    "do" => &["statements", "ret"],
-                    "if" => &["test", "then", "else"],
-                    "recur" => &["exprs"],
-                    "throw" => &["exception"],
-                    "set!" => &["target", "val"],
-                    "invoke" => &["fn", "args"],
-                    "new" => &["class", "args"],
-                    "suss/future" => &["body"],
-                    "suss/await" => &["value"],
-                    _ => unreachable!(),
+                field_push!(self, fields; (op_key, self.keyword(operation)?));
+                // Pinned declared edge order. Authorize keys from the actual
+                // retained SourceNode, never from the operation string alone.
+                self.charge(4)?; // node read, native dispatch and pair selection
+                let (names, children_key): (&[FieldKey<'static>], FieldKey<'static>) = match node.as_ref() {
+                    hir::SourceNode::Do { .. } => (&[FieldKey::Literal(AnalyzerLiteralKeyword("statements")), FieldKey::Literal(AnalyzerLiteralKeyword("ret"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::If { .. } => (&[FieldKey::Literal(AnalyzerLiteralKeyword("test")), FieldKey::Literal(AnalyzerLiteralKeyword("then")), FieldKey::Literal(AnalyzerLiteralKeyword("else"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Recur(_) => (&[FieldKey::Literal(AnalyzerLiteralKeyword("exprs"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Throw(_) => (&[FieldKey::Literal(AnalyzerLiteralKeyword("exception"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Assign { .. } => (&[FieldKey::Literal(AnalyzerLiteralKeyword("target")), FieldKey::Literal(AnalyzerLiteralKeyword("val"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Invoke { .. } => (&[FieldKey::Literal(AnalyzerLiteralKeyword("fn")), FieldKey::Literal(AnalyzerLiteralKeyword("args"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Construct { .. } => (&[FieldKey::Literal(AnalyzerLiteralKeyword("class")), FieldKey::Literal(AnalyzerLiteralKeyword("args"))], FieldKey::Literal(AnalyzerLiteralKeyword("children"))),
+                    hir::SourceNode::Future(_) => (&[FieldKey::Cold("body")], FieldKey::Cold("children")),
+                    hir::SourceNode::Await(_) => (&[FieldKey::Cold("value")], FieldKey::Cold("children")),
+                    _ => unreachable!("operation route selected above"),
                 };
                 for (name, children) in many {
                     let mut records = Vec::new();
                     for child in children {
                         records.push(self.ast(child, depth + 1)?);
                     }
-                    fields.push((name, self.vector(&records)?));
+                    field_push!(self, fields; (name, self.vector(&records)?));
                 }
                 for (name, child) in one {
-                    fields.push((name, self.ast(child, depth + 1)?));
+                    field_push!(self, fields; (name, self.ast(child, depth + 1)?));
                 }
                 let mut keywords = Vec::new();
                 for name in names {
+                    self.charge(2)?; // typed key/tag read before dispatch; no new heap metadata
                     keywords.push(self.keyword(*name)?);
                 }
-                fields.push((FieldKey::Cold("children"), self.vector(&keywords)?));
+                field_push!(self, fields; (children_key, self.vector(&keywords)?));
             }
         }
         if let Some(node) = &source.node
@@ -2758,25 +2930,25 @@ impl<'a> AnalysisGraph<'a> {
                     "Incomplete metadata source children",
                 )));
             }
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("with-meta")?));
-            fields.push((FieldKey::Cold("meta"), self.ast(metadata, depth + 1)?));
-            fields.push((FieldKey::Cold("expr"), self.ast(expression, depth + 1)?));
-            let meta = self.keyword("meta")?;
-            let expr = self.keyword("expr")?;
-            fields.push((FieldKey::Cold("children"), self.vector(&[meta, expr])?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("with-meta")?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("meta")), self.ast(metadata, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("expr")), self.ast(expression, depth + 1)?));
+            let meta = self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("meta")))?;
+            let expr = self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("expr")))?;
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("children")), self.vector(&[meta, expr])?));
         }
         // Pinned analyzer.cljc2630–2655 retains quote syntax separately
         // from its literal const child. Use the actual retained source datum;
         // quoted collection constructor HIR is not a source child AST.
         if let Some(datum) = quoted_datum {
             let literal = self.flag(true)?;
-            let mut constant = vec![
+            let mut constant = field_entries!(self; [
                 (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("const")?),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("env")), env),
-                (FieldKey::Cold("literal?"), literal),
-                (FieldKey::Cold("val"), datum),
-                (FieldKey::Cold("form"), datum),
-            ];
+                (FieldKey::Literal(AnalyzerLiteralKeyword("literal?")), literal),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("val")), datum),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("form")), datum),
+            ]);
             if let Some(tag) = &source.tags.quoted_const_tag {
                 let tag = match tag {
                     Some(tag) => self.form(tag, depth + 1)?,
@@ -2789,7 +2961,7 @@ impl<'a> AnalysisGraph<'a> {
                         depth + 1,
                     )?,
                 };
-                constant.push((FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag));
+                field_push!(self, constant; (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag));
             }
             let constant = constant
                 .into_iter()
@@ -2797,23 +2969,26 @@ impl<'a> AnalysisGraph<'a> {
                 .collect::<Result<Vec<_>>>()?;
             self.charge(0)?;
             let expr = self.recipe(Recipe::Map(constant))?;
-            let expr_key = self.keyword("expr")?;
-            fields.extend([
+            let expr_key = self.keyword(FieldKey::Literal(AnalyzerLiteralKeyword("expr")))?;
+            field_extend!(self, fields; [
                 (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("quote")?),
-                (FieldKey::Cold("literal?"), literal),
-                (FieldKey::Cold("expr"), expr),
-                (FieldKey::Cold("children"), self.vector(&[expr_key])?),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("literal?")), literal),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("expr")), expr),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("children")), self.vector(&[expr_key])?),
             ]);
         }
         // Only a genuine resolved source symbol is a local reference. A list
         // head may resolve to a local too, but its AST is an invocation, not a
-        // reference. Share canonical declaration/initializer graph recipes.
+        // reference. Pinned analyzer4113–4120 supplies literal select-keys
+        // receivers; core.cljs9289–9301 assoc uses those receivers, not keys
+        // copied from the binding descriptor. Descriptor role guards stay separate.
+        // Share canonical declaration/initializer graph recipes.
         if matches!(&source.form.kind, Kind::Symbol(_)) {
             if let Some(hir::SourceBinding::Local(binding)) = &source.resolved {
-                fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("local")?));
-                fields.push((FieldKey::Cold("info"), self.local(binding, depth + 1)?));
-                fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.form(&binding.declaration, depth + 1)?));
-                fields.push((FieldKey::Cold("local"),
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("local")?));
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("info")), self.local(binding, depth + 1)?));
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.form(&binding.declaration, depth + 1)?));
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("local")),
                     self.keyword(match binding.source_kind() {
                         hir::LocalKind::Let => "let",
                         hir::LocalKind::Loop => "loop",
@@ -2823,27 +2998,27 @@ impl<'a> AnalysisGraph<'a> {
                     })?,
                 ));
                 if let hir::LocalKind::Argument { index, .. } = binding.source_kind() {
-                    fields.push((FieldKey::Cold("arg-id"), self.number(index)?));
+                    field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("arg-id")), self.number(index)?));
                 }
                 if let SourceRole::FunctionName {
                     variadic,
                     methods: Some(_),
                 } = &binding.source_role
                 {
-                    fields.push((FieldKey::Cold("variadic?"), self.flag(*variadic)?));
+                    field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("variadic?")), self.flag(*variadic)?));
                 }
                 if let Some(initializer) = &binding.initializer {
-                    fields.push((FieldKey::Cold("init"), self.ast(initializer, depth + 1)?));
+                    field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("init")), self.ast(initializer, depth + 1)?));
                 }
             }
         }
         if matches!(&source.form.kind, Kind::Symbol(_))
             && let Some(hir::SourceBinding::Field(binding)) = &source.resolved
         {
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("local")?));
-            fields.push((FieldKey::Cold("local"), self.keyword("field")?));
-            fields.push((FieldKey::Cold("info"), self.field(binding, depth + 1)?));
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.form(&binding.declaration, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("local")?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("local")), self.keyword("field")?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("info")), self.field(binding, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.form(&binding.declaration, depth + 1)?));
         }
         // Owned JS references retain their genuine source operation. They do
         // not manufacture a source namespace/declaration revision or extern map.
@@ -2854,13 +3029,13 @@ impl<'a> AnalysisGraph<'a> {
             let name = self.symbol(&format!("js/{}", global.name()))?;
             let ns = self.symbol("js")?;
             let tag = self.symbol("js")?;
-            let info = self.map(vec![(FieldKey::Literal(AnalyzerLiteralKeyword("op")), op), (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name), (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), ns), (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag)])?;
-            fields.extend([
+            let info = field_map!(self; [(FieldKey::Literal(AnalyzerLiteralKeyword("op")), op), (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name), (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), ns), (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag)])?;
+            field_extend!(self, fields; [
                 (FieldKey::Literal(AnalyzerLiteralKeyword("op")), op),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), ns),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag),
-                (FieldKey::Cold("info"), info),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("info")), info),
             ]);
         }
         let resolved_var = if matches!(&source.form.kind, Kind::Symbol(_))
@@ -2898,26 +3073,26 @@ impl<'a> AnalysisGraph<'a> {
             entries.extend([(op_key, operation), (name_key, name), (ns_key, namespace)]);
             self.charge(0)?;
             let info = self.recipe(Recipe::Map(entries))?;
-            fields.extend([
+            field_extend!(self, fields; [
                 (FieldKey::Literal(AnalyzerLiteralKeyword("op")), operation),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name),
                 (FieldKey::Literal(AnalyzerLiteralKeyword("ns")), namespace),
                 // Each resolution makes a fresh outer map, while reusing the
                 // captured declaration's nested values. Structural interning
                 // would incorrectly make two distinct references identical.
-                (FieldKey::Cold("info"), info),
+                (FieldKey::Literal(AnalyzerLiteralKeyword("info")), info),
             ]);
             // Global AST tags are selected from resolved info, unlike local
             // reference inference. Preserve actual presence, including false.
             if let Some(tag) = tag {
-                fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag));
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), tag));
             }
             true
         } else {
             false
         };
         if !resolved_var && let Some(tag) = &source.tags.tag {
-            fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.form(tag, depth + 1)?));
+            field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("tag")), self.form(tag, depth + 1)?));
         }
         if let Some(tag) = &source.tags.inferred_return {
             let value = if let Some(tag) = tag {
@@ -2925,15 +3100,27 @@ impl<'a> AnalysisGraph<'a> {
             } else {
                 self.scalar(Literal::Nil)?
             };
-            fields.push((FieldKey::Cold("inferred-ret-tag"), value));
+            self.charge(5)?; // callable/node reads and exact native fn key selection
+            let key = if source.callable.is_some() && source.node.is_none() {
+                FieldKey::Literal(AnalyzerLiteralKeyword("inferred-ret-tag"))
+            } else { FieldKey::Cold("inferred-ret-tag") };
+            field_push!(self, fields; (key, value));
         }
         if let Some(callable) = &source.callable {
-            fields.push((FieldKey::Cold("suss/source-function"), self.callable(callable)?));
+            field_push!(self, fields; (FieldKey::Cold("suss/source-function"), self.callable(callable)?));
             if !matches!(
                 source.node.as_deref(),
                 Some(hir::SourceNode::WithMeta { .. })
             ) {
-                fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("fn")?));
+                field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("op")), self.keyword("fn")?));
+                self.charge(8)?; // node-presence read and three bounded key selections
+                let (methods_key, local_key, children_key) = if source.node.is_none() {
+                    (FieldKey::Literal(AnalyzerLiteralKeyword("methods")),
+                     FieldKey::Literal(AnalyzerLiteralKeyword("local")),
+                     FieldKey::Literal(AnalyzerLiteralKeyword("children")))
+                } else {
+                    (FieldKey::Cold("methods"), FieldKey::Cold("local"), FieldKey::Cold("children"))
+                };
                 let mut methods = Vec::new();
                 // c4295f3 analyzer.cljc2263-2275 analyze-fn-method.
                 for method in &callable.methods {
@@ -2973,7 +3160,7 @@ impl<'a> AnalysisGraph<'a> {
                         Some(value) => self.flag(value)?,
                         None => self.scalar(Literal::Nil)?,
                     };
-                    methods.push(self.map(vec![
+                    methods.push(field_map!(self; [
                         (FieldKey::Literal(AnalyzerLiteralKeyword("op")), op),
                         (FieldKey::Literal(AnalyzerLiteralKeyword("form")), form),
                         (FieldKey::Literal(AnalyzerLiteralKeyword("env")), env),
@@ -2985,19 +3172,19 @@ impl<'a> AnalysisGraph<'a> {
                         (FieldKey::Literal(AnalyzerLiteralKeyword("recurs")), recurs),
                     ])?);
                 }
-                fields.push((FieldKey::Cold("methods"), self.vector(&methods)?));
-                let methods = self.keyword("methods")?;
+                field_push!(self, fields; (methods_key, self.vector(&methods)?));
+                let methods = self.keyword(methods_key)?;
                 let children = if let Some(scope) = &callable.name {
                     let name = self.scope(scope, depth + 1)?;
-                    fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("name")), name));
-                    fields.push((FieldKey::Cold("local"), name));
-                    let local = self.keyword("local")?;
+                    field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("name")), name));
+                    field_push!(self, fields; (local_key, name));
+                    let local = self.keyword(local_key)?;
                     self.vector(&[local, methods])?
                 } else {
-                    fields.push((FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.scalar(Literal::Nil)?));
+                    field_push!(self, fields; (FieldKey::Literal(AnalyzerLiteralKeyword("name")), self.scalar(Literal::Nil)?));
                     self.vector(&[methods])?
                 };
-                fields.push((FieldKey::Cold("children"), children));
+                field_push!(self, fields; (children_key, children));
             }
         }
         self.map_in_task_slot(slot, fields)
@@ -4067,3 +4254,7 @@ mod sharing_tests {
         ));
     }
 }
+
+#[cfg(test)]
+#[path = "portable_macro_graph/body_origin_tests.rs"]
+mod body_origin_tests;

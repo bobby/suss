@@ -8,8 +8,9 @@ mean `{:tag value}`, and inner prefixes merge before outer prefixes. Reader-key
 comparison ignores spans/metadata, shares list/vector sequential data equality,
 and compares map/set data without relying on iteration order. Duplicate map entries compare by their last value, and set members compare
 by unique data, including native Forms with repeated entries. An existing inner
-key object remains while the outer value wins. A depth64/comparison-work bound
-keeps this syntax normalization bounded. Actual compiled association supplies
+key object remains while the outer value wins. Metered traversal/comparison work
+bounds syntax normalization through the compilation allowance, without a fixed
+depth64 cap. Actual compiled association supplies
 equality of evaluated runtime keys; the reader-data comparison does not replace
 that runtime operation. Ordered HIR temporaries avoid deep association chains.
 

@@ -38,8 +38,9 @@ transport still validates and retains metadata. Pinned ClojureScript defaults
 `*print-meta*` to false in `core.cljs` line135. The renderer is original Rust code,
 not a port of the full upstream printing implementation.
 
-Decoding retains the existing 4096-node and 1,048,576-unit guards, and rendered
-output is bounded to 8 MiB. Unsupported data fails explicitly. Raw source arrays,
+Decoding charges visited nodes and UTF-16 reads to the operation allowance,
+without fixed4096-node or1,048,576-unit transport caps. Rendered output remains
+bounded to 8 MiB. Unsupported data fails explicitly. Raw source arrays,
 arbitrary nominal objects and non-data values inside collections are not given
 fabricated string representations; full printing remains a separate requirement.
 

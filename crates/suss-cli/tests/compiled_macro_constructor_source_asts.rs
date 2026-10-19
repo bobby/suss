@@ -1,4 +1,6 @@
 //! Constructor source facts, child edges and once-only field initialization.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -108,9 +110,8 @@ fn constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc(
         format!("(ns suss-oracle.constructor-source-ast-runner)\n; header padding\n{body}");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        // Finite allowance for projecting the complete nine-case source corpus.
-        // The default 10M run traps; production defaults and depth stay unchanged.
-        macros.set_operation_fuel(100_000_000);
+        // Calibrated compilation allowance for the complete source corpus.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .enter_namespace("suss-oracle.constructor-source-ast-runner")
             .unwrap();

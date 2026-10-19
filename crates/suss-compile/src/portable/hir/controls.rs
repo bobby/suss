@@ -442,8 +442,11 @@ impl Analyzer<'_> {
                 }
                 let test = self.control_test(&args[0])?;
                 let consequent = self.form_in(&args[1], context, tail)?;
-                let alternative =
-                    self.control_form(form, &args[2..], operation, context, tail)?;
+                // Tail control expansion recurses directly rather than through
+                // form_in_named's growable-stack boundary.
+                let alternative = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                    self.control_form(form, &args[2..], operation, context, tail)
+                })?;
                 Ok(self.control_if(form, test, consequent, alternative))
             }
             ControlForm::And | ControlForm::Or => {
@@ -467,7 +470,9 @@ impl Analyzer<'_> {
                     ty: value.ty,
                     kind: Expression::Local(id),
                 };
-                let rest = self.control_form(form, &args[1..], operation, context.returning(), tail)?;
+                let rest = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                    self.control_form(form, &args[1..], operation, context.returning(), tail)
+                })?;
                 let body = if operation == ControlForm::And {
                     self.control_if(form, local.clone(), rest, local)
                 } else {

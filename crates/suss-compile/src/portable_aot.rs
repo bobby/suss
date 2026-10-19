@@ -22,6 +22,8 @@ pub struct AsyncImportMapping {
 /// existing synchronous/non-suspending component route.
 #[derive(Debug, Clone, Default)]
 pub struct AotOptions {
+    /// None preserves the shipped compilation budget. Does not configure artifact execution.
+    pub compile_fuel: Option<u64>,
     pub exports: Vec<(String, Symbol)>,
     pub async_imports: Vec<AsyncImportMapping>,
 }
@@ -83,23 +85,25 @@ pub fn compile_file(
         &AotOptions {
             exports: mappings.to_vec(),
             async_imports: Vec::new(),
+            compile_fuel: None,
         },
     )
 }
 
-pub(crate) fn compile_file_typed(
+pub(crate) fn compile_file_typed_with_compile_fuel(
     source_path: &Path,
     wit_path: &Path,
     wit_world: Option<&str>,
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
+    compile_fuel: Option<u64>,
 ) -> CompileResult<Vec<u8>> {
-    compile_input(
+    compile_input_with_options(
         source_path,
         wit_path,
         wit_world,
         source_paths,
-        mappings,
+        &AotOptions { exports: mappings.to_vec(), compile_fuel, ..Default::default() },
         None,
     )
 }
@@ -110,24 +114,32 @@ pub fn compile_main(
     namespace: &str,
     source_paths: &[PathBuf],
 ) -> Result<Vec<u8>, String> {
+    compile_main_with_compile_fuel(source_path, namespace, source_paths, None)
+}
+
+/// Explicit compilation-only override; generated Runtime execution is unchanged.
+pub fn compile_main_with_compile_fuel(
+    source_path: &Path,
+    namespace: &str,
+    source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
+) -> Result<Vec<u8>, String> {
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
-    compile_main_source(
-        &source,
-        Some(source_path.to_owned()),
-        namespace,
-        source_paths,
+    compile_main_source_with_compile_fuel(
+        &source, Some(source_path.to_owned()), namespace, source_paths, compile_fuel,
     )
 }
 
 /// Compile source text to the same official command profile as file mode.
 /// Namespace validation precedes effectful Macro-session preparation; Runtime
 /// initialization remains deferred to the resulting command artifact.
-pub(crate) fn compile_main_source(
+pub(crate) fn compile_main_source_with_compile_fuel(
     source: &str,
     path: Option<PathBuf>,
     namespace: &str,
     source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
 ) -> Result<Vec<u8>, String> {
     let forms = read_script_forms(source).map_err(|error| error.to_string())?;
     portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
@@ -141,6 +153,7 @@ pub(crate) fn compile_main_source(
         }],
         source_paths,
         true,
+        compile_fuel,
     )
     .map_err(|error| error.to_string())?;
     portable::command::component_with_exit(
@@ -161,6 +174,20 @@ pub fn compile_namespace(
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, String> {
     compile_namespace_typed(namespace, wit_path, wit_world, source_paths, mappings)
+        .map_err(|error| error.to_string())
+}
+
+/// Namespace selection and validation with explicit AOT compilation options.
+pub fn compile_namespace_with_options(
+    namespace: &str,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    options: &AotOptions,
+) -> Result<Vec<u8>, String> {
+    let path = portable::resolve::locate_source(namespace, source_paths, 0..0)
+        .map_err(|error| error.to_string())?;
+    compile_input_with_options(&path, wit_path, wit_world, source_paths, options, Some(namespace))
         .map_err(|error| error.to_string())
 }
 
@@ -191,6 +218,18 @@ fn compile_input(
     mappings: &[(String, Symbol)],
     namespace: Option<&str>,
 ) -> CompileResult<Vec<u8>> {
+    compile_input_with_options(source_path, wit_path, wit_world, source_paths,
+        &AotOptions { exports: mappings.to_vec(), ..Default::default() }, namespace)
+}
+
+fn compile_input_with_options(
+    source_path: &Path,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    options: &AotOptions,
+    namespace: Option<&str>,
+) -> CompileResult<Vec<u8>> {
     let source = std::fs::read_to_string(source_path).map_err(|error| {
         CompileError::Io(format!("Failed to read {}: {error}", source_path.display()))
     })?;
@@ -201,7 +240,7 @@ fn compile_input(
             |error| CompileError::Semantic(format!("{}: {error}", source_path.display())),
         )?;
     }
-    compile_inputs_typed(
+    compile_inputs_with_options(
         &[SourceInput {
             source,
             path: Some(source_path.to_owned()),
@@ -211,7 +250,7 @@ fn compile_input(
         wit_path,
         wit_world,
         source_paths,
-        mappings,
+        options,
     )
 }
 
@@ -230,11 +269,12 @@ pub(crate) fn compile_inputs_typed(
         &AotOptions {
             exports: mappings.to_vec(),
             async_imports: Vec::new(),
+            compile_fuel: None,
         },
     )
 }
 
-fn compile_inputs_with_options(
+pub(crate) fn compile_inputs_with_options(
     inputs: &[SourceInput],
     wit_path: &Path,
     wit_world: Option<&str>,
@@ -256,7 +296,7 @@ fn compile_inputs_with_options(
     if options.async_imports.is_empty() {
         portable::aot::validate_boundary(&resolve, world)
             .map_err(|error| CompileError::Unsupported(error.to_string()))?;
-        let fragments = prepare_inputs(inputs, source_paths)
+        let fragments = prepare_inputs_with_command(inputs, source_paths, false, options.compile_fuel)
             .map_err(|error| CompileError::Semantic(error.to_string()))?;
         let mappings =
             portable::aot::source_export_mappings(&fragments, &resolve, world, &options.exports)
@@ -344,6 +384,7 @@ fn compile_inputs_with_options(
         source_paths,
         false,
         std::slice::from_ref(&import_mapping.source),
+        options.compile_fuel,
     )
     .map_err(|error| CompileError::Semantic(error.to_string()))?;
     // Retain the actual predeclared identity; final aliases must not redirect it.
@@ -397,9 +438,19 @@ pub fn prepare_source(
     path: Option<PathBuf>,
     source_paths: &[PathBuf],
 ) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_source_with_compile_fuel(source, path, source_paths, None)
+}
+
+/// Prepare source with an explicit compilation-only allowance; None retains defaults.
+pub fn prepare_source_with_compile_fuel(
+    source: &str,
+    path: Option<PathBuf>,
+    source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
+) -> Result<Vec<PreparedFragment>, SessionError> {
     // Parse the complete input before constructing the effectful Macro session.
     let forms = read_script_forms(source)?;
-    prepare_forms(source, path, source_paths, forms)
+    prepare_forms(source, path, source_paths, forms, compile_fuel)
 }
 
 fn prepare_forms(
@@ -407,8 +458,9 @@ fn prepare_forms(
     path: Option<PathBuf>,
     source_paths: &[PathBuf],
     forms: Vec<suss_reader::forms::Form>,
+    compile_fuel: Option<u64>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    prepare_inputs(
+    prepare_inputs_with_command(
         &[SourceInput {
             source: source.into(),
             path,
@@ -416,6 +468,8 @@ fn prepare_forms(
             namespace: None,
         }],
         source_paths,
+        false,
+        compile_fuel,
     )
 }
 
@@ -423,15 +477,16 @@ fn prepare_inputs(
     inputs: &[SourceInput],
     source_paths: &[PathBuf],
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    prepare_inputs_with_command(inputs, source_paths, false)
+    prepare_inputs_with_command(inputs, source_paths, false, None)
 }
 
 fn prepare_inputs_with_command(
     inputs: &[SourceInput],
     source_paths: &[PathBuf],
     command: bool,
+    compile_fuel: Option<u64>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    prepare_inputs_with_imports(inputs, source_paths, command, &[])
+    prepare_inputs_with_imports(inputs, source_paths, command, &[], compile_fuel)
 }
 
 fn prepare_inputs_with_imports(
@@ -439,6 +494,7 @@ fn prepare_inputs_with_imports(
     source_paths: &[PathBuf],
     command: bool,
     imports: &[Symbol],
+    compile_fuel: Option<u64>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
@@ -487,7 +543,7 @@ fn prepare_inputs_with_imports(
             .map_err(SessionError::Compile)?,
         );
     }
-    let mut macros = CompiledMacros::new()?;
+    let mut macros = compilation_macros(compile_fuel)?;
     if command {
         snapshot.provided.insert(
             ModuleIdentity::new(Phase::Runtime, "wasi.cli").map_err(SessionError::Compile)?,
@@ -518,7 +574,19 @@ fn prepare_inputs_with_imports(
             source.forms.clone(),
             source.source.len(),
             &origin,
-        )?;
+        )
+        .map_err(|error| match error {
+            SessionError::Compile(mut diagnostic) => {
+                if let Some(path) = &source.path {
+                    diagnostic.message = format!(
+                        "While compiling {}: {}",
+                        path.display(), diagnostic.message
+                    );
+                }
+                SessionError::Compile(diagnostic)
+            }
+            error => error,
+        })?;
         snapshot = completed;
         if let Some(identity) = identity {
             snapshot.provided.insert(identity.clone());
@@ -555,4 +623,29 @@ fn prepare_inputs_with_imports(
         }
     }
     Ok(fragments)
+}
+
+// Configure the existing Macro Session once, before any selected-source preparation.
+// This changes neither caller Runtime options nor the generated artifact's execution policy.
+fn compilation_macros(compile_fuel: Option<u64>) -> Result<CompiledMacros, SessionError> {
+    let mut macros = CompiledMacros::new()?;
+    if let Some(fuel) = compile_fuel {
+        macros.set_operation_fuel(fuel);
+    }
+    Ok(macros)
+}
+
+#[cfg(test)]
+mod compilation_budget_tests {
+    use super::*;
+    #[test]
+    fn aot_compilation_options_preserve_default_and_explicit_zero() {
+        assert_eq!(AotOptions::default().compile_fuel, None);
+        let mut macros = compilation_macros(None).unwrap();
+        assert_eq!(portable::ExpansionHost::expansion_work_fuel(&macros), portable::DEFAULT_OPERATION_FUEL);
+        macros = compilation_macros(Some(0)).unwrap();
+        assert_eq!(portable::ExpansionHost::expansion_work_fuel(&macros), 0);
+        macros = compilation_macros(Some(10_000_000_000)).unwrap();
+        assert_eq!(portable::ExpansionHost::expansion_work_fuel(&macros), 10_000_000_000);
+    }
 }

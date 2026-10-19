@@ -1,3 +1,5 @@
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{json, Value};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -117,6 +119,7 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         .join("\n");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro observe-tags [label name]

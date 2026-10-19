@@ -27771,6 +27771,1107 @@ All432 frozen Rust/Suss/bootstrap paths remain unchanged. Independent map compar
 
 Separately reviewed component bb444a7 evidence is retained in `docs/roadmap/evidence/m4-paged-canonical-entries-focused-2026-10-16.tar.gz`, SHA256 `5158c12b92b5e342e49d8c97c479af2a12e85a3220be5cba5d6eff821e2d7180`:42focusedpasses, two retained critical fuel failures,612048netstorage saving including85352extraaccess charges;matchedBitmap remainingfuel gain612860. These component savings are not additional combined acceptance evidence. Next: validate explicit analyzer-literal keyword provenance against pinned observations and repair the source-tag/default-fuel gaps; require full baseline, independent review and final-head CI for issue resolution.
 
+### Reader identifier cold memo contract (2026-10-16)
+
+Isolated portable/m4-cold-reader-identifiers fromd58e693; bounded issue260, Refs257. Production FormBridge.identifier now supplies nil for Symbol/Keyword hash memo. Constructors, namespace/name/fqn/metadata and compiled constant lowering are unchanged. No observer/cumulative-budget/receipt changes included.
+
+Actual main-based BEFORE: native0pass4fail,48rows16case-phase combinations, zero execution errors; bridge bytes identicald58 and396frozen Rust/source/bootstrap hashes unchanged. Initial memo values differ in all48rows; cold nil-aware values/writes differ. Parent/leaf identities remain true on main. Before archive m4-cold-reader-before-2026-10-16.tar.gz SHA256 f67dbb0ceb89c629555755a053c84dad837691c4da2757ca69ad500f7beb2bd4,21payloads independently reviewed. Fresh pinned CLJS probe exit0, eight cases exactly match the recorded observations.
+
+AFTER: matched native4/4, all48rows exact; compiled-constant initialization1/1 both phases; existing pinned cross-invocation identity1/1 both phases/GC/revisions/reset; provenance exit0. Bootstrap regeneration exit0. Commands use cargo test -p suss-compile --lib --locked native_memo_leaf_ (or compiled_identifier_constants_keep_pinned_warmed_memos), CLI target compiled_macro_cross_invocation_identity_probe, and -- --test-threads=2 --nocapture. Jobs2/cold-reader-identifiers-target, no quota change. Initial focus source freeze unchanged; later Jank-only source changes are explicit.
+
+Initial Jank keyword?/symbol? selections reject0N/0.0M at read: zero assertions executed,24unexecuted, two namespace failures. Raw observations, original gate source and logs retained in m4-cold-reader-initial-focused-2026-10-16.tar.gz SHA256 6a51df30af33e25fe5869e5e57fd8b31d1aa482645f4b55f2342a1f78aefa806. No predicate compatibility inferred. The new supplemental test selects full unchanged pinned name/namespace declarations:15/15 independently host-decided passes, exact ordered IDs, zero guest-judged/fail/skipped/not-executed/test/namespace failures. Gate also rejects throws after the final assertion. cargo test -p suss-compile --locked --test clojure_test_suite pinned_reader_identifier_names_keep_values -- --test-threads=2 --nocapture exits0.
+
+Final focused archive m4-cold-reader-focused-2026-10-16.tar.gz SHA256 b9184ac7e9e77d2d7f0e2b367a977f2f95da1fe06cd8c9b22bcd07a1554f3e54, 22payloads plus manifest, read back verified. Initial patch-context mismatch made no production change; initialization was ported explicitly on main afterward. New observations/test helpers are authored code; upstream Symbol/Keyword definitions retain EPL provenance. JVM/Node are development oracles only. Terminal baseline and CI evidence are recorded below; broader retained-storage and fuel contracts remain separate.
+
+The exact `cargo test --workspace --locked -- --test-threads=2` baseline at5aff6827 exited0 after25828.114s:1808 pass executions,0failures,22explicit ignores;398 frozen paths unchanged. Raw log, metadata, terminal receipt, target classification and frozen snapshot are retained in `evidence/m4-cold-reader-full-baseline-2026-10-16.tar.gz`, SHA256ece00358fd34fa0c6fdefcca00500c162a9832c3d64b7f3d413925eb03a9bb3d (406payloads). Ignore outcomes are not passes or broader conformance evidence.
+
+CI run38931494913 at5aff6827 passed foundation, all8 integration shards and aggregate test. Independent audit verified244/244 planned integration targets complete, no unexecuted targets,1812 Rust pass executions/0fail/22ignores and347 Python passes. Actual synthetic checkout tree equals5aff. Raw logs and retrieval receipts: `evidence/m4-cold-reader-ci-2026-10-16.tar.gz`, SHA256628822fe7d3e3d45ffc785d488e594ea49bfb69909ea866a5700468db095e5fd. The four extra CI pass executions are the same four compiled-bootstrap tests run once by foundation bootstrap verification and again by integration shard5; the local baseline executes them once. Raw name-multiset comparison has no local-only pass executions. Documentation/evidence changes require review and final-head CI. No merge.
+
+### When-let compiled source and binding prerequisite (Refs #266)
+
+Base `75e537b`. The immutable `when-let-before` capture kept all 1778 inputs
+unchanged: `compiled_when_let` had three decoder support passes and three
+unresolved-name failures; the complete pinned Jank body had zero executed
+assertions and all 12 IDs unexecuted due to the unresolved namespace. These
+failures are retained; they do not imply Macro-phase execution.
+
+The complete pinned when-let macro is registered in the existing compiled
+Macro pipeline. Ordered assert-args checks retain the pinned messages and
+phase data. Bootstrap let's former head-only rewrite could not lower vector/map
+bindings; it now reuses the existing EPL-derived binder for ordered pairs,
+retaining ordinary symbol validation, live extraction calls and the enclosing
+recur target. Ordinary symbol bindings and loop lowering retain their paths.
+
+`docs/compatibility/when-let/` retains exact upstream forms, EPL notices/license,
+adaptation patch, source hashes and executable oracle inputs. Two fresh pinned
+CLJS compiler/Node runs match the exact native 16-observation when-let guest.
+Two fresh self-host macro-function runs match all five malformed binding
+diagnostics and recovery. These underlying diagnostics do not promise analyzer
+wrapper diagnostics; the public negative test requires only the language
+exception category. Preparation failures and source-range metadata correction
+are retained separately. No Java/Node dependency was added to shipped code.
+
+`direct-let-oracle/` separately retains two fresh pinned compiler/Node runs of
+both exact direct-let guest substrings. Both match the explicit native expected
+values `[17 19 [17 19] 23 19 59 77 [1 4 2 3 5]]` and `[[11 7 18] 6]`, covering
+once-only ordered initializers, eager defaults, prior/outer scope, temporary
+hygiene and tail recur. The provenance record binds both current native fixture
+hashes; the checker also verifies their guest substrings against oracle inputs.
+All raw commands/logs/receipts and the direct-let payload manifest are retained.
+
+The original native test remains byte-identical at
+`f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02`.
+After the before capture, the Jank gate gained explicit reference schema=1,
+suite `95d4a9112cfc5fe6629be3d14bb99080ea00af2f` and CLJS
+`c4295f303100bbf5afac449242d30bca1126f1a1` assertions. Its before hash
+`e91a2bf283249e9279ddd4b341df5fb0df85d2d92145b51053311fd4c371ab6d`
+is preserved in provenance and the before snapshot. The whole original test
+body and complete 12 IDs remain selected. Jank uses Runtime and its existing
+200M harness budget; native feature tests execute both default caller phases.
+
+Actual post-pipeline commands, with `CARGO_BUILD_JOBS=2` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target`:
+
+```sh
+python3 scripts/check_when_let_provenance.py
+python3 scripts/cljs_reviews.py
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --locked --lib portable_macros::when_let_validation_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-cli --locked --test compiled_when_let --test compiled_let_destructuring -- --test-threads=2 --nocapture
+SUSS_WHEN_LET_CAPTURE=/home/bobby/.cache/suss-m4-work/when-let-after cargo test -p suss-compile --locked --test clojure_test_suite pinned_when_let_complete_body_matches_reference -- --exact --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+```
+
+Every stage exited zero. Rust pass executions: private validation 1, native 11
+(5 feature tests and 6 decoder support tests), Jank wrapper 1, bootstrap verifier
+4: total 17, zero failures. Separately, all 12 complete ordered Jank IDs were
+host-decided passes, zero guest judgments/missing/errors/skips. The verifier also
+reproduced both phase artifacts byte-for-byte. The terminal receipt and raw
+stage logs are in `when-let-after`; all 1825 frozen inputs remained unchanged
+after allowing only the four regenerated bootstrap files. No quota was changed.
+
+The updated provenance checker passes and is included in the foundation CI
+commands. Required full `cargo test --workspace --locked -- --test-threads=2`
+and final-head CI remain pending. Focused passes do not establish broader
+source-sharing/integrity, cumulative fuel or M4 acceptance. No merge authorized.
+
+
+### When-let execution archive (2026-10-16)
+
+Archive `evidence/m4-when-let-execution-2026-10-16.tar.gz`, SHA256
+`a3bb34e4723ff815feeb126420a1dad132e0f8aadf43ba647976cbd2e56325cd`. PATHS.json maps 1286 original paths to
+458 content-addressed blobs; all 459 manifested payloads
+and mapped blob hashes were verified after packaging. Commands and immutable
+before/after source/artifact snapshots are included, with independent comparison
+and 419-input source correspondence.
+
+`run-when-let-before.py` retained three decoder passes and three unresolved-name
+feature failures, plus all12 Jank IDs unexecuted at namespace loading.
+`run-when-let-after.py` passed provenance/review checks, both bootstrap phases,
+private validation1, native11 (five feature tests and six decoder executions),
+the Jank wrapper1 and bootstrap execution4:17 Rust passes. The wrapper separately
+compared all12 ordered original assertion IDs with12 host passes and no skips,
+guest judgments, missing IDs or namespace/test failures. Native feature cases
+execute both default caller phases; the separate Runtime Jank harness retains
+its existing200M allowance. Bootstrap verification reproduces both phases twice
+without Java/Node and executes their artifacts.
+
+After these focused checks, the required
+`cargo test --workspace --locked -- --test-threads=2` was launched with jobs2
+on the same compiled tuple using `run-when-let-full-baseline.py`. Its archived
+launch receipt is partial, not a terminal outcome. Inspect the live producer
+receipt/log and final-head CI before claiming a workspace or acceptance pass.
+
+
+### Core-import manifest dependency refresh for when-let (2026-10-16)
+
+CI for41674a7 correctly rejected the stale core-import manifest reviews hash.
+Regeneration changes only reviews-sha256 in runtime/core-import/manifest.json;
+all imported source bytes remain unchanged. Both generated bootstrap JSON/Wasm
+pairs now bind that manifest. Independent review confirms unchanged non-custom
+Wasm sections and the exact post-bootstrap input freeze. No checker was weakened.
+
+The earlier required full baseline at41674a7 was stopped by authorized SIGINT
+after this confirmed provenance blocker:55 completed passing tests, two additional
+observed passes in an interrupted target, zero observed failures; remaining work
+is unexecuted. All1846 declared inputs, including419 compiled inputs, remain
+unchanged in its retained stop receipt. This is partial evidence, not a baseline pass.
+
+The isolated repair passes core-import/provenance checks and its15 checker
+regressions. Focused compiled validation, native let/when-let and selected Jank
+currently total13 Rust passes; all12 original Jank IDs execute and match host
+comparisons. The Java-free bootstrap verifier and subsequent required full
+workspace baseline/final-head CI are separate gates; no readiness is claimed.
+
+
+The corrected tuple now completes17 focused Rust passes,347 Python tests,
+all12 ordered Jank host assertions andtwo byte-exact Java-free bootstrap
+reproductions. Independently verified archive
+m4-when-let-ci-provenance-focused-2026-10-16.tar.gz, SHA256
+04e6fb45a897f0fe6678151b911389bb9a8add1ec65bbec3f05d3b715fc460d3,
+retains1874 manifested payloads andall1846 frozen inputs matchingd1c3c1e.
+The required full baseline started atd1c3c1e inwhen-let-d1-full-baseline with
+CARGO_BUILD_JOBS=2 andthe unchanged command above; its receipt is nonterminal.
+This evidence-only follow-up changes no declared baseline input. Full baseline
+andfinal-head CI outcomes remain pending; no merge or issue closure is claimed.
+
+
+### Executed reconciliation of obsolete destructuring failures (2026-10-16)
+
+CI at896b9bc passes foundation but exposes two obsolete expected-failure guards.
+The four original ignored let-destructuring tests execute unchanged at896b9bc:
+4passes/0fail/0ignore with1846 unchanged inputs. Only after that proof, four
+ignore attributes and their four obsolete unsupported rows are removed; original
+bodies/expected values remain byte-identical. All four re-enabled tests pass,
+andthe remaining unsupported-feature guard passes. Independent review confirms
+exactlythose changes. The known-failures JSON removes only thewhen-let namespace
+error, justified bythe prior12 ordered host comparisons andCI's sole namespace
+delta. No other unknown or failure is converted into success.
+
+The complete Jank baseline comparison is still running inwhen-let-reconcile-after;
+its unfinished result is not a pass. The priorfull baseline/CI at896b9bc retain
+stale-guard failures andpartial/unexecuted coverage separately. This checkpoint
+requires terminal Jank comparison, a newfull workspace baseline andfinal-head CI
+before readiness. No implementation/bootstrap bytes change inthis reconciliation.
+
+### Exact when-let expectation reconciliation (2026-10-16)
+
+The original four ignored destructuring tests pass unchanged with
+`cargo test -p suss-compile --locked --test compile_expr destructuring -- --ignored --test-threads=2`.
+Only their ignore attributes and four stale unsupported rows were removed;
+original bodies and assertions remain byte-identical. The four exact tests and
+remaining unsupported guard then pass five executions with1,846 frozen inputs
+unchanged. The known-failure catalog removes only the obsolete when-let namespace
+load error, backed by all12 complete unchanged Jank body assertions in order.
+
+`cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2 --nocapture`
+passes the full reviewed-failure comparison (568.51s test time). Raw results are
+943 pass,21 fail,17 guest-judged,188 failed namespaces,4,873 unexecuted and0 skipped.
+Those retained gaps do not become successes. The historical runner receipt names
+896b9bc; source correspondence proves its exact two-file candidate tuple matches
+all1,846 inputs committed at1a85c8d. Handoff is outside that frozen set.
+
+The previous required baseline was explicitly stopped after those concrete
+stale-test fixes were validated. It retains117 passes,0 failures/ignores across
+26 completed summaries; interrupted definitions and later targets remain
+unexecuted. SIGINT reached only its verified owned Cargo/child; exit-2 is not a
+baseline pass or timeout. All1,846 old inputs remained unchanged. Raw commands,
+source bytes, comparisons and stop receipts are in
+`m4-when-let-reconciliation-2026-10-16.tar.gz`; manifest maps deduplicated exact
+source bytes to each frozen path. The corrected1a85 baseline has started using
+`CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, with no
+RUSTFLAGS override. Its terminal result and final-head CI remain required.
+
+### When-let local baseline timeout investigation (2026-10-17)
+
+Required `CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`
+at corrected source1a85 (all1,846 inputs match published76a7971) terminated101:
+342pass/4fail/0ignored across75 summaries. Integration coverage is72/246targets;
+174 remain unexecuted. Four native_repl_async_io tests timed out after60seconds
+waiting for their first output (7001 or9001), with empty stdout/stderr, before
+their async semantic checks. Host resource observations are context, not proof
+of cause. The failed baseline remains a failure.
+
+Unchanged `cargo test -p suss-cli --locked --test native_repl_async_io --
+--test-threads=2` then passes8/8 in245.25seconds, same60-second wait deadlines,
+same1,846-input tuple. All four exact tests also pass in76a final-head
+CI39003344698 (all10checks green). Neither result replaces a full local baseline.
+A fresh exact workspace command is live with jobs2 and RAYON_NUM_THREADS=2 to
+bound compiler workers; testthreads2, deadlines and fuel allowances are unchanged.
+Its terminal result is not included in this checkpoint. No RUSTFLAGS set by drivers.
+
+Archive m4-when-let-local-timeouts-rerun-ci-2026-10-17.tar.gz, SHA256
+f1c6ef12c2d4a99dc2d6e86f0555d35eff123acf3be98cbbfb99cc0dd47a82b1,
+retains raw failed baseline, unchanged rerun, source bytes, CI logs/checkout proof,
+resource observations and launch-only new-run evidence. Independent criterion
+review found no additional focused-evidence gap; full local baseline acceptance
+remains unproven. Source/fixture/provenance bytes are unchanged by this documentation
+checkpoint; new documentation-head CI and archive review are separate gates.
+
+### When-let required full workspace command: terminal source-equivalent evidence (2026-10-17)
+
+Actualtestedhead `76a79718843741ead53f9432a2407cbcc4913c65`: `cargo test --workspace --locked -- --test-threads=2`, Cargojobs2/Rayon2/inheritedRUSTFLAGS, unchangedfuel/deadlines, exit0after24491.189741206006s. All1846recordedinputs unchanged. Raw256summaries independentlyreproduce **1825passingexecutions/0failed/18ignored**,246integrationbinaryinvocations+6unit+4doctestcrates. Passingexecutions are not independentlydeduplicated semanticcontracts; exact18existingignorednames remain unexecuted inreport/archive, notcountedaspassed. Fullpinnedwhen-letbody and reviewedJank-baseline matching execute; knownupstreamgaps are notconvertedtosuccess.
+
+IndependentCicero binds1846bytes toBOTH76a andpublished `69dcc2fc4379c5b5d9980e63247f2d489159f8d3`; only2priorDOCpaths differ. AfterROOTexplicitlocal-bytecheckrelease andactualoldPID394310absence/terminalreceiptcheck, archivalleafFFexact69d andall1846bytesrechecked. No source/test/bootstrapedits orCargo. Originaldriver hasno separatecontemporaneousafterfreeze.json; itsunchangedterminalreceipt+independentfinal1846hashproofarepreserved. Addedafter-FFmap is clearlyASSEMBLY-TIME, not fabricatedoldafterevidence. Fourupstreamsupportfiles are separatelypinnedc429andprovided, notsilentlyaddedtooriginal1846count.
+
+Newarchive `m4-when-let-full-workspace-baseline-2026-10-17.tar.gz`, SHA256 `7804c2ba433a21a06e85be7c385b009d5681fdaccf229f735ed834e851763b32`, **2078members /2077manifestedpayloads**, containsfullrawbaseline/driver/receipt/beforemap/terminalindependentverification, bothGitbindings/frozenbytes/ignoredinventory/assemblychecks/pinned4support andactual69dCI39013433075raw/terminalsourceproofs (all10checksSUCCESS). RawbaselinelogSHA `5a5e33b402cdaca430ebedc553374713691cf9dd9bcd6d32ba8834901b15e629`. Allretainedfreezehashes resolveinternally. Priorreviewedtimeout/retryarchivef1c6ef12...47a82b1 isincludedEXACTunchanged:342pass4timeout failure andunchanged8passrerunremain separatehistoricalresults, nohost-loadcausalityclaim. No rewrittentest/deadline/fuel criteria.
+
+The passingfullcommand ran76a, withsource-equivalentpublication69d, not a fabricatedrunonnewdochead. UpcomingdocsheadCI remainsseparateROOTgate; archived69dCIisnotautomaticallyitsresult. Report/commands/results/limits only; no merge, issueclose, universalcompatibility orM4completionclaim. IndependentCiceroarchive/finalscope review precedescommit/push267 byROOT; no duplicatecomments/tests orinterventioninliveE0baseline.
+
+
+## Cumulative-fuel reconciliation: commands and results (2026-10-18)
+
+Merged origin/main0d53908 into a3c158c at74d3ef9, preserving the checked
+construction/cold-memo route and all original map, identifier and when-let
+fixtures. Both handoff additions are retained; bootstrap artifacts were
+regenerated, not copied from either parent. a44800e borrows the imported
+validation test's Form fields and refreshes only the destructuring adaptation
+hash for the existing borrowed-HIR test. Upstream/oracle bytes remain intact.
+
+Commands use CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target,
+CARGO_BUILD_JOBS=1 and RAYON_NUM_THREADS=1, with inherited RUSTFLAGS. Normal
+bootstrap: cargo run --profile test --locked -p suss-cli --bin suss-bootstrap --
+runtime/bootstrap. python3 scripts/verify_bootstrap_identity.py passes.
+
+The first frozen driver stops at a stale when-let adaptation hash: zero Rust
+tests executed. After correction, compiled_when_let returns5PASS/1FAIL: the
+invalid-binding test expects the old diagnostic wrapper, whereas cumulative
+transport adds its stage. The corrected assertion requires the precise compiled
+macro invocation stage and language-exception class; bad forms, both phases and
+recovery checks are unchanged. The original oracle-captured fixture plus exact
+source delta/current hash are retained in when-let/native-fixtures and checked
+by check_when_let_provenance.py. Historical capture inputs/receipts are not
+rewritten. Five provenance unit checks pass (one positive/four negatives).
+
+Final focused source overlay on a44800e: compiled_when_let6/6 (three behavior
+tests and three decoder negatives); pinned_when_let_complete_body_matches_reference
+1/1, all12ordered IDs/12host passes, no fail/skips/unexecuted assertions;
+compiled_macro_source_tags0/2, both caller-&env fuel failures before their
+required observations. Exact cargo argv and terminal receipts are retained at
+~/.cache/suss-m4-work/pr256-main-reconciliation-2026-10-18. The tracked pre-run
+freeze is unchanged; three extra provenance/test files were additionally copied
+after driver start and hash-verified at the end, not claimed as initially frozen.
+The pinned Jank fixture uses its unchanged harness allowance; no new oracle or
+default-budget transport success is inferred. Imported CRLF license/oracle
+whitespace diagnostics are retained without changing their bytes; the authored
+source diff passes git diff --check.
+
+Source-bound archive packaging and broader first-PR preservation remain required.
+The exact full command cargo test --workspace --locked -- --test-threads=2 has
+not run on this reconciled source. Earlier CI does not validate these bytes.
+Next: measure the existing generic canonical-head allocation repair against
+current unchanged CoreEnv/source-tag/collection failures; preserve complete
+source/child/storage/memo checks and all raw failed or unexecuted outcomes.
+
+
+### 2026-10-18: d38 compact heads and terminal measurements
+
+Source d38b59c includes the checked compact canonical heads. Focused execution
+is 43 passes/four fuel failures, with all 3526 tracked frozen inputs unchanged.
+Pinned map keeps all 69 ordered IDs (62 host passes/seven guest judgments).
+CoreEnv and collection matched-prefix fuel gains do not establish completion.
+
+The exact command `cargo test --workspace --locked -- --test-threads=2` is now
+terminal: exit101, 86 passes/two fuel failures/zero ignored across17 harnesses;
+14/251 integration targets completed,237 unexecuted; doctests not reached.
+Collection invocation fails at709..738 and unordered caller &env at510..531.
+All frozen hashes match Git d38 and receipt changed[]. CI39149952174 is also
+terminal red: foundation398Rust passes/one existing ignore and353Python passes;
+integration124passes/18fuel failures,31/251targets completed220unexecuted.
+
+The separate CoreEnv diagnostic changes only Macro allowance to200M, retaining
+caller default and all original assertions. It still fails caller &env0..33
+before the first semantic row; start199999819, provenance199996363,
+caller-form199996362, later stages unobserved. Inputs unchanged, production test
+bytes restored. No default/rate/acceptance change or complete required-cost
+estimate follows. Use the independently reviewed parser only on terminal logs.
+
+Commands, raw outcomes, source freezes, qualification details and five archives:
+[evidence](evidence/m4-pr256-reconciliation-and-fuel-measurements-2026-10-18.md).
+The declaration observer is a separate diagnostic; its analysis will guide the
+next repair rather than inferring a whole-request cost from a failed prefix.
+
+
+### 2026-10-18: canonical encoding scratch down-port
+
+The original reviewed5e0d9f2 raw-key scratch patch applies without context edits
+to e3a3850. One private encoding buffer per plan retains allocation on exact
+intern hits; misses move exact bytes into immutable canonical storage only
+after fallible preparation. Scratch initialization, clear and move/reset work
+remain prepaid. Full hashes/collision equality, stable IDs, compact heads,
+paged entries and publication ordering remain intact. Independent source review
+found no blocker; no quota, tariff, metadata or fixture change is made.
+
+Normal `cargo run --profile test --locked -p suss-cli --bin suss-bootstrap --
+runtime/bootstrap` and `python3 scripts/verify_bootstrap_identity.py` pass.
+Frozen focused commands/results are in
+~/.cache/suss-m4-work/pr256-raw-key-scratch-validation/receipt.json:
+raw_keys lib24PASS; initializer_plan lib3PASS; original CoreEnv1fuelFAIL;
+collection source1fuelFAIL; source tags2fuelFAIL; pinned map wrapper1PASS.
+Total28PASS4fuelFAIL0ignored, every stage executed and changed[]. Initial raw
+preflight also passes24 tests; this repetition is not counted as unique coverage.
+The map's independent ordered-ID comparison is being finalized separately.
+
+Compared with d38, all original metadata marker orders are retained. CoreEnv
+has371857more fuel at the last common IChunkedSeq definition-origin checkpoint
+and214vs182completed declarations, then stillfails. The collection route has
+7296fewer fuel at its last common checkpoint, at its unchanged40M allowance;
+it stillfails at709..738. The new bookkeeping has real costs on small/repeated
+plans. These are completed-prefix observations, not whole-request savings,
+wall-time speedups or default-budget acceptance. Both source-tag failures
+retain the original caller-&env stages/spans. No claim of general regression
+absence or issue completion follows. Full baseline and final-head CI for this
+candidate remain separate requirements; focused success does not replace them.
+
+The diagnostic inner observer is restored and separate:5342912/6145139units of
+completed definition-helper work are raw planning;2693574intern units are a
+subset, with2649338remaining traversal/encoding/scratch units. It observes22107
+exact intern hits. Recipe walk is540651. Every original ordered marker/fuel
+balance matches its control; failed request totals stay unknown.
+
+
+### 2026-10-18: private factory slot log and 2B diagnostic
+
+The reviewed six-file4ab8a76 down-port records final private factory slots and
+retains the walker for incomplete routes. RefCell allocation extent is corrected
+(+8bytes on this host), and new late-slot/fallback/fuel-cut regressions strengthen
+the original tests. Normal bootstrap and identity pass. Focused results:
+private_fixups11PASS, reuse6PASS, source-tags2fuelFAIL, CoreEnv1fuelFAIL,
+collection1fuelFAIL, mapwrapper1PASS; total18PASS4fuelFAIL0ignored. Allstages
+executed,3533inputs frozen including untracked newslot_log before FIRSTCargo.
+Independent map comparison retains69orderedIDs62host/7guest,0fail/skips/unexecuted.
+
+CoreEnv cold checkpoint delta0; collection finalcommon checkpoint+2202066,
+earlieradverse91 retained. Collection invocation failslater851..882 vs709..738.
+Inference nowfailslater&env382..414; invocation-tags
+stillfails388..413. No whole-program/default-budget acceptance follows. Native
+capture/apply small-graph costs458/176 are tested at every lower integer fuel;
+partial private writes are discarded and public source remains unchanged. IRQ
+coverage is entry-only. Full baseline/final-head CI for this overlay are separate
+requirements;4f results do not validate all new behavior.
+
+Exact4f baseline `cargo test --workspace --locked -- --test-threads=2` completed
+exit101 after3556.25seconds:86PASS2fuelFAIL0ignored,14/251integrationtargets
+completed237unexecuted, doctests not reached,changed[]. CI39156456734 is terminal
+red:foundation400RustPASS/1existingignore and353PythonPASS; integration124PASS/
+18fuelFAIL,31/251completed220unexecuted. All18observed failure names/stages/spans
+matchd38; no general regression-free claim. No local full rerun is being started
+before repairing the focused failures; the full command and passing CI remain
+mandatory final acceptance gates.
+
+Separate diagnostic on4f sets only Macro budget2B. First Runtime macro completes
+start-to-decoded at1701285927units, caller-env1701066103 and transformer210097;
+first independent row/GC checks pass. Second request fails caller&env0..36 at2B;
+whole test0PASS1fuelFAIL, second row/Macro caller unexecuted, full cost unknown.
+All inputs unchanged; temporary test restored. This does not change defaults,
+rates or issue criteria. [Source-bound report and five archives](evidence/m4-pr256-private-slot-log-and-complete-prefix-2026-10-18.md).
+
+## Analyzer literal provenance and prepaid entry storage (2026-10-18)
+
+On base `c170e116216ba26d3cb9b48b7c778ae6f185d4c8`, apply the independently
+reviewed seven-file analyzer-literal dependency, then regenerate bootstrap with
+`cargo run --locked --profile test -p suss-cli --bin suss-bootstrap -- runtime/bootstrap`
+and run `python3 scripts/verify_bootstrap_identity.py`. Both commands pass.
+Commands use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`.
+
+The focused selection executes all32 tests:29PASS,3fuelFAIL,0ignored. Eight
+new native tests, two new CLI tests and seventeen existing slot/reuse guards
+pass. The original invocation-tag regression now passes unchanged in Runtime
+and Macro caller phases, including the original value assertions after GC.
+Inference still fails caller `&env` transport at382..414, core environment at
+0..33, and collection source during invocation at851..882. The unchanged
+pinned-map wrapper passes; independent comparison verifies69 ordered IDs with
+62host passes and7guest judgments, no failures/skips/unexecuted assertions.
+No budget, tariff, fixture or metadata reduction was used.
+
+The controller captured all tracked inputs plus the three new source files
+before the first Cargo command. Only the four normal bootstrap outputs changed
+during generation; subsequent test inputs remained fixed. All stages are
+terminal and the owned process group drained. Fuel/cancellation coverage is
+representative except for the existing exhaustive small slot capture/apply
+cuts; no whole-compiler exhaustive cancellation claim is made.
+
+The exact preceding c170 CI run39162616532 is red: foundation passes;
+integration124PASS/18fuelFAIL across31/251 targets,220unexecuted. Those results
+do not validate this new overlay. No full local baseline was repeated while
+focused acceptance remains red; `cargo test --workspace --locked -- --test-threads=2`
+and passing final-head CI remain required acceptance gates.
+
+Commands, source provenance, raw results and archived inputs are linked in the
+[analyzer-literal evidence report](evidence/m4-pr256-analyzer-literals-2026-10-18.md).
+
+## Recorded metadata scratch and fuel-boundary evidence (2026-10-18)
+
+Adapt the preserved f56f1ab native index and occurrence planner to ad6bbcc.
+Only recorded metadata subroots choose sparse scratch above4096 enclosing
+recipes; small recorded graphs and ordinary/controlled materialization remain
+dense. All new index/allocation work is charged. No form limit, metadata
+omission, guest-value authority cache or error-triggered replay is introduced.
+
+The final V8 focused command cohort is30PASS/3fuelFAIL/0ignored, all33 tests
+executed. Separately, production-identical V3 runs pass eight index/occurrence
+tests and six existing construction guards; V4 passes the real-source matrix
+and three semantic/cost tests; V6 passes the exception/recovery test. Thus the
+selection covers52 unique tests with49 positive results and3 fuel failures,
+across explicitly separate source tuples, not one final-source52-test run.
+The original failures remain inference during caller `&env` at382..414, complete
+core environment during caller `&env` at0..33, and collection source during
+invocation at851..882. Original invocation tags and the pinned-map wrapper pass.
+
+Tests retain Runtime/Macro phases, widths2/128, padding0/20000, full source
+ownership/GC and nested-payload poison checks. Runtime-wide memo facts deny
+certification while Macro authenticates them; logical source is valid before
+poison and invalid afterward in all cases. New comparison fixtures explicitly
+use200M for diagnostics; existing regression allowances and payloads are unchanged.
+
+Raw failed new-test assumptions are retained: insufficient dense-control fuel,
+unconditional Runtime certification, debug-text exception matching, parsed versus
+inspection spans, a recovery bridge holding its captured throwing hash, and a
+strict final-unit fuel assumption. The repaired tests inspect actual language
+values, capture a fresh bridge for the explicit recovery request and keep all
+lower exhaustion cuts. At the final-unit boundary, all four phase/mode cases
+return with zero fuel and reject the next positive host debit in the same scope.
+Cold and warm costs are equal in that fixture; no cache-saving claim is made.
+
+Use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and
+`CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`.
+The archived controller plans contain exact test selectors, commands and source
+freezes. Normal `cargo run --locked --profile test -p suss-cli --bin suss-bootstrap -- runtime/bootstrap`
+and `python3 scripts/verify_bootstrap_identity.py` pass. A final correction of
+three test-comment lines regenerates only BOOT4; both Wasm modules retain exact
+noncustom sections. No additional semantic test run is credited to that refresh.
+
+The preceding ad6 diagnostic measures414848670 selected scratch debits within
+a1706480543-unit completed environment interval (825 calls,N100545,plain reached
+nodes4–117,median11). This24.310% fraction is not a predicted net improvement.
+Wide sparse controls can cost more. The following expansion still fails at2B;
+whole-program required cost is unknown. Published ad6 CI39166019279 has foundation
+success and integration127PASS/17fuelFAIL,32/252 targets completed,220unexecuted.
+These results are separate from the new port. The exact full workspace command
+and passing final-head CI remain acceptance gates; no full local rerun was
+started while original focused acceptance remains red.
+
+[Recorded-scratch evidence and complete raw history](evidence/m4-pr256-recorded-metadata-scratch-2026-10-18.md)
+bind the commands, source/bootstrap tuples, independent map replay and final
+comment-only artifact correspondence. Whole-request cost for the new port is
+not inferred from the preceding ad6 scratch census.
+
+## Complete core-environment cost measurement (2026-10-18)
+
+On c59b623, a test-only2B Macro allowance completes the first Runtime expansion
+then fails the second environment at0..36. A separate10B diagnostic completes
+the original fixture in both caller phases with every assertion retained:
+1PASS/0FAIL/0ignored,694.26seconds. The four traced expansion costs are
+1299517125,3766083473,1299585605,3766081893; these exclude work outside the
+trace boundaries. Both controllers are terminal, drained and source-restored.
+The first expansion saves407183242units (23.8579%) against the completed ad6
+measurement; no full-program time improvement or old second-request comparison
+is established. Production defaults and issue acceptance criteria are unchanged.
+
+Historical second-request prefix partitioning attributes25.26M units to658
+completed validation checks and1.832B to inter-check gaps; it does not identify
+a single dominant function or prove c59 counts. Separate expectation projection,
+witness capture, logical comparison and outer materialization before selecting
+another optimization. The exact c59 CI run39172955939 is terminal failure with
+foundation success; no full local baseline was repeated while focused tests fail.
+
+[Commands, raw logs, input freezes and independent reviews](evidence/m4-pr256-complete-coreenv-cost-2026-10-18.md)
+retain the diagnostic overlays and limitations.
+
+## Private placeholder lookup evidence (2026-10-18)
+
+Source `12b88bcecf5e300360745c67ded9820f8afd9fc3` removes redundant token-owner rescans using checked insertion and immutable Session identity. A prepaid dispatch uses empty/direct lookup for zero/one-to-two tokens and immutable GC kind/arity negative filtering for larger sets. Exact reference identity, input ownership, capture/apply checks and callback order remain. Normal bootstrap/identity verification pass; the actual final focused cohort is **12PASS/0FAIL/0ignored** (7 slot tests, 5 reuse guards), with no allowance override.
+
+Wide lookup costs13007→1158 units; empty-token lookup at96 inputs costs193→100. One/two-token compatible cases add only2/1 units per call, constant across widths8/96. These are lookup intervals, excluding setup and GC; full-program improvement remains unmeasured. The earlier V2 small-case regressions and distinct observer tuple remain archived, not counted as final tests. The observer finds about95% of second-request transport cost in parent execution, without isolating token scans. Its Macro-first cost differs150 units from control; cause is unknown.
+
+Use `CARGO_BUILD_JOBS=1`, `RAYON_NUM_THREADS=1` and the shared `CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`. Exact `private_slot` and `portable_macro_graph::reuse::tests::reuse_` commands, source/bootstrap freezes and independent reviews are in the [evidence report](evidence/m4-pr256-private-slot-token-scans-2026-10-18.md). Production allowances and issue criteria remain unchanged. No full baseline or passing final-head CI is established; measure the complete fixture on this source next.
+
+
+## Complete CoreEnv cost comparison on19def
+
+Ran original pinned map200M then a diagnostic-only10B Macro allowance on the unchanged complete CoreEnv fixture. Each test passed1/0/0; map has69 ordered IDs with62 independent host passes and7 guest judgments. Current four macro costs:1299517125,2630830814,1299587037,2630829234. Compared with c59 subtotal10131268096, current subtotal7860764210 removes2270503886 units (22.4108558%) across traced expansions only. Both second requests remove1135252659; Macro-first is adverse1432, retained. Harness637.42s/control694.26s are single uncontrolled samples, not a benchmark. All3553 input paths bind to19def and both stage freezes are fixed; CLI setter restored, source/BOOT unchanged. Commands/raw/checkpoints are in the evidence report/archive. The diagnostic does not establish default10M success, a full baseline or passing final-head CI. It changes no shipped allowance or reset policy.
+
+[Complete-cost report and replayable raw evidence](evidence/m4-pr256-private-slot-complete-cost-2026-10-18.md).
+
+
+## REPL compilation-fuel configuration evidence
+
+Source `49d7ea349dfb051cb1916b12ff07a7be21749ff3` adds explicit `--compile-fuel N`; legacy `--fuel N` still sets both evaluation and compilation allowances, then the explicit compilation option overrides only its side regardless of argument order. Both defaults remain10M. Both native frontends use one private startup helper. Accounted reader/HIR/expansion/Macro work uses that policy; engine JIT time and memory are outside this fuel accounting. No original allowance or reset policy changed.
+
+V3 actual14 test executions:13PASS/1 new-fixtureFAIL. Five parser and two real-options/reset tests pass, along with six unchanged legacy preservation regressions. Initial256-iteration macro returned42 but cost36346<=Runtime50000, correctly failing its own isolation criterion; remaining subprocess tail/order was unexecuted. V4 changes only that new bound to1024, then runs only the corrected process test:1PASS/0FAIL in98.19s. Both flag orders measureMacro134650 withCompile10M>Runtime50000; Runtime infinite loop traps typedOutOfFuel and next43 succeeds. A separate successful realAPI reset preservesRuntime10M/Compile20M via existing options/ExpansionHost reads. Low50k process reset is not required or claimed.
+
+Thus14 distinct positive outcomes exist across production-identical V3/V4 tuples, not a fresh14-test final-source run. Initialfailure and V1/V2 unexecuted design corrections remain archived. NormalBOOT/identity PASS bothruns; allBOOT4 fullbytes identical. No fullbaseline/finalCI/readiness/issuecompletion/promotion/merge claimed.
+
+Exactargv/environment/rawlogs/freezes/sourcebindings are in the configuration evidence. ArchiveSHA256 `3490a570cae944f5b8448c51dfca167c6e4103733cf9fcb62d7ca19860c0c253` (65 safe members,64 content-addressed payloads,135 logical paths); baseGit/bootstrap dependencies explicit, not standalonewhole-repository.
+
+[Configuration commands, raw outcomes and source binding](evidence/m4-pr252-repl-compile-fuel-2026-10-18.md).
+
+
+## Compilation-test fuel calibration, 2026-10-18
+
+The user authorized compiler-test allowance calibration. #252 and #241 now permit
+explicit compiler allowances while preserving Runtime limits and the original
+semantic assertions. `tests/support/compilation_fuel.rs` in suss-cli defines an
+initial 10B allowance for 16 in-process semantic tests (previously 10M, 40M or
+100M). The completed CoreEnv trace on source19def measured a largest request of
+2,630,830,814 units; this supports headroom for that fixture, not every corpus.
+See `docs/runtime/compilation-test-fuel.md` for the old/new settings.
+
+Independent source review verified only Macro-session allowance changes, with
+original sources/assertions, caller budgets, default-fit controls and explicit
+exhaustion tests preserved. No shipped default, metering tariff or bootstrap
+payload changed. `python3 scripts/verify_bootstrap_identity.py` passed. Cache:
+`/home/bobby/.cache/suss-m4-work/pr252-test-compilation-budget-audit/`.
+
+Focused command launched with CARGO_TARGET_DIR set to
+`/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target`, CARGO_BUILD_JOBS=1,
+RAYON_NUM_THREADS=1, without setting RUSTFLAGS:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_source_tags --test compiled_macro_collection_source_asts --test compiled_macro_core_environment -- --test-threads=1
+```
+
+At publication the command is still executing; no terminal result or acceptance
+is claimed. Log: `/home/bobby/.cache/suss-m4-work/pr252-test-budget-calibration/focused.log`.
+The public-record AOT subprocess still needs an explicit compiler-fuel option;
+its Runtime invocation allowance must remain unchanged. Full baseline and final
+CI results have not been established by this calibration patch.
+
+
+## AOT compilation budgets and failure diagnostics — source preparation
+
+The independently reviewed follow-on supplies optional `--compile-fuel` to native
+file/namespace/main/project compilation and `AotOptions::compile_fuel` to library
+preparation. Existing wrappers/defaults and generated Runtime execution limits
+are preserved. The public-record command fixture now supplies the shared10B
+compilation allowance. New real-command tests exercise omitted, explicit zero
+and explicit10B options, failed-output preservation and actual artifact execution.
+Their source packets/reviews are under
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-source-v2/`.
+
+An actual pre-change CLI probe on the already-built binary failed with code1 in
+16.0055s: macro invocation exhausted the original10M default at bytes97..110,
+retaining the prior artifact, but stderr omitted `app.sus`. Raw stderr, binary
+hash, fixture/argv and terminal receipt are in
+`/home/bobby/.cache/suss-m4-work/pr252-aot-filename-before/`.
+A reviewed AOT error-context fix adds the selected source path to Compile errors
+while retaining their span, stage and variant; this is outer compilation context,
+not a claim to recover missing dependency-specific span ownership. The strict
+command regression still requires filename/span, prior/absent output behavior
+and executed42 recovery at the same original defaults.
+
+An additional focused regression returns an infinite lazy macro result and
+requires exhaustion at expanded-result transport, prior ordered Macro effects,
+no partial Runtime publication and same2M-budget recovery in both caller phases.
+It does not establish interruption specifically during lazy realization. The
+existing macro-interrupt regression's expected diagnostic now includes the
+production stage label; its budgets and recovery assertions are unchanged.
+These source changes have not yet been typechecked or executed. Next sequence:
+normal bootstrap generation, identity verification, focused parser/options and
+real-command tests, async controls, public-record execution, lazy-result negative
+and macro-interrupt test. Prepared commands are in
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-validation/stages.json`.
+
+The earlier6d calibration command is terminal exit0:6passed/0failed/0ignored
+across collection3(360.27s), complete CoreEnv1(470.29s) and source-tags2(128.74s).
+Original assertions/caller budgets and both caller phases are retained. Later AOT
+source edits are not attributed to those already-built binaries.
+
+The AOT follow-on has now passed normal bootstrap generation, identity, parser2,
+actual options1 and the strict AOT publication/filename/span/default-recovery1
+(105.06s). Remaining stages are still executing in the sole producer session35563;
+no result is inferred for them. Source bindings, commands and limitations are in
+`docs/roadmap/evidence/m4-pr252-compilation-calibration-2026-10-18.md`.
+No full baseline or final-head CI success is inferred.
+
+
+## Compilation boundary documentation and large generated-result regression
+
+`docs/runtime/compilation-fuel.md` documents actual3e7 request scopes, host/guest
+charging, AOT's pre-request parse and per-top-level staging, same-budget recovery,
+and native/JIT/memory limits. It explicitly records the unmetered declaration
+provenance formatting/hash limitation rather than claiming all Rust work is fueled.
+
+The independently source-reviewed `compiled_macro_large_finite` test adds actual
+compilation/execution of4097-wide and80-deep inputs and transformer-generated
+results in both caller phases, followed by GC and complete ordered data/metadata
+readback. It uses the shared10B compilation setting and asserts caller limits
+remain unchanged. At publication it is UNEXECUTED; typecheck and behavior are not
+inferred from source review. After the current producer drains, execute:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_large_finite -- --test-threads=1 --nocapture
+```
+
+Use the existing shared target/jobs1/Rayon1 environment, without setting RUSTFLAGS.
+The new file is CLI-test-only; `python3 scripts/verify_bootstrap_identity.py` passes
+without regenerated payload changes. Source/review cache:
+`/home/bobby/.cache/suss-m4-work/pr252-large-finite-coverage-audit/`.
+
+The ongoing3e7 validation now also passes the real file/namespace target1(202.94s),
+main target1(98.96s) and project target1(100.60s). All four modes check default
+success, explicit-zero failure with prior output retained, and explicit-budget
+compile plus actual component/command execution. Async/public-record/lazy/IRQ
+stages remain separate, unfinished execution in that same producer.
+
+
+## Completed AOT pipeline and corrected finite bridge expectations
+
+The one-shot35563 producer is terminal0 and drained:23Rust passes,0failures,
+0ignored; normal bootstrap/identity pass. This includes all four real AOT modes,
+async7/public-record7, actual lazy-result exhaustion/effects/no-publication and
+macroIRQ recovery. Full commands, source qualifications and harness times are in
+`docs/roadmap/evidence/m4-pr252-compilation-calibration-2026-10-18.md` and
+`/home/bobby/.cache/suss-m4-work/pr252-aot-compile-fuel-validation/test-counts.json`.
+
+The unchanged obsolete builder selector then failed101 at `unwrap_err` because
+depth64 quotation succeeds (0pass/1fail,41.54s). Raw log/source receipt retained.
+The corrected test replaces only old depth64/vector4096/string1048577 rejection
+assertions with quote/GC/full-content readback at original Session budgets,
+retaining all old metadata/effect/resource/handle checks. The corrected case has
+passed inside the ongoing48802 producer. Exact command:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_data_builders --test compiled_macro_large_finite -- --test-threads=1 --nocapture
+```
+
+Environment remains shared target/jobs1/Rayon1, no RUSTFLAGS setting. Log:
+`/home/bobby/.cache/suss-m4-work/pr252-builder-and-large-finite.log`.
+The remaining builder cases and complete large/deep compiled pipeline are not yet
+terminal; no result is inferred. This CLI-test-only change does not regenerate
+compiler payloads. Full workspace and final-head CI remain separate commands.
+
+
+## Full finite transport execution
+
+The corrected full builder target finishes7PASS/0FAIL/0ignored226.15s. The new
+large-finite target in that same command fails its first wide-argument Runtime
+evaluation at its initial10M allowance, after successful compilation. Overall
+48802 is terminal101 and drained; raw failure and original fixture are preserved.
+Only the new positive fixture now chooses explicit100M evaluation, independently
+from10B compilation. Original programs/dimensions/metadata/assertions remain.
+Existing Runtime regressions/defaults are unchanged. Fresh55774 is terminal0 and
+drained:1PASS/0FAIL/0ignored75.73s, all four cases in both caller phases with full
+readback after GC. See the expanded evidence report for exact commands/logs.
+
+The next sole producer42764 executes the four full remaining targets:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_declaration_metadata --test compiled_macro_compiler_catalog --test compiled_macro_control_source_asts --test compiled_macro_constructor_source_asts -- --test-threads=2
+```
+
+Environment remains shared target/jobs1/Rayon1. Log:
+`/home/bobby/.cache/suss-m4-work/pr252-remaining-preservation.log`.
+Its executables were built before the subsequent provenance-source edit; its
+results are attributed to the pre-repair production/bootstrap bytes. BOOT remains
+unchanged until this producer drains. No result for unfinished targets, repaired
+provenance or the final full baseline is inferred.
+
+
+## Provenance and lazy-result cancellation execution
+
+42764 completed15PASS/0FAIL/0ignored acrosscatalog5,constructor2,control5,decl3;
+source binding/log/terminal receipt are preserved. New metering runs normal BOOT
+and identity successfully. Initial19730 lib-test compilation failed E0433 in the
+new IRQ child's trait path; no runtime checks ran. One-linecrate::portable repair
+then fresh38624 passes provenance3(47.18s) and deterministiclazyIRQ1(73.11s), with
+exact count guards. Raw history/receipts are under
+`/home/bobby/.cache/suss-m4-work/pr252-provenance-and-lazy-irq-validation[-v2]/`.
+
+The SHA256 stream preserves old bytes, pays chunks and finalization, retains typed
+errors/span/path and completes before macro replacement evaluation/publication.
+The IRQ test uses actual guest thunk effects and native-channel acknowledgement,
+then delegates to the original guest spin. It requires source-stage/spans, no
+partial caller publication and same2M recovery; timeouts do not select the stage.
+Detailed commands/results/limitations are in the expanded calibration evidence.
+
+The next stages execute the originalgeneric-case control then five old quota
+selectors unchanged, retaining failures and an overall nonzero result. The eight-
+constant mixed-case guard itself remains unmodified; a direct CLI probe already
+records its rejection of valid nine-constant source. Six additional correctness
+Macro allowances identified by4baf CI are now explicitly10B; their Runtime/test
+content is unchanged, and their execution replay is not yet observed. Full baseline
+and final-head CI are still separate requirements.
+
+
+## Finite-limit audit and native control recursion
+
+The unchanged quota audit preserved four obsolete rejection failures and an actual
+native stack overflow in the original257-operand `and` case. The latter is a
+compiler defect, not an obsolete assertion. Its repaired full-target replay also
+aborted; tests after that abort remain unexecuted. The completed targets in
+`pr252-finite-cap-removal-validation-v1` are maps6, native entrypoints10, case8
+and Murmur5, all passing; control flow completed one case before SIGABRT.
+
+Core process2252453 identifies repeated `Analyzer::control_form` frames bypassing
+the outer growable-stack boundary. The diagnostic receipt and backtrace are in
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-crash/`; the extracted temporary
+core was removed. The repair guards direct `and`/`or` and `cond` tail recursion
+with the existing analyzer stack-growth pattern. Charges, evaluation order,257
+operands and default budgets remain unchanged. Normal bootstrap generation and
+identity pass for this repair. Execution is ongoing in the single producer:
+
+```sh
+cargo test --locked -p suss-cli --test portable_control_flow -- --test-threads=2
+```
+
+Subsequent stages in
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-fix-validation-v1/`
+run the six calibrated Macro correctness cases across four complete targets and
+the full declaration-functions target. They have no results yet. Full baseline,
+independent final review and passing final-head CI remain required.
+
+
+The stack repair's complete control-flow target is terminal3PASS/0FAIL/0ignored
+(22.51s including build,2.83s test execution), including original257-and, ordered
+257-and, all81 pinned observations and malformed/publication controls. Added
+both-phase257-operand `or` and257-pair `cond` late/early selection regressions
+have independent source review but remain unexecuted at publication. They check
+ordered effects, short circuiting, selected-arm count and readback after GC at
+unchanged default budgets. Compiler payload identity passes again. The ongoing
+calibration stage has completed the field-reference target1PASS75.95s; subsequent
+targets and the seventh calibrated declaration case remain pending. These are
+focused results, not final-head workspace/CI acceptance.
+
+
+Failed-shard CI refresh for8ae is terminal cancelled overall. Three completed
+failed shards contain80PASS/4FAIL across21 harnesses, not all-run totals. Three
+failures are the stale display/map expectations repaired in0b05b4c. The fourth,
+`completed_declaration_hint_boundaries_match_actual_primary_expression_tags`,
+exhausts compiler fuel in caller &env transport23..62. It now uses the same shared
+10B Macro allowance; its Runtime budgets,23 original observations and assertions
+remain byte-identical. Independent tiny-diff review passes; calibrated execution
+is pending before the baseline. Failed logs/metadata remain in
+`/home/bobby/.cache/suss-m4-work/pr252-8ae-ci-failed-jobs-refresh/`.
+
+
+## Additional calibrated semantic execution
+
+The existing producer44278 has completed field-reference1PASS75.95s,
+quote-AST1PASS74.63s and record-projection2PASS779.28s, each with original
+observations and Runtime limits. These executables bind to the recorded
+pre-scanner source/bootstrap snapshot under
+`/home/bobby/.cache/suss-m4-work/pr252-control-stack-fix-validation-v1/`.
+The full source-macro target and subsequent declaration-functions target remain
+running/pending; no result is inferred. A dependent controller queues complete
+control-flow5, source-hint1 and the new repeated-helper companion1 only after
+this run succeeds. The companion checks real guest increments, explicitly reads
+zero after warmup reset, conservatively subtracts one potentially incomplete
+transformer, requires more than one completed transformer, and checks retained
+effects/no publication/same100k-budget recovery. It is unexecuted at this capture;
+the original512-call negative remains unchanged.
+
+A second dependent controller applies the independently reviewed native
+parameter-observation metering patch only after those checks succeed, regenerates
+BOOT normally, verifies identity, and executes its three focused regressions and
+the complete cumulative-fuel target. Both dependent controllers are waiting on
+verified live process identities; they start no parallel Cargo producer. Failed
+prerequisites stop the chain. Full baseline and final-head CI remain unexecuted
+acceptance gates, not implied by these selected passes.
+
+
+## Metered definition observation execution
+
+The preceding controller89334 completed0/drained: complete control-flow5PASS
+9.72s, hint-boundaries1PASS90.93s (all23 observations in both phases) and the
+completed-helper companion1PASS49.87s at unchanged100k Macro allowance. The
+companion proves a conservative lower bound greater than one completed transformer,
+with explicit zero reset readback, no pending definition, retained effects and
+same-budget recovery. Original512-call exhaustion regression is unchanged.
+
+The reviewed parameter-observation repair is now applied. It prepays visits,
+reference allocation/relocation/fills and equal-length symbol comparisons to the
+active Store; both scans retain original order and run before replacement
+publication. Normal bootstrap generation and identity pass. Focused command:
+
+```sh
+cargo test --locked -p suss-compile --lib parameter_observation_ -- --test-threads=2 --nocapture
+```
+
+Actual3PASS/0FAIL/0ignored,63.27s including compilation/45.99s execution. Real
+1000-unit scope decreases1000->919->838 before repeated scans exhaust it; typed
+IRQ and same-budget retry pass. The public API test reaches an actual &form scan
+OutOfFuel at40056 units,bytes0..998, preserves old17 definition/provenance/catalog
+and implicit-input policies, then expands the old definition at that same budget.
+Raw source patch, BOOT hashes, command receipts and logs are in
+`/home/bobby/.cache/suss-m4-work/pr252-metered-parameter-observation-validation-v1/`.
+
+The same sole producer now executes the entire12-test cumulative-fuel target:
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_cumulative_fuel -- --test-threads=2
+```
+
+No terminal result for that target is claimed yet. The next gate after focused
+success is Java/Node-free bootstrap verification followed by the exact required
+workspace command. Final-head CI/review and all remaining issue criteria remain
+separate. Earlier10 calibrated-target passes and declaration2 remain attributed
+to their recorded pre-scan source/bootstrap; no new-source replay is inferred.
+
+
+## Public compiler compilation-budget diagnostics
+
+On2caae8c, complete cumulative-fuel12 passes356.95s including build/336.03s
+execution. Java/Node-free reproduction is terminal0 in121.99s (both byte-exact
+reproductions, identity and bootstrap4). Python foundation passes353 unittests
+plus13 inventory/provenance/lock/runtime checks. Final-head CI foundation passes
+444Rust/0FAIL/1existingignored plus353Python, with actual checkout53829b5 tree
+identical to API/local2caae8c. Raw receipts are under
+`pr252-2caae8c-python-foundation/` and
+`pr252-2caae8c-foundation-117871020476/` in the external work cache.
+
+The exact required workspace command compiled every test target. Its completed
+nonempty harnesses pass48tests: CLImain36(774.41s), AOTsource4(138.71s), compiled
+AOT1(66.35s), async command2(235.22s), file command5(491.85s). The compile-fuel
+command test was running without a verdict when the run was deliberately stopped.
+CI integration0 on the same tree establishes two default compilation-fuel failures
+in `public_compiled_pipeline`: docs/arities/lexical-shadowing449..610 and real
+lexical bindings137..249. Its completed scope is135PASS/2FAIL/3ignored across28of31
+planned targets; three later targets are unexecuted. Integration3 is152PASS/0FAIL
+across all31 targets. Other jobs are not included in these counts. Logs, hashes,
+per-harness audit and checkout/tree proof are in
+`pr252-2caae8c-ci-failure-main/`; no whole-CI result is inferred.
+
+The old local baseline was then cancelled with SIGTERM only to its verified owned
+process group2310496. Actual outer session82293 exits143; the group is observed
+drained. Completed log, cancellation reason, process list and post-drain freeze are
+retained in `pr252-observation-full-baseline-v1/`. This is a cancelled baseline,
+not a full success or a naturally completed test failure; later scope remains
+unexecuted/unknown. No unrelated producer was signalled.
+
+A targeted unchanged expression API control then establishes another real default
+compilation-fuel failure at &env137..228:
+
+```sh
+cargo test --locked -p suss-compile --test public_expression_artifacts compiled_macro_artifact_retains_runtime_state_and_roots -- --exact --test-threads=1
+```
+
+It is terminal101/drained,0PASS/1FAIL/0ignored40.06s execution/60.88s including
+build; source/command/log/receipt are in `pr252-public-expression-before/`.
+The public Compiler APIs do not yet offer per-method compilation overrides for
+these cases. A minimal source/component and expression API configuration repair
+is being prepared; no repaired execution is claimed. Original programs, Runtime
+limits and assertions remain the target. New-source focused checks, normal BOOT,
+required workspace replay, pinned-map verdict capture and final-head CI remain
+separate future commands.
+
+
+The public Compiler source repair is applied after independent V3 review:
+explicit optional-fuel variants for component/source and prepared/cached
+expressions retain all old None defaults, WIT-before-Macro validation and deferred
+Runtime initialization. Only the three demonstrated semantic failures receive the
+same10B policy; all old Runtime settings/programs/assertions are byte-preserved.
+Normal BOOT generation and identity pass. The complete13-test public component
+and12-test public expression targets are executing in the sole local producer;
+new controls and repaired results remain pending except individually logged cases.
+Commands/patch/BOOT hashes are in `pr252-public-compiler-fuel-validation-v1/`.
+
+CI jobs1/2 were separately cancelled by their configured45-minute integration
+limit, explicitly confirmed by API annotations. Completed harness scopes are
+69PASS and131PASS respectively, with no assertion failure observed before
+cancellation. Shard1's portable_indexing and shard2's compile_expr were interrupted;
+16 and8 later targets respectively remain unexecuted. These are not all-run counts.
+Raw logs/annotations/audit are in `pr252-2caae8c-cancelled-jobs/`. A reviewed
+integration-only45->120minute window is now applied; tests, fuel/defaults,
+parallelism4, eight shards and foundation/gate timeouts are unchanged. The new
+window is bounded headroom, not a demonstrated completion guarantee.
+
+
+## Public compiler configuration execution
+
+Normal BOOT/identity and the complete public component/expression command finish0:
+
+```sh
+cargo test --no-fail-fast --locked -p suss-compile --test public_compiled_pipeline --test public_expression_artifacts -- --test-threads=2
+```
+
+Actual25PASS/0FAIL/0ignored: component13(306.75s), expression12(99.37s),
+421.04s including compilation. All three former default-fuel failures now execute
+their original values/state/metadata/arity/effect/GC assertions. New controls
+execute actual42 artifacts and retain None/default, explicit zero, WIT/boundary
+preflight, recovery and rooted state. Session Runtime settings remain unchanged.
+Raw patch, commands, BOOT hashes and terminal receipt are in
+`pr252-public-compiler-fuel-validation-v1/`.
+
+The same old-head CI integration4 subsequently establishes another &env fuel
+failure1026..1069 during the pinned reduction fixture, before any observation rows.
+Its completed scope is71PASS/1FAIL across18of32 targets, with14 later targets
+unexecuted; tree proof/raw audit are in
+`pr252-2caae8c-integration4-117871020816/`. Only that fixture's CompiledMacros
+allowance changes to10B; an exact inverse matches the entire original file,
+including every Runtime setting, original source/oracle, descriptor checks and
+assertion. Complete replay:
+
+```sh
+cargo test --locked -p suss-cli --test portable_reduction_dispatch -- --test-threads=2
+```
+
+Actual4PASS/0FAIL/0ignored73.83s execution, including both caller phases, seven
+original plus three source-order cases and three retained adversarial decoders.
+The new test-only setting uses the established CLI support constant. Receipts are
+in `pr252-reduction-dispatch-calibration-validation-v1/`. CI shard-planner tests
+also pass4/4 after the integration-only120-minute window change. These focused
+results do not replace fresh committed-head workspace/CI or pinned-map evidence.
+
+
+## Global-reference compilation allowance execution
+
+Old2caae8c integration7 reports one pass and one &env fuel failure586..621 in
+`captured_global_declarations_supply_var_ast_fields_without_catalog_mutation`.
+Its actual checkout is the same53829b5 tree. Raw log and parsed harness summaries
+are retained in `pr252-2caae8c-ci-failure-main/job-117871020656*`; no whole-run
+verdict is inferred. Only this fixture's Macro allowance now uses the shared10B;
+an exact inverse matches the entire old file. The independent source review is
+in `pr252-global-reference-compilation-fuel-review/`.
+
+```sh
+cargo test --locked -p suss-cli --test compiled_macro_global_reference_asts -- --test-threads=2
+```
+
+Complete target2PASS/0FAIL/0ignored116.59s execution/117.24s including build;
+11 oracle cases, captured revisions, one-time initializer effects, fields/GC and
+both caller phases remain checked. The second case's original compiler allowance
+is unchanged. Native compiler/source and all four bootstrap payloads are unchanged
+fromd7c49a6, which has independent16-path committed-head review; the source-only
+library/CI repair already records public25 and reduction4 complete passes. The
+literal-buffer cache proposal was verified already adopted inad6bbcc (five exact
+postimages and two later-evolved files); it remains archival and was not reapplied.
+
+The next focused acceptance action is an unchanged200M pinned-map capture and
+independent69-ID/verdict comparison before the fresh required workspace baseline.
+No pending full-baseline/CI/map result is claimed by these focused passes.
+
+## Full upstream-suite compilation calibration and exact failure-map review
+
+At base c0c9c45, a fresh original200M Macro/Runtime raw suite capture terminates101
+against stale transport-cap diagnostics:1067host passes/25guest judged/22failures,
+4740unexecuted/186failed namespaces. Compiler-only10B in `check("suite")` leaves
+Runtime, Harness::new, fixtures and pinned-map200M untouched; actual second
+capture terminates101 against the old map in318.97s including build, with
+1144host passes/25guest judged/22failures,4663unexecuted/185failed namespaces.
+The extra77contains? assertions pass. Independent review preserves all960old
+baseline successfulIDs and all1092original-capture successes; no existing raw
+assertion/skip records change. Eight namespace entries now describe actual
+execution; new update#48 remains explicitly kind:error, with all existing
+failures/skips retained. The reviewed map compares equal to the complete raw
+capture with the existing Python comparator; no oracle/reference/source rewrite.
+
+Commands (CARGO_BUILD_JOBS=1/RAYON_NUM_THREADS=1, existing external target dir):
+
+```sh
+SUSS_CLOJURE_TEST_SUITE_CAPTURE=<capture-dir> cargo test --locked -p suss-compile --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=1 --nocapture
+python3 scripts/clojure_test_suite.py compare --suite suite --observations <capture-dir>/suite-observations.json
+cargo test --locked -p suss-compile --test clojure_test_suite -- --test-threads=2 --nocapture
+```
+
+The last complete-target command is still running; no terminal pass is claimed.
+Two direct actual CLI probes establish update#48's underlying message: original
+apply-update expression exits1 with uncaught language exception30.117s; the same
+expression inside catch/ex-message returns"Wrong arity",exit0,28.960s. This
+newly reachable portable-core discrepancy is tracked in issue28; it was formerly
+namespace-blocked, is retained as an error, and has not been fixed by calibration.
+Raw captures, source patch, terminal receipts and independent classifications:
+[evidence report](evidence/m4-pr256-suite-calibration-2026-10-19.md).
+
+Base-source workspace run42160 was explicitly cancelled143after53completedPASS
+once same-tree CI1 established the stale baseline failure; it is not a full pass.
+Current base CI foundation and integration0/3/4 pass; integration1 fails on this
+old baseline, integration6 and7 reveal additional semantic-fixture Macro fuel
+failures in public_compiled_command and compiled_record_factories respectively.
+Those two repairs are separately prepared; they are not credited executed here.
+Fresh complete workspace and committed-head CI remain required.
+
+## Public command compilation allowance and record-factory execution
+
+The preceding full upstream harness now completes12PASS/0FAIL/0ignored621.76s
+execution/622.21s including build on8921f86 native/test source. This includes the
+exact reviewed suite failure map, original200M map control, reader15/when-let12
+ordered observations and adversarial decoding. It predates the native API
+follow-up below and is not credited as a fresh final-native workspace verdict.
+
+Same-tree c0 CI6 completed92PASS/1FAIL21of32targets (11unexecuted), failing
+public_compiled_command's lexical macro &env transport179..471. CI7 completed
+29PASS/1FAIL8of32targets (24unexecuted), failing record map-factory &env
+137..171(inner4756..4771). New stateless public
+`Compiler::compile_for_main_with_compile_fuel` delegates to the existing command
+preparation option; legacy compile_for_main delegatesNone. Only the original
+lexical-command and map-factory fixtures receive shared10B compilation; complete
+source/assertions/profile checks, Runtime, defaults and both factory phases are
+retained. New command control executes zero/preflight/same-Compiler recovery,
+None/10B and legacy default command paths with expected explicit exit73.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --no-fail-fast --locked -p suss-cli --test public_compiled_command --test compiled_record_factories -- --test-threads=2
+python3 -B -m unittest discover -s scripts -p test_ci_test_shards.py
+```
+
+Actual fresh normal bootstrap20.55s/identity0.91sPASS. Both six-section non-custom
+Wasm sequences equal prior images; native source/custom identity and hashes are
+regenerated. Complete factory5PASS/0FAIL/0ignored337.40s; command6PASS/0FAIL/
+0ignored635.89s, combined Cargo terminal0in994.96s including compilation.
+The original command completion/exit-policy test ran fully; nothing was filtered.
+CI planner4tests also pass. CI now passes --no-fail-fast to Cargo so every selected
+harness can execute despite an earlier failure, preserving nonzero exit status,
+partition coverage, threads/concurrency, test limits and the120-minute window.
+
+Raw original CI failures, focused terminal logs, source/bootstrap hashes, exact
+fixture-preservation checks and independent reviews are in the
+[command-fuel evidence](evidence/m4-pr252-command-compilation-fuel-2026-10-19.md).
+Fresh Java/Node-free byte-exact bootstrap verification, the unfiltered required
+workspace command and final committed-head CI remain separate required gates.
+No issue closure, promotion or merge follows from these focused results alone.
+
+
+## Temporary storage for local verification
+
+On source65e9718, an exact workspace invocation stopped with41passing tests
+and2failures when the async-command fixtures' first source-file writes returned
+OS122, `Disk quota exceeded`. Compilation and guest invocation had not started
+in either failed fixture. `/tmp` was a tmpfs with per-user quotas; filesystem
+free-space alone did not establish available user quota. The natural exit101 and
+later unexecuted scope remain recorded, not converted into a successful baseline.
+
+A private writable directory on the Suss work-cache filesystem, supplied through
+process `TMPDIR`, avoids that exhausted temporary-filesystem quota.
+Choose an existing writable cache parent before running the commands below. No unrelated
+files were deleted, and no source, fuel/default, Runtime or assertion changed.
+The unchanged complete async target then passed2/0/0in193.28s:
+
+```sh
+suss_test_tmp="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/suss-tests.XXXXXX")" || exit 1
+TMPDIR="$suss_test_tmp" cargo test --locked -p suss-cli --test compiled_aot_async_command -- --test-threads=2
+TMPDIR="$suss_test_tmp" cargo test --workspace --locked -- --test-threads=2
+```
+
+Use the existing bounded Cargo/Wasmtime worker settings. Only the focused async
+result is credited above; it does not replace the full unfiltered workspace
+verdict. Java/Node-free byte-exact bootstrap verification already passed for the
+unchanged native source. Commands, actual failure/recovery and their limits are
+also recorded in [issue252](https://github.com/bobby/suss/issues/252#issuecomment-6261123567).
+
+
+## Public file and uncached-expression compilation allowances
+
+The remaining three failures in source65e9718 CI39207507722 are retained in the
+[final calibration evidence](evidence/m4-pr252-final-compilation-calibration-2026-10-19.md),
+including all254integration targets (1716PASS/3FAIL/17existingignored). The local
+workspace retry was cancelled after that same-tree terminal evidence:102complete
+passes, actual exit143; the interrupted compiler-catalog scope remains unverified.
+
+New explicit compilation-fuel entry points for file and uncached-expression
+compilation preserve legacy None defaults, explicit-zero exhaustion, typed
+preflight errors and Runtime budgets. Only the original two exhausted semantic
+fixtures receive the shared10B compiler allowance. The300-argument comparison
+now executes direct and alias forms, plus a false final-pair case.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --workspace --locked --no-fail-fast --test portable_comparisons --test public_compiled_files --test uncached_expression_artifacts -- --test-threads=2
+```
+
+With the private cache TMPDIR above and bounded worker settings, normal bootstrap
+generation passes18.67s and identity1.01s. Corrected focused validation exits0 in
+464.20s: both comparison harnesses7+2PASS, public files14PASS, uncached expressions
+4PASS; zero failures/ignores/filtered tests. Both phases retain all six non-custom
+Wasm sections; source/custom identity is refreshed. An initial author build's
+E0308 namespace/fuel forwarding error is retained separately; it executed no
+tests and was corrected through the existing typed AotOptions route.
+
+These are focused results. Fresh committed-source Java/Node-free reproduction,
+the exact workspace command and final-head CI remain required; no closure,
+promotion, merge or whole-core conformance is claimed.
+
+
+## Source-bound command history from be94031
+
+The following preserved commands and results describe the incoming #263 source
+`be9403182656cf370c708842de2828e869af19e8` and its explicitly named earlier
+variants. They provide historical evidence, not verification of the newly
+composed source or regenerated bootstrap.
 
 ## Combined literal provenance and pinned keyword execution — 2026-10-16
 
@@ -28734,3 +29835,30 @@ CI before interpreting unexecuted suites. The remaining source-child fuel failur
 and default core-import setup failure require diagnosis under unchanged budgets.
 No current-source Jank, issue acceptance, complete workspace baseline, passing CI
 or merge-readiness conclusion follows from this checkpoint.
+
+
+## Analyzer literal provenance validation commands
+
+The source integration composes explicit literal-key positions, guarded retained
+declaration keys and native body-origin facts. The accompanying
+[evidence](evidence/m4-pr263-literal-provenance-source-2026-10-19.md) records
+source-only reviews, corrected static findings and qualified development probes.
+Eight changed Rust files parse and whitespace checks pass; no native test result
+is established for this integrated source. The bootstrap files still correspond
+byte-exact to parent66a55ce and must be regenerated normally from this source.
+Type/history and reader shorthand key provenance remain explicit limitations.
+
+Use the existing private writable TMPDIR and bounded worker settings, then run:
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked -p suss-compile --lib analyzer_literal -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib retained_declaration -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_analyzer_literal_memos --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+cargo test --workspace --locked -- --test-threads=2
+```
+
+Keep actual failures/unknowns and source/BOOT tuples separate. These commands are
+validation targets here, not results or permission to promote an incomplete issue.

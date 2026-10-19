@@ -1,0 +1,67 @@
+{
+  "scope": "Final noncompiled checker/provenance bytes after focused execution. Compiled419 inputs are unchanged; this is not full baseline or CI evidence.",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/check_when_let_provenance.py"
+      ],
+      "exit": 0,
+      "stdout": "when-let source provenance, adaptation, retained oracle bytes and receipts match; no Suss execution implied\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_reviews.py"
+      ],
+      "exit": 0,
+      "stdout": "Review overlay verified: 566 reviewed, 499 unassessed declarations\n",
+      "stderr": ""
+    }
+  ],
+  "sha256": {
+    "scripts/check_when_let_provenance.py": "d5c4cab3e8c0886fe4f4cd316b9acb538850f836293b166f1e1fe2dea0c9dbcb",
+    "docs/compatibility/when-let/provenance.json": "c30e46e9d9c0c9a8448cc8a7f7444683b652688307ab5ac421e86b4a606754ee",
+    "docs/compatibility/reviews.edn": "8a5e21f754c05e3f3993479748d320e0b9e5f751d170015563ac09c179fa00c8",
+    "crates/suss-cli/tests/compiled_when_let.rs": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+    "crates/suss-cli/tests/compiled_let_destructuring.rs": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d"
+  },
+  "whitespace": {
+    "full_command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "full_exit": 2,
+    "raw_files": [
+      "docs/compatibility/when-let/direct-let-oracle/guest1.cljs",
+      "docs/compatibility/when-let/direct-let-oracle/guest2.cljs",
+      "docs/compatibility/when-let/direct-let-oracle/src/suss_oracle/direct_let_probe.cljs",
+      "docs/compatibility/when-let/epl-v10.html",
+      "docs/compatibility/when-let/oracle/EPL-1.0.html",
+      "docs/compatibility/when-let/oracle/guest.cljs",
+      "docs/compatibility/when-let/oracle/src/suss_oracle/when_let_probe.cljs",
+      "docs/compatibility/when-let/when-let.patch"
+    ],
+    "reason": "Upstream license CRLF, exact executed guest source bytes and unified patch context are retained. They are not normalized. Full diagnostics retained in task cache.",
+    "authored_command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":(exclude)docs/compatibility/when-let/direct-let-oracle/guest1.cljs",
+      ":(exclude)docs/compatibility/when-let/direct-let-oracle/guest2.cljs",
+      ":(exclude)docs/compatibility/when-let/direct-let-oracle/src/suss_oracle/direct_let_probe.cljs",
+      ":(exclude)docs/compatibility/when-let/epl-v10.html",
+      ":(exclude)docs/compatibility/when-let/oracle/EPL-1.0.html",
+      ":(exclude)docs/compatibility/when-let/oracle/guest.cljs",
+      ":(exclude)docs/compatibility/when-let/oracle/src/suss_oracle/when_let_probe.cljs",
+      ":(exclude)docs/compatibility/when-let/when-let.patch"
+    ],
+    "authored_exit": 0
+  }
+}

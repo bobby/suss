@@ -368,3 +368,61 @@ fn typed_invocation_rejects_malformed_integer_instead_of_substituting_zero() {
     );
     assert_eq!(String::from_utf8(floating.stdout).unwrap(), "2.5\n");
 }
+
+
+#[test]
+fn compile_file_fuel_exhaustion_preserves_output_and_recovers_without_budget_changes() {
+    let root = tempfile::tempdir().unwrap();
+    let input = root.path().join("app.sus");
+    let artifact = root.path().join("app.wasm");
+    let source = concat!(
+        "(ns app)\n",
+        "(defmacro budget-spin [] (loop [] (recur)))\n",
+        "(def calculate (fn [] 42))\n",
+        "(def never-ready (budget-spin))\n",
+    );
+    std::fs::write(&input, source).unwrap();
+    std::fs::write(root.path().join("api.wit"),
+        "package test:macro-fuel; world api { export calculate: func() -> f64; }")
+        .unwrap();
+    let flags = ["--wit-world", "api", "--export", "calculate=app/calculate"];
+    let call = "(budget-spin)";
+    let start = source.find(call).unwrap();
+    let expected_span = format!("{start}..{}", start + call.len());
+    let previous = b"previous artifact must survive failed compilation";
+    std::fs::write(&artifact, previous).unwrap();
+    for existing in [true, false] {
+        if !existing { std::fs::remove_file(&artifact).unwrap(); }
+        // No fuel flags: exercise the original public AOT defaults and source.
+        let output = compile(root.path(), &flags);
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        assert!(!output.status.success(), "nonterminating macro compiled");
+        assert!(output.stdout.is_empty(), "failed compile reported success");
+        assert!(stderr.contains("Compilation error:"), "{stderr}");
+        assert!(stderr.contains("app.sus"), "missing source filename: {stderr}");
+        assert!(stderr.contains(&expected_span), "missing call span {expected_span}: {stderr}");
+        assert!(stderr.contains("during compiled macro invocation"), "wrong exhaustion stage: {stderr}");
+        assert!(stderr.contains("all fuel consumed by WebAssembly"), "wrong failure: {stderr}");
+        if existing {
+            assert_eq!(std::fs::read(&artifact).unwrap(), previous);
+        } else {
+            assert!(!artifact.exists(), "failed compilation published an artifact");
+        }
+    }
+    // A later independent compile uses the same flags and default allowances.
+    std::fs::write(&input, concat!(
+        "(ns app)\n",
+        "(defmacro budget-value [] 42)\n",
+        "(def calculate (fn [] (budget-value)))\n",
+    )).unwrap();
+    let output = compile(root.path(), &flags);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let engine = engine();
+    let component = Component::from_file(&engine, &artifact).unwrap();
+    let mut store = Store::new(&engine, ());
+    // Existing component execution allowance in this test module is unchanged.
+    store.set_fuel(100_000_000).unwrap();
+    let instance = Linker::<()>::new(&engine).instantiate(&mut store, &component).unwrap();
+    let calculate = instance.get_typed_func::<(), (f64,)>(&mut store, "calculate").unwrap();
+    assert_eq!(calculate.call(&mut store, ()).unwrap().0.to_bits(), 42.0_f64.to_bits());
+}

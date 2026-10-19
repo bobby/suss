@@ -1,0 +1,11 @@
+--- captured/crates/suss-cli/tests/compiled_when_let.rs
++++ current/crates/suss-cli/tests/compiled_when_let.rs
+@@ -93,7 +93,7 @@
+             // Public transport currently wraps the language exception. Exact
+             // message/ex-data require separate macro-store/oracle observations;
+             // an unresolved name or read error cannot satisfy this assertion.
+-            assert!(error.to_string().contains("Compiled macro expansion failed: Uncaught language exception"),
++            assert!(error.to_string().contains("Compiled macro expansion failed during compiled macro invocation: Uncaught language exception"),
+                     "{source}: {error}");
+             assert_eq!(observe(&mut session, &mut macros, "(+ 20 22)"), number(42.0));
+             assert_eq!(observe(&mut session, &mut macros, "(when-let [x 17] x)"), number(17.0));

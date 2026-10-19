@@ -68,6 +68,7 @@ fn public_file_async_import_uses_macros_and_initializes_dependencies_once() {
             wit_name: "increment".into(),
             source: Symbol::namespaced("host", "increment"),
         }],
+        ..Default::default()
     };
     let bytes = compile_file_with_options(&source, &wit, Some("api"), &[root.to_owned()], &options)
         .expect("public AOT source/macro/dependency route");
@@ -152,6 +153,7 @@ fn mapping_fixture(
             wit_name: "increment".into(),
             source: Symbol::namespaced("host", "increment"),
         }],
+        ..Default::default()
     };
     (directory, path, wit, options)
 }

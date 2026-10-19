@@ -103,12 +103,6 @@ impl Analyzer<'_> {
                     .iter()
                     .all(|(_, value)| matches!(value, CaseConstant::Keyword(_)))
             });
-        if !primitive && !keywords && seen.len() > 8 {
-            return Err(fail(
-                form.span.clone(),
-                "Case equality bootstrap supports at most eight constants",
-            ));
-        }
         // Analyze user expressions in source order, then build branching from
         // the already analyzed arms. Selector effects happen exactly once even
         // with no clauses.

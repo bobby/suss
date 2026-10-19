@@ -60,6 +60,14 @@ pub(crate) fn prepare(
     source: &str,
     source_paths: &[PathBuf],
 ) -> Result<ExpressionArtifact, SessionError> {
+    prepare_with_compile_fuel(source, source_paths, None)
+}
+
+pub(crate) fn prepare_with_compile_fuel(
+    source: &str,
+    source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
+) -> Result<ExpressionArtifact, SessionError> {
     let forms = read_script_forms(source)?;
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
@@ -76,6 +84,9 @@ pub(crate) fn prepare(
         ]),
     );
     let mut macros = CompiledMacros::new()?;
+    if let Some(fuel) = compile_fuel {
+        macros.set_operation_fuel(fuel);
+    }
     let origin = portable::SourceOrigin::new(source, None);
     let (prepared, _) =
         prepare_script_compiled_batch(snapshot, &mut macros, forms, source.len(), &origin)?;

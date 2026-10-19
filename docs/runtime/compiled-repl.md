@@ -16,9 +16,24 @@ an unfinished input. On Unix, Ctrl-C (SIGINT) while an input executes interrupts
 it in either phase (Runtime evaluation or macro expansion), prints
 `Error: Interrupted` and returns to the prompt; effects before the interrupt are
 not rolled back ([`repl_interrupt.rs`](../../crates/suss-cli/tests/repl_interrupt.rs)).
-`suss repl --fuel <N>` sets each input's execution budget (default 10,000,000),
-so long computations can run until interrupted. Pending I/O cancellation awaits
-the design section 9 scheduler.
+`suss repl --fuel <N>` sets both the program-evaluation and compilation operation
+allowances. Both defaults remain 10,000,000. `--compile-fuel <N>` overrides the
+compilation allowance independently of argument order:
+
+```sh
+suss repl --compile-fuel 10000000000
+```
+
+This keeps evaluation at its default while permitting more accounted compilation
+and macro work. Input preparation consumes compilation fuel even when no macro
+is invoked. These cumulative operation budgets use the existing host/guest
+charges, including allocation work. Engine JIT time is outside that accounting;
+fuel does not bound retained process memory. Increasing an allowance permits more
+work and does not accelerate compilation. A successful
+`:reset` preserves each phase's selected allowance; reset initialization must
+also fit those allowances.
+
+Pending I/O cancellation awaits the design section 9 scheduler.
 
 The native command now uses `Session::new_repl()`, loading the provenance-tracked
 core artifact once per Store generation. [Atom storage](atoms.md) persists across

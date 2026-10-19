@@ -32,7 +32,7 @@ impl AnalysisGraph<'_> {
         let root = self.metadata_sources[index].recipe;
         let bridge = self.bridge.recording(self.session)?;
         trace(self.session, "bridge")?;
-        let value = self.materialize_using(root, &bridge)?;
+        let value = self.materialize_recorded_subroot(root, &bridge)?;
         trace(self.session, "constructed")?;
         let records = bridge.into_records()?;
         trace(self.session, "recorded")?;
@@ -431,6 +431,111 @@ mod tests {
                     .matches_recorded_source(&mut session, &bridge)
                     .unwrap()
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod recorded_scratch_comparison {
+
+    // Explicit fixture policy components plus the actual full production check.
+    // Neither false nor a phase-based expectation bypasses a physical guard.
+    fn source_components(record: &RecordedMetadata, session: &mut Session,
+        bridge: &FormBridge) -> Result<([bool; 5], bool)> {
+        let _request = session.operation_budget_scope()?;
+        let logical = record.source.matches_logical_source(session, bridge, &record.value)?;
+        let direct = record.records.matches_direct_facts(session)?;
+        let inputs = record.records.matches_recorded_inputs(session, &record.value)?;
+        let classes = record.records.matches_class_schemas(session)?;
+        let prototypes = record.records.matches_prototype_origins(session)?;
+        let full = record.matches_recorded_source(session, bridge)?;
+        Ok(([logical, direct, inputs, classes, prototypes], full))
+    }
+    use super::*;
+    use crate::portable::hir::SourceNamespace;
+    use std::sync::Arc;
+
+    #[test]
+    fn real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            // Diagnostic cost calibration only: the original dense width128
+            // control exceeds 10M. Both routes and source audits use 200M;
+            // this is not evidence for shipped/default-budget acceptance.
+            session.set_operation_fuel(200_000_000);
+            eprintln!("real-recorded-scratch diagnostic-only allowance=200000000");
+            for width in [2usize, 128] {
+            for padding in [0usize, 20_000] {
+            let entries = (0..width).map(|n| format!(":key{n} {n}")).collect::<Vec<_>>().join(" ");
+            session.eval(&format!("(def ^{{:audit {{:inner {{:x 17}} {entries}}}}} recorded-scratch-probe 17)")).unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let snapshot = session.compilation_snapshot();
+            let namespace = SourceNamespace::capture(&snapshot.environment, session.phase());
+            let (global, revision) = namespace.declarations.iter()
+                .find(|(global, _)| global.name() == "recorded-scratch-probe").unwrap();
+            let mut records = Vec::new();
+            for sparse in [false, true] {
+                let record = session.with_operation_budget(|session| {
+                    let mut graph = AnalysisGraph::new(&bridge, session);
+                    graph.declaration(global, Some(revision), 0)?;
+                    for _ in 0..padding {
+                        graph.recipe(super::super::Recipe::Scalar(crate::portable::hir::Literal::Nil))?;
+                    }
+                    graph.finish_recipes()?;
+                    let n = graph.recipes.len();
+                    assert_eq!(n > super::super::materialization_index::SPARSE_THRESHOLD, padding != 0,
+                        "fixture must exercise both production workspace choices");
+                    let before = graph.session.operation_fuel_remaining()?;
+                    if sparse {
+                        let record = graph.record_metadata(0)?.unwrap();
+                        eprintln!("real-recorded-scratch width={width} padding={padding} n={n} production=true workspace={} cost={}",
+                            if n > super::super::materialization_index::SPARSE_THRESHOLD { "sparse" } else { "dense" },
+                            before - graph.session.operation_fuel_remaining()?);
+                        return Ok(record);
+                    }
+                    // Original ad6 recording route: same source expectation,
+                    // bridge recording, owned facts and generic dense builder.
+                    let source = graph.metadata_expectation(0)?.unwrap();
+                    let root = graph.metadata_sources[0].recipe;
+                    let recording = bridge.recording(graph.session)?;
+                    let value = graph.materialize_using(root, &recording)?;
+                    let record = RecordedMetadata { source, value, records: recording.into_records()? };
+                    eprintln!("real-recorded-scratch width={width} padding={padding} n={n} production=false workspace=dense cost={}",
+                        before - graph.session.operation_fuel_remaining()?);
+                    Ok(record)
+                }).unwrap();
+                assert_eq!(record.source().global(), global);
+                assert!(Arc::ptr_eq(record.source().revision(), revision));
+                session.collect().unwrap();
+                let phase = session.phase();
+                // :audit has width key/value pairs plus :inner. Above eight
+                // entries, live key hashing warms originally nil keyword memos.
+                // Runtime has no provisional memo receipts; Macro does.
+                let expected = phase == crate::portable::resolve::Phase::Macro || width + 1 <= 8;
+                let (flags, full) = source_components(&record, &mut session, &bridge).unwrap();
+                eprintln!("recorded-source-policy phase={phase:?} width={width} padding={padding} production={sparse} stage=before logical={} direct={} inputs={} classes={} prototypes={} full={full} expected={expected}",
+                    flags[0], flags[1], flags[2], flags[3], flags[4]);
+                assert_eq!(flags, [true, expected, true, true, true],
+                    "only authenticated memo warming may distinguish the fixture's phases");
+                assert_eq!(full, expected);
+                assert_eq!(record.external_seeds(&mut session).unwrap(), 0);
+                records.push(record);
+            }
+            assert_eq!(records[0].record_count(), records[1].record_count());
+            let dense = bridge.read(&mut session, &records[0].value, 0..1).unwrap();
+            let sparse = bridge.read(&mut session, &records[1].value, 0..1).unwrap();
+            assert_eq!(dense, sparse);
+            let poison = session.eval("(fn [m] (aset (.-arr (get (get m :audit) :inner)) 1 99))").unwrap();
+            for (route, record) in records.iter().enumerate() {
+                session.invoke(&poison, &[&record.value]).unwrap();
+                session.collect().unwrap();
+                let (flags, full) = source_components(record, &mut session, &bridge).unwrap();
+                eprintln!("recorded-source-policy phase={:?} width={width} padding={padding} production={} stage=after-poison logical={} direct={} inputs={} classes={} prototypes={} full={full}",
+                    session.phase(), route == 1, flags[0], flags[1], flags[2], flags[3], flags[4]);
+                assert!(!flags[0], "inner payload poison must fail logical source even when Runtime already lacked memo authority");
+                assert!(!full, "physical payload poison must never certify");
+            }
+            }
+            }
         }
     }
 }

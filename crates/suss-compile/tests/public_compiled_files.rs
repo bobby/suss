@@ -1,5 +1,8 @@
 //! Execute public file, namespace and project APIs through their actual artifacts.
 #![cfg(not(target_family = "wasm"))]
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
 
 use std::{path::Path, sync::OnceLock};
 use suss_compile::{Compiler, SussConfig};
@@ -86,9 +89,10 @@ fn public_file_preserves_macro_filename_lexical_environment_and_retained_effects
     write(root.path(), "app.sus", &source);
     write(root.path(), "api.wit", WIT);
     let bytes = Compiler::new()
-        .compile_files(
+        .compile_files_with_compile_fuel(
             path.to_str().unwrap(),
             root.path().join("api.wit").to_str().unwrap(),
+            Some(COMPILATION_FUEL),
         )
         .unwrap();
     execute(bytes, None, &[(41.0, 42.0), (41.0, 43.0), (41.0, 44.0)]);
@@ -449,4 +453,44 @@ fn public_file_mod_retains_compiled_numeric_macro_semantics_after_js_mod_redefin
         None,
         &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, -0.0)],
     );
+}
+
+#[test]
+fn public_file_compile_fuel_preserves_preflight_zero_and_default_recovery() {
+    use suss_compile::CompileError;
+    let root = tempfile::tempdir().unwrap();
+    let source = root.path().join("app.sus");
+    let wit = root.path().join("api.wit");
+    let mut compiler = Compiler::new();
+    write(root.path(), "api.wit", "invalid WIT");
+    let missing = root.path().join("missing.sus");
+    let error = compiler.compile_files_with_compile_fuel(
+        missing.to_str().unwrap(), wit.to_str().unwrap(), Some(0),
+    ).unwrap_err();
+    assert!(matches!(error, CompileError::Io(_)), "{error}");
+    write(root.path(), "app.sus",
+        "(defmacro fail [] (throw 99)) (defn ^:export calculate [x] (fail))");
+    for allowance in [None, Some(0)] {
+        let error = compiler.compile_files_with_compile_fuel(
+            source.to_str().unwrap(), wit.to_str().unwrap(), allowance,
+        ).unwrap_err();
+        assert!(matches!(error, CompileError::Wit(_)), "{error}");
+    }
+    write(root.path(), "api.wit", WIT);
+    write(root.path(), "app.sus", "(defn ^:export calculate [x] (+ x 1))");
+    let error = compiler.compile_files_with_compile_fuel(
+        source.to_str().unwrap(), wit.to_str().unwrap(), Some(0),
+    ).unwrap_err();
+    let CompileError::Semantic(message) = error else { panic!("unexpected error: {error}") };
+    assert!(message.contains("fuel"), "{message}");
+    for mode in 0..3 {
+        let bytes = match mode {
+            0 => compiler.compile_files(source.to_str().unwrap(), wit.to_str().unwrap()),
+            1 => compiler.compile_files_with_compile_fuel(
+                source.to_str().unwrap(), wit.to_str().unwrap(), None),
+            _ => compiler.compile_files_with_compile_fuel(
+                source.to_str().unwrap(), wit.to_str().unwrap(), Some(COMPILATION_FUEL)),
+        }.unwrap();
+        execute(bytes, None, &[(41.0, 42.0), (0.0, 1.0)]);
+    }
 }

@@ -134,6 +134,7 @@ impl Analyzer<'_> {
                 cleanup.span.clone(),
                 super::super::AnalysisContext::Statement,
                 false,
+                super::SourceBodyOrigin::FinallyBody,
             )?)
         } else {
             None
@@ -214,7 +215,10 @@ impl Analyzer<'_> {
             self.literal_form(form, Literal::Nil)
         };
         let source_body =
-            self.analyzed_body(&args[..body_end], form.span.clone(), context, false)?;
+            self.analyzed_body(
+                &args[..body_end], form.span.clone(), context, false,
+                super::SourceBodyOrigin::TryBody,
+            )?;
         let body = self.exception_region(form, vec![], source_body.clone());
         let kind = if self.suspendable {
             Expression::AsyncTry {

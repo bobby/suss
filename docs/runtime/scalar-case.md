@@ -14,8 +14,8 @@ Results are analyzed in source order and retain tail recur. Runtime aliases,
 exclusions and lexical macro shadowing use ordinary phase namespace resolution.
 
 Explicit defaults and scalar literal constants are required by this bootstrap.
-Number/string tables are bounded to256 constants; generic scalar equality tables
-are bounded to8, before collection-backed macro map iteration is required.
+Number/string and generic scalar equality tables have no fixed constant-count
+cap; compilation remains subject to its configured computation allowance.
 Composite/symbol/keyword/const-var tests, full macro maps, no-default printer
 errors and constant-time case* dispatch remain unfinished. The duplicate guard
 uses the accepted binary64/UTF16 representation, including signed-zero aliases.

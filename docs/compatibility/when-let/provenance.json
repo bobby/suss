@@ -1,0 +1,164 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "license": "EPL-1.0",
+  "extraction": "scripts/cljs_inventory.py Scanner; exact source spans, UTF-8, no evaluation",
+  "extraction_tool_sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
+  "sources": [
+    {
+      "name": "when-let",
+      "path": "src/main/clojure/cljs/core.cljc",
+      "start_line": 412,
+      "end_line": 424,
+      "source_sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+      "form_sha256": "ed3244f72d2b38c08223867744d186a83e8332de188ff445429b84cc452f0c28",
+      "retained_sha256": "9dcef30bf4029ea680958b87f65715abdcf2e3983024bc6e7b09256a8fc3fb1d",
+      "reader_context": [
+        ":cljs"
+      ],
+      "retained": "upstream-when-let.cljc"
+    },
+    {
+      "name": "assert-args",
+      "path": "src/main/clojure/cljs/support.cljc",
+      "start_line": 11,
+      "end_line": 18,
+      "source_sha256": "36b15fe0942c2f3d8dc80f7abc07adc9b380bb6e83cd5edcedb1abe9257663dd",
+      "form_sha256": "a07a524ee1e794397f1b05b9b32130c3081b0580d2e8e97a40a175829b942f78",
+      "retained_sha256": "3d80387ac960fde9f444ca012313e3e2f5be71219e3aaa24485d73d109d676f8",
+      "reader_context": [],
+      "retained": "upstream-assert-args.cljc"
+    },
+    {
+      "name": "let",
+      "path": "src/main/clojure/cljs/core.cljc",
+      "start_line": 772,
+      "end_line": 787,
+      "source_sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+      "form_sha256": "6fef5cb8bdbc45547ba5df6d2b251be0eee42e8a78347f8fba7f44b1a8c190e7",
+      "retained_sha256": "0562771b25c984608cb9c6d0a10145895772d99b4cf70458982530cc140b4ef8",
+      "reader_context": [],
+      "retained": "upstream-let.cljc"
+    },
+    {
+      "name": "destructure",
+      "path": "src/main/clojure/cljs/core.cljc",
+      "start_line": 629,
+      "end_line": 730,
+      "source_sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+      "form_sha256": "532417510d2fbf3181403605826236fb4b4a96aed6e7f1e318ed161db7310ec4",
+      "retained_sha256": "f4a3a3bd3dadbef251deafdf19909d2c443f915c3049247c2910f32fb21743b9",
+      "reader_context": [],
+      "retained": "upstream-destructure.cljc"
+    }
+  ],
+  "adapted_sha256": "df7af19920046f45b38f257cfb35d8b9e61988fd42520b183296330cbb7d8875",
+  "patch_sha256": "b0648abff634d85b8f2883c64faf1dd16ae2cffababd2a5c9d767e2f822a8bc5",
+  "files": {
+    "crates/suss-compile/src/portable_when_let.rs": "0de7d8f16339b7327b7e133279d6be7e4a7ecb8d554379e196d0a0f1a7a39e09",
+    "crates/suss-compile/src/portable/hir/destructuring.rs": "a85643f5ddfdcf28ed9feaa158fc7499ee0d470afe8a7fbd0de9ee1489cf27a8",
+    "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
+    "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
+    "crates/suss-cli/tests/compiled_when_let.rs": "3164302cac850756b1a5c2d2449b38331c943f786a2f24837ad8e5928ba08d3d",
+    "crates/suss-cli/tests/compiled_let_destructuring.rs": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d"
+  },
+  "adaptations": [
+    "Register defmacro locally; core/let spelling uses established bootstrap binding resolution.",
+    "Lower ordered assert-args checks to ordinary compiled if/throw/ex-info with identical messages and phase data.",
+    "Keep vector invocation, complete docstring, syntax-quote and hygienic temporary shape unchanged.",
+    "Bootstrap let calls the existing EPL-derived destructuring binder for ordered vector/map binding pairs; no function wrapper, runtime extraction or loop rewrite."
+  ],
+  "dependencies": {
+    "macro": [
+      "vector?",
+      "count",
+      "=",
+      "ex-info",
+      "throw",
+      "let",
+      "when",
+      "syntax-quote"
+    ],
+    "lowered_patterns": [
+      "cljs.core/nth",
+      "cljs.core/seq",
+      "cljs.core/first",
+      "cljs.core/next",
+      "cljs.core/get",
+      "cljs.core/--destructure-map"
+    ]
+  },
+  "oracle": {
+    "positive": "Two fresh pinned CLJS compiler/Node runs, identical 16 tagged observations; exact native guest substring.",
+    "invalid": "Two fresh pinned self-host macro-function/Node runs, identical five diagnostics and recovery expansion. Excludes analyzer wrapper diagnostics.",
+    "native": "Focused post-pipeline passed private validation 1, feature tests 5 plus decoder support 6, Jank wrapper 1 with 12 separate host assertions, bootstrap verifier 4. Required full baseline and final-head CI pending.",
+    "new_direct_let_tests": "Both exact guest substrings executed by two fresh pinned CLJS compiler/Node runs; outputs match both native expected values. Both native regressions also passed in each default caller phase."
+  },
+  "before_test_sha256": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+  "before_jank_gate_sha256": "e91a2bf283249e9279ddd4b341df5fb0df85d2d92145b51053311fd4c371ab6d",
+  "jank_refinement": "After immutable before capture, added explicit reference schema=1, suite=95d4a9112cfc5fe6629be3d14bb99080ea00af2f, upstream=c4295f3 assertions. Complete original 12 IDs unchanged.",
+  "oracle_files": {
+    "oracle/EPL-1.0.html": "d0d35c5fb45696fcaa98858f6c1f1cf0d41400302f4adb966eb9a54fa9b9a226",
+    "oracle/deps.edn": "f1ab88421adfde7c9ceb1d26662675a4237b74b008df91e97d8e78ebac9f71de",
+    "oracle/guest.cljs": "1ff240f8d0c564ff59d72a63e3271b0dbd9c6271a500cedf37f7c3ba40e68583",
+    "oracle/pinned-core.cljc": "780b3f6d2a0cd49fb551c63ee05adcff6c70e3ea2599b1acba3d87ed9b85449c",
+    "oracle/pinned-support.cljc": "3d80387ac960fde9f444ca012313e3e2f5be71219e3aaa24485d73d109d676f8",
+    "oracle/positive-comparison.json": "9f82a90999f559b93cc3509a13c503bce79e50eeb4d90f8c907d997fccbab217",
+    "oracle/provenance-inputs.json": "67e5d485f4ae99b6183749705a7ebd4dbb4c6449c536ebc5efac4096ecb0bb3d",
+    "oracle/run-validation.py": "570db23385e3208ac5a73bbc392a18939267448c6d9cf5771bf850c133cb03ea",
+    "oracle/run.py": "56ed1b56fa03d61370272ea731690dc81c7dc323f5801712eda81008338e8081",
+    "oracle/run1-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "oracle/run1-1.log": "b5b542871392c27b55ac6e1dd8786e98894755d3e596cb2760194dbb810563c0",
+    "oracle/run1-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
+    "oracle/run1-receipt.json": "f88a82915ef22bfe8fd5c998907009ad5a54758f9e2e57d29c27c84239ef796a",
+    "oracle/run2-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "oracle/run2-1.log": "b5b542871392c27b55ac6e1dd8786e98894755d3e596cb2760194dbb810563c0",
+    "oracle/run2-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
+    "oracle/run2-receipt.json": "625953b9d6320b539afc46bd8ba293975c689c860d6ea739fbef580b03aeb453",
+    "oracle/setup-attempt-1.txt": "856e0916dd6644e747fe6643d0f9d84dbb91c19a6f009b27b576d7edc97e5e47",
+    "oracle/setup-notes.txt": "5d926633ac11e7c3a1cb210c4d6951ede5ddaf38599a1b7cdb2f1e0cdb06b614",
+    "oracle/src/suss_oracle/when_let_probe.cljs": "d9d0350f0a661595c0a7e5a4dff4a09232e2e3bb0b449b43a378bf2026a9b573",
+    "oracle/src/suss_oracle/when_let_validation.cljs": "15b4ac47b62be2e5a0ae1bc264962597595c43c280510932fd83c4eb89ed4fc5",
+    "oracle/upstream-excerpts-pre-range-correction.json": "91de357cde5c0d7adc2cc6297e1965bcb7de0db79140b5e044b1c42bba3c577f",
+    "oracle/upstream-excerpts.json": "8566dedb937ec81e9d33929adec22765380f8f33267deb7fbf1a0ca66a60e571",
+    "oracle/validation1-0.log": "7eee96749406468dad70141a074c1d57cf947e297ab2bd2340c777c7528f441f",
+    "oracle/validation1-1.log": "75cb46d89c0bca5a996ed06157a63a23f3f4a49edf2d9bf6f46b185a378a14dd",
+    "oracle/validation1-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
+    "oracle/validation1-receipt.json": "1b98e40d521863071969ec40b3c8f58075834bc317e45f4dddfe8f95ef2aea85",
+    "oracle/validation2-0.log": "7eee96749406468dad70141a074c1d57cf947e297ab2bd2340c777c7528f441f",
+    "oracle/validation2-1.log": "75cb46d89c0bca5a996ed06157a63a23f3f4a49edf2d9bf6f46b185a378a14dd",
+    "oracle/validation2-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
+    "oracle/validation2-receipt.json": "710d823109965c9368e454524502c8cd755b8f1306d3381f7a8c2648ed8d93ad"
+  },
+  "direct_let_oracle_files": {
+    "direct-let-oracle/.cpcache/148138750.basis": "2ddfe3d9c57750c282c44c7de9f5bd9be71843312c1428a01b45134ae423fc8e",
+    "direct-let-oracle/.cpcache/148138750.cp": "cf0d64989c9f41c234dd4229d2f7a7342efcf818ad99dff952c502d698214839",
+    "direct-let-oracle/.cpcache/148138750.manifest": "173ade99124d5858704c13f868f731496cdb813be10e1a92c886b4855771854f",
+    "direct-let-oracle/compare.py": "b0e4b8f93221d3276527431d0ed142f80662afa36ee6d4a9ebbc57314113f79c",
+    "direct-let-oracle/comparison.json": "c5924a6cf7f46235ae7b9824635fe3764cf6f34da1c2d07a44e78c1e41548700",
+    "direct-let-oracle/deps.edn": "f1ab88421adfde7c9ceb1d26662675a4237b74b008df91e97d8e78ebac9f71de",
+    "direct-let-oracle/expected.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "direct-let-oracle/guest1.cljs": "0fb42c4699ff523374bd14b8d7ad1103e7e4f33faaae9d8764965d0560b5ed00",
+    "direct-let-oracle/guest2.cljs": "c45f2cc0f77a3843420386c4dd10f40c3a2a32e6da5e18b13bc30c326ddb951c",
+    "direct-let-oracle/inputs.json": "86ad30c57c933a2f560e4ad58c3bdcd5afc248a165ad64a22231c6640c840e46",
+    "direct-let-oracle/manifest.json": "959d43cc07a2e68e5b8f3f5d02b2b0b20925340321e7a454b0418d94ddd1bf80",
+    "direct-let-oracle/run.py": "b2c96b42ebb5cce087755bee048936b6e10b232049b3422a5542ea87dc34c63a",
+    "direct-let-oracle/run1-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "direct-let-oracle/run1-1.log": "d269aa9ae4c186c90b22a5f7aa619eee7bfc8a3b1612b70ba271fdb1d949a5ca",
+    "direct-let-oracle/run1-observations.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "direct-let-oracle/run1-receipt.json": "6420bda691eabca817de15db51c0b10bf88e396fe71f114f572e3a2719092d67",
+    "direct-let-oracle/run2-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "direct-let-oracle/run2-1.log": "d269aa9ae4c186c90b22a5f7aa619eee7bfc8a3b1612b70ba271fdb1d949a5ca",
+    "direct-let-oracle/run2-observations.json": "d62c61443cf1c2c9147a779fab510eea9a5aca665b1c6117a06c36d2aa868cc5",
+    "direct-let-oracle/run2-receipt.json": "17b6600e706a018ceb4833c487760d16bdb9b8ee159da124062448dfa0687a9f",
+    "direct-let-oracle/src/suss_oracle/direct_let_probe.cljs": "5443fc4757671d7f2f92e64a7b11eeb65e9f744fd326de30244fc96e2b14cbf1"
+  },
+  "native_fixture_adaptations": {
+    "crates/suss-cli/tests/compiled_when_let.rs": {
+      "original": "native-fixtures/compiled_when_let-captured.rs",
+      "original_sha256": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
+      "patch": "native-fixtures/compiled_when_let-stage-diagnostic.patch",
+      "patch_sha256": "d83b8c653535eac9390cb8566f57a3d31a2c3a39f363a7356e2a2d68f870e64a"
+    }
+  }
+}

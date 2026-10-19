@@ -1,5 +1,7 @@
-//! Actual public record source -> component -> execution under normal CLI limits.
+//! Actual public record source -> component -> execution with calibrated compilation fuel.
 //! Fixture includes separate MPL-2.0 Jank excerpts; see its retained provenance.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::process::Command;
 #[test]
 fn public_records_execute_jank_and_authored_contracts_with_two_nominal_classes() {
@@ -40,6 +42,9 @@ fn public_records_execute_jank_and_authored_contracts_with_two_nominal_classes()
         "-o",
         "records.wasm",
     ]);
+    command
+        .arg("--compile-fuel")
+        .arg(compilation_fuel::COMPILATION_FUEL.to_string());
     for export in exports {
         command
             .arg("--export")
@@ -80,6 +85,7 @@ fn public_record_field_and_metadata_values_decode_independently_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session
             .eval_with_macros(
                 include_str!("../../../tests/oracle/fixtures/public-record-contracts.sus"),
@@ -142,6 +148,7 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session
             .eval_with_macros(
                 "(ns record-custom) (defprotocol ValueProbe (-probe [this])) (defrecord Custom [value] ValueProbe (-probe [this] 73) ICounted (-count [this] 99))",
@@ -225,6 +232,7 @@ fn public_record_nominal_equality_and_predicate_decode_after_gc_in_both_phases()
         // only after collection; the guest never prints or re-evaluates it.
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session
             .eval_with_macros(FIXTURE_SOURCE, &mut macros)
             .unwrap();

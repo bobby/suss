@@ -1,5 +1,8 @@
 //! The uncached public expression entrypoint uses compiled macros and ABI2 roots.
 #![cfg(not(target_family = "wasm"))]
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
 
 use suss_compile::{
     Compiler,
@@ -19,7 +22,7 @@ fn number(session: &mut Session, value: &SessionValue) -> f64 {
 #[test]
 fn uncached_expression_executes_lexical_macro_and_keeps_live_bindings() {
     let artifact = Compiler::new()
-        .compile_expr_with_info(
+        .compile_expr_with_compile_fuel(
             r#"
             (defmacro require-local [local]
               (if (get (:locals &env) local) local (throw 17)))
@@ -29,6 +32,7 @@ fn uncached_expression_executes_lexical_macro_and_keeps_live_bindings() {
             (def captured calculate)
             (calculate 41)
             "#,
+            Some(COMPILATION_FUEL),
         )
         .unwrap();
     assert!(!artifact.is_component);
@@ -82,4 +86,27 @@ fn repeated_uncached_compilations_have_isolated_macro_namespaces() {
     second_session.collect().unwrap();
     assert_eq!(number(&mut first_session, &first), 41.0);
     assert_eq!(number(&mut second_session, &second), 42.0);
+}
+
+#[test]
+fn uncached_compile_fuel_preserves_zero_and_isolated_default_recovery() {
+    use suss_compile::CompileError;
+    const SOURCE: &str = "(defmacro answer [] 42) (answer)";
+    let mut compiler = Compiler::new();
+    let error = compiler.compile_expr_with_compile_fuel(SOURCE, Some(0)).err().unwrap();
+    let CompileError::Semantic(message) = error else { panic!("unexpected error: {error}") };
+    assert!(message.contains("fuel"), "{message}");
+    for mode in 0..3 {
+        let artifact = match mode {
+            0 => compiler.compile_expr_with_info(SOURCE),
+            1 => compiler.compile_expr_with_compile_fuel(SOURCE, None),
+            _ => compiler.compile_expr_with_compile_fuel(SOURCE, Some(COMPILATION_FUEL)),
+        }.unwrap();
+        assert!(!artifact.is_component);
+        assert!(artifact.prepared.as_ref().unwrap().modules().count() > 1);
+        let mut session = Session::new().unwrap();
+        let value = artifact.execute(&mut session).unwrap().unwrap();
+        session.collect().unwrap();
+        assert_eq!(number(&mut session, &value), 42.0);
+    }
 }

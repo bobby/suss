@@ -3061,8 +3061,8 @@ fn hash_map_pairs(
     Ok(pairs)
 }
 // Canonical map cursors expose keys without interpreting discarded values or
-// counting their private entry vectors as source nesting. Cursor recursion has
-// its own bound, independent of reader nesting.
+// counting their private entry vectors as source nesting. Cursor traversal uses
+// the shared operation budget, growable stacks and cycle/layout checks.
 fn map_sequence_pairs(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,

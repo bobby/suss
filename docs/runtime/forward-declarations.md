@@ -7,7 +7,8 @@ allowing later function definitions to resolve earlier references. It lowers
 to existing initializerless definitions and retains generated :declared true
 source metadata. Qualified names must belong to the current namespace, under
 the same checks as def. Aliases, exclusions and core qualification use the
-existing phase resolver. The expansion limit remains256 operands.
+existing phase resolver. Expansion consumes the configured compilation allowance
+without a fixed256-operand cap.
 
 A known uninitialized source variable reads as internal undefined, matching
 pinned ClojureScript. Nil? and Boolean truthiness treat it as nil-like/falsey,

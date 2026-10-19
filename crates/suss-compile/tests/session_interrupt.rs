@@ -112,7 +112,7 @@ fn interrupt_stops_a_running_macro_expansion() {
         session.eval_with_macros("(spin)", &mut macros)
     });
     let error = result.map(|_| ()).expect_err("interrupted expansion").to_string();
-    assert_eq!(error, "Compiled macro expansion failed: Interrupted at bytes 0..6");
+    assert_eq!(error, "Compiled macro expansion failed during compiled macro invocation: Interrupted at bytes 0..6");
     // Both phases accept the next input.
     macros.define("(defmacro answer [] 42)").unwrap();
     let value = session.eval_with_macros("(answer)", &mut macros).unwrap();

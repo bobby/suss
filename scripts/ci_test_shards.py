@@ -32,7 +32,8 @@ def partitions(metadata, count):
 
 
 def commands(targets):
-    command = ["cargo", "test", "--workspace", "--locked"]
+    # Finish every selected harness while Cargo retains a failing exit status.
+    command = ["cargo", "test", "--workspace", "--locked", "--no-fail-fast"]
     for target in sorted({name for _, name in targets}):
         command.extend(["--test", target])
     yield command + ["--", "--test-threads=2"]

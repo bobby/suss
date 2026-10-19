@@ -8,6 +8,17 @@ use canonical_entries::Entries;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct KeyId(pub(super) usize);
+
+/// Native canonical-entry index encoded as index+1. Production owners come ONLY
+/// from Entries::prepare after checked next_len and native extent validation.
+/// This is a storage domain, not source/guest identity or provenance authority.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct HeadIndex(std::num::NonZeroUsize);
+impl HeadIndex {
+    // Caller must prepay the decode before using the resulting entry index.
+    fn index(self) -> usize { self.0.get() - 1 }
+}
 pub(super) struct Node {
     pub(super) key: KeyId,
     pub(super) metadata_count: usize,
@@ -192,9 +203,17 @@ fn sort_groups<E>(
 }
 
 impl Interner {
+    #[cfg(test)]
     fn intern<E>(
         &mut self,
-        key: Vec<u8>,
+        mut key: Vec<u8>,
+        charge: &mut impl FnMut(u64) -> Result<(), E>,
+    ) -> Result<KeyId, E> {
+        self.intern_scratch(&mut key, charge)
+    }
+    fn intern_scratch<E>(
+        &mut self,
+        key: &mut Vec<u8>,
         charge: &mut impl FnMut(u64) -> Result<(), E>,
     ) -> Result<KeyId, E> {
         let mut work = 0u64;
@@ -206,7 +225,7 @@ impl Interner {
         };
         let result = (|| {
             let hash = hash_bytes(&key, &mut counted)?;
-            self.intern_bucket(key, hash, &mut counted, &mut comparison_work)
+            self.intern_bucket_scratch(key, hash, &mut counted, &mut comparison_work)
         })();
         self.profile_calls = self.profile_calls.saturating_add(1);
         self.profile_work = self.profile_work.saturating_add(work);
@@ -219,9 +238,19 @@ impl Interner {
         }
         result
     }
+    #[cfg(test)]
     fn intern_bucket<E>(
         &mut self,
-        key: Vec<u8>,
+        mut key: Vec<u8>,
+        hash: u64,
+        charge: &mut impl FnMut(u64) -> Result<(), E>,
+        comparison_work: &mut u64,
+    ) -> Result<KeyId, E> {
+        self.intern_bucket_scratch(&mut key, hash, charge, comparison_work)
+    }
+    fn intern_bucket_scratch<E>(
+        &mut self,
+        key: &mut Vec<u8>,
         hash: u64,
         charge: &mut impl FnMut(u64) -> Result<(), E>,
         comparison_work: &mut u64,
@@ -236,7 +265,13 @@ impl Interner {
                 *work = work.saturating_add(units);
                 Ok(())
             };
-            self.heads.get(hash, &mut head_charge)?
+            match self.heads.get(hash, &mut head_charge)? {
+                Some(head) => {
+                    head_charge(1)?; // decode canonical index before use; included in lookup subtotal
+                    Some(head.index())
+                }
+                None => None,
+            }
         };
         let mut cursor = head;
         let mut tail = None;
@@ -261,20 +296,24 @@ impl Interner {
         let tail_location=if let Some(tail)=tail {
             Some(self.keys.prepare_link(tail,charge,&mut self.entry_stats)?)
         } else {None};
+        // Prepay transferring the buffer and resetting the private scratch.
+        // This must precede head insertion: publication below cannot fail.
+        charge(2)?;
         // All fallible work precedes publication. A failed bucket insertion
         // can change capacity, but cannot consume an ID or publish an entry.
         if head.is_none() {
+            let head_index = prepared.head_index(charge, &mut self.entry_stats)?;
             let work = &mut self.profile_head_insert_work;
             let mut head_charge = |units| {
                 charge(units)?;
                 *work = work.saturating_add(units);
                 Ok(())
             };
-            self.heads.get_or_insert(hash, index, &mut head_charge)?;
+            self.heads.get_or_insert(hash, head_index, &mut head_charge)?;
         }
         #[cfg(test)]
         { self.key_bytes += key.len(); }
-        self.keys.publish(prepared,Entry { key, next: None });
+        self.keys.publish(prepared,Entry { key: std::mem::take(key), next: None });
         if let Some(location) = tail_location {
             self.keys.link(location,index);
         }
@@ -311,6 +350,10 @@ impl Interner {
         }
         let root = plan.nodes.len();
         let result = (|| {
+            // One private encoding buffer per plan. Hits retain its allocation;
+            // misses move it into immutable canonical storage.
+            charge(std::mem::size_of::<Vec<u8>>() as u64 + 1)?;
+            let mut key = Vec::new();
             let mut pending = Vec::new();
             push(&mut pending, Work::Enter(form, None), charge)?;
             while let Some(work) = pending.pop() {
@@ -357,7 +400,8 @@ impl Interner {
                         }
                     }
                     Work::Finish(form, id) => {
-                        let mut key = Vec::new();
+                        charge(1)?;
+                        key.clear();
                         let node = &plan.nodes[id];
                         size(&mut key, node.metadata_count, charge)?;
                         for child in &node.children[..node.metadata_count] {
@@ -440,7 +484,7 @@ impl Interner {
                                 size(&mut key, plan.nodes[*child].key.0, charge)?;
                             }
                         }
-                        let canonical = self.intern(key, charge)?;
+                        let canonical = self.intern_scratch(&mut key, charge)?;
                         plan.nodes[id].key = canonical;
                     }
                 }
@@ -584,6 +628,73 @@ mod tests {
             .unwrap();
         plan.nodes[root].key
     }
+    #[test]
+    fn scratch_hits_retain_allocation_and_misses_transfer_exact_bytes() {
+        let mut table = Interner::default();
+        let mut scratch = vec![7; 300];
+        let owned_pointer = scratch.as_ptr();
+        assert_eq!(table.intern_bucket_scratch(&mut scratch, 7, &mut |_| Ok::<_, Error>(()), &mut 0), Ok(KeyId(0)));
+        assert!(scratch.is_empty());
+        assert_eq!(scratch.capacity(), 0);
+        let entry = table.keys.get(0, &mut |_| Ok::<_, Error>(()), &mut table.entry_stats).unwrap();
+        assert_eq!(entry.key.as_ptr(), owned_pointer);
+        assert_eq!(entry.key, vec![7; 300]);
+        scratch.extend_from_slice(&[7; 300]);
+        let hit_pointer = scratch.as_ptr();
+        let hit_capacity = scratch.capacity();
+        for _ in 0..3 {
+            assert_eq!(table.intern_bucket_scratch(&mut scratch, 7, &mut |_| Ok::<_, Error>(()), &mut 0), Ok(KeyId(0)));
+            assert_eq!(scratch.as_ptr(), hit_pointer);
+            assert_eq!(scratch.capacity(), hit_capacity);
+            assert_eq!(scratch, vec![7; 300]);
+            scratch.clear();
+            scratch.extend_from_slice(&[7; 300]);
+        }
+        scratch[299] = 8;
+        assert_eq!(table.intern_bucket_scratch(&mut scratch, 7, &mut |_| Ok::<_, Error>(()), &mut 0), Ok(KeyId(1)));
+        assert_eq!(scratch.capacity(), 0);
+        let entry = table.keys.get(1, &mut |_| Ok::<_, Error>(()), &mut table.entry_stats).unwrap();
+        assert_eq!(entry.key.as_ptr(), hit_pointer);
+        assert_eq!(entry.key[299], 8);
+    }
+
+    #[test]
+    fn repeated_plans_preserve_every_canonical_byte_and_id() {
+        for unordered in [false, true] {
+            let mut table = Interner::default();
+            let mut corpus = corpus();
+            if unordered {
+                // The raw-data corpus also includes odd maps; logical map
+                // comparison requires complete key/value pairs.
+                for value in &mut corpus {
+                    if let Kind::Map(children) = &mut value.kind {
+                        if !children.len().is_multiple_of(2) {
+                            children.push(form(Kind::Nil));
+                        }
+                    }
+                }
+            }
+            let mut expected = Vec::new();
+            for value in &corpus {
+                let mut plan = Plan::default();
+                table.plan_with_order(value, &mut plan, unordered, &mut |_| Ok::<_, Error>(())).unwrap();
+                expected.push(plan.nodes.iter().map(|n| n.key).collect::<Vec<_>>());
+            }
+            let count = table.keys.len();
+            let bytes: Vec<_> = (0..count).map(|i| table.keys.get(i, &mut |_| Ok::<_, Error>(()), &mut table.entry_stats).unwrap().key.clone()).collect();
+            // Every node is now a hit; sibling encodings share the scratch.
+            for (value, expected_ids) in corpus.iter().zip(&expected).rev() {
+                let mut plan = Plan::default();
+                table.plan_with_order(value, &mut plan, unordered, &mut |_| Ok::<_, Error>(())).unwrap();
+                assert_eq!(plan.nodes.iter().map(|n| n.key).collect::<Vec<_>>(), *expected_ids);
+            }
+            assert_eq!(table.keys.len(), count);
+            for (i, expected) in bytes.iter().enumerate() {
+                assert_eq!(&table.keys.get(i, &mut |_| Ok::<_, Error>(()), &mut table.entry_stats).unwrap().key, expected);
+            }
+        }
+    }
+
     #[test]
     fn compact_sizes_keep_adjacent_integer_boundaries_exact() {
         for (value, expected) in [
@@ -906,7 +1017,7 @@ mod tests {
             table
         }
         fn state(table:&mut Interner)->(Vec<(Vec<u8>,Option<usize>)>,Option<usize>,Option<usize>) {
-            (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),table.heads.get(7,&mut |_|Ok::<_,Error>(())).unwrap(),table.heads.get(2000,&mut |_|Ok::<_,Error>(())).unwrap())
+            (table.keys.iter().map(|e|(e.key.clone(),e.next)).collect(),table.heads.get(7,&mut |_|Ok::<_,Error>(())).unwrap().map(HeadIndex::index),table.heads.get(2000,&mut |_|Ok::<_,Error>(())).unwrap().map(HeadIndex::index))
         }
         let candidate=128u64.to_le_bytes().to_vec();
         for bucket in [7,2000] {

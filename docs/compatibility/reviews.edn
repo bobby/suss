@@ -2,6 +2,15 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "macro:when-let:412"
+  {:source-sha256 "ed3244f72d2b38c08223867744d186a83e8332de188ff445429b84cc452f0c28"
+   :visibility :public :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:let:772" "macro:when:392" "macro:assert-args" "runtime:vector?" "runtime:count" "runtime:=" "runtime:ex-info"]
+   :classification :adapted
+   :rationale "Complete pinned macro shape/docstring retained; local declaration spelling and ordered assert-args lowering only. Executes through the compiled Macro pipeline. Bootstrap let now shares the existing EPL-derived function-pattern binder for ordered vector/map bindings, without a function wrapper or changed recur target. Two fresh positive and two diagnostic pinned CLJS runs retained; production after execution, complete Jank gate, full baseline and CI remain to be established."
+   :status :in-progress :adaptation-path "docs/compatibility/when-let/provenance.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_when_let.rs" "crates/suss-cli/tests/compiled_let_destructuring.rs" "pinned_when_let_complete_body_matches_reference"]}
   "runtime:vector:5959"
   {:source-sha256 "73498aba67f31408a37f2999e650e3e20077facb7406bd569daca59393f8511c" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["macro:defn:3364" "runtime:IndexedSeq:1653" "runtime:PersistentVector:5713" "runtime:vec:5939" "runtime:array?:251"] :classification :adapted :rationale "Complete pinned runtime graph dependency; only defn -> def/fn declaration expansion. Source docstring, every branch, public dispatch, physical source arguments and once-only/effect order retained. Authoring snapshot bootstrap exposed this genuine dependency; native execution not established. Retain full variadic IndexedSeq/zero offset/fromArray fast path, original source array alias flag and complete vec fallback; no vector intrinsic alias." :status :in-progress :adaptation-path "docs/compatibility/patches/destructuring-vector.json" :alternative nil :tests []}
   "runtime:some:4430"

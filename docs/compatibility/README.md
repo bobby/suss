@@ -103,10 +103,14 @@ The [source and license policy](PROVENANCE.md) applies before importing core for
 The vendored [jank-lang/clojure-test-suite](clojure-test-suite.md) is the
 function-level conformance corpus: 248 namespaces and 5,834 assertions recorded
 from the pinned ClojureScript oracle, judged host-side against Suss with an exact
-known-failure baseline. With retained-source printing, 13 namespaces load and all 101 of their
-assertions pass; 235 fail before running (mostly reader gaps and missing core
-vars), with each first blocker recorded. A harness self-test fixture passes 22 of
-23 assertions; the remaining one demonstrates the skip-mismatch path.
+known-failure baseline. The [2026-10-19 full raw capture](../roadmap/evidence/m4-pr256-suite-calibration-2026-10-19.md)
+records 1,144 host-decided passes, 25 guest-judged observations, two assertion
+errors and 4,663 unexecuted assertions behind 185 namespace failures. The
+comparator also retains 20 existing skip mismatches, for 22 failures overall.
+Compilation uses the semantic-test 10B allowance; Runtime remains 200M and the
+separate pinned-map control retains 200M for both. No blocked assertion counts
+as a pass. A harness self-test fixture passes 22 of 23 assertions; the remaining
+one demonstrates the skip-mismatch path.
 
 ## Prototype baseline
 
@@ -475,8 +479,8 @@ remain unfinished. Full baseline, independent review and final-head CI still
 gate PR readiness; no issue or milestone is complete from this work alone.
 
 
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
-boolean/nil equality tables with selector-once evaluation and live qualified
+Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and
+boolean/nil equality tables without fixed constant-count caps with selector-once evaluation and live qualified
 core equality. There are 40 fresh pinned/native value matches and one separately
 asserted pinned empty-group parse failure; native rejects that input with a
 located compile diagnostic. Actual fragments execute in Runtime and Macro
@@ -525,6 +529,14 @@ keyword/symbol literals, quoted collections, runtime metadata and complete M2/M4
 acceptance remain unfinished. No inventory status changed. See
 [collection literal evidence](../runtime/collection-literals.md).
 
+
+## Reader identifier hash initialization
+
+Reader/analyzer Symbol and Keyword values use cold nil hash memos; the live
+IHash method performs warming and preserves custom value/effect behavior.
+Compiled constants retain their separate pinned emission contract. See
+[reader identifier memo observations](../runtime/reader-identifier-memos.md)
+for the matched cold/warm cases and scope.
 
 ## Quoted identifiers for compiled macro data
 
@@ -995,8 +1007,10 @@ default printing remains unfinished. Provenance verifies316 files; overlay413
 reviewed/652 unassessed declarations. Rich retained-core macro environments exposed
 an aggregate graph-capacity failure: the complete graph measures66,474 recipes.
 A compile-only two-phase regression failed the old65,536 limit and passes the new
-bounded131,072 aggregate limit. Per-form, depth, string-storage, key-storage and
-materialization-work guards are unchanged; no full printing/M3 claim follows.
+bounded131,072 aggregate limit in that historical validation. These fixed graph,
+per-form, depth, string-storage, key-storage and traversal-work caps have since
+been replaced by metered operation work; structural validation remains. No full
+printing/M3 claim follows.
 
 
 Current default printer continuation supersedes the earlier unresolved-entrypoint
@@ -1234,3 +1248,35 @@ the latter includes actual metadata hash maps over eight entries. Preserved
 initialization-only public failure and diagnostic trace explain why initialization
 alone was insufficient. No full baseline, final CI, all-view oracle conformance,
 or whole-issue acceptance claim; see the cold-memo-ancestor handoff/archive.
+
+Analyzer-generated keyword literals now retain the initial hash memo emitted by
+the pinned ClojureScript compiler. Eligibility comes from explicit constructor
+positions and binding roles; reader values, dynamic keys and Suss extension
+keys remain cold. Separate literal and cold key tables preserve same-text
+distinctions. Collection construction still invokes live hashing methods, and
+an initially numeric memo cannot acquire originally-nil transition authority.
+Added native entry-buffer work is charged before allocation or growth.
+
+Focused execution passes eight new native tests, two compiled-macro tests in
+both caller phases, and seventeen existing slot/reuse guards. The unchanged
+invocation-tag integration regression now passes in both phases. Inference,
+complete core environment and collection-source tests still exhaust fuel;
+defaults and accounting rates are unchanged. See the dated analyzer-literal
+handoff and evidence for the complete selection and remaining limitations.
+
+Recorded metadata now uses invocation-local scratch indexed by reachable native
+recipe IDs when its enclosing graph has more than4096 recipes. Smaller recorded
+graphs and ordinary/whole-graph materialization retain dense scratch. The
+threshold selects an implementation and rejects no form. Both routes share
+construction, callbacks and validation; added index work is metered, and guest
+values and source authority are not cached by the index.
+
+Focused guards preserve callback order and failures, GC, sharing, source-owner
+identity, typed exhaustion and recovery. Wide Runtime metadata still lacks the
+memo receipts needed for certification; Macro retains its existing permission.
+Logical payload poison is rejected in both phases. Sparse indexing can cost
+more for wide reached roots; the evidence retains those cases. The unchanged
+inference, core-environment and collection-source regressions remain fuel
+failures. See the recorded-scratch handoff and evidence for qualified run scopes.
+
+Private compiler placeholder lookup now uses checked token ownership, exact identity and an immutable GC kind/arity negative filter, with direct routes for small token sets. The [private-token evidence](../roadmap/evidence/m4-pr256-private-slot-token-scans-2026-10-18.md) records12 focused passes, GC/foreign/reset/fuel/IRQ controls and both favorable/adverse cost history. This changes no language contract or allowance and does not establish complete core-environment execution at default fuel, full-suite compatibility or final CI.

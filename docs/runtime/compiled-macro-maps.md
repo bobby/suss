@@ -35,11 +35,12 @@ capture, entry order and exceptions. See `crates/suss-cli/tests/compiled_macro_m
 
 Independent PR #133 review found that sequence transport counted a generated entry
 vector's children at the vector's own depth. The focused before-fix test failed:
-62 enclosing lists incorrectly passed the 64-level syntax bound. Children now use
-two levels below the sequence, accounting for the entry vector. Regressions in
-both stores accept 61 enclosing lists, reject 62 after GC, reject a flat sequence
-exceeding the total 4096-node budget and verify recovery. Additional malformed
-index, metadata and oversized backing-array cases remain rejected.
+62 enclosing lists incorrectly passed the then-current64-level syntax bound.
+That version counted entry children two levels below the sequence. Its regressions
+accepted61 enclosing lists, rejected62 after GC and rejected a flat sequence
+exceeding4096 nodes. Those fixed depth/count caps are no longer transport limits;
+malformed index, metadata and backing layout remain errors. Finite size alone
+does not make otherwise valid backing storage malformed.
 
 The initial large budget probe exhausted the default operation fuel while
 constructing its data; it now explicitly uses bounded 100-million operation fuel.

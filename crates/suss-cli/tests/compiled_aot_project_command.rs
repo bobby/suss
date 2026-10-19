@@ -462,3 +462,32 @@ fn project_command_rejects_ignored_main_and_conflicting_configuration_selection(
         );
     }
 }
+
+
+#[test]
+fn project_compile_fuel_preserves_failed_output_and_executes_explicit_budget() {
+    let root = fixture();
+    // Reuse this target's project directory/configuration helpers and namespace
+    // selection route. No Runtime execution budget is changed.
+    write(root.path(), "src/app/core.sus",
+          "(ns app.core) (defmacro result [] 42) (def calculate (fn [] (result)))");
+    write(root.path(), "api.wit",
+          "package test:project-budget; world api { export calculate: func() -> f64; }");
+    write(root.path(), "deps.sus",
+          "{:src-paths [\"src\"] :worlds {:budget {:namespace app.core :wit \"api.wit\" :wit-world \"api\" :exports {\"calculate\" app.core/calculate} :output \"app.wasm\"}}}");
+    success(&command(root.path(), &["--world", ":budget"]));
+    write(root.path(), "app.wasm", "prior project artifact");
+    let output = command(root.path(), &["--world", ":budget", "--compile-fuel", "0"]);
+    assert!(!output.status.success(), "zero compilation limit must not be ignored");
+    assert!(String::from_utf8_lossy(&output.stderr).to_ascii_lowercase().contains("fuel"),
+            "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(std::fs::read(root.path().join("project/app.wasm")).unwrap(),
+               b"prior project artifact");
+    success(&command(root.path(), &["--world", ":budget", "--compile-fuel", "10000000000"]));
+    let output = Command::new(env!("CARGO_BIN_EXE_suss"))
+        .current_dir(root.path().join("project"))
+        .args(["run", "app.wasm", "--invoke", "calculate"])
+        .output().unwrap();
+    success(&output);
+    assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "42");
+}

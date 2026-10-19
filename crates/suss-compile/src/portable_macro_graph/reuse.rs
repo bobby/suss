@@ -428,7 +428,14 @@ mod tests {
     fn reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh() {
         rebuild_callback_routes(true);
     }
+    #[test]
+    fn reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved() {
+        rebuild_callback_routes_with_incomplete(true, true);
+    }
     fn rebuild_callback_routes(logged: bool) {
+        rebuild_callback_routes_with_incomplete(logged, false);
+    }
+    fn rebuild_callback_routes_with_incomplete(logged: bool, incomplete: bool) {
         use super::super::Recipe;
 
         for poison_prototype in [false, true] {
@@ -541,6 +548,11 @@ mod tests {
                 bridge.private_parent_bridge(graph.session).unwrap()
             };
             assert_eq!(build.logged_parent_route, logged);
+            if incomplete {
+                assert!(build.logged_parent_route);
+                build.note_slot_route(graph.session, false).unwrap();
+                assert!(!build.slots.borrow().complete());
+            }
             let parent = private.vector_values(graph.session, &[a_token, b_token, c_value, d_token]).unwrap();
 
             let arm = graph.session.eval(r#"

@@ -1,3 +1,6 @@
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 use suss_compile::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -10,6 +13,7 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let full_source = r#"(defmacro ^{:suss/compiler-catalog true} protocol-index []
    (let [c (:suss/compiler-catalog &env)]
     (list 'quote [(get (get (:protocol-globals-by-namespace c) "suss.core") 'IHash)
@@ -76,6 +80,7 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
 fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? (:suss/binding-names view) 'ordinary) (:protocols facts)])))").unwrap();
         session
             .eval_with_macros(
