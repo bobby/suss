@@ -41,6 +41,7 @@ mod recorded_scratch_tests;
 mod field_entry_work;
 #[macro_use]
 mod retained_field_keys;
+mod reference_fields;
 use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
 
@@ -3058,19 +3059,17 @@ impl<'a> AnalysisGraph<'a> {
                 )));
             };
             let mut entries = entries.clone();
-            let op_key = self.keyword("op")?;
-            let name_key = self.keyword("name")?;
-            let ns_key = self.keyword("ns")?;
-            let tag_key = self.keyword("tag")?;
-            let tag = entries
-                .iter()
-                .find(|(key, _)| *key == tag_key)
-                .map(|(_, value)| *value);
+            // Literal and source keys occupy distinct native recipe domains.
+            // Read semantic native fields rather than inventing cold query keys.
+            let tag = self.declaration_field_value(&entries, "tag")?;
             let operation = self.keyword("var")?;
             let name = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
             let namespace = self.symbol(global.namespace())?;
-            entries.retain(|(key, _)| ![op_key, name_key, ns_key].contains(key));
-            entries.extend([(op_key, operation), (name_key, name), (ns_key, namespace)]);
+            // Pinned resolve-var merges {:name ... :op :var :ns ...} into
+            // the captured declaration. Existing key origin/order survives.
+            self.declaration_field_assoc(&mut entries, AnalyzerLiteralKeyword("name"), name)?;
+            self.declaration_field_assoc(&mut entries, AnalyzerLiteralKeyword("op"), operation)?;
+            self.declaration_field_assoc(&mut entries, AnalyzerLiteralKeyword("ns"), namespace)?;
             self.charge(0)?;
             let info = self.recipe(Recipe::Map(entries))?;
             field_extend!(self, fields; [

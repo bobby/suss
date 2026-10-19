@@ -1315,3 +1315,7 @@ mod analyzer_literal_effect_tests;
 #[cfg(test)]
 #[path = "portable_macros/body_origin_tests.rs"]
 mod body_origin_tests;
+
+#[cfg(test)]
+#[path = "portable_macros/reference_field_tests.rs"]
+mod reference_field_tests;

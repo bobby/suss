@@ -29862,3 +29862,23 @@ cargo test --workspace --locked -- --test-threads=2
 
 Keep actual failures/unknowns and source/BOOT tuples separate. These commands are
 validation targets here, not results or permission to promote an incomplete issue.
+
+
+## Native declaration-field selection validation
+
+Global-reference overlays now select native keyword recipes across literal and
+source origins while retaining the prior key object and position. See the
+[source evidence](evidence/m4-pr263-reference-field-selection-2026-10-19.md)
+for the independent static review and test correction. Bootstrap artifacts are
+still the parent versions; no new native execution result is established.
+After normal bootstrap generation and identity verification above, run:
+
+```sh
+cargo test --locked -p suss-compile --lib native_reference_field -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib analyzer_literal_global_references -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Then run the required full baseline and final-head CI. Reader shorthand and
+prior type-declaration key provenance still need transport integration and
+actual execution; the new field selector does not establish those properties.
