@@ -30349,3 +30349,17 @@ unchanged noncustom Wasm/catalog/ABI/cells. Four outputs are adopted exactly;
 preserve the failed comparison and brief package-cache wait. Execute the five
 new rejection/health/meter tests and unchanged retained/warm regression next.
 No repaired-source execution or acceptance is inferred from generation.
+
+
+## DATA descendant targeted six-test results (2026-10-19)
+
+[Exact six-result receipt and raw log](evidence/m4-pr263-data-descendant-targeted-results-2026-10-19.json) binds source `018d0f6d323d5376d358738e9107761a50175c9d`: 6PASS0FAIL0ignored, exit0, 193.8678s command/162.37s harness; raw SHA2566f0d9345ffd506c83daab62a5e0d851bf4279c81f1eff6b3243aa7a706dbb099. Five new original-descendant controls and the unchanged full retained/warm fixture pass. Raw labels verify Runtime/Macro, indexed/nonindexed, both current/prior producer orders and metadata-first sequence true,true,false,true per order:32 completed attempts inside one passing Rust test, not32 extra test passes. Original source-owner/strict-authority negatives, physical identity, GC and warm retention assertions remain. This is Graph/controller helper-route evidence, not full public macro-frame, namespace or callable acceptance.
+
+The prior f950 serial0PASS1FAIL remains separately retained with its first Runtime/indexed=true/current_first=false/metadata_first=true Metadata edge-closure failure and exact raw hash; it is not retroactively relabeled. The14 existing DATA/callback-order/sourceguard follow-up is separate and pending here. All remaining public/literal/source-tag/pinned-body, full baseline and final-head CI gates remain uncredited; no all-DATA, performance or readiness claim.
+
+
+## Remaining DATA/callback-order/sourceguard cohort:12PASS2FAIL (2026-10-19)
+
+The [combined result receipt](evidence/m4-pr263-data-descendant-targeted-results-2026-10-19.json) now also retains the separate14-test follow-up on the same `018d0f6` source:12PASS2FAIL0ignored, exit101,125.3531s command/125.02s harness, raw SHA2567a735792afa7120cb64c2035fbcf99ac70a9f1edd60f47ae72d8d288275b97b7. Exact14 names/argv/raw outcomes, changed[] and owned-group drained receipt are included. The prior six-test6PASS result, its full retained-case coverage, and historical f9500PASS1FAIL remain separately source-bound; this is not one all-pass run.
+
+`active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original` fails at first_use_data/tests.rs229 on the fresh retry with typed Wasm fuel exhaustion, after the preceding interrupt/cache assertions. `selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity` fails at line263 on its FIRST healthy make with `Host(Fresh first-use source failed complete DATA checks)`, before installing the intended poisoning callback; its subsequent poison/effect/restore/recovery checks are therefore not credited. Causes remain under diagnosis, with no assertion or budget weakening authorized by these results. All remaining public/literal/source-tag/pinned-body, full baseline and final-head CI gates remain required; no all-DATA, performance or readiness claim.
