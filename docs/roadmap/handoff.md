@@ -30187,3 +30187,16 @@ retain the failed build; no library test verdict is inferred. Test source is
 part of the compiler fingerprint, so regenerate/adopt both normal phases before
 fresh `sh scripts/verify-bootstrap.sh`, focused tests and the exact full baseline.
 No local concurrent Cargo/VM was used; root66a55ce's producer continues intact.
+
+
+## Normal bootstrap for the corrected type-test source
+
+CI39298297611 completes two normal generations of both phases from19f6211.
+The independently reviewed four exact outputs are adopted; [source, hashes,
+raw old-shipped comparison and limits](evidence/m4-pr263-test-source-bootstrap-2026-10-19.md)
+retain the receipts. Actual compiled build-script identity probe passes;
+non-custom executable sections match3c. The generator job supplies no new
+bootstrap or library execution. Fresh `sh scripts/verify-bootstrap.sh`, focused
+completed-value/literal/COW/source-root/core-import/source-tags tests and the
+exact workspace baseline remain required. Parent66a55ce's same producer
+continues separately; no local concurrent Cargo/VM ran for this adoption.
