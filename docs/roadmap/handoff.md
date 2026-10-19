@@ -30075,3 +30075,16 @@ Source parsing and independent source review pass; native compilation, metering
 failures/retry, collection and live IHash execution remain unverified. Preserve
 the existing ordinary reader metadata cases and refresh/reproduce bootstrap
 outputs after these source edits before interpreting Session results.
+
+
+## Bootstrap tuple for borrowed-reader transport
+
+CI39281448728 generated both normal phases twice, byte-identical, from32ef328.
+After two independent source/integrity reviews the four exact outputs are adopted.
+See [source, hashes and qualification](evidence/m4-pr263-reader-owner-bootstrap-2026-10-19.md).
+Non-custom executable sections match the ca8 tuple, but the native compiler/test
+source changed and must execute again. Run `sh scripts/verify-bootstrap.sh`, then
+the focused borrowed-reader/type-history/body-origin regressions and full baseline
+when the separate parent producer has terminated. No current native test success
+is inferred from this adoption. The original generation job stopped at the expected
+stale-shipped comparison before downstream execution; retain that failure.
