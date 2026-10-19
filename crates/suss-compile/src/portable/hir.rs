@@ -1482,7 +1482,8 @@ impl Analyzer<'_> {
                 });
         self.expander.charge_expansion_work(2, form.span.clone())?; // both native owner-field initializations
         let mut definition = super::resolve::DefinitionInfo {
-            definition_form: form.clone(),
+            definition_form: super::resolve::own_definition_form(form,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?,
             analysis_completed: false,
             declaration: args[0].clone(),
             docstring: if args.len() == 3 {

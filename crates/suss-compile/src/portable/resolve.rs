@@ -14,7 +14,7 @@ mod type_key_history;
 pub use type_key_history::TypeKeyHistory;
 mod completed_values;
 pub use completed_values::CompletedDeclarationSource;
-pub(crate) use completed_values::{TypeValuePlan, TypeSourceValue, VALUE_FIELDS};
+pub(crate) use completed_values::{TypeValuePlan, TypeSourceValue, VALUE_FIELDS, own_definition_form};
 pub(crate) use type_key_history::{TypeKey, KeyOrigin as TypeKeyOrigin, LiteralSite as TypeKeyLiteralSite};
 pub(crate) use type_key_history::{RetainedKey, RetainedSite};
 
@@ -210,7 +210,7 @@ impl Scope {
 #[derive(Debug, Clone)]
 pub struct DefinitionInfo {
     /// Actual definition syntax, retained before initializer analysis.
-    pub definition_form: suss_reader::forms::Form,
+    pub definition_form: std::sync::Arc<suss_reader::forms::Form>,
     /// Analysis completion is distinct from presence or runtime evaluation of an initializer.
     pub analysis_completed: bool,
     pub declaration: suss_reader::forms::Form,

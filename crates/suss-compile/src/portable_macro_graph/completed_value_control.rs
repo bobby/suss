@@ -609,16 +609,43 @@ mod tests {
         }
         graph.vector(&fields).unwrap()
     }
+    // Use the same genuine shipped source catalog as Session::provision_core,
+    // rather than fabricating a declaration for the variadic rest class. This
+    // test analyzes native source but does not execute the function body.
+    fn ordinary_control_environment(phase: Phase, namespace: &str) -> Environment {
+        let shipped = portable::bootstrap::shipped(phase)
+            .unwrap_or_else(|error| panic!("ordinary control bootstrap {phase:?}: {error:?}"));
+        let mut environment = shipped.environment.clone();
+        environment.enter_namespace(phase, namespace)
+            .unwrap_or_else(|error| panic!("ordinary control namespace {phase:?}/{namespace}: {error:?}"));
+        let rest = suss_reader::Symbol {
+            namespace: Some("suss.core".into()),
+            name: "IndexedSeq".into(),
+        };
+        let class = environment.resolve(phase, &rest, 0..0)
+            .unwrap_or_else(|error| panic!("real shipped rest class {phase:?}: {error:?}"))
+            .global().clone();
+        assert_eq!(class.phase(), phase);
+        assert!(shipped.cells.contains(&class), "rest class must be an actual shipped cell");
+        let info = environment.definition_info(&class).expect("real source type declaration");
+        assert!(info.analysis_completed);
+        assert_eq!(info.type_fields, Some(3), "source IndexedSeq [arr i meta], not a placeholder binding");
+        environment
+    }
     #[test]
     fn shared_completed_value_writer_matches_original_full_ordinary_projection_cold() {
         for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
             let bridge = FormBridge::new(&mut session).unwrap();
+            let baseline = ordinary_control_environment(phase, session.current_namespace());
             for source in CONTROLS {
                 let forms = suss_reader::forms::resolve_conditionals(
                     suss_reader::forms::read_forms(source).unwrap()).unwrap();
                 let origin = portable::SourceOrigin::new(*source, None);
-                let (_, environment) = hir::prepare_with_origin(&forms, 0..source.len(), &Environment::default(), phase,
-                    &mut portable::NoExpansion, Some(&origin)).unwrap();
+                // Each unchanged program starts from the same pristine core
+                // catalog; previous subject declarations are not accumulated.
+                let (_, environment) = hir::prepare_with_origin(&forms, 0..source.len(), &baseline, phase,
+                    &mut portable::NoExpansion, Some(&origin))
+                    .unwrap_or_else(|error| panic!("ordinary control prepare {phase:?} source={source:?}: {error:?}"));
                 let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
                 let global = binding.global();
                 let info = environment.shared_definition_info(global).unwrap();
@@ -759,7 +786,8 @@ mod tests {
                 else { assert_eq!(values[2].kind, Kind::Nil); }
                 if physical_symbol {
                     let identity = session.invoke(&same, &[&actual]).unwrap();
-                    assert_eq!(bridge.read(&mut session, &identity, 0..0).unwrap().kind, Kind::Bool(true));
+                    assert_eq!(bridge.read(&mut session, &identity, 0..0).unwrap().kind, Kind::Bool(true),
+                        "outer/inner Symbol identity {phase:?} indexed={indexed} file={file:?} source={source:?}");
                 }
                 assert_eq!(info.declaration, original_source, "immutable native source unchanged");
             }

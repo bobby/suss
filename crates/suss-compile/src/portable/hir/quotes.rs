@@ -368,6 +368,10 @@ impl MetadataEntry<'_, MetadataOrigins> {
     /// Caller meters its own selection/read work. No guest or spelling proof.
     pub(crate) fn key_origin(&self) -> MetadataKeyOrigin { self.origins.kind }
     pub(crate) fn key_position(&self) -> (usize, usize) { self.origins.position }
+    /// Exact winning VALUE writer; association preserves the original key but
+    /// replaces this coordinate with the selected value's actual source pair.
+    /// Callers prepay their selection/read work, as for key_position.
+    pub(crate) fn value_position(&self) -> (usize, usize) { self.order }
 }
 // Both views use the identical association and ordering algorithm. Only readers
 // requesting provenance allocate/store/move the immutable origin coordinates.

@@ -28,6 +28,23 @@ fn owned_form(form: &Form, meter: &mut Meter<'_>) -> Result<Arc<Form>, Diagnosti
     meter((std::mem::size_of::<Form>() + 2 * std::mem::size_of::<usize>() + 4) as u64)?;
     Ok(Arc::new(clone_form_metered(form, meter)?))
 }
+// Own the SAME complete syntax at the two original DefinitionInfo constructor
+// sites. Their existing Form::clone remains here exactly once; only the newly
+// introduced Arc allocation/header is added to the operation's prepayment.
+// This does NOT turn pre-existing unmetered Rust clones into metered traversal.
+// No Info/HIR/source-analysis/environment owner is retained in this syntax Arc.
+pub(crate) fn own_definition_form(form: &Form, meter: &mut Meter<'_>) -> Result<Arc<Form>, Diagnostic> {
+    let bytes = std::mem::size_of::<Form>()
+        .checked_add(2 * std::mem::size_of::<usize>())
+        .and_then(|n| n.checked_add(4))
+        .and_then(|n| u64::try_from(n).ok()).ok_or_else(overflow)?;
+    meter(bytes)?; // new heap Form, Arc header/init and eventual release control
+    Ok(Arc::new(form.clone()))
+}
+fn share_definition_form(form: &Arc<Form>, meter: &mut Meter<'_>) -> Result<Arc<Form>, Diagnostic> {
+    meter((2 * std::mem::size_of::<Arc<Form>>() + 4) as u64)?;
+    Ok(form.clone()) // actual reference retention/release; NO second syntax copy
+}
 #[derive(Debug)]
 pub(crate) struct FunctionValues {
     pub(crate) variadic: bool,
@@ -38,7 +55,7 @@ pub(crate) struct FunctionValues {
 pub struct CompletedDeclarationSource {
     global: Global,
     pub(crate) declaration: Form,
-    pub(crate) definition: Form,
+    pub(crate) definition: Arc<Form>,
     pub(crate) origin: Option<SourceOrigin>,
     pub(crate) docstring: Option<Vec<u16>>,
     pub(crate) function: Option<FunctionValues>,
@@ -95,7 +112,7 @@ impl CompletedDeclarationSource {
         storage::<Self>(1, meter)?;
         meter((global.namespace().len() + global.name().len() + 2 * std::mem::size_of::<usize>() + 12) as u64)?;
         let declaration = clone_form_metered(&info.declaration, meter)?;
-        let definition = clone_form_metered(&info.definition_form, meter)?;
+        let definition = share_definition_form(&info.definition_form, meter)?;
         let origin = clone_origin(info.origin.as_ref(), meter)?;
         let docstring = if let Some(doc) = &info.docstring {
             storage::<Vec<u16>>(1, meter)?;
@@ -224,7 +241,7 @@ impl TypeValuePlan {
     pub(crate) fn seal(&mut self, info: &DefinitionInfo, meter: &mut Meter<'_>) -> Result<(), Diagnostic> {
         storage::<TypeValueInput>(1, meter)?;
         let declaration = owned_form(&info.declaration, meter)?;
-        let definition = owned_form(&info.definition_form, meter)?;
+        let definition = share_definition_form(&info.definition_form, meter)?;
         let origin = clone_origin(info.origin.as_ref(), meter)?;
         meter(8)?;
         self.current = Some(TypeValueInput { declaration, definition, origin,
@@ -413,5 +430,136 @@ mod tests {
             assert!(retry.matches_ordinary(info, &mut |_| Ok(())).unwrap());
             assert!(owner.matches_ordinary(info, &mut |_| Ok(())).unwrap());
         }
+    }
+}
+
+
+#[cfg(test)]
+mod definition_form_owner_tests {
+    use super::*;
+    use crate::portable::{NoExpansion, resolve::{Environment, Phase}};
+    // Native preparation still resolves executable collection constructors.
+    // Use the genuine shipped catalog, not a fabricated nominal declaration.
+    // Loading these immutable compiler facts does not create a guest Session.
+    fn native_fixture_environment(phase: Phase) -> Environment {
+        let namespace = Environment::default().current_namespace(phase).to_owned();
+        let shipped = crate::portable::bootstrap::shipped(phase)
+            .unwrap_or_else(|error| panic!("native fixture bootstrap {phase:?}: {error:?}"));
+        let mut environment = shipped.environment.clone();
+        environment.enter_namespace(phase, &namespace)
+            .unwrap_or_else(|error| panic!("native fixture namespace {phase:?}/{namespace}: {error:?}"));
+        let symbol = suss_reader::Symbol {
+            namespace: Some("suss.core".into()), name: "PersistentVector".into(),
+        };
+        let class = environment.resolve(phase, &symbol, 0..0)
+            .unwrap_or_else(|error| panic!("actual shipped vector class {phase:?}: {error:?}"))
+            .global().clone();
+        assert_eq!(class.phase(), phase);
+        assert_eq!(class.namespace(), "suss.core");
+        assert_eq!(class.name(), "PersistentVector");
+        assert!(shipped.cells.contains(&class), "vector constructor must be an actual shipped cell");
+        let info = environment.definition_info(&class).expect("actual shipped nominal source declaration");
+        assert!(info.analysis_completed);
+        assert!(info.type_fields.is_some(), "completed nominal type, no guessed field count");
+        environment
+    }
+    fn environment(source: &str, phase: Phase) -> (Environment, Global) {
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let origin = SourceOrigin::new(source, None);
+        let baseline = native_fixture_environment(phase);
+        let env = hir::prepare_with_origin(&forms, 0..source.len(), &baseline,
+            phase, &mut NoExpansion, Some(&origin)).unwrap().1;
+        let global = env.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0)
+            .unwrap().global().clone();
+        (env, global)
+    }
+    #[test]
+    fn completed_definition_shares_exact_original_syntax_without_retaining_initializer_hir() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let body = std::iter::repeat_n("x", 128).collect::<Vec<_>>().join(" ");
+            let source = format!("(def ^{{:audit {{:leaf ^{{:nested true}} syntax-symbol}}}} subject (fn* [x] [{body}]))");
+            let (env, global) = environment(&source, phase);
+            let info = env.definition_info(&global).unwrap();
+            let owner = info.completed_values.as_ref().unwrap().clone();
+            assert!(Arc::ptr_eq(&owner.definition, &info.definition_form));
+            let original = suss_reader::forms::read_forms(&source).unwrap().remove(0);
+            assert_eq!(owner.definition.as_ref(), &original, "all spans, prefixes, kinds and body nodes");
+            assert!(owner.matches_ordinary(info, &mut |_| Ok(())).unwrap());
+            let mut copy_work = 0u64;
+            let copied = clone_form_metered(info.definition_form.as_ref(), &mut |work| {copy_work += work; Ok(())}).unwrap();
+            let mut retain_work = 0u64;
+            let shared = share_definition_form(&info.definition_form, &mut |work| {retain_work += work; Ok(())}).unwrap();
+            assert_eq!(shared.as_ref(), &copied);
+            assert!(Arc::ptr_eq(&shared, &info.definition_form));
+            eprintln!("completed-definition-syntax {phase:?} old_copy_only_work={copy_work} retained_reference_only_work={retain_work}");
+            assert!(retain_work < copy_work, "actual removed copy site, not whole request cost");
+            let initializer = Arc::downgrade(info.initializer.as_ref().unwrap());
+            drop(env);
+            assert!(initializer.upgrade().is_none(), "syntax owner must not retain completed HIR/Info/environment");
+            assert_eq!(owner.definition.as_ref(), &original);
+        }
+    }
+    #[test]
+    fn completed_definition_copy_on_write_changes_still_fail_full_original_input_validation() {
+        let (env, global) = environment("(def ^{:audit {:marker 17}} subject [1 2 3])", Phase::Macro);
+        let info = env.definition_info(&global).unwrap();
+        let owner = info.completed_values.as_ref().unwrap();
+        let original = info.definition_form.clone();
+        for mutation in 0..4 {
+            let mut changed = info.clone();
+            assert!(Arc::ptr_eq(&changed.definition_form, &original));
+            let form = Arc::make_mut(&mut changed.definition_form);
+            match mutation {
+                0 => form.span.end += 1,
+                1 => {
+                    let Kind::List(items) = &mut form.kind else { panic!("definition list") };
+                    items[1].metadata.clear();
+                }
+                2 => {
+                    let Kind::List(items) = &mut form.kind else { panic!("definition list") };
+                    let Kind::Vector(body) = &mut items.last_mut().unwrap().kind else { panic!("original vector") };
+                    body[0].kind = Kind::Number(99.0);
+                }
+                _ => form.metadata.push(Form {span: 7..8, metadata: vec![], kind: Kind::Bool(true)}),
+            }
+            assert!(!Arc::ptr_eq(&changed.definition_form, &original));
+            assert!(!owner.matches_ordinary(&changed, &mut |_| Ok(())).unwrap(), "changed full input {mutation}");
+            assert!(owner.matches_ordinary(info, &mut |_| Ok(())).unwrap());
+            assert_eq!(owner.definition.as_ref(), original.as_ref());
+        }
+    }
+    #[test]
+    fn current_type_definition_owner_shares_only_syntax_and_checks_mutated_current_inputs() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let (env, global) = environment("(deftype* ^{:meta {:marker :retained}} subject [] nil nil)", phase);
+            let info = env.definition_info(&global).unwrap();
+            let plan = info.type_key_history.as_ref().unwrap().values(&global).unwrap();
+            let current = plan.current.as_ref().unwrap();
+            assert!(Arc::ptr_eq(&current.definition, &info.definition_form));
+            assert!(plan.matches_current_type(info, &mut |_| Ok(())).unwrap());
+            let mut changed = info.clone();
+            Arc::make_mut(&mut changed.definition_form).span.end += 1;
+            assert!(!plan.matches_current_type(&changed, &mut |_| Ok(())).unwrap());
+            assert!(plan.matches_current_type(info, &mut |_| Ok(())).unwrap());
+        }
+    }
+    #[test]
+    fn definition_owner_allocation_and_reference_retention_propagate_native_failures_then_retry() {
+        let form = suss_reader::forms::read_forms("(def ^{:audit true} subject [1 2 3])").unwrap().remove(0);
+        let before = form.clone();
+        let failure = |_: u64| -> Result<(), Diagnostic> { Err(Diagnostic {span: 5..9, message: "native capture cancelled".into()}) };
+        let error = own_definition_form(&form, &mut {failure}).unwrap_err();
+        assert_eq!(error.span, 5..9);
+        assert_eq!(error.message, "native capture cancelled");
+        assert_eq!(form, before);
+        let owned = own_definition_form(&form, &mut |_| Ok(())).unwrap();
+        let references = Arc::strong_count(&owned);
+        let error = share_definition_form(&owned, &mut {failure}).unwrap_err();
+        assert_eq!(error.span, 5..9);
+        assert_eq!(error.message, "native capture cancelled");
+        assert_eq!(Arc::strong_count(&owned), references);
+        let retried = share_definition_form(&owned, &mut |_| Ok(())).unwrap();
+        assert!(Arc::ptr_eq(&owned, &retried));
+        assert_eq!(owned.as_ref(), &before);
     }
 }

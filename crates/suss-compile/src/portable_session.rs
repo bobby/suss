@@ -1083,6 +1083,12 @@ impl Session {
         self.environment
             .resolves_bootstrap_name(self.phase, symbol, "defmacro")
     }
+    /// Read-only Store-owner identity check for native graph transport.
+    /// This forwards the existing ForeignValue check exactly: no inspection,
+    /// guest call, fuel refill, source proof or memo/domain authority is added.
+    pub(crate) fn check_value_owner(&self, value: &SessionValue) -> Result<(), SessionError> {
+        self.check(value)
+    }
     fn check(&self, value: &SessionValue) -> Result<(), SessionError> {
         if value.identity == self.identity {
             Ok(())

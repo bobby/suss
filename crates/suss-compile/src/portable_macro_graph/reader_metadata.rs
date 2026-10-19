@@ -36,11 +36,18 @@ impl AnalysisGraph<'_> {
     fn reader_metadata_map(
         &mut self, map: &Form, origins: &[MetadataKeyOrigin], supplied: &[Option<Value>], depth: usize,
     ) -> Result<Value> {
+        self.reader_metadata_map_with_values(map, origins, supplied, None, depth)
+    }
+    fn reader_metadata_map_with_values(
+        &mut self, map: &Form, origins: &[MetadataKeyOrigin], supplied: &[Option<Value>],
+        values: Option<&[Option<Value>]>, depth: usize,
+    ) -> Result<Value> {
         self.charge(8)?;
         let Kind::Map(pairs) = &map.kind else {
             return Err(SessionError::Host(wasmtime::Error::msg("Expected reader metadata map")));
         };
-        if pairs.len() % 2 != 0 || pairs.len() / 2 != origins.len() || supplied.len() != origins.len() {
+        if pairs.len() % 2 != 0 || pairs.len() / 2 != origins.len() || supplied.len() != origins.len()
+            || values.is_some_and(|v| v.len() != origins.len()) {
             return Err(SessionError::Host(wasmtime::Error::msg("Reader metadata occurrence extent mismatch")));
         }
         // Same whole synthetic-map validator before selecting any key route;
@@ -56,7 +63,11 @@ impl AnalysisGraph<'_> {
                 Some(key) => key,
                 None => self.reader_key_recipe(&pair[0], origins[index])?,
             };
-            let value = self.form(&pair[1], depth + 1)?;
+            self.charge(2)?; // optional native value slot read, before selection
+            let value = match values.and_then(|v| v[index]) {
+                Some(value) => value,
+                None => self.form(&pair[1], depth + 1)?,
+            };
             entries.push((key, value));
         }
         self.recipe(Recipe::ReaderMap(entries))
@@ -77,9 +88,19 @@ impl AnalysisGraph<'_> {
     pub(super) fn declaration_reader_metadata_map(
         &mut self, metadata: &ReaderMetadata, keys: &mut [Option<Value>], core_file: bool, depth: usize,
     ) -> Result<Value> {
+        self.declaration_reader_metadata_map_with_values(metadata, keys, None, core_file, depth)
+    }
+    // Private producer-only value slots. A supplied ID is NOT a certificate or
+    // key-authority grant. Only completed source selection calls this overload;
+    // all original whole-map validation and selected pair order stay intact.
+    pub(super) fn declaration_reader_metadata_map_with_values(
+        &mut self, metadata: &ReaderMetadata, keys: &mut [Option<Value>],
+        values: Option<&[Option<Value>]>, core_file: bool, depth: usize,
+    ) -> Result<Value> {
         self.charge(12)?;
         if metadata.pairs.len() % 2 != 0 || metadata.pairs.len() / 2 != metadata.origins.len()
-            || metadata.key_positions.len() != metadata.origins.len() || keys.len() != metadata.origins.len() {
+            || metadata.key_positions.len() != metadata.origins.len() || keys.len() != metadata.origins.len()
+            || values.is_some_and(|v| v.len() != metadata.origins.len()) {
             return Err(SessionError::Host(wasmtime::Error::msg("Declaration metadata occurrence extent mismatch")));
         }
         let count = metadata.origins.len().checked_add(usize::from(core_file))
@@ -91,6 +112,7 @@ impl AnalysisGraph<'_> {
             .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Declaration metadata extent overflow")))?)?;
         reuse::reserve(self.session, &mut origins, count)?;
         let mut supplied = self.reader_key_slots(count)?;
+        let mut supplied_values = if values.is_some() { Some(self.reader_key_slots(count)?) } else { None };
         let mut selected = 0;
         for (index, pair) in metadata.pairs.chunks_exact(2).enumerate() {
             self.charge(12)?;
@@ -101,6 +123,10 @@ impl AnalysisGraph<'_> {
             pairs.push(self.clone_form(&pair[1])?);
             origins.push(metadata.origins[index]);
             supplied[selected] = keys[index];
+            self.charge(3)?; // optional value-buffer read/publication
+            if let (Some(input), Some(output)) = (values, supplied_values.as_mut()) {
+                output[selected] = input[index];
+            }
             selected += 1;
         }
         if core_file {
@@ -112,8 +138,9 @@ impl AnalysisGraph<'_> {
         }
         self.charge(count.saturating_add(2))?;
         supplied.truncate(selected);
+        if let Some(values) = supplied_values.as_mut() { self.charge(2)?; values.truncate(selected); }
         let map = Form { span: 0..0, metadata: vec![], kind: Kind::Map(pairs) };
-        self.reader_metadata_map(&map, &origins, &supplied, depth)
+        self.reader_metadata_map_with_values(&map, &origins, &supplied, supplied_values.as_deref(), depth)
     }
 }
 

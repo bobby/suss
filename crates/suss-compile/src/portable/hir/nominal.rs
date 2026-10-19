@@ -501,7 +501,8 @@ impl Analyzer<'_> {
         type_info.declaration.metadata = if metadata.is_empty() { vec![] } else {
             vec![Form { kind: Kind::Map(metadata), span: 0..0, metadata: vec![] }]
         };
-        type_info.definition_form = form.clone();
+        type_info.definition_form = super::super::resolve::own_definition_form(form,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         type_info.origin = self.clone_origin_value(form.span.clone())?;
         type_info.type_fields = Some(declared_fields);
         type_info.type_is_record = record;

@@ -13,7 +13,7 @@ impl AnalysisGraph<'_> {
         preserve_source_error(holder.declaration.span.clone(), &mut |n| self.session.charge_host_work(n),
             |meter| owner.matches_ordinary(holder, meter))
     }
-    pub(super) fn completed_owner_binding(&mut self, global: &portable::resolve::Global,
+    pub(super) fn completed_owner_binding_full(&mut self, global: &portable::resolve::Global,
         owner: &Arc<CompletedDeclarationSource>, holder: &Info) -> Result<()> {
         self.charge(global.namespace().len().saturating_add(global.name().len()).saturating_mul(6).saturating_add(40))?;
         let held = holder.completed_values.as_ref().is_some_and(|x| Arc::ptr_eq(x, owner))
@@ -67,7 +67,7 @@ impl AnalysisGraph<'_> {
         }
         Err(SessionError::Host(wasmtime::Error::msg("Cyclic completed native map recipe")))
     }
-    fn completed_reader(&mut self, owner: &CompletedDeclarationSource) -> Result<hir::ReaderMetadata> {
+    pub(super) fn completed_reader_source(&mut self, owner: &CompletedDeclarationSource) -> Result<Form> {
         validate_form_data(&owner.definition, &mut |units| self.session.charge_host_work(units))?;
         validate_form_data(&owner.declaration, &mut |units| self.session.charge_host_work(units))?;
         self.charge(6)?;
@@ -75,6 +75,10 @@ impl AnalysisGraph<'_> {
             origin.macro_form_data_metered(&owner.declaration, &mut |units|
                 charge_origin_work(self.session, owner.declaration.span.clone(), units)).map_err(SessionError::Compile)?
         } else { self.clone_form(&owner.declaration)? };
+        Ok(declaration)
+    }
+    pub(super) fn completed_reader(&mut self, owner: &CompletedDeclarationSource) -> Result<hir::ReaderMetadata> {
+        let declaration = self.completed_reader_source(owner)?;
         crate::portable_macro_data::normalized_reader_metadata_view(self.session, &declaration)
     }
     fn completed_key_registry(&mut self, global: &portable::resolve::Global,
@@ -94,7 +98,11 @@ impl AnalysisGraph<'_> {
         reuse::reserve(self.session, &mut keys, metadata.origins.len())?;
         for (index, pair) in metadata.pairs.chunks_exact(2).enumerate() {
             self.charge(8)?;
-            let key = self.reader_key_recipe(&pair[0], metadata.origins[index])?;
+            let key = if self.capture_roots && self.direct_reader_roots {
+                self.capture_completed_reader_key(global, owner, holder, metadata.key_positions[index])?
+            } else {
+                self.reader_key_recipe(&pair[0], metadata.origins[index])?
+            };
             let ordinal = self.number(index)?;
             keys.push((key, ordinal));
         }
@@ -108,6 +116,56 @@ impl AnalysisGraph<'_> {
         let entries = self.completed_pairs(registry)?;
         Ok(self.declaration_field_position(&entries, label)?.map(|i| entries[i].0))
     }
+    // One normalized SOURCE occurrence, not one spelling/value. The owner is
+    // retained by completed_store and fully bound to the current holder before
+    // every lookup. Independent source owners never meet in this registry.
+    fn completed_reader_property_value(&mut self, global: &portable::resolve::Global,
+        owner: &Arc<CompletedDeclarationSource>, holder: &Info,
+        index: usize, depth: usize) -> Result<Value> {
+        if let Some(value) = self.completed_lookup(global, owner, holder,
+            CompletedCacheKind::ReaderValue(index))? { return Ok(value); }
+        let value = if self.capture_roots && self.direct_reader_roots {
+            // This constructor accepts only owner/holder/ordinal; it constructs
+            // its own native value from the original source. No external ID or
+            // Form can manufacture the captured DATA occurrence.
+            self.capture_completed_reader_value(global, owner, holder, index, depth)?
+        } else {
+            let metadata = self.completed_reader(owner)?;
+            self.charge(12)?;
+            if metadata.pairs.len() % 2 != 0 || metadata.pairs.len() / 2 != metadata.origins.len()
+                || metadata.origins.len() != metadata.key_positions.len()
+                || index >= metadata.origins.len() {
+                return Err(SessionError::Host(wasmtime::Error::msg("Invalid completed reader value ordinal")));
+            }
+            let native = self.form(&metadata.pairs[index * 2 + 1], depth)?;
+            // Metadata/List propagate reader repetition. This barrier gives one
+            // immutable source occurrence one construction, even without a cache.
+            self.recipe(Recipe::Alias(native))?
+        };
+        self.completed_store(global, owner, holder, CompletedCacheKind::ReaderValue(index), value)?;
+        Ok(value)
+    }
+    fn completed_property_index(&mut self, metadata: &hir::ReaderMetadata, label: &str) -> Result<Option<usize>> {
+        // Entry, selector setup and return controls are paid even when there
+        // are zero complete pairs. Do not borrow slot-allocation charges for
+        // this separate work. No iterator can advance ahead of its debit.
+        self.charge(8)?;
+        let mut index = 0;
+        loop {
+            // Next/probe, extent/index reads, checked-in-range pair offset and
+            // indexed slice selection; includes the empty/final no-hit probe.
+            self.charge(6)?;
+            if index >= metadata.pairs.len() / 2 { return Ok(None); }
+            // Preserve the original per-pair comparison charge exactly.
+            self.charge(label.len().saturating_add(6))?;
+            let pair = &metadata.pairs[index * 2..index * 2 + 2];
+            if matches!(&pair[0].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == label) {
+                return Ok(Some(index));
+            }
+            self.charge(2)?; // increment before the next pair, including no-hit
+            index += 1;
+        }
+    }
     pub(super) fn completed_metadata_map(&mut self, global: &portable::resolve::Global,
         owner: &Arc<CompletedDeclarationSource>, holder: &Info, depth: usize) -> Result<Value> {
         if let Some(root) = self.completed_lookup(global, owner, holder, CompletedCacheKind::Metadata)? { return Ok(root); }
@@ -120,7 +178,26 @@ impl AnalysisGraph<'_> {
         }
         let mut keys = self.reader_key_slots(entries.len())?;
         for (index, (key, _)) in entries.iter().enumerate() { self.charge(4)?; keys[index] = Some(*key); }
-        let value = self.declaration_reader_metadata_map(&metadata, &mut keys, global.namespace() == "suss.core", depth)?;
+        let mut values = self.reader_key_slots(entries.len())?;
+        // Match precisely the initial 22-field reader writer. Later computed,
+        // top-fn, explicit-user-meta, position and inferred writers keep their
+        // existing independent provenance and precedence.
+        // Prepay all fixed iterator/label/skip/call-branch controls BEFORE the
+        // loop starts, including four excluded labels and eighteen empty scans.
+        self.charge(8 + VALUE_FIELDS.len() * 8)?;
+        for label in VALUE_FIELDS {
+            if matches!(label, "meta" | "line" | "column" | "file") { continue; }
+            if let Some(index) = self.completed_property_index(&metadata, label)? {
+                let value = self.completed_reader_property_value(global, owner, holder, index, depth + 1)?;
+                self.charge(2)?;
+                values[index] = Some(value);
+            }
+        }
+        let value = self.declaration_reader_metadata_map_with_values(&metadata, &mut keys,
+            Some(&values), global.namespace() == "suss.core", depth)?;
+        let value = if self.capture_roots && self.direct_reader_roots {
+            self.capture_completed_metadata(global, owner, holder, value)?
+        } else { value };
         // Alias is the existing immutable-record sharing barrier; ReaderMap
         // itself intentionally repeats. Only this genuine owner gets a barrier.
         let value = self.recipe(Recipe::Alias(value))?;
@@ -167,8 +244,8 @@ impl AnalysisGraph<'_> {
         self.completed_set(&mut fields, "name", name)?;
         for label in VALUE_FIELDS {
             if matches!(label, "meta" | "line" | "column" | "file") { continue; }
-            if let Some(value) = self.completed_property(&metadata, label)? {
-                let value = self.form(value, depth + 1)?;
+            if let Some(index) = self.completed_property_index(&metadata, label)? {
+                let value = self.completed_reader_property_value(global, owner, holder, index, depth + 1)?;
                 self.completed_set(&mut fields, label, value)?;
             }
         }
@@ -254,7 +331,11 @@ impl AnalysisGraph<'_> {
                     }
                     let value = self.recipe(Recipe::List(methods))?; self.completed_set(&mut fields, "method-params", value)?;
                     let arglists = self.completed_property(&metadata, "arglists")?;
-                    let value = if let Some(x) = arglists { self.form(x, depth + 1)? } else { self.scalar(Literal::Nil)? };
+                    let value = if arglists.is_some() {
+                        let index = self.completed_property_index(&metadata, "arglists")?.ok_or_else(||
+                            SessionError::Host(wasmtime::Error::msg("Missing selected source arglists")))?;
+                        self.completed_reader_property_value(global, owner, holder, index, depth + 1)?
+                    } else { self.scalar(Literal::Nil)? };
                     self.completed_set(&mut fields, "arglists", value)?;
                     self.charge(std::mem::size_of::<Vec<Value>>() * 2 + 4)?;
                     let mut metas = Vec::new();
@@ -303,15 +384,23 @@ impl AnalysisGraph<'_> {
         }
         if !provisional {
             let raw = self.completed_property(&metadata, "tag")?;
-            let tag = if owner.function.is_some() { raw.filter(|x| truthy(x)).or(owner.inferred_return.as_ref()) }
-                else if raw.is_some_and(truthy) { raw }
-                else if self.completed_property(&metadata, "dynamic")?.is_some_and(truthy) { None }
-                else { owner.inferred.as_ref().or(raw) };
+            // Carry the actual writer decision, never Form equality or native
+            // pointer coincidence. Inferred/dynamic values are separate writers.
+            let (tag, reader_writer) = if owner.function.is_some() {
+                if raw.is_some_and(truthy) { (raw, true) } else { (owner.inferred_return.as_ref(), false) }
+            } else if raw.is_some_and(truthy) { (raw, true) }
+            else if self.completed_property(&metadata, "dynamic")?.is_some_and(truthy) { (None, false) }
+            else if let Some(inferred) = owner.inferred.as_ref() { (Some(inferred), false) }
+            else { (raw, raw.is_some()) };
             let dynamic_any = owner.function.is_none() && !raw.is_some_and(truthy)
                 && self.completed_property(&metadata, "dynamic")?.is_some_and(truthy);
             if dynamic_any { let value = self.symbol("any")?; self.completed_set(&mut fields, "tag", value)?; }
             else if let Some(tag) = tag {
-                let value = self.form(tag, depth + 1)?;
+                let value = if reader_writer {
+                    let index = self.completed_property_index(&metadata, "tag")?.ok_or_else(||
+                        SessionError::Host(wasmtime::Error::msg("Missing selected source tag")))?;
+                    self.completed_reader_property_value(global, owner, holder, index, depth + 1)?
+                } else { self.form(tag, depth + 1)? };
                 self.completed_set(&mut fields, if owner.function.is_some() { "ret-tag" } else { "tag" }, value)?;
             }
         }
@@ -326,8 +415,8 @@ impl AnalysisGraph<'_> {
         self.completed_store(global, owner, holder, CompletedCacheKind::Fields, root)?;
         Ok(fields)
     }
-    pub(super) fn completed_source_value_recipe(&mut self, global: &portable::resolve::Global,
-        holder: &Info, source: &Arc<portable::resolve::TypeSourceValue>, depth: usize) -> Result<Value> {
+    pub(super) fn check_explicit_source_binding(&mut self, global: &portable::resolve::Global,
+        holder: &Info, source: &Arc<portable::resolve::TypeSourceValue>) -> Result<()> {
         self.charge(22 * 8 + global.namespace().len() * 2 + global.name().len() * 2 + 12)?;
         let plan = holder.type_key_history.as_ref().and_then(|h| h.values(global)).ok_or_else(||
             SessionError::Host(wasmtime::Error::msg("Missing current source value plan")))?;
@@ -338,6 +427,11 @@ impl AnalysisGraph<'_> {
         if !plan.overrides().any(|(_, value)| Arc::ptr_eq(value, source)) {
             return Err(SessionError::Host(wasmtime::Error::msg("Foreign type source value owner")));
         }
+        Ok(())
+    }
+    pub(super) fn completed_source_value_recipe(&mut self, global: &portable::resolve::Global,
+        holder: &Info, source: &Arc<portable::resolve::TypeSourceValue>, depth: usize) -> Result<Value> {
+        self.check_explicit_source_binding(global, holder, source)?;
         self.charge(global.namespace().len().saturating_add(global.name().len()).saturating_mul(2)
             .saturating_add(std::mem::size_of::<DeclarationCacheKey>() * 2 + 16))?;
         let key = DeclarationCacheKey::SourceValue(global.clone(), Arc::as_ptr(source) as usize);
@@ -351,6 +445,9 @@ impl AnalysisGraph<'_> {
         } else { self.clone_form(source.form())? };
         validate_form_data(&form, &mut |units| self.session.charge_host_work(units))?;
         let value = self.form(&form, depth)?;
+        let value = if self.capture_roots && self.direct_reader_roots {
+            self.capture_explicit_source_value(global, source, holder, value)?
+        } else { value };
         let value = self.recipe(Recipe::Alias(value))?;
         self.charge(global.namespace().len() * 2 + global.name().len() * 2
             + std::mem::size_of::<(DeclarationCacheKey, (Option<Info>, Value))>() * 2 + 24)?;
@@ -418,5 +515,258 @@ impl AnalysisGraph<'_> {
             else { fields.retain(|(name, _)| *name != label); }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod reader_property_value_tests {
+    use super::*;
+    use portable::resolve::{Environment, Global, Phase};
+
+    fn prepare(source: &str, phase: Phase, environment: &Environment, indexed: bool)
+        -> (Environment, Global, Info) {
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let origin = indexed.then(|| portable::SourceOrigin::new(source, Some("value-owner.cljs".into())));
+        let environment = hir::prepare_with_origin(&forms, 0..source.len(), environment, phase,
+            &mut portable::NoExpansion, origin.as_ref()).unwrap().1;
+        let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
+        let global = binding.global().clone();
+        let info = environment.shared_definition_info(&global).unwrap().clone();
+        (environment, global, info)
+    }
+    fn selected(_graph: &mut AnalysisGraph<'_>, fields: &Fields, label: &str) -> Value {
+        fields.iter().find_map(|(name, value)| (*name == label).then_some(*value))
+            .unwrap_or_else(|| panic!("required field {label}"))
+    }
+    fn property(graph: &mut AnalysisGraph<'_>, metadata: Value, label: &str) -> Value {
+        let entries = graph.completed_pairs(metadata).unwrap();
+        graph.declaration_field_value(&entries, label).unwrap().expect("selected metadata value")
+    }
+
+    #[test]
+    fn completed_reader_property_occurrences_share_outer_inner_objects_without_symbol_only_rule() {
+        // The raw doc and arglists programs are existing ordinary-writer control
+        // shapes, not newly assumed guest prototype semantics. Outer/inner are
+        // independently obtained from the actual field and metadata producers.
+        let cases = [
+            ("(def ^{:doc raw-doc :meta {:x 1} :fn-var false :variadic? false} subject 17)", "doc"),
+            ("(def ^{:arglists '([^{:note 7} x])} subject (fn* [x] x))", "arglists"),
+            ("(def ^{:export [17 23]} subject 17)", "export"),
+            ("(def ^number subject 17)", "tag"),
+            ("(def ^{:ret-tag ^{:marker :kept} result-type} subject 17)", "ret-tag"),
+        ];
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()),
+            (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let same = session.eval("(fn [v] (identical? (nth v 0) (nth v 1)))").unwrap();
+            for (source, label) in cases {
+                for indexed in [false, true] {
+                    let (_environment, global, info) = prepare(source, phase, &Environment::default(), indexed);
+                    let owner = info.completed_values.as_ref().unwrap();
+                    let original = info.declaration.clone();
+                    let values = {
+                        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                        let fields = graph.completed_field_values(&global, owner, &info, 0).unwrap();
+                        let outer = selected(&mut graph, &fields, label);
+                        let meta = selected(&mut graph, &fields, "meta");
+                        let inner = property(&mut graph, meta, label);
+                        // Native occurrence identity is supplemental evidence;
+                        // the actual compiled identity check below is mandatory.
+                        assert_eq!(outer, inner, "same original writer: {label}");
+                        let root = graph.vector(&[outer, inner]).unwrap();
+                        graph.materialize(root).unwrap()
+                    };
+                    session.collect().unwrap();
+                    let actual = session.invoke(&same, &[&values]).unwrap();
+                    assert_eq!(bridge.read(&mut session, &actual, 0..0).unwrap().kind,
+                        Kind::Bool(true), "{phase:?} indexed={indexed} {label}: {source}");
+                    assert_eq!(info.declaration, original);
+                }
+            }
+        }
+    }
+
+    fn retained_values(session: &mut Session, bridge: &FormBridge, cache: &mut source_roots::RootCache,
+        global: &Global, prior: &Info, current: &Info, current_first: bool, metadata_first: bool)
+        -> crate::portable_session::SessionValue {
+        let owner = prior.completed_values.as_ref().unwrap();
+        let mut graph = AnalysisGraph::new(bridge, session);
+        graph.capture_roots = true;
+        graph.direct_reader_roots = true;
+        // The genuine current type's collapsed source still owns the original
+        // ordinary declaration. Exercise both producer orders in one Graph.
+        let first = if current_first { current } else { prior };
+        let second = if current_first { prior } else { current };
+        let a = graph.completed_field_values(global, owner, first, 0).unwrap();
+        let b = graph.completed_field_values(global, owner, second, 0).unwrap();
+        let meta = selected(&mut graph, &a, "meta");
+        let inner = property(&mut graph, meta, "tag");
+        let tag = selected(&mut graph, &a, "tag");
+        let ret = selected(&mut graph, &b, "ret-tag");
+        assert_eq!(tag, inner);
+        assert_eq!(ret, inner, "raw source tag is also the actual function return writer");
+        // This is the important warm case: selecting the retained Metadata root
+        // before its value cuts traversal. Its captured VALUE child must bind
+        // the later outer export; an uncaptured native ID would reconstruct it.
+        let values = if metadata_first { [meta, tag, ret] } else { [tag, meta, ret] };
+        let root = graph.vector(&values).unwrap();
+        assert!(graph.admit_reader_controller(root).unwrap().is_none(),
+            "a DATA value slot cannot mint a strict source certificate");
+        graph.materialize_reader_controller(root, cache).unwrap()
+            .expect("healthy original-source DATA identity must not decline")
+    }
+
+    #[test]
+    fn completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc() {
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()),
+            (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            for indexed in [false, true] {
+                let (prior_environment, global, prior) = prepare("(def ^number subject (fn* [] 17))",
+                    phase, &Environment::default(), indexed);
+                let (_current_environment, same_global, current) = prepare("(deftype* subject [] nil nil)",
+                    phase, &prior_environment, indexed);
+                assert_eq!(global, same_global);
+                let owner = prior.completed_values.as_ref().unwrap();
+                assert!(Arc::ptr_eq(current.type_key_history.as_ref().unwrap().values(&global)
+                    .unwrap().source.as_ref().unwrap(), owner));
+                for current_first in [false, true] {
+                    let mut cache = source_roots::RootCache::default();
+                    let mut previous = None;
+                    for metadata_first in [true, true, false, true] {
+                        let result = retained_values(&mut session, &bridge, &mut cache, &global,
+                            &prior, &current, current_first, metadata_first);
+                        session.collect().unwrap();
+                        let get = session.eval(if metadata_first {
+                            "(fn [v] [(get (nth v 0) :tag) (nth v 1) (nth v 2)])"
+                        } else { "(fn [v] [(get (nth v 1) :tag) (nth v 0) (nth v 2)])" }).unwrap();
+                        let row = session.invoke(&get, &[&result]).unwrap();
+                        let check = session.eval("(fn [v] (and (identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))))").unwrap();
+                        let passed = session.invoke(&check, &[&row]).unwrap();
+                        assert_eq!(bridge.read(&mut session, &passed, 0..0).unwrap().kind, Kind::Bool(true),
+                            "{phase:?} indexed={indexed} current_first={current_first} metadata_first={metadata_first}");
+                        let first = session.eval("(fn [v] (nth v 0))").unwrap();
+                        let current_value = session.invoke(&first, &[&row]).unwrap();
+                        if let Some(old) = &previous {
+                            assert!(session.values_identical(old, &current_value).unwrap(),
+                                "same source value must retain identity across healthy warm requests");
+                        }
+                        previous = Some(current_value);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn completed_reader_values_reject_foreign_equal_owner_changed_source_and_unknown_holder_before_publication() {
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()),
+            (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let source = "(def ^number subject 17)";
+            let (_a, global, info) = prepare(source, phase, &Environment::default(), true);
+            let (_b, _, foreign) = prepare(source, phase, &Environment::default(), true);
+            let owner = info.completed_values.as_ref().unwrap();
+            let foreign_owner = foreign.completed_values.as_ref().unwrap();
+            assert!(!Arc::ptr_eq(owner, foreign_owner));
+            let mut changed = info.as_ref().clone();
+            changed.declaration.metadata.push(suss_reader::forms::read_forms("{:tag changed}").unwrap().remove(0));
+            let changed = Arc::new(changed);
+            let mut unknown = info.as_ref().clone();
+            unknown.completed_values = None;
+            let unknown = Arc::new(unknown);
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            let metadata = graph.completed_reader(owner).unwrap();
+            let index = graph.completed_property_index(&metadata, "tag").unwrap().unwrap();
+            for (candidate, holder) in [(foreign_owner, &info), (owner, &changed), (owner, &unknown)] {
+                let before = graph.recipes.len();
+                assert!(matches!(graph.completed_reader_property_value(&global, candidate, holder, index, 0),
+                    Err(SessionError::Host(_))));
+                assert_eq!(graph.recipes.len(), before, "invalid ownership cannot publish a value recipe");
+            }
+            // A cache hit is not authority either: mutate after the successful
+            // source lookup, then recheck the full holder binding on that hit.
+            graph.completed_reader_property_value(&global, owner, &info, index, 0).unwrap();
+            let before = graph.recipes.len();
+            assert!(matches!(graph.completed_reader_property_value(&global, owner, &changed, index, 0),
+                Err(SessionError::Host(_))));
+            assert_eq!(graph.recipes.len(), before);
+        }
+    }
+
+    #[test]
+    fn reader_value_coordinate_tracks_winning_writer_independently_from_retained_key() {
+        let form = suss_reader::forms::read_forms("^number ^{:tag other :doc raw-doc} subject").unwrap().remove(0);
+        let entries = hir::reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+        let tag = entries.iter().find(|entry| matches!(&entry.key.as_ref().kind,
+            Kind::Keyword(k) if k.namespace.is_none() && k.name == "tag")).unwrap();
+        assert_ne!(tag.key_position(), tag.value_position(), "outer association replaces only the value");
+        assert!(matches!(&tag.value.as_ref().kind, Kind::Symbol(s) if s.name == "number"));
+        let (prefix, pair) = tag.value_position();
+        assert_eq!(pair, 0);
+        assert!(matches!(&form.metadata[prefix].kind, Kind::Symbol(s) if s.name == "number"));
+    }
+
+    #[test]
+    fn reader_property_empty_and_no_hit_scans_bill_work_and_preserve_typed_failure_irq_and_retry() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for source in ["(def subject 17)", "(def ^{:private true} subject 17)"] {
+            let (_environment, global, info) = prepare(source, Phase::Macro, &Environment::default(), false);
+            let original = info.declaration.clone();
+            let metadata = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                graph.completed_reader(info.completed_values.as_ref().unwrap()).unwrap()
+            };
+            let request = session.operation_budget_scope().unwrap();
+            let used = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let before = graph.session.operation_fuel_remaining().unwrap();
+                assert_eq!(graph.completed_property_index(&metadata, "doc").unwrap(), None);
+                before - graph.session.operation_fuel_remaining().unwrap()
+            };
+            drop(request);
+            assert!(used > 0, "a genuine empty/no-hit source scan performs paid work");
+            // No exact fee formula is repeated here. The measured actual work
+            // must fail atomically under insufficient budget and retry fully.
+            for allowance in [0, 1, used - 1] {
+                session.set_operation_fuel(allowance);
+                let request = session.operation_budget_scope().unwrap();
+                let error = {
+                    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                    graph.completed_property_index(&metadata, "doc").unwrap_err()
+                };
+                assert!(matches!(error, SessionError::Trap(ref e)
+                    if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error:?}");
+                drop(request);
+                assert_eq!(info.declaration, original);
+                session.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+                let request = session.operation_budget_scope().unwrap();
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                assert_eq!(graph.completed_property_index(&metadata, "doc").unwrap(), None);
+                drop(graph);
+                drop(request);
+            }
+            let request = session.operation_budget_scope().unwrap();
+            session.interrupt_handle().interrupt(); // active scope, not cleared by begin
+            let error = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                graph.completed_property_index(&metadata, "doc").unwrap_err()
+            };
+            assert!(error.is_interrupt(), "{error:?}");
+            drop(request);
+            let request = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            assert_eq!(graph.completed_property_index(&metadata, "doc").unwrap(), None);
+            // A real full producer remains valid after the failed lookups; no
+            // synthetic source owner or preselected field value is injected.
+            let meta = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+            assert!(graph.completed_pairs(meta).is_ok());
+            drop(graph);
+            drop(request);
+            assert_eq!(info.declaration, original);
+        }
     }
 }

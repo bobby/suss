@@ -44,6 +44,7 @@ mod retained_field_keys;
 mod reference_fields;
 mod type_key_history;
 mod completed_type_values;
+mod completed_bindings;
 mod reader_metadata;
 use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
@@ -437,7 +438,7 @@ enum Task {
 /// reused only through checked source/representation records after callbacks.
 /// An owned revision pointer is not an artifact cache key.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum CompletedCacheKind { Fields, KeyOccurrences, Metadata }
+enum CompletedCacheKind { Fields, KeyOccurrences, Metadata, ReaderValue(usize) }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum DeclarationCacheKey {
@@ -464,6 +465,8 @@ pub struct AnalysisGraph<'a> {
         DeclarationCacheKey,
         (Option<Arc<portable::resolve::DefinitionInfo>>, Value),
     >,
+    // Successful immutable input bindings only; never guest/certificate authority.
+    completed_bindings: Option<Vec<completed_bindings::Binding>>,
     locals: BTreeMap<(usize, usize, String), (Arc<LocalBinding>, Value)>,
     fields: BTreeMap<usize, (Arc<FieldBinding>, Value)>,
     scopes: BTreeMap<usize, (Arc<FunctionScope>, Value)>,
@@ -475,6 +478,9 @@ pub struct AnalysisGraph<'a> {
     metadata_sources: Vec<metadata_expectations::CapturedMetadata>,
     source_roots: source_roots::Captures,
     capture_roots: bool,
+    // Enabled only by a controller that owns direct key exposure AND deferred
+    // parent enrollment. Legacy Build must never see a partially enabled route.
+    direct_reader_roots: bool,
     jobs: VecDeque<(Value, Task)>,
 }
 impl<'a> AnalysisGraph<'a> {
@@ -504,6 +510,7 @@ impl<'a> AnalysisGraph<'a> {
             maps: BTreeMap::new(),
             vectors: BTreeMap::new(),
             declarations: BTreeMap::new(),
+            completed_bindings: None,
             locals: BTreeMap::new(),
             fields: BTreeMap::new(),
             scopes: BTreeMap::new(),
@@ -515,11 +522,12 @@ impl<'a> AnalysisGraph<'a> {
             metadata_sources: Vec::new(),
             source_roots: source_roots::Captures::default(),
             capture_roots: false,
+            direct_reader_roots: false,
             jobs: VecDeque::new(),
         }
     }
     pub(crate) fn with_declaration_values(bridge: &'a FormBridge,session: &'a mut Session,values: &'a mut DeclarationValues)->Self {
-        let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph.capture_roots=true;graph
+        let mut graph=Self::new(bridge,session);graph.retained=Some(values);graph.capture_roots=true;graph.direct_reader_roots=true;graph
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
         self.charge(1)?;
@@ -798,10 +806,40 @@ impl<'a> AnalysisGraph<'a> {
             } else { bridge };
             let value = if let Some((inputs, _)) = source.filter(|(inputs,_)| inputs.intercepts(frame.id)) {
                 self.session.charge_host_work(1)?;
-                inputs.selected(self.session, frame.id)?.ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Missing selected source input")))?.clone()
+                inputs.selected(self.session, frame.id, self.bridge)?.ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Missing selected source input")))?.clone()
             } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
                 control.as_mut().unwrap().produce(self,frame.id)?
-            } else {let recipe = self.recipes[frame.id].as_ref().unwrap();match recipe {
+            } else { self.produce_native_recipe(frame.id, active_bridge, &inputs)? };
+            let tainted=if source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id)) {
+                true
+            } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
+                control.as_ref().unwrap().last_is_private(frame.id)
+            } else {frame.tainted};
+            if has_inputs {value_taint[slot]=tainted;}
+            if !repeat[slot] {
+                cached[slot] = Some(value.clone());
+            }
+            if let Some(parent) = frames.last_mut() {
+                parent.tainted |= tainted;
+                if has_inputs {
+                    reuse::reserve(self.session, &mut parent.input_taint, 1)?;
+                    parent.input_taint.push(tainted);
+                }
+                parent.inputs.push(value);
+            } else {
+                return Ok(value);
+            }
+        }
+        unreachable!("graph has a root")
+    }
+    // ONE constructor dispatch for ordinary and source-aware walks. The
+    // returned value, callback order and fallible propagation remain here.
+    fn produce_native_recipe(
+        &mut self, id: Value, active_bridge: &FormBridge, inputs: &[SessionValue],
+    ) -> Result<SessionValue> {
+        let recipe = self.recipes[id].as_ref().ok_or_else(||
+            SessionError::Host(wasmtime::Error::msg("Missing native materialization recipe")))?;
+        Ok(match recipe {
                 Recipe::Scalar(value) => active_bridge.scalar(self.session, value)?,
                 Recipe::Identifier {
                     namespace,
@@ -848,28 +886,8 @@ impl<'a> AnalysisGraph<'a> {
                     inputs.last().unwrap(),
                     &inputs[1..1 + set_items.len()],
                 )?,
-            }};
-            let tainted=if source.is_some_and(|(inputs,_)|inputs.intercepts(frame.id)) {
-                true
-            } else if control.as_ref().is_some_and(|b|b.intercepts(frame.id)) {
-                control.as_ref().unwrap().last_is_private(frame.id)
-            } else {frame.tainted};
-            if has_inputs {value_taint[slot]=tainted;}
-            if !repeat[slot] {
-                cached[slot] = Some(value.clone());
-            }
-            if let Some(parent) = frames.last_mut() {
-                parent.tainted |= tainted;
-                if has_inputs {
-                    reuse::reserve(self.session, &mut parent.input_taint, 1)?;
-                    parent.input_taint.push(tainted);
-                }
-                parent.inputs.push(value);
-            } else {
-                return Ok(value);
-            }
-        }
-        unreachable!("graph has a root")
+
+        })
     }
     fn charge(&mut self, units: usize) -> Result<()> {
         self.session.charge_host_work(units as u64)

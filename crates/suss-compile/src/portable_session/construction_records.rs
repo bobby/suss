@@ -155,6 +155,16 @@ pub(crate) struct BridgeClassInput {
     pub constructor: Option<SessionValue>,
     pub descriptor: SessionValue,
 }
+// Bounded helper for the transient, non-authoritative child-input buffer.
+fn record_error(message: &'static str) -> SessionError {
+    SessionError::Host(wasmtime::Error::msg(message))
+}
+fn record_bytes<T>(count: usize) -> Result<u64, SessionError> {
+    count.checked_mul(std::mem::size_of::<T>())
+        .filter(|bytes| *bytes <= isize::MAX as usize)
+        .and_then(|bytes| u64::try_from(bytes).ok())
+        .ok_or_else(|| record_error("Transient input allocation overflow"))
+}
 struct ChildBinding { value: SessionValue }
 pub(crate) struct ConstructionRecords {
     domain: std::sync::Arc<super::write_domain::WriteDomain>,
@@ -172,6 +182,12 @@ impl ConstructionRecords {
             bridge_classes,
             class_prechecks_valid: true,
         }
+    }
+    // Eligibility only, used immediately after a callback-free recording fork.
+    // This never substitutes for the later current class/prototype validators.
+    pub(crate) fn initial_class_precheck(&self, session: &mut Session) -> Result<bool, SessionError> {
+        session.charge_host_work(1)?;
+        Ok(self.class_prechecks_valid)
     }
     pub(crate) fn note_class_precheck(&mut self, valid: bool) {
         self.class_prechecks_valid &= valid;
@@ -275,6 +291,26 @@ impl ConstructionRecords {
         root: &SessionValue,
     ) -> Result<bool, SessionError> {
         self.check_recorded_inputs(session, root, u64::MAX)
+    }
+    // DATA-only use of complete original native factory observations. This
+    // returns a boolean, never a domain/receipt/CheckedChild. The only caller is
+    // the first-use source evidence walk, which recursively checks every input
+    // and binds it to the actual native recipe dependency before this call.
+    pub(crate) fn matches_current_native_inputs(
+        &self, session: &mut Session, root: &SessionValue, inputs: &[&SessionValue],
+    ) -> Result<bool, SessionError> {
+        let count = inputs.len();
+        session.charge_host_work(record_bytes::<ChildBinding>(count)?
+            .checked_add((count as u64).checked_mul(4)
+                .ok_or_else(|| record_error("Native data input control overflow"))?)
+            .ok_or_else(|| record_error("Native data input prepayment overflow"))?)?;
+        let mut children = Vec::new();
+        children.try_reserve_exact(count).map_err(|_| record_error("Native data input allocation failed"))?;
+        for value in inputs {
+            session.check(value)?;
+            children.push(ChildBinding { value: (*value).clone() });
+        }
+        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &children)
     }
     fn check_recorded_inputs(
         &self,
@@ -458,6 +494,48 @@ impl ConstructionRecords {
             }
         }
         Ok(count)
+    }
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session)
+        -> Result<(bool, bool), SessionError> {
+        let _request = session.operation_budget_scope()?;
+        let mut source = true;
+        let mut certified = true;
+        for record in &self.records {
+            session.charge_host_work(1)?;
+            let (data, reusable) = match &record.fact {
+                Fact::Constructor(fact) => fact.fresh_direct_status(session, &record.value)?,
+                Fact::Scalar(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
+                Fact::Array(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
+                Fact::CanonicalSeed(fact) => fact.fresh_direct_status(session, &record.value)?,
+                Fact::ExternalSeed(_) => (false, false),
+            };
+            session.charge_host_work(2)?;
+            source &= data;
+            certified &= reusable;
+        }
+        Ok((source, certified))
+    }
+    pub(crate) fn matches_fresh_source_inputs(
+        &self, session: &mut Session, root: &SessionValue,
+        children: &[crate::portable_macro_graph::source_roots::FreshSourceProof],
+    ) -> Result<bool, SessionError> {
+        let _request = session.operation_budget_scope()?;
+        let count = self.children.len().checked_add(children.len())
+            .ok_or_else(|| record_error("Fresh input coverage overflow"))?;
+        let bytes = record_bytes::<ChildBinding>(count)?;
+        let controls = u64::try_from(count).ok().and_then(|n| n.checked_mul(3))
+            .ok_or_else(|| record_error("Fresh input control overflow"))?;
+        session.charge_host_work(bytes.checked_add(controls)
+            .ok_or_else(|| record_error("Fresh input allocation overflow"))?)?;
+        let mut selected = Vec::new();
+        selected.try_reserve_exact(count)
+            .map_err(|_| record_error("Fresh input allocation failed"))?;
+        for child in &self.children { selected.push(ChildBinding { value: child.value.clone() }); }
+        for child in children {
+            session.check(child.value())?;
+            selected.push(ChildBinding { value: child.value().clone() });
+        }
+        Self::check_selected_inputs(session, root, u64::MAX, &self.records, &selected)
     }
     pub(crate) fn matches_direct_facts(&self, session: &mut Session) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
@@ -798,4 +876,14 @@ mod tests {
 
 impl Default for ConstructionRecords {
  fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:Vec::new(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
+}
+
+// Eligibility is only the existence of private provisioning witnesses, not a
+// mutable class/method verdict. Every selected value still gets full current
+// source/input/class/prototype validation. Bootstrap cannot mint this authority.
+impl Session {
+    pub(crate) fn source_controller_ready(&mut self) -> Result<bool, SessionError> {
+        self.charge_host_work(6)?;
+        Ok(!self.bootstrap_core && self.canonical_methods.is_some() && self.canonical_seeds.is_some())
+    }
 }

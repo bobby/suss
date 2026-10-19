@@ -338,6 +338,19 @@ impl AnalysisGraph<'_> {
         cache: &mut DeclarationValues,
     ) -> Result<SessionValue> {
         trace_graph(self, "start")?;
+        self.session.charge_host_work(1)?;
+        if self.direct_reader_roots {
+            match self.materialize_reader_controller(root, &mut cache.roots)? {
+                Some(value) => return Ok(value),
+                None => {
+                    // No construction callbacks occurred in the declined path.
+                    // One ordinary whole-build context preserves reader aliases.
+                    let value = self.materialize_using(root, self.bridge)?;
+                    cache.roots.retire_obsolete(self.session)?;
+                    return Ok(value);
+                }
+            }
+        }
         self.finish_recipes()?;
         trace_graph(self, "recipes")?;
         let placed = !self.metadata_sources.is_empty() && self.private_metadata_placement(root)?;

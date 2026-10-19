@@ -30226,3 +30226,8 @@ match the previous tuple, and the actual existing compiled identity probe passes
 No new native test success is inferred. Run committed-head normal reproduction
 and all focused original acceptance before the exact workspace gate. Root66a55ce's
 existing producer remains untouched; no local concurrent Cargo/Suss VM ran.
+
+
+## Shared reader controller source/build evidence (2026-10-19)
+
+See [source/build evidence](evidence/m4-pr263-shared-reader-controller-source-2026-10-19.md). Exact 34-source freeze 79ec4632c4e5994e9633f7a74cf165a049e16e538f581f050af34be234a8160f; final library no-run PASS24.9537s. Earlier library/CLI no-run PASS20.01s/28.77s and 531 listed library entries are compile-only evidence. Native ownership run 4PASS/2setupFAIL is retained; genuine shipped-env helper repairs are unexecuted. Next: normal bootstrap regeneration and identity, then focused execution. No acceptance/performance/full-baseline/final-CI claim. Archive SHA256 bcca02f7551029926955a317656089aaac4cc100d4beb0e49dcf3bdd1ad5f913.

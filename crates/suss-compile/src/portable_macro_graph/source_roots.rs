@@ -9,7 +9,26 @@ use crate::portable::{
     resolve::{DefinitionInfo, Global},
 };
 use crate::portable_session::{Session, SessionError};
-use std::{rc::Rc, sync::Arc};
+use std::{rc::Rc, sync::{Arc, Weak}};
+#[path = "source_roots/reader_keys.rs"]
+mod reader_keys;
+#[path = "source_roots/reader_plan.rs"]
+mod reader_plan;
+#[path = "source_roots/mixed_reader_inputs.rs"]
+mod mixed_reader_inputs;
+#[path = "source_roots/reader_controller.rs"]
+mod reader_controller;
+#[path = "source_roots/fresh_source.rs"]
+mod fresh_source;
+pub(crate) use fresh_source::FreshSourceProof;
+#[path = "source_roots/transient_inputs.rs"]
+mod transient_inputs;
+#[path = "source_roots/first_use_walk.rs"]
+mod first_use_walk;
+#[path = "source_roots/first_use_data.rs"]
+mod first_use_data;
+use reader_keys::{ReaderSourceOwner, ReaderSelector};
+use reader_plan::populate;
 
 type Locals = Arc<std::collections::HashMap<String, Arc<hir::LocalBinding>>>;
 type Fields = Arc<std::collections::HashMap<String, Arc<hir::FieldBinding>>>;
@@ -28,8 +47,82 @@ pub(super) enum Owner {
     Scope(Arc<hir::FunctionScope>),
     Callable(Arc<hir::SourceCallable>),
     Ast(Arc<hir::SourceAnalysis>),
+    ReaderSource(Global, ReaderSourceOwner, ReaderSelector),
+    Request(Arc<()>),
 }
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+// Cache certificates retain allocation identity weakly, not the native graph.
+// No source owner (including a namespace's declaration DAG) is kept alive by
+// another certificate, expectation or historical cache entry. A real compiler
+// snapshot/current capture keeps the Arc alive; Weak reserves its allocation
+// identity after expiry, so pointer reuse cannot select a different revision.
+#[derive(Clone)]
+enum OwnerLease {
+    Namespace(Weak<hir::SourceNamespace>),
+    Defs(Weak<hir::SourceNamespace>),
+    Declaration(Weak<DefinitionInfo>),
+    DeclarationField(Weak<DefinitionInfo>),
+    Locals(Weak<std::collections::HashMap<String, Arc<hir::LocalBinding>>>,
+           Weak<std::collections::HashMap<String, Arc<hir::FieldBinding>>>),
+    Local(Weak<hir::LocalBinding>),
+    Field(Weak<hir::FieldBinding>),
+    Scope(Weak<hir::FunctionScope>),
+    Callable(Weak<hir::SourceCallable>),
+    Ast(Weak<hir::SourceAnalysis>),
+    ReaderSource(reader_keys::ReaderSourceLease),
+    Request(Weak<()>),
+}
+impl OwnerLease {
+    fn live(&self, session: &mut Session) -> Result<bool> {
+        session.charge_host_work(5)?;
+        // Counts test existence, never subtract a guessed internal-reference
+        // count. ALL persistent cache paths hold Weak native owners only.
+        Ok(self.exists())
+    }
+    fn exists(&self) -> bool {
+        match self {
+            Self::Namespace(v) | Self::Defs(v) => v.strong_count() != 0,
+            Self::Declaration(v) | Self::DeclarationField(v) => v.strong_count() != 0,
+            Self::Locals(l, f) => l.strong_count() != 0 && f.strong_count() != 0,
+            Self::Local(v) => v.strong_count() != 0,
+            Self::Field(v) => v.strong_count() != 0,
+            Self::Scope(v) => v.strong_count() != 0,
+            Self::Callable(v) => v.strong_count() != 0,
+            Self::Ast(v) => v.strong_count() != 0,
+            Self::ReaderSource(v) => v.exists(),
+            Self::Request(v) => v.strong_count() != 0,
+        }
+    }
+}
+impl Owner {
+    fn kind(&self) -> &'static str {
+        match self {
+            Self::Namespace(_) => "Namespace", Self::Defs(_) => "Defs",
+            Self::Declaration(..) => "Declaration", Self::DeclarationField(..) => "DeclarationField",
+            Self::Locals(..) => "Locals", Self::Local(_) => "Local", Self::Field(_) => "Field",
+            Self::Scope(_) => "Scope", Self::Callable(_) => "Callable", Self::Ast(_) => "Ast",
+            Self::ReaderSource(..) => "ReaderSource",
+            Self::Request(_) => "Request",
+        }
+    }
+    fn lease(&self, session: &mut Session) -> Result<OwnerLease> {
+        session.charge_host_work(3)?;
+        Ok(match self {
+            Self::Namespace(v) => OwnerLease::Namespace(Arc::downgrade(v)),
+            Self::Defs(v) => OwnerLease::Defs(Arc::downgrade(v)),
+            Self::Declaration(_, v) => OwnerLease::Declaration(Arc::downgrade(v)),
+            Self::DeclarationField(_, v, _) => OwnerLease::DeclarationField(Arc::downgrade(v)),
+            Self::Locals(l, f) => OwnerLease::Locals(Arc::downgrade(l), Arc::downgrade(f)),
+            Self::Local(v) => OwnerLease::Local(Arc::downgrade(v)),
+            Self::Field(v) => OwnerLease::Field(Arc::downgrade(v)),
+            Self::Scope(v) => OwnerLease::Scope(Arc::downgrade(v)),
+            Self::Callable(v) => OwnerLease::Callable(Arc::downgrade(v)),
+            Self::Ast(v) => OwnerLease::Ast(Arc::downgrade(v)),
+            Self::ReaderSource(_, owner, _) => OwnerLease::ReaderSource(owner.lease(session)?),
+            Self::Request(owner) => OwnerLease::Request(Arc::downgrade(owner)),
+        })
+    }
+}
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum Key {
     Namespace(usize),
     Defs(usize),
@@ -41,6 +134,8 @@ pub(super) enum Key {
     Scope(usize),
     Callable(usize),
     Ast(usize),
+    ReaderSource(Global, reader_keys::ReaderSourceIndex, ReaderSelector),
+    Request(usize),
 }
 impl Owner {
     fn key(&self, session: &mut Session) -> Result<Key> {
@@ -63,68 +158,78 @@ impl Owner {
             Self::Scope(v) => Key::Scope(Arc::as_ptr(v) as usize),
             Self::Callable(v) => Key::Callable(Arc::as_ptr(v) as usize),
             Self::Ast(v) => Key::Ast(Arc::as_ptr(v) as usize),
+            Self::Request(v) => Key::Request(Arc::as_ptr(v) as usize),
+            Self::ReaderSource(global, owner, selector) => {
+                session.charge_host_work((2 * std::mem::size_of::<Global>()
+                    + 2 * (global.namespace().len() + global.name().len()) + 12) as u64)?;
+                Key::ReaderSource(global.clone(), owner.index(), *selector)
+            }
         })
     }
 }
-// Retention owns the source revision as part of each certificate. Pointer keys
-// are indexes only; every lookup independently checks the current expectation.
+// Certificates retain weak native source ownership and rooted guest values.
+// Every whole-build replacement is staged before the single infallible swap.
 #[derive(Default)]
 pub(super) struct RootCache {
-    entries: crate::portable::metered_map::TryOrderedMap<Key, Option<Rc<Certificate>>>,
-}
-struct KeyMeter<'a>(&'a mut Session);
-impl crate::portable::metered_map::Context<Key> for KeyMeter<'_> {
-    type Error = SessionError;
-    fn charge(&mut self, units: u64) -> Result<()> {
-        self.0.charge_host_work(units)
-    }
-    fn compare(&mut self, a: &Key, b: &Key) -> Result<std::cmp::Ordering> {
-        self.0.charge_host_work(key_comparison_work(a, b))?;
-        Ok(a.cmp(b))
-    }
+    entries: Vec<Rc<Certificate>>,
+    // Persistent identity, never reusable source/memo/domain authority.
+    data: Vec<Rc<first_use_data::Root>>,
 }
 impl RootCache {
-    fn lookup(
-        &self,
-        session: &mut Session,
+    fn lookup(&self, session: &mut Session,
         bridge: &crate::portable_macro_data::FormBridge,
-        expected: &Rc<Expectation>,
-    ) -> Result<Option<CheckedChild>> {
+        expected: &Rc<Expectation>) -> Result<Option<CheckedChild>> {
         let _request = session.operation_budget_scope()?;
-        let key = expected.owner.key(session)?;
-        session.charge_host_work(1)?;
-        let candidate = self
-            .entries
-            .get(&key, &mut KeyMeter(session))?
-            .and_then(|entry| entry.as_ref())
-            .cloned();
-        match candidate {
-            Some(certificate) => Certificate::checked(session, bridge, &certificate, expected),
-            None => Ok(None),
+        let live = expected.owner.live(session)?;
+        for certificate in &self.entries {
+            session.charge_host_work(key_comparison_work(&expected.key, &certificate.source.key))?;
+            if live && expected.key == certificate.source.key {
+                return Certificate::checked(session, bridge, certificate, expected);
+            }
         }
+        Ok(None)
     }
-    // Called only in the callback-free final publication interval. Errors are
-    // propagated, and an invalid entry explicitly invalidates its old cache slot.
-    // Each inserted Some is already a COMPLETE independently checked certificate;
-    // an allocation trap cannot expose a partly initialized certificate.
-    fn publish(
-        &mut self,
-        session: &mut Session,
+    fn replacement(&self, session: &mut Session, updates: &[Rc<Certificate>])
+        -> Result<Vec<Rc<Certificate>>> {
+        let mut next = Vec::new();
+        reserve(session, &mut next, self.entries.len())?;
+        for old in &self.entries {
+            session.charge_host_work(2)?;
+            if Certificate::owners_live(session, old)? { next.push(old.clone()); }
+        }
+        for certificate in updates {
+            if !Certificate::owners_live(session, certificate)? { continue; }
+            let mut found = None;
+            for (index, old) in next.iter().enumerate() {
+                session.charge_host_work(key_comparison_work(&old.source.key, &certificate.source.key))?;
+                if old.source.key == certificate.source.key { found = Some(index); break; }
+            }
+            session.charge_host_work(2)?;
+            match found {
+                Some(index) => next[index] = certificate.clone(),
+                None => { reserve(session, &mut next, 1)?; next.push(certificate.clone()); }
+            }
+        }
+        session.charge_host_work(self.entries.len() as u64 + 1)?;
+        Ok(next)
+    }
+    pub(super) fn retire_obsolete(&mut self, session: &mut Session) -> Result<()> {
+        let next = self.replacement(session, &[])?;
+        self.entries = next;
+        Ok(())
+    }
+    // Single-certificate proof-test path. The production controller prepares
+    // ONE replacement for ALL roots, never calls this incrementally.
+    fn publish(&mut self, session: &mut Session,
         bridge: &crate::portable_macro_data::FormBridge,
-        expected: &Rc<Expectation>,
-        certificate: &Rc<Certificate>,
-    ) -> Result<bool> {
+        expected: &Rc<Expectation>, certificate: &Rc<Certificate>) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
-        let checked = Certificate::checked(session, bridge, certificate, expected)?;
-        let key = expected.owner.key(session)?;
-        let valid = checked.is_some();
-        session.charge_host_work(1)?;
-        self.entries.insert(
-            key,
-            checked.map(|child| child.certificate),
-            &mut KeyMeter(session),
-        )?;
-        Ok(valid)
+        if Certificate::checked(session, bridge, certificate, expected)?.is_none() {
+            return Ok(false);
+        }
+        let next = self.replacement(session, std::slice::from_ref(certificate))?;
+        self.entries = next;
+        Ok(true)
     }
 }
 pub(super) struct Capture {
@@ -168,6 +273,22 @@ impl AnalysisGraph<'_> {
         self.capture_source_root(owner, native)
     }
     pub(super) fn capture_source_root(&mut self, owner: Owner, native: Value) -> Result<Value> {
+        // One actual map_values node can be exported repeatedly by an identical
+        // immutable locals/fields pair. Coalesce only that exact native node and
+        // both actual owners. Equal maps or reader occurrences never qualify.
+        self.session.charge_host_work(2)?;
+        if let Owner::Locals(locals, fields) = &owner
+            && matches!(self.recipes.get(native), Some(Some(Recipe::Map(_)))) {
+            for old in &self.source_roots.roots {
+                self.session.charge_host_work(7)?;
+                if let Owner::Locals(old_locals, old_fields) = &old.owner
+                    && Arc::ptr_eq(locals, old_locals)
+                    && Arc::ptr_eq(fields, old_fields)
+                    && old.native == native {
+                    return Ok(old.alias);
+                }
+            }
+        }
         // Native selection always precedes the alias. Callers inspecting a raw
         // declaration map must resolve native explicitly, never inspect an alias
         // as if it were a Recipe::Map.
@@ -317,7 +438,7 @@ pub(super) fn dependencies(session: &mut Session, recipe: &Recipe) -> Result<Vec
 // Independent source expectation. Its constructor consumes native recipes only;
 // a later physical read can reject it but cannot refresh its contents.
 pub(super) struct Expectation {
-    owner: Owner,
+    owner: OwnerLease,
     key: Key,
     witness: super::source_facts::LogicalSourceWitness,
     // Canonical boundary ordinal -> independently owned native source identity.
@@ -329,6 +450,7 @@ pub(crate) struct Certificate {
     value: crate::portable_session::SessionValue,
     records: crate::portable_session::construction_records::ConstructionRecords,
     children: Vec<Rc<Certificate>>,
+    alias_root: bool,
 }
 // Only this module can mint a checked child; neither an arbitrary SessionValue
 // nor an ExternalSeed can be converted into one. The expected current source is
@@ -350,7 +472,9 @@ impl CheckedChild {
 struct SourceInput {
     alias: Value,
     ordinal: usize,
-    token: crate::portable_session::private_fixups::slot_log::PrivateToken,
+    // None means a STRICT direct reader KEY, never an unchecked child value.
+    token: Option<crate::portable_session::private_fixups::slot_log::PrivateToken>,
+    exposed: std::cell::Cell<bool>,
     child: CheckedChild,
     expected: Rc<Expectation>,
 }
@@ -359,6 +483,7 @@ pub(super) struct SourceInputs {
     log: crate::portable_session::private_fixups::slot_log::SharedSlotLog,
     inputs: Vec<SourceInput>,
     by_alias: Vec<Option<usize>>,
+    transient: Option<transient_inputs::Inputs>,
 }
 // Only native recipe-directed materialization can construct this proof. A list
 // of individually valid children cannot establish their physical parent slots.
@@ -368,6 +493,13 @@ struct BoundParent {
     records: crate::portable_session::construction_records::ConstructionRecords,
     children: Vec<CheckedChild>,
 }
+impl SourceInput {
+    fn private_token(&self, session: &mut Session)
+        -> Result<&crate::portable_session::private_fixups::slot_log::PrivateToken> {
+        session.charge_host_work(1)?;
+        self.token.as_ref().ok_or_else(|| invalid("Direct key cannot become a private token"))
+    }
+}
 impl SourceInputs {
     pub(super) fn intercepts(&self, alias: Value) -> bool {
         self.by_alias.get(alias).is_some_and(Option::is_some)
@@ -376,19 +508,32 @@ impl SourceInputs {
         &self,
         session: &mut Session,
         alias: Value,
+        bridge: &crate::portable_macro_data::FormBridge,
     ) -> Result<Option<&crate::portable_session::SessionValue>> {
+        session.charge_host_work(1)?;
+        if let Some(transient) = &self.transient {
+            return transient.selected(session, bridge, &self.log, alias);
+        }
         self.log.borrow().binding_owner(session)?;
         session.charge_host_work(2)?;
         if let Some(Some(index)) = self.by_alias.get(alias) {
             let input = &self.inputs[*index];
-            session.charge_host_work(3)?;
-            if input.alias != alias
-                || !input.token.belongs_to(&self.log.borrow())
-                || input.token.id() != input.ordinal
-            {
-                return Err(invalid("Foreign source-edge token"));
+            session.charge_host_work(4)?; // original controls + new mode branch
+            if input.alias != alias { return Err(invalid("Foreign source-edge alias")); }
+            if let Some(token) = &input.token {
+                if !token.belongs_to(&self.log.borrow()) || token.id() != input.ordinal {
+                    return Err(invalid("Foreign source-edge token"));
+                }
+                return Ok(Some(token.value()));
             }
-            return Ok(Some(input.token.value()));
+            // A strict direct key is always reread before actual exposure.
+            // There is no substitution/hash retry on this path.
+            session.charge_host_work(3)?;
+            if Certificate::checked(session, bridge, &input.child.certificate, &input.expected)?.is_none() {
+                return Err(invalid("Direct reader key changed before selection"));
+            }
+            input.exposed.set(true);
+            return Ok(Some(input.child.value()));
         }
         Ok(None)
     }
@@ -463,14 +608,15 @@ impl AnalysisGraph<'_> {
             let mut slots = log.borrow_mut();
             let _value = slots.token(self.session, ordinal)?;
             let token = slots.token_handle(self.session, ordinal)?;
-            self.session.charge_host_work(3)?;
+            self.session.charge_host_work(4)?;
             let alias = self.source_roots.roots[layout[id][ordinal]].alias;
             by_alias[alias] = Some(ordinal);
             let (child, expected) = child.unwrap();
             inputs.push(SourceInput {
                 alias,
                 ordinal,
-                token,
+                token: Some(token),
+                exposed: std::cell::Cell::new(false),
                 child,
                 expected,
             });
@@ -480,6 +626,7 @@ impl AnalysisGraph<'_> {
             log,
             inputs,
             by_alias,
+            transient: None,
         }))
     }
     fn materialize_source_parent(
@@ -530,12 +677,13 @@ impl AnalysisGraph<'_> {
         for input in &inputs.inputs {
             self.session.charge_host_work(3)?;
             let slots = inputs.log.borrow();
-            if !input.token.belongs_to(&slots) || input.token.id() != input.ordinal {
+            let token = input.private_token(self.session)?;
+            if !token.belongs_to(&slots) || token.id() != input.ordinal {
                 return Err(invalid("Foreign final source-edge binding"));
             }
             // Recheck the original native empty-array token fact before use.
             drop(slots.token_handle(self.session, input.ordinal)?);
-            pairs.push((input.token.value(), input.child.value()));
+            pairs.push((token.value(), input.child.value()));
         }
         inputs.log.borrow().apply(self.session, &value, &pairs)?;
         // Child domains must close the parent domain before any snapshot is
@@ -603,7 +751,7 @@ impl AnalysisGraph<'_> {
             (std::mem::size_of::<Expectation>() + 2 * std::mem::size_of::<usize>()) as u64 + 1,
         )?;
         Ok(Some(Rc::new(Expectation {
-            owner: capture.owner.clone(),
+            owner: capture.owner.lease(self.session)?,
             key,
             witness,
             children,
@@ -611,6 +759,41 @@ impl AnalysisGraph<'_> {
     }
 }
 impl Certificate {
+    fn owners_live(session: &mut Session, root: &Rc<Self>) -> Result<bool> {
+        let mut pending = Vec::new();
+        let mut done: Vec<*const Self> = Vec::new();
+        reserve(session, &mut pending, 1)?;
+        session.charge_host_work(1)?;
+        pending.push(root);
+        while let Some(certificate) = pending.pop() {
+            session.charge_host_work(done.len() as u64 + 2)?;
+            let pointer = Rc::as_ptr(certificate);
+            if done.contains(&pointer) { continue; }
+            if !certificate.source.owner.live(session)? { return Ok(false); }
+            reserve(session, &mut done, 1)?;
+            session.charge_host_work(1)?;
+            done.push(pointer);
+            reserve(session, &mut pending, certificate.children.len())?;
+            session.charge_host_work(certificate.children.len() as u64)?;
+            pending.extend(certificate.children.iter());
+        }
+        Ok(true)
+    }
+    fn finish_native_alias(session: &mut Session,
+        bridge: &crate::portable_macro_data::FormBridge, source: Rc<Expectation>,
+        child: CheckedChild) -> Result<Option<Rc<Self>>> {
+        // The caller has already proved the native recipe is an Alias-only
+        // chain to this single child. No constructor or guest callback occurs.
+        let recording = bridge.recording(session)?;
+        session.charge_host_work(3)?;
+        let value = child.value().clone();
+        let mut children = Vec::new();
+        reserve(session, &mut children, 1)?;
+        children.push(child);
+        Self::finish_complete(session, bridge, source, value,
+            recording.into_records()?, children, false, true)
+    }
+
     fn finish_bound(
         session: &mut Session,
         bridge: &crate::portable_macro_data::FormBridge,
@@ -624,6 +807,7 @@ impl Certificate {
             bound.records,
             bound.children,
             true,
+            false,
         )
     }
     // Inventory-only construction is restricted to the negative/closure tests.
@@ -637,7 +821,7 @@ impl Certificate {
         records: crate::portable_session::construction_records::ConstructionRecords,
         children: Vec<CheckedChild>,
     ) -> Result<Option<Rc<Self>>> {
-        Self::finish_complete(session, bridge, source, value, records, children, false)
+        Self::finish_complete(session, bridge, source, value, records, children, false, false)
     }
     fn finish_complete(
         session: &mut Session,
@@ -647,12 +831,16 @@ impl Certificate {
         mut records: crate::portable_session::construction_records::ConstructionRecords,
         children: Vec<CheckedChild>,
         attached: bool,
+        alias_root: bool,
     ) -> Result<Option<Rc<Self>>> {
         let _request = session.operation_budget_scope()?;
         // Check coverage and source identity BEFORE attaching any domain. The
         // vector position is the canonical native boundary ordinal, not a
         // caller-selected field name or logical-equality match.
         session.charge_host_work(2)?;
+        if matches!(&source.key, Key::ReaderSource(_, _, ReaderSelector::Value(_))) {
+            return Ok(None); // DATA value identity is not source-domain authority
+        }
         if source.children.len() != children.len() {
             return Ok(None);
         }
@@ -684,6 +872,7 @@ impl Certificate {
             value,
             records,
             children: owned,
+            alias_root,
         });
         if !Self::validate(session, bridge, &certificate)? {
             return Ok(None);
@@ -740,11 +929,12 @@ impl Certificate {
     ) -> Result<Option<CheckedChild>> {
         session.charge_host_work(2)?;
         session.inspect(&certificate.value, |_, _| Ok(()))?;
-        let owner = expected.owner.key(session)?;
+        if !expected.owner.live(session)? { return Ok(None); }
+        let owner = &expected.key;
         // Key comparison includes genuine owned revisions and field ordinals;
         // logical equivalence cannot substitute for a source-owner mismatch.
-        session.charge_host_work(key_comparison_work(&owner, &certificate.source.key))?;
-        let same = owner == certificate.source.key;
+        session.charge_host_work(key_comparison_work(owner, &certificate.source.key))?;
+        let same = *owner == certificate.source.key;
         let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
         let current =
             expected
@@ -784,6 +974,7 @@ impl Certificate {
             session.charge_host_work(3)?;
             // Ownership precedes any invocation-local validation reuse.
             session.inspect(&certificate.value, |_, _| Ok(()))?;
+            if !certificate.source.owner.live(session)? { return Ok(false); }
             let pointer = Rc::as_ptr(&certificate);
             let mut seen = false;
             for (old, _) in done.iter() {
@@ -836,9 +1027,14 @@ impl Certificate {
                 &certificate.value,
             )?;
             valid &= certificate.records.matches_direct_facts(session)?;
-            valid &= certificate
-                .records
-                .matches_recorded_inputs(session, &certificate.value)?;
+            session.charge_host_work(1)?;
+            valid &= if certificate.alias_root {
+                session.charge_host_work(3)?;
+                certificate.records.len() == 0 && certificate.children.len() == 1
+                    && session.values_identical(&certificate.value, &certificate.children[0].value)?
+            } else {
+                certificate.records.matches_recorded_inputs(session, &certificate.value)?
+            };
             valid &= certificate
                 .records
                 .matches_class_schemas_audited(session, audit)?;
@@ -861,12 +1057,13 @@ impl Certificate {
 }
 fn key_comparison_work(a: &Key, b: &Key) -> u64 {
     let text = |key: &Key| match key {
-        Key::Declaration(g, _) | Key::DeclarationField(g, _, _) => {
+        Key::Declaration(g, _) | Key::DeclarationField(g, _, _) | Key::ReaderSource(g, _, _) => {
             g.namespace().len() + g.name().len()
         }
         _ => 0,
     };
     (text(a) + text(b)) as u64 + 4
+        + if matches!(a, Key::ReaderSource(..)) || matches!(b, Key::ReaderSource(..)) { 12 } else { 0 }
 }
 
 #[cfg(test)]
@@ -1622,7 +1819,7 @@ mod tests {
             let correct: Vec<_> = inputs
                 .inputs
                 .iter()
-                .map(|input| (input.token.value(), input.child.value()))
+                .map(|input| (input.token.as_ref().expect("legacy private token").value(), input.child.value()))
                 .collect();
             let mut wrong_pairs = correct.clone();
             let doc_slot = inputs
@@ -1668,4 +1865,14 @@ mod tests {
             let _ = b;
         }
     }
+}
+
+fn same_child_keys(session: &mut Session, a: &[Key], b: &[Key]) -> Result<bool> {
+    session.charge_host_work(1)?;
+    let mut same = a.len() == b.len();
+    for (left, right) in a.iter().zip(b) {
+        session.charge_host_work(key_comparison_work(left, right))?;
+        same &= left == right;
+    }
+    Ok(same)
 }

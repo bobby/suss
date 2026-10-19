@@ -301,13 +301,24 @@ impl ConstructorInputs {
         self.fields.iter().filter_map(Option::as_ref)
     }
     pub(crate) fn matches(&self, session: &mut Session, value: &SessionValue) -> Result<bool> {
+        self.check_source_fields(session, value, false).map(|(_, strict)| strict)
+    }
+    // Health is invocation-only DATA, never memo/write-domain/cache authority.
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session, value: &SessionValue)
+        -> Result<(bool, bool)> {
+        self.check_source_fields(session, value, true)
+    }
+    fn check_source_fields(&self, session: &mut Session, value: &SessionValue, fresh: bool)
+        -> Result<(bool, bool)> {
         session.check(value)?;
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
+        session.charge_host_work(2)?; // new mode and strict-result initialization
+        let mut certified = true;
         if !same(session, value, &self.receiver)?
             || !session.storage_matches(&self.schema, &self.schema_storage)?
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let descriptor = field(session, value, 0)?;
         let storage = field(session, value, 1)?;
@@ -316,7 +327,7 @@ impl ConstructorInputs {
             || !same(session, &storage, &self.field_storage)?
             || !same(session, &properties, &self.properties)?
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         // Revalidate receipt before borrowing the Store for the field walk.
         // Original input edges remain unchanged, including the original nil.
@@ -335,7 +346,7 @@ impl ConstructorInputs {
         let uid = object.field(&mut scope, 3)?;
         if !matches!(uid, Val::AnyRef(Some(value)) if value.as_i31(&scope)?.is_some_and(|value| value.get_u32()==0))
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let properties = properties
             .value
@@ -344,14 +355,14 @@ impl ConstructorInputs {
             .ok_or_else(|| invalid("Constructor properties need prototype storage"))?;
         Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
         if properties.len(&scope)? != 1 {
-            return Ok(false);
+            return Ok((false, false));
         }
         Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
         let prototype = properties.get(&mut scope, 0)?;
         let expected = self.prototype.value.to_rooted(&mut scope);
         if !matches!(prototype, Val::AnyRef(Some(value)) if Rooted::<AnyRef>::ref_eq(&scope, &value, &expected)?)
         {
-            return Ok(false);
+            return Ok((false, false));
         }
         let array = storage
             .value
@@ -359,7 +370,7 @@ impl ConstructorInputs {
             .as_array(&scope)?
             .ok_or_else(|| invalid("Constructor fields need array storage"))?;
         if array.len(&scope)? as usize != self.fields.len() {
-            return Ok(false);
+            return Ok((false, false));
         }
         for (index, expected) in self.fields.iter().enumerate() {
             Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
@@ -376,10 +387,23 @@ impl ConstructorInputs {
                     .is_some_and(|v| v.get_i32() == crate::runtime_abi::UNDEFINED)
             };
             if !equal && authenticated_slot != Some(index) {
-                return Ok(false);
+                Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                if fresh {
+                    let numeric = match &self.memo_watch {
+                        Some(watch) => watch.fresh_memo_data(scope.as_context_mut(), index,
+                            &Val::AnyRef(Some(*found)), &interrupt)?,
+                        None => false,
+                    };
+                    if numeric {
+                        Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
+                        certified = false;
+                        continue;
+                    }
+                }
+                return Ok((false, false));
             }
         }
-        Ok(true)
+        Ok((true, certified))
     }
 }
 
@@ -838,3 +862,7 @@ impl ConstructorInputs {
         cuts
     }
 }
+
+#[cfg(test)]
+#[path = "constructor_inputs/fresh_data_tests.rs"]
+mod fresh_data_tests;

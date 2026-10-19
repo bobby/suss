@@ -5,6 +5,7 @@ use super::{
 };
 use crate::portable::{bootstrap, hir::Literal};
 use std::sync::{Arc, atomic::AtomicUsize};
+use wasmtime::{RootScope, Val, AsContextMut};
 
 type Result<T> = std::result::Result<T, SessionError>;
 pub(crate) struct CanonicalSeed {
@@ -87,6 +88,31 @@ impl CanonicalSeed {
     }
     pub(crate) fn matches(&self, session: &mut Session, value: &SessionValue) -> Result<bool> {
         session.storage_matches(value, &self.storage)
+    }
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session, value: &SessionValue)
+        -> Result<(bool, bool)> {
+        session.check(value)?;
+        let _request = session.operation_budget_scope()?;
+        session.charge_host_work(2)?; // optional authority retain and exception flag
+        let methods = session.canonical_methods.clone();
+        let runtime = session.runtime;
+        let identity = session.identity;
+        let interrupt = session.host_work_interrupt();
+        let mut used_method_data = false;
+        let mut scope = RootScope::new(&mut session.store);
+        let root = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+        let healthy = self.storage.matches_in_context_with_slots(scope.as_context_mut(), root,
+            identity, &interrupt, |mut store, array, index, actual| {
+                Session::consume_host_work(store.as_context_mut(), 2, &interrupt)?;
+                let Some(methods) = &methods else { return Ok(false); };
+                let valid = methods.fresh_seed_method_slot_matches(
+                    canonical_methods::InspectionContext { store, identity, runtime, interrupt: &interrupt },
+                    array, index, actual)?;
+                if valid { used_method_data = true; }
+                Ok(valid)
+            })?;
+        Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
+        Ok((healthy, healthy && !used_method_data))
     }
 }
 impl Session {
@@ -335,3 +361,7 @@ mod tests {
 impl CanonicalSeed {
     pub(super) fn write_storage(&self)->&StorageSnapshot {&self.storage}
 }
+
+#[cfg(test)]
+#[path = "canonical_seeds/fresh_seed_tests.rs"]
+mod fresh_seed_tests;
