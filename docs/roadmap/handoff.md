@@ -28513,3 +28513,14 @@ unchanged default budgets. Compiler payload identity passes again. The ongoing
 calibration stage has completed the field-reference target1PASS75.95s; subsequent
 targets and the seventh calibrated declaration case remain pending. These are
 focused results, not final-head workspace/CI acceptance.
+
+
+Failed-shard CI refresh for8ae is terminal cancelled overall. Three completed
+failed shards contain80PASS/4FAIL across21 harnesses, not all-run totals. Three
+failures are the stale display/map expectations repaired in0b05b4c. The fourth,
+`completed_declaration_hint_boundaries_match_actual_primary_expression_tags`,
+exhausts compiler fuel in caller &env transport23..62. It now uses the same shared
+10B Macro allowance; its Runtime budgets,23 original observations and assertions
+remain byte-identical. Independent tiny-diff review passes; calibrated execution
+is pending before the baseline. Failed logs/metadata remain in
+`/home/bobby/.cache/suss-m4-work/pr252-8ae-ci-failed-jobs-refresh/`.
