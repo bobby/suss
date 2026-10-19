@@ -30260,3 +30260,14 @@ inferred. Indexed metadata ordering remains a known separate failure.
 [Small source/evidence receipt](evidence/m4-pr263-metadata-order-and-data-attribution-2026-10-19.json) binds three reviewed source postimages: two semantic metadata association-order files and one failure-only observational DATA attribution file. Metadata generated file/position keys keep first-association order while explicit prefixes replace values/coordinates; two reference-backed unit expectations corrected, original public tag assertions unchanged.
 
 Pure two-source metadata_reader_tests/pair_only_metadata_tests:12PASS0FAIL0ignored,29.0233s command/0.00s Rust test time, no Session/VM/BOOT use. This predates the third diagnostic source file and is not full-three-source execution. Prior4effee1 cohort remains16PASS12FAIL across28 tests; historical558095c remains19PASS17FAIL. All raw logs/results/review/reference bindings are embedded in the JSON receipt; no repeated archive or219-input inventory. Full-three library no-run subsequently passed21.1056s (compile/link only), raw SHA256dbbc5168470c735563dab60c8448e22e57b162d96932c995f09f08729b51d374. Both actual compiled builders returned fingerprintde973d93614143563e47cf1af0df94b1bfeef2ec9621d948c9f4a80c46efeaec. New diagnostic and public tag VM replay remain unexecuted. No whole acceptance/performance/full baseline/final CI/closure claim. Next: normal generation/identity and source-bound diagnosis/replay.
+
+
+## Bootstrap binding for metadata association order
+
+`sh scripts/verify-bootstrap.sh` on e3e875b generated identical normal phase pairs
+in27.7880s, then exited1 against older shipped bytes. Independent review verifies
+219 Git inputs and fingerprint de973d93, all8 outputs and unchanged noncustom sections,
+catalog/ABI/cells. Exact four outputs are adopted; [raw log and source/hash review](evidence/m4-pr263-metadata-order-bootstrap-2026-10-19.json)
+preserve the failed comparison. Next execute the unchanged public tag control
+and a canonical failing DATA control with observational stage labels. No new VM
+pass, complete bootstrap-verification pass, performance or acceptance is inferred.
