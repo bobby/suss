@@ -400,6 +400,8 @@ impl ConstructorInputs {
                         continue;
                     }
                 }
+                #[cfg(test)]
+                eprintln!("FRESH_CONSTRUCTOR_FIELD_REJECT test={:?} field={index} fresh={fresh} memo_watch={} authenticated_slot={authenticated_slot:?}", std::thread::current().name(), self.memo_watch.is_some());
                 return Ok((false, false));
             }
         }

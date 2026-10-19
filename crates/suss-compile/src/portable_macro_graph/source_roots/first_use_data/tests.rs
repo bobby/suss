@@ -26,6 +26,7 @@ pub(super) fn build(
     info: &Arc<DefinitionInfo>,
     inline_first: bool,
 ) -> Result<SessionValue> {
+    let _request = session.operation_budget_scope()?;
     let owner = info.completed_values.as_ref().unwrap();
     let mut graph = AnalysisGraph::new(bridge, session);
     graph.capture_roots = true;
