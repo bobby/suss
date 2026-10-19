@@ -29934,3 +29934,24 @@ cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-thre
 
 Preserve the original source-tags programs, caller Runtime limits, existing
 poisoning/authority controls and required full baseline/final-head CI.
+
+
+## Reader occurrence transport validation
+
+The origin-preserving carrier is wired through Graph and FormBridge. Original
+Symbol cloning records prefix selectors before enrichment, so a single actual
+retained key supplies outer declaration and inner metadata. See the
+[source evidence](evidence/m4-pr263-reader-occurrence-transport-2026-10-19.md)
+for the rejected content-join correction, added work and remaining eager/expanded
+mapping limits. Added tests are unexecuted; normal bootstrap generation and
+identity verification must precede:
+
+```sh
+cargo test --locked -p suss-compile --lib reader_metadata -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib reader_shorthand_declaration -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+```
+
+Then execute the unchanged source-tags programs and remaining full acceptance
+gates. Partial source checks do not classify unknown mappings as success or
+replace final-head independent review/CI.

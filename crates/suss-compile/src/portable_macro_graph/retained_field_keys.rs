@@ -115,6 +115,19 @@ impl RetainedFieldKeys {
         }
         Ok(())
     }
+    pub(super) fn remember_reader_occurrence(
+        &mut self, graph: &mut AnalysisGraph<'_>, label: &'static str,
+        form: &Form, occurrence: Value,
+    ) -> Result<()> {
+        graph.charge(label.len().saturating_add(8))?;
+        if !matches!(&form.kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == label) {
+            return Err(SessionError::Host(wasmtime::Error::msg("Invalid retained reader key")));
+        }
+        if self.find(graph, label)?.is_none() {
+            self.push(graph, Entry { label, key: Key::Source(occurrence) })?;
+        }
+        Ok(())
+    }
     pub(super) fn finish(
         self, graph: &mut AnalysisGraph<'_>, fields: Vec<(&'static str, Value)>,
     ) -> Result<Value> {

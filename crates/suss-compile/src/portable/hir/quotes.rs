@@ -357,10 +357,12 @@ pub(crate) struct MetadataEntry<'a> {
     pub value: MetadataForm<'a>,
     order: (usize, usize),
     key_origin: MetadataKeyOrigin,
+    key_position: (usize, usize),
 }
 impl MetadataEntry<'_> {
     /// Caller meters its own selection/read work. No guest or spelling proof.
     pub(crate) fn key_origin(&self) -> MetadataKeyOrigin { self.key_origin }
+    pub(crate) fn key_position(&self) -> (usize, usize) { self.key_position }
 }
 
 fn metadata_reserve<T>(
@@ -387,6 +389,38 @@ pub(crate) fn reader_metadata_view_metered<'a>(
     merged_metadata_view_metered(form, true, meter)
 }
 
+/// Owned transport carrier. Its origin vector comes only from the actual view;
+/// the public Vec<Form> adapter intentionally remains independent and unchanged.
+pub(crate) struct ReaderMetadata {
+    pub(crate) pairs: Vec<Form>,
+    pub(crate) origins: Vec<MetadataKeyOrigin>,
+    pub(crate) key_positions: Vec<(usize, usize)>,
+}
+pub(crate) fn reader_metadata_owned_view_metered(
+    form: &Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<ReaderMetadata, Diagnostic> {
+    // Header acquisition/move/retirement before either Vec is initialized.
+    meter((std::mem::size_of::<ReaderMetadata>() as u64).saturating_mul(2).saturating_add(4))?;
+    let entries = reader_metadata_view_metered(form, meter)?;
+    let count = entries.len().checked_mul(2)
+        .ok_or_else(|| fail(form.span.clone(), "Metadata output capacity overflow"))?;
+    let mut pairs = Vec::new();
+    let mut origins = Vec::new();
+    let mut key_positions = Vec::new();
+    metadata_reserve(&mut key_positions, entries.len(), meter, &form.span)?;
+    metadata_reserve(&mut pairs, count, meter, &form.span)?;
+    metadata_reserve(&mut origins, entries.len(), meter, &form.span)?;
+    for entry in entries {
+        // Added origin read/write and vector-entry retirement controls prepaid.
+        meter(8)?;
+        key_positions.push(entry.key_position());
+        origins.push(entry.key_origin());
+        pairs.push(super::super::clone_form_metered(entry.key.as_ref(), meter)?);
+        pairs.push(super::super::clone_form_metered(entry.value.as_ref(), meter)?);
+    }
+    Ok(ReaderMetadata { pairs, origins, key_positions })
+}
+
 fn merged_metadata_view_metered<'a>(
     form: &'a Form, reader_data: bool,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
@@ -398,7 +432,7 @@ fn merged_metadata_view_metered<'a>(
     ) -> Result<(), Diagnostic> {
         // Prepay the new origin control/store before filtering or publishing.
         // Vec backing/relocation below uses the actual enlarged entry layout.
-        meter(1)?;
+        meter(3)?; // origin and immutable retained-key position initialization
         if !reader_data && irrelevant_metadata_key(key.as_ref()) { return Ok(()) }
         let mut previous = None;
         for (index, entry) in entries.iter().enumerate() {
@@ -414,7 +448,7 @@ fn merged_metadata_view_metered<'a>(
             entries[index].order = order;
         } else {
             metadata_reserve(entries, 1, meter, span)?;
-            entries.push(MetadataEntry { key, value, order, key_origin });
+            entries.push(MetadataEntry { key, value, order, key_origin, key_position: order });
         }
         Ok(())
     }
@@ -449,8 +483,8 @@ fn merged_metadata_view_metered<'a>(
     }
     meter((entries.len() as u64)
         .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
-    // Prepay the added Copy origin movement using the existing sort-work bound.
-    meter((entries.len() as u64)
+    // Prepay origin and retained-key-position moves with the existing sort-work bound.
+    meter(((entries.len() as u64).saturating_mul(3))
         .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
     // Each surviving entry has a distinct winning source position, so stable
     // and unstable order coincide; this in-place sort needs no scratch backing.
@@ -713,7 +747,7 @@ mod metadata_reader_tests {
     #[test]
     fn metadata_view_storage_is_thin_and_synthesized_box_work_is_precharged() {
         assert!(std::mem::size_of::<MetadataForm<'_>>() <= 2 * std::mem::size_of::<usize>());
-        assert!(std::mem::size_of::<MetadataEntry<'_>>() <= 7 * std::mem::size_of::<usize>());
+        assert!(std::mem::size_of::<MetadataEntry<'_>>() <= 9 * std::mem::size_of::<usize>());
         let form = Form { span: 5..8, metadata: vec![], kind: Kind::Bool(true) };
         let mut charged = 0;
         let result = MetadataForm::synthesized(form.clone(), &mut |work| {

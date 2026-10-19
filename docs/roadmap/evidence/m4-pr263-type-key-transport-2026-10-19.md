@@ -32,6 +32,9 @@ acceptance programs and final gates remain required.
 
 Four Rust postimages pass parsing and cached patch application. No local native
 typecheck, bootstrap generation or test execution is credited while the unchanged
-parent exact-workspace producer is running. Independent source review must be
-reconciled before treating the patch as reviewed; final-head review and CI remain
-required before promotion. Shipped bootstrap files are still the parent versions.
+parent exact-workspace producer is running. Independent source review verified
+the four published source blobs, guards, policy, constructor sites, charges and
+bounded regression, returning GO SOURCE-ONLY with no proven production/type
+blocker. Type inner metadata identity and other retained fields remain unproved.
+Final-head review and CI remain required before promotion. Shipped bootstrap files
+are still the parent versions.

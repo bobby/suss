@@ -1319,3 +1319,7 @@ mod body_origin_tests;
 #[cfg(test)]
 #[path = "portable_macros/reference_field_tests.rs"]
 mod reference_field_tests;
+
+#[cfg(test)]
+#[path = "portable_macros/reader_metadata_tests.rs"]
+mod reader_metadata_tests;

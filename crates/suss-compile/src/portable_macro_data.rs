@@ -17,6 +17,20 @@ pub(crate) fn normalized_reader_metadata(
     }).map_err(SessionError::Compile)
 }
 
+pub(crate) fn normalized_reader_metadata_view(
+    session: &mut Session, form: &Form,
+) -> Result<crate::portable::hir::ReaderMetadata, SessionError> {
+    let mut original = None;
+    let result = crate::portable::hir::reader_metadata_owned_view_metered(form, &mut |units| {
+        session.charge_host_work(units).map_err(|error| {
+            let diagnostic = Diagnostic { span: form.span.clone(), message: error.to_string() };
+            if original.is_none() { original = Some(error); }
+            diagnostic
+        })
+    });
+    match original { Some(error) => Err(error), None => result.map_err(SessionError::Compile) }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
     Symbol,
@@ -1087,9 +1101,30 @@ impl FormBridge {
         self.check(session)?;
         session.with_operation_budget(|session| self.form_value(session, &form))
     }
+
+    fn reader_metadata_value(
+        &self, session: &mut Session, form: &Form,
+    ) -> Result<SessionValue, SessionError> {
+        let metadata = normalized_reader_metadata_view(session, form)?;
+        session.charge_host_work(8)?;
+        if metadata.pairs.len() % 2 != 0 || metadata.pairs.len() / 2 != metadata.origins.len()
+            || metadata.key_positions.len() != metadata.origins.len() {
+            return Err(SessionError::Host(error("Reader metadata carrier extent mismatch")));
+        }
+        let map = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Map(metadata.pairs) };
+        self.form_value_with_reader_keys(session, &map, Some(&metadata.origins))
+    }
     fn form_value(&self, session: &mut Session, form: &Form) -> Result<SessionValue, SessionError> {
+        self.form_value_with_reader_keys(session, form, None)
+    }
+    fn form_value_with_reader_keys(
+        &self, session: &mut Session, form: &Form,
+        reader_origins: Option<&[crate::portable::hir::MetadataKeyOrigin]>,
+    ) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
         enum Task<'a> {
+            ReaderMap(&'a Form, &'a [crate::portable::hir::MetadataKeyOrigin]),
+            ReaderKey(&'a Form),
             Visit(&'a Form),
             Finish {
                 form: &'a Form,
@@ -1097,16 +1132,58 @@ impl FormBridge {
                 has_metadata: bool,
             },
         }
+        #[allow(dead_code)]
+        enum OriginalTask<'a> {
+            Visit(&'a Form),
+            Finish {
+                form: &'a Form,
+                children: usize,
+                has_metadata: bool,
+            },
+        }
+        const _: () = assert!(std::mem::size_of::<Task<'static>>() == std::mem::size_of::<OriginalTask<'static>>());
+
         let failure = |form: &Form, message: &str| {
             SessionError::Compile(Diagnostic {
                 span: form.span.clone(),
                 message: message.into(),
             })
         };
-        let mut tasks = vec![Task::Visit(form)];
+        // New dispatch/control paid before selecting the root task.
+        session.charge_host_work(2)?;
+        let root = match reader_origins {
+            Some(origins) => Task::ReaderMap(form, origins),
+            None => Task::Visit(form),
+        };
+        let mut tasks = vec![root];
         let mut values = Vec::<SessionValue>::new();
         while let Some(task) = tasks.pop() {
             match task {
+                Task::ReaderMap(form, origins) => {
+                    // The old synthetic-map visit, with only key-task origin
+                    // annotations added. Do not prevalidate later children:
+                    // their errors and any earlier construction effects retain
+                    // the original left-to-right traversal position.
+                    session.charge_host_work(9)?;
+                    let Kind::Map(items) = &form.kind else { return Err(failure(form, "Expected reader metadata map")); };
+                    if items.len() % 2 != 0 || items.len() / 2 != origins.len() || !form.metadata.is_empty() {
+                        return Err(failure(form, "Invalid reader metadata occurrence extent"));
+                    }
+                    tasks.push(Task::Finish { form, children: items.len(), has_metadata: false });
+                    for (index, child) in items.iter().enumerate().rev() {
+                        session.charge_host_work(5)?;
+                        if index % 2 == 0 && origins[index / 2] == crate::portable::hir::MetadataKeyOrigin::ReaderShorthandTag {
+                            tasks.push(Task::ReaderKey(child));
+                        } else { tasks.push(Task::Visit(child)); }
+                    }
+                }
+                Task::ReaderKey(form) => {
+                    session.charge_host_work(12)?; // original tag text visit + new native origin/payload controls
+                    if !matches!(&form.kind,Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")
+                        || !form.metadata.is_empty() { return Err(failure(form, "Invalid reader shorthand key")); }
+                    values.push(self.analyzer_literal_keyword(session,
+                        crate::portable_macro_graph::AnalyzerLiteralKeyword::reader_shorthand_tag())?);
+                }
                 Task::Visit(form) => {
                     let work = 1u64.saturating_add(match &form.kind {
                         Kind::String(text) => text.len() as u64,
@@ -1225,14 +1302,8 @@ impl FormBridge {
                     if has_metadata {
                         // Preserve quotation order: realize children and the
                         // base collection before evaluating its metadata map.
-                        let pairs = normalized_reader_metadata(session, form)?;
-                        let metadata_form = Form {
-                            span: form.span.clone(),
-                            metadata: vec![],
-                            kind: Kind::Map(pairs),
-                        };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.form_value(session, &metadata_form)
+                            self.reader_metadata_value(session, form)
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;

@@ -43,6 +43,7 @@ mod field_entry_work;
 mod retained_field_keys;
 mod reference_fields;
 mod type_key_history;
+mod reader_metadata;
 use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
 
@@ -54,6 +55,7 @@ use raw_keys::{Interner, KeyId, Plan};
 #[derive(Clone, Copy)]
 pub(crate) struct AnalyzerLiteralKeyword(&'static str);
 impl AnalyzerLiteralKeyword {
+    pub(crate) fn reader_shorthand_tag() -> Self { Self("tag") }
     pub(crate) fn name(self) -> &'static str { self.0 }
 }
 #[derive(Clone, Copy)]
@@ -1074,6 +1076,7 @@ impl<'a> AnalysisGraph<'a> {
             }
         }
         enum Work<'a> {
+            Metadata(crate::portable::hir::ReaderMetadata, std::ops::Range<usize>),
             Visit(Form, usize),
             BorrowedVisit(&'a Form, usize),
             Finish {
@@ -1085,6 +1088,24 @@ impl<'a> AnalysisGraph<'a> {
                 base_value: Option<Value>,
             },
         }
+        #[allow(dead_code)]
+        enum OriginalWork<'a> {
+            Visit(Form, usize),
+            BorrowedVisit(&'a Form, usize),
+            Finish {
+                key: KeyId,
+                shape: Shape,
+                child_count: usize,
+                metadata_shape: Option<MetadataShape>,
+                set_item_count: usize,
+                base_value: Option<Value>,
+            },
+        }
+        // New metadata task must not enlarge the existing queue backing.
+        // If its actual target layout grows, stop compilation until growth and
+        // relocation are explicitly prepaid; no assumed byte-size discount.
+        const _: () = assert!(std::mem::size_of::<Work<'static>>() == std::mem::size_of::<OriginalWork<'static>>());
+
 
         // Identity planning is native-only. Raw metadata participates in keys,
         // but only the existing normalized-metadata path builds guest recipes.
@@ -1111,6 +1132,13 @@ impl<'a> AnalysisGraph<'a> {
         let mut values = Vec::<Value>::new();
         while let Some(item) = work.pop() {
             let (input, plan_id) = match item {
+                Work::Metadata(metadata, span) => {
+                    let value = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                        self.reader_metadata_recipe(metadata, span)
+                    })?;
+                    values.push(value);
+                    continue;
+                }
                 Work::BorrowedVisit(form, id) => (Input::Borrowed(form), id),
                 Work::Visit(form, id) => (Input::Owned(form), id),
                 Work::Finish {
@@ -1205,8 +1233,7 @@ impl<'a> AnalysisGraph<'a> {
                 })
             };
             let metadata_form = if metadata_shape.is_some() {
-                let pairs = crate::portable_macro_data::normalized_reader_metadata(self.session, form)?;
-                Some(Form { span: form.span.clone(), metadata: vec![], kind: Kind::Map(pairs) })
+                Some((crate::portable_macro_data::normalized_reader_metadata_view(self.session, form)?, form.span.clone()))
             } else { None };
             let (shape, body_count) = match &form.kind {
                 Kind::List(items) => (Shape::List, items.len()),
@@ -1235,17 +1262,17 @@ impl<'a> AnalysisGraph<'a> {
                 base_value = Some(value);
                 None
             } else { Some(input) };
-            let metadata_plan = if let Some(form) = metadata_form {
-                let id = self.raw_keys.plan(&form, plan, &mut |units| self.session.charge_host_work(units))?;
-                Some((form, id))
-            } else { None };
+            let metadata_plan = metadata_form;
             work.push(Work::Finish {
                 key, shape, child_count: body_count + usize::from(metadata_plan.is_some()),
                 metadata_shape, set_item_count: if matches!(shape, Shape::Set) { body_count } else { 0 }, base_value,
             });
             // LIFO: push metadata first, then reversed body children, preserving
             // textual body order followed by normalized metadata.
-            if let Some((form, id)) = metadata_plan { work.push(Work::Visit(form, id)); }
+            if let Some((metadata, span)) = metadata_plan {
+                self.charge(std::mem::size_of::<hir::ReaderMetadata>().saturating_add(8))?;
+                work.push(Work::Metadata(metadata, span));
+            }
             let offset = plan.nodes[plan_id].metadata_count;
             match body {
                 Some(Input::Borrowed(form)) => {
@@ -1718,11 +1745,10 @@ impl<'a> AnalysisGraph<'a> {
         let prefixes = info.map_or(0, |info| info.declaration.metadata.len());
         self.charge(prefixes.saturating_mul(3))?; // all prefix-kind reads/checks before scanning
         let ordinary_def = info.is_some_and(|info| info.type_fields.is_none()
-            // Only original borrowed-key metadata forms are covered here.
-            // Symbol/string shorthand synthesizes a :tag key; its independent
-            // reader constructor proof is pending, not guessed from its name.
+            // Reader shorthand eligibility uses the actual normalized entry
+            // origin below, never a synthesized Form or tag spelling alone.
             && info.declaration.metadata.iter().all(|prefix|
-                matches!(&prefix.kind, Kind::Map(_) | Kind::Keyword(_)))
+                matches!(&prefix.kind, Kind::Map(_) | Kind::Keyword(_) | Kind::Symbol(_) | Kind::String(_)))
             && matches!(&info.definition_form.kind, Kind::List(items)
                 if matches!(items.first().map(|head| &head.kind), Some(Kind::Symbol(head))
                     if head.namespace.is_none() && matches!(head.name.as_str(), "def" | "defonce"))
@@ -1746,14 +1772,15 @@ impl<'a> AnalysisGraph<'a> {
                 self.session.charge_host_work(units)
             })?;
             trace(self.session, "guarded")?;
-            let mut declaration = if let Some(origin) = &info.origin {
+            self.charge(3)?;
+            let (mut declaration, mut original_metadata_prefixes) = if let Some(origin) = &info.origin {
                 origin
-                    .macro_form_data_metered(&info.declaration, &mut |units| {
+                    .macro_form_data_with_metadata_origins_metered(&info.declaration, &mut |units| {
                         charge_origin_work(self.session, info.declaration.span.clone(), units)
                     })
                     .map_err(SessionError::Compile)?
             } else {
-                self.clone_form(&info.declaration)?
+                (self.clone_form(&info.declaration)?, Some(info.declaration.metadata.len()))
             };
             trace(self.session, "declaration-origin")?;
             // declare adds semantic metadata to an original source symbol. Only
@@ -1772,6 +1799,8 @@ impl<'a> AnalysisGraph<'a> {
                                 charge_origin_work(self.session, original.span.clone(), units)
                             })
                             .map_err(SessionError::Compile)?;
+                        self.charge(1)?;
+                        original_metadata_prefixes = None;
                         declaration.metadata = std::mem::take(&mut original.metadata);
                         for metadata in &info.declaration.metadata {
                             declaration.metadata.push(self.clone_form(metadata)?);
@@ -1779,8 +1808,10 @@ impl<'a> AnalysisGraph<'a> {
                     }
                 }
             }
-            let metadata =
-                crate::portable_macro_data::normalized_reader_metadata(self.session, &declaration)?;
+            let reader_metadata =
+                crate::portable_macro_data::normalized_reader_metadata_view(self.session, &declaration)?;
+            let metadata = &reader_metadata.pairs;
+            let mut metadata_keys = self.reader_key_slots(reader_metadata.origins.len())?;
             let property = |name: &str| {
                 metadata.chunks_exact(2).find_map(|pair| {
                     matches!(&pair[0].kind, Kind::Keyword(key)
@@ -1793,22 +1824,61 @@ impl<'a> AnalysisGraph<'a> {
             // The original full guards/enrichment/normalization have run first.
             self.charge(2)?;
             if ordinary_def && let Some(keys) = retained.as_mut() {
-                let raw = preserve_source_error(info.declaration.span.clone(),
-                    &mut |units| self.session.charge_host_work(units),
-                    |meter| hir::reader_metadata_pairs_metered(&info.declaration, meter))?;
-                for label in ["name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
-                    "fn-var", "variadic?", "max-fixed-arity", "method-params", "arglists", "arglists-meta",
-                    "export", "type", "num-fields", "record", "meta", "line", "column", "file"] {
-                    self.charge(2)?;
-                    let mut found = None;
-                    for pair in raw.chunks_exact(2) {
-                        self.charge(label.len().saturating_add(4))?;
-                        if matches!(&pair[0].kind, Kind::Keyword(key)
-                            if key.namespace.is_none() && key.name == label) {
-                            found = Some(&pair[0]); break;
+                // Consume ONE owned normalized view. The source clone recorded
+                // which root prefix slots came from the verified original;
+                // normalization retained the KEY's original (prefix,pair)
+                // selector even when a later prefix replaced its VALUE.
+                self.charge(3)?;
+                if let Some(original_count) = original_metadata_prefixes {
+                    for label in ["name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
+                        "fn-var", "variadic?", "max-fixed-arity", "method-params", "arglists", "arglists-meta",
+                        "export", "type", "num-fields", "record", "meta"] {
+                        self.charge(2)?;
+                        for (index, pair) in metadata.chunks_exact(2).enumerate() {
+                            self.charge(label.len().saturating_add(8))?;
+                            if reader_metadata.key_positions[index].0 < original_count
+                                && matches!(&pair[0].kind, Kind::Keyword(key)
+                                    if key.namespace.is_none() && key.name == label) {
+                                let recipe = self.reader_key_recipe(&pair[0], reader_metadata.origins[index])?;
+                                metadata_keys[index] = Some(recipe);
+                                keys.remember_reader_occurrence(self, label, &pair[0], recipe)?;
+                                break;
+                            }
                         }
                     }
-                    if let Some(key) = found { keys.remember_source(self, label, key)?; }
+                    // Root position enrichment is not assessed by the tag
+                    // reference. Preserve its ORIGINAL raw-key registration
+                    // policy without joining it to an enriched occurrence.
+                    let position_keys = preserve_source_error(info.declaration.span.clone(),
+                        &mut |units| self.session.charge_host_work(units),
+                        |meter| hir::reader_metadata_view_metered(&info.declaration, meter))?;
+                    for label in ["line", "column", "file"] {
+                        for entry in &position_keys {
+                            self.charge(label.len().saturating_add(6))?;
+                            if matches!(&entry.key.as_ref().kind, Kind::Keyword(key)
+                                if key.namespace.is_none() && key.name == label) {
+                                keys.remember_source(self, label, entry.key.as_ref())?; break;
+                            }
+                        }
+                    }
+                } else {
+                    // Legacy expanded/eager mappings have no root-prefix clone
+                    // proof. Do not join equal keys from separate views. Keep
+                    // the pre-existing source registration policy for those
+                    // unclassified native mappings; no alias claim is made.
+                    let raw = preserve_source_error(info.declaration.span.clone(),
+                        &mut |units| self.session.charge_host_work(units),
+                        |meter| hir::reader_metadata_pairs_metered(&info.declaration, meter))?;
+                    for label in ["name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
+                        "fn-var", "variadic?", "max-fixed-arity", "method-params", "arglists", "arglists-meta",
+                        "export", "type", "num-fields", "record", "meta", "line", "column", "file"] {
+                        for pair in raw.chunks_exact(2) {
+                            self.charge(label.len().saturating_add(4))?;
+                            if matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == label) {
+                                keys.remember_source(self, label, &pair[0])?; break;
+                            }
+                        }
+                    }
                 }
             }
             self.charge(2)?;
@@ -1853,33 +1923,9 @@ impl<'a> AnalysisGraph<'a> {
             let provisional = !info.analysis_completed
                 || (info.initializer_form.is_some() && property("declared").is_some_and(truthy));
             if !provisional {
-                let mut meta = Form {
-                    span: 0..0,
-                    metadata: vec![],
-                    kind: Kind::Map(metadata.chunks_exact(2).filter(|pair| !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "test")).flat_map(|pair| pair.iter().cloned()).collect()),
-                };
-                if global.namespace() == "suss.core" {
-                    let Kind::Map(items) = &mut meta.kind else {
-                        unreachable!()
-                    };
-                    let mut pairs = items.chunks_exact(2)
-                        .filter(|pair| !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "file"))
-                        .flat_map(|pair| pair.iter().cloned()).collect::<Vec<_>>();
-                    pairs.extend([
-                        Form {
-                            span: 0..0,
-                            metadata: vec![],
-                            kind: Kind::Keyword(suss_reader::Keyword::new("file")),
-                        },
-                        Form {
-                            span: 0..0,
-                            metadata: vec![],
-                            kind: Kind::String("cljs/core.cljs".encode_utf16().collect()),
-                        },
-                    ]);
-                    *items = pairs;
-                }
-                retained_decl_push!(self, retained, fields; "meta", AnalyzerLiteralKeyword("meta"), self.form(&meta, depth + 1)?);
+                let meta = self.declaration_reader_metadata_map(
+                    &reader_metadata, &mut metadata_keys, global.namespace() == "suss.core", depth + 1)?;
+                retained_decl_push!(self, retained, fields; "meta", AnalyzerLiteralKeyword("meta"), meta);
             } else if let Some(value) = property("meta") {
                 fields.push(("meta", self.form(value, depth + 1)?));
             }

@@ -758,6 +758,35 @@ impl SourceOrigin {
         }
     }
 
+    /// Reader declaration metadata provenance for the actual clone operation.
+    /// For a verified original Symbol, clone_attached copies the original root
+    /// prefixes in place/order then appends indexing metadata. This count is
+    /// recorded BEFORE that clone; no output key/content/address join is used.
+    /// Borrowed expanded/eager mappings are explicitly unclassified here.
+    pub(crate) fn macro_form_data_with_metadata_origins_metered(
+        &self, form: &Form,
+        meter: &mut impl FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<(Form, Option<usize>), Diagnostic> {
+        charge(meter, 8, &form.span)?;
+        match self.macro_form_source_metered(form, meter)? {
+            Some(MacroFormSource::Original(node)) => {
+                let prefixes = if matches!(&node.form().kind, Kind::Symbol(_)) && !node.is_caret_prefix() {
+                    Some(node.form().metadata.len())
+                } else { None };
+                if std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some() {eprintln!("origin-demand mode=full composite={} span={}:{}",matches!(node.form().kind,Kind::List(_)|Kind::Vector(_)|Kind::Map(_)|Kind::Set(_)),form.span.start,form.span.end);}
+                let copied = demand_read(meter, |meter| node.located_metered(meter))?;
+                Ok((copied, prefixes))
+            }
+            Some(MacroFormSource::Borrowed(reader)) => {
+                Ok((clone_form_metered(reader, meter)?, None))
+            }
+            None => {
+                let prefixes = matches!(&form.kind, Kind::Symbol(_)).then_some(form.metadata.len());
+                Ok((clone_form_metered(form, meter)?, prefixes))
+            }
+        }
+    }
+
     /// Root metadata with the same complete provenance checks as full reader
     /// data. The selected span is retained for normalization diagnostics.
     pub(crate) fn macro_form_root_metadata_metered(
