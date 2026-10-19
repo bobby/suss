@@ -4,7 +4,7 @@
 //! memo transitions still require separate validation. This is not a complete
 //! source certificate and does not authorize retained-root reuse.
 use super::{Session, SessionError, SessionValue, own, storage_snapshot::StorageSnapshot};
-use wasmtime::{AnyRef, ArrayType, AsContextMut, RootScope, Rooted, Val};
+use wasmtime::{AnyRef, ArrayType, AsContextMut, RootScope, Rooted, StructType, Val};
 
 type Result<T> = std::result::Result<T, SessionError>;
 
@@ -20,6 +20,8 @@ pub(crate) struct ConstructorInputs {
     prototype: SessionValue,
     prototype_origin: Option<super::prototype_origin::PrototypeInputs>,
     memo_watch: Option<std::sync::Arc<super::memo_bridge::Watch>>,
+    // Invocation-only DATA evidence. Never a Watch, receipt or write capability.
+    runtime_memo_data: Option<(usize, StructType)>,
 }
 fn invalid(message: &'static str) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message))
@@ -219,6 +221,9 @@ impl Session {
         // Read-only provenance query after the existing post-factory getter.
         // No eager getter, and custom/unregistered constructors keep direct facts.
         let prototype_origin = self.prototype_origin_inputs(class, &descriptor, &prototype)?;
+        // Prepay added inline optional metadata, initialization/moves and retirement.
+        // Existing whole-ConstructorInputs storage charges follow its actual sizeof.
+        self.charge_host_work((2 * std::mem::size_of::<Option<(usize, StructType)>>()) as u64 + 8)?;
         let mut inputs = ConstructorInputs {
             descriptor,
             schema,
@@ -230,6 +235,7 @@ impl Session {
             prototype,
             prototype_origin,
             memo_watch: None,
+            runtime_memo_data: None,
         };
         if !inputs.matches(self, &value)? {
             return Err(invalid(
@@ -241,6 +247,34 @@ impl Session {
         inputs.memo_watch = self.watch_constructor_memo(
             class, &inputs.descriptor, &value, &inputs.field_storage, &inputs.fields,
         )?;
+        // Macro registration above is unchanged. Runtime gets data recognition only.
+        self.charge_host_work(1)?;
+        if self.phase == crate::portable::resolve::Phase::Runtime {
+            self.charge_host_work(std::mem::size_of::<StructType>() as u64 * 2 + 8)?;
+            let authority = self.canonical_methods.clone();
+            if let Some(authority) = authority {
+                if let Some((_, _, slot)) = authority.constructor_memo_site(self, class, &inputs.descriptor)? {
+                    self.charge_host_work(4)?;
+                    if let Some(Some(initial)) = inputs.fields.get(slot) {
+                        let initial_nil = {
+                            let mut scope = RootScope::new(&mut self.store);
+                            initial.value.to_rooted(&mut scope).as_i31(&scope)?
+                                .is_some_and(|value| value.get_u32() == 0)
+                        };
+                        if initial_nil {
+                            // Trusted scalar route supplies the exact phase-local nominal type.
+                            // No type is learned from the guest's later memo contents.
+                            self.charge_host_work(8)?;
+                            let zero = self.data_scalar(&crate::portable::hir::Literal::Number(0.0))?;
+                            let mut scope = RootScope::new(&mut self.store);
+                            let number_type = zero.value.to_rooted(&mut scope).as_struct(&scope)?
+                                .ok_or_else(|| invalid("Canonical Number needs struct storage"))?.ty(&scope)?;
+                            inputs.runtime_memo_data = Some((slot, number_type));
+                        }
+                    }
+                }
+            }
+        }
         Ok((value, Some(inputs)))
     }
 }
@@ -392,7 +426,20 @@ impl ConstructorInputs {
                     let numeric = match &self.memo_watch {
                         Some(watch) => watch.fresh_memo_data(scope.as_context_mut(), index,
                             &Val::AnyRef(Some(*found)), &interrupt)?,
-                        None => false,
+                        None => {
+                            Session::consume_host_work(scope.as_context_mut(), 4, &interrupt)?;
+                            match &self.runtime_memo_data {
+                                Some((slot, number_type)) if *slot == index => {
+                                    Session::consume_host_work(scope.as_context_mut(), 8, &interrupt)?;
+                                    match found.as_struct(&scope)? {
+                                        Some(number) if StructType::eq(&number.ty(&scope)?, number_type) =>
+                                            matches!(number.field(&mut scope, 0)?, Val::F64(_)),
+                                        _ => false,
+                                    }
+                                },
+                                _ => false,
+                            }
+                        },
                     };
                     if numeric {
                         Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;

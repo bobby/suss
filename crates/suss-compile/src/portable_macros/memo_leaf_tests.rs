@@ -4,6 +4,8 @@ use super::*;
 use crate::portable::resolve::Phase;
 use crate::portable_session::memo_leaf_test_support::Method;
 use serde_json::{Value, json};
+#[path = "../../tests/support/compilation_fuel.rs"]
+mod compilation_fuel;
 
 const OBSERVE: &str = r#"
 (defmacro observe-leaf [stage warm]
@@ -62,6 +64,7 @@ fn run_group(kind: &str, nil_aware: bool) {
                     .eval(pinned["source"].as_str().unwrap())
                     .map_err(|e| e.to_string())?;
                 let mut macros = CompiledMacros::new().map_err(|e| e.to_string())?;
+                macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
                 macros.session.eval("(def leaf-dispatches 0) (def leaf-writes 0) (def leaf-original-method nil)").map_err(|e|e.to_string())?;
                 let original =
                     Method::capture(&mut macros.session, owner).map_err(|e| e.to_string())?;

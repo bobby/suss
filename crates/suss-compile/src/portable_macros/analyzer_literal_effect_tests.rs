@@ -13,6 +13,7 @@ fn analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restorat
         ("macro", Session::new_macro().unwrap()),
     ] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let run = (|| -> Result<(), String> {
             caller
                 .eval("(def ^{:audit-leaf :source-only-leaf} watched 17)")
@@ -395,6 +396,7 @@ fn analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries() {
     for (label, definition) in cases {
         for (phase, mut caller) in [("runtime", Session::new_repl().unwrap()), ("macro", Session::new_macro().unwrap())] {
             let mut macros = CompiledMacros::new().unwrap();
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             macros.session.eval("(def leaf-original-method nil) (def retained-key-events [])").unwrap();
             let original = Method::capture(&mut macros.session, "Keyword").unwrap();
             original.bind_delegate(&mut macros.session).unwrap();
