@@ -1280,3 +1280,12 @@ inference, core-environment and collection-source regressions remain fuel
 failures. See the recorded-scratch handoff and evidence for qualified run scopes.
 
 Private compiler placeholder lookup now uses checked token ownership, exact identity and an immutable GC kind/arity negative filter, with direct routes for small token sets. The [private-token evidence](../roadmap/evidence/m4-pr256-private-slot-token-scans-2026-10-18.md) records12 focused passes, GC/foreign/reset/fuel/IRQ controls and both favorable/adverse cost history. This changes no language contract or allowance and does not establish complete core-environment execution at default fuel, full-suite compatibility or final CI.
+
+
+The [completed type-value source evidence](../roadmap/evidence/m4-pr263-completed-type-values-2026-10-19.md)
+distinguishes retained original metadata values from current type defaults and
+explicit source overrides. Its new native-owner projection and regression
+programs have source review only; they do not establish portable type metadata
+acceptance. On source320, bootstrap4 and CLI36 pass, compiler456 pass/6 fail,
+and actual retained-key/namespace identity and strict default core loading still
+fail. Historical focused results above retain their original source scope.

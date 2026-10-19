@@ -43,6 +43,19 @@ fn equal_text_metered(
     Ok(true)
 }
 impl SourceOrigin {
+    /// Native immutable source-owner identity, not a source-content verdict.
+    /// Callers must separately validate the complete associated input facts.
+    pub(crate) fn same_native_owner(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.text, &other.text)
+            && Arc::ptr_eq(&self.line_starts, &other.line_starts)
+            && Arc::ptr_eq(&self.metadata_forms, &other.metadata_forms)
+            && match (&self.reader_forms, &other.reader_forms) {
+                (None, None) => true,
+                (Some(a), Some(b)) => Arc::ptr_eq(a, b),
+                _ => false,
+            }
+    }
+
     /// Builds the UTF-8 line-start index eagerly. This constructor has no
     /// operation meter; macro-expansion callers should charge the source byte
     /// length at their operation boundary before creating the origin.

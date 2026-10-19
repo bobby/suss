@@ -451,7 +451,7 @@ impl Analyzer<'_> {
         // ordinary def/:declared rule. Capture that revision before def can
         // replace it, selecting only this namespace's actual declaration.
         // New history Arc copy/read controls in the existing revision clones.
-        self.expander.charge_expansion_work(12, form.span.clone())?;
+        self.expander.charge_expansion_work(20, form.span.clone())?;
         let previous_type_info = if let Kind::Symbol(name) = &name.kind {
             self.environment.namespace_scope(self.phase).declarations.into_iter()
                 .find(|(global, _)| global.name() == name.name)
@@ -475,7 +475,7 @@ impl Analyzer<'_> {
         // its tag/metadata/origin from that ordinary-def preservation rule.
         let previous_type_info_for_keys = previous_type_info.as_ref();
         let mut key_history = super::super::resolve::TypeKeyHistory::capture_type(
-            &class_global, previous_type_info_for_keys, name,
+            &class_global, previous_type_info_for_keys, name, self.origin.as_deref(),
             &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
         )?;
         let mut type_info = previous_type_info.unwrap_or_else(|| {

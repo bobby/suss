@@ -240,11 +240,22 @@ fn run_proven_ast_literal_family(label: &str, initializer: &str, required_ops: &
                                       hits (reduce (fn [out event]
                                                      (if (identical? key (first event))
                                                        (conj out (second event)) out)) [] ast-literal-events)]
-                                  (and (some? key) (= (.-_hash key) (second pair))
-                                       (if (= stage 0)
-                                         (and (pos? (count hits))
-                                              (every? (fn [memo] (= memo (second pair))) hits))
-                                         (empty? hits)))))
+                                  (if (some? key)
+                                    (let [before (.-_hash key)
+                                          before-count (count hits)
+                                          actual (hash key)
+                                          after-hits (reduce (fn [out event]
+                                                               (if (identical? key (first event))
+                                                                 (conj out (second event)) out))
+                                                             [] ast-literal-events)]
+                                      (and (= before (second pair)) (= actual (second pair))
+                                           (= (.-_hash key) (second pair))
+                                           (if (= stage 0)
+                                             (and (every? (fn [memo] (= memo (second pair))) hits)
+                                                  (= (count after-hits) (inc before-count))
+                                                  (= (last after-hits) before))
+                                             (and (empty? hits) (empty? after-hits)))))
+                                    false)))
                     walk (fn walk [node]
                            (let [op (str (:op node))
                                  spec (some (fn [spec] (if (= op (first spec)) spec nil)) specs)

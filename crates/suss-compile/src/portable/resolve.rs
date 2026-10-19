@@ -12,6 +12,9 @@ use suss_reader::Symbol;
 
 mod type_key_history;
 pub use type_key_history::TypeKeyHistory;
+mod completed_values;
+pub use completed_values::CompletedDeclarationSource;
+pub(crate) use completed_values::{TypeValuePlan, TypeSourceValue, VALUE_FIELDS};
 pub(crate) use type_key_history::{TypeKey, KeyOrigin as TypeKeyOrigin, LiteralSite as TypeKeyLiteralSite};
 pub(crate) use type_key_history::{RetainedKey, RetainedSite};
 
@@ -223,6 +226,8 @@ pub struct DefinitionInfo {
     pub type_is_record: bool,
     /// Bounded native key facts captured before type metadata is rebuilt.
     pub type_key_history: Option<std::sync::Arc<TypeKeyHistory>>,
+    /// Private genuine completed ordinary projection owner; no predecessor chain.
+    pub completed_values: Option<std::sync::Arc<CompletedDeclarationSource>>,
     pub once: bool,
 }
 impl DefinitionInfo {

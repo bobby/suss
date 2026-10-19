@@ -22,6 +22,7 @@ use super::{
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
+pub(crate) use source_tags::inferred as completed_inferred_value_metered;
 pub(crate) use quotes::{MetadataEntry, MetadataForm, MetadataKeyOrigin, ReaderMetadata, reader_metadata_view_metered, reader_metadata_owned_view_metered};
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
 pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
@@ -1479,7 +1480,7 @@ impl Analyzer<'_> {
                     if key.namespace.is_none() && key.name == "declared")
                         && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
                 });
-        self.expander.charge_expansion_work(1, form.span.clone())?; // native history-field initialization
+        self.expander.charge_expansion_work(2, form.span.clone())?; // both native owner-field initializations
         let mut definition = super::resolve::DefinitionInfo {
             definition_form: form.clone(),
             analysis_completed: false,
@@ -1498,6 +1499,7 @@ impl Analyzer<'_> {
             type_fields: None,
             type_is_record: false,
             type_key_history: None,
+            completed_values: None,
             once,
         };
         // Publish and retain the actual provisional revision before any
@@ -1534,6 +1536,8 @@ impl Analyzer<'_> {
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         definition.analysis_completed = true;
         if !preserve_declaration {
+            definition.completed_values = super::resolve::CompletedDeclarationSource::capture(
+                &global, &definition, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
             self.environment
                 .record_definition(global.clone(), definition);
         }

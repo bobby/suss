@@ -43,6 +43,7 @@ mod field_entry_work;
 mod retained_field_keys;
 mod reference_fields;
 mod type_key_history;
+mod completed_type_values;
 mod reader_metadata;
 use retained_field_keys::RetainedFieldKeys;
 use raw_keys::{Interner, KeyId, Plan};
@@ -435,6 +436,18 @@ enum Task {
 /// Recipe memo tables live for one build. Captured declaration metadata may be
 /// reused only through checked source/representation records after callbacks.
 /// An owned revision pointer is not an artifact cache key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum CompletedCacheKind { Fields, KeyOccurrences, Metadata }
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+enum DeclarationCacheKey {
+    Revision(portable::resolve::Global, usize),
+    #[cfg(test)]
+    LegacyRevision(portable::resolve::Global, usize),
+    Completed(portable::resolve::Global, usize, CompletedCacheKind),
+    SourceValue(portable::resolve::Global, usize),
+}
+
 pub struct AnalysisGraph<'a> {
     bridge: &'a FormBridge,
     retained: Option<&'a mut DeclarationValues>,
@@ -448,7 +461,7 @@ pub struct AnalysisGraph<'a> {
     maps: BTreeMap<Vec<(Value, Value)>, Value>,
     vectors: BTreeMap<Vec<Value>, Value>,
     declarations: BTreeMap<
-        (portable::resolve::Global, usize),
+        DeclarationCacheKey,
         (Option<Arc<portable::resolve::DefinitionInfo>>, Value),
     >,
     locals: BTreeMap<(usize, usize, String), (Arc<LocalBinding>, Value)>,
@@ -1724,10 +1737,10 @@ impl<'a> AnalysisGraph<'a> {
         Self::depth(depth)?;
         // Own each revision so addresses cannot be recycled within this graph.
         // Global identity also distinguishes plain catalog entries without facts.
-        let key = (
-            global.clone(),
-            info.map_or(0, |info| Arc::as_ptr(info) as usize),
-        );
+        self.charge(std::mem::size_of::<DeclarationCacheKey>() * 2
+            + global.namespace().len() + global.name().len() + 8)?;
+        let key = DeclarationCacheKey::Revision(
+            global.clone(), info.map_or(0, |info| Arc::as_ptr(info) as usize));
         self.charge(global.namespace().len().saturating_add(global.name().len()).saturating_add(1))?;
         if let Some((_, value)) = self.declarations.get(&key) {
             return Ok(*value);
@@ -1773,14 +1786,31 @@ impl<'a> AnalysisGraph<'a> {
             })?;
             trace(self.session, "guarded")?;
             self.charge(3)?;
-            let (mut declaration, mut owned_reader_prefixes) = if let Some(origin) = &info.origin {
+            self.charge(8)?;
+            let type_values = info.type_key_history.as_ref().and_then(|h| h.values(global));
+            let completed_type = if info.type_fields.is_some() {
+                if let Some(values) = type_values {
+                    preserve_source_error(info.declaration.span.clone(), &mut |n| self.session.charge_host_work(n),
+                        |meter| values.matches_current_type(info, meter))?
+                } else { false }
+            } else { false };
+            let ordinary_owner = if info.type_fields.is_none() {
+                if let Some(owner) = &info.completed_values {
+                    if self.completed_owner_is_current(global, owner, info)? { Some(owner) } else { None }
+                } else { None }
+            } else { None };
+            let (declaration_input, declaration_origin) = if let Some(owner) = ordinary_owner {
+                self.completed_owner_binding(global, owner, info)?;
+                (&owner.declaration, &owner.origin)
+            } else { (&info.declaration, &info.origin) };
+            let (mut declaration, mut owned_reader_prefixes) = if let Some(origin) = declaration_origin {
                 origin
-                    .macro_form_data_with_metadata_origins_metered(&info.declaration, &mut |units| {
+                    .macro_form_data_with_metadata_origins_metered(declaration_input, &mut |units| {
                         charge_origin_work(self.session, info.declaration.span.clone(), units)
                     })
                     .map_err(SessionError::Compile)?
             } else {
-                (self.clone_form(&info.declaration)?, Some(info.declaration.metadata.len()))
+                (self.clone_form(declaration_input)?, Some(declaration_input.metadata.len()))
             };
             trace(self.session, "declaration-origin")?;
             // declare adds semantic metadata to an original source symbol. Only
@@ -1839,7 +1869,11 @@ impl<'a> AnalysisGraph<'a> {
                             if reader_metadata.key_positions[index].0 < original_count
                                 && matches!(&pair[0].kind, Kind::Keyword(key)
                                     if key.namespace.is_none() && key.name == label) {
-                                let recipe = self.reader_key_recipe(&pair[0], reader_metadata.origins[index])?;
+                                self.charge(4)?;
+                                let recipe = if let Some(owner) = ordinary_owner {
+                                    self.completed_occurrence_key(global, owner, info, label)?.ok_or_else(||
+                                        SessionError::Host(wasmtime::Error::msg("Missing completed source occurrence")))?
+                                } else { self.reader_key_recipe(&pair[0], reader_metadata.origins[index])? };
                                 metadata_keys[index] = Some(recipe);
                                 keys.remember_reader_occurrence(self, label, &pair[0], recipe)?;
                                 break;
@@ -1882,7 +1916,8 @@ impl<'a> AnalysisGraph<'a> {
                 }
             }
             self.charge(2)?;
-            if info.type_fields.is_some() && let Some(keys) = retained.as_mut() {
+            if info.type_fields.is_some() && (type_values.is_none() || completed_type)
+                && let Some(keys) = retained.as_mut() {
                 self.seed_type_key_history(keys, global, info)?;
             }
             let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
@@ -1920,13 +1955,16 @@ impl<'a> AnalysisGraph<'a> {
                     fields.push((field, self.form(value, depth + 1)?));
                 }
             }
-            let provisional = !info.analysis_completed
-                || (info.initializer_form.is_some() && property("declared").is_some_and(truthy));
-            if !provisional {
-                let meta = self.declaration_reader_metadata_map(
-                    &reader_metadata, &mut metadata_keys, global.namespace() == "suss.core", depth + 1)?;
+            let provisional = !completed_type && (!info.analysis_completed
+                || (info.initializer_form.is_some() && property("declared").is_some_and(truthy)));
+            if !provisional && !completed_type {
+                self.charge(4)?;
+                let meta = if let Some(owner) = ordinary_owner {
+                    self.completed_metadata_map(global, owner, info, depth + 1)?
+                } else { self.declaration_reader_metadata_map(
+                    &reader_metadata, &mut metadata_keys, global.namespace() == "suss.core", depth + 1)? };
                 retained_decl_push!(self, retained, fields; "meta", AnalyzerLiteralKeyword("meta"), meta);
-            } else if let Some(value) = property("meta") {
+            } else if !completed_type && let Some(value) = property("meta") {
                 fields.push(("meta", self.form(value, depth + 1)?));
             }
             trace(self.session, "metadata")?;
@@ -1975,7 +2013,7 @@ impl<'a> AnalysisGraph<'a> {
             let callable = source.and_then(|source| source.callable.as_ref());
             // parse-def chooses a callable return independently of dynamic
             // var-reference inference. False hints fall through just like nil.
-            let completed_tag = if info.type_fields.is_some() {
+            let completed_tag = if completed_type { None } else if info.type_fields.is_some() {
                 hir::declaration_tag(info).map_err(SessionError::Compile)?
             } else if provisional {
                 None
@@ -2026,12 +2064,13 @@ impl<'a> AnalysisGraph<'a> {
                 "suss/initializer-recorded",
                 self.flag(info.initializer.is_some())?,
             ));
-            if !provisional && let Some(doc) = &info.docstring {
+            if !completed_type && !provisional && let Some(doc) = &info.docstring {
                 fields.retain(|(name, _)| *name != "doc");
                 retained_decl_push!(self, retained, fields; "doc", AnalyzerLiteralKeyword("doc"), self.scalar(Literal::String(doc.clone()))?);
             }
             if let Some(callable) = callable {
                 fields.push(("suss/source-function", self.callable(callable)?));
+                if !completed_type {
                 const FUNCTION_FIELDS: [&str; 6] = [
                     "fn-var",
                     "variadic?",
@@ -2205,7 +2244,8 @@ impl<'a> AnalysisGraph<'a> {
                         self.recipe(Recipe::List(argument_metadata))?);
                 }
             }
-            if !provisional
+            }
+            if !completed_type && !provisional
                 && property("declared").is_some_and(truthy)
                 && let Some(arglists) = property("arglists").filter(|value| truthy(value))
             {
@@ -2257,6 +2297,10 @@ impl<'a> AnalysisGraph<'a> {
                 }
                 fields.push((field, value));
             }
+            if let Some(owner) = ordinary_owner {
+                self.apply_completed_ordinary_values(global, owner, info, &mut fields, depth)?;
+            }
+            if completed_type { self.apply_completed_type_values(global, info, &mut fields, depth)?; }
         }
         // Share the final metadata value of this captured declaration revision,
         // including a top-fn overlay. Reader occurrences remain independently
@@ -2278,6 +2322,14 @@ impl<'a> AnalysisGraph<'a> {
         self.charge(2)?;
         let native = if let Some(keys) = retained { keys.finish(self, fields)? }
             else { self.map(fields)? };
+        if let Some(revision) = info {
+            self.charge(4)?;
+            if revision.type_fields.is_none() && let Some(owner) = &revision.completed_values {
+                if self.completed_owner_is_current(global, owner, revision)? {
+                    self.completed_store(global, owner, revision, CompletedCacheKind::Fields, native)?;
+                }
+            }
+        }
         let value = if let Some(revision) = info {
             self.source_boundary(source_roots::Owner::Declaration(global.clone(), revision.clone()), native)?
         } else { native };
@@ -4320,3 +4372,9 @@ mod sharing_tests {
 #[cfg(test)]
 #[path = "portable_macro_graph/body_origin_tests.rs"]
 mod body_origin_tests;
+
+#[cfg(test)]
+mod type_value_regression_tests;
+
+#[cfg(test)]
+mod completed_value_control;

@@ -5,7 +5,7 @@ use crate::portable::resolve::{TypeKey, TypeKeyOrigin, TypeKeyLiteralSite, Retai
 impl AnalysisGraph<'_> {
     pub(super) fn seed_type_key_history(
         &mut self, keys: &mut RetainedFieldKeys, global: &portable::resolve::Global,
-        info: &portable::resolve::DefinitionInfo,
+        info: &Arc<portable::resolve::DefinitionInfo>,
     ) -> Result<()> {
         self.charge(6)?;
         let Some(history) = &info.type_key_history else { return Ok(()); };
@@ -21,6 +21,20 @@ impl AnalysisGraph<'_> {
                 TypeKey::NumFields => AnalyzerLiteralKeyword("num-fields"),
                 TypeKey::Record => AnalyzerLiteralKeyword("record"),
             };
+            self.charge(4)?;
+            if let Some(owner) = history.occurrence(global, field.name()) {
+                let occurrence = self.completed_occurrence_key(global, owner, info, field.name())?.ok_or_else(||
+                    SessionError::Host(wasmtime::Error::msg("Missing retained completed type key")))?;
+                // Native source-owner selection returns the actual key recipe;
+                // the selector label neither mints literal eligibility nor joins
+                // keys from independently normalized outputs.
+                let form = match history.key(global, field) {
+                    Some(TypeKeyOrigin::Source(form) | TypeKeyOrigin::ReaderShorthandTag(form)) => form,
+                    _ => return Err(SessionError::Host(wasmtime::Error::msg("Invalid completed type key association"))),
+                };
+                keys.remember_proved_occurrence(self, field.name(), form, occurrence)?;
+                continue;
+            }
             match history.key(global, field) {
                 Some(TypeKeyOrigin::Literal(site)) => {
                     self.charge(4)?;
@@ -79,6 +93,17 @@ impl AnalysisGraph<'_> {
                 RetainedKey::Column => AnalyzerLiteralKeyword("column"),
                 RetainedKey::File => AnalyzerLiteralKeyword("file"),
             };
+            self.charge(4)?;
+            if let Some(owner) = history.occurrence(global, field.name()) {
+                let occurrence = self.completed_occurrence_key(global, owner, info, field.name())?.ok_or_else(||
+                    SessionError::Host(wasmtime::Error::msg("Missing retained declaration occurrence")))?;
+                let form = match history.retained_key(global, field) {
+                    Some(TypeKeyOrigin::Source(form)) => form,
+                    _ => return Err(SessionError::Host(wasmtime::Error::msg("Invalid retained declaration association"))),
+                };
+                keys.remember_proved_occurrence(self, field.name(), form, occurrence)?;
+                continue;
+            }
             match history.retained_key(global, field) {
                 Some(TypeKeyOrigin::Literal(TypeKeyLiteralSite::Retained(site))) => {
                     self.charge(8)?;
@@ -127,7 +152,9 @@ mod tests {
                 (mapv (fn [label]
                     (let [key (reduce (fn [found k] (if (= (str k) label) k found)) nil (keys info))
                           events (filter (fn [event] (identical? key (first event))) type-key-events)]
-                        (if (seq events) (second (first events)) (.-_hash key))))
+                        [(not (nil? key))
+                         (if (nil? key) nil
+                           (if (seq events) (second (first events)) (.-_hash key)))]))
                     [":name" ":tag" ":type" ":num-fields" ":record" ":meta"]))"#).unwrap();
             for (source, tag_literal, raw_flags, meta_literal) in [
                 ("(deftype* subject [] nil nil)", true, false, false),
@@ -165,6 +192,14 @@ mod tests {
                 assert_eq!(memos.len(), 6);
                 // Exact initial literal memos independently observed in the
                 // pinned type-history reference, not merely "some number".
+                for (index, memo) in memos.iter().enumerate() {
+                    let Kind::Vector(observation) = &memo.kind else { panic!("presence/memo pair"); };
+                    assert_eq!(observation.len(), 2);
+                    assert_eq!(observation[0].kind, Kind::Bool(index != 5 || meta_literal), "{source}/key{index} presence");
+                }
+                let memos = memos.iter().map(|memo| {
+                    let Kind::Vector(pair) = &memo.kind else { unreachable!() }; &pair[1]
+                }).collect::<Vec<_>>();
                 assert_eq!(memos[5].kind, if meta_literal { Kind::Number(1499536964.0) } else { Kind::Nil }, "{source}");
                 assert_eq!(memos[0].kind, Kind::Number(1843675177.0), "{source}");
                 assert_eq!(memos[1].kind, if tag_literal { Kind::Number(-1290361223.0) } else { Kind::Nil }, "{source}");

@@ -30119,3 +30119,25 @@ Run `python3 scripts/verify_bootstrap_identity.py`, normal Java/Node-free
 `scripts/verify-bootstrap.sh` and focused tests listed above, then the full
 baseline when the separate parent producer actually drains. Generation stopped
 at stale shipped comparison; it supplies no new library execution verdict.
+
+
+## Completed type-value source and native feedback
+
+[Source/review archive and exact native limits](evidence/m4-pr263-completed-type-values-2026-10-19.md)
+record320 CI bootstrap4/0, CLI36/0 and compiler456/6, plus shard3 145/31.
+Strict default core17 still exhausts native10M; its source/allowance and complete
+source-child negative fixture remain unchanged. Three AST-family failures now
+reach their observer, which uses an explicit receiver hash witness after saving
+initial memo/events instead of requiring every constructor to hash every key.
+
+New completed type-value source and tests have source review only. Bootstrap
+files still belong to320: regenerate/adopt both normal phases before executing
+this source. Run `sh scripts/verify-bootstrap.sh`, then focused
+`type_value_regression_tests`, `type_key_history`, `analyzer_literal_`,
+`reader_shorthand_declaration_keys`, `source_roots` and the unchanged
+`core_import`/`compiled_macro_source_tags` targets. After focused acceptance,
+run `cargo test --workspace --locked -- --test-threads=2` using private writable
+TMPDIR and bounded workers. Keep the separate parent producer until terminal;
+no local concurrent Cargo/VM was used. Full type input capture costs, actual
+public retained-key identity, focused native results and complete-suite results
+remain unverified for these new sources.

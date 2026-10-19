@@ -732,7 +732,7 @@ fn union(
         }))
     }
 }
-fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagnostic> {
+pub(crate) fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagnostic> {
     let mut current = hir;
     loop {
         charge(meter, 1, &current.span)?;

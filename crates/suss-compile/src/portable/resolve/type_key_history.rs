@@ -43,21 +43,40 @@ pub struct TypeKeyHistory {
     global: Global,
     keys: [KeyOrigin; 5],
     retained: RetainedHistory,
+    values: Option<super::TypeValuePlan>,
+    occurrences: [Option<Arc<super::CompletedDeclarationSource>>; 22],
 }
 impl TypeKeyHistory {
+    pub(crate) fn values(&self, global: &Global) -> Option<&super::TypeValuePlan> {
+        (self.global == *global).then_some(self.values.as_ref()).flatten().filter(|v| v.is_known())
+    }
+    pub(crate) fn occurrence(&self, global: &Global, label: &str) -> Option<&Arc<super::CompletedDeclarationSource>> {
+        if self.global != *global { return None; }
+        super::VALUE_FIELDS.iter().position(|name| *name == label).and_then(|i| self.occurrences[i].as_ref())
+    }
+
     pub(crate) fn key(&self, global: &Global, field: TypeKey) -> Option<&KeyOrigin> {
         (self.global == *global).then(|| &self.keys[field as usize])
     }
     pub(crate) fn retained_key(&self, global: &Global, field: RetainedKey) -> Option<&KeyOrigin> {
         if self.global == *global { self.retained.keys[field as usize].as_ref() } else { None }
     }
-    pub(crate) fn capture_type(global: &Global, previous: Option<&DefinitionInfo>, incoming: &Form, meter: &mut Meter<'_>)
+    pub(crate) fn capture_type(global: &Global, previous: Option<&DefinitionInfo>, incoming: &Form, origin: Option<&crate::portable::SourceOrigin>, meter: &mut Meter<'_>)
         -> Result<Arc<Self>, Diagnostic>
     {
         let mut history = Self::capture(global, previous, meter)?;
         meter(4)?;
         let owned = Arc::get_mut(&mut history).expect("fresh unpublished type history");
         owned.retained.merge_metadata(incoming, meter)?;
+        owned.values = Some(super::TypeValuePlan::capture(global, previous, incoming, origin, meter)?);
+        if owned.values.as_ref().is_some_and(|v| !v.is_known()) {
+            meter((2 * std::mem::size_of::<[KeyOrigin; 5]>() + 5 * 8
+                + 2 * std::mem::size_of::<RetainedHistory>() + 17 * 8
+                + 2 * std::mem::size_of_val(&owned.occurrences) + 22 * 8 + 8) as u64)?;
+            owned.keys = std::array::from_fn(|_| KeyOrigin::Unknown);
+            owned.retained = RetainedHistory::unknown();
+            owned.occurrences = std::array::from_fn(|_| None);
+        }
         Ok(history)
     }
     pub(crate) fn finish_type(history: &mut Arc<Self>, global: &Global, info: &DefinitionInfo, meter: &mut Meter<'_>)
@@ -67,7 +86,10 @@ impl TypeKeyHistory {
         if history.global != *global {
             return Err(Diagnostic { span: info.declaration.span.clone(), message: "Type history binding mismatch".into() });
         }
-        Arc::get_mut(history).expect("unpublished type history").retained.source_info(info, global, meter)
+        let native = Arc::get_mut(history).expect("unpublished type history");
+        native.retained.source_info(info, global, meter)?;
+        if let Some(values) = native.values.as_mut() { values.seal(info, meter)?; }
+        Ok(())
     }
     pub(crate) fn capture(global: &Global, previous: Option<&DefinitionInfo>, meter: &mut Meter<'_>)
         -> Result<Arc<Self>, Diagnostic>
@@ -80,6 +102,8 @@ impl TypeKeyHistory {
         // larger final Arc backing above. Every new slot's controls are paid.
         meter((2 * std::mem::size_of::<RetainedHistory>() + 17 * 4 + 4) as u64)?;
         let mut retained = RetainedHistory::empty();
+        meter((22 * 8 + 2 * std::mem::size_of::<[Option<Arc<super::CompletedDeclarationSource>>; 22]>() + 8) as u64)?;
+        let mut occurrences = std::array::from_fn(|_| None);
         let mut keys = TypeKey::ALL.map(|field| KeyOrigin::Literal(LiteralSite::ParseType(field)));
         if let Some(previous) = previous {
             meter(8)?;
@@ -87,6 +111,8 @@ impl TypeKeyHistory {
                 // A foreign native snapshot cannot authorize this binding.
                 meter((history.global.namespace().len() + history.global.name().len() + 5) as u64)?;
                 if history.global == *global {
+                    meter((22 * 8 + std::mem::size_of_val(&history.occurrences) + 8) as u64)?;
+                    occurrences = history.occurrences.clone();
                     keys = history.keys.clone();
                     // Read/copy payload plus per-slot Option/Arc retain and
                     // eventual release controls before cloning the new array.
@@ -105,9 +131,31 @@ impl TypeKeyHistory {
             } else {
                 Self::ordinary_keys(previous, &mut keys, meter)?;
                 retained = RetainedHistory::ordinary(global, previous, meter)?;
+                if let Some(owner) = &previous.completed_values {
+                    meter((global.namespace().len() * 2 + global.name().len() * 2 + 8) as u64)?;
+                    if owner.belongs_to(global) && owner.matches_ordinary(previous, meter)? {
+                        // This is the original ordinary association route, not
+                        // an equality join of two normalized outputs. Resolution
+                        // of the actual reader-owner selector stays in Graph.
+                        let entries = hir::reader_metadata_view_metered(&owner.declaration, meter)?;
+                        for (index, label) in super::VALUE_FIELDS.iter().enumerate() {
+                            meter(8)?;
+                            if matches!(*label, "name" | "line" | "column" | "file") { continue; }
+                            meter((5 * 8 + 17 * 8 + 8) as u64)?;
+                            let key = TypeKey::ALL.into_iter().find(|key| key.name() == *label)
+                                .map(|key| &keys[key as usize])
+                                .or_else(|| RetainedKey::ALL.into_iter().find(|key| key.name() == *label)
+                                    .and_then(|key| retained.keys[key as usize].as_ref()));
+                            if !matches!(key, Some(KeyOrigin::Source(_) | KeyOrigin::ReaderShorthandTag(_))) { continue; }
+                            if Self::property(&entries, label, meter)?.is_some() {
+                                occurrences[index] = Some(owner.clone());
+                            }
+                        }
+                    }
+                }
             }
         }
-        Ok(Arc::new(Self { global: global.clone(), keys, retained }))
+        Ok(Arc::new(Self { global: global.clone(), keys, retained, values: None, occurrences }))
     }
     fn source(key: &Form, shorthand: bool, meter: &mut Meter<'_>) -> Result<KeyOrigin, Diagnostic> {
         meter((std::mem::size_of::<Form>() + 4 * std::mem::size_of::<usize>() + 4) as u64)?;
