@@ -30020,3 +30020,25 @@ Run normal Java/Node-free reproduction with diagnostic retention above, verify
 source/identity and then execute the existing complete compiled_bootstrap target
 before treating generated artifacts as usable. No quota/rate reduction or
 nested budget refill was introduced.
+
+
+## Bootstrap outputs from the normal CI generator
+
+The four shipped files now come from two byte-identical normal Java/Node-free CI
+generations on a05cbb1. See the
+[source/tree/hash/review evidence](evidence/m4-pr263-ci-regenerated-bootstrap-2026-10-19.md).
+Current compiled build-script identity verification passes, including checkout
+independence and runtime asset invalidation. No Cargo or VM was run locally for
+that check. Executable section bytes differ from the parent; runtime behavior
+must be established again on this exact source/BOOT tuple.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+sh scripts/verify-bootstrap.sh
+cargo test --locked -p suss-cli --test compiled_bootstrap -- --test-threads=2
+```
+
+Only the first command has a new local result here; CI establishes two normal
+complete generation tuples, not the later compiled_bootstrap tests. Fresh-head
+reproduction, actual bootstrap validation/execution and the remaining focused/full
+gates are still required. Preserve the separate parent baseline source and process.
