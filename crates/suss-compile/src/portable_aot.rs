@@ -133,16 +133,7 @@ pub fn compile_main_with_compile_fuel(
 /// Compile source text to the same official command profile as file mode.
 /// Namespace validation precedes effectful Macro-session preparation; Runtime
 /// initialization remains deferred to the resulting command artifact.
-pub(crate) fn compile_main_source(
-    source: &str,
-    path: Option<PathBuf>,
-    namespace: &str,
-    source_paths: &[PathBuf],
-) -> Result<Vec<u8>, String> {
-    compile_main_source_with_compile_fuel(source, path, namespace, source_paths, None)
-}
-
-fn compile_main_source_with_compile_fuel(
+pub(crate) fn compile_main_source_with_compile_fuel(
     source: &str,
     path: Option<PathBuf>,
     namespace: &str,

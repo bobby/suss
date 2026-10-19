@@ -75,7 +75,7 @@ order. AOT `compile --compile-fuel` configures source compilation, not subsequen
 artifact execution. See [compiled REPL configuration](compiled-repl.md).
 
 Native library callers can use `Compiler::compile_with_compile_fuel`,
-`prepare_expression_with_compile_fuel` and
+`compile_for_main_with_compile_fuel`, `prepare_expression_with_compile_fuel` and
 `compile_expr_cached_with_compile_fuel` with an `Option<u64>` allowance.
 `None` preserves the default; `Some(0)` is an explicit zero allowance.
 The original methods keep their defaults. These options do not configure the

@@ -41,6 +41,11 @@ nil and NaN, complete successfully; uncaught exceptions fail. Explicit exit
 uses the checked u8 status policy, with invalid statuses catchable as language
 errors. Runtime initialization remains deferred to artifact instantiation.
 
+`compile_for_main_with_compile_fuel(source, namespace, allowance)` configures
+compilation independently: `None` keeps the default, and `Some(0)` is explicit.
+Namespace validation still precedes Macro execution. The option does not change
+Runtime execution limits; `compile_for_main` continues to use the default.
+
 Seven new command regressions execute the public library output, covering real
 lexical macro data, ordered empty/Unicode arguments, phase capability isolation,
 normal and explicit exit behavior, retained state across repeated typed calls

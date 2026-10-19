@@ -304,19 +304,28 @@ impl Compiler {
     /// the artifact host. Ordinary completion succeeds; explicit exit uses the
     /// command status policy.
     pub fn compile_for_main(&mut self, source: &str, main_ns: &str) -> CompileResult<Vec<u8>> {
+        self.compile_for_main_with_compile_fuel(source, main_ns, None)
+    }
+
+    /// Compile an official command with an explicit compilation allowance.
+    /// None preserves the default; Some(0) is explicit. Runtime fuel is unchanged.
+    pub fn compile_for_main_with_compile_fuel(
+        &mut self, source: &str, main_ns: &str, compile_fuel: Option<u64>,
+    ) -> CompileResult<Vec<u8>> {
         #[cfg(not(target_family = "wasm"))]
         {
-            portable_aot::compile_main_source(
+            portable_aot::compile_main_source_with_compile_fuel(
                 source,
                 None,
                 main_ns,
                 &[std::path::PathBuf::from("src")],
+                compile_fuel,
             )
             .map_err(CompileError::Semantic)
         }
         #[cfg(target_family = "wasm")]
         {
-            let _ = (source, main_ns);
+            let _ = (source, main_ns, compile_fuel);
             Err(CompileError::Unsupported(
                 "Public command compilation requires the native compiled macro host".into(),
             ))

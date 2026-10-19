@@ -3,6 +3,9 @@
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+use compilation_fuel::COMPILATION_FUEL;
 use portable_decode::{Decoder, Observation};
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
@@ -91,6 +94,7 @@ fn compiled_map_factory_preserves_missing_nil_false_values_and_extension_entries
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(COMPILATION_FUEL);
         factory_tools(&mut macros);
         session.eval_with_macros("(defrecord* MapFactoryRecord [left right] nil nil) (record-map MapFactoryRecord [left right]) (defrecord* EmptyFactoryRecord [] nil nil) (record-map EmptyFactoryRecord [])", &mut macros).unwrap();
         assert_eq!(

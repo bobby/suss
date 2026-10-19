@@ -28761,3 +28761,45 @@ old baseline, integration6 and7 reveal additional semantic-fixture Macro fuel
 failures in public_compiled_command and compiled_record_factories respectively.
 Those two repairs are separately prepared; they are not credited executed here.
 Fresh complete workspace and committed-head CI remain required.
+
+## Public command compilation allowance and record-factory execution
+
+The preceding full upstream harness now completes12PASS/0FAIL/0ignored621.76s
+execution/622.21s including build on8921f86 native/test source. This includes the
+exact reviewed suite failure map, original200M map control, reader15/when-let12
+ordered observations and adversarial decoding. It predates the native API
+follow-up below and is not credited as a fresh final-native workspace verdict.
+
+Same-tree c0 CI6 completed92PASS/1FAIL21of32targets (11unexecuted), failing
+public_compiled_command's lexical macro &env transport179..471. CI7 completed
+29PASS/1FAIL8of32targets (24unexecuted), failing record map-factory &env
+137..171(inner4756..4771). New stateless public
+`Compiler::compile_for_main_with_compile_fuel` delegates to the existing command
+preparation option; legacy compile_for_main delegatesNone. Only the original
+lexical-command and map-factory fixtures receive shared10B compilation; complete
+source/assertions/profile checks, Runtime, defaults and both factory phases are
+retained. New command control executes zero/preflight/same-Compiler recovery,
+None/10B and legacy default command paths with expected explicit exit73.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --no-fail-fast --locked -p suss-cli --test public_compiled_command --test compiled_record_factories -- --test-threads=2
+python3 -B -m unittest discover -s scripts -p test_ci_test_shards.py
+```
+
+Actual fresh normal bootstrap20.55s/identity0.91sPASS. Both six-section non-custom
+Wasm sequences equal prior images; native source/custom identity and hashes are
+regenerated. Complete factory5PASS/0FAIL/0ignored337.40s; command6PASS/0FAIL/
+0ignored635.89s, combined Cargo terminal0in994.96s including compilation.
+The original command completion/exit-policy test ran fully; nothing was filtered.
+CI planner4tests also pass. CI now passes --no-fail-fast to Cargo so every selected
+harness can execute despite an earlier failure, preserving nonzero exit status,
+partition coverage, threads/concurrency, test limits and the120-minute window.
+
+Raw original CI failures, focused terminal logs, source/bootstrap hashes, exact
+fixture-preservation checks and independent reviews are in the
+[command-fuel evidence](evidence/m4-pr252-command-compilation-fuel-2026-10-19.md).
+Fresh Java/Node-free byte-exact bootstrap verification, the unfiltered required
+workspace command and final committed-head CI remain separate required gates.
+No issue closure, promotion or merge follows from these focused results alone.

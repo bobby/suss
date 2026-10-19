@@ -27,7 +27,7 @@ class ShardTests(unittest.TestCase):
 
     def test_cargo_commands_keep_complete_suites_and_bounded_workers(self):
         result = list(commands([("first", "a"), ("first", "b"), ("second", "c")]))
-        self.assertEqual(result, [["cargo", "test", "--workspace", "--locked",
+        self.assertEqual(result, [["cargo", "test", "--workspace", "--locked", "--no-fail-fast",
                                   "--test", "a", "--test", "b", "--test", "c",
                                   "--", "--test-threads=2"]])
 
