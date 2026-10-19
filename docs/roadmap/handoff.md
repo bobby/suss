@@ -30295,3 +30295,10 @@ and unchanged noncustom Wasm/catalog/ABI/cells. Exact four outputs are adopted;
 Next run the both-phase Alias regression and unchanged canonical-cold/retained-warm
 DATA controls. No Alias semantic, complete new-head verification or acceptance
 result is inferred from generation/adoption.
+
+
+## Alias targeted replay: two passes and retained/warm DATA failure (2026-10-19)
+
+[Three-test raw result receipt](evidence/m4-pr263-alias-targeted-results-2026-10-19.json) binds `7b56177c8fcf112155e299909ad8bb60efc755d5`, full argv/log and terminal exit101: 2PASS1FAIL0ignored, 225.5490s command/191.54s harness. The new uncaptured-native Alias regression passes in both Runtime and Macro with GC/physical identity and request-only cache checks. The unchanged canonical cold inline-callback poison/restoration control also passes. These are two Rust test passes, not a full DATA-suite result.
+
+The unchanged retained/warm reader-property control still fails at completed_type_values.rs616 with `Host(Fresh first-use source failed complete DATA checks)`. Its last reported Native has inputs=2 and current_inputs=false while children/direct/classes/prototypes=true; the ReaderSource root has binding/logical=true but audit=false (source0, alias14, native13). The failing phase/row is unlogged. Earlier false flags may belong to intentional poison observations in the concurrently passing control; the raw emission order is retained without inventing per-test attribution. A with-meta/evidence explanation remains unproved. This is a discussion/review stopping point, with no claim that all twelve DATA cases, public macro-frame/namespace/callable acceptance, full baseline or final CI pass. Existing assertions and all remaining gates are retained.
