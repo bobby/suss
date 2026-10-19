@@ -30200,3 +30200,17 @@ bootstrap or library execution. Fresh `sh scripts/verify-bootstrap.sh`, focused
 completed-value/literal/COW/source-root/core-import/source-tags tests and the
 exact workspace baseline remain required. Parent66a55ce's same producer
 continues separately; no local concurrent Cargo/VM ran for this adoption.
+
+
+## Reference-qualified tag metadata and expected primitive spans
+
+Current1bea CI passes bootstrap4/0/0 and CLI36/0, then compiler466/5.
+[Raw native failures, retained indexing-reader reference and two reviewed test corrections](evidence/m4-pr263-reference-qualified-controls-2026-10-19.md)
+retain exact tuples, commands, hashes and unexecuted boundaries. The new tag writer
+matches the actual pinned indexing-reader metadata; its legacy test expectation
+gets one precise source-qualified exception, with all other fields/programs still
+fully checked. The type-value fixture corrects only expected primitive spans.
+No production code or fuel limit changes. Corrected native execution is pending;
+regenerate the normal source-fingerprint bootstrap tuple before focused replay and
+the exact workspace baseline. Original strict core/source-child and pinned-map
+exhaustions remain explicit failures. Root66a55ce's existing producer is untouched.

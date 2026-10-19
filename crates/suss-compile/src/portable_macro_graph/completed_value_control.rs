@@ -641,8 +641,31 @@ mod tests {
                     session.collect().unwrap();
                     actuals.push(bridge.read(&mut session, &actual, 0..0).unwrap());
                 }
-                assert_eq!(actuals[0].kind, actuals[1].kind, "shared ordinary {phase:?}: {source}");
-                assert_eq!(actuals[0].kind, actuals[2].kind, "cold helper {phase:?}: {source}");
+                let mut expected = actuals[0].clone();
+                if *source == "(def ^number subject 17)" {
+                    // Pinned indexing-reader + actual analyzer/&env reference:
+                    // raw tag, final :tag and inner :meta :tag share this
+                    // located Symbol. The old native scalar path was bare.
+                    // Qualified ONLY for this executed reference source; all
+                    // other fields/metadata and all other programs stay strict.
+                    let pinned = suss_reader::forms::read_forms(
+                        "^{:line 1 :column 7 :end-line 1 :end-column 13} number").unwrap().remove(0);
+                    let pinned = bridge.quote(&mut session, pinned).unwrap();
+                    let pinned = bridge.read(&mut session, &pinned, 0..0).unwrap();
+                    let Kind::Vector(fields) = &mut expected.kind else { panic!("all22 fields"); };
+                    assert_eq!(fields.len(), VALUE_FIELDS.len());
+                    let tag = VALUE_FIELDS.iter().position(|name| *name == "tag").unwrap();
+                    let Kind::Vector(pair) = &mut fields[tag].kind else { panic!("tag presence/value"); };
+                    assert_eq!(pair.len(), 2);
+                    assert_eq!(pair[0].kind, Kind::Bool(true));
+                    assert_eq!(pair[1].kind, pinned.kind, "legacy still independently checks exact scalar data");
+                    assert!(pair[1].metadata.is_empty(), "retain observed legacy counterexample");
+                    assert!(!pinned.metadata.is_empty());
+                    pair[1].metadata = pinned.metadata.clone();
+                    assert_ne!(actuals[0].kind, expected.kind, "explicit reference-qualified exception, not silent legacy rewrite");
+                }
+                assert_eq!(expected.kind, actuals[1].kind, "shared ordinary, reference-qualified legacy {phase:?}: {source}");
+                assert_eq!(expected.kind, actuals[2].kind, "cold helper, reference-qualified legacy {phase:?}: {source}");
             }
         }
     }
@@ -680,6 +703,67 @@ mod tests {
             observed.push(bridge.read(&mut session, &value, 0..0).unwrap());
         }
         assert_eq!(observed[0].kind, observed[1].kind);
+    }
+
+    #[test]
+    fn completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source() {
+        // Actual retained analyzer.js/tools.reader observation, pin c4295f3:
+        // pr261-scalar-tag-indexing-reference-1bea-v1. Five bounded rows select
+        // the meaningful plain/indexing/file/string/function distinctions.
+        let cases = [
+            ("(def ^number subject 17)", false, None, "number", false, true),
+            ("(def ^number subject 17)", true, None,
+             "^{:line 1 :column 7 :end-line 1 :end-column 13} number", false, true),
+            ("(def ^\"number\" subject 17)", true, None, "\"number\"", false, false),
+            ("(def ^{:tag ^{:marker :kept} number} subject 17)", true, Some("tag-oracle.cljs"),
+             "^{:file \"tag-oracle.cljs\" :line 1 :column 30 :end-line 1 :end-column 36 :marker :kept} number", false, true),
+            ("(def ^number subject (fn* [] 17))", true, None,
+             "^{:line 1 :column 7 :end-line 1 :end-column 13} number", true, true),
+        ];
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()), (Phase::Macro, Session::new_macro().unwrap())] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let same = session.eval("(fn [values] (identical? (nth values 0) (nth values 1)))").unwrap();
+            for (source, indexed, file, expected, returns, physical_symbol) in cases {
+                let forms = suss_reader::forms::read_forms(source).unwrap();
+                let origin = indexed.then(|| portable::SourceOrigin::new(source, file.map(std::path::PathBuf::from)));
+                let environment = hir::prepare_with_origin(&forms, 0..source.len(), &Environment::default(), phase,
+                    &mut portable::NoExpansion, origin.as_ref()).unwrap().1;
+                let binding = environment.resolve(phase, &suss_reader::Symbol::new("subject"), 0..0).unwrap();
+                let info = environment.shared_definition_info(binding.global()).unwrap();
+                let original_source = info.declaration.clone();
+                let expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+                let expected = bridge.quote(&mut session, expected).unwrap();
+                session.collect().unwrap();
+                let expected = bridge.read(&mut session, &expected, 0..0).unwrap();
+                let actual = {
+                    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                    let root = graph.declaration(binding.global(), Some(info), 0).unwrap();
+                    let fields = graph.completed_pairs(root).unwrap();
+                    let tag = graph.declaration_field_value(&fields, "tag").unwrap().expect("outer tag");
+                    let meta = graph.declaration_field_value(&fields, "meta").unwrap().expect("meta map");
+                    let fields_meta = graph.completed_pairs(meta).unwrap();
+                    let inner = graph.declaration_field_value(&fields_meta, "tag").unwrap().expect("inner tag");
+                    let ret = graph.declaration_field_value(&fields, "ret-tag").unwrap();
+                    assert_eq!(ret.is_some(), returns);
+                    let ret = ret.unwrap_or_else(|| graph.scalar(Literal::Nil).unwrap());
+                    let root = graph.vector(&[tag, inner, ret]).unwrap();
+                    graph.materialize(root).unwrap()
+                };
+                session.collect().unwrap();
+                let data = bridge.read(&mut session, &actual, 0..0).unwrap();
+                let Kind::Vector(values) = &data.kind else { panic!("three exact values"); };
+                assert_eq!(values.len(), 3);
+                assert_eq!(values[0], expected, "outer {phase:?} indexed={indexed} {source}");
+                assert_eq!(values[1], expected, "inner {phase:?} indexed={indexed} {source}");
+                if returns { assert_eq!(values[2], expected, "return tag retains reader metadata"); }
+                else { assert_eq!(values[2].kind, Kind::Nil); }
+                if physical_symbol {
+                    let identity = session.invoke(&same, &[&actual]).unwrap();
+                    assert_eq!(bridge.read(&mut session, &identity, 0..0).unwrap().kind, Kind::Bool(true));
+                }
+                assert_eq!(info.declaration, original_source, "immutable native source unchanged");
+            }
+        }
     }
 
 }

@@ -107,7 +107,20 @@ fn actual_type_value_projection_preserves_shallow_meta_and_prior_function_policy
                 session.collect().unwrap();
                 let result = session.invoke(&project, &[&values]).unwrap();
                 let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-                let expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+                let mut expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+                // These sixteen scalar observations are runtime data. Match the
+                // decoder's synthetic span, preserving every metadata/value check;
+                // parsed coordinates inside this expectation string are unrelated
+                // to the source metadata explicitly observed by the guest probe.
+                let Kind::Vector(expected_values) = &mut expected.kind else {
+                    panic!("type-value reference must be an observation vector");
+                };
+                assert_eq!(expected_values.len(), 16);
+                for item in expected_values {
+                    assert!(item.metadata.is_empty());
+                    assert!(matches!(&item.kind, Kind::Nil | Kind::Bool(_) | Kind::String(_) | Kind::Number(_)));
+                    item.span = 0..0;
+                }
                 observations.push((format!("{label}/prior_first={prior_first}"), decoded, expected));
             }
         }
