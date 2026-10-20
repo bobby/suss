@@ -24,6 +24,8 @@ use wasmtime::{
 };
 
 type Result<T> = std::result::Result<T, SessionError>;
+mod original_members;
+pub(super) use original_members::OriginalMember;
 
 #[derive(Debug)]
 enum Atom {

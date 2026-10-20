@@ -7,18 +7,25 @@ pub(crate) struct FactoryOrigin {
     domain: Weak<WriteDomain>,
     point: FactoryPoint,
 }
-// Exact original factory/seed node. The index is immutable after sealing;
-// dependencies are native weak/index references, never current guest snapshots.
+// Exact factory output, or a downward original snapshot subroot. A member
+// retains its Node/terminal scope across every producer generation; it never
+// carries permission to revisit the enclosing seed or another ledger sibling.
 pub(super) struct FactoryPoint {
     domain: Weak<WriteDomain>,
     node: usize,
+    member: Option<super::super::canonical_seeds::SeedMember>,
 }
 impl FactoryPoint {
     fn retained(&self, session: &mut Session) -> Result<Self> {
-        session.charge_host_work((2 * std::mem::size_of::<Self>() + 4) as u64)?;
+        session.charge_host_work((2 * std::mem::size_of::<Self>() + 7) as u64)?;
+        let member = match &self.member {
+            Some(member) => Some(member.retained(session)?),
+            None => None,
+        };
         Ok(Self {
             domain: self.domain.clone(),
             node: self.node,
+            member,
         })
     }
 }
@@ -104,13 +111,14 @@ impl WriteDomain {
                 && session.values_identical(root, &node.value)?
             {
                 session.charge_host_work((2 * std::mem::size_of::<FactoryOrigin>() + 6) as u64)?;
-                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 4) as u64)?;
+                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 6) as u64)?;
                 return Ok(Some(FactoryOrigin {
                     root: root.clone(),
                     domain: Arc::downgrade(self),
                     point: FactoryPoint {
                         domain: Arc::downgrade(self),
                         node: index,
+                        member: None,
                     },
                 }));
             }
@@ -183,6 +191,26 @@ impl WriteDomain {
             let Some(domain) = point.domain.upgrade() else {
                 return Ok(None);
             };
+            // A restricted snapshot scope is processed BEFORE output-node
+            // deduplication: it cannot mark or expand its containing factory
+            // node. The snapshot walker separately deduplicates only original
+            // downward Nodes; opaque/immediate members stay terminal.
+            session.charge_host_work(4)?;
+            if let Some(member) = &point.member {
+                let seed = {
+                    let state = registry_lock(&domain.state);
+                    if !state.sealed { return Ok(None); }
+                    session.charge_host_work((2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64)?;
+                    state.nodes.get(point.node).and_then(|node| node.seed.clone())
+                };
+                let Some(seed) = seed else { return Ok(None); };
+                if let Some(descendant) = seed.original_member(session, value, Some(member))? {
+                    let mut selected = point;
+                    selected.member = Some(descendant);
+                    return Ok(Some(selected));
+                }
+                continue;
+            }
             let key = (Arc::as_ptr(&domain) as usize, point.node);
             let mut duplicate = false;
             for old in &seen {
@@ -227,8 +255,11 @@ impl WriteDomain {
                 return Ok(Some(point));
             }
             if let Some(seed) = seed {
-                if seed.contains_initial_reference(session, value)? {
-                    return Ok(Some(point));
+                if let Some(scope) = seed.original_member(session, value, None)? {
+                    session.charge_host_work(3)?;
+                    let mut selected = point;
+                    selected.member = Some(scope);
+                    return Ok(Some(selected));
                 }
             }
             for edge in edges {
@@ -294,18 +325,16 @@ impl WriteDomain {
                 }
             }
         }
-        for (index, root, seed) in originals {
+        for (index, root, _seed) in originals {
             session.charge_host_work(3)?;
-            if session.values_identical(value, &root)?
-                || match seed {
-                    Some(seed) => seed.contains_initial_reference(session, value)?,
-                    None => false,
-                }
-            {
-                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 4) as u64)?;
+            // Membership flows from an exact reached seed root to its original
+            // members, never from a shared interior back to an unrelated seed.
+            if session.values_identical(value, &root)? {
+                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 6) as u64)?;
                 return Ok(Some(FactoryPoint {
                     domain: Arc::downgrade(self),
                     node: index,
+                    member: None,
                 }));
             }
         }
@@ -974,6 +1003,137 @@ mod tests {
                 "only the exact offered seed root grants its initial backing membership"
             );
         }
+    }
+    #[test]
+    fn original_factory_seed_member_links_cannot_reexport_the_container_across_generations() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let recording = bridge.recording(&mut session).unwrap();
+        let value = recording.map_values(&mut session, &[]).unwrap();
+        let seed = finished(&mut session, recording, value);
+        assert_eq!(seed.records.canonical_seed_fact_count_for_test(), 1);
+        let meta = metadata(&mut session, &bridge);
+        let base = symbol(&mut session, &bridge);
+        let mut copies = Vec::new();
+        // First copy has an explicit seed-root input. Its copied backing is
+        // genuinely shared heap storage, not an equal-content replacement.
+        // The second copy receives only the first copy plus the metadata.
+        for _ in 0..2 {
+            let parent = copies.last().unwrap_or(&seed);
+            let origins = [origin(&mut session, parent), origin(&mut session, &meta)];
+            let recording = bridge.recording(&mut session).unwrap();
+            recording.bind_original_factory_inputs(&mut session, &origins).unwrap();
+            let value = recording.with_form_metadata(&mut session,
+                MetadataShape::Map { large: false }, &parent.value, &meta.value, &[]).unwrap();
+            copies.push(finished(&mut session, recording, value));
+        }
+        let seed_fields = session.data_fields(&seed.value).unwrap();
+        for copy in &copies {
+            let fields = session.data_fields(&copy.value).unwrap();
+            assert!(session.values_identical(&fields[2], &seed_fields[2]).unwrap(),
+                "actual original backing must be shared across the real factory generations");
+            let inherited = [origin(&mut session, &base), origin(&mut session, copy)];
+            // Neither copy has a constructor edge to the original seed object.
+            // Its exact backing link must not re-export that containing object.
+            let wrong = wrap(&mut session, &bridge, &base, &seed, &inherited);
+            hash(&mut session, &wrong.value);
+            assert!(!watch(&wrong).matches(&mut session).unwrap(),
+                "a terminal backing member cannot become whole-seed authority");
+            // The metadata map IS an original downward input of each copy.
+            let legitimate = wrap(&mut session, &bridge, &base, &meta, &inherited);
+            hash(&mut session, &legitimate.value);
+            session.collect().unwrap();
+            assert!(watch(&legitimate).matches(&mut session).unwrap(),
+                "restricting seed interiors must preserve actual downward input closure");
+            // Explicitly offering the original seed still admits that exact
+            // object. No mutation or initially-nil manufacture is involved.
+            let explicit = [origin(&mut session, &base), origin(&mut session, copy),
+                origin(&mut session, &seed)];
+            let legitimate = wrap(&mut session, &bridge, &base, &seed, &explicit);
+            hash(&mut session, &legitimate.value);
+            assert!(watch(&legitimate).matches(&mut session).unwrap(),
+                "the explicit seed-root positive must stay valid");
+        }
+    }
+    #[test]
+    fn original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let recording = bridge.recording(&mut session).unwrap();
+        // Genuine private EMPTY_SET contains the original EMPTY_MAP Node;
+        // that map in turn contains its original backing array Node.
+        let value = recording.set_values(&mut session, &[]).unwrap();
+        let seed = finished(&mut session, recording, value);
+        assert_eq!(seed.records.canonical_seed_fact_count_for_test(), 1);
+        let seed_fields = session.data_fields(&seed.value).unwrap();
+        let inner_map = seed_fields[1].clone();
+        let inner_fields = session.data_fields(&inner_map).unwrap();
+        let meta = metadata(&mut session, &bridge);
+        let mut copies = Vec::new();
+        for _ in 0..2 {
+            let parent = copies.last().unwrap_or(&seed);
+            let inputs = [origin(&mut session, parent)];
+            let recording = bridge.recording(&mut session).unwrap();
+            recording.bind_original_factory_inputs(&mut session, &inputs).unwrap();
+            let key = recording.scalar(&mut session,
+                &Literal::String("original-member".encode_utf16().collect())).unwrap();
+            // The ordinary array-map factory captures inner_map as an actual
+            // argument. Its seed-member Node scope must survive this link and
+            // the next generation, rather than becoming either terminal-only
+            // or permission for the entire EMPTY_SET snapshot.
+            let value = recording.map_values(&mut session, &[(key, inner_map.clone())]).unwrap();
+            copies.push(finished(&mut session, recording, value));
+        }
+        for copy in &copies {
+            let inputs = [origin(&mut session, copy), origin(&mut session, &meta)];
+            let recording = bridge.recording(&mut session).unwrap();
+            recording.bind_original_factory_inputs(&mut session, &inputs).unwrap();
+            // This supported metadata factory needs the backing BELOW the
+            // admitted inner-map Node, not just that Node's exact identity.
+            let value = recording.with_form_metadata(&mut session,
+                MetadataShape::Map { large: false }, &inner_map, &meta.value, &[]).unwrap();
+            let descendant = finished(&mut session, recording, value);
+            let fields = session.data_fields(&descendant.value).unwrap();
+            assert!(session.values_identical(&fields[2], &inner_fields[2]).unwrap());
+            session.collect().unwrap();
+            assert!(complete_domain(&mut session, &descendant),
+                "genuine original Node descendants must remain selectable through both generations");
+            // The parent seed object itself was not an argument of either map.
+            // Store it as an ordinary map VALUE, preserving genuine factory
+            // semantics rather than putting a set in a metadata-map position.
+            let recording = bridge.recording(&mut session).unwrap();
+            let original_inputs = [origin(&mut session, copy)];
+            recording.bind_original_factory_inputs(&mut session, &original_inputs).unwrap();
+            let key = recording.scalar(&mut session,
+                &Literal::String("not-an-ancestor".encode_utf16().collect())).unwrap();
+            let value = recording.map_values(&mut session, &[(key, seed.value.clone())]).unwrap();
+            let ancestor = finished(&mut session, recording, value);
+            assert!(!complete_domain(&mut session, &ancestor),
+                "original downward membership must not recover its containing seed");
+            // A separately allocated equal-content map is neither a descendant
+            // nor a permitted seed sibling, even while all owners remain live.
+            let other = metadata(&mut session, &bridge);
+            assert!(!session.values_identical(&other.value, &meta.value).unwrap());
+            let recording = bridge.recording(&mut session).unwrap();
+            let inputs = [origin(&mut session, copy)];
+            recording.bind_original_factory_inputs(&mut session, &inputs).unwrap();
+            let value = recording.with_form_metadata(&mut session,
+                MetadataShape::Map { large: false }, &inner_map, &other.value, &[]).unwrap();
+            let unrelated = finished(&mut session, recording, value);
+            assert!(!complete_domain(&mut session, &unrelated),
+                "an unrelated same-content source object cannot enter the original subtree");
+        }
+    }
+    fn complete_domain(session: &mut Session, owner: &Owner) -> bool {
+        let domain = owner.records.write_domain();
+        let watch = watch(owner);
+        let methods = session.canonical_methods.clone().unwrap();
+        let prototype = session.prototype_origin.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        let identity = session.identity;
+        domain.matches(session.store.as_context_mut(), runtime, identity, &irq,
+            &methods, &prototype, None, &watch, &[]).unwrap()
     }
     #[test]
     fn original_factory_inputs_reject_mutated_original_producer_without_recapturing_it() {

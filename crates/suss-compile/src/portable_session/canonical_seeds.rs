@@ -4,12 +4,26 @@ use super::{
     Session, SessionError, SessionValue, canonical_methods, storage_snapshot::StorageSnapshot,
 };
 use crate::portable::{bootstrap, hir::Literal};
-use std::sync::{Arc, atomic::AtomicUsize};
+use std::sync::{Arc, Weak, atomic::AtomicUsize};
 use wasmtime::{RootScope, Val, AsContextMut};
 
 type Result<T> = std::result::Result<T, SessionError>;
 pub(crate) struct CanonicalSeed {
     storage: StorageSnapshot,
+}
+// Downward original membership, tied to the ACTUAL immutable seed allocation.
+// Weak ownership keeps retirement fail-closed without adding a domain DAG.
+// It carries neither whole-seed permission nor current validity.
+pub(super) struct SeedMember {
+    seed: Weak<CanonicalSeed>,
+    point: super::storage_snapshot::OriginalMember,
+}
+impl SeedMember {
+    pub(super) fn retained(&self, session: &mut Session) -> Result<Self> {
+        session.charge_host_work((2 * std::mem::size_of::<Self>() + 4) as u64)?;
+        let point = self.point.retained(session)?;
+        Ok(Self { seed: self.seed.clone(), point })
+    }
 }
 pub(super) struct CanonicalSeeds {
     seeds: Vec<(&'static str, Arc<CanonicalSeed>)>,
@@ -79,6 +93,22 @@ impl CanonicalSeeds {
     }
 }
 impl CanonicalSeed {
+    pub(super) fn original_member(
+        self: &Arc<Self>, session: &mut Session, value: &SessionValue,
+        within: Option<&SeedMember>,
+    ) -> Result<Option<SeedMember>> {
+        session.check(value)?;
+        session.charge_host_work(6)?; // scope/Weak upgrade, Arc identity/drop
+        if let Some(within) = within {
+            let Some(owner) = within.seed.upgrade() else { return Ok(None); };
+            if !Arc::ptr_eq(&owner, self) { return Ok(None); }
+        }
+        let point = self.storage.original_member(session, value,
+            within.map(|member| &member.point))?;
+        let Some(point) = point else { return Ok(None); };
+        session.charge_host_work((2 * std::mem::size_of::<SeedMember>() + 4) as u64)?;
+        Ok(Some(SeedMember { seed: Arc::downgrade(self), point }))
+    }
     pub(super) fn contains_initial_reference(
         &self,
         session: &mut Session,
