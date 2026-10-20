@@ -1,0 +1,634 @@
+{
+  "schema": 1,
+  "scope": "Commands, source/artifact bindings and bounded checked short-property validation. Historical acceptance failures remain in the linked prior-source record. No whole-issue, stack, default-fit or final-CI completion claim.",
+  "production_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+  "published_source_checkpoint": "c639e8bc82ed4a64b463023a8903f6cbc579a240",
+  "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+  "compiler_inputs": 228,
+  "source_freeze": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/source-freeze.json",
+    "sha256": "cfe87a73fa2d493c560aaaea97daaaf81ffe18bb3421024d3120d6bb1124414e"
+  },
+  "bootstrap_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+  "initial_typecheck_failure": {
+    "head": "0607a6d07d983c9e969c6865b11936b792e9d3a6",
+    "compiler_source_sha256": "55e17c57f75891626182bf7090156e09c888e6f1edf1cc4401ff61f8fb255293",
+    "input_count": 228,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 101,
+    "seconds": 15.863875674000155,
+    "raw_sha256": "2c1bc56c4c89ff64135f94cc0bcc30abd3c06766a04f1f0e56307ce5986227b1"
+  },
+  "typecheck": {
+    "head": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+    "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "input_count": 228,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 145.82557522699972,
+    "raw_sha256": "a2c7c62c746d0885f7d1b88eb103570633d86fc1154664939ebbb1c89f965e66"
+  },
+  "normal_generation": {
+    "head": "c639e8bc82ed4a64b463023a8903f6cbc579a240",
+    "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "inputs": 228,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 173.53146727199965,
+    "raw_sha256": "50eb9568a3881dcbe14d4ec5df5928b9165c1dce0cee0c1edf85553e0d0269b6"
+  },
+  "generation_receipt": {
+    "scope": "Generated file bytes and source receipt only; no validation, execution or acceptance claim.",
+    "source": {
+      "head": "c639e8bc82ed4a64b463023a8903f6cbc579a240",
+      "tree": "ef8daa2c0a629ab77989ebbad64ee62cc98094bf",
+      "working_tree_clean": true
+    },
+    "files": {
+      "first/runtime.wasm": {
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+        "bytes": 2120708
+      },
+      "first/runtime.json": {
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+        "bytes": 2119229
+      },
+      "first/macro.json": {
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+        "bytes": 2120708
+      },
+      "second/runtime.json": {
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+        "bytes": 2119229
+      },
+      "second/macro.json": {
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+        "bytes": 45875
+      }
+    },
+    "reproductions_match": true,
+    "shipped_matches_first": false
+  },
+  "build_input_review": {
+    "fp": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "inputs": 228,
+    "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "b1f2c415bf1ebc034eb13eaef6e0f2ed2ddb38820467e567272168be56bf92e3",
+    "all_input_hashes_and_rerun_paths_verified": true,
+    "manifest_deltas": {
+      "runtime": {
+        "compiler_source_sha256": {
+          "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+          "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+        },
+        "wasm_sha256": {
+          "old": "12b3ee8c82b8d969827024a60f200648bae7cb9a822b81918e3cc64721cdd475",
+          "new": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a"
+        }
+      },
+      "macro": {
+        "compiler_source_sha256": {
+          "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+          "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+        },
+        "wasm_sha256": {
+          "old": "61cd893876cbf79cfaf5e4e3324d304a3a027503bcd48c925e55213028f0f6eb",
+          "new": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3"
+        }
+      }
+    }
+  },
+  "bootstrap_identity": {
+    "head": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "exit_code": 0,
+    "seconds": 11.159012893000181,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "independent_source_review": {
+    "verdict": "SOURCE_FEE_PROVENANCE_GO_FOR_MAIN_BOOTSTRAP_AND_FOCUSED_EXECUTION",
+    "scope": "Exact frozen V4 closure of B2, inheriting hash-bound V3 production fee/lifecycle review; no native semantic acceptance claim",
+    "manifest_sha256": "ef67573f1d9650446736f90814d6be522b2861b9f0bccc21b4cb7f60ca5130d6",
+    "patch_sha256": "4d1b6390c248e16d6e26d529aea637a0c2f7552627c33dffc11d0392334ce264",
+    "all_18_manifest_postimages_and_git_base_preimages_verified": true,
+    "all_rust_bytes_exact_v3": true,
+    "prior_review": "/home/bobby/.cache/suss-m4-work/pr263-short-property-transplant-83f-v3/independent-review-cicero.json",
+    "prior_review_sha256": "3042260ffc9f53ac09f212c975247d88b00a127a3219d654ccaa508530334973",
+    "B1": "CLOSED by V3 actual caller-meter plumbing; inherited unchanged. Same cumulative meter for verifier/emitter/all three cache miss-bypass routes; standalone local budget never refills Session/Store.",
+    "B2": {
+      "status": "CLOSED",
+      "actual_whole_checked_function_sha256": "76c90e88398bb4e49e320877d5bf04c84ab6d667bc3fcc5a0a93be96352918cf",
+      "closure": "Unique checked_function anchor and terminating top-level body delimiter, emitter-before-validator order check; actual sixth-scope digest is compared against independent hardcoded identity as well as JSON checked-emitter-sha256.",
+      "negative_review": "Test prepends the exact earlier i32.const1/return bypass inside the helper, asserts other five extracted scopes byte-identical, then requires rejection after whole-file hash refresh; refreshing both whole-file and helper manifest hashes is rejected by the independent closed identity.",
+      "execution": "Reviewer statically inspected both branches and independently recomputed the actual scope hash; did not run checker/tests."
+    },
+    "fee_semantics": "No Rust change from reviewed V3, so tariff/prepayment/actual-use plan/failure-publication/no-refill findings stand. Existing canonical generic guard and receiver/getter/setter dispatcher remain unchanged; raw UTF16, full late-schema validation, last duplicate winner, miss callback ordering, nil/false distinction preserved by source inspection. No additional confirmed blocker.",
+    "readme": "Former missing local donor evidence link now points to full immutable donor commit; Git object for linked report exists. No current native/oracle rerun inferred.",
+    "main_typecheck_verified": {
+      "head": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--profile",
+        "test"
+      ],
+      "exit_code": 0,
+      "seconds": 145.82557522699972,
+      "raw_sha256": "a2c7c62c746d0885f7d1b88eb103570633d86fc1154664939ebbb1c89f965e66",
+      "raw_hash_verified": true,
+      "source_fp": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "scope": "Workspace/all-target type/borrow check; not bootstrap or VM execution."
+    },
+    "python_evidence": "User reports full checker PASS and recordPython32 terminal forthcoming. This review does not claim to have independently reconciled that terminal yet.",
+    "remaining_execution": "Normal two-generation matching executable BOOT, main artifact review, and focused native/guest controls remain required. New ABI helpers mean noncustom Wasm changes are expected. No old metadata-only adoption assumption.",
+    "limits": [
+      "No Cargo/rustc/VM/oracle/Python test execution by reviewer.",
+      "No shared source/index/ref/GitHub writes or adoption.",
+      "No default-fit/pinned200M/public acceptance/readiness/performance claim."
+    ]
+  },
+  "independent_artifact_review": {
+    "verdict": "GO_EXACT_FOUR_NEW_ABI_CODE_BOOT_ARTIFACTS_ONLY",
+    "reviewed_at_utc": "2026-10-20T18:19:52.867830+00:00",
+    "head": "c639e8bc82ed4a64b463023a8903f6cbc579a240",
+    "source_fingerprint": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "source_input_count": 228,
+    "source_all_228_git_frozen_current_hashes_verified": true,
+    "source_fingerprint_independently_recomputed": true,
+    "actual_builder_output": {
+      "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "b1f2c415bf1ebc034eb13eaef6e0f2ed2ddb38820467e567272168be56bf92e3",
+      "actual_fingerprint_and_all_rerun_paths_verified": true
+    },
+    "generator_terminal": {
+      "head": "c639e8bc82ed4a64b463023a8903f6cbc579a240",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "inputs": 228,
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+      "exit_code": 1,
+      "seconds": 173.53146727199965,
+      "raw_sha256": "50eb9568a3881dcbe14d4ec5df5928b9165c1dce0cee0c1edf85553e0d0269b6"
+    },
+    "generator_log_hash_verified": true,
+    "generator_exit_interpretation": "Both normal generations completed; exit1 at stale shipped runtime.wasm comparison. The command did not reach post-comparison identity/compiled_bootstrap execution; not reported as overall verifier PASS.",
+    "retained_artifacts": "diagnostics/first and diagnostics/second; temporary original generation directory was cleaned by verifier trap.",
+    "all_eight_file_hashes_and_lengths_verified": true,
+    "four_generation_pairs_byte_equal": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+        "bytes": 2120708
+      },
+      "first/runtime.json": {
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+        "bytes": 2119229
+      },
+      "first/macro.json": {
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+        "bytes": 2120708
+      },
+      "second/runtime.json": {
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+        "bytes": 2119229
+      },
+      "second/macro.json": {
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+            "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+          },
+          "wasm_sha256": {
+            "old": "12b3ee8c82b8d969827024a60f200648bae7cb9a822b81918e3cc64721cdd475",
+            "new": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a"
+          }
+        },
+        "all_other_manifest_fields_exact": true,
+        "cells_count": 768,
+        "cells_order_and_values_exact": true,
+        "source_custom_diffs": {
+          "suss.source-artifact": {
+            "compiler_source_sha256": {
+              "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+              "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+            },
+            "wasm_sha256": {
+              "old": "cfc3719c2f63feebbdf5cb80ae2bb768e6b3d938e39d5feccf39bb30a1c35f93",
+              "new": "47f4c8586d5ed168d0c5a45682b9f908b54e9bb2b649366f74f346997781a2cc"
+            }
+          }
+        },
+        "shared_recursive_abi_ten_types_byte_semantics_exact": true,
+        "new_imports": [
+          {
+            "module": "suss.runtime",
+            "name": "short-literal-property-probe",
+            "kind": 0,
+            "signature": {
+              "func": [
+                [
+                  109,
+                  126,
+                  127
+                ],
+                [
+                  127,
+                  109
+                ]
+              ]
+            }
+          }
+        ],
+        "removed_or_changed_imports": [],
+        "all_existing_imports_order_and_signatures_exact": true,
+        "defined_function_signatures_and_count_exact": true,
+        "defined_function_count": 2656,
+        "changed_function_body_count": 1082,
+        "export_old": [
+          {
+            "name": "eval",
+            "kind": 0,
+            "index": 96
+          }
+        ],
+        "export_new": [
+          {
+            "name": "eval",
+            "kind": 0,
+            "index": 97
+          }
+        ],
+        "export_change_explained_by_one_additional_function_import": true,
+        "changed_sections": [
+          {
+            "id": 1,
+            "name": "",
+            "old_payload_bytes": 630,
+            "new_payload_bytes": 638,
+            "old_payload_sha256": "1894c2cc3d816908d3bd41cafe26994641c11b1ed75574e3a8e64c7f618c7699",
+            "new_payload_sha256": "50e9114f263d0628082e1b8fcf2a39b69ee2d9bc41f7f4971c3b5be3895213e2"
+          },
+          {
+            "id": 2,
+            "name": "",
+            "old_payload_bytes": 47678,
+            "new_payload_bytes": 47722,
+            "old_payload_sha256": "21fed0001afc5262d3ca7455d7f68939953d53479d989fed5a67758f5d2cb9f6",
+            "new_payload_sha256": "393e33d5be4f562d4ff79dec420e95b3d07787caebc37aa07639bec4769e1af6"
+          },
+          {
+            "id": 3,
+            "name": "",
+            "old_payload_bytes": 2658,
+            "new_payload_bytes": 2658,
+            "old_payload_sha256": "7907a3904001cdb2eaf5ed8c5c2b8b49552efb262632170a5b9611b9476e61b9",
+            "new_payload_sha256": "c2cf54e8d4732a3dda3ecf88eca0598d1256034e3096188e7ecc0bb41d1be404"
+          },
+          {
+            "id": 7,
+            "name": "",
+            "old_payload_bytes": 8,
+            "new_payload_bytes": 8,
+            "old_payload_sha256": "920f0c0526bd1dab43d6ca8ca58fb8c7dd892f5734978f5fc2e73778f5d9f498",
+            "new_payload_sha256": "a08a0e896ce236eef9acedb07071baa3a944ec2cc875fb8a05d7c332577d06bb"
+          },
+          {
+            "id": 9,
+            "name": "",
+            "old_payload_bytes": 5284,
+            "new_payload_bytes": 5285,
+            "old_payload_sha256": "876c02822fa7c6df8a5f3ebc8555aeebde30c3074439381dfad87cf552023bf8",
+            "new_payload_sha256": "2db5647e77fc49b2002aca3d7eb893094473dc160119384a151ce5fab07d7cdd"
+          },
+          {
+            "id": 10,
+            "name": "",
+            "old_payload_bytes": 2051198,
+            "new_payload_bytes": 2063731,
+            "old_payload_sha256": "82b682fa39f715e7202d438bca523e5752a6c93bde0ed3f321da69831fddcf51",
+            "new_payload_sha256": "ef08eb0e82f7f16c03aa1b57f083afa7fb9a6dff9021923a1ad752f6b1d92938"
+          },
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_payload_bytes": 588,
+            "new_payload_bytes": 588,
+            "old_payload_sha256": "9fd990c378cc17e72d9f994c44d9d5bc80ef28541d29b32454107a1e37676dad",
+            "new_payload_sha256": "401cdcd94b43d6f4bbd0d71eb8f43154aa47710bb2212ca5ed4afc603e50855b"
+          }
+        ],
+        "noncustom_changes_expected": true
+      },
+      "macro": {
+        "manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+            "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+          },
+          "wasm_sha256": {
+            "old": "61cd893876cbf79cfaf5e4e3324d304a3a027503bcd48c925e55213028f0f6eb",
+            "new": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3"
+          }
+        },
+        "all_other_manifest_fields_exact": true,
+        "cells_count": 768,
+        "cells_order_and_values_exact": true,
+        "source_custom_diffs": {
+          "suss.source-artifact": {
+            "compiler_source_sha256": {
+              "old": "83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b",
+              "new": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9"
+            },
+            "wasm_sha256": {
+              "old": "60e494d9c99b51b184253baa94596baaf1a4568580bca35a9498190c64719cfd",
+              "new": "0bcfb5758b94813f22a026c07a93790ce81777d8f6735ced6a8e648ac8eff479"
+            }
+          }
+        },
+        "shared_recursive_abi_ten_types_byte_semantics_exact": true,
+        "new_imports": [
+          {
+            "module": "suss.runtime",
+            "name": "short-literal-property-probe",
+            "kind": 0,
+            "signature": {
+              "func": [
+                [
+                  109,
+                  126,
+                  127
+                ],
+                [
+                  127,
+                  109
+                ]
+              ]
+            }
+          }
+        ],
+        "removed_or_changed_imports": [],
+        "all_existing_imports_order_and_signatures_exact": true,
+        "defined_function_signatures_and_count_exact": true,
+        "defined_function_count": 2656,
+        "changed_function_body_count": 1082,
+        "export_old": [
+          {
+            "name": "eval",
+            "kind": 0,
+            "index": 97
+          }
+        ],
+        "export_new": [
+          {
+            "name": "eval",
+            "kind": 0,
+            "index": 98
+          }
+        ],
+        "export_change_explained_by_one_additional_function_import": true,
+        "changed_sections": [
+          {
+            "id": 1,
+            "name": "",
+            "old_payload_bytes": 636,
+            "new_payload_bytes": 644,
+            "old_payload_sha256": "d834c7f7e3567d52e3360d10d2f8ed791dcf00f34ac4dc22522909da863b4d7b",
+            "new_payload_sha256": "34cad81d97b6c76211d36174ca984f4e3837c9e52d75fc6bbbe624e9ea592b5c"
+          },
+          {
+            "id": 2,
+            "name": "",
+            "old_payload_bytes": 46193,
+            "new_payload_bytes": 46237,
+            "old_payload_sha256": "4f39c42aa2e86a2b9f86540d5a05458176db67006d56dd7c651460845ba6f2cb",
+            "new_payload_sha256": "ccd6999342f5b98b1bb87e09d0bbc3a7de6b1e46d5a08d4f2a027b7e3988cec6"
+          },
+          {
+            "id": 3,
+            "name": "",
+            "old_payload_bytes": 2658,
+            "new_payload_bytes": 2658,
+            "old_payload_sha256": "c2cf54e8d4732a3dda3ecf88eca0598d1256034e3096188e7ecc0bb41d1be404",
+            "new_payload_sha256": "70f1cfe51e9e3ab2300bcafdfb1103376265c4bda934c2677c39dcb55c478ba1"
+          },
+          {
+            "id": 7,
+            "name": "",
+            "old_payload_bytes": 8,
+            "new_payload_bytes": 8,
+            "old_payload_sha256": "a08a0e896ce236eef9acedb07071baa3a944ec2cc875fb8a05d7c332577d06bb",
+            "new_payload_sha256": "e08cc1de04c7af5138b3ce0615687d5aac31f10987e3e857edc7875932e0c03f"
+          },
+          {
+            "id": 9,
+            "name": "",
+            "old_payload_bytes": 5285,
+            "new_payload_bytes": 5286,
+            "old_payload_sha256": "2db5647e77fc49b2002aca3d7eb893094473dc160119384a151ce5fab07d7cdd",
+            "new_payload_sha256": "d4eaa9b4df8ccd9e6eb2c7b3b5d94383f4d793d511f8df5c39d6ccda109c2bb1"
+          },
+          {
+            "id": 10,
+            "name": "",
+            "old_payload_bytes": 2051199,
+            "new_payload_bytes": 2063732,
+            "old_payload_sha256": "fa1a19106ad74378d84218f73c495522e275da2e3f6983c3950e301ac0619a23",
+            "new_payload_sha256": "b5e2069e0d5615d73c22ec2f12d6f6d359d24e96e173a43f2cd7b53bc87a0dc8"
+          },
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_payload_bytes": 586,
+            "new_payload_bytes": 586,
+            "old_payload_sha256": "4cd602259c19a760d6ba0d58f163a777cde9e293c4ec3259a584dd2031a81511",
+            "new_payload_sha256": "e2abc4694df3074ecf253c5030d05256d3086fb127de418f6528d443d3491862"
+          }
+        ],
+        "noncustom_changes_expected": true
+      }
+    },
+    "source_fee_provenance_review": "/home/bobby/.cache/suss-m4-work/pr263-short-property-transplant-83f-v4/independent-review-cicero.json",
+    "code_change_assessment": "Both phases add exactly the reviewed packed-probe function import with eqref,i64,i32 -> i32,eqref signature. Existing imports/layout/cells and function signatures unchanged. Export/elements/function type indices relocate after the new import/type; code contains reviewed probe/fallback emission. Code changes are expected, not restricted to custom metadata. This static structural review does not establish runtime semantic equivalence.",
+    "abi_helper_boundary": "Two new runtime ABI helper exports are generated separately by reviewed runtime_abi.rs/named_properties.rs; these BOOT modules import the probe and do not embed the runtime ABI module. ABI runtime validation/execution remains part of focused main tests.",
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253"
+      }
+    ],
+    "reviewer_actions": "Static source/binary parsing/hash/Git reads only; cache receipt/script writes. No Cargo/rustc/Wasmtime/Session/oracle execution, adoption or shared/index/ref/GitHub changes.",
+    "remaining": "Main exact4 adoption then pure identity and focused runtime/guest tests; no default-fit, pinned200M gain or public acceptance claim."
+  },
+  "python_provenance": {
+    "command": "python3 -m unittest discover -s scripts -p test_record_*provenance.py",
+    "tests": 32,
+    "failures": 0,
+    "seconds": 12.797,
+    "full_python_cohort": {
+      "command": "python3 -m unittest discover -s scripts -p 'test_*.py'",
+      "exit_code": 0,
+      "tests": 365,
+      "failures": 0,
+      "seconds": 56.319,
+      "raw_log": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2/python-all.log",
+        "sha256": "7a9a56f28ec13892876edb36a81f86a9e1ba019965ae3b1ab61c80b2de8a4b45"
+      }
+    },
+    "full_checker_command": "python3 scripts/check_record_macro_provenance.py",
+    "full_checker_result": "PASS12 pinned forms,2factoryadaptations,label/public",
+    "limits": "Tool stdout observed; no separately retained raw Python log or independent execution is claimed."
+  },
+  "implementation_bounds": [
+    "Only <=4 raw UTF16 units with exactly one adjacent same-block use; original STRING allocation and original getter call on miss.",
+    "Explicit hit/value distinguishes real nil/false; full later schema validation and last duplicate winner preserved.",
+    "Full original generic guard and fixed getter/setter receiver/storage/dispatch bytes unchanged.",
+    "Caller meter shared by verifier/emitter/all three cache miss-bypass paths; standalone pure emission has bounded local planning, no Session refill.",
+    "No quota/rate increase, Integer SSA transplant, fixture reduction or source/memo authority change."
+  ],
+  "focused": {
+    "planner-three": {
+      "head": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input",
+        "portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide",
+        "portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir"
+      ],
+      "selection": {
+        "exact_names": [
+          "portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input",
+          "portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide",
+          "portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 258.4024995990003,
+      "raw_sha256": "03cce18ec91920cc5c6e0d3bf0b00198930c1562da4121b969d6817af42be419",
+      "harness_summaries": [
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 607 filtered out; finished in 0.00s"
+      ],
+      "executed_test_lines": [
+        "test portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide ... ok",
+        "test portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir ... ok",
+        "test portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input ... ok"
+      ]
+    }
+  },
+  "historical_acceptance": "m4-pr263-pinned-and-transport-attribution-83f-2026-10-20.json",
+  "execution_environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "CARGO_BUILD_JOBS": "1",
+    "RAYON_NUM_THREADS": "1",
+    "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+    "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+    "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+    "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+  },
+  "limits": "Normal verifier exited1 at stale shipped comparison after two equal generations; adoption/pure identity recorded separately. No complete verifier execution credit. Final-source public/pinned/default/preservation/source-tag/full-baseline and final-head CI require actual terminals."
+}
