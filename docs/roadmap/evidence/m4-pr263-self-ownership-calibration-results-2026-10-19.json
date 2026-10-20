@@ -109,5 +109,260 @@
     "scope": "Original2namespace/callable +corrected1companion; no resultread/inferred. Command/profile from actualrunner; no start/terminalreceipt fabricated. Live log not copied/hashed asfinal."
   },
   "remaining": "Publish completedsource/BOOT/config/reviewfacts now without waiting. Sharingacceptance, defaultCORE17, otherpublic/pinned/strictcontrols, fullbaseline/finalCI/criterionreconciliation stillpending/failed. Globalc10futurecandidate excluded.",
-  "actions": "Cache-only; no producer/Cargo/VM/repo/GH action."
+  "actions": "Cache-only; no producer/Cargo/VM/repo/GH action.",
+  "callable_partial_result": {
+    "state": "ONE_TEST_RETURNED_FAILED_WHOLE_HARNESS_STILL_RUNNING",
+    "source_head": "8f1e4cface9a6c8d85573c71b8d7b5988054282d",
+    "observations": {
+      "limits": "Three independent requests per caller phase with Macro compilation allowance 100000000000; caller Runtime limits unchanged, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim.",
+      "phases": [
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": false
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": false
+              }
+            ]
+          },
+          "phase": "runtime"
+        },
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": false
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": false
+              }
+            ]
+          },
+          "phase": "macro"
+        }
+      ]
+    },
+    "classification": "All six rows execute: first request matches both phases; subsequent two requests per phase fail only index5 (saved raw declaration identity). Expected true, actual false. Other fields match. This is a semantic identity mismatch, not exhaustion. Namespace test remains running; companion not started. No whole-command terminal or total fabricated.",
+    "parsed_observations_sha256": "e0755301281f261e57d3404edcb2c97f35375caf3114a14fb41d5a61593727ea"
+  }
 }

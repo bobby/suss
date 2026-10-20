@@ -30520,3 +30520,5 @@ SUSS_MACRO_FUEL_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_na
 ```
 
 Use one producer, a private writable TMPDIR and bounded workers; do not set RUSTFLAGS. The companion evidence records the exact six-test native command, timings, raw hashes and source scopes. Local caches: `pr263-named-self-owner-production-v1`, `pr263-semantic-compilation-calibration-b0c5091-v1`, `pr263-identity-focused-calibrated-e497-v1`. The last contains the active runner and eventual terminal receipt. Earlier pinned map failure remains tied to source316a; no current-source map, full baseline or final-head CI success is claimed.
+
+Partial result from that same identity run: the original callable test has now returned FAILED. All six rows execute. First requests match in both phases; the next two requests in each phase differ only at index5, `(identical? callable-saved-raw raw)`, expected true but observed false. Metadata and method-parameter identities match. The namespace test remains running and the companion has not started; no whole-command verdict is claimed. Exact actual/expected rows are retained in companion JSON.
