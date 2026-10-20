@@ -253,3 +253,106 @@ fn variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery() {
     session.collect().unwrap();
     assert_eq!(bitwise_number(&mut session, "(bitwise_saved 1 2 4)"), 7.0);
 }
+
+#[test]
+fn integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries() {
+    let cases: [(&str, f64); 20] = [
+        ("(bit-xor (unsigned-bit-shift-right -1 0) 0)", -1.0),
+        ("(unsigned-bit-shift-right (bit-xor -1 0) 0)", 4294967295.0),
+        ("(int (unsigned-bit-shift-right -2147483648 0))", -2147483648.0),
+        ("(bit-or (bit-and-not 4294967295 2147483647) 1)", -2147483647.0),
+        ("(bit-flip (bit-clear (bit-set 0 31) 0) 31)", 0.0),
+        ("(bit-and (bit-not 0) 2147483648)", -2147483648.0),
+        ("(bit-xor (bit-shift-left 3 0) 0)", 3.0),
+        ("(bit-xor (bit-shift-left 3 31) 0)", -2147483648.0),
+        ("(bit-xor (bit-shift-left 3 32) 0)", 3.0),
+        ("(bit-xor (bit-shift-left 3 33) 0)", 6.0),
+        ("(bit-or (bit-shift-right -3 1) 0)", -2.0),
+        ("(bit-xor (bit-shift-left 3 1.9) 0)", 6.0),
+        ("(bit-xor (bit-shift-left 3 -0.9) 0)", 3.0),
+        ("(bit-xor (bit-shift-left 3 (/ 0 0)) 0)", 3.0),
+        ("(bit-xor (bit-shift-left 3 (/ 1 0)) 0)", 3.0),
+        ("(bit-xor (int (/ 0 0)) 7)", 7.0),
+        ("(bit-xor (int (/ 1 0)) 7)", 7.0),
+        ("(bit-xor (int (/ -1 0)) 7)", 7.0),
+        ("(bit-xor (int 4294967297.9) 7)", 6.0),
+        ("(bit-or (int -0.0) 0)", 0.0),
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for (source, expected) in cases {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let actual = session.inspect(&value, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                Ok(object.field(&mut store, 0)?.unwrap_f64())
+            }).unwrap();
+            assert_eq!(actual.to_bits(), expected.to_bits(), "{source}");
+        }
+    }
+}
+
+fn bitwise_true_after_gc(session: &mut Session, source: &str) {
+    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+    session.collect().unwrap();
+    session.inspect(&value, |store, value| {
+        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 4, "{source}");
+        Ok(())
+    }).unwrap();
+}
+
+#[test]
+fn integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order() {
+    let cases = [
+        // Both operands exist before the producer. Conversion remains x then y.
+        r#"(let [events (atom []) x (js-obj "valueOf" (fn [] (swap! events conj :x) 7)) y (js-obj "valueOf" (fn [] (swap! events conj :y) 3))]
+            (and (= (bit-xor (int x) y) 4) (= @events [:x :y])))"#,
+        // The effectful second source expression is a fusion barrier. The first
+        // primitive must already have converted x before evaluating that effect.
+        r#"(let [events (atom []) x (js-obj "valueOf" (fn [] (swap! events conj :x) 7)) y (js-obj "valueOf" (fn [] (swap! events conj :y) 3))]
+            (and (= (bit-xor (int x) (do (swap! events conj :evaluate-y) y)) 4)
+                 (= @events [:x :evaluate-y :y])))"#,
+        r#"(let [events (atom []) x (js-obj "valueOf" (fn [] (swap! events conj :x) (throw 17))) y (js-obj "valueOf" (fn [] (swap! events conj :y) 3))]
+            (try (bit-xor (int x) (do (swap! events conj :evaluate-y) y)) false
+                 (catch :default e (and (= e 17) (= @events [:x])))))"#,
+        r#"(let [events (atom []) x (js-obj "valueOf" (fn [] (swap! events conj :x) 7)) y (js-obj "valueOf" (fn [] (swap! events conj :y) (throw 19)))]
+            (try (bit-xor (int x) y) false
+                 (catch :default e (and (= e 19) (= @events [:x :y])))))"#,
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in cases { bitwise_true_after_gc(&mut session, source); }
+        assert_eq!(bitwise_number(&mut session, "(bit-xor (int 7) 3)"), 4.0);
+    }
+}
+
+#[test]
+fn integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls() {
+    let cases = [
+        "(let [x (unsigned-bit-shift-right -1 0)] (and (= x 4294967295) (= (bit-xor x 0) -1)))",
+        "(let [x (unsigned-bit-shift-right -1 0) read-x (fn [] x)] (and (= (read-x) 4294967295) (= (bit-xor x 0) -1)))",
+        "(let [x (unsigned-bit-shift-right -1 0)] (= (if (> 1 0) x nil) 4294967295))",
+        "(let [bit-xor (fn [a b] (+ a b))] (= (bit-xor (int -1) 3) 2))",
+        "(let [int (fn [x] 42)] (= (bit-xor (int 0) 3) 41))",
+        "(let [bit-shift-left (fn [x n] 17)] (= (bit-xor (bit-shift-left 1 2) 1) 16))",
+        // Public predicate results remain booleans; Test is not a raw producer.
+        "(and (bit-test (bit-shift-left 1 31) 31) (not (bit-test 0 31)))",
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in cases { bitwise_true_after_gc(&mut session, source); }
+    }
+}
+
+#[test]
+fn cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Retain the actual Number through a global, collect it, then compare
+        // aliases and consume it again. Reloaded globals have no planner facts.
+        session.eval("(def cached_integer_saved (unsigned-bit-shift-right -1 0))").unwrap();
+        session.collect().unwrap();
+        for source in [
+            "(let [x (unsigned-bit-shift-right -1 0) alias x read-x (fn [] x) a (bit-xor x x) captured (read-x) b (bit-and x 255)] (and (identical? x alias) (= captured 4294967295) (= a 0) (= b 255) (= x 4294967295)))",
+            r#"(let [events (atom []) x (int 7) y (js-obj "valueOf" (fn [] (swap! events conj :convert) 3)) a (bit-xor x (do (swap! events conj :evaluate) y)) b (bit-or x 0)] (and (= a 4) (= b 7) (= @events [:evaluate :convert]) (= x 7)))"#,
+            "(let [x (unsigned-bit-shift-right -1 0) recur-call (fn walk [n] (if (= n 0) 3 (walk (dec n)))) a (bit-xor x (recur-call 3)) b (bit-and x 255)] (and (= a -4) (= b 255) (= x 4294967295)))",
+            "(let [a (bit-xor cached_integer_saved 0)] (and (= cached_integer_saved 4294967295) (= a -1)))",
+        ] { bitwise_true_after_gc(&mut session, source); }
+    }
+}

@@ -1,6 +1,7 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
 mod short_keys;
+mod integer_bits;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -159,6 +160,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
     let mut module_short_keys = false;
+    let mut module_integer_bits = false;
     for function in all_functions {
         let primitive_strings = PrimitiveStringKeys::new(function);
         for block in &function.blocks {
@@ -213,6 +215,12 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     }
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
+                        meter(2)?; // integer eligibility and one module import flag
+                        if integer_bits::integer(*operation) && !module_integer_bits {
+                            meter(1024)?; // at most two new import nodes/backing/control
+                            names.extend(["coerce-int32", "number-box"]);
+                            module_integer_bits = true;
+                        }
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -427,6 +435,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" | "string-char-code-at-method" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "coerce-int32" => (vec![VALUE], vec![ValType::I32]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
@@ -497,7 +506,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None, module_short_keys, memos.as_deref_mut(), meter,
+        &futures, None, module_short_keys, module_integer_bits, memos.as_deref_mut(), meter,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -508,7 +517,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None, module_short_keys, memos.as_deref_mut(), meter,
+            &futures, None, module_short_keys, module_integer_bits, memos.as_deref_mut(), meter,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -518,7 +527,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), module_short_keys, memos.as_deref_mut(), meter)?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), module_short_keys, module_integer_bits, memos.as_deref_mut(), meter)?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -746,12 +755,15 @@ fn emit_function(
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
     module_short_keys: bool,
+    module_integer_bits: bool,
     mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
     let primitive_strings = PrimitiveStringKeys::new(ir);
     meter(1)?; // module admission/continuation control before optional planning
     let short_keys = short_keys::Plan::new(ir, module_short_keys && continuation.is_none(), meter)?;
+    meter(1)?; // integer module/continuation admission, no scan when absent
+    let integer_plan = integer_bits::Plan::new(ir, module_integer_bits && continuation.is_none(), meter)?;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -776,7 +788,18 @@ fn emit_function(
     // resumable states and all branch/backedge functions on the dispatcher.
     let straight_line = continuation.is_none() && ir.blocks.len() == 1
         && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
-    let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
+    meter(1)?; // plan count read; no extra local work for unoptimized functions
+    let (raw_base, temporary, integer_locals) = if integer_plan.count == 0 {
+        (0, 0, 1)
+    } else {
+        meter(16)?; // checked local arithmetic and additional count encoding
+        let raw_base = pc.checked_add(1).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        let temporary = raw_base.checked_add(integer_plan.count).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        let integer_locals = integer_plan.count.checked_add(3).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        pc.checked_add(integer_locals).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        (raw_base, temporary, integer_locals)
+    };
+    let mut function = Function::new([(count + 14, VALUE), (integer_locals, ValType::I32)]);
     use Instruction::*;
     if continuation.is_none() {
     if let Some(capture_count) = capture_count {
@@ -1094,12 +1117,19 @@ fn emit_function(
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    meter(4 + 4 * arguments.len() as u64)?; // bounded plan/slot admission reads
+                    if integer_bits::integer(*operation) && (integer_plan.slot(inst.result).is_some()
+                        || arguments.iter().any(|argument| integer_plan.slot(*argument).is_some())) {
+                        integer_bits::emit(&mut function, &integer_plan, *operation, arguments,
+                            inst.result, offset, raw_base, temporary, &index, meter)?;
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Comparison {
                     operation,

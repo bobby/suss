@@ -310,8 +310,13 @@ mod tests {
         let original = cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
             &mut |work| { consumed += work; Ok(()) }).unwrap();
         assert!(consumed > 0);
+        let mut hit_consumed = 0;
+        assert_eq!(cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
+            &mut |work| { hit_consumed += work; Ok(()) }).unwrap(), original);
+        assert!(hit_consumed > 0);
+        assert!(consumed > hit_consumed, "miss also pays integer planning");
         let before = cache.stats();
-        let mut remaining = consumed - 1;
+        let mut remaining = hit_consumed - 1;
         let error = cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
             &mut |work| {
                 remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
@@ -321,12 +326,68 @@ mod tests {
             }).unwrap_err();
         assert!(error.message.contains("fuel exhausted"));
         assert_eq!(cache.stats(), before);
-        let mut hit_consumed = 0;
+        let mut retry_consumed = 0;
         assert_eq!(cache.emit_metered(&function, Phase::Runtime, &[], None, Some(&[]),
-            &mut |work| { hit_consumed += work; Ok(()) }).unwrap(), original);
-        assert_eq!(consumed, hit_consumed);
+            &mut |work| { retry_consumed += work; Ok(()) }).unwrap(), original);
+        assert_eq!(retry_consumed, hit_consumed);
         assert_eq!(cache.stats().hits, before.hits + 1);
     }
+    #[test]
+    fn integer_planning_cancellation_propagates_through_cache_routes_and_retries() {
+        use super::super::hir::{Bitwise, Expression, Hir, Literal, Type};
+        let number = |value| Hir {
+            source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+            kind: Expression::Literal(Literal::Number(value)),
+        };
+        let inner = Hir {
+            source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+            kind: Expression::Bitwise { operation: Bitwise::Int, arguments: vec![number(7.0)] },
+        };
+        let function = ir::lower(&Hir {
+            source: None, span: 0..1, metadata: vec![], ty: Type::Number,
+            kind: Expression::Bitwise { operation: Bitwise::Xor, arguments: vec![inner, number(3.0)] },
+        }).unwrap();
+        // Observe the emitter's actual planning suffix; do not assume a tiny
+        // allowance or equality between cache admission and emission costs.
+        let mut planning = Vec::new();
+        super::super::emit::emit_verified_metered(&function,
+            &mut |work| { planning.push(work); Ok(()) }).unwrap();
+        assert!(!planning.is_empty());
+        let large = SourceOrigin::new("x".repeat(128 * 1024), None);
+        for mode in 0..3 {
+            let dependencies = if mode == 0 { None } else { Some(&[][..]) };
+            let origin = if mode == 1 { Some(&large) } else { None };
+            let mut measured = ArtifactCache::default();
+            let mut charges = Vec::new();
+            let expected = measured.emit_metered(&function, Phase::Runtime, &[], origin, dependencies,
+                &mut |work| { charges.push(work); Ok(()) }).unwrap();
+            assert!(charges.ends_with(&planning));
+            let start = charges.len() - planning.len();
+            // Fail before, during and after scratch preparation. None may
+            // publish an entry or turn the original error into a cache bypass.
+            for boundary in [start, start + planning.len() / 2, charges.len() - 1] {
+            for message in ["planner fuel exhausted", "planner interrupted"] {
+                let mut cache = ArtifactCache::default();
+                let mut call = 0;
+                let error = cache.emit_metered(&function, Phase::Runtime, &[], origin, dependencies,
+                    &mut |_| {
+                        let fail = call == boundary;
+                        call += 1;
+                        if fail { Err(Diagnostic { span: 7..9, message: message.into() }) }
+                        else { Ok(()) }
+                    }).unwrap_err();
+                assert_eq!(error.span, 7..9);
+                assert_eq!(error.message, message);
+                assert_eq!(cache.stats().entries, 0, "failed emission cannot publish");
+                let mut retry_charges = Vec::new();
+                assert_eq!(cache.emit_metered(&function, Phase::Runtime, &[], origin, dependencies,
+                    &mut |work| { retry_charges.push(work); Ok(()) }).unwrap(), expected);
+                assert_eq!(retry_charges, charges, "retry pays the complete route");
+            }
+            }
+        }
+    }
+
     #[test]
     fn source_cache_distinguishes_source_dependency_phase_and_origin() {
         let mut cache = ArtifactCache::default();
