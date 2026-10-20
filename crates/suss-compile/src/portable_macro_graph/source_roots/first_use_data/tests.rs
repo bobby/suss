@@ -325,16 +325,59 @@ fn uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object
 }
 
 
+// These three alias helpers need the same genuine provisioned declaration
+// pipeline as the executed reuse_frontier fixture. Empty-environment HIR
+// preparation is not evidence that its detached metadata map is admissible.
+fn actual_alias_fixture_declaration(session: &mut Session) -> (Global, Arc<DefinitionInfo>) {
+    session.eval("(def ^{:order.meta/k0 0 :order.meta/k1 1 :order.meta/k2 2 :order.meta/k3 3 :order.meta/k4 4 :order.meta/k5 5 :order.meta/k6 6 :order.meta/k7 7 :order.meta/k8 8 :order.meta/k9 9} watched 17)").unwrap();
+    let snapshot = session.compilation_snapshot();
+    let namespace = hir::SourceNamespace::capture(&snapshot.environment, session.phase());
+    let (global, info) = namespace.declarations.iter()
+        .find(|(global, _)| global.name() == "watched").unwrap();
+    (global.clone(), info.clone())
+}
+fn actual_alias_fixture_metadata(
+    graph: &mut AnalysisGraph<'_>, global: &Global, info: &Arc<DefinitionInfo>,
+) -> Value {
+    let before = graph.metadata_sources.len();
+    graph.declaration(global, Some(info), 0).unwrap();
+    graph.finish_recipes().unwrap();
+    let captured = &graph.metadata_sources[before];
+    assert_eq!(&captured.global, global);
+    assert!(Arc::ptr_eq(&captured.revision, info));
+    // This recipe is the real declaration's FINAL metadata export. Strip only
+    // ordinary Alias wrappers until an actual indexed source capture is met.
+    // Do not mistake completed_metadata_map's extra Alias for that boundary.
+    let mut recipe = captured.recipe;
+    for _ in 0..graph.recipes.len() {
+        if let Some(source) = graph.source_roots.index(graph.session, recipe).unwrap() {
+            match &graph.source_roots.roots[source].owner {
+                Owner::ReaderSource(actual_global, super::super::reader_keys::ReaderSourceOwner::Completed(owner), super::super::reader_keys::ReaderSelector::Metadata) => {
+                    assert_eq!(actual_global, global);
+                    assert!(Arc::ptr_eq(owner, info.completed_values.as_ref().unwrap()));
+                }
+                _ => panic!("final metadata must reach its genuine completed source owner"),
+            }
+            return recipe;
+        }
+        recipe = match graph.recipes[recipe].as_ref().unwrap() {
+            Recipe::Alias(child) => *child,
+            _ => panic!("metadata export must follow only its actual Alias chain"),
+        };
+    }
+    panic!("cyclic metadata export in alias fixture")
+}
+
 #[test]
 fn cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner() {
-    let (_environment, global, info) = source();
     let mut session = Session::new_macro().unwrap();
+    let (global, info) = actual_alias_fixture_declaration(&mut session);
     let bridge = FormBridge::new(&mut session).unwrap();
     let _operation = session.operation_budget_scope().unwrap();
     let mut graph = AnalysisGraph::new(&bridge, &mut session);
     graph.capture_roots = true;
     graph.direct_reader_roots = true;
-    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+    let metadata = actual_alias_fixture_metadata(&mut graph, &global, &info);
     let alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
     let nested = graph.recipe(Recipe::Alias(alias)).unwrap();
     graph.finish_recipes().unwrap();
@@ -350,17 +393,19 @@ fn cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitte
 
 #[test]
 fn cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary() {
-    let (_environment, global, info) = source();
-    let (_other_environment, other_global, other_info) = source();
-    assert!(!Arc::ptr_eq(info.completed_values.as_ref().unwrap(), other_info.completed_values.as_ref().unwrap()));
     let mut session = Session::new_macro().unwrap();
+    let (global, info) = actual_alias_fixture_declaration(&mut session);
+    // A second real revision of the same complete source is equal in content
+    // but has its own genuine completed owner, retained independently below.
+    let (other_global, other_info) = actual_alias_fixture_declaration(&mut session);
+    assert!(!Arc::ptr_eq(info.completed_values.as_ref().unwrap(), other_info.completed_values.as_ref().unwrap()));
     let bridge = FormBridge::new(&mut session).unwrap();
     let _operation = session.operation_budget_scope().unwrap();
     let mut graph = AnalysisGraph::new(&bridge, &mut session);
     graph.capture_roots = true;
     graph.direct_reader_roots = true;
-    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
-    let other = graph.completed_metadata_map(&other_global, other_info.completed_values.as_ref().unwrap(), &other_info, 0).unwrap();
+    let metadata = actual_alias_fixture_metadata(&mut graph, &global, &info);
+    let other = actual_alias_fixture_metadata(&mut graph, &other_global, &other_info);
     let alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
     let other_alias = graph.recipe(Recipe::Alias(other)).unwrap();
     let non_alias = graph.recipe(Recipe::Vector(vec![metadata])).unwrap();
@@ -383,14 +428,14 @@ fn cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unad
 
 #[test]
 fn cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start() {
-    let (_environment, global, info) = source();
     let mut session = Session::new_macro().unwrap();
+    let (global, info) = actual_alias_fixture_declaration(&mut session);
     let bridge = FormBridge::new(&mut session).unwrap();
     let _operation = session.operation_budget_scope().unwrap();
     let mut graph = AnalysisGraph::new(&bridge, &mut session);
     graph.capture_roots = true;
     graph.direct_reader_roots = true;
-    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+    let metadata = actual_alias_fixture_metadata(&mut graph, &global, &info);
     let ordinary_alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
     // Negative admission fixture only: a genuine native Request owner wraps
     // that same admitted child, but is unreachable from this plan's export.
