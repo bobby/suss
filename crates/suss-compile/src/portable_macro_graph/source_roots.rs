@@ -10,7 +10,7 @@ use crate::portable::{
     resolve::{DefinitionInfo, Global},
 };
 use crate::portable_session::{Session, SessionError};
-use std::{rc::Rc, sync::{Arc, Weak}};
+use std::{num::NonZeroUsize, rc::Rc, sync::{Arc, Weak}};
 #[path = "source_roots/reader_keys.rs"]
 mod reader_keys;
 #[path = "source_roots/reader_plan.rs"]
@@ -276,7 +276,7 @@ pub(super) struct Capture {
 pub(super) struct Captures {
     pub(super) roots: Vec<Capture>,
     // Graph-local aliases only. Persistent retention must use owned Owner keys.
-    by_alias: Vec<Option<usize>>,
+    by_alias: Vec<Option<NonZeroUsize>>,
 }
 fn invalid(message: &'static str) -> SessionError {
     wasmtime::Error::msg(message).into()
@@ -288,8 +288,8 @@ impl Captures {
             .map_or(alias, |id| self.roots[id].native))
     }
     pub(super) fn index(&self, session: &mut Session, alias: Value) -> Result<Option<usize>> {
-        session.charge_host_work(2)?;
-        Ok(self.by_alias.get(alias).copied().flatten())
+        session.charge_host_work(3)?; // lookup plus nonzero capture-index decode
+        Ok(self.by_alias.get(alias).copied().flatten().map(|index| index.get() - 1))
     }
     pub(super) fn keys(&self, session: &mut Session) -> Result<Vec<Key>> {
         let mut keys = Vec::new();
@@ -337,18 +337,105 @@ impl AnalysisGraph<'_> {
         self.session.charge_host_work(extra as u64 + 3)?;
         self.source_roots.by_alias.resize(count, None);
         let id = self.source_roots.roots.len();
+        self.session.charge_host_work(1)?; // checked encoding before publication
+        let encoded = id.checked_add(1).and_then(NonZeroUsize::new)
+            .ok_or_else(|| invalid("Source capture index overflow"))?;
         self.source_roots.roots.push(Capture {
             owner,
             native,
             alias,
         });
-        self.source_roots.by_alias[alias] = Some(id);
+        self.source_roots.by_alias[alias] = Some(encoded);
         Ok(alias)
     }
     // Validate the FULL native graph, including dependencies that a retained
     // alias would otherwise hide. This is an iterative proof, not a cut-through
     // materializer traversal. Called before source-root interception is enabled.
     pub(super) fn source_root_children(&mut self) -> Result<Vec<Vec<usize>>> {
+        self.finish_recipes()?;
+        let count = self.recipes.len();
+        let mut children = Vec::new();
+        reserve(self.session, &mut children, self.source_roots.roots.len())?;
+        let mut state = Vec::new();
+        reserve(self.session, &mut state, count)?;
+        self.session.charge_host_work(count as u64)?;
+        state.resize(count, 0u8);
+        let mut stack = Vec::new();
+        for root in &self.source_roots.roots {
+            reserve(self.session, &mut stack, 1)?;
+            stack.push((root.native, false));
+            while let Some((id, exit)) = stack.pop() {
+                self.session.charge_host_work(3)?;
+                let slot = state
+                    .get_mut(id)
+                    .ok_or_else(|| invalid("Unknown source recipe edge"))?;
+                if exit {
+                    *slot = 2;
+                    continue;
+                }
+                if *slot == 2 {
+                    continue;
+                }
+                if *slot == 1 {
+                    return Err(invalid("Cyclic native source-root graph"));
+                }
+                *slot = 1;
+                let recipe = self.recipes[id]
+                    .as_ref()
+                    .ok_or_else(|| invalid("Unfinished source-root recipe"))?;
+                let deps = dependencies(self.session, recipe)?;
+                reserve(self.session, &mut stack, deps.len() + 1)?;
+                stack.push((id, true));
+                stack.extend(deps.into_iter().rev().map(|id| (id, false)));
+            }
+        }
+        // The complete recipe DAG is acyclic. Boundary discovery is separate:
+        // descend only to the next explicit captured-root alias, keeping the
+        // certificate graph compact instead of expanding shared descendants.
+        // Reuse byte scratch only AFTER the full acyclic proof. Clear every
+        // slot, with payment before writing, before any generation is reused.
+        let mut generation = u8::MAX;
+        for (root_id, root) in self.source_roots.roots.iter().enumerate() {
+            self.session.charge_host_work(2)?;
+            generation = match generation.checked_add(1) {
+                Some(next) => next,
+                None => {
+                    self.session.charge_host_work(count as u64)?;
+                    state.fill(0);
+                    1
+                }
+            };
+            let mut found = Vec::new();
+            reserve(self.session, &mut stack, 1)?;
+            stack.push((root.native, false));
+            while let Some((id, _)) = stack.pop() {
+                self.session.charge_host_work(3)?;
+                if let Some(child) = self.source_roots.index(self.session, id)? {
+                    if child == root_id {
+                        return Err(invalid("Self-referential source-root capture"));
+                    }
+                    // Prepay every possible comparison before the bounded scan.
+                    self.session.charge_host_work(found.len() as u64)?;
+                    if !found.contains(&child) {
+                        reserve(self.session, &mut found, 1)?;
+                        found.push(child);
+                    }
+                    continue;
+                }
+                if state[id] == generation {
+                    continue;
+                }
+                state[id] = generation;
+                let deps = dependencies(self.session, self.recipes[id].as_ref().unwrap())?;
+                reserve(self.session, &mut stack, deps.len())?;
+                stack.extend(deps.into_iter().rev().map(|id| (id, false)));
+            }
+            children.push(found);
+        }
+        Ok(children)
+    }
+    #[cfg(test)]
+    fn source_root_children_fullfill_control(&mut self) -> Result<Vec<Vec<usize>>> {
         self.finish_recipes()?;
         let count = self.recipes.len();
         let mut children = Vec::new();
@@ -1948,3 +2035,7 @@ fn same_child_keys(session: &mut Session, a: &[Key], b: &[Key]) -> Result<bool> 
     }
     Ok(same)
 }
+
+#[cfg(test)]
+#[path = "source_root_index_tests.rs"]
+mod index_tests;
