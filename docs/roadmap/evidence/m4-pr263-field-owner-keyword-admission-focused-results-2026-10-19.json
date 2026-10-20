@@ -1,0 +1,109 @@
+{
+ "status": "FINAL_CACHE_FOCUSED10_PASS_PUBLICATION_PEER_GO_PENDING",
+ "source": "e703065dba54f005600faa149e6d09ed2f2ef736",
+ "bootstrap": "2d340463ed7880a5b24058ba71ac4b92e25b38e6",
+ "compiler_source_sha256": "e2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940",
+ "inputs": 222,
+ "changes": {
+  "HIR_A1": "Prepay actual outer Arc<FieldBinding> ownership; real capture failure/retry test.",
+  "F1": "Reject ambiguous keyword-fqn source locators; exact logical partitions/metadata remain guarded.",
+  "compilation_fuel": {
+   "inference_before": 100000000000,
+   "inference_after": 1000000000000,
+   "invocation_unchanged": 100000000000,
+   "scope": "Original programs/assertions/callerRuntime/default/exhaustion/core17/sourcechild/pinned200M/rates/refills unchanged. Firstenv14565794779 is not proof100B insufficient or1T sufficient."
+  }
+ },
+ "build": "Initial f77 no-run failed test placement; exact new body moved to ownership_tests, CarverGO. Retry37390 toolterminal0,opt2,4m17s. Inventory553 confirms expected10 names; listing is not execution.",
+ "normal_generation": {
+  "exit": 1,
+  "seconds": 245.989473,
+  "raw_sha256": "9c18272ba4c3793d5f9a0f5fbe0845c4f31d008152b63ad370f19d43ec68f5b3",
+  "scope": "Both generations completed/four pairs equal. Expected stale-shipped comparison remains exit1, not bootstrap testPASS.",
+  "command": [
+   "sh",
+   "scripts/verify-bootstrap.sh"
+  ],
+  "profile_environment": {
+   "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+   "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+   "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+  }
+ },
+ "adoption": {
+  "review": "pr263-independent-review-fixes-production-v1/independent-adoption-review.json",
+  "review_sha256": "717a1b1ea1a6a011446272c4ebfd8442ac161a869592c80d59a5321467ce4310",
+  "four_Git_blobs_match_reviewed_outputs": true,
+  "only": "source-artifact custom sections and source/hash manifest fields; noncustom/catalog/ABI/cells unchanged.",
+  "identity": "Main tool84777exit0, checkout-independent/Graph invalidations; pureidentity only.",
+  "identity_reproduction_command": [
+   "python3",
+   "scripts/verify_bootstrap_identity.py"
+  ],
+  "identity_command_scope": "Reproduction command for existing pure identity script; main tool84777exit0 is recorded separately, not a bootstrap execution suite."
+ },
+ "focused": {
+  "head": "2d340463ed7880a5b24058ba71ac4b92e25b38e6",
+  "exit": 0,
+  "passed": 10,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 543,
+  "harness_seconds": 175.33,
+  "seconds": 445.7447560109431,
+  "raw_sha256": "ba7b705dfd8fbdb2c4c869010d85939f86f1fcbde792685d5a751ac6aa7c24f5",
+  "actual_pass_names_by_module": {
+   "portable::hir::local_bindings::ownership_tests": [
+    "unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry"
+   ],
+   "portable_macro_graph::analyzer_literal_tests": [
+    "analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+    "analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+    "analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+    "analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+    "analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+    "analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc"
+   ],
+   "portable_macro_graph::source_facts::keyword_fqn_admission_tests": [
+    "actual_retained_graph_declines_equal_fqn_map_and_uses_ordinary_merge",
+    "equal_fqn_keyword_partitions_decline_before_guest_map_construction",
+    "unique_keyword_witness_keeps_exact_partition_and_metadata_validation"
+   ]
+  },
+  "command_and_profile_receipt": "pr263-independent-review-fixes-production-v1/focused-terminal.json",
+  "raw": "pr263-independent-review-fixes-production-v1/focused.log",
+  "command": [
+   "cargo",
+   "test",
+   "-p",
+   "suss-compile",
+   "--locked",
+   "--lib",
+   "--",
+   "--nocapture",
+   "--test-threads=2",
+   "portable_macro_graph::analyzer_literal_tests::",
+   "portable_macro_graph::source_facts::keyword_fqn_admission_tests::",
+   "portable::hir::local_bindings::ownership_tests::unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry"
+  ],
+  "profile_environment": {
+   "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+   "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+   "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+  }
+ },
+ "superseded_CLI": {
+  "head": "89d8149a6ece1ec525fa78a5d4e59bc6a6531159",
+  "actual_macro_budgets": "Both100B",
+  "exit": 101,
+  "signal": 2,
+  "seconds": 1964.441058482,
+  "raw_sha256": "30348054a3d3fe6acf535b7606909e6170d7fa586759aaf1f590421e214c262c",
+  "scope": "Main deliberately SIGINTed exact ownedPID1044958 when reviewed fixes ready; not observation timeout/semantic failure. NO test verdict.",
+  "receipts": "pr263-source-tags-hostopt2-114a-v1/{cli-terminal.json,deliberate-interruption.json,cli.log}"
+ },
+ "history": "Old6PASS20x9true on89d/source114a is historical, NOT current aggregate16PASS. Full25 on46ac985 remains23P2F. Named100B pass/retained diagnostic failure separately scoped. Both interrupted CLI trials have no final test verdict.",
+ "limits": "Current10PASS is focused source-fix evidence, not publicCLI, fullbaseline, finalCI,1Tsufficiency or issue acceptance. Next unchanged pinned2 at200M starting, no verdict.",
+ "receipts": "pr263-independent-review-fixes-production-v1: source-freeze-after-placement.json, builder-output.txt, build.log, build-placement-repair.log, bootstrap-terminal.json, diagnostics/receipt.json; complete source reviews retained separately.",
+ "source_review": "Carver pr263-historical-owner-type-source-review-e703-v1 closes requested current owner/type production source coverage; no extra source blocker, not execution."
+}

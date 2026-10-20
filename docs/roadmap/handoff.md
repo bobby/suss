@@ -30429,3 +30429,28 @@ Focused79534 exited0:6PASS/0FAIL/0ignored,543filtered,457.58s harness/626.965493
 Historical original full25 remains23PASS/2FAIL; it was not rerun. Earlier named100B1PASS/instrumented-retained1FAIL and original CLI0PASS/2fuelFAIL retain their source scopes. Publishedcc40982's original CLI100B trial was deliberately SIGINTed at exact testPID864816 after3648.8076s/about two CPU-hours (Cargo101/signal2), inference4/32 decoded, NO test verdict; rawd29d05da19163a041c0a2a5c5d33103483484e3309de8bad2cf0766ea0d8b1f5. Its inherited budget description is stale; preserve budget-scope-correction.json proving actual100B both programs.
 
 New original CLI replay71354 is active on89d8149/source114a with both100B, hostopt2/checks retained, Macro trace only and metadata fprintf trace off: cache pr263-source-tags-hostopt2-114a-v1/{run.py,start.json,cli.log}. No verdict yet; live logs are not finalized here. CallerRuntime/default/exhaustion/core17/sourcechild/pinned200M are unchanged. Source/evidence publication is pending; no full baseline, final-head CI, public acceptance, issue closure or promotion is claimed. Main removed only its task-owned detached staging worktree after integration, with no new branch retained.
+
+
+### PR263 field-owner and keyword-admission review repairs (2026-10-19)
+
+Source f77c406 plus exact test-placement repair e703065dba54f005600faa149e6d09ed2f2ef736 integrates peer-reviewed HIR-A1 Arc-owner prepayment, F1 keyword-fqn ambiguity rejection and inference-only compilation100B→1T; invocation remains100B. Original programs/assertions/Runtime/default/exhaustion/strictcore17/sourcechild/pinned200M/rates/refills are unchanged. 1T sufficiency is not established.
+
+Initial no-run placement failure is preserved; CarverGO moves the identical A1 body beside its Observe helper. Retry37390 toolterminal0,opt2 in4m17s. Actual222-input fingerprint e2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940 replaces obsolete auxiliary predictions. Normal generation245.989473s exits1 only at stale shipped comparison, raw9c18272ba4c3793d5f9a0f5fbe0845c4f31d008152b63ad370f19d43ec68f5b3; fourpairs equal. Carver exact adoptionGO; committed BOOT2d340463ed7880a5b24058ba71ac4b92e25b38e6 matches all four reviewed first outputs. Main identity84777exit0 is pure compiled identity/Graph invalidation credit, not bootstrap execution.
+
+Focused59770 terminalexit0 on2d340463ed7880a5b24058ba71ac4b92e25b38e6:10PASS0FAIL0ignored543filtered,175.33s harness/445.744756s total. Raw SHAba7b705dfd8fbdb2c4c869010d85939f86f1fcbde792685d5a751ac6aa7c24f5. Six literal+threeF1+oneA1 exact results/argv/profile are retained in pr263-independent-review-fixes-production-v1/{focused-terminal.json,focused.log}; compact evidence lists all names. Carver current requested owner/type source audit is complete in pr263-historical-owner-type-source-review-e703-v1, no extra source blocker; not test/acceptance credit.
+
+Prior original CLI71354 was deliberately SIGINTed when source fixes ready:1964.441058s,Cargo101/signal2,no test verdict, both100B; raw30348054a3d3fe6acf535b7606909e6170d7fa586759aaf1f590421e214c262c. Historical full25 remains23P2F; named100B separatePASS and old89d/source114a nested6PASS20x9true are not newe294 passes. No publicCLI/fullbaseline/finalCI/issue completion claim. Current10PASS is not combined with old114a sixPASS into16PASS. Next pinned2 unchanged200M is starting, no verdict. Fullbaseline/finalCI and issue reconciliation remain pending. Source-fix publication awaits independent exact publication GO.
+
+Reproduction commands from repository root (same sourcee703/BOOT2d34046):
+
+```sh
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+export CARGO_BUILD_JOBS=1 RAYON_NUM_THREADS=1
+cargo test -p suss-compile --locked --lib -- --nocapture --test-threads=2 portable_macro_graph::analyzer_literal_tests:: portable_macro_graph::source_facts::keyword_fqn_admission_tests:: portable::hir::local_bindings::ownership_tests::unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+```
+
+Use a writable private TMPDIR and the main-controlled target after other owned producers drain; do not set RUSTFLAGS. The focused argv/profile above are copied from the actual terminal receipt. Normal-generation command retained its historical stale-comparison exit1 before exact adoption; pure identity is a separate reproduction check, not semantic/bootstrap execution credit. Focused10PASS, historical scopes and pending publicCLI/baseline/finalCI limits above remain unchanged.
