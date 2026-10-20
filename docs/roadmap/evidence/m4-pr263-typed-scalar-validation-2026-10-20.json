@@ -1523,5 +1523,444 @@
     "seconds": 30.926173039002606,
     "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
     "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "independent-focused-evidence-review-cicero": {
+    "verdict": "CALIBRATED69_EXACT_RESULTS_SOURCE_BOOT_AND_RUNTIME_GUARDS_VERIFIED",
+    "head": "db9a96ae832cb0acc07402749d55519fc0cb259f",
+    "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+    "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+    "compiler_inputs": 229,
+    "raw_sha256": "804c7e23f5f52449880fd902b502489f14f2cf1f9ea5e2d58a38f9cc21afd6a3",
+    "terminal_sha256": "1060095ec9a37b4e71be9df265448e66400bde77e84be24503e94f7865a89ae7",
+    "selection_sha256": "63cc7299f5328dfb661547bbbb429c295a732cf4da7a0c2396ae9ce9df029994",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macro_graph::source_roots::tests::factory_candidate_prefix_keeps_genuine_checked_source_and_reference_suffixes",
+      "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+      "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+      "portable_session::canonical_seeds::tests::canonical_seeds_partial_capture_releases_roots_before_recovery",
+      "portable_session::canonical_seeds::tests::canonical_seeds_reject_mutation_before_a_bridge_can_observe_it",
+      "portable_session::construction_records::controller_provisioning_tests::source_controller_requires_installed_core_and_both_original_private_registries",
+      "portable_session::construction_records::projection::tests::factory_projection_checks_complete_pristine_seed_snapshot",
+      "portable_session::construction_records::projection::tests::factory_projection_every_insufficient_constructor_allowance_keeps_ledger_and_recovers",
+      "portable_session::construction_records::projection::tests::factory_projection_false_root_still_propagates_later_fuel_error",
+      "portable_session::construction_records::projection::tests::factory_projection_preserves_shared_aliases_and_closes_exact_native_inputs_under_collisions",
+      "portable_session::construction_records::projection::tests::factory_projection_rejects_unrecorded_and_open_roots_and_recovers_after_fuel_irq",
+      "portable_session::construction_records::projection::tests::paged_projection_forced_collisions_match_independent_flat_view_and_keep_roots_after_gc",
+      "portable_session::construction_records::projection::tests::physical_factory_projection_is_not_source_authority_for_copied_metadata_memo",
+      "portable_session::construction_records::tests::boxed_fact_cuts_release_unpublished_inputs_and_preserve_existing_records",
+      "portable_session::construction_records::tests::construction_records_false_seed_does_not_hide_later_fuel_error",
+      "portable_session::construction_records::tests::construction_records_follow_normalized_constructor_fields_not_unused_arguments",
+      "portable_session::construction_records::tests::construction_records_missing_root_does_not_skip_later_edge_budget_errors",
+      "portable_session::construction_records::tests::construction_records_require_independent_child_facts_and_exact_root",
+      "portable_session::construction_records::tests::construction_records_table_clustered_hashes_and_empty_overflow",
+      "portable_session::construction_records::tests::construction_records_table_probe_failures_leave_heads_unchanged",
+      "portable_session::construction_records::tests::paged_records_every_append_fuel_cut_and_irq_leave_no_partial_page_and_retry",
+      "portable_session::construction_records::tests::paged_records_preserve_ordinals_boundaries_and_logical_pages_with_excess_capacity",
+      "portable_session::deferred_factory::tests::deferred_factory_constructor_rejects_memo_poison_and_preserves_captured_inputs",
+      "portable_session::deferred_factory::tests::deferred_factory_does_not_treat_unpatched_or_wrong_children_as_expected",
+      "portable_session::deferred_factory::tests::deferred_factory_expected_bindings_precede_storage_and_reject_poison",
+      "portable_session::deferred_factory::tests::deferred_factory_fuel_irq_foreign_and_reset_never_finalize_a_fact",
+      "portable_session::deferred_factory::tests::deferred_factory_rejects_hash_field_substitution_in_both_phases",
+      "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates",
+      "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry",
+      "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible",
+      "portable_session::scalar_inputs::tests::scalar_factory_owner_preparation_cancellation_releases_unenrolled_facts",
+      "portable_session::scalar_inputs::tests::scalar_host_work_invoke_polls_before_later_foreign_argument",
+      "portable_session::scalar_inputs::tests::scalar_host_work_string_copy_exceeds_guest_allocation_cost",
+      "portable_session::scalar_inputs::tests::scalar_inputs_preserve_exact_bits_and_reject_string_mutation_after_gc",
+      "portable_session::scalar_inputs::tests::scalar_inputs_share_budget_and_release_failed_preparations",
+      "portable_session::scalar_inputs::tests::scalar_physical_false_and_sentinel_poll_irq_and_number_bits_restore_after_gc",
+      "portable_session::scalar_inputs::tests::scalar_physical_types_reject_extra_field_subtype_and_preserve_direct_errors",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+      "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+      "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+      "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+      "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+      "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_actual_charges_match_old_membership_and_reduce_large_suffix_work",
+      "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates",
+      "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_staging_fuel_irq_failures_leave_domain_unchanged_and_retry",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority",
+      "portable_session::write_domain::factory_inputs::tests::original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage",
+      "portable_session::write_domain::tests::scalar_domain_mixed_growth_and_record_drop_orders_keep_only_scalar_owners",
+      "portable_session::write_domain::tests::scalar_domain_publication_fuel_irq_sweep_preserves_owners_and_recovers",
+      "portable_session::write_domain::tests::scalar_domain_shares_only_valid_fact_and_preserves_wrong_supplied_root_and_late_error",
+      "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+      "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+    ],
+    "summary": {
+      "pass": 69,
+      "fail": 0,
+      "ignored": 0,
+      "filtered": 557,
+      "unique_names": 69,
+      "unexecuted_selected": 0,
+      "harness_seconds": 142.32,
+      "command_seconds": 375.2616463359991
+    },
+    "results": [
+      {
+        "name": "portable_macro_graph::source_roots::tests::factory_candidate_prefix_keeps_genuine_checked_source_and_reference_suffixes",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::canonical_seeds::tests::canonical_seeds_partial_capture_releases_roots_before_recovery",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::canonical_seeds::tests::canonical_seeds_reject_mutation_before_a_bridge_can_observe_it",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::controller_provisioning_tests::source_controller_requires_installed_core_and_both_original_private_registries",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::factory_projection_checks_complete_pristine_seed_snapshot",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::factory_projection_every_insufficient_constructor_allowance_keeps_ledger_and_recovers",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::factory_projection_false_root_still_propagates_later_fuel_error",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::factory_projection_preserves_shared_aliases_and_closes_exact_native_inputs_under_collisions",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::factory_projection_rejects_unrecorded_and_open_roots_and_recovers_after_fuel_irq",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::paged_projection_forced_collisions_match_independent_flat_view_and_keep_roots_after_gc",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::projection::tests::physical_factory_projection_is_not_source_authority_for_copied_metadata_memo",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::boxed_fact_cuts_release_unpublished_inputs_and_preserve_existing_records",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_false_seed_does_not_hide_later_fuel_error",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_follow_normalized_constructor_fields_not_unused_arguments",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_missing_root_does_not_skip_later_edge_budget_errors",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_require_independent_child_facts_and_exact_root",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_table_clustered_hashes_and_empty_overflow",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::construction_records_table_probe_failures_leave_heads_unchanged",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::paged_records_every_append_fuel_cut_and_irq_leave_no_partial_page_and_retry",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::construction_records::tests::paged_records_preserve_ordinals_boundaries_and_logical_pages_with_excess_capacity",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::deferred_factory::tests::deferred_factory_constructor_rejects_memo_poison_and_preserves_captured_inputs",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::deferred_factory::tests::deferred_factory_does_not_treat_unpatched_or_wrong_children_as_expected",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::deferred_factory::tests::deferred_factory_expected_bindings_precede_storage_and_reject_poison",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::deferred_factory::tests::deferred_factory_fuel_irq_foreign_and_reset_never_finalize_a_fact",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::deferred_factory::tests::deferred_factory_rejects_hash_field_substitution_in_both_phases",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_factory_owner_preparation_cancellation_releases_unenrolled_facts",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_host_work_invoke_polls_before_later_foreign_argument",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_host_work_string_copy_exceeds_guest_allocation_cost",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_inputs_preserve_exact_bits_and_reject_string_mutation_after_gc",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_inputs_share_budget_and_release_failed_preparations",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_physical_false_and_sentinel_poll_irq_and_number_bits_restore_after_gc",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::scalar_inputs::tests::scalar_physical_types_reject_extra_field_subtype_and_preserve_direct_errors",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_actual_charges_match_old_membership_and_reduce_large_suffix_work",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_staging_fuel_irq_failures_leave_domain_unchanged_and_retry",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::factory_inputs::tests::original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::tests::scalar_domain_mixed_growth_and_record_drop_orders_keep_only_scalar_owners",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::tests::scalar_domain_publication_fuel_irq_sweep_preserves_owners_and_recovers",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::tests::scalar_domain_shares_only_valid_fact_and_preserves_wrong_supplied_root_and_late_error",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+        "result": "PASS"
+      },
+      {
+        "name": "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction",
+        "result": "PASS"
+      }
+    ],
+    "three_previously_failed_full_tests_now_pass": [
+      "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates",
+      "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+      "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+    ],
+    "calibration_body_preservation": {
+      "exact_reverse_to_original_files": true,
+      "three_setup_substitutions_by_file": {
+        "crates/suss-compile/src/portable_session/memo_bridge.rs": 1,
+        "crates/suss-compile/src/portable_session/write_domain.rs": 2
+      },
+      "all_original_program_literals_and_remaining_semantic_bodies_assertions_preserved": true,
+      "before_after_Runtime_options_assertions_executed": true,
+      "Runtime_default": 10000000,
+      "compilation_setup_allowance": 100000000000,
+      "helper": "Fresh checked cumulative compilation counter per original setup input; no Runtime Store/options setter or nested refill. These guards assert configured allowance, not equal remaining fuel after Runtime setup execution."
+    },
+    "bindings": {
+      "independent_artifact_review": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3/independent-adoption-review-cicero.json",
+        "sha256": "5ed998ba2d39a706cda13c30b7bb8c9282f80b4b9b9cf5d3826182544e5ba0ae"
+      },
+      "six_reviewed_composed_sources": {
+        "original_production_paths": 4,
+        "calibration_paths": 3,
+        "unique_paths": 6,
+        "postimages": {
+          "crates/suss-compile/src/portable_session/scalar_inputs.rs": "48ea45398d46c1e86b3c532fc710fbed1fda58cef0c0bd262ed169dae76e58dc",
+          "crates/suss-compile/src/portable_session/construction_records.rs": "e2390a3d0e4e4d3ffe98265c06c2d57a29f2f44da277b1803452c9e3d62c2c37",
+          "crates/suss-compile/src/portable_session/write_domain.rs": "cbeca0bfe1be2dd3d7e2aeb7a694b994ed320bcde6bf2ac124094870f9234b74",
+          "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs": "5cebf6d64bb80247dfd936ffc12b82dde509291252085c952b959271c54d883f",
+          "crates/suss-compile/src/portable_session/memo_leaf_test_support.rs": "97643f96aeb3d7d1185176492f61306c838b57f3c65dccf44375b04efacd0a1d",
+          "crates/suss-compile/src/portable_session/memo_bridge.rs": "7fc4890b5c38d87810dc60e69661894099889cd25d821402fd76ef641479cb4d"
+        },
+        "production_overlap_unchanged": true,
+        "production_source_review_sha256": "04bb82984b67aac2dac144707f02e4a4c7b56690cf5689d72680d6977c9a6fad",
+        "calibration_source_review_sha256": "8aa1dc80437518c51ca24d20470eef646b1549c584a50c1082ee9ec01148b47c",
+        "limits": "Initial69=66P3F and helper-only69ae missing-include failure remain historical distinct tuples; no calibrated semantic success inferred."
+      },
+      "exact4_reviewed_boot_hashes_at_test_head": true,
+      "identity_head": "db9a96ae832cb0acc07402749d55519fc0cb259f",
+      "identity_exit_code": 0,
+      "identity_log_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "scope": "Reuses prior229 actual-input/artifact binding; verifies calibrated three images against source/test-head Git and reviewedBOOT, not a new run-long mutation detector."
+    },
+    "historical_initial69": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v1/initial69-independent-evidence-review-cicero.json",
+      "sha256": "9360731c0d15fd39b5076597a8e51734a1d5bf2378da6aa2f53d74f207f5fa47",
+      "pass": 66,
+      "fail": 3,
+      "source_commit": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+      "compiler_source_sha256": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+      "qualification": "Separate earlier tuple; neither erased nor called a calibrated success."
+    },
+    "limits": [
+      "Helper-only missing-include typecheck failure remains separate; this receipt does not relabel that build.",
+      "69PASS is focused current-source evidence, not fullbaseline/finalCI/public acceptance/readiness.",
+      "Live fresh pinned pair has no verdict in this receipt.",
+      "No Cargo/VM/comparator/oracle execution or shared edits by reviewer; no default/pinned fit or performance claim."
+    ]
   }
 }
