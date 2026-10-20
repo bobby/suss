@@ -153,7 +153,7 @@ impl StorageSnapshot {
                 .as_ref()
                 .ok_or_else(|| invalid("Incomplete original snapshot node"))?;
             let children = match contents {
-                Contents::Struct(_, atoms) | Contents::Array(_, atoms) => atoms,
+                Contents::Struct(atoms) | Contents::Array(atoms) => atoms,
             };
             member_room(&mut pending, children.len(), &mut meter)?;
             for child in children {
@@ -200,7 +200,7 @@ impl StorageSnapshot {
             let contents = node.contents.as_ref()
                 .ok_or_else(|| invalid("Incomplete original snapshot node"))?;
             let atoms = match contents {
-                Contents::Struct(_, atoms) | Contents::Array(_, atoms) => atoms,
+                Contents::Struct(atoms) | Contents::Array(atoms) => atoms,
             };
             meter.work((2 * size_of::<std::slice::Iter<'_, Atom>>() + 4) as u64)?;
             let mut atoms = atoms.iter();

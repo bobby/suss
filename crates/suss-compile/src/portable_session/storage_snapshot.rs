@@ -20,7 +20,7 @@ use std::{
     },
 };
 use wasmtime::{
-    AnyRef, ArrayType, AsContextMut, Func, RootScope, Rooted, StoreContextMut, StructType, Val,
+    AnyRef, AsContextMut, Func, RootScope, Rooted, StoreContextMut, Val,
 };
 
 type Result<T> = std::result::Result<T, SessionError>;
@@ -47,8 +47,10 @@ enum Atom {
 
 #[derive(Debug)]
 enum Contents {
-    Struct(StructType, Vec<Atom>),
-    Array(ArrayType, Vec<Atom>),
+    // Each node owns its exact original GC object and therefore its immutable
+    // intrinsic type. Mutable descriptors/prototypes remain ordinary atoms.
+    Struct(Vec<Atom>),
+    Array(Vec<Atom>),
 }
 
 #[derive(Debug)]
@@ -140,15 +142,18 @@ fn room<T>(values: &mut Vec<T>, meter: &mut Meter<'_>) -> Result<()> {
 }
 
 struct Cut { value: SessionValue, collision: Option<usize> }
-struct Capture {
+// Search strategy only: all larger valid cut lists keep the current index.
+const BORROWED_CUT_LIMIT: usize = 32;
+struct Capture<'cuts> {
     owner: u64,
     handles: Arc<AtomicUsize>,
     nodes: Vec<Node>,
     index: TryOrderedMap<u64, usize>,
     cuts: Vec<Cut>,
     cut_index: TryOrderedMap<u64, usize>,
+    borrowed_cuts: Option<&'cuts [&'cuts SessionValue]>,
 }
-impl Capture {
+impl<'cuts> Capture<'cuts> {
     fn hash(reference: &Rooted<AnyRef>, meter: &mut Meter<'_>) -> Result<u64> {
         meter.work(1)?;
         let mut hash = DefaultHasher::new();
@@ -158,6 +163,28 @@ impl Capture {
         let hash = if meter.force_hash_collision { 0 } else { hash };
         Ok(hash)
     }
+    fn prepare_cuts(&mut self, cuts: &'cuts [&'cuts SessionValue], root: &Val, meter: &mut Meter<'_>) -> Result<()> {
+        meter.work(4)?; // empty-state checks, supplied length and strategy dispatch
+        debug_assert!(self.borrowed_cuts.is_none() && self.cuts.is_empty());
+        if cuts.len() <= BORROWED_CUT_LIMIT {
+            // Owners were checked before RootScope. Validate every supplied
+            // entry, including duplicates/immediates/unused cuts, before atoms.
+            for cut in cuts {
+                meter.work(4)?; // iteration, root access and exact reference check
+                let reference = cut.value.to_rooted(&mut meter.store);
+                if let Some(root) = root.anyref().flatten() {
+                    if Rooted::<AnyRef>::ref_eq(&meter.store, root, &reference)? {
+                        return Err(invalid("Storage snapshot root cannot be cut"));
+                    }
+                }
+            }
+            meter.work(1)?; // private slice publication
+            self.borrowed_cuts = Some(cuts);
+            return Ok(());
+        }
+        self.add_cuts(cuts, root, meter)
+    }
+
     fn add_cuts(&mut self, cuts: &[&SessionValue], root: &Val, meter: &mut Meter<'_>) -> Result<()> {
         // Session checked owners before one RootScope. No guest call/allocation
         // or GC while either ephemeral identity index lives.
@@ -217,6 +244,27 @@ impl Capture {
                 // No guest execution or guest heap allocation occurs in this
                 // traversal. The ephemeral index is discarded before returning;
                 // later checks use rooted ref_eq, not pre-GC reference hashes.
+                meter.work(2)?; // optional borrowed mode and entry into cut search
+                if let Some(cuts) = self.borrowed_cuts {
+                    for cut in cuts {
+                        meter.work(4)?; // iterator/load/root access/exact comparison
+                        let expected = cut.value.to_rooted(&mut meter.store);
+                        if Rooted::<AnyRef>::ref_eq(&meter.store, &reference, &expected)? {
+                            meter.work(4)?; // owned reference, counter and handle retention
+                            // Keep only reached opaque occurrences. Never clone
+                            // the caller's SessionValue/accounting counter.
+                            let value = cut.value.clone();
+                            self.handles.fetch_add(1, AtomicOrdering::Relaxed);
+                            return Ok(Atom::Opaque(SessionValue {
+                                identity: self.owner,
+                                value,
+                                handles: self.handles.clone(),
+                            }));
+                        }
+                    }
+                }
+                // An opaque borrowed hit needs no hash/index work. Ordinary
+                // nodes and the unchanged large-cut path still pay all of it.
                 let hash = Self::hash(&reference, meter)?;
                 if !self.cuts.is_empty() {
                     let mut cursor = self.cut_index.get(&hash, meter)?.copied();
@@ -293,9 +341,9 @@ impl Capture {
                     let value = structure.field(&mut meter.store, field)?;
                     values.push(self.atom(value, meter)?);
                 }
-                Contents::Struct(ty, values)
+                Contents::Struct(values)
             } else if let Some(array) = reference.as_array(&meter.store)? {
-                let ty = array.ty(&meter.store)?;
+                let _ty = array.ty(&meter.store)?;
                 let count = array.len(&meter.store)?;
                 allocation::<Atom>(count as usize, meter)?;
                 let mut values = Vec::new();
@@ -307,7 +355,7 @@ impl Capture {
                     let value = array.get(&mut meter.store, index)?;
                     values.push(self.atom(value, meter)?);
                 }
-                Contents::Array(ty, values)
+                Contents::Array(values)
             } else {
                 return Err(invalid("Unsupported storage snapshot node"));
             };
@@ -360,7 +408,7 @@ impl StorageSnapshot {
             meter.work(1)?;
             if self.atom_matches(&Atom::Node(id), value.clone(), &mut meter)? { return Ok(true) }
             let atoms = match node.contents.as_ref().expect("complete snapshot") {
-                Contents::Array(_, atoms) | Contents::Struct(_, atoms) => atoms,
+                Contents::Array(atoms) | Contents::Struct(atoms) => atoms,
             };
             for atom in atoms {
                 meter.work(1)?;
@@ -420,11 +468,15 @@ impl StorageSnapshot {
                 .as_ref()
                 .expect("only complete snapshots escape capture")
             {
-                Contents::Struct(ty, values) => {
+                Contents::Struct(values) => {
                     let Some(structure) = reference.as_struct(&meter.store)? else {
                         return Ok(false);
                     };
-                    if !StructType::eq(&structure.ty(&meter.store)?, ty) {
+                    // Exact incoming reference identity fixes this owned
+                    // object's intrinsic type. Keep fallible kind/type/count
+                    // checks and every mutable field observation.
+                    meter.work(3)?;
+                    if structure.ty(&meter.store)?.fields().len() != values.len() {
                         return Ok(false);
                     }
                     for (field, expected) in values.iter().enumerate() {
@@ -435,13 +487,12 @@ impl StorageSnapshot {
                         }
                     }
                 }
-                Contents::Array(ty, values) => {
+                Contents::Array(values) => {
                     let Some(array) = reference.as_array(&meter.store)? else {
                         return Ok(false);
                     };
-                    if !ArrayType::eq(&array.ty(&meter.store)?, ty)
-                        || array.len(&meter.store)? as usize != values.len()
-                    {
+                    let _ty = array.ty(&meter.store)?;
+                    if array.len(&meter.store)? as usize != values.len() {
                         return Ok(false);
                     }
                     for (index, expected) in values.iter().enumerate() {
@@ -508,10 +559,12 @@ impl Session {
         let mut scope = RootScope::new(&mut self.store);
         let root = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
         let mut meter = Meter::new(scope.as_context_mut(), &interrupt);
+        // Prepay the added slice metadata and initialization/retirement controls.
+        meter.work(size_of::<Option<&[&SessionValue]>>() as u64 + 8)?;
         let mut capture = Capture { owner: self.identity, handles,
             nodes: Vec::new(), index: TryOrderedMap::default(),
-            cuts: Vec::new(), cut_index: TryOrderedMap::default() };
-        capture.add_cuts(cuts, &root, &mut meter)?;
+            cuts: Vec::new(), cut_index: TryOrderedMap::default(), borrowed_cuts: None };
+        capture.prepare_cuts(cuts, &root, &mut meter)?;
         capture.finish(root, &mut meter)
     }
 
@@ -536,7 +589,7 @@ impl Session {
 mod tests {
     use super::*;
     use crate::portable::hir::Literal;
-    use wasmtime::{FieldType, Mutability, StorageType, StructRef, StructRefPre, ValType};
+    use wasmtime::{ArrayType, StructType, FieldType, Mutability, StorageType, StructRef, StructRefPre, ValType};
 
     fn raw_array(session: &mut Session, values: &[&SessionValue]) -> SessionValue {
         session.budget().unwrap();
@@ -654,7 +707,7 @@ mod tests {
                 nodes: Vec::new(),
                 index: TryOrderedMap::default(),
             cuts: Vec::new(),
-            cut_index: TryOrderedMap::default(),
+            cut_index: TryOrderedMap::default(), borrowed_cuts: None,
             }
             .finish(value, &mut meter)
             .unwrap()
@@ -1020,7 +1073,7 @@ mod tests {
                     nodes: Vec::new(),
                     index: TryOrderedMap::default(),
             cuts: Vec::new(),
-            cut_index: TryOrderedMap::default(),
+            cut_index: TryOrderedMap::default(), borrowed_cuts: None,
                 }
                 .finish(root_value, &mut meter)
                 .unwrap_err()
@@ -1152,7 +1205,7 @@ mod tests {
             meter.force_hash_collision = true;
             let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
                 nodes: Vec::new(), index: TryOrderedMap::default(), cuts: Vec::new(),
-                cut_index: TryOrderedMap::default() };
+                cut_index: TryOrderedMap::default(), borrowed_cuts: None };
             capture.add_cuts(&[&a, &b, &a, &nil], &value, &mut meter).unwrap();
             capture.finish(value, &mut meter).unwrap()
         };
@@ -1198,7 +1251,7 @@ mod tests {
             } else {
                 let mut capture = Capture { owner: session.identity, handles: session.handles.clone(),
                     nodes: Vec::new(), index: TryOrderedMap::default(), cuts: Vec::new(),
-                    cut_index: TryOrderedMap::default() };
+                    cut_index: TryOrderedMap::default(), borrowed_cuts: None };
                 capture.add_cuts(&[&child], &value, &mut meter)
                     .and_then(|()| capture.finish(value, &mut meter)).unwrap_err()
             };
@@ -1219,4 +1272,221 @@ mod tests {
         assert!(matches!(small.contains_reference_in_context(scope.as_context_mut(), value,
             foreign.identity, &irq), Err(SessionError::ForeignValue)));
     }
+    #[test]
+    fn native_storage_snapshot_owned_nodes_survive_external_type_and_module_drop() {
+        eprintln!("snapshot-owned-layout Node={} Contents={} Snapshot={} Atom={}",
+            size_of::<Node>(), size_of::<Contents>(), size_of::<StorageSnapshot>(), size_of::<Atom>());
+        let mut session = Session::new().unwrap();
+        // The host allocator's temporary StructType is dropped by structure().
+        let host = structure(&mut session, ValType::I32, Val::I32(17));
+        let values = {
+            let _request = session.operation_budget_scope().unwrap();
+            let module = wasmtime::Module::new(&session.engine, r#"(module
+                (type $s (struct (field (mut i32))))
+                (type $a (array (mut i32)))
+                (type $immutable (array i32))
+                (func (export "object") (result (ref $s)) i32.const 17 struct.new $s)
+                (func (export "array") (result (ref $a)) i32.const 17 i32.const 2 array.new $a)
+                (func (export "immutable") (result (ref $immutable))
+                    i32.const 17 i32.const 2 array.new $immutable))"#).unwrap();
+            let instance = wasmtime::Instance::new(&mut session.store, &module, &[]).unwrap();
+            let mut values = Vec::new();
+            for name in ["object", "object", "array", "immutable"] {
+                let mut scope = RootScope::new(&mut session.store);
+                let function = instance.get_func(&mut scope, name).unwrap();
+                let mut result = [Val::null_any_ref()];
+                function.call(&mut scope, &[], &mut result).unwrap();
+                values.push(super::super::own(&mut scope, result[0].clone(),
+                    session.identity, &session.handles).unwrap());
+            }
+            values
+        }; // Caller Module/Instance/function handles are gone; Store owns registrations.
+        let host_snapshot = session.capture_storage(&host).unwrap();
+        let guest_snapshot = session.capture_storage(&values[0]).unwrap();
+        let array_snapshot = session.capture_storage(&values[2]).unwrap();
+        session.collect().unwrap();
+        assert!(session.storage_matches(&host, &host_snapshot).unwrap());
+        assert!(session.storage_matches(&values[0], &guest_snapshot).unwrap());
+        assert!(session.storage_matches(&values[2], &array_snapshot).unwrap());
+        // Same intrinsic type/different object, and same array contents with a
+        // different mutability/type, never replace the captured references.
+        assert!(!session.storage_matches(&values[1], &guest_snapshot).unwrap());
+        assert!(!session.storage_matches(&values[3], &array_snapshot).unwrap());
+        for (root, snapshot) in [(&host, &host_snapshot), (&values[0], &guest_snapshot)] {
+            set_field(&mut session, root, Val::I32(99));
+            assert!(!session.storage_matches(root, snapshot).unwrap());
+            set_field(&mut session, root, Val::I32(17));
+            assert!(session.storage_matches(root, snapshot).unwrap());
+        }
+        for value in [99, 17] {
+            let mut scope = RootScope::new(&mut session.store);
+            let array = values[2].value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+            array.set(&mut scope, 1, Val::I32(value)).unwrap();
+            drop(scope);
+            assert_eq!(session.storage_matches(&values[2], &array_snapshot).unwrap(), value == 17);
+        }
+        session.collect().unwrap();
+        assert!(session.storage_matches(&host, &host_snapshot).unwrap());
+        assert!(session.storage_matches(&values[0], &guest_snapshot).unwrap());
+        assert!(session.storage_matches(&values[2], &array_snapshot).unwrap());
+    }
+
+    #[test]
+    fn borrowed_cuts_keep_snapshot_handle_accounting_and_owned_leaves_after_inputs_drop() {
+        eprintln!("borrowed-cut-layout slice={} node={} cut={} snapshot={}",
+            size_of::<Option<&[&SessionValue]>>(), size_of::<Node>(), size_of::<Cut>(), size_of::<StorageSnapshot>());
+        for phase in [crate::portable::resolve::Phase::Runtime, crate::portable::resolve::Phase::Macro] {
+            let mut session = match phase {
+                crate::portable::resolve::Phase::Runtime => Session::new().unwrap(),
+                _ => Session::new_macro().unwrap(),
+            };
+            let nil = session.data_scalar(&Literal::Nil).unwrap();
+            let child = raw_array(&mut session, &[&nil]);
+            let root = raw_array(&mut session, &[&child, &child, &nil]);
+            let external = session.stats().external_value_handles;
+            let handles = Arc::new(AtomicUsize::new(0));
+            let snapshot = session.capture_storage_cut_accounted(
+                &root, &[&child, &nil, &child], handles.clone(),
+            ).unwrap();
+            // One array root and two opaque child occurrences belong to the
+            // proof counter. The caller's root counter must not increase.
+            assert_eq!(snapshot.nodes.len(), 1);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 3);
+            assert_eq!(session.stats().external_value_handles, external);
+            drop(child);
+            session.collect().unwrap();
+            assert!(session.storage_matches(&root, &snapshot).unwrap());
+            set_array(&mut session, &root, 1, &nil);
+            assert!(!session.storage_matches(&root, &snapshot).unwrap());
+            drop(root);
+            session.collect().unwrap();
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 3);
+            drop(snapshot);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            assert_eq!(session.stats().external_value_handles, external - 2);
+        }
+    }
+
+    #[test]
+    fn borrowed_cut_boundaries_fuel_irq_unused_foreign_and_root_rejection_recover() {
+        let mut session = Session::new().unwrap();
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        let child = raw_array(&mut session, &[&nil]);
+        let root = raw_array(&mut session, &[&child]);
+        let mut foreign = Session::new().unwrap();
+        let unused_foreign = raw_array(&mut foreign, &[]);
+        let handles = Arc::new(AtomicUsize::new(0));
+        for count in [BORROWED_CUT_LIMIT, BORROWED_CUT_LIMIT + 1] {
+            let cuts = vec![&child; count];
+            let cost = {
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.store.get_fuel().unwrap();
+                drop(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap());
+                let cost = before - session.store.get_fuel().unwrap();
+                drop(request);
+                cost
+            };
+            let external = session.stats().external_value_handles;
+            for allowance in 0..cost {
+                let request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(allowance).unwrap();
+                exhausted(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap_err(), wasmtime::Trap::OutOfFuel);
+                assert_eq!(handles.load(AtomicOrdering::Relaxed), 0, "count={count} allowance={allowance}");
+                assert_eq!(session.stats().external_value_handles, external);
+                drop(request);
+            }
+            let request = session.operation_budget_scope().unwrap();
+            session.interrupt_handle().interrupt();
+            assert!(session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap_err().is_interrupt());
+            drop(request);
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            let snapshot = session.capture_storage_cut_accounted(&root, &cuts, handles.clone()).unwrap();
+            assert!(session.storage_matches(&root, &snapshot).unwrap());
+            drop(snapshot);
+            let mut malformed = cuts.clone();
+            malformed[count - 1] = &unused_foreign;
+            assert!(matches!(session.capture_storage_cut_accounted(&root, &malformed, handles.clone()), Err(SessionError::ForeignValue)));
+            malformed[count - 1] = &root;
+            assert!(matches!(session.capture_storage_cut_accounted(&root, &malformed, handles.clone()), Err(SessionError::Host(_))));
+            let immediate_root = vec![&nil; count];
+            assert!(matches!(session.capture_storage_cut_accounted(&nil, &immediate_root, handles.clone()), Err(SessionError::Host(_))));
+            assert_eq!(handles.load(AtomicOrdering::Relaxed), 0);
+            assert_eq!(session.stats().external_value_handles, external);
+        }
+    }
+
+
+    #[test]
+    fn borrowed_cut_strategies_match_current_index_across_supplied_boundaries_and_collisions() {
+        fn capture_mode(
+            session: &mut Session, root: &SessionValue, cuts: &[&SessionValue],
+            indexed: bool, collision: bool,
+        ) -> (StorageSnapshot, u64) {
+            session.check(root).unwrap();
+            let _request = session.operation_budget_scope().unwrap();
+            let before = session.store.get_fuel().unwrap();
+            for cut in cuts { session.charge_host_work(1).unwrap(); session.check(cut).unwrap(); }
+            let interrupt = session.host_work_interrupt();
+            let mut scope = RootScope::new(&mut session.store);
+            let value = Val::AnyRef(Some(root.value.to_rooted(&mut scope)));
+            let mut meter = Meter::new(scope.as_context_mut(), &interrupt);
+            meter.force_hash_collision = collision;
+            meter.work(size_of::<Option<&[&SessionValue]>>() as u64 + 8).unwrap();
+            let mut capture = Capture {
+                owner: session.identity, handles: session.handles.clone(),
+                nodes: Vec::new(), index: TryOrderedMap::default(),
+                cuts: Vec::new(), cut_index: TryOrderedMap::default(), borrowed_cuts: None,
+            };
+            if indexed {
+                capture.add_cuts(cuts, &value, &mut meter).unwrap();
+            } else {
+                capture.prepare_cuts(cuts, &value, &mut meter).unwrap();
+                assert_eq!(capture.borrowed_cuts.is_some(), cuts.len() <= BORROWED_CUT_LIMIT);
+            }
+            let snapshot = capture.finish(value, &mut meter).unwrap();
+            let cost = before - meter.store.get_fuel().unwrap();
+            (snapshot, cost)
+        }
+        let mut session = Session::new().unwrap();
+        let nil = session.data_scalar(&Literal::Nil).unwrap();
+        let number = session.data_scalar(&Literal::Number(17.0)).unwrap();
+        for count in [0, 1, 31, 32, 33] {
+            for collision in [false, true] {
+                let child = raw_array(&mut session, &[&nil]);
+                let strict_child = raw_array(&mut session, &[&nil]);
+                let unused = raw_array(&mut session, &[]);
+                let root = raw_array(&mut session, &[&child, &child, &strict_child, &nil]);
+                let mut cuts = vec![&unused; count];
+                if count > 0 { cuts[0] = &child; }
+                if count > 2 { cuts[1] = &child; cuts[2] = &nil; }
+                let external = session.stats().external_value_handles;
+                let (borrowed, borrowed_cost) = capture_mode(&mut session, &root, &cuts, false, collision);
+                let (indexed, indexed_cost) = capture_mode(&mut session, &root, &cuts, true, collision);
+                eprintln!("snapshot-cut-strategies supplied={count} collision={collision} selected={borrowed_cost} forced-indexed={indexed_cost}");
+                assert_eq!(borrowed.nodes.len(), indexed.nodes.len());
+                session.collect().unwrap();
+                for snapshot in [&borrowed, &indexed] {
+                    assert!(session.storage_matches(&root, snapshot).unwrap());
+                    assert!(!session.storage_contains_reference(&unused, snapshot).unwrap());
+                }
+                set_array(&mut session, &child, 0, &number);
+                for snapshot in [&borrowed, &indexed] {
+                    assert_eq!(session.storage_matches(&root, snapshot).unwrap(), count != 0);
+                }
+                set_array(&mut session, &child, 0, &nil);
+                set_array(&mut session, &strict_child, 0, &number);
+                for snapshot in [&borrowed, &indexed] {
+                    assert!(!session.storage_matches(&root, snapshot).unwrap());
+                }
+                set_array(&mut session, &strict_child, 0, &nil);
+                session.collect().unwrap();
+                for snapshot in [&borrowed, &indexed] {
+                    assert!(session.storage_matches(&root, snapshot).unwrap());
+                }
+                drop(borrowed); drop(indexed);
+                assert_eq!(session.stats().external_value_handles, external);
+            }
+        }
+    }
+
 }
