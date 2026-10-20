@@ -1,3 +1,7 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
+
+use semantic_compilation::eval as eval_semantics;
 use suss_cli::portable_session::Session;
 use wasmtime::Val;
 
@@ -10,9 +14,13 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 70);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
-        .unwrap();
+    // This corpus checks all70 pinned values, not default compilation capacity.
+    // Keep the original CORE/programs and default Runtime allowance separate.
+    eval_semantics(
+        &mut session,
+        include_str!("../../../runtime/core-import/suss/core.sus"),
+    )
+    .unwrap();
     session
         .enter_namespace("suss-oracle.bitwise-hash-cases")
         .unwrap();
@@ -22,7 +30,7 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
-        let value = match session.eval(source) {
+        let value = match eval_semantics(&mut session, source) {
             Ok(value) => value,
             Err(error) => {
                 failures.push(format!("{id}: {source}: {error:?}"));
@@ -92,6 +100,10 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
             }
             tag => panic!("unsupported Bitwise hash observation {tag}"),
         };
+        println!(
+            "BITWISE_HASH_OBSERVATION {}",
+            serde_json::json!({"id": id, "actual": &actual})
+        );
         if actual != case["expected"] {
             failures.push(format!(
                 "{id}: {source}: actual {actual}, expected {}",
@@ -100,12 +112,17 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         }
         session.collect().unwrap();
     }
+    assert_eq!(
+        session.options().fuel_per_operation,
+        suss_compile::portable::DEFAULT_OPERATION_FUEL
+    );
     assert!(
         failures.is_empty(),
         "{} failing observations:\n{}",
         failures.len(),
         failures.join("\n")
     );
+    println!("BITWISE_HASH_OBSERVATIONS_COMPLETE {}", ids.len());
 }
 
 fn bitwise_number(session: &mut Session, source: &str) -> f64 {

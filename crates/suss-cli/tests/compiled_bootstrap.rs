@@ -1,6 +1,6 @@
 //! Execute the versioned bootstrap in real, separate phase Stores.
-#[path = "support/compilation_fuel.rs"]
-mod compilation_fuel;
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -8,45 +8,9 @@ use suss_cli::{
 use suss_compile::portable::{bootstrap, resolve::Phase};
 use suss_reader::forms::Kind;
 
-// Cache isolation is a semantic test, not a default compilation-budget control.
-// Use the ordinary no-expansion pipeline with one cumulative compilation-only
-// allowance; Session execution and inspection retain their default Runtime fuel.
-fn eval_isolation(
-    session: &mut Session,
-    source: &str,
-) -> Result<suss_cli::portable_session::SessionValue, suss_cli::portable_session::SessionError> {
-    struct Compilation(u64);
-    impl suss_compile::portable::ExpansionHost for Compilation {
-        fn expansion_work_fuel(&self) -> u64 {
-            self.0
-        }
-        fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
-            Some(vec![])
-        }
-        fn charge_expansion_work(
-            &mut self,
-            work: u64,
-            span: std::ops::Range<usize>,
-        ) -> Result<(), suss_compile::portable::Diagnostic> {
-            self.0 =
-                self.0
-                    .checked_sub(work)
-                    .ok_or_else(|| suss_compile::portable::Diagnostic {
-                        span,
-                        message: "Bootstrap isolation compilation fuel exhausted".into(),
-                    })?;
-            Ok(())
-        }
-        fn expand(
-            &mut self,
-            _: &suss_reader::forms::Form,
-            _: suss_compile::portable::ExpansionContext<'_>,
-        ) -> Result<Option<suss_reader::forms::Form>, suss_compile::portable::Diagnostic> {
-            Ok(None)
-        }
-    }
-    session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL))
-}
+// Cache isolation uses the shared compilation-only test allowance. Its original
+// source, Runtime default, assertions, separate Stores and GC/reset remain.
+use semantic_compilation::eval as eval_isolation;
 
 #[test]
 fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {

@@ -1861,6 +1861,75 @@
       ],
       "accepted_complete_selected_tests": true,
       "measurement_lines": []
+    },
+    "bitwise-cli-all": {
+      "head": "90729ee9129f7d1766d85077db372bf58883f7bb",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_bitwise_hash",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+        "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+        "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+        "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+        "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+        "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+        "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+        "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+        "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+        "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls"
+      ],
+      "selection": {
+        "exact_names": [
+          "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+          "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+          "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+          "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+          "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+          "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+          "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+          "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+          "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+          "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls"
+        ],
+        "test_file": "crates/suss-cli/tests/portable_bitwise_hash.rs",
+        "test_source_sha256": "4b14a284d4f722ccdd276793f4ae5f212a357f9ea1d8b25af65ab14c0e05806c",
+        "scope": "All original and complete donor tests in this module; no shortened bodies or prior pass transfer."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 452.792226137999,
+      "raw_sha256": "cc283480e80f05b6bf9c2944d4a7b7522eceb5a1f8a051b513f67ee95218e503",
+      "started_names": [
+        "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+        "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+        "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+        "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+        "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls",
+        "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+        "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+        "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+        "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+        "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 75.96s"
+      ],
+      "accepted_complete_selected_tests": false,
+      "measurement_lines": []
     }
   },
   "profile_environment": {
@@ -1878,5 +1947,349 @@
     "All Runtime ABI source files, source/storage/domain guards and short-key implementation remain; added integer instruction/plan/import/local work is prepaid.",
     "Source review and emitted structure do not substitute for public value/effect execution. All historical passes/failures remain bound to their original source.",
     "Dedicated map/identifier200M, constructor10M and CORE/source-child defaults remain unchanged. No success inferred without actual complete outcomes."
-  ]
+  ],
+  "native25_independent_evidence_review": {
+    "verdict": "GO_SCOPED_NATIVE25_EVIDENCE_RECONCILIATION",
+    "published_evidence_head": "90729ee9129f7d1766d85077db372bf58883f7bb",
+    "published_evidence_path": "docs/roadmap/evidence/m4-pr263-integer-ssa-validation-2026-10-20.json",
+    "published_evidence_sha256": "7c4a47b005507ae8b92fb9755ea757853c66ad6425b9dd9703197caf662dbdc3",
+    "source_head": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+    "boot_head": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+    "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+    "compiler_inputs": 229,
+    "all229_current_frozen_and_source_boot_publication_git_blobs_match": true,
+    "fingerprint_recomputed": true,
+    "four_adopted_BOOT_bytes_equal_reviewed_first_generation": true,
+    "identity": {
+      "exit_code": 0,
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "seconds": 14.094454779000444,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "raw_hash_verified": true,
+      "scope": "Pure build-source identity/input invalidation, no Session/guest semantic acceptance."
+    },
+    "aggregate": {
+      "distinct_passed": 25,
+      "failed": 0,
+      "ignored": 0,
+      "complete_cohorts": 5,
+      "all_selections_terminal_exit_zero_and_raw_hashes_verified": true
+    },
+    "cohorts": [
+      {
+        "cohort": "cache-all",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--lib",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "portable::artifact_cache::tests::large_cache_keys_emit_fresh_without_changing_retained_entries",
+          "portable::artifact_cache::tests::key_admission_preserves_real_errors_and_stops_partial_encoding",
+          "portable::artifact_cache::tests::large_ir_key_declines_with_small_source_and_matches_fresh_emission",
+          "portable::artifact_cache::tests::key_decline_preserves_session_fuel_interrupt_and_final_cancellation_poll",
+          "portable::artifact_cache::tests::formatted_fragment_work_is_charged_before_optional_decline",
+          "portable::artifact_cache::tests::source_cache_hit_and_miss_debit_the_caller_verification_budget",
+          "portable::artifact_cache::tests::integer_planning_cancellation_propagates_through_cache_routes_and_retries",
+          "portable::artifact_cache::tests::source_cache_distinguishes_source_dependency_phase_and_origin",
+          "portable::artifact_cache::tests::source_cache_unknown_provenance_bypasses_reuse_and_reverifies_graph",
+          "portable::artifact_cache::tests::source_cache_preserves_nan_payload_bits_and_checks_integrity",
+          "portable::artifact_cache::tests::source_cache_rejected_single_entry_releases_accounting_and_recovers",
+          "portable::artifact_cache::tests::source_cache_eviction_keeps_memory_and_entry_counts_bounded"
+        ],
+        "source_and_boot_heads": {
+          "source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "boot": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc"
+        },
+        "selection_sha256": "93f381887c8ecf147975fc3c6b3df162e38812e7c22ff62c566a85fe4a5b8ae2",
+        "start_receipt_sha256": "6fb5e5eca27fac9b5fe2f52676363d0fa75fb1eab180d7996876baff68335594",
+        "terminal_sha256": "ef56e013e1cb06e7658773219ca255cbc3a8db1b88b017cc87f93d90f9e4b7e4",
+        "raw_sha256": "b452cec3445f60c439cd1d7ece4a4f97484a44069bc578e2f5db002f7395fba0",
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 599,
+        "harness_seconds": 3.04,
+        "command_seconds": 235.1698007019986,
+        "all_exact_results": [
+          {
+            "name": "portable::artifact_cache::tests::formatted_fragment_work_is_charged_before_optional_decline",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::integer_planning_cancellation_propagates_through_cache_routes_and_retries",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::key_admission_preserves_real_errors_and_stops_partial_encoding",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::key_decline_preserves_session_fuel_interrupt_and_final_cancellation_poll",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::large_cache_keys_emit_fresh_without_changing_retained_entries",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::large_ir_key_declines_with_small_source_and_matches_fresh_emission",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_distinguishes_source_dependency_phase_and_origin",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_eviction_keeps_memory_and_entry_counts_bounded",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_hit_and_miss_debit_the_caller_verification_budget",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_preserves_nan_payload_bits_and_checks_integrity",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_rejected_single_entry_releases_accounting_and_recovers",
+            "result": "ok"
+          },
+          {
+            "name": "portable::artifact_cache::tests::source_cache_unknown_provenance_bypasses_reuse_and_reverifies_graph",
+            "result": "ok"
+          }
+        ],
+        "measurements": []
+      },
+      {
+        "cohort": "bitwise-ir-all",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--test",
+          "portable_bitwise",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "cached_integer_bits_keep_escaping_box_and_remove_only_repeated_coercions",
+          "integer_chain_emission_omits_the_unobserved_intermediate_number_box",
+          "public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission",
+          "private_binary64_storage_hir_and_ir_check_unary_result_contract",
+          "numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts"
+        ],
+        "source_and_boot_heads": {
+          "source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "boot": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc"
+        },
+        "selection_sha256": "56aa1e1b21a0ee6e869dee0408b291b1cb946175853751b2fec744d163559dd1",
+        "start_receipt_sha256": "34df42290c9b223cfa6c9d6a9e3aa62657c55e2ec4e54e5616b887ce40f0eef3",
+        "terminal_sha256": "9bba05d5b278b9d7f384102825bf35fabdd5d938c70154cad9c67269a4c5eb62",
+        "raw_sha256": "6ea9d8ab84d8f6e738e19a1eb6c1c9c7c920ede7c51085f8b7d22d71de9cd37c",
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 0,
+        "harness_seconds": 0.0,
+        "command_seconds": 270.94658778600024,
+        "all_exact_results": [
+          {
+            "name": "cached_integer_bits_keep_escaping_box_and_remove_only_repeated_coercions",
+            "result": "ok"
+          },
+          {
+            "name": "integer_chain_emission_omits_the_unobserved_intermediate_number_box",
+            "result": "ok"
+          },
+          {
+            "name": "numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts",
+            "result": "ok"
+          },
+          {
+            "name": "private_binary64_storage_hir_and_ir_check_unary_result_contract",
+            "result": "ok"
+          },
+          {
+            "name": "public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission",
+            "result": "ok"
+          }
+        ],
+        "measurements": []
+      },
+      {
+        "cohort": "planner-three",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--lib",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input",
+          "portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide",
+          "portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir"
+        ],
+        "source_and_boot_heads": {
+          "source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "boot": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc"
+        },
+        "selection_sha256": "bd6b57bd856a5ead1ec16f5d64b6ca393fbf4f54dbedd1ee4d3aecda4a779b49",
+        "start_receipt_sha256": "4b969c3dd53b68ffa75d64f4cdb3052c99f127f2df9b21bdb3bea175de6db02e",
+        "terminal_sha256": "272d9f72981a765111dcee9636e611214243b76ea05982dc0ac5bf3ada5528f3",
+        "raw_sha256": "05840a3fcd69b0cd07f7df964ad00f887a350eafb58425b315b6be542649e13e",
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 608,
+        "harness_seconds": 0.0,
+        "command_seconds": 0.3561245839991898,
+        "all_exact_results": [
+          {
+            "name": "portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide",
+            "result": "ok"
+          },
+          {
+            "name": "portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir",
+            "result": "ok"
+          },
+          {
+            "name": "portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input",
+            "result": "ok"
+          }
+        ],
+        "measurements": []
+      },
+      {
+        "cohort": "runtime-three",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--test",
+          "runtime_short_property_keys",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls",
+          "packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors",
+          "packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses"
+        ],
+        "source_and_boot_heads": {
+          "source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "boot": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc"
+        },
+        "selection_sha256": "d1d81b4dcb7ca25be572588e178c63fa45cc16ce051df00ce8ed034e5eaf3260",
+        "start_receipt_sha256": "38e19b8ec03d9c5db49ce48b0a3c084a7ade0b44f124810ee5eb817ae62dc410",
+        "terminal_sha256": "9bb1bf26d8ea918c0a7655b44a73aec9066465860734082608be61b341a789b6",
+        "raw_sha256": "cfce2241d4b20f785ace8a1d515b5e00132aec30a37e0b1e0c081cbf061c8f0f",
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 0,
+        "harness_seconds": 7.01,
+        "command_seconds": 11.168390422000812,
+        "all_exact_results": [
+          {
+            "name": "packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls",
+            "result": "ok"
+          },
+          {
+            "name": "packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses",
+            "result": "ok"
+          },
+          {
+            "name": "packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors",
+            "result": "ok"
+          }
+        ],
+        "measurements": [
+          "test packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls ... short-key nominal-hit existing=537 packed=463",
+          "test packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses ... short-key explicit probe nil-hit fuel=455",
+          "test packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors ... short-key fallback units=[] existing=634 packed=675 (no savings assertion)",
+          "short-key fallback units=[0] existing=643 packed=695 (no savings assertion)",
+          "short-key fallback units=[55296] existing=643 packed=695 (no savings assertion)",
+          "short-key fallback units=[0, 57343, 0, 55296] existing=664 packed=749 (no savings assertion)",
+          "short-key fallback units=[110, 115] existing=634 packed=697 (no savings assertion)"
+        ]
+      },
+      {
+        "cohort": "emitter-two",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--test",
+          "portable_short_property_keys",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "adjacent_short_key_probe_keeps_original_allocation_only_on_miss",
+          "key_escape_in_return_and_closure_capture_keeps_original_allocation"
+        ],
+        "source_and_boot_heads": {
+          "source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "boot": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc"
+        },
+        "selection_sha256": "1536fd26e45de769a084b54fe329b7980c56654e1eb44e2be39ade12fe6bbbb0",
+        "start_receipt_sha256": "9dcf7cb3925bd3ca2f3cd8919bdba13fe0fae08a4245ccb8e80df54dadc0c9b5",
+        "terminal_sha256": "e633e78c3a82874d06068f97b9b81044dbb97b8d4e8612945054fe90ebd6e124",
+        "raw_sha256": "48a86b3d08ae4155fa6efe5d0a2c9e6360ffb15065a61e624e552821b0f86627",
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 0,
+        "harness_seconds": 0.0,
+        "command_seconds": 1.1318631710000773,
+        "all_exact_results": [
+          {
+            "name": "adjacent_short_key_probe_keeps_original_allocation_only_on_miss",
+            "result": "ok"
+          },
+          {
+            "name": "key_escape_in_return_and_closure_capture_keeps_original_allocation",
+            "result": "ok"
+          }
+        ],
+        "measurements": []
+      }
+    ],
+    "scope_assessment": {
+      "cache12": "Actual cache/meters/failure-publication/retry controls, including three new integer cancellation routes; selected existing Session budget tests execute only their own assertions. No transfer to full public macro fixture.",
+      "IR5_and_emitter2": "Encoding/validation/structure assertions; do not prove public value/effect semantics.",
+      "planner3": "Native emission callback cancellation/retry/admission controls; not a complete guest transport replay.",
+      "runtime3": "Actual direct-ABI execution with live schema/payload mutation, late-invalid-schema rejection, rawUTF16 fallback, nil/false hit distinction and GC. Own nominal-hit cost537->463 and adverse fallback costs are fixture-local, not whole-program gains.",
+      "authority": "Integer transplant source scope remains5 reviewed files; Runtime ABI and all source/owner/domain/memo guard sources remain outside that delta, with unchanged production cache metering. No runtime defaults, strict200M controls or source authority relaxation credited.",
+      "published_limits": "Published scope/limits explicitly preserve source qualification, historical controls, unfinished public/default/pinned acceptance and prohibit public-semantic inference from structure. No confirmed overclaim found for this native25 checkpoint."
+    },
+    "live_cli": "Excluded: CLI10 was reported live. Its log/terminal is not read or added to this result. Public short tests, compiled bootstrap4 and later strict controls are likewise not inferred.",
+    "verification_limits": [
+      "This is a postrun source/BOOT/hash match, not an independent run-long source-mutation detector. Retained runner start/terminal metadata bind commands/head; no independent /proc environment attestation.",
+      "Published profile environment is recorded configuration; raw logs show optimized compilation, but this evidence-only review does not re-execute or inspect compiler flag internals.",
+      "No Cargo/VM/oracle/Python test execution or shared edits. Only cache-only parsing/hash/Git reads/writes.",
+      "Not final-head review, acceptance, promotion, full baseline or performance verdict."
+    ]
+  }
 }
