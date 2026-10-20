@@ -1,0 +1,506 @@
+{
+  "scope": "Partial Draft263 source1b evidence; no default-fit/pinned200M or wholeissue acceptance.",
+  "source_commit": "fa4915a9932479a58997667055e1fd4bb33a8493",
+  "bootstrap_commit": "95e60d35e003487b78886bfbc4a25b6d7b25d056",
+  "compiler_source_sha256": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+  "compiler_inputs": 224,
+  "source_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_SOURCE_AND_FEE_REVIEW_ONLY_BORROWED_EXACT_LOOKUP",
+    "approved_for_source_integration": true,
+    "base_commit": "6d0187bf72486213a2db427aebf513f28c87be5c",
+    "patch_sha256": "f4b147c8bc23400a619a5e3eea3d8b09cb0e6119bce261bd8e21a0fe076c21c4",
+    "manifest_sha256": "7aedf81653f734818bd189509c88eea06c0d9efc8e01c6a0890c9788571f9912",
+    "fee_ledger_sha256": "33d8a0c9fb0e2beb03d6c4926cfbdd677b824fbef9a048b6cd44fd289bfe31c3",
+    "path": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+    "before_sha256": "40f68aae09d771d6e30cfd9105a54d0f6b4b64a6c0ec22c22e05610167a3eb46",
+    "after_sha256": "b0a310b3bccc82e0acea42b6b1985e9593c7120b9c2d94f780718b71ac8a8dec",
+    "blockers": [],
+    "integrity": [
+      "All request input hashes verified. Exact baseGit/current preimage and postimage hashes verified; cache-only patch application independently reconstructed exact postimage.",
+      "Whole original test module is byte-exact. Restricted member branch and full-node dedup prefix of origin_contains are byte-exact. Only two lookup function bodies change."
+    ],
+    "scope_and_error_review": [
+      "Exact local-original-output priority is preserved before linked-reference priority; linked selection still uses exact ref_eq and owner.retained preserving Node/terminal scope. Strict Source lookup remains final fallback in original relative order. No seed-interior to container reversal or equality join introduced.",
+      "Borrowed SessionValue/FactoryPoint reads remain protected by state guard. Existing values_identical owner checks and frontend/native checkpoint/ref_eq/restore are unchanged; no guest transformer or source callback is invoked. Its success path leaves the captured dynamic frame unchanged. There is no new callback window.",
+      "Parent state guard ends before seed.original_member traversal and before original_factory_origin on a child domain. No parent/child lock nesting introduced.",
+      "Exact-root/seed hits can avoid previously eager unused edge allocations. Return/proof values are unchanged; typed errors from work still performed propagate via?. Removed allocation/fuel failures from unused work are not promised identical old error timing.",
+      "All sealed/current full predecessor payload, class/prototype/method, source-safe719 and target-only staged receipt validation remain unchanged outside these two functions. No proof verdict cached across callbacks."
+    ],
+    "accounting": [
+      "Borrowed root scan retains8 per node and3 per eligible comparison plus unchanged exact-identity helper charges. Selected point retains actual sizeof creation/retirement.",
+      "Linked scan pays4 per tag and3 per comparison; only selected scoped owner is retained and charged. Unused clones and inventories are actually removed, not merely discounted.",
+      "Strict Source fallback prepays vector header/lifecycle/control, each tag iteration, actual incremental reserve/growth/relocation/retirement and root/Arc copies. Guard dropped before original child lookup; selected comparisons retain original tariffs.",
+      "origin_contains prepays borrowed lock/index/eligibility/read controls; seed Arc retained onlywhenSome with explicit copy/drop fee. Edge-vector header/rechecks/reserve and each edge clone remain paid before expansion. Original immediate/pending/seen/snapshot tariffs are preserved.",
+      "No tariff, allowance, original test, whole-domain validation or callback ordering change. No sourcecost/default10M-fit or pinned200M benefit claim follows."
+    ],
+    "execution": "Source candidate remains unexecuted/typecheck pending. Previous c5full25PASS, defaultconstructor10Mfuel failure, pinnedmap200Mtransport failure andidentifier15PASS remain source-qualified old evidence; not transferred to this candidate.",
+    "actions": {
+      "cargo": false,
+      "vm": false,
+      "shared_edits": false,
+      "producer_actions": false,
+      "cache_only": true
+    }
+  },
+  "bootstrap": {
+    "head": "fa4915a9932479a58997667055e1fd4bb33a8493",
+    "compiler_source_sha256": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "inputs": 224,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 90.73449958197307,
+    "raw_sha256": "8bb66a1e8284d4a7906c43e8e0332b0504a475e5ab88a107c14779b1e88d4dc1"
+  },
+  "compiled_identity": {
+    "actual_fingerprint": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "inputs": 224,
+    "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "f7924bf8bc11bfe53180c5f052f9edb6a7131585ca84924e53d2991ef136f4bb",
+    "source_commit": "fa4915a9932479a58997667055e1fd4bb33a8493",
+    "exact_input_paths_and_current_hashes_verified": true
+  },
+  "adoption_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+    "head": "fa4915a9932479a58997667055e1fd4bb33a8493",
+    "tree": "2b0423a3224abad570a01df2c602ff58a7b707a4",
+    "clean_head_and_current_git_inputs_verified": true,
+    "terminal_sha256": "2a9fa3ce7b1936242aa1ac3bb381323e2e2dfbc353095b7d59635b184df3d8b5",
+    "generator_receipt_sha256": "de46ef7e3234e1ea1ef4286e62c55ab2a0fef3dfc9472be47b9943e6c6d20e57",
+    "source_fingerprint": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "git_source_inputs_verified": 224,
+    "eight_output_hashes_and_sizes_verified": true,
+    "four_first_second_pairs_byte_exact": true,
+    "phase_comparison": {
+      "runtime": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "a19bdac5e3ee5510a1c4a22ab35aeda0413fa307d8ddacf30908ba53fc4ed290",
+            "new_sha256": "a86392ce55eb47da7a0013b8f28cf1196fcf60196346c6b76cf671b94f1a4082"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "d53f21798a9c948d5589f06aa6b72082cc3f6922d8cc00c89468070223aabcce",
+        "new_json_sha256": "0521700a9a6fc89bd8395e2130d3d77c09db613e0f8296d2dee4b2dd6f2a409b"
+      },
+      "macro": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "0b3d4a3e815b5433fdfe30e60e79c41450e0aeffeb642b45ef17082ab65f77da",
+            "new_sha256": "f17815f3d814c75dc415c1898ae06e0071e1f8db3062683173800c577a005ae1"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "cc2f630f6c286dc45a849558661a664c193e6d4dab77d8c2932bcc2cdd0fab42",
+        "new_json_sha256": "c16662d37c7de02f63471b1546a4f5422ac1c678b1daa30d574903b80172d731"
+      }
+    },
+    "allowlist": {
+      "runtime/bootstrap/runtime.wasm": {
+        "source": "diagnostics/first/runtime.wasm",
+        "sha256": "d53f21798a9c948d5589f06aa6b72082cc3f6922d8cc00c89468070223aabcce"
+      },
+      "runtime/bootstrap/runtime.json": {
+        "source": "diagnostics/first/runtime.json",
+        "sha256": "0521700a9a6fc89bd8395e2130d3d77c09db613e0f8296d2dee4b2dd6f2a409b"
+      },
+      "runtime/bootstrap/macro.wasm": {
+        "source": "diagnostics/first/macro.wasm",
+        "sha256": "cc2f630f6c286dc45a849558661a664c193e6d4dab77d8c2932bcc2cdd0fab42"
+      },
+      "runtime/bootstrap/macro.json": {
+        "source": "diagnostics/first/macro.json",
+        "sha256": "c16662d37c7de02f63471b1546a4f5422ac1c678b1daa30d574903b80172d731"
+      }
+    },
+    "qualification": "Normal hostopt2 generation90.734500s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, focused/defaultconstructor/pinned/CORE/public-macro semantic or acceptance credit.",
+    "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations"
+  },
+  "pure_identity": {
+    "head": "95e60d35e003487b78886bfbc4a25b6d7b25d056",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "exit_code": 0,
+    "seconds": 1.1363256340264343,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "focused23": {
+    "head": "95e60d35e003487b78886bfbc4a25b6d7b25d056",
+    "source_commit": "fa4915a9932479a58997667055e1fd4bb33a8493",
+    "compiler_source_sha256": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "input_count": 224,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+      "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+      "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+      "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+      "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+      "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+      "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority"
+    ],
+    "selection": {
+      "exact_names": [
+        "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+        "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+        "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+        "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+        "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+        "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+        "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+        "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+        "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+        "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority"
+      ],
+      "scope": "19 complete existing snapshot/seed/factory tests plus four new original-subroot scoped membership regressions. No public semantic or whole-issue acceptance credit."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 0,
+    "seconds": 174.76065027003642,
+    "raw_sha256": "b8cb4c520bf3a007124a64b5f2f646d9bec4fae9faebcbfe4b89d8e050884ba1"
+  },
+  "focused23_result": {
+    "pass": 23,
+    "fail": 0,
+    "ignored": 0,
+    "harness_seconds": 37.04,
+    "assertions": "Alloriginal23samebody root/subroot/opaque/seed/multigeneration/currentpayload/owner/fuel/IRQ/no-publication/retry and lifetime checks execute."
+  },
+  "default_constructor": {
+    "head": "95e60d35e003487b78886bfbc4a25b6d7b25d056",
+    "source_commit": "fa4915a9932479a58997667055e1fd4bb33a8493",
+    "compiler_source_sha256": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "input_count": 224,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_constructor_source_asts",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+    ],
+    "selection": {
+      "exact_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 174.07276710501174,
+    "raw_sha256": "3a5d92f56be2eb5aaff5f96155dfb4600a195e7a3c3f773d68cb07c439342337"
+  },
+  "default_constructor_result": "0PASS1FAIL0ignored1filtered;40.83s harness. SamefirstRuntimeenvinputtransportOutFuelspan83..108 atunchanged10M; assertions/Macrounreached. Actualremovedworkdoesnotestablishdefaultfit.",
+  "diagnostic": {
+    "scope": "Diagnostic Macro100B/caller10M complete original programs/assertions; NOTdefaultfit/acceptance. Completed adjacent fuel deltas; includesguest+host consumption, noexclusivecause/walltimesavings claim.",
+    "source": "fa4915a/1b2e761f/224/BOOT95e60d3",
+    "phases": {
+      "Runtime": {
+        "start": 99999973604,
+        "provenance": 99999973343,
+        "caller-form": 99999973340,
+        "caller-environment": 99759891189,
+        "arguments": 99759883172,
+        "invoked": 99759754160,
+        "decoded": 99759753976,
+        "completed_nonoverlapping_stage_units": {
+          "setup": 26396,
+          "provenance": 261,
+          "caller-form": 3,
+          "caller-environment": 240082151,
+          "arguments": 8017,
+          "invoked": 129012,
+          "decoded": 184
+        }
+      },
+      "Macro": {
+        "start": 99999975417,
+        "provenance": 99999975156,
+        "caller-form": 99999975153,
+        "caller-environment": 99759902710,
+        "arguments": 99759894693,
+        "invoked": 99759765681,
+        "decoded": 99759765497,
+        "completed_nonoverlapping_stage_units": {
+          "setup": 24583,
+          "provenance": 261,
+          "caller-form": 3,
+          "caller-environment": 240072443,
+          "arguments": 8017,
+          "invoked": 129012,
+          "decoded": 184
+        }
+      }
+    },
+    "raw_sha256": "feea75786e83bae8b1ac558ecfb7ea672e2751d8ad0acfb717e2712733de245e",
+    "restoration": {
+      "original_test_file_restored_exactly": true,
+      "sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2"
+    }
+  },
+  "diagnostic_review": {
+    "reviewer": "Carver",
+    "verdict": "VERIFIED_DIAGNOSTIC_EQUIVALENCE_ONLY_NOT_DEFAULT_ACCEPTANCE",
+    "manifest_sha256": "091b7573f325546a693e75d9bc52ae40ae4ecf43328bad2ce09535d79af06842",
+    "script_sha256": "631d85ed1e96753b401a70d9db0d586075efe1b1b4537f931e52d3b3ddae4dd3",
+    "original_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+    "diagnostic_sha256": "bdb85b718c510dececcf31c1a3fda8113314346939e92aca50f3e120ba79e10a",
+    "source_head": "95e60d35e003487b78886bfbc4a25b6d7b25d056",
+    "compiler_fingerprint": "1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22",
+    "compiler_inputs_verified_unchanged": 224,
+    "checks": [
+      "Original entire integration file is a byte-exact prefix of diagnostic.rs; executed-head originalGitblob equals before.rs.",
+      "Appended function inverse-exact to original after removing only renamedselector,phase-label logging/loop labeling and oneCompiledMacros100Bsetter. Bothoriginalguestprograms,caller10Massert,GC andfullop/children/field42expectedvalue preserved.",
+      "Originaldefault10Mtest andthelargecorpus test remain unmodified. CLI testappendix is outside224 compilerinputs; current compilerhashesunchanged.",
+      "Trace flag uses existing macro-fuel instrumentation. No new guestcallback/source hook introduced."
+    ],
+    "classification": "Separate higher-Macro-allowance diagnostic only. A PASS would establish complete originalsemanticprojection at100B, not default10Macceptance, performance improvement or proof of any single native cost source. Completed trace stages may measure request intervals; unfinished tails remain unknown and constructor setup/define traces must be separated from target invocation.",
+    "controller_observations": [
+      "Normal subprocess.run return reaps its directCargo child before finally restores knownexactpostimage to knownoriginalbytes. Unknownbytesrefuseoverwrite.",
+      "Script lacks ownedprocessgroup/signalhandler/drain guard before finally. On KeyboardInterrupt/exception with descendants alive, restore safety is not established. Do not claim signal-safe/drained restoration; main should let normalcompletion/drain finish or perform its own knownowned cleanup before restoration.",
+      "Sourcewrite/startreceipt occur beforetry; an exception writing start.json could leave overlay withoutfinally. This branch has already passed in the live run, so no interruption or sourceedit requested.",
+      "No current execution verdict or restoration success claimed by thispreflight. Main-owned actualterminal/restore/drainreceipt stillneeded."
+    ],
+    "actions": {
+      "cargo": false,
+      "vm": false,
+      "shared_edits": false,
+      "producer_actions": false
+    }
+  },
+  "profiling": {
+    "scope": "DIAGNOSTIC_STACKS_ONLY_NOT_DEFAULT_ACCEPTANCE_OR_EXCLUSIVE_FUEL_ATTRIBUTION",
+    "source": "fa4915a/1b2e761f/224/BOOT95e60d3",
+    "observed_path": [
+      "Session::consume_host_work",
+      "StorageSnapshot::original_member",
+      "CanonicalSeed::original_member",
+      "WriteDomain::record",
+      "FormBridge::array",
+      "FormBridge::map_node",
+      "AnalysisGraph::produce_native_recipe",
+      "AnalysisGraph::expansion_catalog"
+    ],
+    "completed_diagnostic_program": "Bothcallerphases with Macro100B/caller10M; originaldefaultcontrol remains0PASS1FAIL. Three separate completed debuggerinferiors; their walltimes include debuggerstops and are notperformance evidence.",
+    "limits": [
+      "First broad stop wasJITinitialization and grantsnoenvattribution.",
+      "Conditional100000charge sampling wasinterrupted/disabledwithoutaqualifyinghit; noabsence/dominance inference.",
+      "A captured env stack traversed original snapshot members during HAMT map-array construction; one stack doesnotproveexclusivefuel cost.",
+      "Original complete source-snapshot nodeinventory is byconstruction reachablefromitscaptureRoot; potential root-only linear membership lookup requires independentreview and tests, while scopedNode/terminal queriesmust staydownward."
+    ]
+  },
+  "profiling_restoration": {
+    "original_file_restored_exactly": true,
+    "sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+    "inferior_terminal_before_restore": true,
+    "gdb_log_sha256": "06fd176747da5479d74bb6cd0abe4e6c4a3a47492d1b89f26880ac9d3a2f4b1f"
+  },
+  "old_c5_baselines": {
+    "scope": "Old c5 baseline only; no new1b execution/default-fit credit.",
+    "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+    "source_fingerprint": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+    "compiler_inputs": 224,
+    "default_constructor": {
+      "head": "67ec7a2cd049d4f28218917ddf8f392181ae57dc",
+      "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+      "compiler_source_sha256": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+      "input_count": 224,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 184.4281179580139,
+      "raw_sha256": "88af8331f3e9c210fe5f48eeecd96e850b87b68ff25db161953b8ee34fffda57"
+    },
+    "pinned_pair": {
+      "head": "6d0187bf72486213a2db427aebf513f28c87be5c",
+      "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+      "predicted_source_fingerprint": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+      "source_input_count": 224,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ],
+      "trace_environment": {},
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original unchanged pinned map69 and identifier15 bodies, originalMacro200M/caller200M. Fresh capture directory and independentcomparisonrequired; exactIDs/operand/verdictchecks remain. No source/metadata/observation reduction or quota/ratechange. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 193.07471869001165,
+      "raw_sha256": "432e9e9482dee1745066d79b47b570528e54fd9740b043ee09dee82b3089dce6"
+    },
+    "map_comparison": {
+      "counts": {
+        "pass": 0,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 69,
+        "skipped": 0,
+        "namespaces-failed": 1
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {
+          "clojure.core-test.map": {
+            "stage": "macro",
+            "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:  0x13f40 - <unknown>!<wasm function 327>\n    1:  0x1588d - <unknown>!<wasm function 328>\n    2:  0x19cd2 - <unknown>!<wasm function 362>\n    3:  0xed16d - <unknown>!<wasm function 1069>\n    4:   0xe03e - <unknown>!<wasm function 185>\n    5:  0x10437 - <unknown>!<wasm function 276>\n    6:  0x10461 - <unknown>!<wasm function 277>\n    7:  0xef136 - <unknown>!<wasm function 1085>\n    8:   0xe0e7 - <unknown>!<wasm function 186>\n    9:  0xf326b - <unknown>!<wasm function 1121>\n   10:  0xed263 - <unknown>!<wasm function 1069>\n   11:   0xe03e - <unknown>!<wasm function 185>\n   12:  0x10437 - <unknown>!<wasm function 276>\n   13:  0x10461 - <unknown>!<wasm function 277>\n   14:    0x1cd - <unknown>!<wasm function 5>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+          }
+        },
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": false,
+      "expected_count": 69,
+      "actual_count": 0,
+      "observations_sha256": "bead86e0e1745f2a186156eee4da9541627c741641c90e7b8473dac7f6cb499b",
+      "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+      "accepted": false
+    },
+    "identifier_comparison": {
+      "counts": {
+        "pass": 15,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 0,
+        "skipped": 0,
+        "namespaces-failed": 0
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {},
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": true
+    },
+    "fresh_captures": {
+      "map-transport-observations.json": "bead86e0e1745f2a186156eee4da9541627c741641c90e7b8473dac7f6cb499b",
+      "identifier-observations.json": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317"
+    },
+    "classifications": [
+      "DefaultCtor10M: firstRuntime caller &env inputtransport OutFuel span83..108, assertions/Macrounreached.",
+      "Map200M: expandedresulttransport OutFuel span239..5926; zero69IDs,69notexecuted,not69semanticfailures.",
+      "Identifier200M: all15orderedhostPASS,0guest/fail/skip/missing."
+    ]
+  },
+  "limitations": [
+    "Onlytwo lookupfunctions changed; copied/stagedunusedinventoriesremoved, no tariff/quota/testbody change.",
+    "Diagnosticfullprogram+assertionsbothphases passesonlywithMacro100B/caller10M; notdefaultacceptance. Adjacentstagecost~240Menv includesguest+host, notexclusiveculprit attribution.",
+    "GDBoneenvstacksampleoriginal_snapshot_member duringmap_node; no dominantfraction/performanceclaim. Debuggerstopsmeanwalltimesnotcomparable. TemporaryCLIappendrestoredexactly.",
+    "Oldc5full25/48PASS remainsoldsourcequalified; current1bfull25/Symbol/public719/source-tag/pinned/default-core/source-child/workspace/finalCI unproven.",
+    "Oldc5map69zeroobservations means69notexecuted,not69semanticfailures; identifier15hostPASS at200M."
+  ]
+}
