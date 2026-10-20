@@ -139,7 +139,7 @@ impl InputIndex<'_> {
 }
 
 pub(crate) enum Fact {
-    Scalar(ScalarInputs),
+    Scalar(std::sync::Arc<ScalarInputs>),
     Array(Box<SourceArrayInputs>),
     Constructor(Box<ConstructorInputs>),
     CanonicalSeed(std::sync::Arc<super::canonical_seeds::CanonicalSeed>),

@@ -130,8 +130,9 @@ impl WriteDomain {
         }
         for (index, node) in state.nodes.iter().enumerate() {
             session.charge_host_work(5)?;
-            if (node.snapshot.is_some() || node.seed.is_some())
-                && session.values_identical(root, &node.value)?
+            session.charge_host_work(8)?; // original-storage dispatch + value accessor
+            if node.has_original_storage()
+                && session.values_identical(root, node.value())?
             {
                 session.charge_host_work((2 * std::mem::size_of::<FactoryOrigin>() + 6) as u64)?;
                 session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 6) as u64)?;
@@ -224,7 +225,8 @@ impl WriteDomain {
                     let state = registry_lock(&domain.state);
                     if !state.sealed { return Ok(None); }
                     session.charge_host_work((2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64)?;
-                    state.nodes.get(point.node).and_then(|node| node.seed.clone())
+                    session.charge_host_work(3)?; // seed variant/option access
+                    state.nodes.get(point.node).and_then(|node| node.seed().cloned())
                 };
                 let Some(seed) = seed else { return Ok(None); };
                 if let Some(descendant) = seed.original_member(session, value, Some(member))? {
@@ -260,15 +262,18 @@ impl WriteDomain {
                 let Some(node) = state.nodes.get(point.node) else {
                     return Ok(None);
                 };
-                if node.snapshot.is_none() && node.seed.is_none() {
+                session.charge_host_work(5)?; // original-storage variant/option checks
+                if !node.has_original_storage() {
                     continue;
                 }
                 session.charge_host_work(3)?; // borrowed root and match controls
-                if session.values_identical(value, &node.value)? {
+                session.charge_host_work(3)?; // original exact value accessor
+                if session.values_identical(value, node.value())? {
                     return Ok(Some(point));
                 }
                 session.charge_host_work(2)?;
-                match &node.seed {
+                session.charge_host_work(3)?; // seed accessor
+                match node.seed() {
                     Some(seed) => {
                         session.charge_host_work(
                             (2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64,
@@ -301,8 +306,10 @@ impl WriteDomain {
                     return Ok(None);
                 };
                 let mut edges = Vec::new();
-                reserve_factory(session, &mut edges, node.edges.len())?;
-                for edge in &node.edges {
+                session.charge_host_work(3)?; // one borrowed edge slice accessor
+                let original_edges = node.edges();
+                reserve_factory(session, &mut edges, original_edges.len())?;
+                for edge in original_edges {
                     session.charge_host_work(
                         (2 * std::mem::size_of::<SessionValue>() + 3) as u64,
                     )?;
@@ -342,11 +349,13 @@ impl WriteDomain {
             // existing rooted ref_eq helper, with no guest call or recapture.
             for (index, node) in state.nodes.iter().enumerate() {
                 session.charge_host_work(8)?; // iterator/index/eligibility controls
-                if node.snapshot.is_none() && node.seed.is_none() {
+                session.charge_host_work(5)?; // original-storage variant/option checks
+                if !node.has_original_storage() {
                     continue;
                 }
                 session.charge_host_work(3)?; // original exact-comparison controls
-                if session.values_identical(value, &node.value)? {
+                session.charge_host_work(3)?; // original exact value accessor
+                if session.values_identical(value, node.value())? {
                     session.charge_host_work(
                         (2 * std::mem::size_of::<FactoryPoint>() + 6) as u64,
                     )?;
@@ -441,8 +450,9 @@ impl WriteDomain {
                 let mut local = false;
                 for node in &state.nodes {
                     session.charge_host_work(3)?;
-                    if (node.snapshot.is_some() || node.seed.is_some())
-                        && session.values_identical(edge, &node.value)?
+                    session.charge_host_work(8)?; // eligibility + original value access
+                    if node.has_original_storage()
+                        && session.values_identical(edge, node.value())?
                     {
                         local = true;
                         break;
@@ -515,8 +525,9 @@ impl WriteDomain {
                 let mut local = false;
                 for node in &state.nodes {
                     session.charge_host_work(3)?;
-                    if (node.snapshot.is_some() || node.seed.is_some())
-                        && session.values_identical(edge, &node.value)?
+                    session.charge_host_work(8)?; // eligibility + original value access
+                    if node.has_original_storage()
+                        && session.values_identical(edge, node.value())?
                     {
                         local = true;
                         break;
@@ -721,8 +732,8 @@ impl WriteDomain {
             let mut watches = Vec::new();
             reserve_store(store.as_context_mut(), irq, &mut watches, state.nodes.len())?;
             for node in &state.nodes {
-                Session::consume_host_work(store.as_context_mut(), 5, irq)?;
-                if let Some(watch) = node.watch.as_ref().and_then(Weak::upgrade) {
+                Session::consume_host_work(store.as_context_mut(), 8, irq)?; // original5 + watch accessor3
+                if let Some(watch) = node.watch().and_then(Weak::upgrade) {
                     watches.push(watch);
                 }
             }
@@ -924,7 +935,7 @@ mod tests {
         state
             .nodes
             .iter()
-            .find_map(|node| node.watch.as_ref().and_then(Weak::upgrade))
+            .find_map(|node| node.watch().and_then(Weak::upgrade))
             .unwrap()
     }
     fn hash(session: &mut Session, value: &SessionValue) -> SessionValue {
@@ -1438,8 +1449,8 @@ mod tests {
         let state = registry_lock(&domain.state);
         let mut selected = None;
         for node in &state.nodes {
-            if session.values_identical(&node.value, &owner.value).unwrap()
-                && let Some(watch) = node.watch.as_ref().and_then(Weak::upgrade)
+            if session.values_identical(node.value(), &owner.value).unwrap()
+                && let Some(watch) = node.watch().and_then(Weak::upgrade)
             {
                 assert!(selected.is_none(), "output must have one recorded memo watch");
                 selected = Some(watch);
@@ -1709,6 +1720,69 @@ mod tests {
             assert!(output_watch(session, &owner).matches(session).unwrap());
             drop(operation);
         }
+    }
+
+    #[test]
+    fn original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let units = vec![0u16, 0xd800, 65];
+        let recording = bridge.recording(&mut session).unwrap();
+        let value = recording.scalar(&mut session, &Literal::String(units.clone())).unwrap();
+        // Same ledger, genuine unused output: not a descendant of the scalar root.
+        let sibling = recording.scalar(&mut session, &Literal::String(vec![17])).unwrap();
+        let producer = finished(&mut session, recording, value);
+        let offered = origin(&mut session, &producer);
+        assert!(offered.point.member.is_none());
+        let exact = WriteDomain::origin_contains(&mut session, &offered, &producer.value)
+            .unwrap().expect("the original scalar root must remain selectable");
+        assert!(exact.member.is_none(), "scalar root must not mint a seed member");
+        assert!(WriteDomain::origin_contains(&mut session, &offered, &sibling).unwrap().is_none(),
+            "an unrelated same-recording output is not a scalar descendant");
+        let other = bridge.recording(&mut session).unwrap();
+        let equal_value = other.scalar(&mut session, &Literal::String(units.clone())).unwrap();
+        let equal = finished(&mut session, other, equal_value);
+        assert!(!session.values_identical(&producer.value, &equal.value).unwrap());
+        assert!(WriteDomain::origin_contains(&mut session, &offered, &equal.value).unwrap().is_none(),
+            "equal raw UTF16 is not the original receiver");
+
+        // Actual array/Vector factories consume the original external scalar edge.
+        // The offer is installed through the real producer API, never a test link.
+        let recording = bridge.recording(&mut session).unwrap();
+        recording.bind_original_factory_inputs(&mut session, &[offered]).unwrap();
+        let value = recording.vector_values(&mut session, &[producer.value.clone()]).unwrap();
+        let first = finished(&mut session, recording, value);
+        assert!(complete_domain(&mut session, &first));
+        let first_origin = origin(&mut session, &first);
+        let recording = bridge.recording(&mut session).unwrap();
+        recording.bind_original_factory_inputs(&mut session, &[first_origin]).unwrap();
+        let value = recording.vector_values(&mut session, &[first.value.clone()]).unwrap();
+        let second = finished(&mut session, recording, value);
+        let scalar_origin = origin(&mut session, &producer);
+        assert!(WriteDomain::origin_contains(&mut session, &scalar_origin, &first.value).unwrap().is_none(),
+            "scalar permission cannot climb into its consumer/ancestor");
+        session.collect().unwrap();
+        assert!(complete_domain(&mut session, &first));
+        assert!(complete_domain(&mut session, &second));
+
+        // Mutate only the genuine original scalar storage, not an expected witness.
+        // A second-generation validation must revisit its producer's current data.
+        session.inspect(&producer.value, |mut store, value| {
+            value.unwrap_anyref().unwrap().as_array(&store)?.unwrap()
+                .set(&mut store, 2, Val::I32(66))?;
+            Ok(())
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(!complete_domain(&mut session, &first));
+        assert!(!complete_domain(&mut session, &second), "no cached predecessor health");
+        session.inspect(&producer.value, |mut store, value| {
+            value.unwrap_anyref().unwrap().as_array(&store)?.unwrap()
+                .set(&mut store, 2, Val::I32(65))?;
+            Ok(())
+        }).unwrap();
+        session.collect().unwrap();
+        assert!(complete_domain(&mut session, &first));
+        assert!(complete_domain(&mut session, &second));
     }
 
 }
