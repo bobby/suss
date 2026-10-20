@@ -259,7 +259,7 @@
     },
     "scope": "Only these exact complete tests; no broader acceptance credit."
   },
-  "initialization_two_status": "RUNNING_NO_VERDICT",
+  "initialization_two_status": "PASS_2_FAIL_0_IGNORED_0_FILTERED_601",
   "prior_source169_default": {
     "head": "6ce0982f7f4b4ccaa580cb51c66b8da392d33a15",
     "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
@@ -367,5 +367,82 @@
     "findings": [],
     "pending": "Normal generation is live; no generated artifact adoption or semantic acceptance reviewed here.",
     "execution": "Read-only Git/cache/source plus cache-only receipt; no Cargo/VM/shared edits."
-  }
+  },
+  "initialization_two_terminal": {
+    "head": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macros::initialization_budget_tests::fixed_macro_initialization_restores_default_and_replacement_caller_limits",
+      "portable_macros::initialization_budget_tests::fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery"
+    ],
+    "selection": {
+      "exact_names": [
+        "portable_macros::initialization_budget_tests::fixed_macro_initialization_restores_default_and_replacement_caller_limits",
+        "portable_macros::initialization_budget_tests::fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery"
+      ],
+      "scope": "ActualfixedMacroinitialization/default&customcallerrestoration/1-unittrap/no publication/defaultmacro17; sameStorecumulativefixed-sourceanalysis/guestexecution, nativefuelIRQ/no publish/recovery23."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 0,
+    "seconds": 366.53142522400003,
+    "raw_sha256": "f21b6ef4d830142baeaa69cb65ec441dde06e9d1b1fcf9949cb7a0c4855f8851"
+  },
+  "initialization_two_independent_review": {
+    "reviewer": "Carver",
+    "verdict": "VERIFIED_EXACT_TWO_INITIALIZATION_REGRESSIONS_PASS",
+    "executed_head": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+    "current_head": "89265e05f71ba9f4b118ed48e49915a2f2f52532",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "all_frozen_inputs_current_and_executed_git_source_equal": true,
+    "boot_hashes": {
+      "runtime/bootstrap/runtime.wasm": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb",
+      "runtime/bootstrap/runtime.json": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12",
+      "runtime/bootstrap/macro.wasm": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22",
+      "runtime/bootstrap/macro.json": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec"
+    },
+    "identity_terminal_verified": true,
+    "exact_names": [
+      "portable_macros::initialization_budget_tests::fixed_macro_initialization_restores_default_and_replacement_caller_limits",
+      "portable_macros::initialization_budget_tests::fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery"
+    ],
+    "result": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 601,
+      "harness_seconds": 91.28,
+      "command_seconds": 366.53142522400003
+    },
+    "raw_sha256": "f21b6ef4d830142baeaa69cb65ec441dde06e9d1b1fcf9949cb7a0c4855f8851",
+    "executed_assertion_scope": [
+      "Default returned macro Store fuel/options10M; active initializer setter rejected with both unchanged.",
+      "Real user1-unit define typedOutOfFuel/no definition publication; same host default-budget define and actual caller expansion17.",
+      "Fresh custom77777777 replacement Store/options exact; user1-unit define still typed failure/no publication.",
+      "Nested fixed-source prepare sees preconsumed remaining10000, typedOutOfFuel/Store0 and no published lookup.",
+      "Active-scope IRQ before helper entry yields typedInterrupt/Store0; subsequent fresh operation compiles definition23 and reads value23 at unchanged default."
+    ],
+    "limits": "These assertions now actually executed. Entry IRQ test is not arbitrary mid-guest timing proof. No default constructor, namespace/callable, CORE, source-tags, pinned-map, full baseline or final acceptance verdict. Main default replay untouched.",
+    "receipt_hashes": {
+      "initialization-two-terminal.json": "eb0721a0fdb451a171a20648c8ec94563e21bbd2cf6a4e9eec4be145543aa7fa",
+      "source-freeze.json": "3fabf9f3d8999f2e6ab921e0dfbee98c9253a2aac33a1bca932ca5bb13c07afb",
+      "identity-terminal.json": "2e802337c8917ba5775cfd1094e68f9345cd47db44a1dca4e18d5961735d60f9",
+      "independent-adoption-review-cicero.json": "21b1f4aa7cbac351ee0cb3504a43318a98f48eececf95188b7fc745f20efe960"
+    },
+    "execution": "Read-only cache/Git/current source; cache-only receipt. No Cargo/VM/shared edits."
+  },
+  "limits": "Initialization regressions pass; default constructor10M replay is running with no verdict. Public namespace/callable full probes and original14 preservation must replay on this source; pinned/source-tags/literal/defaultCORE/source-child/workspace/final-head CI/review remain unproven."
 }
