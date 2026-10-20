@@ -30499,3 +30499,24 @@ Original pinned2 replay75178 now terminal1PASS/1FAIL/0ignored on9730ab4/source31
 Olda04CIintegration3 is separately classified atpr263-ci-a04d468-v1/integration3-terminal-audit.json; it is not a new-source CI verdict.
 
 Separate future work (excluded from sparse validation): missing543 HIR GeneralFunction self-binding-owner cachepacket71555 is source-only/cross-review pending. Defaultcore17+COW probe50681 runs on unchangedsource316a, no verdict. Keep current map gateFAIL and olde294failure separate.
+
+
+### Named-function ownership and compilation test calibration (2026-10-19)
+
+Production commit `215e55d` shares completed named-function self parameters instead of deep-copying them. Six focused native HIR tests pass. The normal two bootstrap generations agree, the exact four outputs were independently reviewed and adopted in `b0c5091`, and compiled source identity verification passes. Compiler fingerprint: `e497f67802dbcec53e673f9f24e7d0164b3964007027a62bfcae7d94170def18` over 222 inputs. These native tests do not establish public macro or core acceptance.
+
+All 17 unchanged `core_import` tests fail during common `Session::eval(CORE)` preparation at the default native 10M allowance (span 161702..161706); their Runtime assertions do not execute. A separate finite-budget diagnostic measures 17,476,366 units for preparation after parsing, excluding parsing and source-byte charges. It does not measure a full Session operation or establish default-budget acceptance.
+
+Test-only commit `b3ea5b6` raises both semantic compilation helpers from 10B to 100B and calibrates the three identity probes' Macro allowance from 10M to 100B. Caller Runtime limits, production defaults, strict core/source-child controls, pinned 200M controls and dedicated exhaustion/recovery controls remain unchanged. Both identity test targets compile. The source-tag tests separately retain inference 1T / invocation 100B allowances; neither has a completed current-source verdict.
+
+The first calibrated shared-environment test failed because its fixture read absent raw declaration `:init`, then indexed an empty vector. Commit `8f1e4cf` changes only that lookup to the existing source-callable method body. It preserves all three independent requests per phase, GC and every count/identity assertion. At this snapshot the two original namespace/callable tests and corrected companion are running; no verdict is claimed.
+
+```sh
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+cargo test -p suss-cli --locked --test core_import -- --test-threads=2 --nocapture
+SUSS_MACRO_FUEL_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_namespace_identity --test compiled_macro_shared_environment_admission -- --nocapture --test-threads=2
+```
+
+Use one producer, a private writable TMPDIR and bounded workers; do not set RUSTFLAGS. The companion evidence records the exact six-test native command, timings, raw hashes and source scopes. Local caches: `pr263-named-self-owner-production-v1`, `pr263-semantic-compilation-calibration-b0c5091-v1`, `pr263-identity-focused-calibrated-e497-v1`. The last contains the active runner and eventual terminal receipt. Earlier pinned map failure remains tied to source316a; no current-source map, full baseline or final-head CI success is claimed.

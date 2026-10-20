@@ -1,0 +1,113 @@
+{
+  "status": "FINAL_PUBLICATION_RUNNING_SNAPSHOT_NO_IDENTITY_VERDICT",
+  "HEAD": "8f1e4cface9a6c8d85573c71b8d7b5988054282d",
+  "production_source": "215e55d3f542e3d9e4b22049ca92856372e9bc3d",
+  "compiler_source_sha256": "e497f67802dbcec53e673f9f24e7d0164b3964007027a62bfcae7d94170def18",
+  "inputs": 222,
+  "BOOT": "b0c5091b20a0ff87b87d4d62e89230acc7932e3b",
+  "native": {
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0,
+    "harness_seconds": 0.07,
+    "seconds": 245.92341881501488,
+    "raw_sha256": "e3b8d5a9778d1dd1673807139e575f0538b39aa0856ec8f0357bb3b81ba4ac1c",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "portable::hir::local_bindings::ownership_tests::self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload",
+      "portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity",
+      "portable::hir::destructuring::tests::parameter_binding_qualified_shorthand_and_hygiene_preserve_local_metadata",
+      "portable::hir::destructuring::tests::parameter_binding_primitive_fn_star_stays_strict_and_bad_rest_fails",
+      "portable::hir::local_bindings::ownership_tests::direct_definition_function_retains_actual_provisional_owner_and_nested_def_restores_parent",
+      "portable::hir::local_bindings::ownership_tests::replaced_equal_function_and_nested_function_use_owned_fallback_defonce_reuses_actual_owner",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "NativeHIR only; no publicSession/defaultCORE credit."
+  },
+  "CORE17": {
+    "passed": 0,
+    "failed": 17,
+    "harness_seconds": 10.51,
+    "seconds": 266.4908693920006,
+    "raw_sha256": "a29f3fdefee74ab9ee821393cfa4c3c3ceebf5979bc452e70815d87f76d19940",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "core_import",
+      "--",
+      "--test-threads=2",
+      "--nocapture"
+    ],
+    "scope": "All17 commonSession.eval(CORE) NoExpansion native10M setupFAIL161702..161706; RuntimeassertionsUNEXECUTED. Spanadvance154019->161702 is not cost saving."
+  },
+  "BOOT_identity": "Normalgeneration expectedoldcomparison exit1; Carverexact4adoptionGO and mainpureidentity0; not semanticbootstrap suite credit.",
+  "diagnostic": "Separate NativeMeteredNoExpansion finite1B diagnostic:17,476,366accepted preparationunits AFTERparse, CORE276925bytes/525forms; parse389921/sourcebyte276925 separate/excluded. No Session/VM/fullSessioncost/defaultCORE acceptance. Cachepr263-native-metered-noexpansion-e497-v1.",
+  "calibration": {
+    "commit": "b3ea5b6b1411d4a4dfe3e488d7d2f50af122cd0f",
+    "changes": "Both sharedsemantichelpers10B->100B, threeidentityMacro10M->100B; inference1T/invocation100B separate. Headroom, not sufficiency.",
+    "unchanged": "All222compilerinputs/BOOT4, originalprograms/assertions/callerRuntime/shippeddefault10M,strictCORE17/sourcechild,pinned200M/defaultmemo/exhaustion/IRQ/recovery.",
+    "build": "Twoidentitytargets no-run77763PASS23.10s, raw07008859e55ae43a4f2146a86c0ff572887407f0c137884a7d25045e2edddd59; no semanticpass."
+  },
+  "old_invalid_companion": {
+    "head": "b3ea5b6b1411d4a4dfe3e488d7d2f50af122cd0f",
+    "counts": "0PASS1FAIL",
+    "harness_seconds": 57.48,
+    "seconds": 57.8942363759852,
+    "raw_sha256": "d37fcb6fd249ba8602db1a1b36c9a182ef4a4cbdeedc3e7ba49581c8887184e9",
+    "scope": "Bothfirstrequests completeenv+args thenlanguageexception0..38;0sharingrows, later2requests/phaseunexecuted. Diagnostic shows raw:initABSENT/sourceCallablePRESENT, ErrorNoitem0emptyvector. Invalidfixture interface assumption, not demonstrated controller corruption; diagnosticcatch completion is not acceptance."
+  },
+  "applied_fixture_correction": {
+    "commit": "8f1e4cface9a6c8d85573c71b8d7b5988054282d",
+    "patch_sha256": "fcc665d917761e4de2cf4cad0732780a384ee4998b8ef8db1f8f951a5bb391e7",
+    "postimage_sha256": "b5d6db548e4f552cd41534d24ea4d33038cbd8c80f93564f026ccb285d5e9cdd",
+    "review": "/home/bobby/.cache/suss-m4-work/pr263-shared-env-source-body-fixture-repair-e497-v1/independent-review.json",
+    "review_sha256": "7085193270e0cae2e74d0ae87d4bcd429fd111a5239bc51a1722d3db41663273",
+    "scope": "One-line genuine SourceCallable :suss/methods first :suss/body traversal; no production:init. Threeindependentrequests perphase, GC, label+fourBoolean row (oneBooleanis count(refs)==2) unchanged. Originalnamespace/callableprobe file unchanged.",
+    "actual_execution": "Applied; correctedcompanion and original2probes RUNNING in currentcohort, no verdict."
+  },
+  "identity_cohort": {
+    "state": "RUNNING_NO_VERDICT_AT_MAIN_SNAPSHOT",
+    "producer_PID": 1383982,
+    "expected_Rusttests": 3,
+    "source_HEAD": "8f1e4cface9a6c8d85573c71b8d7b5988054282d",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_namespace_identity",
+      "--test",
+      "compiled_macro_shared_environment_admission",
+      "--",
+      "--nocapture",
+      "--test-threads=2"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "trace_environment": {
+      "SUSS_MACRO_FUEL_TRACE": "1"
+    },
+    "runner": "/home/bobby/.cache/suss-m4-work/pr263-identity-focused-calibrated-e497-v1/run.py",
+    "runner_sha256": "1a91781052b61dfddd14870d56442a52c96243c329689f1c38d476ac74e290d5",
+    "scope": "Original2namespace/callable +corrected1companion; no resultread/inferred. Command/profile from actualrunner; no start/terminalreceipt fabricated. Live log not copied/hashed asfinal."
+  },
+  "remaining": "Publish completedsource/BOOT/config/reviewfacts now without waiting. Sharingacceptance, defaultCORE17, otherpublic/pinned/strictcontrols, fullbaseline/finalCI/criterionreconciliation stillpending/failed. Globalc10futurecandidate excluded.",
+  "actions": "Cache-only; no producer/Cargo/VM/repo/GH action."
+}
