@@ -50,6 +50,17 @@ fn native_interface_facts(
     }
 }
 
+fn native_interface_facts_metered(environment: &resolve::Environment, phase: resolve::Phase,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Vec<NativeInterfaceFact>, Diagnostic>
+{
+    Ok(match environment.native_binding_metered(phase, "js", "Object", meter)? {
+        Some(resolve::Binding::Core { global, export: "object-constructor" })
+            if global.phase() == phase && global.namespace() == "js" && global.name() == "Object" =>
+            vec![NativeInterfaceFact { global, kind: NativeInterfaceKind::NativeObject, export: "object-constructor" }],
+        _ => Vec::new(),
+    })
+}
+
 impl CompilerNamespaceCatalog {
     pub fn capture(environment: &resolve::Environment, phase: resolve::Phase) -> Self {
         Self {
@@ -68,6 +79,25 @@ impl CompilerNamespaceCatalog {
             native_interfaces: native_interface_facts(environment, phase),
         }
     }
+    pub(crate) fn capture_metered(environment: &resolve::Environment, phase: resolve::Phase,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        Ok(Self {
+            phase,
+            current: environment.current_namespace(phase).to_owned(),
+            namespaces: environment
+                .declared_namespaces(phase)
+                .map(|namespace| {
+                    (
+                        namespace.to_owned(),
+                        hir::SourceNamespace::capture_namespace(environment, phase, namespace)
+                            .map(Arc::new),
+                    )
+                })
+                .collect(),
+            native_interfaces: native_interface_facts_metered(environment, phase, meter)?,
+        })
+    }
+
 
     /// Pinned find-ns-starts-with compares the complete needle with the first
     /// namespace segment. It does not perform a prefix or substring match.

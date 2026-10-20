@@ -39,9 +39,7 @@ impl Session {
 
         self.budget()?;
         let mut environment = self.environment.clone();
-        let cell_identity = environment
-            .declare_cell(self.phase, NAMESPACE, NAME)
-            .map_err(SessionError::Compile)?;
+        let cell_identity = self.declare_compiler_cell(&mut environment, NAMESPACE, NAME)?;
         let provided = ModuleIdentity::new(self.phase, NAMESPACE).map_err(SessionError::Compile)?;
         let closure_new = self
             .runtime

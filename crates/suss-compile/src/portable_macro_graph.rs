@@ -1392,10 +1392,10 @@ impl<'a> AnalysisGraph<'a> {
             )?
         };
         if include_compiler {
-            let compiler = portable::compiler_facts::CompilerNamespaceCatalog::capture(
-                context.environment,
-                context.phase,
-            );
+            let compiler = preserve_source_error(0..0,
+                &mut |work| self.session.charge_host_work(work),
+                |meter| portable::compiler_facts::CompilerNamespaceCatalog::capture_metered(
+                    context.environment, context.phase, meter))?;
             let mut namespaces = Vec::new();
             for (name, revision) in &compiler.namespaces {
                 let value = match revision {

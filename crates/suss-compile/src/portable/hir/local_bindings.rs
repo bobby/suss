@@ -570,9 +570,7 @@ pub(super) fn derive_reader_origin(origin: Option<&super::super::SourceOrigin>, 
     Ok(Arc::new(origin.with_reader_expansion(lowered, reader)))
 }
 fn cow_global(global: &Global, meter: &mut CowMeter<'_>) -> Result<Global, Diagnostic> {
-    cow_charge(meter, global.namespace().len(), 1)?;
-    cow_charge(meter, global.name().len(), 1)?;
-    Ok(global.clone())
+    global.retain_metered(meter)
 }
 fn cow_parameter(parameter: &Parameter, meter: &mut CowMeter<'_>) -> Result<Parameter, Diagnostic> {
     Ok(Parameter { id: parameter.id, name: cow_text(&parameter.name, meter)?,

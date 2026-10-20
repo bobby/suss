@@ -1057,7 +1057,8 @@ impl Analyzer<'_> {
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
-                        match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+                        match self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))? {
                             Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
                             _ => None,
@@ -1092,7 +1093,8 @@ impl Analyzer<'_> {
             )?
         };
         if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+            let (global, fallback, fresh) = self.environment.reader_sequence_cells_metered(self.phase,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
             if fresh {
                 let initializer = self.form(&coerced)?;
                 self.callable_keys.insert(
@@ -1150,6 +1152,7 @@ impl Analyzer<'_> {
             }),
             _ => None,
         };
+        let mut resolution_meter_error = None;
         let resolved = symbol.and_then(|symbol| {
             if symbol.namespace.is_none() || symbol.namespace.as_deref() == Some("js") {
                 if let Some(binding) = self.locals.get(&symbol.name) {
@@ -1160,7 +1163,11 @@ impl Analyzer<'_> {
                 }
             }
             self.environment
-                .resolve(self.phase, symbol, form.span.clone())
+                .resolve_metered(self.phase, symbol, form.span.clone(), &mut |work| {
+                    self.expander.charge_expansion_work(work, form.span.clone()).map_err(|error| {
+                        resolution_meter_error = Some(error.clone()); error
+                    })
+                })
                 .ok()
                 .map(|binding| {
                     let global = binding.global().clone();
@@ -1175,6 +1182,7 @@ impl Analyzer<'_> {
                     }
                 })
         });
+        if let Some(error) = resolution_meter_error { return Err(error); }
         // A nested source function gets its own fact slot. Compiler-only
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
@@ -1360,7 +1368,8 @@ impl Analyzer<'_> {
         symbol: &suss_reader::Symbol,
         span: Range<usize>,
     ) -> Result<(Expression, Type), Diagnostic> {
-        match self.environment.resolve(self.phase, symbol, span.clone())? {
+        match self.environment.resolve_metered(self.phase, symbol, span.clone(),
+            &mut |work| self.expander.charge_expansion_work(work, span.clone()))? {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
                 self.environment.materialize_bootstrap(global.clone());
@@ -1450,7 +1459,8 @@ impl Analyzer<'_> {
         }
         let global = self
             .environment
-            .declare_cell(self.phase, &namespace, &name.name)
+            .declare_cell_metered(self.phase, &namespace, &name.name,
+                &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))
             .map_err(|mut error| {
                 error.span = args[0].span.clone();
                 error
@@ -1732,13 +1742,14 @@ impl Analyzer<'_> {
         } else {
             Some(
                 self.environment
-                    .resolve(
+                    .resolve_metered(
                         self.phase,
                         &suss_reader::Symbol {
                             namespace: Some("suss.core".into()),
                             name: "IndexedSeq".into(),
                         },
                         form.span.clone(),
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                     )?
                     .global()
                     .clone(),
@@ -2329,10 +2340,14 @@ impl Analyzer<'_> {
             // A fresh generated type can query a real unbound cell only in the
             // current, already declared namespace; no arbitrary namespace or
             // source declaration facts are fabricated for an existence probe.
-            let global = match self
-                .environment
-                .resolve(self.phase, target, args[0].span.clone())
-            {
+            let mut resolution_meter_error = None;
+            let resolved = self.environment.resolve_metered(self.phase, target, args[0].span.clone(), &mut |work| {
+                self.expander.charge_expansion_work(work, args[0].span.clone()).map_err(|error| {
+                    resolution_meter_error = Some(error.clone()); error
+                })
+            });
+            if let Some(error) = resolution_meter_error { return Err(error); }
+            let global = match resolved {
                 Ok(ResolvedBinding::Cell(global)) => global,
                 Ok(_) => {
                     return Err(fail(
@@ -2342,7 +2357,8 @@ impl Analyzer<'_> {
                 }
                 Err(_) if namespace == self.environment.current_namespace(self.phase) => self
                     .environment
-                    .declare_cell(self.phase, namespace, &target.name)?,
+                    .declare_cell_metered(self.phase, namespace, &target.name,
+                        &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))?,
                 Err(error) => return Err(error),
             };
             if self
@@ -2551,12 +2567,14 @@ impl Analyzer<'_> {
                 return self.call(form, items);
             }
             Some(
-                if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
+                if let Some(binding) = self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 {
                     binding
                 } else {
                     self.environment
-                        .resolve(self.phase, symbol, items[0].span.clone())?
+                        .resolve_metered(self.phase, symbol, items[0].span.clone(),
+                            &mut |work| self.expander.charge_expansion_work(work, items[0].span.clone()))?
                 },
             )
         };

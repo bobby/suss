@@ -18,7 +18,8 @@ impl Analyzer<'_> {
         }
         match self
             .environment
-            .resolve(self.phase, name, form.span.clone())?
+            .resolve_metered(self.phase, name, form.span.clone(),
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
         {
             ResolvedBinding::Cell(global) => Ok(global),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {

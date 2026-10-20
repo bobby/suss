@@ -352,9 +352,11 @@ mod tests {
         assert!(direct_span_seen && contextual_span_seen, "both diagnostic routes exercised");
         let mut prior_type = info.clone();
         prior_type.type_key_history = Some(history.clone());
-        for foreign in [Global { phase: Phase::Macro, ..global.clone() },
-            Global { namespace: "elsewhere".into(), ..global.clone() },
-            Global { name: "other".into(), ..global.clone() }]
+        for foreign in [
+            Global::new_metered(Phase::Macro, global.namespace(), global.name(), &mut |_| Ok(())).unwrap(),
+            Global::new_metered(global.phase(), "elsewhere", global.name(), &mut |_| Ok(())).unwrap(),
+            Global::new_metered(global.phase(), global.namespace(), "other", &mut |_| Ok(())).unwrap(),
+        ]
         {
             assert!(history.key(&foreign, TypeKey::Tag).is_none());
             let copied = TypeKeyHistory::capture(&foreign, Some(&prior_type), &mut |_| Ok(())).unwrap();

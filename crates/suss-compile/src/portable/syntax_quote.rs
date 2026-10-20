@@ -222,9 +222,9 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
         }
         Ok(result)
     }
-    fn resolve(&self, symbol: &Symbol, form: &Form) -> Symbol {
+    fn resolve(&mut self, symbol: &Symbol, form: &Form) -> Result<Symbol, Diagnostic> {
         if symbol.namespace.is_none() && symbol.name.contains('.') {
-            return symbol.clone();
+            return Ok(symbol.clone());
         }
         let scope = self.environment.namespace_scope(self.phase);
         if let Some(namespace) = &symbol.namespace {
@@ -233,45 +233,46 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                 .get(namespace)
                 .or_else(|| scope.macro_aliases.get(namespace))
                 .map_or(namespace.as_str(), String::as_str);
-            return Symbol::namespaced(
+            return Ok(Symbol::namespaced(
                 if matches!(namespace, "suss.core" | "clojure.core") {
                     "cljs.core"
                 } else {
                     namespace
                 },
                 &symbol.name,
-            );
+            ));
         }
-        if let Ok(binding) = self
-            .environment
-            .resolve(self.phase, symbol, form.span.clone())
-        {
+        let mut meter_error = None;
+        let resolved = self.environment.resolve_metered(self.phase, symbol, form.span.clone(), &mut |work| {
+            (self.meter)(work).map_err(|error| { meter_error = Some(error.clone()); error })
+        });
+        if let Some(error) = meter_error { return Err(error); }
+        if let Ok(binding) = resolved {
             let global = binding.global();
-            return Symbol::namespaced(
+            return Ok(Symbol::namespaced(
                 if global.namespace() == "suss.core" {
                     "cljs.core"
                 } else {
                     global.namespace()
                 },
                 global.name(),
-            );
+            ));
         }
         if let Some((namespace, name)) = scope.macro_refers.get(&symbol.name) {
-            return Symbol::namespaced(
+            return Ok(Symbol::namespaced(
                 if namespace == "suss.core" {
                     "cljs.core"
                 } else {
                     namespace
                 },
                 name,
-            );
+            ));
         }
         if self
             .environment
-            .resolve_bootstrap_macro(self.phase, symbol)
-            .is_some()
+            .has_bootstrap_macro_metered(self.phase, symbol, &mut *self.meter)?
         {
-            return Symbol::namespaced("cljs.core", &symbol.name);
+            return Ok(Symbol::namespaced("cljs.core", &symbol.name));
         }
         // Reader resolution knows core declarations before they are loaded in
         // this bounded runtime. Ordinary HIR resolution still requires actual
@@ -281,9 +282,9 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                 .binary_search(&symbol.name.as_str())
                 .is_ok()
         {
-            return Symbol::namespaced("cljs.core", &symbol.name);
+            return Ok(Symbol::namespaced("cljs.core", &symbol.name));
         }
-        Symbol::namespaced(scope.namespace, &symbol.name)
+        Ok(Symbol::namespaced(scope.namespace, &symbol.name))
     }
     fn quote(
         &mut self,
@@ -343,7 +344,7 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                     } else if s.namespace.is_none() && s.name.starts_with('.') {
                         s.clone()
                     } else {
-                        self.resolve(s, form)
+                        self.resolve(s, form)?
                     };
                     call(span, "quote", vec![data(span, Kind::Symbol(s))])
                 }
