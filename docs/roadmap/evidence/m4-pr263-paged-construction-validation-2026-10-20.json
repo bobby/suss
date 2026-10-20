@@ -1,0 +1,492 @@
+{
+  "schema": 1,
+  "scope": "Checked construction-ledger representation and source-bound validation; no whole-program improvement, issue completion or PR readiness inferred.",
+  "source_commit": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+  "compiler_source_sha256": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+  "compiler_inputs": 229,
+  "source_freeze": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/source-freeze.json",
+    "sha256": "f9b0448ea1b70e4beaddbbcd353549c387d524cce5bdbf02c26e44ba525365ca"
+  },
+  "adaptation": {
+    "base": "602a343625e0f92eb88f4e29f469ca6d9fbe2ab7",
+    "donors": [
+      "14c2ad10c144663fbac433cdeb3920ff3913b6d8",
+      "014e0f0d4072e36e6a3c9bb4e47dfcaa8553dc7f"
+    ],
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "before_sha256": "61eaef0f75462a4b9ad066f89a2899b897e3c54e72a4f10445507f288c3a9f01",
+        "after_sha256": "47599837639faeb49de989d4c361ded13138a903899a37c173360f8427be60d5"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records/projection.rs",
+        "before_sha256": "94469024945355aadeace969da0309903bc32ca6aeeaeaa9c68863ed023857f9",
+        "after_sha256": "23a85603d87fe452371bc1f3e7147ea5ba4aa0926aaa71329e6d957aaffc5683"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_macro_data.rs",
+        "before_sha256": "244a8cd9d95d22b6faf83470644a3ce465ffe1b4639e5cbd3466a679eed7bbc8",
+        "after_sha256": "c646ea97092a5c8df4d6a278cbbb465f1613479c5f801246dbdb44759eca1df8"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/deferred_factory.rs",
+        "before_sha256": "34989257034c8f3d967d9019ee1f0081f6df1f3cd53a365f8655b8f4573740b9",
+        "after_sha256": "d2f457f25bad476dda3030d333837ffacab1cbdfdc7e6fa7846259728fb7c2c0"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/canonical_seeds.rs",
+        "before_sha256": "83c809ce31c8a5e6e34fd0b0a90edf198328fe184f75476053fad8ea82ffcfd2",
+        "after_sha256": "ea92d64ce3d90d8c395e528068e88f122c17e9829244b8f8c6cc23be4e8ea60f"
+      }
+    ],
+    "limits": "Prepared exact images only; no source applied or execution inferred. No donor HIR/sharedscalar/BOOT/artifacts imported.",
+    "correction": "Initial source39552b3 typecheck rejected accidentally generalized slice element bound (8typeerrors from1line); fixed flat slice implementation retains AsRef<Record> while consumer uses RecordAccess+?Sized. No semantic allowance change."
+  },
+  "initial_typecheck_failure": {
+    "head": "39552b359025ab766f22e61f9477363d4cd34eca",
+    "compiler_source_sha256": "eb3d064b93d17f18bf8cb971884f5e148c5193bad1353ac19c1b55d7fd46c026",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 101,
+    "seconds": 14.553155551002419,
+    "raw_sha256": "361ec75a46cbc36fcede3fbebbb7915a169f6f59c5f87e51d2a0b3d471c0088e"
+  },
+  "independent_source_review": {
+    "verdict": "SOURCE_FEE_SEMANTIC_GO_FOR_MAIN_VALIDATION",
+    "scope": "Revised exact five-file packet only; static review, no reviewer Cargo/VM/tests or shared edits.",
+    "manifest_sha256": "82efea9517fa5f6ff5a0e298a43bf7a1ce40e2632521d49525997ec5e47a1b5b",
+    "base": "602a343625e0f92eb88f4e29f469ca6d9fbe2ab7",
+    "donors": [
+      "14c2ad10c144663fbac433cdeb3920ff3913b6d8",
+      "014e0f0d4072e36e6a3c9bb4e47dfcaa8553dc7f"
+    ],
+    "source_commit": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+    "source_freeze": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/source-freeze.json",
+      "sha256": "f9b0448ea1b70e4beaddbbcd353549c387d524cce5bdbf02c26e44ba525365ca",
+      "input_count": 229,
+      "fingerprint": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+      "fingerprint_status": "descriptor prediction; not independently asserted as an actual compiled output"
+    },
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "before_sha256": "61eaef0f75462a4b9ad066f89a2899b897e3c54e72a4f10445507f288c3a9f01",
+        "after_sha256": "47599837639faeb49de989d4c361ded13138a903899a37c173360f8427be60d5"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records/projection.rs",
+        "before_sha256": "94469024945355aadeace969da0309903bc32ca6aeeaeaa9c68863ed023857f9",
+        "after_sha256": "23a85603d87fe452371bc1f3e7147ea5ba4aa0926aaa71329e6d957aaffc5683"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_macro_data.rs",
+        "before_sha256": "244a8cd9d95d22b6faf83470644a3ce465ffe1b4639e5cbd3466a679eed7bbc8",
+        "after_sha256": "c646ea97092a5c8df4d6a278cbbb465f1613479c5f801246dbdb44759eca1df8"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/deferred_factory.rs",
+        "before_sha256": "34989257034c8f3d967d9019ee1f0081f6df1f3cd53a365f8655b8f4573740b9",
+        "after_sha256": "d2f457f25bad476dda3030d333837ffacab1cbdfdc7e6fa7846259728fb7c2c0"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/canonical_seeds.rs",
+        "before_sha256": "83c809ce31c8a5e6e34fd0b0a90edf198328fe184f75476053fad8ea82ffcfd2",
+        "after_sha256": "ea92d64ce3d90d8c395e528068e88f122c17e9829244b8f8c6cc23be4e8ea60f"
+      }
+    ],
+    "bindings_verified": [
+      "All five before hashes equal manifest and base Git blobs.",
+      "All five after hashes equal revised manifest, source-freeze entries and committed Git blobs."
+    ],
+    "resolved_finding": {
+      "id": "C1",
+      "original": "Slice element R was incorrectly bounded by RecordAccess + ?Sized, failing Sized/AsRef requirements.",
+      "resolution": "Revised impl<R: AsRef<Record>> RecordAccess for [R]; generic consumers retain RecordAccess + ?Sized.",
+      "first_failure": "Retained by main in production-v1; no execution success inferred from this source correction."
+    },
+    "findings": [],
+    "semantic_review": [
+      "Logical record ordinals/order remain stable; pages and native addresses confer no authority. Page boundaries use len/32, independently of allocator excess capacity.",
+      "Exact reference equality and collision handling remain; canonical-seed fallback is still original seed membership, not current-heap recapture or source certification.",
+      "Retained DATA eligibility still scans every original Constructor watch; retained_data_eligible, prototype/class/direct/storage predicates and later fallible checks are not skipped after a false aggregate.",
+      "Factory projection still requires the exact explicitly recorded root, closes original inputs and retains full selected-fact/class/prototype validation. Source causal proof and OriginalDataInputs ledger binding remain separate.",
+      "Factory-input enrollment, scoped original-member witnesses, Weak owner lifetimes and WriteDomain validation are not replaced or broadened by paging or boxing.",
+      "Array/Constructor Box owners contain the same original immutable input payloads. Real factory invocation order and subsequent recording order remain; a failed box debit propagates before publication without replaying earlier guest effects.",
+      "No new recursive owner graph, strong Watch link, HIR/shared-scalar contribution or BOOT artifact is imported."
+    ],
+    "performed_work_review": [
+      "Paged lookup prepays five controls before bounds/arithmetic/directory/slot access; flat differential lookup prepays one.",
+      "Append prepays eight controls; directory/page reserve charges requested allocation bytes plus existing live-element relocation bytes before try_reserve_exact. First page grows 4/8/16/32, later pages reserve 32; final pushes/publication are prepaid.",
+      "Failed append may retain private capacity/first-limit bookkeeping, but publishes neither an empty page nor an advanced logical length. No fallible operation remains after the final record/page pushes.",
+      "Boxing prepays twice the checked payload size plus four bounded controls before Box::new. Smaller record-page charges use actual new slot sizes; removed large-slot allocation/copy work is not charged as though it still occurred.",
+      "Existing predicate/hash/ref_eq/seed/source checks retain their charges; new paged reads add charges rather than cutting rates. Existing domain.record-before-push ordering is not changed by this patch."
+    ],
+    "tests_source_review": {
+      "added": [
+        "boxed_fact_cuts_release_unpublished_inputs_and_preserve_existing_records",
+        "paged_records_preserve_ordinals_boundaries_and_logical_pages_with_excess_capacity",
+        "paged_records_every_append_fuel_cut_and_irq_leave_no_partial_page_and_retry",
+        "paged_projection_forced_collisions_match_independent_flat_view_and_keep_roots_after_gc"
+      ],
+      "donor_preservation": "Three new ledger regression function bodies independently compared byte-exact with their donor commits. Projection donor regression retains flat-view collision/GC/mutation assertions, with current optional-descendant argument adaptation.",
+      "old_tests": "Original tests retained; representation accesses, Box initializers and explicit ordinal scan mechanically adapted where needed. No source programs, semantic expected values, budget constants or authority assertions removed.",
+      "coverage": "Added cases cover every insufficient append/boxing debit, IRQ/retry and unpublished handle/page cleanup, page boundaries/excess capacity, forced collision closure, GC roots and mutation rejection.",
+      "execution": "Not executed by reviewer; source GO is not a passing test or semantic acceptance receipt."
+    },
+    "limitations": [
+      "Main must validate revised typecheck, normal generated artifacts/identity and focused runtime regressions on exact revised source.",
+      "No claim of default-10M or pinned-200M fit, overall performance improvement, new BOOT compatibility, public acceptance or PR readiness.",
+      "Box::new retains standard allocator OOM behavior; the explicit typed-failure contract here covers precharged fuel/IRQ/checked-size errors, not whole-process OOM recovery."
+    ]
+  },
+  "independent_paging_fee_review": {
+    "verdict": "BLOCK_COMPILE_BOUND; NO_ADDITIONAL_CONFIRMED_PAGING_STORAGE_OR_FEE_OMISSION_IN_REVIEWED_SCOPE",
+    "applied_commit": "39552b359025ab766f22e61f9477363d4cd34eca",
+    "manifest_sha256": "ee09b5a9c7b6c9062fe2ce8f344a5d8e120154abf290293fe19f8fa881265752",
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "before_matches_manifest": true,
+        "after_matches_manifest": true,
+        "applied_commit_matches_after": true
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records/projection.rs",
+        "before_matches_manifest": true,
+        "after_matches_manifest": true,
+        "applied_commit_matches_after": true
+      },
+      {
+        "path": "crates/suss-compile/src/portable_macro_data.rs",
+        "before_matches_manifest": true,
+        "after_matches_manifest": true,
+        "applied_commit_matches_after": true
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/deferred_factory.rs",
+        "before_matches_manifest": true,
+        "after_matches_manifest": true,
+        "applied_commit_matches_after": true
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/canonical_seeds.rs",
+        "before_matches_manifest": true,
+        "after_matches_manifest": true,
+        "applied_commit_matches_after": true
+      }
+    ],
+    "findings": [
+      {
+        "id": "B1",
+        "file": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "line": 205,
+        "issue": "Slice RecordAccess implementation uses R: RecordAccess + ?Sized but calls AsRef::as_ref and stores R as a slice element. The donor uses R: AsRef<Record>. Current bound cannot implement the intended flat &[Record]/&[&Record] views.",
+        "minimal_repair": "Restore impl<R: AsRef<Record>> RecordAccess for [R]; no body, tariff or authority change needed."
+      }
+    ],
+    "review_scope": "Paging retained capacity/failure atomicity, boxed preallocation charges, current inline ScalarInputs, added DATA and original-membership consumers. Exact postimage review delegated separately to Cicero.",
+    "execution": null,
+    "resolution_followup": {
+      "status": "B1_RESOLVED_SOURCE_ONLY",
+      "commit": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+      "file": "crates/suss-compile/src/portable_session/construction_records.rs",
+      "line": 205,
+      "bound": "impl<R: AsRef<Record>> RecordAccess for [R]",
+      "sha256": "47599837639faeb49de989d4c361ded13138a903899a37c173360f8427be60d5",
+      "cache_after_manifest_git_and_worktree_equal": true,
+      "only_change_in_this_file_since_original_review": "slice generic bound replacement",
+      "updated_manifest_sha256": "82efea9517fa5f6ff5a0e298a43bf7a1ce40e2632521d49525997ec5e47a1b5b",
+      "typecheck_result": "NOT_REVIEWED; main producer live",
+      "remaining_confirmed_blockers_in_prior_bounded_review": []
+    }
+  },
+  "typecheck": {
+    "head": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+    "compiler_source_sha256": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 152.33201246500175,
+    "raw_sha256": "764728bcfe6dd20b814c87f1789e721a0701db540ab5a8ffe50d2ec7f0de7db1"
+  },
+  "cohorts": {},
+  "limits": [
+    "Existing source/member/closure/class/prototype/method/memo checks remain; representations carry original native facts, not cached current guest health.",
+    "No shared scalar witness, HIR, emitter/runtime ABI, tariff/quota or unrelated donor bootstrap changes imported.",
+    "The initial typecheck failure is retained; corrected sized AsRef slice view is independent of paged RecordAccess consumers.",
+    "Prior411dd map/default failures and focused53executions39distinct14repeats remain source-qualified, never transferred as new-source results."
+  ],
+  "bootstrap-terminal": {
+    "head": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+    "compiler_source_sha256": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "inputs": 229,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 158.93521037900064,
+    "raw_sha256": "1592f46552bb73d9a967e141434753947207451021f5faa7427d1461115528bc"
+  },
+  "main-build-input-check": {
+    "fp": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "inputs": 229,
+    "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "b0a12a11df5172b4096e77bea3a6a90276e457b330a851ac1887a6f97c7ca117",
+    "all_input_hashes_and_rerun_paths_verified": true
+  },
+  "main-generation-pair-check": {
+    "four_pairs_equal": true,
+    "source_fingerprint": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "phases": {
+      "runtime": {
+        "pairs": {
+          "wasm": {
+            "sha256": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883",
+            "bytes": 2121342
+          },
+          "json": {
+            "sha256": "293fd4339d2747d0530cf07e9ff4ef112f04ed8e5dc3d48989651e02daa809b2",
+            "bytes": 47413
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "wasm_sha256": {
+            "old": "05d5c429a81493c62869af6d5ebee440a75f298aa3b48787c41d12df05b05cb2",
+            "new": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883"
+          },
+          "compiler_source_sha256": {
+            "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+            "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+          }
+        }
+      },
+      "macro": {
+        "pairs": {
+          "wasm": {
+            "sha256": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a",
+            "bytes": 2119863
+          },
+          "json": {
+            "sha256": "4b5a3ee3bafed40349f627baf4282474c51cc4a642aac4fcdb07f8c131eb6850",
+            "bytes": 45875
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "wasm_sha256": {
+            "old": "92c88b5f625f28f7a15674ed6ad5968b4b6a05231e0c9c48d24cd151ae516289",
+            "new": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a"
+          },
+          "compiler_source_sha256": {
+            "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+            "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+          }
+        }
+      }
+    }
+  },
+  "independent-adoption-review-cicero": {
+    "reviewer": "Cicero",
+    "scope": "Exact generated artifact adoption only; not new Cargo/VM execution, source re-review, performance/default/pinned fit or readiness.",
+    "reviewed_at_utc": "2026-10-20T21:02:52.158994+00:00",
+    "head": "1f5c3b622fcf094affdf130c89738f2a5e7d8ed7",
+    "old_shipped_commit": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+    "source_fingerprint": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "compiler_inputs": 229,
+    "adoption_performed": false,
+    "shared_mutations": false,
+    "cargo_rustc_or_vm_execution": false,
+    "reviewed_paged_boxed_five_postimages_exact_commit": true,
+    "source_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-transplant-411-v1/independent-source-review-cicero.json",
+      "sha256": "46ba5d5b8306298163997ddf0a3739dbdd49421e79ae2f0dfc576d5349f94422"
+    },
+    "all229_actual_builder_rerun_paths_verified": true,
+    "actual_builder_output": {
+      "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "b0a12a11df5172b4096e77bea3a6a90276e457b330a851ac1887a6f97c7ca117",
+      "expected_fp_present": true
+    },
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "all_229_frozen_current_and_git_inputs_verified": true,
+    "source_fp_recomputed": true,
+    "current_clean_before_and_after": true,
+    "source_freeze_sha256": "f9b0448ea1b70e4beaddbbcd353549c387d524cce5bdbf02c26e44ba525365ca",
+    "diagnostics_receipt_sha256": "e1a2b2bd7c016f2c3871a02420d6b78790e083956bb8ec5c529978e141da083c",
+    "terminal_sha256": "51be994ec0dbb90cea356115399f109551588a1dbac594aa18130ad3478bbcae",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 158.93521037900064,
+    "generator_log_sha256": "1592f46552bb73d9a967e141434753947207451021f5faa7427d1461115528bc",
+    "exit_interpretation": "Two complete matching generations; exit1 occurs at stale shipped runtime.wasm comparison, not reported as verifier PASS.",
+    "all_eight_hashes_verified": true,
+    "four_generation_pairs_exact": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883",
+        "bytes": 2121342
+      },
+      "first/runtime.json": {
+        "sha256": "293fd4339d2747d0530cf07e9ff4ef112f04ed8e5dc3d48989651e02daa809b2",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a",
+        "bytes": 2119863
+      },
+      "first/macro.json": {
+        "sha256": "4b5a3ee3bafed40349f627baf4282474c51cc4a642aac4fcdb07f8c131eb6850",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883",
+        "bytes": 2121342
+      },
+      "second/runtime.json": {
+        "sha256": "293fd4339d2747d0530cf07e9ff4ef112f04ed8e5dc3d48989651e02daa809b2",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a",
+        "bytes": 2119863
+      },
+      "second/macro.json": {
+        "sha256": "4b5a3ee3bafed40349f627baf4282474c51cc4a642aac4fcdb07f8c131eb6850",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+                "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+            "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+          },
+          "wasm_sha256": {
+            "old": "05d5c429a81493c62869af6d5ebee440a75f298aa3b48787c41d12df05b05cb2",
+            "new": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      },
+      "macro": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+                "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+            "new": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203"
+          },
+          "wasm_sha256": {
+            "old": "92c88b5f625f28f7a15674ed6ad5968b4b6a05231e0c9c48d24cd151ae516289",
+            "new": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "293fd4339d2747d0530cf07e9ff4ef112f04ed8e5dc3d48989651e02daa809b2"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-paged-boxed-production-v2/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "4b5a3ee3bafed40349f627baf4282474c51cc4a642aac4fcdb07f8c131eb6850"
+      }
+    ]
+  },
+  "identity-terminal": {
+    "head": "5a41e0427da08a43b4ef8c3841676ef2387ba460",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+    "exit_code": 0,
+    "seconds": 7.099623459998838,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  }
+}
