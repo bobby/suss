@@ -1,0 +1,371 @@
+{
+  "scope": "Partial fixedMacroinitialization implementation checkpoint; no new initialization/default/public identity acceptance yet.",
+  "source": "050e5d3e14b55918e3dc34216730dd1608010496",
+  "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+  "inputs": 227,
+  "bootstrap_commit": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+  "changes": [
+    "Privatefixedcompilerlibraryinitializationperoperationcap10M->100B onfreshnew/replacementMacroStoresonly; restorecallerconfiguredoptionsandidleStorefuelbeforepublication.",
+    "Idleinitializationfuelsetterrejectsactivedepthbeforemutatingfuel/options; initializationerrorsdropownedunpublishedSession.",
+    "Fivefixedplainrecordlibrarysourcesuseexistingmodule/source/conditionalpipelinewithNoExpansion-equivalentmeteredhost, sameStorebudgetthroughguestexecution, originaltypederrors, noextraEnvironmentclone. Ordinaryprepare_inputstillusesoriginalNoExpansionanddefaultlimits."
+  ],
+  "typecheck": {
+    "head": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 163.885108769,
+    "raw_sha256": "671dd9e41ffc0142656870dc440bb3c98f94b6a32ffe0650d360c6f283df9d2c"
+  },
+  "normal_generations": {
+    "head": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "inputs": 227,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 120.05910633900021,
+    "raw_sha256": "0405090a30e9d3791e5adcfccca243d9ebd98fafd2f77feff08f18cdc1cf0c9e"
+  },
+  "compiled_build_source_identity": {
+    "actual_fingerprint": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "inputs": 227,
+    "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "44daac2b81b10f8c8bb721347c6d7a2dfd71b2df852bc393dff57579cf90cf3a",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "exact_input_paths_and_current_hashes_verified": true
+  },
+  "adoption_review": {
+    "reviewer": "Cicero",
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "scope": "Artifact integrity/adoption only. No source-budget/lifecycle re-review, Cargo/VM execution, semantic/default/pinned acceptance or readiness claim.",
+    "reviewed_at_utc": "2026-10-20T15:53:55.914888+00:00",
+    "head": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "current_git_clean_before_and_after": true,
+    "old_shipped_commit": "40f22c6f2a4ec79cc2027aa35610847e28c43804",
+    "old_shipped_compiler_fingerprint": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "source_fingerprint": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "compiler_inputs": 227,
+    "all_227_frozen_current_and_git_inputs_equal": true,
+    "source_fingerprint_recomputed": true,
+    "actual_builder_output_hash_and_fingerprint_verified": true,
+    "source_freeze_sha256": "3fabf9f3d8999f2e6ab921e0dfbee98c9253a2aac33a1bca932ca5bb13c07afb",
+    "compiled_build_identity_receipt_sha256": "f66b0cf62334a1b6b08480e3babb6f26774b7be6be410977469c921403ae643f",
+    "diagnostics_receipt_sha256": "b49ff3b3713117a1dbc40490c5e9b91ea80191ebd0fc5bf28663f293bcb5425c",
+    "bootstrap_terminal_sha256": "d3fed2d32527c47d6ba55566b4a8eed10ac730df16c6a563faff9df9f9de50f2",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 120.05910633900021,
+    "generator_log_sha256": "0405090a30e9d3791e5adcfccca243d9ebd98fafd2f77feff08f18cdc1cf0c9e",
+    "generator_exit_interpretation": "Both normal generations emitted four matching pairs. Actual exit1 is the stale shipped runtime.wasm comparison, retained as exit1 rather than reported as verifier PASS.",
+    "all_eight_hashes_verified": true,
+    "four_byte_equal_generation_pairs": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb",
+        "bytes": 2108122
+      },
+      "first/runtime.json": {
+        "sha256": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22",
+        "bytes": 2106643
+      },
+      "first/macro.json": {
+        "sha256": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb",
+        "bytes": 2108122
+      },
+      "second/runtime.json": {
+        "sha256": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22",
+        "bytes": 2106643
+      },
+      "second/macro.json": {
+        "sha256": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "old_shipped_wasm_sha256": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+        "first_wasm_sha256": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb",
+        "first_manifest_sha256": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12",
+        "total_sections": 8,
+        "noncustom_sections": 6,
+        "all_noncustom_sections_order_and_bytes_exact": true,
+        "noncustom_sections_sha256": "1ac447f8acc19264dda25006b8fed704bdedc6a7a3cf01a98a6d8abdcb0c08b0",
+        "all_other_custom_sections_exact": true,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "section_id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_field_differences": {
+              "compiler_source_sha256": {
+                "old": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+                "new": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1"
+              }
+            }
+          }
+        ],
+        "complete_manifest_field_differences": {
+          "compiler_source_sha256": {
+            "old": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+            "new": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1"
+          },
+          "wasm_sha256": {
+            "old": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+            "new": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb"
+          }
+        },
+        "all_other_json_fields_and_format_exact": true,
+        "runtime_abi_unchanged": 2,
+        "catalog_cells_count": 768,
+        "catalog_order_and_values_exact": true
+      },
+      "macro": {
+        "old_shipped_wasm_sha256": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+        "first_wasm_sha256": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22",
+        "first_manifest_sha256": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec",
+        "total_sections": 8,
+        "noncustom_sections": 6,
+        "all_noncustom_sections_order_and_bytes_exact": true,
+        "noncustom_sections_sha256": "e46acd1f0861623dcf6c7fe31b99ba3cee47a9d4fb7325e444c8fb3811166a5e",
+        "all_other_custom_sections_exact": true,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "section_id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_field_differences": {
+              "compiler_source_sha256": {
+                "old": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+                "new": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1"
+              }
+            }
+          }
+        ],
+        "complete_manifest_field_differences": {
+          "compiler_source_sha256": {
+            "old": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+            "new": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1"
+          },
+          "wasm_sha256": {
+            "old": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+            "new": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22"
+          }
+        },
+        "all_other_json_fields_and_format_exact": true,
+        "runtime_abi_unchanged": 2,
+        "catalog_cells_count": 768,
+        "catalog_order_and_values_exact": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-fixed-macro-initialization-production-v5/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-fixed-macro-initialization-production-v5/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-fixed-macro-initialization-production-v5/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-fixed-macro-initialization-production-v5/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec"
+      }
+    ],
+    "adoption_performed": false,
+    "shared_source_index_refs_or_artifacts_mutated": false,
+    "cargo_rustc_or_vm_executed_by_reviewer": false,
+    "followup": "Main may adopt only the four exact first-generation files listed; pure identity and actual planned controlled tests remain separate."
+  },
+  "pure_identity": {
+    "head": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "exit_code": 0,
+    "seconds": 1.4223958689999563,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "initialization_two_start": {
+    "head": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macros::initialization_budget_tests::fixed_macro_initialization_restores_default_and_replacement_caller_limits",
+      "portable_macros::initialization_budget_tests::fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery"
+    ],
+    "selection": {
+      "exact_names": [
+        "portable_macros::initialization_budget_tests::fixed_macro_initialization_restores_default_and_replacement_caller_limits",
+        "portable_macros::initialization_budget_tests::fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery"
+      ],
+      "scope": "ActualfixedMacroinitialization/default&customcallerrestoration/1-unittrap/no publication/defaultmacro17; sameStorecumulativefixed-sourceanalysis/guestexecution, nativefuelIRQ/no publish/recovery23."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit."
+  },
+  "initialization_two_status": "RUNNING_NO_VERDICT",
+  "prior_source169_default": {
+    "head": "6ce0982f7f4b4ccaa580cb51c66b8da392d33a15",
+    "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_constructor_source_asts",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+    ],
+    "selection": {
+      "exact_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 497.88478736699994,
+    "raw_sha256": "d2c5570c57e30e3d6225687060909f8d2bca07fad53f6c1ac97bf1facef487f4"
+  },
+  "prior_source169_public_pair": {
+    "head": "6ce0982f7f4b4ccaa580cb51c66b8da392d33a15",
+    "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_namespace_identity",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+      "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+    ],
+    "selection": {
+      "exact_names": [
+        "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "scope": "Both original complete namespace five-call and callable six-row probes, bothcaller phases, helper100B Macro compilation/originalRuntime; original assertions retained."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 72.5228008009999,
+    "raw_sha256": "2ea41e82823a082b27b06e09fd77322d8b85a409a6152e74735306ee6ea9a305"
+  },
+  "prior_failure_classification": "Defaulttestline179 CompiledMacros::new/privatebootstrapdefn1728bytes(form1..1727) failure beforeuserdefine/invocation. Public2failmacroStorecreationbothphases,0namespace/callablerows; noidentitymismatchverdict. Firstdefaultcompileinterruptionunexecutedandpreserved.",
+  "source_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_COMMITTED_BOUNDED_SOURCE_FEES_LIFECYCLE_AND_NO_REFILL_POLICY",
+    "base": "6ce0982f7f4b4ccaa580cb51c66b8da392d33a15",
+    "initialization_commit": "1bc8043d5aaf12bd1065b41f991351e98ea53c9d",
+    "routing_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "postimages": {
+      "crates/suss-compile/src/portable/modules.rs": "959299b32039bec15cad534ad2c4332b686d8a080ae3b6b4a9285460c43ee3b6",
+      "crates/suss-compile/src/portable_macros.rs": "292418ba4f562d898ae15dd36461088aba770624ae9f9f18977bd62d054be7eb",
+      "crates/suss-compile/src/portable_session.rs": "8e64b8bbdaf54503223b41386157ca1ca7dd581e4a52169aaf7f40d2d2b6218c"
+    },
+    "matches_previous_exact_source_reviews": true,
+    "complete_three_path_delta_reviewed": true,
+    "checks": {
+      "scope": "Private with_bootstrap only; fresh Session new and replacement callsites; existing fixed source helper sequence/order retained. Only five fixed record source evals take new route; no ordinary public eval/NoExpansion/default change.",
+      "policy": "100B PER existing fixed initializer operation, not entire library total. Existing define/eval request boundaries retained. No lower fee, nested refill, guest/caller Runtime cap change, CORE/sourcechild/default-constructor/pinned budget change. User-authorized compiler setup calibration is not default-fit evidence.",
+      "native_and_guest": "One outer operation scope for each routed fixed source covers parser/source/analysis/emission/prepare and existing install/eval; nested eval_prepared budget cannot reset nonzero depth. Same Store and interrupt flag; host work once forwarded into fuel and fallback counters unchanged rates.",
+      "restoration": "Idle-only helper rejects before mutations at active depth. Save original fuel; restore Store then option before success; source_paths and remaining options untouched. Fresh init/replacement errors drop unpublished object; old macro host unaffected.",
+      "fees": "Prepay2*sizeof(local host)+8 before init/retirement, existing parsing/source/conditional/module analysis fees retained. Environment/options/provided borrowed, no additional Environment clone. No authority/receipt/source-validation weakening.",
+      "typed_errors": "First host failure retained and returned as original SessionError before mapped diagnostics. Parse/compile/dependency failures preserve prior variants. Preparation error prevents guest eval/publication.",
+      "lifecycle": "Host dropped before Session reborrow; request guards drop on error/unwind; Store stays private; final restore failure does not publish. Replacement prior core/native-profile provisioning remains unchanged/outside override.",
+      "tests": "Both new initialization regressions source-reviewed; genuine budget/IRQ entry failure, options/idle Store restoration, low-user budget and compiled recovery paths. UNEXECUTED, no pass claimed."
+    },
+    "verified_typecheck": {
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--profile",
+        "test"
+      ],
+      "exit_code": 0,
+      "seconds": 163.885108769,
+      "raw_sha256": "671dd9e41ffc0142656870dc440bb3c98f94b6a32ffe0650d360c6f283df9d2c",
+      "scope": "Compile/typecheck only, not VM or tests."
+    },
+    "findings": [],
+    "pending": "Normal generation is live; no generated artifact adoption or semantic acceptance reviewed here.",
+    "execution": "Read-only Git/cache/source plus cache-only receipt; no Cargo/VM/shared edits."
+  }
+}
