@@ -1,10 +1,11 @@
-#[path = "support/compilation_fuel.rs"]
-mod compilation_fuel;
 use serde_json::{json, Value};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
 use suss_reader::forms::{Form, Kind};
+
+// Compilation-only trial for the unchanged source-tag semantic programs (#252/#261).
+const SOURCE_TAG_COMPILATION_FUEL: u64 = 100_000_000_000;
 
 // Lossless projection for this corpus. Reader locations and symbol metadata are
 // intentionally outside its scope. Unknown data kinds fail rather than match.
@@ -119,7 +120,7 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         .join("\n");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        macros.set_operation_fuel(SOURCE_TAG_COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro observe-tags [label name]
@@ -207,6 +208,7 @@ fn compiled_source_invocation_tags_distinguish_global_aggregate_and_local_method
     // direct and local source functions retain individual method tags instead.
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(SOURCE_TAG_COMPILATION_FUEL);
         macros.define(r#"(defmacro invocation-tag [name]
           (list 'quote (get (get (get (get &env :locals) name) :init) :tag)))"#).unwrap();
         let value = session.eval_with_macros(r#"
