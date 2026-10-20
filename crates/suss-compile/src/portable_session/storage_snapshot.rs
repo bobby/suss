@@ -371,6 +371,45 @@ impl<'cuts> Capture<'cuts> {
 }
 
 impl StorageSnapshot {
+    /// Prepay cache-triggered last-owner retirement, conservatively even when
+    /// other facts retain this snapshot. This does not alter general RAII Drop.
+    /// Owned payload bytes bound root/variant/type-release work; each atom and
+    /// each live node is included, plus backing-buffer/Arc release controls.
+    /// Counting itself is charged BEFORE reading each node's contents length.
+    pub(super) fn precharge_retirement(
+        &self, meter: &mut dyn FnMut(u64) -> Result<()>,
+    ) -> Result<()> {
+        meter(8)?;
+        let mut work = size_of::<Self>().checked_add(2 * size_of::<usize>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
+        // Snapshot root is included above; release of its nodes buffer is not
+        // a scan of unused capacity. Only initialized elements are dropped.
+        work = work.checked_add(1)
+            .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
+        let node_work = u64::try_from(size_of::<Node>())
+            .map_err(|_| invalid("Snapshot retirement work overflow"))?;
+        for node in &self.nodes {
+            // Iteration, contents selection, length read and checked arithmetic.
+            meter(8)?;
+            let atoms = match &node.contents {
+                Some(Contents::Struct(atoms) | Contents::Array(atoms)) => Some(atoms),
+                None => None,
+            };
+            let atom_work = match atoms {
+                Some(atoms) => atoms.len().checked_mul(size_of::<Atom>())
+                    .and_then(|n| n.checked_add(1)) // atom-buffer release
+                    .and_then(|n| u64::try_from(n).ok())
+                    .ok_or_else(|| invalid("Snapshot retirement work overflow"))?,
+                None => 0,
+            };
+            work = work.checked_add(node_work)
+                .and_then(|n| n.checked_add(atom_work))
+                .ok_or_else(|| invalid("Snapshot retirement work overflow"))?;
+        }
+        meter(work)
+    }
+
     pub(super) fn matches_in_context(
         &self,
         store: StoreContextMut<'_, ()>,

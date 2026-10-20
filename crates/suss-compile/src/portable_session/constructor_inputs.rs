@@ -12,7 +12,7 @@ type Result<T> = std::result::Result<T, SessionError>;
 pub(crate) struct ConstructorInputs {
     descriptor: SessionValue,
     schema: SessionValue,
-    schema_storage: StorageSnapshot,
+    schema_storage: std::sync::Arc<StorageSnapshot>,
     fields: Vec<Option<SessionValue>>,
     receiver: SessionValue,
     field_storage: SessionValue,
@@ -23,6 +23,146 @@ pub(crate) struct ConstructorInputs {
     // Invocation-only DATA evidence. Never a Watch, receipt or write capability.
     runtime_memo_data: Option<(usize, StructType)>,
 }
+// Session-local bounded retention, never source or pristine-class authority.
+// Successful reset replaces the Session and this cache. Foreign roots are
+// checked before access. Exclusive &mut Session prevents intervening cache edits.
+const SCHEMA_WITNESS_LIMIT: usize = 16;
+struct SchemaWitnessEntry {
+    schema: SessionValue,
+    snapshot: std::sync::Arc<StorageSnapshot>,
+}
+#[derive(Default)]
+pub(super) struct SchemaWitnessCache {
+    entries: Vec<SchemaWitnessEntry>,
+    next: usize,
+}
+struct SchemaWitnessPublication {
+    entry: SchemaWitnessEntry,
+    target: usize,
+    grown: Option<Vec<SchemaWitnessEntry>>,
+}
+impl SchemaWitnessPublication {
+    // Every reserve, copy/control fee and retain precedes this infallible commit.
+    fn publish(self, cache: &mut SchemaWitnessCache) {
+        if let Some(mut grown) = self.grown {
+            grown.extend(cache.entries.drain(..));
+            cache.entries = grown;
+        }
+        if self.target == cache.entries.len() {
+            cache.entries.push(self.entry);
+        } else {
+            cache.entries[self.target] = self.entry;
+            cache.next = (self.target + 1) % SCHEMA_WITNESS_LIMIT;
+        }
+    }
+}
+// Test-only stage seam: cancellation is consumed by the REAL following
+// operation. It grants no authority and replaces no validation/publication.
+#[cfg(test)]
+thread_local! {
+    static SCHEMA_CANCEL_STAGE: std::cell::Cell<Option<&'static str>> = const { std::cell::Cell::new(None) };
+}
+#[cfg(test)]
+fn cancel_schema_stage(session: &Session, stage: &'static str) {
+    SCHEMA_CANCEL_STAGE.with(|armed| {
+        if armed.get() == Some(stage) {
+            armed.set(None);
+            session.host_work_interrupt().store(true, std::sync::atomic::Ordering::SeqCst);
+        }
+    });
+}
+
+impl Session {
+    fn prepare_schema_witness(&mut self, schema: &SessionValue) -> Result<(
+        std::sync::Arc<StorageSnapshot>, Option<SchemaWitnessPublication>,
+    )> {
+        self.check(schema)?;
+        let mut existing = None;
+        self.charge_host_work(1)?;
+        for index in 0..self.schema_witness_cache.entries.len() {
+            self.charge_host_work(1)?;
+            self.check(&self.schema_witness_cache.entries[index].schema)?;
+            let equal = {
+                let mut scope = RootScope::new(&mut self.store);
+                let wanted = schema.value.to_rooted(&mut scope);
+                let candidate = self.schema_witness_cache.entries[index].schema.value.to_rooted(&mut scope);
+                Rooted::<AnyRef>::ref_eq(&scope, &wanted, &candidate)?
+            };
+            if equal {
+                self.charge_host_work(1)?;
+                let snapshot = self.schema_witness_cache.entries[index].snapshot.clone();
+                if self.storage_matches(schema, &snapshot)? {
+                    return Ok((snapshot, None));
+                }
+                existing = Some(index);
+                break;
+            }
+        }
+        // A changed schema is not rejected: ordinary construction observes its
+        // current state through exactly the original complete, strict capture.
+        // The cache and shared native fact witness own private roots. They
+        // are not caller-owned SessionValues reported by SessionStats.
+        // Each cold witness owns its counter through its rooted values, so
+        // eviction/reset cannot invalidate a fact retaining the same witness.
+        let accounting_owner = std::mem::size_of::<std::sync::atomic::AtomicUsize>()
+            .checked_add(2 * std::mem::size_of::<usize>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Schema witness accounting allocation overflow"))?;
+        self.charge_host_work(accounting_owner)?;
+        let handles = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let snapshot = self.capture_storage_accounted(schema, handles.clone())?;
+        let owner = std::mem::size_of::<StorageSnapshot>()
+            .checked_add(2 * std::mem::size_of::<usize>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Schema witness owner allocation overflow"))?;
+        self.charge_host_work(owner)?;
+        let snapshot = std::sync::Arc::new(snapshot);
+        let len = self.schema_witness_cache.entries.len();
+        let target = existing.unwrap_or(if len < SCHEMA_WITNESS_LIMIT {
+            len
+        } else {
+            self.schema_witness_cache.next
+        });
+        if target < len {
+            // Retain/drop this temporary outside the cache borrow. Publication
+            // can retire the cache's last witness owner; pay for the full release
+            // even when another ConstructorInputs currently shares that owner.
+            self.charge_host_work(2)?;
+            let retiring = self.schema_witness_cache.entries[target].snapshot.clone();
+            retiring.precharge_retirement(&mut |work| self.charge_host_work(work))?;
+            self.charge_host_work(u64::try_from(std::mem::size_of::<SchemaWitnessEntry>())
+                .map_err(|_| invalid("Schema entry retirement work overflow"))?)?;
+            drop(retiring);
+        }
+        let mut grown = None;
+        if target == len && len == self.schema_witness_cache.entries.capacity() {
+            let capacity = len.checked_mul(2)
+                .ok_or_else(|| invalid("Schema witness capacity overflow"))?
+                .max(4).min(SCHEMA_WITNESS_LIMIT);
+            let bytes = capacity.checked_add(len)
+                .and_then(|n| n.checked_mul(std::mem::size_of::<SchemaWitnessEntry>()))
+                .and_then(|n| n.checked_add(len))
+                .and_then(|n| u64::try_from(n).ok())
+                .ok_or_else(|| invalid("Schema witness allocation overflow"))?;
+            self.charge_host_work(bytes)?;
+            let mut values = Vec::new();
+            values.try_reserve_exact(capacity)
+                .map_err(|_| invalid("Schema witness allocation failed"))?;
+            grown = Some(values);
+        }
+        // Exact schema root retention, shared witness retention, publication.
+        self.charge_host_work(3)?;
+        handles.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let cached_schema = SessionValue {
+            identity: schema.identity,
+            value: schema.value.clone(),
+            handles,
+        };
+        let entry = SchemaWitnessEntry { schema: cached_schema, snapshot: snapshot.clone() };
+        Ok((snapshot, Some(SchemaWitnessPublication { entry, target, grown })))
+    }
+}
+
 fn invalid(message: &'static str) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message))
 }
@@ -170,7 +310,8 @@ impl Session {
             return Ok((self.data_construct_from_plan(&plan, arguments)?, None));
         }
         let schema = field(self, &descriptor, 1)?;
-        let schema_storage = self.capture_storage(&schema)?;
+        let (schema_storage, schema_publication) = self.prepare_schema_witness(&schema)?;
+        #[cfg(test)] cancel_schema_stage(self, "names");
         let names = names(self, &schema)?;
         let mut fields = Vec::new();
         reserve(self, &mut fields, names.len())?;
@@ -194,6 +335,7 @@ impl Session {
         }
         // All expected field references and schema facts precede construction.
         // The ordinary plan has no guest callback between this point and bind.
+        #[cfg(test)] cancel_schema_stage(self, "factory");
         let value = self.data_construct_from_plan(&plan, arguments)?;
         let field_storage = field(self, &value, 1)?;
         let properties = field(self, &value, 2)?;
@@ -244,10 +386,12 @@ impl Session {
         }
         // Registration follows exact initial-field validation and precedes guest
         // exposure. Failed registration drops every staged root/watch.
+        #[cfg(test)] cancel_schema_stage(self, "watch");
         inputs.memo_watch = self.watch_constructor_memo(
             class, &inputs.descriptor, &value, &inputs.field_storage, &inputs.fields,
         )?;
         // Macro registration above is unchanged. Runtime gets data recognition only.
+        #[cfg(test)] cancel_schema_stage(self, "runtime-memo");
         self.charge_host_work(1)?;
         if self.phase == crate::portable::resolve::Phase::Runtime {
             self.charge_host_work(std::mem::size_of::<StructType>() as u64 * 2 + 8)?;
@@ -274,6 +418,11 @@ impl Session {
                     }
                 }
             }
+        }
+        // Publish only after all fallible validation, Watch registration and
+        // Runtime memo setup have succeeded. No guest callback follows.
+        if let Some(publication) = schema_publication {
+            publication.publish(&mut self.schema_witness_cache);
         }
         Ok((value, Some(inputs)))
     }
@@ -460,6 +609,271 @@ impl ConstructorInputs {
 mod tests {
     use super::*;
     use crate::portable::resolve::Phase;
+
+    fn schema_test_session(phase: Phase) -> Session {
+        match phase { Phase::Runtime => Session::new_repl().unwrap(), Phase::Macro => Session::new_macro().unwrap() }
+    }
+    fn schema_test_array(session: &mut Session, values: &[&SessionValue]) -> SessionValue {
+        session.budget().unwrap();
+        let mut scope = RootScope::new(&mut session.store);
+        let mut output = [Val::null_any_ref()];
+        session.runtime.get_func(&mut scope, "args-new").unwrap()
+            .call(&mut scope, &[Val::I32(values.len() as i32)], &mut output).unwrap();
+        let array = output[0].unwrap_anyref().unwrap().as_array(&scope).unwrap().unwrap();
+        for (i, value) in values.iter().enumerate() {
+            let rooted = value.value.to_rooted(&mut scope);
+            array.set(&mut scope, i as u32, Val::AnyRef(Some(rooted))).unwrap();
+        }
+        super::super::own(&mut scope, output[0].clone(), session.identity, &session.handles).unwrap()
+    }
+    fn schema_test_child(session: &mut Session, schema: &SessionValue, index: u32) -> SessionValue {
+        let mut scope = RootScope::new(&mut session.store);
+        let array = schema.value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+        let value = array.get(&mut scope, index).unwrap();
+        super::super::own(&mut scope, value, session.identity, &session.handles).unwrap()
+    }
+    fn schema_test_prepare(session: &mut Session, schema: &SessionValue) -> (
+        std::sync::Arc<StorageSnapshot>, Option<SchemaWitnessPublication>,
+    ) {
+        let _request = session.operation_budget_scope().unwrap();
+        session.prepare_schema_witness(schema).unwrap()
+    }
+
+    #[test]
+    fn checked_schema_cache_strict_hits_deep_mutation_distinct_roots_and_gc() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            session.eval("(deftype CheckedSchemaProbe [alpha beta])").unwrap();
+            let class = session.eval("CheckedSchemaProbe").unwrap();
+            let input = session.eval("17").unwrap();
+            let (receiver, prior) = session.data_construct_with_inputs(&class, &[&input, &input]).unwrap();
+            let prior = prior.unwrap();
+            let schema = prior.schema.clone();
+            session.collect().unwrap();
+            let (hit, pending) = schema_test_prepare(&mut session, &schema);
+            assert!(pending.is_none());
+            assert!(std::sync::Arc::ptr_eq(&hit, &prior.schema_storage));
+            // Same child references and content, genuinely different array root.
+            let a = schema_test_child(&mut session, &schema, 0);
+            let b = schema_test_child(&mut session, &schema, 1);
+            let equal = schema_test_array(&mut session, &[&a, &b]);
+            assert!(!same(&mut session, &schema, &equal).unwrap());
+            let (distinct, pending) = schema_test_prepare(&mut session, &equal);
+            assert!(pending.is_some());
+            assert!(!std::sync::Arc::ptr_eq(&distinct, &hit));
+            drop(pending); // private preparation cannot publish on its own
+            // Mutate a reachable UTF16 child; root identity remains the same.
+            session.inspect(&a, |mut store, value| {
+                value.unwrap_anyref().unwrap().as_array(&store)?.unwrap().set(&mut store, 0, Val::I32(98))
+            }).unwrap();
+            assert!(!prior.matches(&mut session, &receiver).unwrap());
+            let (fresh, pending) = schema_test_prepare(&mut session, &schema);
+            assert!(!std::sync::Arc::ptr_eq(&fresh, &hit));
+            assert!(!session.storage_matches(&schema, &hit).unwrap());
+            assert!(session.storage_matches(&schema, &fresh).unwrap());
+            pending.unwrap().publish(&mut session.schema_witness_cache);
+            session.collect().unwrap();
+            let (again, pending) = schema_test_prepare(&mut session, &schema);
+            assert!(pending.is_none());
+            assert!(std::sync::Arc::ptr_eq(&again, &fresh));
+            assert!(!prior.matches(&mut session, &receiver).unwrap());
+            // Restore original data; an old fact is not permanently tainted.
+            session.inspect(&a, |mut store, value| {
+                value.unwrap_anyref().unwrap().as_array(&store)?.unwrap().set(&mut store, 0, Val::I32(97))
+            }).unwrap();
+            assert!(prior.matches(&mut session, &receiver).unwrap());
+        }
+    }
+
+    #[test]
+    fn checked_schema_cache_fuel_irq_staging_rollback_and_retry() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            let name = session.data_scalar(&crate::portable::hir::Literal::String(vec![97])).unwrap();
+            let schema = schema_test_array(&mut session, &[&name]);
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            let capture_cost = {
+                let _request = session.operation_budget_scope().unwrap();
+                let before = session.store.get_fuel().unwrap();
+                drop(session.capture_storage(&schema).unwrap());
+                before - session.store.get_fuel().unwrap()
+            };
+            let owner = (std::mem::size_of::<StorageSnapshot>() + 2*std::mem::size_of::<usize>()) as u64;
+            let growth = (4*std::mem::size_of::<SchemaWitnessEntry>()) as u64;
+            let accounting_owner = (std::mem::size_of::<std::sync::atomic::AtomicUsize>() + 2*std::mem::size_of::<usize>()) as u64;
+            // Actual cold path: lookup entry, original capture, owner, Vec, retains.
+            for allowance in [0, 1, 1+accounting_owner, 1+accounting_owner+capture_cost,
+                1+accounting_owner+capture_cost+owner, 1+accounting_owner+capture_cost+owner+growth,
+                1+accounting_owner+capture_cost+owner+growth+2] {
+                let handles = session.stats().external_value_handles;
+                let _request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(allowance).unwrap();
+                let error = session.prepare_schema_witness(&schema).err().expect("incomplete staging budget");
+                assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                assert!(session.schema_witness_cache.entries.is_empty());
+                assert_eq!(session.stats().external_value_handles, handles);
+            }
+            let (old, pending) = schema_test_prepare(&mut session, &schema);
+            pending.unwrap().publish(&mut session.schema_witness_cache);
+            let handles = session.stats().external_value_handles;
+            for allowance in [0, 1, 2] {
+                let _request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(allowance).unwrap();
+                assert!(session.prepare_schema_witness(&schema).is_err());
+                assert!(std::sync::Arc::ptr_eq(&session.schema_witness_cache.entries[0].snapshot, &old));
+                assert_eq!(session.stats().external_value_handles, handles);
+            }
+            {
+                let _request = session.operation_budget_scope().unwrap();
+                session.host_work_interrupt().store(true, std::sync::atomic::Ordering::SeqCst);
+                let error = session.prepare_schema_witness(&schema).err().unwrap();
+                assert!(error.is_interrupt());
+                assert!(std::sync::Arc::ptr_eq(&session.schema_witness_cache.entries[0].snapshot, &old));
+            }
+            let (retry, pending) = schema_test_prepare(&mut session, &schema);
+            assert!(pending.is_none());
+            assert!(std::sync::Arc::ptr_eq(&old, &retry));
+        }
+    }
+
+    #[test]
+    fn checked_schema_cache_actual_constructor_stage_failures_do_not_publish() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            let class = session.eval("suss.core/List").unwrap();
+            let nil = session.eval("nil").unwrap();
+            let stages: &[&str] = if phase == Phase::Macro { &["names", "factory", "watch"] } else { &["names", "factory", "runtime-memo"] };
+            for &stage in stages {
+                session.schema_witness_cache = SchemaWitnessCache::default();
+                SCHEMA_CANCEL_STAGE.with(|armed| armed.set(Some(stage)));
+                let error = session.data_construct_with_inputs(&class, &[&nil, &nil, &nil, &nil, &nil]).unwrap_err();
+                SCHEMA_CANCEL_STAGE.with(|armed| assert!(armed.get().is_none(), "actual requested stage reached"));
+                assert!(error.is_interrupt(), "{stage}: {error:?}");
+                assert!(session.schema_witness_cache.entries.is_empty(), "{stage}");
+                let (value, fact) = session.data_construct_with_inputs(&class, &[&nil, &nil, &nil, &nil, &nil]).unwrap();
+                let fact = fact.unwrap();
+                assert!(fact.matches(&mut session, &value).unwrap());
+                if phase == Phase::Macro { assert!(fact.memo_watch.is_some()); }
+                else { assert!(fact.runtime_memo_data.is_some(), "real Runtime memo tail reached"); }
+                assert!(session.schema_witness_cache.entries.iter().any(|entry| std::sync::Arc::ptr_eq(&entry.snapshot, &fact.schema_storage)));
+            }
+        }
+    }
+
+    #[test]
+    fn checked_schema_cache_retirement_failure_preserves_last_and_shared_owners_then_retries() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            for shared in [false, true] {
+                let mut session = schema_test_session(phase);
+                let name = session.data_scalar(&crate::portable::hir::Literal::String(vec![97])).unwrap();
+                session.eval("(deftype RetirementWitness [alpha])").unwrap();
+                let class = session.eval("RetirementWitness").unwrap();
+                session.schema_witness_cache = SchemaWitnessCache::default();
+                let (receiver, fact) = session.data_construct_with_inputs(&class, &[&name]).unwrap();
+                let fact = fact.unwrap();
+                assert!(fact.matches(&mut session, &receiver).unwrap());
+                let mut schemas = vec![fact.schema.clone()];
+                for _ in 0..16 { schemas.push(schema_test_array(&mut session, &[&name])); }
+                let older_fact = if shared { Some(fact) } else { drop(fact); None };
+                for schema in &schemas[1..16] {
+                    let (snapshot, publication) = schema_test_prepare(&mut session, schema);
+                    publication.unwrap().publish(&mut session.schema_witness_cache);
+                    drop(snapshot);
+                }
+                let target = session.schema_witness_cache.next;
+                let witness = &session.schema_witness_cache.entries[target].snapshot;
+                assert_eq!(std::sync::Arc::strong_count(witness), if shared { 2 } else { 1 });
+                let weak = std::sync::Arc::downgrade(witness);
+                let table = session.schema_witness_cache.entries.as_ptr();
+                let cost = {
+                    let _request = session.operation_budget_scope().unwrap();
+                    let before = session.store.get_fuel().unwrap();
+                    let staged = session.prepare_schema_witness(&schemas[16]).unwrap();
+                    let spent = before - session.store.get_fuel().unwrap();
+                    drop(staged); // preparation alone cannot retire the old owner
+                    spent
+                };
+                // Full-cache eviction has no Vec growth. After snapshot release
+                // prepayment only entry-release and final three retain/control
+                // units remain. Fail IN that prepayment, and again after it.
+                let tail = std::mem::size_of::<SchemaWitnessEntry>() as u64 + 3;
+                for allowance in [cost.checked_sub(tail + 1).unwrap(), cost - 1] {
+                    let handles = session.stats().external_value_handles;
+                    let _request = session.operation_budget_scope().unwrap();
+                    session.store.set_fuel(allowance).unwrap();
+                    let error = session.prepare_schema_witness(&schemas[16]).err().unwrap();
+                    assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                    assert_eq!(session.schema_witness_cache.entries.as_ptr(), table);
+                    assert_eq!(session.schema_witness_cache.entries.len(), 16);
+                    assert_eq!(session.schema_witness_cache.next, target);
+                    assert!(std::sync::Arc::ptr_eq(&weak.upgrade().unwrap(), &session.schema_witness_cache.entries[target].snapshot));
+                    assert_eq!(session.stats().external_value_handles, handles);
+                }
+                // The counting walk is also cancellable before any mutation.
+                {
+                    let old = weak.upgrade().unwrap();
+                    let _request = session.operation_budget_scope().unwrap();
+                    let mut calls = 0;
+                    let error = old.precharge_retirement(&mut |units| {
+                        calls += 1;
+                        if calls == 2 {
+                            session.host_work_interrupt().store(true, std::sync::atomic::Ordering::SeqCst);
+                        }
+                        session.charge_host_work(units)
+                    }).unwrap_err();
+                    assert!(error.is_interrupt());
+                    assert_eq!(session.schema_witness_cache.entries.as_ptr(), table);
+                }
+                let (fresh, publication) = schema_test_prepare(&mut session, &schemas[16]);
+                publication.unwrap().publish(&mut session.schema_witness_cache);
+                assert!(session.storage_matches(&schemas[16], &fresh).unwrap());
+                if let Some(old) = older_fact {
+                    assert!(std::sync::Arc::ptr_eq(&weak.upgrade().unwrap(), &old.schema_storage));
+                    assert!(old.matches(&mut session, &receiver).unwrap());
+                    drop(old);
+                }
+                assert!(weak.upgrade().is_none(), "last old witness owner retires only on successful publication/drop");
+            }
+        }
+    }
+
+    #[test]
+    fn checked_schema_cache_seventeen_roots_evict_without_rejecting_and_reset_is_foreign() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            let name = session.data_scalar(&crate::portable::hir::Literal::String(vec![97])).unwrap();
+            let schemas: Vec<_> = (0..17).map(|_| schema_test_array(&mut session, &[&name])).collect();
+            let mut witnesses = Vec::new();
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            for schema in &schemas {
+                let (witness, pending) = schema_test_prepare(&mut session, schema);
+                pending.unwrap().publish(&mut session.schema_witness_cache);
+                assert!(session.schema_witness_cache.entries.len() <= SCHEMA_WITNESS_LIMIT);
+                witnesses.push(witness);
+            }
+            assert_eq!(session.schema_witness_cache.entries.len(), 16);
+            session.collect().unwrap();
+            for (schema, witness) in schemas.iter().zip(&witnesses) {
+                assert!(session.storage_matches(schema, witness).unwrap());
+            }
+            let (recaptured, pending) = schema_test_prepare(&mut session, &schemas[0]);
+            assert!(pending.is_some(), "eviction is a cache miss, never rejection");
+            assert!(!std::sync::Arc::ptr_eq(&recaptured, &witnesses[0]));
+            pending.unwrap().publish(&mut session.schema_witness_cache);
+            let mut foreign = schema_test_session(phase);
+            let foreign_schema = schema_test_array(&mut foreign, &[]);
+            {
+                let _request = session.operation_budget_scope().unwrap();
+                assert!(matches!(session.prepare_schema_witness(&foreign_schema), Err(SessionError::ForeignValue)));
+            }
+            session.reset().unwrap();
+            assert!(session.schema_witness_cache.entries.is_empty());
+            {
+                let _request = session.operation_budget_scope().unwrap();
+                assert!(matches!(session.prepare_schema_witness(&schemas[0]), Err(SessionError::ForeignValue)));
+            }
+        }
+    }
 
     #[test]
     fn private_constructor_route_rejects_actual_guest_argument_escape() {
@@ -771,6 +1185,99 @@ mod tests {
             let fields = session.data_fields(&value).unwrap();
             assert!(same(&mut session, &fields[0], &a).unwrap());
             assert!(same(&mut session, &fields[1], &b).unwrap());
+        }
+    }
+
+    #[test]
+    fn checked_schema_private_roots_preserve_external_stats_failures_and_fact_lifetimes() {
+        use std::sync::{Arc, atomic::Ordering};
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = schema_test_session(phase);
+            session.eval("(deftype PrivateSchemaAccounting [a b])").unwrap();
+            let class = session.eval("PrivateSchemaAccounting").unwrap();
+            let local = session.eval("17").unwrap();
+            let external = session.stats().external_value_handles;
+            assert!(session.schema_witness_cache.entries.is_empty());
+            let (value, fact) = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let fact = fact.unwrap();
+            assert_eq!(session.schema_witness_cache.entries.len(), 1);
+            let counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            assert!(!Arc::ptr_eq(&counter, &session.handles));
+            // Exactly one schema-array root, two UTF16 name-array roots,
+            // plus the cache's separately owned schema handle. No hidden stats offset.
+            assert_eq!(counter.load(Ordering::Relaxed), 4);
+            assert!(Arc::ptr_eq(&fact.schema_storage, &session.schema_witness_cache.entries[0].snapshot));
+            let weak = Arc::downgrade(&fact.schema_storage);
+            assert!(fact.matches(&mut session, &value).unwrap());
+            let held_external = session.stats().external_value_handles;
+            // All rejected owner/poll work leaves current cache identity,
+            // private roots, publication cursor and caller roots exactly intact.
+            let cursor = session.schema_witness_cache.next;
+            let mut other = Session::new().unwrap();
+            let foreign = other.eval("99").unwrap();
+            for interrupt in [false, true] {
+                let request = session.operation_budget_scope().unwrap();
+                session.store.set_fuel(0).unwrap();
+                if interrupt { session.interrupt_handle().interrupt(); }
+                assert!(matches!(session.data_construct_with_inputs(&class, &[&foreign]), Err(SessionError::ForeignValue)));
+                let error = session.data_construct_with_inputs(&class, &[&local, &foreign]).unwrap_err();
+                if interrupt { assert!(error.is_interrupt(), "{error:?}"); }
+                else { assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))); }
+                assert_eq!(session.stats().external_value_handles, held_external);
+                assert_eq!(counter.load(Ordering::Relaxed), 4);
+                assert_eq!(session.schema_witness_cache.next, cursor);
+                assert_eq!(session.schema_witness_cache.entries.len(), 1);
+                assert!(Arc::ptr_eq(&weak.upgrade().unwrap(), &session.schema_witness_cache.entries[0].snapshot));
+                drop(request);
+            }
+            // A genuine hit shares the existing witness and creates no roots
+            // after its returned value/fact have been dropped.
+            let again = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            assert!(Arc::ptr_eq(&again.1.as_ref().unwrap().schema_storage, &fact.schema_storage));
+            drop(again);
+            assert_eq!(session.stats().external_value_handles, held_external);
+            assert_eq!(counter.load(Ordering::Relaxed), 4);
+            // Retiring only cache ownership leaves the fact's independent
+            // private witness alive and complete across GC.
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            assert_eq!(counter.load(Ordering::Relaxed), 3);
+            session.collect().unwrap();
+            assert!(fact.matches(&mut session, &value).unwrap());
+            assert!(weak.upgrade().is_some());
+            // Existing real cancellation seam, not a replacement publication.
+            let request = session.operation_budget_scope().unwrap();
+            SCHEMA_CANCEL_STAGE.with(|stage| stage.set(Some("factory")));
+            let error = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap_err();
+            assert!(error.is_interrupt(), "{error:?}");
+            assert!(session.schema_witness_cache.entries.is_empty());
+            assert_eq!(session.stats().external_value_handles, held_external);
+            assert_eq!(counter.load(Ordering::Relaxed), 3);
+            drop(request);
+            let retry = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let retry_counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            assert!(!Arc::ptr_eq(&counter, &retry_counter));
+            assert_eq!(retry_counter.load(Ordering::Relaxed), 4);
+            drop(retry);
+            session.schema_witness_cache = SchemaWitnessCache::default();
+            assert_eq!(retry_counter.load(Ordering::Relaxed), 0);
+            drop((fact, value));
+            assert_eq!(counter.load(Ordering::Relaxed), 0);
+            assert!(weak.upgrade().is_none());
+            assert_eq!(session.stats().external_value_handles, external);
+            let (reset_value, reset_fact) = session.data_construct_with_inputs(&class, &[&local, &local]).unwrap();
+            let reset_fact = reset_fact.unwrap();
+            let reset_counter = session.schema_witness_cache.entries[0].schema.handles.clone();
+            let reset_weak = Arc::downgrade(&reset_fact.schema_storage);
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 4);
+            session.reset().unwrap();
+            assert_eq!(session.stats().external_value_handles, 0);
+            assert!(session.schema_witness_cache.entries.is_empty());
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 3);
+            assert!(reset_weak.upgrade().is_some());
+            assert!(matches!(reset_fact.matches(&mut session, &reset_value), Err(SessionError::ForeignValue)));
+            drop((reset_fact, reset_value));
+            assert!(reset_weak.upgrade().is_none());
+            assert_eq!(reset_counter.load(Ordering::Relaxed), 0);
         }
     }
 
