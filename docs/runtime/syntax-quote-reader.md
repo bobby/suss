@@ -25,10 +25,13 @@ the original five macro definitions, scalars, empty list, vector splicing, map,
 set, metadata and nested templates. The comparison preserves tree structure,
 symbol qualification and generated identity; only generated numeric IDs and
 JSON integer versus portable binary64 representation are normalized. Raw primary
-observations remain unchanged. Explicit metadata entries use the previously
-accepted textual order; the metadata fixture compares that declared variance
-against the pinned reader's incidental order. No effectful map/set entry order
-is normalized away.
+observations remain unchanged. Indexed metadata retains first-association order:
+line, column, end-line and end-column precede the explicit marker in the pinned
+syntax-quote fixture. The previous test-only marker-first permutation is removed;
+the complete raw pinned tree is compared directly. A focused regression checks
+both phases and rejects that obsolete permutation without sorting metadata or
+changing effectful map/set entry order. This correction is source-only until its
+focused tests execute on the current compiler tuple.
 
 Focused tests cover aliases, ordinary and macro referrals, exclusions, phase
 separation, local namespace definitions, transactional failure, counter overflow,
