@@ -729,7 +729,8 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise::functions(&mut b));
-    arithmetic_functions.extend(named_properties::functions(&mut b));
+    let (named_callbacks, short_field_match) = named_properties::functions(&mut b);
+    arithmetic_functions.extend(named_callbacks);
     // Original source error adapter: retain the ABI Error descriptor/message
     // rather than substituting nil, an opaque object or a Wasm trap.
     b.function(
@@ -758,6 +759,7 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);
+    named_properties::short_literal_functions(&mut b, short_field_match);
     arrays::set_or_property(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));

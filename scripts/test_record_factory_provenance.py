@@ -55,13 +55,25 @@ class RecordFactoryProvenance(unittest.TestCase):
                     verify_factory_adaptations(data)
 
     def test_bootstrap_installation_and_artifact_dependency_required(self):
-        for old in ['macros.session.eval(crate::portable_record_factories::SOURCE)?;',
+        for old in ['macros.session.eval_fixed_initialization_source(crate::portable_record_factories::SOURCE)?;',
                     'dependencies.push(("record-factory-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_factories::SOURCE.as_bytes())));']:
             with self.subTest(old=old):
                 old = re.sub(r'\s+', '', old)
                 self.assertIn(old, self.host)
                 with self.assertRaises(ValueError):
                     verify_factory_adaptations(self.provenance, self.host.replace(old, ''))
+
+
+    def test_fixed_initialization_route_and_exact_source_are_required(self):
+        installation = 'macros.session.eval_fixed_initialization_source(crate::portable_record_factories::SOURCE)?;'
+        self.assertIn(installation, self.host)
+        self.assertEqual(verify_factory_adaptations(self.provenance, self.host), 2)
+        for wrong in [
+                'macros.session.eval(crate::portable_record_factories::SOURCE)?;',
+                'macros.session.eval_fixed_initialization_source(crate::portable_record_label::SOURCE)?;']:
+            with self.subTest(wrong=wrong):
+                with self.assertRaisesRegex(ValueError, 'bootstrap installation missing'):
+                    verify_factory_adaptations(self.provenance, self.host.replace(installation, wrong))
 
 
 if __name__ == '__main__':

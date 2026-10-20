@@ -65,13 +65,25 @@ class RecordLabelProvenance(unittest.TestCase):
             verify_label_adaptations(data, source_bytes=mutated)
 
     def test_bootstrap_and_cache_identity_required(self):
-        for old in ['macros.session.eval(crate::portable_record_label::SOURCE)?;',
+        for old in ['macros.session.eval_fixed_initialization_source(crate::portable_record_label::SOURCE)?;',
                     'dependencies.push(("record-label-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes())));']:
             with self.subTest(old=old):
                 old = re.sub(r'\s+', '', old)
                 self.assertIn(old, self.host)
                 with self.assertRaises(ValueError):
                     verify_label_adaptations(self.provenance, self.host.replace(old, ''))
+
+
+    def test_fixed_initialization_route_and_exact_source_are_required(self):
+        installation = 'macros.session.eval_fixed_initialization_source(crate::portable_record_label::SOURCE)?;'
+        self.assertIn(installation, self.host)
+        self.assertEqual(verify_label_adaptations(self.provenance, self.host), 4)
+        for wrong in [
+                'macros.session.eval(crate::portable_record_label::SOURCE)?;',
+                'macros.session.eval_fixed_initialization_source(crate::portable_record_factories::SOURCE)?;']:
+            with self.subTest(wrong=wrong):
+                with self.assertRaisesRegex(ValueError, 'bootstrap installation missing'):
+                    verify_label_adaptations(self.provenance, self.host.replace(installation, wrong))
 
 
 if __name__ == '__main__':
