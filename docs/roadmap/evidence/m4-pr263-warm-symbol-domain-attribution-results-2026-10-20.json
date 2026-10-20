@@ -1,0 +1,161 @@
+{
+  "scope": "Existing complete Symbol nil-aware group, unchanged12rows, diagnostics only; failure attributed to original constructor-input ownership membership. No source/authority repair or acceptance claimed.",
+  "terminal": {
+    "head": "12cb83ac8aeb8165af3f2ed00d73bef65ca377d3",
+    "source_commit": "b3d5559ec28416e81a58c48f1ac041549cfec356",
+    "predicted_source_fingerprint": "73a77267bd50462c86bc194ac460e0577dabc2979d579e72bb32e0ab2f68f763",
+    "source_input_count": 222,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware"
+    ],
+    "trace_environment": {
+      "SUSS_POISON_RECEIPT_TRACE": "1",
+      "SUSS_MEMO_DOMAIN_TRACE": "1"
+    },
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Original completeSymbolnilaware12-rowgroup, cold/warm bothphases andbaseline/custom/restored-method windows unchanged; traceexistingcanonical/scopedreceipts/sourceSafe/authentication andexistingmembership/method/class/prototype/storage/memo/inputpredicates exactlyonce; noadditionalSessionqueries. Retained-nodeverboseoutputoptinonly. This diagnosticselectsafailingfulloriginaltest, not replacementfull25acceptance. No source/rate/quota/authoritychanges. Optin native diagnostics do not authorize source/memo or performance claims.",
+    "exit_code": 101,
+    "seconds": 246.80603254400194,
+    "raw_sha256": "48ddb4651302c8c941fdd8eeebabb51027a52316dd7f4e8bfb4f96b1ad1664de"
+  },
+  "harness_seconds": 109.42,
+  "counts": {
+    "passed": 0,
+    "failed": 1,
+    "ignored": 0,
+    "filtered": 573
+  },
+  "observations": {
+    "rows": 12,
+    "identical_to_prior_trace": true,
+    "matching_rows": 8,
+    "mismatched_rows": 4,
+    "prior_terminal": {
+      "head": "78aa8e5f1a0bf5f6eb94bf5b84c66bed7de6928b",
+      "source_commit": "493bf105a926be605ff635a92cb4feac49647bd7",
+      "predicted_source_fingerprint": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware"
+      ],
+      "trace_environment": {
+        "SUSS_POISON_RECEIPT_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original completeSymbolnilaware12-rowgroup, cold/warm bothphases andbaseline/custom/restored-method windows unchanged; traceexistingcanonical/scopedreceipts/sourceSafe/authentication only. This diagnosticselectsafailingfulloriginaltest, not replacementfull25acceptance. No source/rate/quota/authoritychanges. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 107.5296572050429,
+      "raw_sha256": "5d2b2477bcdfd88d6d01da813f5c3b9173e3c84336a3be9196d9ea4a29362a1e"
+    },
+    "qualification": "Same13-field observations as sourcec960; logging adds no guest reads/callbacks. This is not a full25 replay on source73a7."
+  },
+  "subjects": [
+    {
+      "case": "symbol/nil-aware=true/warm=true/Runtime",
+      "watch_label": "0x7bdb7b5ac070",
+      "canonical_pre_store": "POISON_RECEIPT stage=canonical-pre-store watch=0x7bdb7b5ac070 owner=Symbol site=2 slot=3 bits=41969e1568000000 source_safe=false domain_registered=true domain_live=true valid=None",
+      "domain_checks": [
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=membership identity=6 staged=false require_target=true member=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=method watch=0x7bdb7b5ac070 valid=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=header staged=false state_valid=true classes=true prototype_parent=true methods=true nodes=1 child_domains=0",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=snapshot node=0x7bdd8afc0140 valid=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=original-input-edge node=0x7bdd8afc0140 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=original-input-edge node=0x7bdd8afc0140 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=original-input-edge node=0x7bdd8afc0140 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bdb7519ddc0 target=0x7bdb7b5ac070 stage=local-result valid=false"
+      ],
+      "first_failing_stage": "original-input-edge membership",
+      "missing_edges": 3,
+      "canonical_post_store": "POISON_RECEIPT stage=canonical-post-store-publication watch=0x7bdb7b5ac070 owner=Symbol site=2 slot=3 bits=41969e1568000000 source_safe=false domain_registered=true domain_live=true valid=Some(true)"
+    },
+    {
+      "case": "symbol/nil-aware=true/warm=true/Macro",
+      "watch_label": "0x7bd928f125a0",
+      "canonical_pre_store": "POISON_RECEIPT stage=canonical-pre-store watch=0x7bd928f125a0 owner=Symbol site=2 slot=3 bits=41969e1568000000 source_safe=false domain_registered=true domain_live=true valid=None",
+      "domain_checks": [
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=membership identity=8 staged=false require_target=true member=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=method watch=0x7bd928f125a0 valid=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=header staged=false state_valid=true classes=true prototype_parent=true methods=true nodes=1 child_domains=0",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=snapshot node=0x7bd928f194b0 valid=true",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=original-input-edge node=0x7bd928f194b0 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=original-input-edge node=0x7bd928f194b0 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=original-input-edge node=0x7bd928f194b0 member=false",
+        "MEMO_DOMAIN test=Some(\"portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware\") domain=0x7bd928486770 target=0x7bd928f125a0 stage=local-result valid=false"
+      ],
+      "first_failing_stage": "original-input-edge membership",
+      "missing_edges": 3,
+      "canonical_post_store": "POISON_RECEIPT stage=canonical-post-store-publication watch=0x7bd928f125a0 owner=Symbol site=2 slot=3 bits=41969e1568000000 source_safe=false domain_registered=true domain_live=true valid=Some(true)"
+    }
+  ],
+  "interpretation": "Both domains contain one constructor node and no child domains. Target membership, state, class/prototype/method and node snapshot checks pass. Three recorded original constructor-input references lack owned membership, making sourceSafe false before canonical setter. Physical setter publication validates but correctly retains false. Exact edge ordinals/types are not observed here; source inspection points to metadata reconstruction recording the new Symbol while genuine original input evidence remains in separate Native.inputs. It is not permission to trust DATA health, suppress edges, recapture current guest data, or upgrade a false receipt.",
+  "bootstrap": {
+    "generation": {
+      "head": "b3d5559ec28416e81a58c48f1ac041549cfec356",
+      "compiler_source_sha256": "73a77267bd50462c86bc194ac460e0577dabc2979d579e72bb32e0ab2f68f763",
+      "inputs": 222,
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+      "exit_code": 1,
+      "seconds": 89.07920685404679,
+      "raw_sha256": "7de8bae2c46ed2bd18e4565200503bcee09f2411360238a0f1895d184fe620ee"
+    },
+    "identity": {
+      "head": "12cb83ac8aeb8165af3f2ed00d73bef65ca377d3",
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+      "source_sha256": "73a77267bd50462c86bc194ac460e0577dabc2979d579e72bb32e0ab2f68f763",
+      "exit_code": 0,
+      "seconds": 1.147040743031539,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+    },
+    "actual_builder": {
+      "actual_fingerprint": "73a77267bd50462c86bc194ac460e0577dabc2979d579e72bb32e0ab2f68f763",
+      "inputs": 222,
+      "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "30ab69a72d5e785af534c5809a58f01a74a73de02684692c3a5f3e4b22b91988",
+      "source_commit": "b3d5559ec28416e81a58c48f1ac041549cfec356"
+    },
+    "independent_adoption": "independent-adoption-review.json in the raw cache; exact four generated files adopted, allpairs equal/executable sections unchanged; initial stale comparison exit1 remains not full verifier pass."
+  },
+  "remaining": "Constructive enrollment of genuine original native factory-input evidence before exposure, with exact-reference/foreign-owner/missing-edge/poison/storage/method/memo and failure/publication/retry guards preserved.719 poison/restoration and originally-nil authority remain mandatory. NamespaceV2 is source-reviewed/parked; source-tags/pinned/native/default/source-child/workspace/finalCI gates remain separate."
+}
