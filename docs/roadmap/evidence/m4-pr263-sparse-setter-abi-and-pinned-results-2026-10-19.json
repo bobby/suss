@@ -1,0 +1,175 @@
+{
+ "status": "FINAL_IMMUTABLE_SPARSE_SOURCE_ABI_BOOT_PINNED_FACTS_AWAIT_CARVER_GO",
+ "source_commit": "a9fbe933641401aad832f6fb9469f9dafdb1979f",
+ "compiler_source_sha256": "316a04ce95c5cfaa8103854f19c8bc0b53f1fbc39578939ff15312118dd0b8e4",
+ "inputs": 222,
+ "scope": "Source-exact peer-reviewed sparse290e donor in two Rust source/test paths only; current preexisting tests preserved. Direct fresh runtime_abi::module tests, no Session/shippedBOOT/public macro credit.",
+ "source_paths": [
+  "crates/suss-compile/src/runtime_abi/sparse_arrays.rs",
+  "crates/suss-compile/tests/runtime_abi.rs"
+ ],
+ "reviewed_patch_sha256": "9d4c9fce369f607a6a678956078a3427cff12104fc61254e1057badfe67df2d6",
+ "command": [
+  "cargo",
+  "test",
+  "-p",
+  "suss-compile",
+  "--locked",
+  "--test",
+  "runtime_abi",
+  "--",
+  "runtime_abi_sparse_",
+  "runtime_abi_source_array",
+  "runtime_abi_native_factory_rejects_source_array_",
+  "runtime_abi_array_",
+  "sparse_set_repair_tests::",
+  "--test-threads=1",
+  "--nocapture"
+ ],
+ "profile_environment": {
+  "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+  "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+  "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+ },
+ "ABI": {
+  "exit": 0,
+  "passed": 23,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 61,
+  "harness_seconds": 66.36,
+  "seconds": 310.2488845490152,
+  "raw_sha256": "49a923eeaaee804ce4cd9b92510e41094cdd5dd525be35197d42d3aa71b4abd0",
+  "actual_pass_names": [
+   "runtime_abi_array_constructor_lengths_and_range_error_identity_after_gc",
+   "runtime_abi_array_join_rejects_corrupt_active_chains_and_recovers_after_gc",
+   "runtime_abi_array_ordinary_properties_reject_corrupt_chains_before_writes",
+   "runtime_abi_array_own_property_names_preserve_canonical_decimal_keys",
+   "runtime_abi_array_push_overflow_preserves_all_writes_before_range_error",
+   "runtime_abi_native_factory_rejects_source_array_self_and_mutual_cycles_after_gc",
+   "runtime_abi_source_array_bad_inputs_and_capacity_fail_as_language_errors",
+   "runtime_abi_source_array_sparse_owner_clone_preserves_holes_and_maximum_length_after_gc",
+   "runtime_abi_source_arrays_copy_argument_buffers_and_own_values_through_growth_and_gc",
+   "runtime_abi_sparse_array_bulk_ingress_copies_input_and_preserves_explicit_undefined",
+   "runtime_abi_sparse_array_dense_prefix_presence_and_shrink_remain_independent",
+   "runtime_abi_sparse_array_length_presence_and_uint32_boundary_survive_gc",
+   "runtime_abi_sparse_array_materialization_is_linear_snapshot_and_keeps_sparse_length_independent",
+   "runtime_abi_sparse_array_mutations_reject_invalid_presence_without_repairing_it",
+   "runtime_abi_sparse_array_rejects_corrupt_chains_before_shrink_mutates_length",
+   "runtime_abi_sparse_array_rejects_duplicate_out_of_range_and_dense_overlap_keys",
+   "runtime_abi_sparse_array_rejects_malformed_length_instead_of_saturating",
+   "runtime_abi_sparse_array_shrink_deletes_indices_without_resurrection_or_length_change_on_delete",
+   "runtime_abi_sparse_array_slice_preserves_holes_dense_offsets_and_high_sparse_ranges",
+   "runtime_abi_sparse_clone_coalesces_present_prefix_without_filling_holes_or_aliasing",
+   "sparse_set_repair_tests::sparse_set_late_corruption_rejects_before_matching_head_write_then_recovers",
+   "sparse_set_repair_tests::sparse_set_ordered_insert_replace_alias_gc_and_uint32_property",
+   "sparse_set_repair_tests::sparse_set_wrong_receiver_and_cross_store_are_rejected_before_writes"
+  ]
+ },
+ "source_proof": {
+  "all222freeze_hashes_match_Git_commit": true,
+  "source_freeze_sha256": "db78a9c8e91ea4601a7a2e448ec74b2956957f4d63557eb7deef37b9a5e98692",
+  "builder_output_sha256": "fc34295dc88a3b4d42ce47b8a24e1093deb982d03b4994904925c160a3818845",
+  "actual_identity_receipt": "compiled-source-identity.json",
+  "independent_ABI_review": "VERIFIED_EXACT_DIRECT_ABI_23_PASS",
+  "review_sha256": "4466455bff19d11b7afe068c271525b7b60aaf220a4d560160bb3059a08d9663"
+ },
+ "normal_BOOT": {
+  "command": [
+   "sh",
+   "scripts/verify-bootstrap.sh"
+  ],
+  "profile_environment": {
+   "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+   "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+   "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+  },
+  "exit": 1,
+  "seconds": 207.36329831404146,
+  "raw_sha256": "744d975b603bc93fc9b7d516484b1de1ee603708e2e39c9e11fbd7660c299507",
+  "scope": "Two normal generations completed/four equal pairs; verify command exit1 expected old-shipped comparison, not execution-suitePASS. Inherited ABI scope label on raw bootstrap terminal is not bootstrap semantic credit.",
+  "independent_adoption": {
+   "path": "pr263-sparse-setter-production-v1/independent-adoption-review.json",
+   "sha256": "810a4b86570dfc34a8786a11a0349e180dfd78f9ee2243ee66a6c59a0f588726",
+   "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY"
+  },
+  "adopted_commit": "9730ab4c4023abcdb98467f72111ccc4e3db5128",
+  "four_committed_blobs_independently_equal_reviewed_first_and_second_outputs": true,
+  "changes": "Only source-artifact fingerprint custom section and source/hash manifest fields; executable/noncustomBOOT unchanged. New runtimeABI module is separately generated/instantiated, not proof the public macro graph uses it.",
+  "identity": {
+   "tool_session": 15593,
+   "exit": 0,
+   "basis": "Main actual tool terminal",
+   "reproduction_command": [
+    "python3",
+    "scripts/verify_bootstrap_identity.py"
+   ],
+   "scope": "Pure checkout-independent compiled identity/Graph invalidations only."
+  }
+ },
+ "next": "Separate future work only: missing543 HIR GeneralFunction self-binding-owner cachepacket71555 is source-only/cross-review pending; one defaultcore17+COW probe50681 runs on unchangedsource316a, no verdict. Neither is part of sparse ABI23/pinned validation.",
+ "history": "Old pinned1P1F and trace0P1F are sourcee294: identifier15orderedhostPASS; map0IDs/69UNEXECUTED from expanded-result fuel239..5926, not semantic failures. NewABI23PASS does not relabel old outcomes or prove map acceptance.",
+ "limitations": "DirectABI23PASS; normalgeneration comparisonexit1, exactBOOT adoption and pureidentity0; pinned1P1F/identifier15hostPASS/map0IDs69UNEXECUTED. No sparse map unblock, savings, publicCLI/fullbaseline/finalCI/issue acceptance or promotion. Olde294failure remains separate.",
+ "receipts": "/home/bobby/.cache/suss-m4-work/pr263-sparse-setter-production-v1",
+ "issue_progress_reference": "Main reports existing issue comment6282146487/PR failure checkbox updated; no GH mutation by this reviewer.",
+ "public_pinned_replay": {
+  "head": "9730ab4c4023abcdb98467f72111ccc4e3db5128",
+  "source_fingerprint": "316a04ce95c5cfaa8103854f19c8bc0b53f1fbc39578939ff15312118dd0b8e4",
+  "inputs": 222,
+  "command": [
+   "cargo",
+   "test",
+   "-p",
+   "suss-compile",
+   "--locked",
+   "--test",
+   "clojure_test_suite",
+   "--",
+   "--nocapture",
+   "--test-threads=2",
+   "--exact",
+   "pinned_map_declaration_executes_without_transport_loss",
+   "pinned_reader_identifier_names_keep_values"
+  ],
+  "environment": {
+   "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+   "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+   "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+   "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-sparse-316a-v1/capture",
+   "SUSS_READER_IDENTIFIER_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-sparse-316a-v1/capture"
+  },
+  "outcome": {
+   "exit": 101,
+   "passed": 1,
+   "failed": 1,
+   "ignored": 0,
+   "filtered": 11,
+   "harness_seconds": 123.28,
+   "seconds": 320.794091248943,
+   "raw_sha256": "45d35e276dc657b5ca8893262c24165bd7f3bd8a88926fce5c0f45c96567fd17"
+  },
+  "identifier": {
+   "ordered_IDs": 15,
+   "host_pass": 15,
+   "guest_judged": 0,
+   "failed": 0,
+   "skipped": 0,
+   "not_executed": 0,
+   "capture_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317"
+  },
+  "map": {
+   "executed_IDs": 0,
+   "not_executed": 69,
+   "namespace_failure": 1,
+   "assertion_failure": 0,
+   "accepted": false,
+   "stage": "expanded result transport",
+   "error": "WasmOutOfFuel239..5926",
+   "capture_sha256": "691c317aef7f9dbe1d1a64540fd3069e83b16c1b1416c4f6ed154b81f29535a5"
+  },
+  "cache": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-sparse-316a-v1",
+  "independent_comparison_receipt": "independent-post-pinned-comparison.json",
+  "scope": "Original200M both Macro/caller. MAP gate FAIL;69assertions UNEXECUTED, not semantic failures. No progress or savings inferred from changed backtrace/functions or uncontrolled duration."
+ },
+ "validation_head": "9730ab4c4023abcdb98467f72111ccc4e3db5128"
+}

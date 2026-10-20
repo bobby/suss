@@ -30475,3 +30475,27 @@ Diagnostic followup: on a04d46831756764cfb172d2c35b55ac413d69377, same sourcee29
 Completed flat interval totals: provenance5,118,607; provenance→caller-form417; caller-form→environment417; environment→arguments40,133,594; arguments→invoked80,436,360; completed invoked→decoded59,630,937. These exclude missing tail/gaps/other compile work and are not exclusive wholecompile attribution.
 
 Next bounded donor290e exact2file port awaitsCarverGO; no measurement benefit claimed. Evidence may batch with next source fix. Full diagnostic commands/environment remain in companion JSON; actual trace rawhash/cost limits above retained.
+
+
+### PR263 sparse-setter direct ABI validation (2026-10-19)
+
+Source a9fbe933641401aad832f6fb9469f9dafdb1979f ports the exact peer-reviewed sparse290e two-file source/test patch; preexisting tests retained. Actual compiled fingerprint316a04ce95c5cfaa8103854f19c8bc0b53f1fbc39578939ff15312118dd0b8e4, all222 frozen input hashes matchGit.
+
+ABI23 terminal0:23PASS/0FAIL/0ignored,61filtered,66.36s harness/310.248884549s command; raw49a923eeaaee804ce4cd9b92510e41094cdd5dd525be35197d42d3aa71b4abd0. Carver verified exact direct-ABI23 results. These tests instantiate fresh runtime_abi::module directly: no Session/shippedBOOT or public macro success is inferred.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true cargo test -p suss-compile --locked --test runtime_abi -- runtime_abi_sparse_ runtime_abi_source_array runtime_abi_native_factory_rejects_source_array_ runtime_abi_array_ sparse_set_repair_tests:: --test-threads=1 --nocapture
+```
+
+NormalBOOT23298 completed207.363298s, exit1 only at expected old-shipped comparison, raw744d975b603bc93fc9b7d516484b1de1ee603708e2e39c9e11fbd7660c299507; all four first/second pairs match. Carver exact-adoptionGO; committed BOOT `9730ab4c4023abcdb98467f72111ccc4e3db5128` independently matches all reviewed outputs. Only source-FP custom section/manifest identity changes; executable/noncustomBOOT is unchanged, while the new ABI module is separate. Main pureidentity15593toolterminal0; not public macro/bootstrap suite credit.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+```
+
+Original pinned2 replay75178 now terminal1PASS/1FAIL/0ignored on9730ab4/source316a, unchanged200M both Macro/caller:320.794091s command/123.28s harness; raw45d35e276dc657b5ca8893262c24165bd7f3bd8a88926fce5c0f45c96567fd17. Identifier15orderedhostPASS; map still expanded-resultOutOfFuel239..5926,0IDs/69notexecuted,1namespacefailure,0semanticassertionfailures, comparatoracceptedfalse. Both actual captures independently compared against the tested-head oracle. Different raw backtrace function IDs do not establish progress/cost/savings. Cache pr263-pinned-acceptance-sparse-316a-v1 retains argv/profile/terminal/raw/captures. Exact focused source/ABI23 and BOOT facts above remain valid but do not satisfy map gate. Public map benefit remains UNKNOWN; publish ABI/source/BOOTfacts independently of the pending long replay. Sparse-setter public macro/map benefit is UNKNOWN. Historical sourcee294 pinned1P1F/trace0P1F and69UNEXECUTED remain unchanged; no semantic69failures, acceptance/promotion/fullbaseline/finalCI claim. Full cache: pr263-sparse-setter-production-v1/{abi-terminal.json,abi.log,compiled-source-identity.json,builder-output.txt,source-freeze.json,independent-abi-terminal-review.json}; all23 names and exact argv/profile are in companion JSON. Use main's exclusive target/privateTMPDIR and bounded workers, no RUSTFLAGS changes.
+
+Olda04CIintegration3 is separately classified atpr263-ci-a04d468-v1/integration3-terminal-audit.json; it is not a new-source CI verdict.
+
+Separate future work (excluded from sparse validation): missing543 HIR GeneralFunction self-binding-owner cachepacket71555 is source-only/cross-review pending. Defaultcore17+COW probe50681 runs on unchangedsource316a, no verdict. Keep current map gateFAIL and olde294failure separate.
