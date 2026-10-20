@@ -94,28 +94,29 @@ impl InputIndex<'_> {
         let b = b.value.to_rooted(&mut scope);
         Ok(Rooted::<AnyRef>::ref_eq(&scope, &a, &b)?)
     }
-    fn contains_explicit<R: AsRef<Record>>(
+    fn contains_explicit<R: RecordAccess + ?Sized>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[R],
+        records: &R,
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         let hash = self.hash(value)?;
         let mut cursor = index.get(hash, self)?;
         while let Some(id) = cursor {
-            if self.same(value, &records[id].as_ref().value)? {
+            let record = records.record(id, self.session)?;
+            if self.same(value, &record.value)? {
                 return Ok(true);
             }
             cursor = collisions[id];
         }
         Ok(false)
     }
-    fn contains<R: AsRef<Record>>(
+    fn contains<R: RecordAccess + ?Sized>(
         &mut self,
         index: &InputHeads,
         collisions: &[Option<usize>],
-        records: &[R],
+        records: &R,
         value: &SessionValue,
     ) -> Result<bool, SessionError> {
         if self.contains_explicit(index, collisions, records, value)? {
@@ -124,9 +125,10 @@ impl InputIndex<'_> {
         // Copied fields of an EMPTY seed are covered by its pristine complete
         // storage witness, even when they were not bridge-created allocations.
         // Membership alone is not validation: direct seed checks remain required.
-        for record in records {
+        for id in 0..records.len() {
             self.charge(1)?;
-            if let Fact::CanonicalSeed(seed) = &record.as_ref().fact {
+            let record = records.record(id, self.session)?;
+            if let Fact::CanonicalSeed(seed) = &record.fact {
                 if seed.contains_initial_reference(self.session, value)? {
                     return Ok(true);
                 }
@@ -138,10 +140,29 @@ impl InputIndex<'_> {
 
 pub(crate) enum Fact {
     Scalar(ScalarInputs),
-    Array(SourceArrayInputs),
-    Constructor(ConstructorInputs),
+    Array(Box<SourceArrayInputs>),
+    Constructor(Box<ConstructorInputs>),
     CanonicalSeed(std::sync::Arc<super::canonical_seeds::CanonicalSeed>),
     ExternalSeed(&'static str),
+}
+// Keep the large immutable input owners out of every scalar/seed record slot.
+// Charge the separate payload allocation and move before allocating it, plus
+// bounded Box initialization/release controls. Existing nested input teardown
+// keeps its prior policy. Page/directory fees use actual smaller slot sizes.
+impl Fact {
+    fn boxed<T>(session: &mut Session, inputs: T) -> Result<Box<T>, SessionError> {
+        let bytes = record_bytes::<T>(1)?.checked_mul(2)
+            .and_then(|bytes| bytes.checked_add(4))
+            .ok_or_else(|| record_error("Construction fact allocation overflow"))?;
+        session.charge_host_work(bytes)?;
+        Ok(Box::new(inputs))
+    }
+    pub(crate) fn array(session: &mut Session, inputs: SourceArrayInputs) -> Result<Self, SessionError> {
+        Ok(Self::Array(Self::boxed(session, inputs)?))
+    }
+    pub(crate) fn constructor(session: &mut Session, inputs: ConstructorInputs) -> Result<Self, SessionError> {
+        Ok(Self::Constructor(Self::boxed(session, inputs)?))
+    }
 }
 pub(crate) struct Record {
     pub value: SessionValue,
@@ -149,6 +170,113 @@ pub(crate) struct Record {
 }
 impl AsRef<Record> for Record {
     fn as_ref(&self) -> &Record { self }
+}
+// Only ordinals index this native ledger. Pages/addresses never authorize a
+// source edge. Logical page boundaries are independent of allocator capacity.
+const RECORD_PAGE: usize = 32;
+#[derive(Default)]
+struct PagedRecords {
+    pages: Vec<Vec<Record>>,
+    len: usize,
+    first_limit: usize,
+}
+fn record_reserve<T>(
+    session: &mut Session,
+    values: &mut Vec<T>,
+    capacity: usize,
+) -> Result<(), SessionError> {
+    if capacity > values.capacity() {
+        let bytes = record_bytes::<T>(capacity)?
+            .checked_add(record_bytes::<T>(values.len())?)
+            .ok_or_else(|| record_error("Construction record allocation overflow"))?;
+        session.charge_host_work(bytes)?;
+        values
+            .try_reserve_exact(capacity - values.len())
+            .map_err(|_| record_error("Construction record allocation failed"))?;
+    }
+    Ok(())
+}
+// Slice views keep differential tests and selected-ledger checks independent
+// of the page representation. Every read is fallible and metered.
+trait RecordAccess {
+    fn len(&self) -> usize;
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError>;
+}
+impl<R: RecordAccess + ?Sized> RecordAccess for [R] {
+    fn len(&self) -> usize {
+        <[R]>::len(self)
+    }
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError> {
+        session.charge_host_work(1)?;
+        self.get(id)
+            .map(AsRef::as_ref)
+            .ok_or_else(|| record_error("Unknown construction record"))
+    }
+}
+impl RecordAccess for PagedRecords {
+    fn len(&self) -> usize {
+        self.len
+    }
+    fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError> {
+        // Bounds, page/slot arithmetic, directory and slot reads.
+        session.charge_host_work(5)?;
+        if id >= self.len {
+            return Err(record_error("Unknown construction record"));
+        }
+        self.pages
+            .get(id / RECORD_PAGE)
+            .and_then(|page| page.get(id % RECORD_PAGE))
+            .ok_or_else(|| record_error("Incomplete construction record page"))
+    }
+}
+impl PagedRecords {
+    fn push(&mut self, session: &mut Session, record: Record) -> Result<(), SessionError> {
+        // Length advance, offsets, last-page selection and reserve predicates.
+        session.charge_host_work(8)?;
+        let next_len = self
+            .len
+            .checked_add(1)
+            .ok_or_else(|| record_error("Construction record length overflow"))?;
+        let page_id = self.len / RECORD_PAGE;
+        let offset = self.len % RECORD_PAGE;
+        if offset == 0 {
+            // Directory capacity can survive failure, but an empty page cannot
+            // become visible. Stage the new page privately until all fees pass.
+            if self.pages.len() == self.pages.capacity() {
+                let capacity = self
+                    .pages
+                    .capacity()
+                    .checked_mul(2)
+                    .map(|n| n.max(4))
+                    .ok_or_else(|| record_error("Construction record directory overflow"))?;
+                record_reserve(session, &mut self.pages, capacity)?;
+            }
+            let limit = if page_id == 0 { 4 } else { RECORD_PAGE };
+            let mut page = Vec::new();
+            record_reserve(session, &mut page, limit)?;
+            session.charge_host_work(5)?; // record/page pushes, len/initial-capacity publication
+            page.push(record);
+            self.pages.push(page);
+            if page_id == 0 {
+                self.first_limit = limit;
+            }
+        } else {
+            if page_id == 0 && offset == self.first_limit {
+                let limit = self
+                    .first_limit
+                    .checked_mul(2)
+                    .filter(|n| *n <= RECORD_PAGE)
+                    .ok_or_else(|| record_error("Construction record first-page overflow"))?;
+                record_reserve(session, &mut self.pages[0], limit)?;
+                // Reserve bookkeeping may survive a later debit failure.
+                self.first_limit = limit;
+            }
+            session.charge_host_work(3)?; // page selection, reserved push, len publication
+            self.pages[page_id].push(record);
+        }
+        self.len = next_len;
+        Ok(())
+    }
 }
 pub(crate) struct BridgeClassInput {
     pub name: &'static str,
@@ -169,7 +297,7 @@ struct ChildBinding { value: SessionValue }
 pub(crate) struct ConstructionRecords {
     domain: std::sync::Arc<super::write_domain::WriteDomain>,
     children: Vec<ChildBinding>,
-    records: Vec<Record>,
+    records: PagedRecords,
     bridge_classes: Vec<BridgeClassInput>,
     class_prechecks_valid: bool,
 }
@@ -180,8 +308,9 @@ impl ConstructionRecords {
         let _request = session.operation_budget_scope()?;
         session.charge_host_work(1)?;
         let mut eligible = true;
-        for record in &self.records {
-            session.charge_host_work(8)?; // fact/option reads, branches, Arc retain/drop and result
+        for id in 0..self.records.len() {
+            session.charge_host_work(8)?;
+            let record = self.records.record(id, session)?; // fact/option reads, branches, Arc retain/drop and result
             if let Fact::Constructor(inputs) = &record.fact {
                 if let Some(watch) = inputs.memo_watch() {
                     eligible &= watch.retained_data_eligible(session)?;
@@ -195,7 +324,7 @@ impl ConstructionRecords {
         Self {
             domain: super::write_domain::WriteDomain::new(),
             children: Vec::new(),
-            records: Vec::new(),
+            records: PagedRecords::default(),
             bridge_classes,
             class_prechecks_valid: true,
         }
@@ -289,8 +418,9 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut valid = true;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             if let Fact::Constructor(inputs) = &record.fact {
                 valid &= match audit.as_deref_mut() {
                     Some(audit) => inputs.matches_prototype_origin_audited(session, audit)?,
@@ -310,7 +440,8 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         session.charge_host_work((2 * std::mem::size_of::<InputIndex<'_>>() + 6) as u64)?;
         let mut meter = InputIndex { session, hash_mask: u64::MAX };
-        for record in &self.records {
+        for id in 0..self.records.len() {
+            let record = self.records.record(id, meter.session)?;
             meter.charge(3)?; // record read, kind/loop and eventual scan control
             if meter.same(value, &record.value)? { return Ok(true); }
             if let Fact::CanonicalSeed(seed) = &record.fact {
@@ -376,9 +507,9 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         Self::check_selected_inputs(session, root, hash_mask, &self.records, &self.children, None)
     }
-    fn check_selected_inputs<R: AsRef<Record>>(
+    fn check_selected_inputs<R: RecordAccess + ?Sized>(
         session: &mut Session, root: &SessionValue, hash_mask: u64,
-        records: &[R], children: &[ChildBinding],
+        records: &R, children: &[ChildBinding],
         descendants: Option<&mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>>,
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
@@ -404,8 +535,9 @@ impl ConstructionRecords {
         trace(&meter, "reserved");
         // No guest execution or guest allocation occurs while this ephemeral
         // identity-hash index is live. Collision chains always use ref_eq.
-        for (id, record) in records.iter().enumerate() {
-            let hash = meter.hash(&record.as_ref().value)?;
+        for id in 0..records.len() {
+            let record = records.record(id, meter.session)?;
+            let hash = meter.hash(&record.value)?;
             // insert returns the previous head from the same charged probe.
             // Collision capacity was reserved above, so publication needs no
             // fallible work between updating the head and recording its link.
@@ -441,15 +573,15 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         Self::check_selected_edges(meter, index, collisions, &self.records, &self.children, None)
     }
-    fn check_selected_edges<R: AsRef<Record>>(
+    fn check_selected_edges<R: RecordAccess + ?Sized>(
         meter: &mut InputIndex<'_>, index: &InputHeads, collisions: &[Option<usize>],
-        records: &[R], children: &[ChildBinding],
+        records: &R, children: &[ChildBinding],
         mut descendants: Option<&mut crate::portable_macro_graph::source_roots::OriginalDataInputs<'_>>,
     ) -> Result<bool, SessionError> {
         let mut valid = true;
-        for record in records {
+        for id in 0..records.len() {
             meter.charge(1)?;
-            let record = record.as_ref();
+            let record = records.record(id, meter.session)?;
             match &record.fact {
                 Fact::Array(fact) => {
                     for value in fact.inputs() {
@@ -533,49 +665,20 @@ impl ConstructionRecords {
         value: SessionValue,
         fact: Fact,
     ) -> Result<(), SessionError> {
-        session.charge_host_work(1)?;
-        if self.records.len() == self.records.capacity() {
-            let count = self
-                .records
-                .capacity()
-                .checked_mul(2)
-                .ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record capacity overflow",
-                    ))
-                })?
-                .max(4);
-            let bytes = count
-                .checked_add(self.records.len())
-                .and_then(|n| n.checked_mul(std::mem::size_of::<Record>()))
-                .ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record allocation overflow",
-                    ))
-                })?;
-            session.charge_host_work(bytes as u64)?;
-            self.records
-                .try_reserve_exact(count - self.records.len())
-                .map_err(|_| {
-                    SessionError::Host(wasmtime::Error::msg(
-                        "Construction record allocation failed",
-                    ))
-                })?;
-        }
-        self.records.push(Record { value, fact });
-        Ok(())
+        self.records.push(session, Record { value, fact })
     }
     pub(crate) fn len(&self) -> usize {
         self.records.len()
     }
     #[cfg(test)]
     pub(crate) fn canonical_seed_fact_count_for_test(&self) -> usize {
-        self.records.iter().filter(|record| matches!(&record.fact, Fact::CanonicalSeed(_))).count()
+        self.records.pages.iter().flatten().filter(|record| matches!(&record.fact, Fact::CanonicalSeed(_))).count()
     }
     pub(crate) fn external_seeds(&self, session: &mut Session) -> Result<usize, SessionError> {
         let mut count = 0;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             if let Fact::ExternalSeed(name) = &record.fact {
                 session.charge_host_work(name.len() as u64)?;
                 count += 1;
@@ -588,8 +691,9 @@ impl ConstructionRecords {
         let _request = session.operation_budget_scope()?;
         let mut source = true;
         let mut certified = true;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             let (data, reusable) = match &record.fact {
                 Fact::Constructor(fact) => fact.fresh_direct_status(session, &record.value)?,
                 Fact::Scalar(fact) => { let valid = fact.matches(session, &record.value)?; (valid, valid) }
@@ -628,8 +732,9 @@ impl ConstructionRecords {
     pub(crate) fn matches_direct_facts(&self, session: &mut Session) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let mut valid = true;
-        for record in &self.records {
+        for id in 0..self.records.len() {
             session.charge_host_work(1)?;
+            let record = self.records.record(id, session)?;
             // Never short-circuit later inspection/budget/interrupt failures.
             valid &= match &record.fact {
                 Fact::Scalar(fact) => fact.matches(session, &record.value)?,
@@ -646,6 +751,255 @@ impl ConstructionRecords {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn boxed_fact_cuts_release_unpublished_inputs_and_preserve_existing_records() {
+        use crate::portable::{hir::Literal, resolve::Phase};
+        enum Prepared { Array(SourceArrayInputs), Constructor(ConstructorInputs) }
+        fn prepare(session: &mut Session, class: &SessionValue, input: &SessionValue, constructor: bool)
+            -> (SessionValue, Prepared) {
+            if constructor {
+                let (value, inputs) = session.data_construct_with_inputs(class, &[input]).unwrap();
+                (value, Prepared::Constructor(inputs.unwrap()))
+            } else {
+                let (value, inputs) = session.data_array_with_inputs(&[input]).unwrap();
+                (value, Prepared::Array(inputs))
+            }
+        }
+        fn rebox(session: &mut Session, fact: Prepared) -> Result<Fact, SessionError> {
+            match fact {
+                Prepared::Constructor(inputs) => Fact::constructor(session, inputs),
+                Prepared::Array(inputs) => Fact::array(session, inputs),
+            }
+        }
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = match phase {
+                Phase::Runtime => Session::new_repl().unwrap(),
+                Phase::Macro => Session::new_macro().unwrap(),
+            };
+            session.eval("(deftype BoxedRecordInput [x])").unwrap();
+            let class = session.eval("BoxedRecordInput").unwrap();
+            let input = session.data_scalar(&Literal::Number(17.0)).unwrap();
+            let mut prior = paged_prefix(&mut session, &input, 33);
+            for constructor in [false, true] {
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let request = session.operation_budget_scope().unwrap();
+                let before = session.operation_fuel_remaining().unwrap();
+                let fact = rebox(&mut session, fact).unwrap();
+                let cost = before - session.operation_fuel_remaining().unwrap();
+                drop((fact, value, request));
+                let handles = session.stats().external_value_handles;
+                for allowance in 0..cost {
+                    let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                    let request = session.operation_budget_scope().unwrap();
+                    session.store.set_fuel(allowance).unwrap();
+                    let error = rebox(&mut session, fact).err().unwrap();
+                    assert!(matches!(error, SessionError::Trap(ref e)
+                        if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                    drop((value, request));
+                    assert_eq!(session.stats().external_value_handles, handles);
+                    assert_eq!(prior.len(), 33);
+                }
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let request = session.operation_budget_scope().unwrap();
+                session.interrupt_handle().interrupt();
+                assert!(rebox(&mut session, fact).err().unwrap().is_interrupt());
+                drop((value, request));
+                assert_eq!(session.stats().external_value_handles, handles);
+                let (value, fact) = prepare(&mut session, &class, &input, constructor);
+                let fact = session.with_operation_budget(|session| rebox(session, fact)).unwrap();
+                session.collect().unwrap();
+                match &fact {
+                    Fact::Array(inputs) => assert!(inputs.matches(&mut session, &value).unwrap()),
+                    Fact::Constructor(inputs) => assert!(inputs.matches(&mut session, &value).unwrap()),
+                    _ => unreachable!(),
+                }
+                prior.push(&mut session, Record { value, fact }).unwrap();
+                assert_eq!(prior.len(), 34);
+                // Removing only this private test append leaves every old slot.
+                prior.pages.last_mut().unwrap().pop();
+                prior.len -= 1;
+                for id in 0..33 {
+                    let old = prior.record(id, &mut session).unwrap().value.clone();
+                    assert!(session.values_identical(&old, &input).unwrap());
+                }
+            }
+        }
+    }
+
+    fn paged_prefix(session: &mut Session, value: &SessionValue, count: usize) -> PagedRecords {
+        let mut records = PagedRecords::default();
+        for _ in 0..count {
+            records
+                .push(
+                    session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("page-fault-fixture"),
+                    },
+                )
+                .unwrap();
+        }
+        records
+    }
+    #[test]
+    fn paged_records_preserve_ordinals_boundaries_and_logical_pages_with_excess_capacity() {
+        let mut session = Session::new().unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let mut records = PagedRecords::default();
+        let mut expected = Vec::new();
+        for id in 0..133 {
+            let value = session
+                .data_scalar(&crate::portable::hir::Literal::Number(id as f64))
+                .unwrap();
+            records
+                .push(
+                    &mut session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("ordinal-fixture"),
+                    },
+                )
+                .unwrap();
+            expected.push(value);
+            assert_eq!(records.len(), id + 1);
+            assert_eq!(records.pages.len(), (id + RECORD_PAGE) / RECORD_PAGE);
+            for page in &records.pages[..records.pages.len() - 1] {
+                assert_eq!(page.len(), RECORD_PAGE);
+            }
+            assert!(!records.pages.last().unwrap().is_empty());
+        }
+        for id in (0..expected.len()).rev() {
+            let record = records.record(id, &mut session).unwrap();
+            let mut meter = InputIndex {
+                session: &mut session,
+                hash_mask: 0,
+            };
+            assert!(meter.same(&record.value, &expected[id]).unwrap());
+        }
+        assert!(records.record(records.len(), &mut session).is_err());
+        assert!(record_bytes::<Record>(usize::MAX).is_err());
+        // Allocator excess MUST NOT move the logical page boundary.
+        let value = expected[0].clone();
+        let mut excess = paged_prefix(&mut session, &value, 4);
+        excess.pages[0].try_reserve_exact(128).unwrap();
+        for _ in 4..33 {
+            excess
+                .push(
+                    &mut session,
+                    Record {
+                        value: value.clone(),
+                        fact: Fact::ExternalSeed("excess-capacity"),
+                    },
+                )
+                .unwrap();
+        }
+        assert_eq!(excess.pages.len(), 2);
+        assert_eq!(excess.pages[0].len(), RECORD_PAGE);
+        assert_eq!(excess.pages[1].len(), 1);
+    }
+    #[test]
+    fn paged_records_every_append_fuel_cut_and_irq_leave_no_partial_page_and_retry() {
+        let mut session = Session::new().unwrap();
+        let value = session
+            .data_scalar(&crate::portable::hir::Literal::Number(17.0))
+            .unwrap();
+        for count in [0, 4, 8, 16, 32, 64, 128] {
+            let cost = session
+                .with_operation_budget(|session| {
+                    let mut records = paged_prefix(session, &value, count);
+                    let before = session.operation_fuel_remaining()?;
+                    records.push(
+                        session,
+                        Record {
+                            value: value.clone(),
+                            fact: Fact::ExternalSeed("candidate"),
+                        },
+                    )?;
+                    Ok(before - session.operation_fuel_remaining()?)
+                })
+                .unwrap();
+            for allowance in 0..cost {
+                let mut records = session.with_operation_budget(|session| {
+                        let mut records = paged_prefix(session, &value, count);
+                        let pages = records.pages.len();
+                        session.store.set_fuel(allowance)?;
+                        let error = records.push(session, Record { value: value.clone(), fact: Fact::ExternalSeed("candidate") }).unwrap_err();
+                        assert!(matches!(error, SessionError::Trap(ref error)
+                            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+                        assert_eq!(records.len(), count);
+                        assert_eq!(records.pages.len(), pages, "no empty page may be published on failure");
+                        assert!(records.pages.iter().all(|page| !page.is_empty()));
+                        Ok(records)
+                    }).unwrap();
+                session
+                    .with_operation_budget(|session| {
+                        for id in 0..count {
+                            let record = records.record(id, session)?;
+                            assert!(matches!(
+                                &record.fact,
+                                Fact::ExternalSeed("page-fault-fixture")
+                            ));
+                            let mut meter = InputIndex {
+                                session,
+                                hash_mask: 0,
+                            };
+                            assert!(meter.same(&record.value, &value)?);
+                        }
+                        records.push(
+                            session,
+                            Record {
+                                value: value.clone(),
+                                fact: Fact::ExternalSeed("candidate"),
+                            },
+                        )?;
+                        assert_eq!(records.len(), count + 1);
+                        assert!(matches!(
+                            &records.record(count, session)?.fact,
+                            Fact::ExternalSeed("candidate")
+                        ));
+                        Ok(())
+                    })
+                    .unwrap();
+            }
+            let mut records = session
+                .with_operation_budget(|session| Ok(paged_prefix(session, &value, count)))
+                .unwrap();
+            session
+                .with_operation_budget(|session| {
+                    let pages = records.pages.len();
+                    session.interrupt_handle().interrupt();
+                    assert!(
+                        records
+                            .push(
+                                session,
+                                Record {
+                                    value: value.clone(),
+                                    fact: Fact::ExternalSeed("candidate")
+                                }
+                            )
+                            .unwrap_err()
+                            .is_interrupt()
+                    );
+                    assert_eq!(records.len(), count);
+                    assert_eq!(records.pages.len(), pages);
+                    Ok(())
+                })
+                .unwrap();
+            session
+                .with_operation_budget(|session| {
+                    records.push(
+                        session,
+                        Record {
+                            value: value.clone(),
+                            fact: Fact::ExternalSeed("candidate"),
+                        },
+                    )
+                })
+                .unwrap();
+            assert_eq!(records.len(), count + 1);
+        }
+    }
+
     #[test]
     fn construction_records_table_clustered_hashes_and_empty_overflow() {
         let mut session = Session::new().unwrap();
@@ -788,7 +1142,7 @@ mod tests {
                 .push(
                     &mut session,
                     parent.clone(),
-                    Fact::Constructor(inputs.unwrap()),
+                    Fact::Constructor(Box::new(inputs.unwrap())),
                 )
                 .unwrap();
             assert!(
@@ -816,7 +1170,7 @@ mod tests {
                 .push(
                     &mut session,
                     padded.clone(),
-                    Fact::Constructor(inputs.unwrap()),
+                    Fact::Constructor(Box::new(inputs.unwrap())),
                 )
                 .unwrap();
             assert!(
@@ -841,7 +1195,7 @@ mod tests {
         let (parent, array) = session.data_array_with_inputs(&[&child, &child]).unwrap();
         let mut records = ConstructionRecords::default();
         records
-            .push(&mut session, parent.clone(), Fact::Array(array))
+            .push(&mut session, parent.clone(), Fact::Array(Box::new(array)))
             .unwrap();
         session.collect().unwrap();
         assert!(records.matches_direct_facts(&mut session).unwrap());
@@ -915,8 +1269,9 @@ mod tests {
         // A present child record is insufficient if its direct facts changed.
         // The low-level test below changes the UTF-16 storage directly; it does
         // not depend on source string indexing adapters or guest equality.
-        let child = match &records.records[1].fact {
-            Fact::Scalar(_) => &records.records[1].value,
+        let record = records.records.record(1, &mut session).unwrap();
+        let child = match &record.fact {
+            Fact::Scalar(_) => &record.value,
             _ => unreachable!(),
         };
         session
@@ -963,7 +1318,7 @@ mod tests {
 }
 
 impl Default for ConstructionRecords {
- fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:Vec::new(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
+ fn default()->Self {Self {domain:super::write_domain::WriteDomain::new(),children:Vec::new(),records:PagedRecords::default(),bridge_classes:Vec::new(),class_prechecks_valid:false}}
 }
 
 // Eligibility is only the existence of private provisioning witnesses, not a

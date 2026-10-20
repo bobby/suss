@@ -75,7 +75,7 @@ impl DeferredFactory {
             value.clone(),
             Self {
                 value,
-                fact: Fact::Array(fact),
+                fact: Fact::array(s, fact)?,
             },
         ))
     }
@@ -90,7 +90,7 @@ impl DeferredFactory {
             value.clone(),
             Self {
                 value,
-                fact: Fact::Constructor(fact),
+                fact: Fact::constructor(s, fact)?,
             },
         ))
     }
