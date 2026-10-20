@@ -30933,3 +30933,23 @@ Corrected source9fa6d99 / compiler `db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e
 The same69exact-name cohort on current9fa6d99 / compilerdb4a3fd9 / BOOT2eb83ba now completes **69 distinct passes**, zero failures/ignores, 557 filtered (142.32s harness / 375.262s command including3m52s native build), raw `804c7e23f5f52449880fd902b502489f14f2cf1f9ea5e2d58a38f9cc21afd6a3`. The three previously blocked semantic bodies now execute fully with their source and assertions intact; Runtime10M before/after checks pass. All seven added scalar/storage/owner/root/predecessor/cancellation regressions and prior53ledger/source names pass. Actual layout output is Node16/ComplexNode160/ScalarInputs112/Fact24; this is an observation, not a whole-program gain. [Complete commands/results, original66/3 and helper import failure, exact calibration/postimages and reviews](evidence/m4-pr263-typed-scalar-validation-2026-10-20.json). Fresh unchanged map/identifier200M packet `pr263-pinned-acceptance-db4a3fd9-v1` binds11unchangedfixture/sourcefiles plus4reviewedBOOT2eb83 artifacts; its acceptance is separate from these69passes.
 
 Independent calibrated69 evidence review verifies all69unique full tests, including all three previously blocked semantic bodies and their original source/assertions plus before/after Runtime10M guards. Raw/source/BOOT/identity bindings and original66/3/helper-path failure remain separate. Review SHA256: `96ad403706795616945f82a18f34000de57e762e062f2fdf6ccb67a96918fc59`; included in the typed-scalar evidence JSON. No pinned/default verdict or final-source readiness is inferred.
+
+### Worktree target cleanup (2026-10-20)
+
+At the user’s request, inspected Suss worktree and task-cache Cargo targets,
+checked `/proc` process references (including `CARGO_TARGET_DIR`), and removed
+only inactive generated `debug`/`release`/`tmp` subdirectories using Python
+`shutil.rmtree`. Cleaned 31 target roots; retained the shared
+`/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target` for ongoing validation.
+Preserved all source/worktrees and evidence caches, plus 186 build-output and
+diagnostic files in the local cleanup archive. Available filesystem space rose
+by 26,801,762,304 bytes (about 25.0 GiB), from 191,417,569,280 to
+218,219,331,584 bytes. This is a measured filesystem delta; concurrent activity
+can affect it, and logical target sizes are not a physical reclamation total.
+
+Local audit records: `/home/bobby/.cache/suss-m4-work/target-cleanup-2026-10-20-`
+`{inventory,plan,result}.json`; retained diagnostics are in
+`target-cleanup-2026-10-20-preserved/` beside them. Verified every selected
+generated subdirectory is absent and the protected shared target still exists.
+AGENTS.md now requests this check periodically at task/branch handoffs and after
+abandoned experiments. Documentation-only change; checked with `git diff --check`.
