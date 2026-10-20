@@ -16,6 +16,14 @@ use std::sync::{
 };
 use wasmtime::{AnyRef, AsContextMut, RootScope, Rooted, StoreContextMut, Val};
 type Result<T> = std::result::Result<T, SessionError>;
+// Temporary attribution of existing native predicates only. No guest reads.
+#[cfg(test)]
+fn memo_domain_trace(detail: std::fmt::Arguments<'_>) {
+    if std::env::var_os("SUSS_MEMO_DOMAIN_TRACE").is_some() {
+        use std::io::Write as _;
+        let _ = writeln!(std::io::stderr().lock(), "MEMO_DOMAIN test={:?} {detail}", std::thread::current().name());
+    }
+}
 struct Node {
     value: SessionValue,
     snapshot: Option<StorageSnapshot>,
@@ -207,10 +215,15 @@ impl WriteDomain {
             domains.push(current);
         }
         let mut valid=self.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,staged,target,receivers,true)?;
+        #[cfg(test)]
+        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=target-domain-result valid={valid}"));
         for domain in domains {
             Session::consume_host_work(store.as_context_mut(),1,irq)?;
             // A parent's staged receipt can never excuse a child's storage slot.
-            valid &= domain.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,None,target,receivers,false)?;
+            let child_valid = domain.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,None,target,receivers,false)?;
+            #[cfg(test)]
+            memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=descendant-domain-result child={:p} valid={child_valid}", domain.as_ref()));
+            valid &= child_valid;
         }
         Ok(valid)
     }
@@ -266,6 +279,8 @@ impl WriteDomain {
             Session::consume_host_work(store.as_context_mut(), 1, irq)?;
             if std::ptr::eq(watch.as_ref(), target) { member = true; break; }
         }
+        #[cfg(test)]
+        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=membership identity={identity} staged={} require_target={require_target} member={member}", staged.is_some()));
         if require_target && !member { return Ok(false); }
         let bytes = receivers.len().checked_mul(std::mem::size_of::<Val>())
             .and_then(|n| u64::try_from(n).ok())
@@ -287,7 +302,10 @@ impl WriteDomain {
         }
         let mut canonical = true;
         for watch in &watches {
-            canonical &= watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
+            let method_valid = watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
+            #[cfg(test)]
+            memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=method watch={:p} valid={method_valid}", watch.as_ref()));
+            canonical &= method_valid;
         }
         let classes = methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),
@@ -303,44 +321,61 @@ impl WriteDomain {
         })?;
         let state = registry_lock(&self.state);
         let mut valid = state.valid && classes && parent && canonical;
+        #[cfg(test)]
+        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=header staged={} state_valid={} classes={classes} prototype_parent={parent} methods={canonical} nodes={} child_domains={}", staged.is_some(), state.valid, state.nodes.len(), state.children.len()));
         let mut scope = RootScope::new(store);
         for node in &state.nodes {
             Session::consume_host_work(scope.as_context_mut(), 1, irq)?;
             let root = Val::AnyRef(Some(node.value.value.to_rooted(&mut scope)));
             if let Some(seed) = &node.seed {
-                valid &= seed.write_storage().matches_in_context(
+                let seed_valid = seed.write_storage().matches_in_context(
                     scope.as_context_mut(),
                     root,
                     identity,
                     irq,
                 )?;
+                #[cfg(test)]
+                memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=seed node={node:p} valid={seed_valid}"));
+                valid &= seed_valid;
             } else if let Some(snapshot) = &node.snapshot {
                 let watch = node.watch.as_ref().and_then(Weak::upgrade);
-                valid &= snapshot.matches_in_context_with_slots(
+                let snapshot_valid = snapshot.matches_in_context_with_slots(
                     scope.as_context_mut(),
                     root,
                     identity,
                     irq,
                     |mut store, array, index, actual| {
                         let Some(watch) = &watch else {
+                            #[cfg(test)]
+                            memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=memo-slot node={node:p} index={index} watch_present=false"));
                             return Ok(false);
                         };
-                        if !watch.is_slot(store.as_context_mut(), &array, index, irq)? {
+                        let is_slot = watch.is_slot(store.as_context_mut(), &array, index, irq)?;
+                        #[cfg(test)]
+                        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=memo-slot node={node:p} watch={:p} index={index} exact_slot={is_slot}", watch.as_ref()));
+                        if !is_slot {
                             return Ok(false);
                         }
                         if let Some((current, receipt)) = staged {
                             if std::ptr::eq(current, watch.as_ref()) {
-                                return watch
-                                    .matches_receipt(store, actual, receipt, irq)
-                                    .map_err(Into::into);
+                                let matches = watch.matches_receipt(store, actual, receipt, irq)?;
+                                #[cfg(test)]
+                                memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=staged-memo node={node:p} watch={:p} index={index} matches={matches}", watch.as_ref()));
+                                return Ok(matches);
                             }
                         }
-                        watch
-                            .source_authenticated(store, actual, irq)
-                            .map_err(Into::into)
+                        let authenticated = watch.source_authenticated(store, actual, irq)?;
+                        #[cfg(test)]
+                        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=existing-memo node={node:p} watch={:p} index={index} authenticated={authenticated}", watch.as_ref()));
+                        Ok(authenticated)
                     },
                 )?;
+                #[cfg(test)]
+                memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=snapshot node={node:p} valid={snapshot_valid}"));
+                valid &= snapshot_valid;
             } else {
+                #[cfg(test)]
+                memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=missing-proof node={node:p}"));
                 valid = false;
             }
             for edge in &node.edges {
@@ -376,9 +411,13 @@ impl WriteDomain {
                         if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
                     }
                 }
+                #[cfg(test)]
+                memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=original-input-edge node={node:p} member={member}"));
                 valid &= member;
             }
         }
+        #[cfg(test)]
+        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=local-result valid={valid}"));
         Ok(valid)
     }
 }

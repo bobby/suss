@@ -924,15 +924,17 @@ impl Observer for Build<'_> {
                 children.extend(inputs.into_iter().map(|input| input.evidence));
                 let native = Native::allocate(graph.session, &value, records, children)?;
                 #[cfg(test)]
-                eprintln!("RETAINED_DATA_NODE test={:?} node={:p} recipe={} kind={:?} inputs={} records={}",
-                    std::thread::current().name(), Rc::as_ptr(&native), id,
-                    match graph.recipes[id].as_ref().unwrap() {
-                        Recipe::Metadata { .. } => "Metadata", Recipe::Form(_) => "Form",
-                        Recipe::Identifier { .. } => "Identifier", Recipe::Map(_) => "Map",
-                        Recipe::Vector(_) => "Vector", other => {
-                            eprintln!("RETAINED_DATA_OTHER recipe={} discriminant={:?}", id, std::mem::discriminant(other)); "Other"
-                        } },
-                    native.inputs.len(), native.records.len());
+                if std::env::var_os("SUSS_RETAINED_DATA_TRACE").is_some() {
+                    eprintln!("RETAINED_DATA_NODE test={:?} node={:p} recipe={} kind={:?} inputs={} records={}",
+                        std::thread::current().name(), Rc::as_ptr(&native), id,
+                        match graph.recipes[id].as_ref().unwrap() {
+                            Recipe::Metadata { .. } => "Metadata", Recipe::Form(_) => "Form",
+                            Recipe::Identifier { .. } => "Identifier", Recipe::Map(_) => "Map",
+                            Recipe::Vector(_) => "Vector", other => {
+                                eprintln!("RETAINED_DATA_OTHER recipe={} discriminant={:?}", id, std::mem::discriminant(other)); "Other"
+                            } },
+                        native.inputs.len(), native.records.len());
+                }
                 Ok(Observed {
                     value,
                     evidence: Evidence::Native(native),
