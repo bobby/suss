@@ -1,0 +1,657 @@
+{
+  "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+  "guard_commit": "682c50f3d1b0121914e60ed9bc68e59573df2dfe",
+  "alias_fixture_commit": "31d773a53f082a9fa1c02799d36ca04420584ace",
+  "memo_fixture_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+  "bootstrap_commit": "d8991e2521abd972b7c78611d752aba23c256e02",
+  "compiler_source_sha256": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+  "source_input_count": 222,
+  "normal_generation": {
+    "head": "5de94e972f8b094e7ad959a231988196261f8b2e",
+    "compiler_source_sha256": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+    "inputs": 222,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 82.29593621299136,
+    "raw_sha256": "3ec3f48422b69a404fc743bc0e0bb7b9b2b6022af84a489eafc9338bf11eadf7"
+  },
+  "actual_builder_identity": {
+    "actual_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+    "inputs": 222,
+    "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "5becef3413c50fe0af75deda69d7ac5300a833590418f65f4f760684c7843841",
+    "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e"
+  },
+  "adoption": {
+    "reviewer": "Carver",
+    "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+    "head": "5de94e972f8b094e7ad959a231988196261f8b2e",
+    "tree": "5a97fd1bc8faccf4096dc148219ff8ecd2717d5a",
+    "clean_head_and_current_git_inputs_verified": true,
+    "terminal_sha256": "bcf47ec3800bfc3668eff78cbe983f09e6f9f445dd2a91c0405f799adea45967",
+    "generator_receipt_sha256": "2c5c06526021d4e779c120e8a11c9647c3fcb89f767e7b3e26f18e060d1716e8",
+    "source_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+    "git_source_inputs_verified": 222,
+    "eight_output_hashes_and_sizes_verified": true,
+    "four_first_second_pairs_byte_exact": true,
+    "phase_comparison": {
+      "runtime": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "bc1640c7894f9082fe82ece026294416f5e9e08a5b7fd88e2bd1651d3ea11be3",
+            "new_sha256": "968a371709bc8c45eba0c4995da250b702e420f329e617299bfa1561ddd2e772"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "8a2764573c531a750684a17e0b2c80a74d59fe4175eba29fd870cc8686d26c3f",
+        "new_json_sha256": "6e0070dc86f7cc4876b3704d2bdfccd8a9e550bd068444390e321366840f4ff4"
+      },
+      "macro": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "8cbb1f7e4d8e4b8ef3f857307dbf394138ae2cb1be0da47a3d70e8f71e1455be",
+            "new_sha256": "64268346a3123537df2d4e9a58d58eac1d9f63a7968e9b3ce415e6317ee46ca8"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "61bd5419c9682599712d595d1c8fadbc6182135d937f28871103f6f448ddd358",
+        "new_json_sha256": "0a72c1ffba9b2d984d5fb0655eba0438677ee8c291bad7e27042d9e5365ea60e"
+      }
+    },
+    "allowlist": {
+      "runtime/bootstrap/runtime.wasm": {
+        "source": "diagnostics/first/runtime.wasm",
+        "sha256": "8a2764573c531a750684a17e0b2c80a74d59fe4175eba29fd870cc8686d26c3f"
+      },
+      "runtime/bootstrap/runtime.json": {
+        "source": "diagnostics/first/runtime.json",
+        "sha256": "6e0070dc86f7cc4876b3704d2bdfccd8a9e550bd068444390e321366840f4ff4"
+      },
+      "runtime/bootstrap/macro.wasm": {
+        "source": "diagnostics/first/macro.wasm",
+        "sha256": "61bd5419c9682599712d595d1c8fadbc6182135d937f28871103f6f448ddd358"
+      },
+      "runtime/bootstrap/macro.json": {
+        "source": "diagnostics/first/macro.json",
+        "sha256": "0a72c1ffba9b2d984d5fb0655eba0438677ee8c291bad7e27042d9e5365ea60e"
+      }
+    },
+    "qualification": "Normal hostopt2 generation82.295936s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, retained-memo fixture CORE/public-macro semantic or acceptance credit.",
+    "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations",
+    "actual_builder_output_copy_verified": true,
+    "actual_builder_output_sha256": "5becef3413c50fe0af75deda69d7ac5300a833590418f65f4f760684c7843841"
+  },
+  "pure_identity": {
+    "head": "d8991e2521abd972b7c78611d752aba23c256e02",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+    "exit_code": 0,
+    "seconds": 1.1250100919860415,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "focused11": {
+    "terminal": {
+      "head": "d8991e2521abd972b7c78611d752aba23c256e02",
+      "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+      "predicted_source_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones",
+        "portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback",
+        "portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start",
+        "portable_macro_graph::source_roots::first_use_walk::tests::retained_binding_policy_keeps_reader_occurrences_distinct_and_native_sharing_intact",
+        "portable_macro_graph::source_roots::first_use_walk::tests::retained_native_policy_poll_preserves_active_irq_and_fresh_operation_retry",
+        "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates",
+        "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible",
+        "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original2unchangedreuse/callbackcontrols plusnew2sourcephaseordinary-frontieradmissionregression; expected11Rusttests: originalcontrols, alias3/repeat2 and newretainedmemo3. Originalprograms/defaults/assertions preserved. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 0,
+      "seconds": 195.17203582299408,
+      "raw_sha256": "d23be30353b0eab49838b1c86902dcfcbcdc71271ba9a2e5a29b44b984639121"
+    },
+    "exact_test_results": {
+      "portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback": "ok",
+      "portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones": "ok",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start": "ok",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary": "ok",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner": "ok",
+      "portable_macro_graph::source_roots::first_use_walk::tests::retained_binding_policy_keeps_reader_occurrences_distinct_and_native_sharing_intact": "ok",
+      "portable_macro_graph::source_roots::first_use_walk::tests::retained_native_policy_poll_preserves_active_irq_and_fresh_operation_retry": "ok",
+      "portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration": "ok",
+      "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates": "ok",
+      "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry": "ok",
+      "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible": "ok"
+    },
+    "counts": {
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 562
+    },
+    "harness_seconds": 57.89,
+    "scope": "Exact11selectors fullyaccounted. Originalfrontier/cold/admission plus3alias/2repeat/3memo; independentsemanticresult notinferredfrom compilation."
+  },
+  "public_poison": {
+    "terminal": {
+      "head": "d8991e2521abd972b7c78611d752aba23c256e02",
+      "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+      "predicted_source_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--",
+        "--exact",
+        "source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "One original source-metadata poison-at-memo-write/restoration test, programs/defaults/assertions unchanged. Both caller phases intended; report actual attempted assertions/stages. No quota/rate/fixture change.",
+      "exit_code": 0,
+      "seconds": 209.46747904701624,
+      "raw_sha256": "2b14a5172ab790acb2d7474b4f8d52165cd52d69cd7bcf93cfae9f5e9c2a6c2e"
+    },
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 11
+    },
+    "harness_seconds": 65.77,
+    "request_starts": 4,
+    "caller_phases": [
+      "Runtime",
+      "Macro"
+    ],
+    "asserted_boolean_vectors": 4,
+    "booleans_per_vector": 4,
+    "original_test_source_sha256": "22cce693e344b9ca0de4a4e47169048d6ef4f48ce4665daae9eca20ed6173bb7",
+    "scope": "Current36 originalpublicpoison/restorationPASS bothcallerphases; original16boolassertions/4requests/GC/defaults unchanged."
+  },
+  "public_test_byte_exact_against_published_32cc": true,
+  "callable": {
+    "terminal": {
+      "head": "d8991e2521abd972b7c78611d752aba23c256e02",
+      "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+      "predicted_source_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_namespace_identity",
+        "--",
+        "--exact",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "One original callable identity test, all3independentrequests perphase (6rows), unchanged Macro100B/callerRuntime. Optin targetdeclarationreuse trace only; no expected assertion change. Freshsource/BOOT/pureidentity required. Native trace overhead is not a performance benchmark.",
+      "exit_code": 0,
+      "seconds": 96.45323339296738,
+      "raw_sha256": "e7950a4b880089fa54bc5887b9c560fa2529d535216ed60530ec7452830e2cbd"
+    },
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 1
+    },
+    "harness_seconds": 92.09,
+    "actual_observations": {
+      "limits": "Three independent requests per caller phase with Macro compilation allowance 100000000000; caller Runtime limits unchanged, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim.",
+      "phases": [
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": true
+              }
+            ]
+          },
+          "phase": "runtime"
+        },
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": true
+              }
+            ]
+          },
+          "phase": "macro"
+        }
+      ]
+    },
+    "request_starts": 6,
+    "matching_rows": 6,
+    "staged_conflicts": 0
+  },
+  "remaining_six": {
+    "terminal": {
+      "head": "d8991e2521abd972b7c78611d752aba23c256e02",
+      "source_commit": "5de94e972f8b094e7ad959a231988196261f8b2e",
+      "predicted_source_fingerprint": "36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry",
+        "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority",
+        "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries",
+        "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Six original strict mixed-reader/key-authority/admission andfuelIRQ regressions. No assertion/fixture/budget change; expected6actualtests; historical067failuresnotcurrentverdict. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 19.3449959459831,
+      "raw_sha256": "8ddc2874a9fb74006c81a0b777a1ab282f294aed3cfb509abfad0aa680999f2a"
+    },
+    "exact_results": {
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry": "FAILED",
+      "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority": "FAILED",
+      "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries": "FAILED",
+      "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children": "FAILED"
+    },
+    "counts": {
+      "passed": 0,
+      "failed": 6,
+      "ignored": 0,
+      "filtered": 567
+    },
+    "harness_seconds": 19.14,
+    "failure_lines": [
+      "thread 'portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot' (1766565) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/mixed_reader_inputs.rs:260:14:",
+      "called `Option::unwrap()` on a `None` value",
+      "thread 'portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect' (1767070) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/mixed_reader_inputs.rs:260:14:",
+      "called `Option::unwrap()` on a `None` value",
+      "thread 'portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry' (1767071) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/mixed_reader_inputs.rs:260:14:",
+      "called `Option::unwrap()` on a `None` value",
+      "thread 'portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority' (1767072) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs:596:65:",
+      "called `Option::unwrap()` on a `None` value",
+      "thread 'portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries' (1767073) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/reader_keys.rs:983:18:",
+      "called `Result::unwrap_err()` on an `Ok` value: 1",
+      "declaration-reuse target=user/watched owner=0x74485def3330 event=admission-decline boundary=12 alias=44 native=43 reason=private-data-value private_slots=true",
+      "thread 'portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children' (1767074) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/reader_plan.rs:339:65:",
+      "called `Option::unwrap()` on a `None` value"
+    ],
+    "scope": "Current36 completeoriginal6selectedfail; mixed3 childCertificateNone beforeparent/poison/fuel assertions, health/planadmissionNone beforeassertions, capturefuelcutErr expectedgotOk1. Plan traceprivate-data-value strictdecline observed; no exactcutidentified. No coveragewaived."
+  },
+  "prior_a3_fixture_failure": {
+    "terminal": {
+      "head": "12ae41275abbfbca5261d6d44367849263b338d9",
+      "source_commit": "682c50f3d1b0121914e60ed9bc68e59573df2dfe",
+      "predicted_source_fingerprint": "a3cd6ae756116ca7d96f1c40584fdd3c58c187d07aa942a5fef7138ed2fcb60c",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates",
+        "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible",
+        "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "trace_environment": {
+        "SUSS_POISON_RECEIPT_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Three exact retained-data memo policy tests in actual receipt_tests module. Prior intended11 control command matchedonly8; these3wereunexecuted. Same source/BOOT/defaults/assertions. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 18.870926126022823,
+      "raw_sha256": "9b1d62be2a4c5fd7b5ca9f767df7ba6418e94dd8f7b5f3433aeacfde850b8aef"
+    },
+    "exact_test_results": {
+      "portable_session::memo_bridge::receipt_tests::retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates": "ok",
+      "portable_session::memo_bridge::receipt_tests::retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry": "ok",
+      "portable_session::memo_bridge::receipt_tests::retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible": "FAILED"
+    },
+    "counts": {
+      "passed": 2,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 570
+    },
+    "harness_seconds": 18.66,
+    "scope": "Currenta3 exact3Memo tests; safe receipt creation assertFAIL beforeeligibilitypositive/unboundtail. Unsafeexact/distinct/nil/restoration/strictfalse control andtypedfuelIRQretryPASS. Fixtureoriginalinputcoveragefixpending; no waivers."
+  },
+  "prior_selector_mismatch": {
+    "source": "682/a3/BOOT12ae",
+    "intended": 11,
+    "matched": 8,
+    "scope": "Initialmemo module path tests insteadreceipt_tests;3unexecuted ininitialcommand. Correctednamesactualharnessverified; subsequent3run2P1F. Current36 full11allaccounted."
+  },
+  "policy": "Negative retention eligibility for current exact domain-bound source_safe=false receipt only; fresh callback DATA and strict authentication unchanged; originalclosure fullytraversed and selectedold sources rechecked beforeatomicpublication. No quota/default/rate/assertion changes.",
+  "limits": [
+    "Six existing original strict child/admission/fuel tests FAIL on current36 beforemostintendednegativeassertions; no waiver, blocker remains.",
+    "source_safe=false is insufficient source proof, not proof of poison or unsafe Certificate acceptance.",
+    "Separate namespace five-call, complete literal/authority/source-tag/pinned69/source-child, workspace baseline and final-head CI remain required.",
+    "Normal verifier initially exits1 at old-shipped comparison; two equal generations/exact adoption/pureidentity are separate facts, not full verifier/bootstrap suite pass."
+  ],
+  "cache": "pr263-retained-memo-fixture-production-v1"
+}

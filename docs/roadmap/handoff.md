@@ -30589,3 +30589,24 @@ SUSS_MACRO_FUEL_TRACE=1 SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/
 ```
 
 Use the custom target, private TMPDIR, one producer and unchanged opt2/debug-assertion/overflow profile documented above; do not set RUSTFLAGS. [Full eight-test command, source/BOOT bindings, before/after observations and raw hashes](evidence/m4-pr263-alias-and-callable-identity-results-2026-10-20.json); raw cache `pr263-alias-repeat-production-v1`. A separate earlier9ba/ddca restoration trace remains0PASS1FAIL: the719 receipt is source_safe=false and authentication correctly rejects it, while DATA identity is retained. That is not unsafe-certificate evidence; retained-DATA eligibility still needs repair. Three helper failures, namespace identity, complete literal/authority/source-tag/pinned69/source-child checks, workspace baseline and final-head CI remain unproven by this checkpoint.
+
+
+### Retained memo eligibility and complete factory fixtures (2026-10-20)
+
+Commit `682c50f` excludes a retained candidate when its original watch has a domain-bound source_safe=false receipt matching the current receiver/storage/slot, exact Number reference and bits. That is a conservative reuse exclusion, not proof of poison or a new certificate. A separate closed pass covers all original Native/Source inputs and rechecks selected old sources after callbacks, before atomic publication. Fresh callback DATA health and strict memo authentication are unchanged; a preconstruction miss takes the existing single fresh path, while postcallback invalidation fails without replay. Added work is prepaid.
+
+The alias helpers now use actual Session declarations and indexed completed metadata captures (`31d773a`). The memo fixture now records the original scalar/count/empty-list/List factory closure and retains its full records (`5de94e9`); its mandatory safe-receipt positive remains unchanged. Earlier eight-control and2PASS1FAIL memo results on a3 retain their scopes. An initial command used the wrong module for three memo selectors, matching only8 tests; the corrected three-test follow-up exposed that fixture failure. The latest command accounts for all11 actual harness names.
+
+Current compiler fingerprint is `36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e` over222 inputs, matching independently reviewed BOOT `d8991e2`. Two normal generations agree (82.295936s); the verifier initially exits1 at the old-shipped comparison. Exact adoption and pure source identity verification pass (1.125010s); this is not a complete bootstrap-verifier pass.
+
+All11 focused unit controls pass (57.89s harness /195.172036s command), including the original frontier/callback, three alias negatives/positives, repeat/IRQ and three memo-policy tests. The original public poison/restoration test passes both caller phases (65.77s /209.467479s), with four requests and all16 Boolean assertions unchanged. The original callable test separately passes all six15-field observations in both phases (92.09s /96.453233s). Source programs, GC, default poison allowances, existing callable Macro100B and caller Runtime are unchanged.
+
+The separate unchanged six-case authority/fuel replay remains0PASS6FAIL (19.14s /19.344996s). Three mixed-reader cases stop at strict child Certificate::finish None before their parent/poison/fuel assertions. Health and plan cases stop at admission None; the plan trace explicitly declines private-data-value in strict placement mode. The capture-fuel case expects an error but gets Ok1 at an as-yet unidentified sampled cut. These are current failures, not waivers or executed negative coverage.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_POISON_RECEIPT_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --exact source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration --test-threads=1 --nocapture
+SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/callable cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --exact resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations --test-threads=1 --nocapture
+```
+
+Use the custom target/private TMPDIR, one producer and the opt2/debug-assertion/overflow profile above; do not set RUSTFLAGS. [Exact11/6 commands, current observations, raw hashes and source/BOOT bindings](evidence/m4-pr263-retained-memo-and-authority-results-2026-10-20.json); raw cache `pr263-retained-memo-fixture-production-v1`. Separate namespace, complete literal/authority/source-tag/pinned69/source-child, workspace baseline and final-head CI are not established by this checkpoint. No allowance or production authority guard was relaxed.
