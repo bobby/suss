@@ -30573,3 +30573,19 @@ SUSS_POISON_RECEIPT_TRACE=1 cargo test -p suss-compile --locked --lib -- --exact
 ```
 
 Use one producer and a private writable TMPDIR; do not set RUSTFLAGS. [Exact commands, source bindings, generated-file hashes and results](evidence/m4-pr263-native-frontier-callback-results-2026-10-20.json). Raw receipts/logs: cache `pr263-frontier-attribution-production-v1`. The new callable/poison diagnostic paths compile, but their tests have not run on this source. Their previous067 failures and CORE0/17 remain source-qualified; full source-child, source-tag, pinned69 and workspace/final-head CI results are not established by this run.
+
+
+### Transparent aliases and repeated native occurrences (2026-10-20)
+
+Commit `e12d831` preserves cached genuine Source evidence through ordinary Alias edges to the same admitted owner, with full current validation. An unadmitted captured starting boundary is rejected. It also omits scratch bindings only for repeated native occurrences that the existing walker never caches; source-alias and cacheable-native physical checks remain intact. New traversal/policy work is prepaid. Compiler identity is `e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77` over222 inputs, with independently reviewed generated BOOT `be9dcde` and passing pure source identity verification. Normal two-generation verification stopped at the expected old-shipped comparison (exit1,82.152135s); it is not a complete verifier pass.
+
+The focused8 cohort completes5PASS3FAIL0ignored (68.44s harness /209.720995s command). The original repeated-occurrence/alias/metadata-clone regression now passes all10 identity/value assertions after GC. Original cold callback and ordinary-frontier admission controls pass, as do the two new repeat-policy/IRQ-retry controls. Three new alias helper tests fail with None unwrap during admission setup, before their positive/negative assertions; their setup and admission path require correction, and their intended negative coverage remains unexecuted. No production admission guard has been relaxed to make those tests pass.
+
+The original callable test separately passes1/0/0 (96.56s harness /261.440817s command). All six observations match their full15-field expectations: three independent requests in each caller phase, including saved raw-declaration identity on later requests. No staged binding conflict appears in that trace. The original program, GC, Macro100B and caller Runtime allowances/assertions are unchanged. This result does not establish the separate namespace five-call test or whole-issue acceptance.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_MACRO_FUEL_TRACE=1 SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/callable cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --exact resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations --test-threads=1 --nocapture
+```
+
+Use the custom target, private TMPDIR, one producer and unchanged opt2/debug-assertion/overflow profile documented above; do not set RUSTFLAGS. [Full eight-test command, source/BOOT bindings, before/after observations and raw hashes](evidence/m4-pr263-alias-and-callable-identity-results-2026-10-20.json); raw cache `pr263-alias-repeat-production-v1`. A separate earlier9ba/ddca restoration trace remains0PASS1FAIL: the719 receipt is source_safe=false and authentication correctly rejects it, while DATA identity is retained. That is not unsafe-certificate evidence; retained-DATA eligibility still needs repair. Three helper failures, namespace identity, complete literal/authority/source-tag/pinned69/source-child checks, workspace baseline and final-head CI remain unproven by this checkpoint.

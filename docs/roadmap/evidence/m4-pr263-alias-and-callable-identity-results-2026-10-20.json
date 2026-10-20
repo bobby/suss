@@ -1,0 +1,906 @@
+{
+  "source_commit": "e12d831bf18728d51a7da0cb27698df008da2b4e",
+  "compiler_source_sha256": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+  "source_input_count": 222,
+  "bootstrap_commit": "be9dcdec9813b1176b35e1d2dd64ff51509a4138",
+  "composition": {
+    "base_head": "f0f0536093408291cb5836b66c6eb6d97f0df963",
+    "components": [
+      {
+        "packet": "pr263-transparent-source-alias-fix-8e-v2",
+        "patch_sha256": "f672b5d3956894f8ebdcd43eb851ae628c87f8dfd74d6d425fbc685a08bb4de0"
+      },
+      {
+        "packet": "pr263-repeat-native-bindings-9ba9969-v1",
+        "patch_sha256": "8e065de21144009cf5236cfdbb10d5f0357a7c05eef23eb367aadb823c696971"
+      }
+    ],
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs",
+        "before_sha256": "19eb5d131344dd1616e89b48e7ca0f696ec309d97a62c6205eac4161bf8dbf41",
+        "after_sha256": "911917af7c27496e2445a5c17c26d3879a3ca76874f604f6e91eb6a3b1b23838"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs",
+        "before_sha256": "23cb021b0b5000f61f8c9def3e599f3a7d42d1a62da6c031452905d2c3df219c",
+        "after_sha256": "996a98caa0702c10b81e03080e58cd862331888a38d821bbf6308c9ac91c3e5a"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_walk.rs",
+        "before_sha256": "2d7055e50830286c692f2b050f6560f2ecddee8c1b09a2241e33221c10621e2e",
+        "after_sha256": "f05924e7788fa8702fd632274b9e42713ac1b9c8a50e72746e6f23eee8f820fb"
+      }
+    ],
+    "patch_sha256": "2204b05112ea68a71769bf3059481fe9df57250b78a3e7864cac278dbd93de4a",
+    "scope": "Cache-only exactsequentialcomposition ofaliasV2+repeatV1. No sourceapplication,typecheck,VM orsemanticcredit. Repeatindependentreviewpending; aliasV2sourceGO."
+  },
+  "normal_generation": {
+    "head": "e12d831bf18728d51a7da0cb27698df008da2b4e",
+    "compiler_source_sha256": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+    "inputs": 222,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 82.1521350700059,
+    "raw_sha256": "05279b8f46319fb63a60929a7bd1b75bc4dac363d46bf809736d559f4123bc7b"
+  },
+  "adoption": {
+    "reviewer": "Carver",
+    "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+    "head": "e12d831bf18728d51a7da0cb27698df008da2b4e",
+    "tree": "814ab4fc90ba5f2fc03fbb49ab135498c96d5251",
+    "clean_head_and_current_git_inputs_verified": true,
+    "terminal_sha256": "32d01b844e4c36f2933e996ad2e2c7d1fbbb14e7aaa34ab14b0c94205591b400",
+    "generator_receipt_sha256": "fcdb08d779f564f9cd89c77940d3a9de30126378279ba9fac7f7e615fd14afd5",
+    "source_fingerprint": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+    "git_source_inputs_verified": 222,
+    "eight_output_hashes_and_sizes_verified": true,
+    "four_first_second_pairs_byte_exact": true,
+    "phase_comparison": {
+      "runtime": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "1571d6225d941f78aa77a6a439e995c5aa5a8499b3188cf651ff13c2ea276b68",
+            "new_sha256": "bdca54c506116cb4d5550dbd4bdfa97baf6b565dfe687120d76e9e8682f858fd"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "e4c06638ac5f7a37f7d39e237aa39bb644c6aacb35e85583ddd07510f1b5a242",
+        "new_json_sha256": "ad2c8182e3f0524ef98c004fb45d76d8a2ea55a27ffcfda3417a108e1d911b90"
+      },
+      "macro": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "65a92325c7ef8dff3de00f54420fea33a74ac74fdd013f30ccb9378731bc9455",
+            "new_sha256": "2da6eb9c68b8c5c33cd3a102c0660553e7e950a5160731bebe7c3dead08c6351"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "b5808517709f411c8f275a39858579112e71abdd29a673b8e7f4b374acbc6b4c",
+        "new_json_sha256": "03f046669b960950d29ea5086becded2994c3f3a2248c7439509e748f7e088e5"
+      }
+    },
+    "allowlist": {
+      "runtime/bootstrap/runtime.wasm": {
+        "source": "diagnostics/first/runtime.wasm",
+        "sha256": "e4c06638ac5f7a37f7d39e237aa39bb644c6aacb35e85583ddd07510f1b5a242"
+      },
+      "runtime/bootstrap/runtime.json": {
+        "source": "diagnostics/first/runtime.json",
+        "sha256": "ad2c8182e3f0524ef98c004fb45d76d8a2ea55a27ffcfda3417a108e1d911b90"
+      },
+      "runtime/bootstrap/macro.wasm": {
+        "source": "diagnostics/first/macro.wasm",
+        "sha256": "b5808517709f411c8f275a39858579112e71abdd29a673b8e7f4b374acbc6b4c"
+      },
+      "runtime/bootstrap/macro.json": {
+        "source": "diagnostics/first/macro.json",
+        "sha256": "03f046669b960950d29ea5086becded2994c3f3a2248c7439509e748f7e088e5"
+      }
+    },
+    "qualification": "Normal hostopt2 generation82.152135s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, alias/repeat CORE/public-macro semantic or acceptance credit.",
+    "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations",
+    "actual_builder_output_copy_verified": true,
+    "actual_builder_output_sha256": "a2c028dcc27545208a0b6e1b7f844a888550321f9a5b6a127f18361f737286d1"
+  },
+  "pure_identity": {
+    "head": "be9dcdec9813b1176b35e1d2dd64ff51509a4138",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+    "exit_code": 0,
+    "seconds": 1.1851927730021998,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "focused_controls": {
+    "terminal": {
+      "head": "be9dcdec9813b1176b35e1d2dd64ff51509a4138",
+      "source_commit": "e12d831bf18728d51a7da0cb27698df008da2b4e",
+      "predicted_source_fingerprint": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones",
+        "portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback",
+        "portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary",
+        "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start",
+        "portable_macro_graph::source_roots::first_use_walk::tests::retained_binding_policy_keeps_reader_occurrences_distinct_and_native_sharing_intact",
+        "portable_macro_graph::source_roots::first_use_walk::tests::retained_native_policy_poll_preserves_active_irq_and_fresh_operation_retry",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original2unchangedreuse/callbackcontrols plusnew2sourcephaseordinary-frontieradmissionregression; expected8Rusttests; threealias andtworepeat-policy regressions added. Originalprograms/defaults/assertions preserved. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 209.72099485096987,
+      "raw_sha256": "acdc2199b214c0da9944c8701b3a338ee9960ac7687ed4e6dad110c35118c9ad"
+    },
+    "exact_test_results": {
+      "portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback": "ok",
+      "portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones": "ok",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start": "FAILED",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary": "FAILED",
+      "portable_macro_graph::source_roots::first_use_data::tests::cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner": "FAILED",
+      "portable_macro_graph::source_roots::first_use_walk::tests::retained_binding_policy_keeps_reader_occurrences_distinct_and_native_sharing_intact": "ok",
+      "portable_macro_graph::source_roots::first_use_walk::tests::retained_native_policy_poll_preserves_active_irq_and_fresh_operation_retry": "ok",
+      "portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration": "ok"
+    },
+    "counts": {
+      "passed": 5,
+      "failed": 3,
+      "ignored": 0,
+      "filtered": 562
+    },
+    "harness_seconds": 68.44,
+    "scope": "Exact8selectors fullyaccounted. Originalfrontier/cold/admission plus3alias/2repeat; independentsemanticresult notinferredfrom compilation."
+  },
+  "callable": {
+    "terminal": {
+      "head": "be9dcdec9813b1176b35e1d2dd64ff51509a4138",
+      "source_commit": "e12d831bf18728d51a7da0cb27698df008da2b4e",
+      "predicted_source_fingerprint": "e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_namespace_identity",
+        "--",
+        "--exact",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "One original callable identity test, all3independentrequests perphase (6rows), unchanged Macro100B/callerRuntime. Optin targetdeclarationreuse trace only; no expected assertion change. Freshsource/BOOT/pureidentity required. Native trace overhead is not a performance benchmark.",
+      "exit_code": 0,
+      "seconds": 261.44081667799037,
+      "raw_sha256": "52b98eed48c41a29b261754100cd86d9ca67c9fa1cade2d9364440b235c92f44"
+    },
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 1
+    },
+    "harness_seconds": 96.56,
+    "actual_observations": {
+      "limits": "Three independent requests per caller phase with Macro compilation allowance 100000000000; caller Runtime limits unchanged, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim.",
+      "phases": [
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": true
+              }
+            ]
+          },
+          "phase": "runtime"
+        },
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": true
+              }
+            ]
+          },
+          "phase": "macro"
+        }
+      ]
+    },
+    "rows": 6,
+    "matching_rows": 6,
+    "request_starts": 6,
+    "errors": [],
+    "staged_conflicts": 0,
+    "parent_selections": 4,
+    "result_lines": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 96.56s"
+    ]
+  },
+  "before_callable": {
+    "terminal": {
+      "head": "f0f0536093408291cb5836b66c6eb6d97f0df963",
+      "source_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+      "predicted_source_fingerprint": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_namespace_identity",
+        "--",
+        "--exact",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "One original callable identity test, all3independentrequests perphase (6rows), unchanged Macro100B/callerRuntime. Optin targetdeclarationreuse trace only; no expected assertion change. Freshsource/BOOT/pureidentity required. Native trace overhead is not a performance benchmark.",
+      "exit_code": 101,
+      "seconds": 249.22495584498392,
+      "raw_sha256": "bb7aa27b5eb3ac9b012a4c7b1bf9f6da9bdf9d7ed468a81ef9d1e984e30f10c0"
+    },
+    "actual_observations": {
+      "limits": "Three independent requests per caller phase with Macro compilation allowance 100000000000; caller Runtime limits unchanged, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim.",
+      "phases": [
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": false
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": false
+              }
+            ]
+          },
+          "phase": "runtime"
+        },
+        {
+          "observations": {
+            "errors": [],
+            "rows": [
+              {
+                "actual": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "first",
+                  true,
+                  true,
+                  true,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "first",
+                "matches": true
+              },
+              {
+                "actual": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-2",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-2",
+                "matches": false
+              },
+              {
+                "actual": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "expected": [
+                  "same-revision-3",
+                  true,
+                  true,
+                  false,
+                  false,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  true,
+                  2.0,
+                  2.0,
+                  "callable-doc"
+                ],
+                "label": "same-revision-3",
+                "matches": false
+              }
+            ]
+          },
+          "phase": "macro"
+        }
+      ]
+    },
+    "differences": [
+      {
+        "phase": "runtime",
+        "label": "first",
+        "differences": []
+      },
+      {
+        "phase": "runtime",
+        "label": "same-revision-2",
+        "differences": [
+          5
+        ]
+      },
+      {
+        "phase": "runtime",
+        "label": "same-revision-3",
+        "differences": [
+          5
+        ]
+      },
+      {
+        "phase": "macro",
+        "label": "first",
+        "differences": []
+      },
+      {
+        "phase": "macro",
+        "label": "same-revision-2",
+        "differences": [
+          5
+        ]
+      },
+      {
+        "phase": "macro",
+        "label": "same-revision-3",
+        "differences": [
+          5
+        ]
+      }
+    ],
+    "six_request_starts_verified": true,
+    "conflicts": [
+      "declaration-reuse target=suss-oracle.sharing-target/callable owner=0x7b8dcbe4a140 event=binding-conflict-detail source_boundary=52 source_key=DeclarationField(suss-oracle.sharing-target/callable,0x7b8dc8686d70,4) slot=59 slot_is_source_alias=false slot_is_source_native=true repeat_policy=Some(true) cache_eligible=Some(false) current_cache_visible=false recipe=Some(Discriminant(3)) old_evidence=kind:0;ptr:0x7b8b7bcd58e0;source_wrappers:0;native:0x7b8b7bcd58e0 selected_evidence=kind:0;ptr:0x7b8b7bcc62e0;source_wrappers:0;native:0x7b8b7bcc62e0",
+      "declaration-reuse target=suss-oracle.sharing-target/callable owner=0x7b8dcbe4a140 event=binding-conflict-detail source_boundary=52 source_key=DeclarationField(suss-oracle.sharing-target/callable,0x7b8dc8686d70,4) slot=59 slot_is_source_alias=false slot_is_source_native=true repeat_policy=Some(true) cache_eligible=Some(false) current_cache_visible=false recipe=Some(Discriminant(3)) old_evidence=kind:0;ptr:0x7b8b7bcd58e0;source_wrappers:0;native:0x7b8b7bcd58e0 selected_evidence=kind:0;ptr:0x7b8b7bcc62e0;source_wrappers:0;native:0x7b8b7bcc62e0",
+      "declaration-reuse target=suss-oracle.sharing-target/callable owner=0x7b8fe088c470 event=binding-conflict-detail source_boundary=52 source_key=DeclarationField(suss-oracle.sharing-target/callable,0x7b8fe2a5d2b0,4) slot=59 slot_is_source_alias=false slot_is_source_native=true repeat_policy=Some(true) cache_eligible=Some(false) current_cache_visible=false recipe=Some(Discriminant(3)) old_evidence=kind:0;ptr:0x7b8b78709430;source_wrappers:0;native:0x7b8b78709430 selected_evidence=kind:0;ptr:0x7b8b7be44490;source_wrappers:0;native:0x7b8b7be44490",
+      "declaration-reuse target=suss-oracle.sharing-target/callable owner=0x7b8fe088c470 event=binding-conflict-detail source_boundary=52 source_key=DeclarationField(suss-oracle.sharing-target/callable,0x7b8fe2a5d2b0,4) slot=59 slot_is_source_alias=false slot_is_source_native=true repeat_policy=Some(true) cache_eligible=Some(false) current_cache_visible=false recipe=Some(Discriminant(3)) old_evidence=kind:0;ptr:0x7b8b78709430;source_wrappers:0;native:0x7b8b78709430 selected_evidence=kind:0;ptr:0x7b8b7be44490;source_wrappers:0;native:0x7b8b7be44490"
+    ],
+    "counts": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 1
+    },
+    "harness_seconds": 99.74,
+    "scope": "Actual complete originalcallable6rows; fourlater rawidentityindex5false andstagedrepeatnativeconflicts; not a demonstratedfix. No namespace5callcredit."
+  },
+  "separate_prior_poison": {
+    "terminal": {
+      "head": "f0f0536093408291cb5836b66c6eb6d97f0df963",
+      "source_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+      "predicted_source_fingerprint": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--",
+        "--exact",
+        "source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "One original source-metadata poison-at-memo-write/restoration test, programs/defaults/assertions unchanged. Both caller phases intended; report actual attempted assertions/stages. No quota/rate/fixture change.",
+      "exit_code": 101,
+      "seconds": 49.62687368801562,
+      "raw_sha256": "23c383ed37f8a6f2dad8bebcb95d30ced7629b79c3625ffc0520d5c2104ecf29"
+    },
+    "counts": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 11
+    },
+    "harness_seconds": 42.01,
+    "observed_actual": [
+      false,
+      true,
+      false,
+      true
+    ],
+    "expected": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "receipt_719_bits": "4086780000000000",
+    "source_safe": false,
+    "domain_registered_and_live": true,
+    "authentication_rejects_unsafe": true,
+    "data_retained": true,
+    "macro_caller_program": "UNEXECUTED after Runtime assertion panic",
+    "scope": "FirstRuntime4booleanspass; secondRuntimefreshidentity/coldmemoassertsFAIL. Existingauthenticationcorrectly rejectsunsafe719; observedDATAidentityretentionisnotunsafeCertificateproof. No fuelchange orassertionweakening.",
+    "relevant_trace_lines": [
+      "POISON_RECEIPT stage=canonical-pre-store watch=0x7fdec7aeff40 owner=PersistentArrayMap site=6 slot=3 bits=4086780000000000 source_safe=false domain_registered=true domain_live=true valid=None",
+      "POISON_RECEIPT stage=canonical-post-store-publication watch=0x7fdec7aeff40 owner=PersistentArrayMap site=6 slot=3 bits=4086780000000000 source_safe=false domain_registered=true domain_live=true valid=Some(true)",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_DATA_RETAINED source=20 native=86 root=0x7fe0d822c830 key=Declaration(user/write-state-target,0x7fe0d7525d60) checked=true bindings=true",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain",
+      "POISON_AUTHENTICATED watch=0x7fdec7aeff40 owner=PersistentArrayMap slot=3 source_domain_bound=true source_safe=false bits=4086780000000000 result=false reason=unsafe-or-dead-domain"
+    ]
+  },
+  "limits": [
+    "Three new alias helpers panic at admission setup before new positive/negative assertions. They are failures, not skipped or waived.",
+    "Original frontier identity, callback and admission tests pass; separate namespace5call notrun on this source.",
+    "Poison restoration result is separate9ba/ddca source. Unsafe719 authentication rejects correctly; DATAretention stillfails originalfreshness/coldmemo expectations. Retained-onlyrepair notapplied.",
+    "No current full source-child/source-tags/pinned69/workspacebaseline/finalCI/issueclosure claim. No quota/default/runtime/assertion change."
+  ],
+  "cache": "pr263-alias-repeat-production-v1"
+}
