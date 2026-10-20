@@ -1,0 +1,127 @@
+{
+  "verdict": "PASS",
+  "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+  "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+  "input_count": 227,
+  "counts": {
+    "NAMESPACE_IDENTITY/runtime": 5,
+    "NAMESPACE_IDENTITY/macro": 5,
+    "CALLABLE_NAMESPACE_IDENTITY/runtime": 3,
+    "CALLABLE_NAMESPACE_IDENTITY/macro": 3
+  },
+  "complete": true,
+  "problems": [],
+  "harness_summary": [
+    "ok",
+    "2",
+    "0",
+    "0",
+    "0"
+  ],
+  "terminal": {
+    "head": "20a3162e50bbcce37214cc23dc7590dad56532f7",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_namespace_identity",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+      "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+    ],
+    "selection": {
+      "exact_names": [
+        "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations"
+      ],
+      "scope": "Both original complete namespace five-call and callable six-row probes, bothcaller phases, helper100B Macro compilation/originalRuntime; original assertions retained."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 0,
+    "seconds": 909.487964856,
+    "raw_sha256": "f8d40c2d1756a0b08595b5830dfaaf843f6ab38cb5dc0817baeb575cf6412017"
+  },
+  "limits": "Full unchanged Rust test assertions and source-qualified raw receipts; expected rows here come from the checked test fixture. No broader identity/schema/source-authority claim.",
+  "observation_artifact": {
+    "path": "docs/roadmap/evidence/m4-pr263-namespace-identity-observations-2026-10-20.jsonl",
+    "sha256": "8d23468268489d6a37f36823b8fc94bf90280441eaf74b4aec23932e90a36e38",
+    "receipts": 2,
+    "namespace_rows": 10,
+    "callable_rows": 6,
+    "callable_fields_per_row": 15
+  },
+  "bootstrap_commit": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+  "independent_review": "Pending; public pair terminal and complete rows locally reconciled.",
+  "namespace_capture_fourteen": {
+    "terminal": {
+      "head": "8fd4916c3395de796bdff85ae8d44c6d59ea24ae",
+      "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+      "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+      "input_count": 227,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+        "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+        "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+        "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+        "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+        "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+        "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+        "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+        "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+        "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+        "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly"
+      ],
+      "selection": {
+        "exact_names": [
+          "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+          "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+          "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+          "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+          "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+          "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+          "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+          "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+          "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+          "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+          "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+          "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+          "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+          "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly"
+        ],
+        "scope": "All original eight namespace/error and four compact tests unchanged plus two native identity-prefilter parity/failure-retry regressions. No broader/public identity/default/pinned acceptance inference."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 280.8770393549994,
+      "raw_sha256": "4e9219196f76c7f88a571434f578bf10c375b14be322eed1b9ebdf37c8bb8fbc"
+    },
+    "passed": 14,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 589,
+    "harness_seconds": 35.8,
+    "all_exact_names_reconciled": true
+  }
+}

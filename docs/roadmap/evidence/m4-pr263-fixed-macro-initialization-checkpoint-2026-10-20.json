@@ -444,7 +444,7 @@
     },
     "execution": "Read-only cache/Git/current source; cache-only receipt. No Cargo/VM/shared edits."
   },
-  "limits": "Initialization regressions pass. The unchanged explicit10M constructor fails after initialization and user definition, during first Runtime caller &env input transport83..108; constructor output assertions and Macro caller phase are unreached. Full namespace/callable pair is running without a terminal verdict. Original14 preservation, pinned/source-tags/literal/defaultCORE/source-child/workspace/final-head CI/review remain unproven on this source.",
+  "limits": "Initialization regressions pass. Explicit10M constructor still fails during first Runtime caller &env input transport83..108 after initialization and user definition; output assertions/Macro caller unreached. Full public namespace/callable pair now2PASS with complete10namespace/6x15callable rows; see m4-pr263-namespace-identity-results-2026-10-20.json. Original14 preservation now14PASS; companion, pinned/source-tags/literal/defaultCORE/source-child/workspace/final-head CI/review remain unproven on this source.",
   "default_constructor_terminal": {
     "head": "89265e05f71ba9f4b118ed48e49915a2f2f52532",
     "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
