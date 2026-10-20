@@ -563,101 +563,119 @@ mod health_tests {
     use super::*;
     use crate::portable::{
         hir,
-        resolve::{Environment, Phase},
+        resolve::Phase,
     };
     use crate::portable_macro_data::FormBridge;
     #[test]
     fn uncached_numeric_key_data_never_mints_direct_key_or_retained_authority() {
-        let text = "(def ^{:tag number} watched 17)";
-        let forms = suss_reader::forms::read_forms(text).unwrap();
-        let environment = hir::prepare(
-            &forms,
-            0..text.len(),
-            &Environment::default(),
-            Phase::Runtime,
-        )
-        .unwrap()
-        .1;
-        let binding = environment
-            .resolve(Phase::Runtime, &suss_reader::Symbol::new("watched"), 0..0)
-            .unwrap();
-        let global = binding.global();
-        let info = environment.shared_definition_info(global).unwrap();
-        let owner = info.completed_values.as_ref().unwrap();
-        let mut session = Session::new_macro().unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
-        let mut graph = AnalysisGraph::new(&bridge, &mut session);
-        graph.capture_roots = true;
-        graph.direct_reader_roots = true;
-        let metadata = graph
-            .completed_metadata_map(global, owner, info, 0)
-            .unwrap();
-        let root = graph.reader_request_export(metadata).unwrap();
-        let plan = graph.admit_reader_controller(root).unwrap().unwrap();
-        let key = *plan
-            .order
-            .iter()
-            .find(|id| plan.modes[**id] == ChildMode::CheckedDirectKey)
-            .unwrap();
-        assert!(plan.layout[key].is_empty());
-        let recording = graph.bridge.recording(graph.session).unwrap();
-        let value = graph
-            .materialize_using(graph.source_roots.roots[key].alias, &recording)
-            .unwrap();
-        let poison = graph
-            .session
-            .eval("(fn [key] (set! (.-_hash key) 991))")
-            .unwrap();
-        graph.session.invoke(&poison, &[&value]).unwrap();
-        graph.session.collect().unwrap();
-        let proof = FreshSourceProof::finish(
-            graph.session,
-            graph.bridge,
-            plan.expected[key].as_ref().unwrap().clone(),
-            value,
-            recording.into_records().unwrap(),
-            vec![],
-            false,
-        )
-        .unwrap();
-        assert!(
-            proof.certificate().is_none(),
-            "numeric DATA cannot authorize a forged memo"
-        );
-        assert!(
-            proof
-                .checked(
-                    graph.session,
-                    graph.bridge,
-                    plan.expected[key].as_ref().unwrap()
-                )
-                .unwrap()
-        );
-        let parent = *plan
-            .order
-            .iter()
-            .find(|id| plan.layout[**id].contains(&key))
-            .unwrap();
-        let mut states = Vec::new();
-        states.resize_with(plan.layout.len(), || None);
-        states[key] = Some(proof);
-        let error = match graph.construct_transient_reader_parent(
-            graph.source_roots.roots[parent].native,
-            parent,
-            &plan,
-            &states,
-        ) {
-            Err(error) => error,
-            Ok(_) => panic!("health-only KEY must not enter strict direct exposure"),
-        };
-        assert!(
-            error
-                .to_string()
-                .contains("strict checked source certificate"),
-            "{error}"
-        );
-        let cache = RootCache::default();
-        assert_eq!(cache.entries.len(), 0);
+        // The original program always runs. The second case adds an explicit
+        // reader key; neither provenance case can disappear behind a filter.
+        for (text, born_literal) in [
+            ("(def ^{:tag number} watched 17)", true),
+            ("(def ^{:tag number :health-data-key 17} watched 17)", false),
+        ] {
+            let mut source_session = Session::new_repl().unwrap();
+            source_session.eval(text).unwrap();
+            let snapshot = source_session.compilation_snapshot();
+            let namespace = hir::SourceNamespace::capture(&snapshot.environment, Phase::Runtime);
+            let (global, info) = namespace.declarations.iter()
+                .find(|(global, _)| global.name() == "watched").unwrap();
+            let mut session = Session::new_macro().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let _operation = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            graph.declaration(global, Some(info), 0).unwrap();
+            graph.finish_recipes().unwrap();
+            let mut selected = None;
+            for (id, capture) in graph.source_roots.roots.iter().enumerate() {
+                if !matches!(&capture.owner,
+                    Owner::ReaderSource(_, _, super::super::reader_keys::ReaderSelector::Key(_))) {
+                    continue;
+                }
+                let mut native = capture.native;
+                for _ in 0..graph.recipes.len() {
+                    match graph.recipes[native].as_ref().unwrap() {
+                        Recipe::Alias(child) => native = *child,
+                        Recipe::Identifier { keyword: true, name, literal, .. } => {
+                            // The name selects the authored input only. Origin
+                            // is independently asserted from the protected token
+                            // and then the actual pre-write memo below.
+                            if literal.is_some() == born_literal
+                                && (born_literal || name == "health-data-key") {
+                                selected = Some(id);
+                            }
+                            break;
+                        }
+                        _ => break,
+                    }
+                }
+                if selected.is_some() { break; }
+            }
+            let key = selected.expect("both literal and cold reader-key cases must exist");
+            let alias = graph.source_roots.roots[key].alias;
+            let scalar = graph.recipe(Recipe::Scalar(crate::portable::hir::Literal::Number(17.0))).unwrap();
+            let request_map = graph.recipe(Recipe::ReaderMap(vec![(alias, scalar)])).unwrap();
+            let root = graph.reader_request_export(request_map).unwrap();
+            // This separate native Request has ALL of its children. It does
+            // not filter a full declaration's children or forge a source owner.
+            assert!(graph.admit_reader_controller(root).unwrap().is_some());
+            let plan = graph.admit_first_use_data_controller(root).unwrap().unwrap();
+            assert_eq!(plan.modes[key], ChildMode::CheckedDirectKey);
+            assert!(plan.layout[key].is_empty());
+            let parent = graph.source_roots.index(graph.session, root).unwrap().unwrap();
+            assert_eq!(plan.layout[parent], vec![key]);
+            assert!(plan.expected[key].is_some());
+            let recording = graph.bridge.recording(graph.session).unwrap();
+            let value = graph.materialize_using(alias, &recording).unwrap();
+            let mut fields = graph.session.data_fields(&value).unwrap();
+            assert_eq!(fields.len(), 4, "actual Keyword schema");
+            let initial = fields.remove(3);
+            let initial_form = graph.bridge.read(graph.session, &initial, 0..1).unwrap();
+            if born_literal {
+                assert!(matches!(initial_form.kind, suss_reader::forms::Kind::Number(_)),
+                    "compiler-literal memo must actually start numeric");
+            } else {
+                assert!(matches!(initial_form.kind, suss_reader::forms::Kind::Nil),
+                    "the reader-key positive must actually start nil");
+            }
+            let poison = graph.session.eval("(fn [key] (set! (.-_hash key) 991))").unwrap();
+            graph.session.invoke(&poison, &[&value]).unwrap();
+            graph.session.collect().unwrap();
+            let replacement = graph.session.data_fields(&value).unwrap().remove(3);
+            assert!(!graph.session.values_identical(&initial, &replacement).unwrap(),
+                "the generic write must actually replace the original memo");
+            let finished = FreshSourceProof::finish(
+                graph.session, graph.bridge, plan.expected[key].as_ref().unwrap().clone(),
+                value, recording.into_records().unwrap(), vec![], false,
+            );
+            if born_literal {
+                let error = match finished {
+                    Err(error) => error,
+                    Ok(_) => panic!("born-numeric literals cannot gain originally-nil DATA eligibility"),
+                };
+                assert!(matches!(error, crate::portable_session::SessionError::Host(ref error)
+                    if error.to_string() == "Fresh coherent source failed non-memo certification"));
+                assert!(RootCache::default().entries.is_empty());
+                continue;
+            }
+            let proof = finished.unwrap();
+            assert!(proof.certificate().is_none(), "numeric DATA cannot authorize a forged memo");
+            assert!(proof.checked(graph.session, graph.bridge, plan.expected[key].as_ref().unwrap()).unwrap());
+            let mut states = Vec::new();
+            states.resize_with(plan.layout.len(), || None);
+            states[key] = Some(proof);
+            let error = match graph.construct_transient_reader_parent(
+                graph.source_roots.roots[parent].native, parent, &plan, &states,
+            ) {
+                Err(error) => error,
+                Ok(_) => panic!("health-only KEY must not enter strict direct exposure"),
+            };
+            assert!(error.to_string().contains("strict checked source certificate"), "{error}");
+            let cache = RootCache::default();
+            assert_eq!(cache.entries.len(), 0);
+        }
     }
 }
 

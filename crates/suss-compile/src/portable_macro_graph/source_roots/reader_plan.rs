@@ -336,7 +336,10 @@ mod tests {
         graph.capture_roots = true;
         graph.direct_reader_roots = true;
         let root = graph.declaration(global, Some(holder), 0).unwrap();
-        let plan = graph.admit_reader_controller(root).unwrap().unwrap();
+        // Full declarations now contain DATA-only Value/NestedKey captures.
+        // A topology plan does not grant their strict source authority.
+        assert!(graph.admit_reader_controller(root).unwrap().is_none());
+        let plan = graph.admit_first_use_data_controller(root).unwrap().unwrap();
         assert!(!plan.exports.is_empty());
         let mut direct = 0;
         for &id in &plan.order {
