@@ -1370,7 +1370,9 @@ impl<'a> AnalysisGraph<'a> {
         include_compiler: bool,
         record_bindings: bool,
     ) -> Result<SessionValue> {
-        let catalog = context.resolution_catalog();
+        let catalog = preserve_source_error(0..0,
+            &mut |work| self.session.charge_host_work(work),
+            |meter| context.resolution_catalog_metered(meter))?;
         let mut root = if record_bindings {
             let snapshot = self.namespace_membership(context.namespace_snapshot)?;
             let live = self.namespace_membership(&catalog)?;
@@ -4403,3 +4405,41 @@ mod type_value_regression_tests;
 
 #[cfg(test)]
 mod completed_value_control;
+
+#[cfg(test)]
+mod namespace_revision_error_tests {
+    use super::*;
+    #[test]
+    fn native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm() {
+        for phase in [portable::resolve::Phase::Runtime, portable::resolve::Phase::Macro] {
+            let mut environment = portable::resolve::Environment::new("capture.user").unwrap();
+            environment.declare_cell(phase, "capture.user", "visible").unwrap();
+            let snapshot = Arc::new(portable::hir::SourceNamespace::capture(&environment, phase));
+            let locals = Default::default();
+            let fields = Default::default();
+            let context = portable::ExpansionContext { environment: &environment,
+                namespace_snapshot: &snapshot, namespace_revision: None,
+                origin: None, phase, context: portable::AnalysisContext::Expression,
+                locals: &locals, fields: &fields, function_scopes: &[] };
+            let mut count = 0;
+            context.resolution_catalog_metered(&mut |_| { count += 1; Ok(()) }).unwrap();
+            for interrupted in [false, true] {
+                for cut in [0, count / 2, count - 1] {
+                    let mut index = 0;
+                    let failure = preserve_source_error(0..0, &mut |_| {
+                        let fail = index == cut; index += 1;
+                        if fail { Err(SessionError::Trap(if interrupted {
+                            wasmtime::Trap::Interrupt.into()
+                        } else { wasmtime::Trap::OutOfFuel.into() })) }
+                        else { Ok(()) }
+                    }, |meter| context.resolution_catalog_metered(meter)).unwrap_err();
+                    let expected = if interrupted { wasmtime::Trap::Interrupt } else { wasmtime::Trap::OutOfFuel };
+                    assert!(matches!(failure, SessionError::Trap(ref error)
+                        if error.downcast_ref::<wasmtime::Trap>() == Some(&expected)));
+                    assert_eq!(context.resolution_catalog_metered(&mut |_| Ok(())).unwrap().identities,
+                        snapshot.identities);
+                }
+            }
+        }
+    }
+}

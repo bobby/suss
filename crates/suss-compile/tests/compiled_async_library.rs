@@ -36,6 +36,7 @@ fn bundled_async_library_loads_and_compiled_macros_preserve_ordered_body_forms()
             .expand(
                 &form,
                 ExpansionContext {
+            namespace_revision: None,
                     environment: &environment,
                     namespace_snapshot: &namespace,
                     origin: None,

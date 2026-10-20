@@ -17,6 +17,8 @@ pub mod artifact_cache;
 pub mod artifact_identity;
 pub mod core_bindings;
 pub mod compiler_facts;
+mod namespace_revision;
+pub use namespace_revision::NamespaceRevision;
 pub mod compiler_names;
 pub mod aot;
 pub mod command;
@@ -51,6 +53,9 @@ pub struct ExpansionContext<'a> {
     /// Immutable namespace at entry to the enclosing top-level source form.
     /// Resolution uses the live environment above, including provisional defs.
     pub namespace_snapshot: &'a std::sync::Arc<hir::SourceNamespace>,
+    /// Analyzer-minted, lazy live revision factory. Manually assembled contexts
+    /// use None and retain the legacy fresh-capture behavior.
+    pub namespace_revision: Option<NamespaceRevision<'a>>,
     pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
     pub context: AnalysisContext,

@@ -815,7 +815,7 @@ struct Analyzer<'a> {
     next_loop: usize,
     analysis_depth: usize,
     analysis_contexts: Vec<super::AnalysisContext>,
-    source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
+    source_namespace: super::namespace_revision::NamespaceFactory,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
@@ -825,22 +825,9 @@ struct Analyzer<'a> {
     method_recurrence: Vec<(LoopId, bool)>,
 }
 impl Analyzer<'_> {
-    fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
-        let namespace = self.environment.current_namespace(self.phase).to_owned();
-        let generation = self.environment.source_generation();
-        match &self.source_namespace {
-            Some((version, phase, name, scope))
-                if *version == generation && *phase == self.phase && *name == namespace =>
-            {
-                scope.clone()
-            }
-            _ => {
-                let scope =
-                    std::sync::Arc::new(SourceNamespace::capture(&self.environment, self.phase));
-                self.source_namespace = Some((generation, self.phase, namespace, scope.clone()));
-                scope
-            }
-        }
+    fn capture_source_namespace(&mut self, span: Range<usize>) -> Result<std::sync::Arc<SourceNamespace>, Diagnostic> {
+        self.source_namespace.capture(&self.environment, self.phase,
+            &mut |work| self.expander.charge_expansion_work(work, span.clone()))
     }
     fn body(
         &mut self,
@@ -1004,7 +991,7 @@ impl Analyzer<'_> {
             // The pinned analyzer refreshes &env's namespace between top-level
             // forms, not after each nested def. Keep resolution's live catalog
             // separate so recursive definitions still resolve provisionally.
-            self.namespace_snapshot = Some(self.capture_source_namespace());
+            self.namespace_snapshot = Some(self.capture_source_namespace(form.span.clone())?);
         }
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
@@ -1034,8 +1021,14 @@ impl Analyzer<'_> {
                     && (self.locals.contains_key(&symbol.name)
                         || self.fields.contains_key(&symbol.name));
                 if !shadowed {
+                    // Only prepay the borrowed capability here; live source capture
+                    // stays lazy, after the host selects an actual macro call.
+                    let namespace_revision = self.source_namespace.borrow_revision(
+                        &self.environment, self.phase,
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
                     let expansion_context = super::ExpansionContext {
                         environment: &self.environment,
+                        namespace_revision: Some(namespace_revision),
                         namespace_snapshot: self
                             .namespace_snapshot
                             .as_ref()
@@ -1137,7 +1130,7 @@ impl Analyzer<'_> {
             });
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
-        let scope = self.capture_source_namespace();
+        let scope = self.capture_source_namespace(form.span.clone())?;
         let locals = self.locals.clone();
         let fields = self.fields.clone();
         let function_scopes = self.function_scopes.clone().into();
@@ -1949,7 +1942,7 @@ impl Analyzer<'_> {
             }
         }
         let method_environment = SourceMethodEnvironment {
-            scope: self.capture_source_namespace(),
+            scope: self.capture_source_namespace(params.span.clone())?,
             namespace_snapshot: self
                 .namespace_snapshot
                 .as_ref()
@@ -3149,6 +3142,8 @@ pub(crate) fn prepare_with_origin_and_first_override(
     first_override: Option<&Form>,
 ) -> Result<(Hir, Environment), Diagnostic> {
     let origin = local_bindings::capture_origin_owner(origin, &mut |work| expander.charge_expansion_work(work, span.clone()))?;
+    let source_namespace = super::namespace_revision::NamespaceFactory::new_metered(
+        &mut |work| expander.charge_expansion_work(work, span.clone()))?;
     let mut analyzer = Analyzer {
         suspendable: false,
         expander,
@@ -3163,7 +3158,7 @@ pub(crate) fn prepare_with_origin_and_first_override(
         next_loop: 0,
         analysis_depth: 0,
         analysis_contexts: Vec::new(),
-        source_namespace: None,
+        source_namespace,
         namespace_snapshot: None,
         source_callables: Vec::new(),
         source_nodes: Vec::new(),

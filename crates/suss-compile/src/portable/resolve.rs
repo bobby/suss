@@ -16,6 +16,7 @@ use suss_reader::Symbol;
 mod type_key_history;
 pub use type_key_history::TypeKeyHistory;
 mod completed_values;
+mod namespace_snapshot;
 pub use completed_values::CompletedDeclarationSource;
 pub(crate) use completed_values::{TypeValuePlan, TypeSourceValue, VALUE_FIELDS, own_definition_form};
 pub(crate) use type_key_history::{TypeKey, KeyOrigin as TypeKeyOrigin, LiteralSite as TypeKeyLiteralSite};

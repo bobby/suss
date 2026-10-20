@@ -24,6 +24,7 @@ fn compiler_facts_resolve_actual_phase_aliases_and_declaration_identity() {
     let locals = SourceLocals::default();
     let fields = SourceFields::default();
     let context = ExpansionContext {
+            namespace_revision: None,
         environment: &env,
         namespace_snapshot: &snapshot,
         origin: None,
@@ -106,6 +107,7 @@ fn unused_lexical_bindings_keep_declaration_identity_and_shadow_globals() {
     let fields = SourceFields::default();
     let snapshot = Arc::new(SourceNamespace::capture(&env, Phase::Runtime));
     let context = ExpansionContext {
+            namespace_revision: None,
         environment: &env,
         namespace_snapshot: &snapshot,
         origin: None,

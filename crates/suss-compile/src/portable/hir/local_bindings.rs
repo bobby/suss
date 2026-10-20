@@ -321,7 +321,7 @@ impl Analyzer<'_> {
         let mut grown_scopes = cow_scope_growth(&self.function_scopes, &mut meter)?;
         cow_charge(&mut meter, 1, std::mem::size_of::<FunctionScope>())?;
         cow_charge(&mut meter, 2, std::mem::size_of::<usize>())?;
-        let scope = self.capture_source_namespace();
+        let scope = self.capture_source_namespace(function_form.span.clone())?;
         let record = Arc::new(FunctionScope {
             function_form: function_form_copy,
             declaration: declaration_copy,

@@ -115,6 +115,15 @@ impl ExpansionContext<'_> {
         Arc::new(hir::SourceNamespace::capture(self.environment, self.phase))
     }
 
+    /// Lazy Analyzer-scoped revision. The old infallible method above remains
+    /// a fresh capture for external callers. This method propagates the caller's
+    /// meter error and never converts it into a fresh-capture fallback.
+    pub fn resolution_catalog_metered(
+        &self, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<Arc<hir::SourceNamespace>, Diagnostic> {
+        super::namespace_revision::catalog(self, meter)
+    }
+
     /// All lexical entries, including unused locals and field captures. A local
     /// shadows an identically named field, exactly as the existing &env graph.
     pub fn lexical_bindings(&self) -> BTreeMap<String, hir::SourceBinding> {
