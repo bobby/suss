@@ -1430,6 +1430,28 @@ mod tests {
         (base, meta, owner)
     }
 
+    // Unlike wrap(), these fixtures retain several distinct Symbol outputs.
+    // Authenticate the watch for the exact output that the test actually hashes.
+    fn output_watch(session: &mut Session, owner: &Owner) -> Arc<Watch> {
+        let first = watch(owner);
+        let domain = owner.records.write_domain();
+        let state = registry_lock(&domain.state);
+        let mut selected = None;
+        for node in &state.nodes {
+            if session.values_identical(&node.value, &owner.value).unwrap()
+                && let Some(watch) = node.watch.as_ref().and_then(Weak::upgrade)
+            {
+                assert!(selected.is_none(), "output must have one recorded memo watch");
+                selected = Some(watch);
+            }
+        }
+        let selected = selected.expect("actual factory output must have a recorded watch");
+        drop(state);
+        assert!(!Arc::ptr_eq(&first, &selected),
+            "multi-output fixture must not accidentally select the first output");
+        selected
+    }
+
     #[test]
     fn factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates() {
         let mut session = Session::new_macro().unwrap();
@@ -1470,7 +1492,7 @@ mod tests {
         let empty = WriteDomain::new();
         assert!(empty.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap().is_empty());
         hash(&mut session, &owner.value);
-        assert!(watch(&owner).matches(&mut session).unwrap());
+        assert!(output_watch(&mut session, &owner).matches(&mut session).unwrap());
         drop(operation);
     }
 
@@ -1525,7 +1547,7 @@ mod tests {
         }
         owner.records.seal_source_domain(&mut session).unwrap();
         hash(&mut session, &owner.value);
-        assert!(watch(&owner).matches(&mut session).unwrap());
+        assert!(output_watch(&mut session, &owner).matches(&mut session).unwrap());
     }
 
     #[test]
@@ -1613,7 +1635,7 @@ mod tests {
         }
         owner.records.seal_source_domain(&mut session).unwrap();
         hash(&mut session, &owner.value);
-        assert!(watch(&owner).matches(&mut session).unwrap());
+        assert!(output_watch(&mut session, &owner).matches(&mut session).unwrap());
     }
 
     // Test-only integration entrypoint: the source_roots test must obtain its
@@ -1684,7 +1706,7 @@ mod tests {
                 assert!(state.children.iter().any(|link| matches!(link, ChildDomain::FactoryReference { .. })));
             }
             hash(session, &owner.value);
-            assert!(watch(&owner).matches(session).unwrap());
+            assert!(output_watch(session, &owner).matches(session).unwrap());
             drop(operation);
         }
     }
