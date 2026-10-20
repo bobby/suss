@@ -361,6 +361,23 @@ impl FormBridge {
             private_arguments: false, deferred: None, private_slots: None,
         })
     }
+    // Install only original origins from THIS recipe's actual input Evidence.
+    // Used field refs are resolved later against actual captured factory inputs.
+    pub(crate) fn bind_original_factory_inputs(
+        &self, session: &mut Session,
+        origins: &[crate::portable_session::write_domain::FactoryOrigin],
+    ) -> Result<(), SessionError> {
+        session.charge_host_work(8)?; // owner/mode/lock, Arc retain/drop and branch
+        self.check(session)?;
+        if self.private_arguments || self.deferred.is_some() {
+            return Err(SessionError::Host(error("Original factory inputs require ordinary recording")));
+        }
+        let records = self.recording.as_ref().ok_or_else(||
+            SessionError::Host(error("Original factory inputs require recording")))?;
+        let domain = records.lock().map_err(|_| SessionError::Host(error("Poisoned construction records")))?
+            .write_domain();
+        domain.prepare_factory_inputs(session, origins)
+    }
     // Explicit source-controller route. This is NOT a normal recording fork:
     // constructor/array facts remain private and unenrolled until the controller
     // has proved source-edge bindings and performed authorized slot substitution.

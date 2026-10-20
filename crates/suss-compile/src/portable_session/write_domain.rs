@@ -16,6 +16,8 @@ use std::sync::{
 };
 use wasmtime::{AnyRef, AsContextMut, RootScope, Rooted, StoreContextMut, Val};
 type Result<T> = std::result::Result<T, SessionError>;
+mod factory_inputs;
+pub(crate) use factory_inputs::FactoryOrigin;
 // Temporary attribution of existing native predicates only. No guest reads.
 #[cfg(test)]
 fn memo_domain_trace(detail: std::fmt::Arguments<'_>) {
@@ -31,9 +33,11 @@ struct Node {
     edges: Vec<SessionValue>,
     watch: Option<Weak<Watch>>,
 }
-struct ChildDomain {
-    value: SessionValue,
-    domain: Arc<WriteDomain>,
+enum ChildDomain {
+    Source { value: SessionValue, domain: Arc<WriteDomain> },
+    // Offers are not membership. Only stage_factory_edges creates exact links.
+    FactoryCandidate(FactoryOrigin),
+    FactoryReference { value: SessionValue, origin: FactoryOrigin, owner: factory_inputs::FactoryPoint },
 }
 struct State {
     valid: bool,
@@ -59,7 +63,12 @@ impl WriteDomain {
     }
     pub(crate) fn seal(&self, session: &mut Session) -> Result<()> {
         session.charge_host_work(1)?;
-        registry_lock(&self.state).sealed=true;
+        let mut state = registry_lock(&self.state);
+        session.charge_host_work((state.children.len() as u64).saturating_mul(3).saturating_add(2))?;
+        // Candidate retirement/backing is prepaid during prepare_factory_inputs.
+        // Used exact links remain; none owns a strong producer-domain Arc.
+        state.children.retain(|child| !matches!(child, ChildDomain::FactoryCandidate(_)));
+        state.sealed=true;
         Ok(())
     }
     pub(crate) fn attach_child(
@@ -84,7 +93,8 @@ impl WriteDomain {
             state.children.try_reserve_exact(extra).map_err(|_|wasmtime::Error::msg("Child domain allocation failed"))?;
         }
         session.charge_host_work(2)?;
-        state.children.push(ChildDomain {value:child.value().clone(),domain});
+        session.charge_host_work(2)?; // new tagged representation initialization
+        state.children.push(ChildDomain::Source {value:child.value().clone(),domain});
         Ok(())
     }
     pub(super) fn invalidate(&self) {
@@ -147,8 +157,16 @@ impl WriteDomain {
         } else {
             None
         };
+        let links = self.stage_factory_edges(session, &edges)?;
         let mut state = registry_lock(&self.state);
         if state.sealed { return Err(wasmtime::Error::msg("Source domain is sealed").into()); }
+        // Stage all capacity and link work before publishing either node or links.
+        factory_inputs::reserve_factory(session, &mut state.children, links.len())?;
+        let link_bytes = links.len().checked_mul(std::mem::size_of::<ChildDomain>())
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Factory link publication overflow")))?;
+        session.charge_host_work(link_bytes.checked_add(2).ok_or_else(||
+            SessionError::Host(wasmtime::Error::msg("Factory link publication overflow")))?)?;
         if state.nodes.len() == state.nodes.capacity() {
             let capacity = state
                 .nodes
@@ -175,66 +193,18 @@ impl WriteDomain {
             edges,
             watch: watch.as_ref().map(Arc::downgrade),
         });
+        // Payload/root/weak-link publication and retirement were prepaid while staging.
+        state.children.extend(links);
         Ok(())
     }
     pub(super) fn matches(
-        &self,
-        mut store: StoreContextMut<'_, ()>,
-        runtime: wasmtime::Instance,
-        identity: u64,
-        irq: &AtomicBool,
-        methods: &CanonicalMethods,
-        prototype: &Authority,
-        staged: Option<(&Watch, &Receipt)>,
-        target: &Watch,
-        receivers: &[Val],
+        self: &Arc<Self>, store: StoreContextMut<'_, ()>, runtime: wasmtime::Instance,
+        identity: u64, irq: &AtomicBool, methods: &CanonicalMethods,
+        prototype: &Authority, staged: Option<(&Watch, &Receipt)>,
+        target: &Watch, receivers: &[Val],
     ) -> Result<bool> {
-        // Clone only typed immutable domain links under each brief lock. All
-        // authority adapters and payload inspections run after those locks end.
-        Session::consume_host_work(store.as_context_mut(),1,irq)?;
-        if registry_lock(&self.state).children.is_empty() {
-            return self.matches_local(store,runtime,identity,irq,methods,prototype,staged,target,receivers,true);
-        }
-        let mut pending: Vec<Arc<WriteDomain>>=Vec::new();
-        let mut domains: Vec<Arc<WriteDomain>>=Vec::new();
-        let mut seen: Vec<usize>=Vec::new();
-        reserve_context(store.as_context_mut(),irq,&mut seen,1)?;
-        seen.push(self as *const Self as usize);
-        self.queue_children(store.as_context_mut(),irq,&mut pending)?;
-        while let Some(current)=pending.pop() {
-            Session::consume_host_work(store.as_context_mut(),3,irq)?;
-            let pointer=Arc::as_ptr(&current) as usize;
-            let mut duplicate=false;
-            for old in &seen {Session::consume_host_work(store.as_context_mut(),1,irq)?;if *old==pointer {duplicate=true;break;}}
-            if duplicate {continue;}
-            if !registry_lock(&current.state).sealed {return Err(wasmtime::Error::msg("Unsealed certified domain dependency").into());}
-            reserve_context(store.as_context_mut(),irq,&mut seen,1)?;
-            seen.push(pointer);
-            current.queue_children(store.as_context_mut(),irq,&mut pending)?;
-            reserve_context(store.as_context_mut(),irq,&mut domains,1)?;
-            domains.push(current);
-        }
-        let mut valid=self.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,staged,target,receivers,true)?;
-        #[cfg(test)]
-        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=target-domain-result valid={valid}"));
-        for domain in domains {
-            Session::consume_host_work(store.as_context_mut(),1,irq)?;
-            // A parent's staged receipt can never excuse a child's storage slot.
-            let child_valid = domain.matches_local(store.as_context_mut(),runtime,identity,irq,methods,prototype,None,target,receivers,false)?;
-            #[cfg(test)]
-            memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=descendant-domain-result child={:p} valid={child_valid}", domain.as_ref()));
-            valid &= child_valid;
-        }
-        Ok(valid)
-    }
-    fn queue_children(&self, mut store:StoreContextMut<'_,()>,irq:&AtomicBool,domains:&mut Vec<Arc<WriteDomain>>)->Result<()> {
-        let state=registry_lock(&self.state);
-        reserve_context(store.as_context_mut(),irq,domains,state.children.len())?;
-        for child in &state.children {
-            Session::consume_host_work(store.as_context_mut(),1,irq)?;
-            domains.push(child.domain.clone());
-        }
-        Ok(())
+        self.matches_factory_closure(store, runtime, identity, irq, methods,
+            prototype, staged, target, receivers)
     }
     fn matches_local(
         &self,
@@ -248,6 +218,7 @@ impl WriteDomain {
         target: &Watch,
         receivers: &[Val],
         require_target: bool,
+        factory_layouts: &[Val],
     ) -> Result<bool> {
         // Authority adapters may allocate. Run them before locking the domain;
         // all subsequent operations are native reads, without guest execution.
@@ -300,6 +271,9 @@ impl WriteDomain {
                 }
             }
         }
+        // The caller derives these only from actual receiver Watch anchors in
+        // this exact factory-ownership component, never a strict source child.
+        factory_inputs::append_layouts(store.as_context_mut(), irq, &mut layouts, factory_layouts)?;
         let mut canonical = true;
         for watch in &watches {
             let method_valid = watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
@@ -407,7 +381,12 @@ impl WriteDomain {
                 if !member {
                     for child in &state.children {
                         Session::consume_host_work(scope.as_context_mut(),1,irq)?;
-                        let root=child.value.value.to_rooted(&mut scope);
+                        Session::consume_host_work(scope.as_context_mut(), 2, irq)?;
+                        let value = match child {
+                            ChildDomain::Source { value, .. } | ChildDomain::FactoryReference { value, .. } => value,
+                            ChildDomain::FactoryCandidate(_) => continue,
+                        };
+                        let root=value.value.to_rooted(&mut scope);
                         if Rooted::<AnyRef>::ref_eq(&scope,&edge,&root)? {member=true;break;}
                     }
                 }

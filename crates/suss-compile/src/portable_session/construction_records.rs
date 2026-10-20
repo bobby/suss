@@ -516,6 +516,12 @@ impl ConstructionRecords {
     pub(crate) fn seal_source_domain(&self, session:&mut Session)->Result<(),SessionError> {
         self.domain.seal(session)
     }
+    // Private factory provenance only. No DATA-health flag or source certificate
+    // can be supplied; the root must be an original output in this sealed ledger.
+    pub(crate) fn original_factory_origin(&self, session: &mut Session, root: &SessionValue)
+        -> Result<Option<super::write_domain::FactoryOrigin>, SessionError> {
+        self.domain.original_factory_origin(session, root)
+    }
     pub(crate) fn write_domain(&self)->std::sync::Arc<super::write_domain::WriteDomain> {self.domain.clone()}
     pub(crate) fn push(&mut self,session:&mut Session,value:SessionValue,fact:Fact)->Result<(),SessionError> {
         self.domain.record(session,&value,&fact)?;

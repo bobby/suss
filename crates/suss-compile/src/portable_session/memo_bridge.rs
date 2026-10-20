@@ -1111,7 +1111,7 @@ fn scoped_error(error: SessionError) -> wasmtime::Error {
     }
 }
 fn scoped_domain(
-    domain: &super::write_domain::WriteDomain, store: StoreContextMut<'_, ()>,
+    domain: &Arc<super::write_domain::WriteDomain>, store: StoreContextMut<'_, ()>,
     runtime: Instance, ledger: &Ledger, authority: &CanonicalMethods,
     prototype: &super::prototype_origin::Authority, irq: &AtomicBool,
     staged: Option<(&Watch, &Receipt)>, target: &Watch, receivers: &[Val],

@@ -150,6 +150,9 @@ impl Native {
         records: ConstructionRecords,
         inputs: Vec<Evidence>,
     ) -> Result<Rc<Self>> {
+        // Topology only: all original facts already exist, with no recapture or
+        // health-to-authority conversion. Seal before this Native is exposed.
+        records.seal_source_domain(session)?;
         let release = ReleaseFrame::allocate(session, false, inputs.len())?;
         // Native backing, publication move, try_unwrap move and retirement.
         // Release processing moves the payload out of its Rc allocation once.
@@ -896,6 +899,36 @@ impl Observer for Build<'_> {
                 })
             }
             Scope::Native(recording) => {
+                // New temporary vector header, backing retirement and controls
+                // are prepaid even for an empty/no-origin input list. The
+                // existing reserve separately charges actual backing creation.
+                let origin_work = inputs.len()
+                    .checked_mul(std::mem::size_of::<crate::portable_session::write_domain::FactoryOrigin>())
+                    .and_then(|n| n.checked_add(2 * std::mem::size_of::<Vec<crate::portable_session::write_domain::FactoryOrigin>>() + 8))
+                    .and_then(|n| u64::try_from(n).ok())
+                    .ok_or_else(|| invalid("Factory origin scratch extent overflow"))?;
+                graph.session.charge_host_work(origin_work)?;
+                let mut origins = Vec::new();
+                reserve(graph.session, &mut origins, inputs.len())?;
+                for input in &inputs {
+                    let mut evidence = &input.evidence;
+                    loop {
+                        graph.session.charge_host_work(4)?; // native role/field reads and loop controls
+                        match evidence {
+                            Evidence::Source(root) => evidence = root.actual(),
+                            Evidence::Native(node) => {
+                                if let Some(origin) = node.records.original_factory_origin(graph.session, &node.value)? {
+                                    graph.session.charge_host_work(3)?;
+                                    origins.push(origin);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                // BEFORE produce_native_recipe can invoke any Map/Set hash
+                // callback. No globally audited siblings are offered here.
+                recording.bind_original_factory_inputs(graph.session, &origins)?;
                 let value = graph.produce_native_recipe(id, &recording, &values)?;
                 let records = recording.into_records()?;
                 // Alias forwards its one exact input without a factory call.
