@@ -1048,6 +1048,135 @@
     ],
     "scope": "Unchanged 200M/200M controls; failed map transport leaves all69 judgments unexecuted. Identifier15 passing observations do not discharge map acceptance."
   },
+  "independent_pinned_default_review": {
+    "verdict": "EXECUTION_OUTCOMES_VERIFIED_METADATA_D1_CORRECTION_REQUIRED",
+    "source_commit": "b03c1e00865f42e113a9ba32a0e8ba7ab72d7160",
+    "compiler_source_sha256": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+    "compiler_inputs": 229,
+    "boot_commit": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+    "prior229_source_binding_receipt": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-snapshot-pair-production-v1/snapshot53-independent-evidence-review-cicero.json",
+      "sha256": "813062e542cf80242a1d952d81d8d4aa94f0f4729a13e79ee19e4fc732f23a7a",
+      "scope": "Same unchanged sourceFP/BOOT; not repeated census or run-long detector"
+    },
+    "pinned_terminal": {
+      "head": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+      "exit_code": 101,
+      "rust_pass": 1,
+      "rust_fail": 1,
+      "ignored": 0,
+      "filtered": 11,
+      "harness_seconds": 190.41,
+      "command_seconds": 349.31612490300176,
+      "raw_sha256": "7d7d8fe7557176fe58538c79f68805187bff1ccdfd23344290458fab6276aabb",
+      "raw_hash_verified": true,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ]
+    },
+    "identifier15": {
+      "accepted": true,
+      "ordered_ids_match": true,
+      "actual_count": 15,
+      "host_pass": 15,
+      "guest_judged": 0,
+      "host_comparison_kind_counts": {
+        "predicate": 13,
+        "thrown": 2
+      },
+      "operand_data_and_types_equal_immutable_reference": true,
+      "throw_observations_equal_immutable_reference": true,
+      "exact_ordered_ids": [
+        "clojure.core-test.name/test-name#1",
+        "clojure.core-test.name/test-name#2",
+        "clojure.core-test.name/test-name#3",
+        "clojure.core-test.name/test-name#4",
+        "clojure.core-test.name/test-name#5",
+        "clojure.core-test.name/test-name#6",
+        "clojure.core-test.name/test-name#7",
+        "clojure.core-test.name/test-name#8",
+        "clojure.core-test.name/test-name#9",
+        "clojure.core-test.namespace/test-namespace#1",
+        "clojure.core-test.namespace/test-namespace#2",
+        "clojure.core-test.namespace/test-namespace#3",
+        "clojure.core-test.namespace/test-namespace#4",
+        "clojure.core-test.namespace/test-namespace#5",
+        "clojure.core-test.namespace/test-namespace#6"
+      ],
+      "capture_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+      "comparison_sha256": "4abaa53d273e66d343af3de2d9c6da134e146f17e3fef18b20b1f574e17d73a6"
+    },
+    "map69": {
+      "accepted": false,
+      "observed_assertions": 0,
+      "unexecuted_assertions": 69,
+      "semantic_assertion_failures": 0,
+      "namespace_failures": 1,
+      "stage": "expanded result transport",
+      "source_span": "239..5926",
+      "failure": "OutOfFuel at unchanged Macro200M/caller200M configuration",
+      "raw_embedded_observations_exact_capture": true,
+      "capture_sha256": "e59635c6faee85a47b0a8a9601648fef8669da3fb23caeb07a16452a18ff75e6",
+      "comparison_sha256": "c2ffd5ec32f00f98e455e51ef5e60cc21076c4f111558daefc8fefd5e569ddc9",
+      "not_claimed": "No semantic verdict for any of69unexecuted assertions; no cost/progress/performance inference from backtrace function changes."
+    },
+    "default_constructor": {
+      "head": "26ee34ea022740ab67ae9a9856d1c2896a18cfaa",
+      "test": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+      "exit_code": 101,
+      "pass": 0,
+      "fail": 1,
+      "ignored": 0,
+      "filtered": 1,
+      "harness_seconds": 67.16,
+      "command_seconds": 344.5710628980014,
+      "raw_sha256": "9ccca39d14c1c9cd7cc3233bec1c519b5e54999ed072ab40bf7123be8212193c",
+      "raw_hash_verified": true,
+      "full_unchanged_test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "first_failing_caller": "Runtime (source loop order)",
+      "stage": "caller &env input transport",
+      "span": "83..108",
+      "failure_line": 192,
+      "unchanged_default": 10000000,
+      "unreached": "Value/GC/bridge decode and final AST/field assertions after first Runtime eval; Macro caller body has no acceptance. Both Session constructors may initialize before loop, which is not Macrocaller source acceptance."
+    },
+    "repository_evidence_snapshot": {
+      "path": "docs/roadmap/evidence/m4-pr263-snapshot-cut-validation-2026-10-20.json",
+      "sha256": "0da7b404b7dab991ab70fbc87696696992809eff2485a32783c1faddafe5bc98",
+      "pinned_terminal_both_comparisons_and_default_fields_exact_retained_receipts": true,
+      "discrepancies": [
+        {
+          "id": "D1",
+          "classification": "Stale inherited metadata, not an actual wrong-BOOT/source execution binding",
+          "field": "fixture-bindings.json:bootstrap_commit and copied pinned_acceptance.fixture_bindings.bootstrap_commit",
+          "recorded": "51cc2b2343a6be862890471249a5d8fbcb2e9f2e",
+          "correct_actual_launch_and_per_file_BOOT": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+          "detail": "Top-level descriptor says old51cc2b2, but all4per-file BOOT hashes/exact_source_commit fields and launch head bind71a4126. Start/terminal correctly retain the hash of this original descriptor.",
+          "recommended_recording": "Preserve the launch-bound original descriptor and terminal hash; publish a small explicit correction or separately corrected metadata descriptor rather than silently rewriting the original run binding."
+        }
+      ]
+    },
+    "scope": "Only current411pinned/default failure evidence and identifier15 positive evidence; snapshot53andhistorical24edresults remain separately source-qualified. No new tests/execution, finalPR/readiness/fullbaseline/defaultfit claim.",
+    "reviewer_actions": "Remote-free local Git/source/capture/hash parsing and this cache receipt only. No Cargo/VM/oracle/comparator-test execution, source/index/ref/GitHub edits, processes, signals or reruns."
+  },
+  "pinned_fixture_metadata_correction": {
+    "field": "pinned_acceptance.fixture_bindings.bootstrap_commit",
+    "recorded_in_original_launch_bound_descriptor": "51cc2b2343a6be862890471249a5d8fbcb2e9f2e",
+    "actual_launch_and_all_four_per_file_bindings": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+    "scope": "Inherited top-level metadata only. Original descriptor and its terminal binding hash are preserved; actual launch and all four per-file hashes bind the correct reviewed BOOT."
+  },
   "independent_focused_evidence_review": {
     "verdict": "GO_SCOPED_SNAPSHOT53_EXECUTIONS_EVIDENCE",
     "publication_head_reviewed": "9b977b78985690302b3fc635095e84a2ada998ad",
