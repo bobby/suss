@@ -1,0 +1,283 @@
+{
+  "scope": "Test-contract corrections and native attribution; partial progress only, no issue acceptance or fuel/authority relaxation. Historical source-qualified results remain unchanged.",
+  "first_replay": {
+    "terminal": {
+      "head": "a3eb90638c75d89a00de08ea03151b1341cc6ed8",
+      "source_commit": "24bda9c44fbac2dda2d29838947ff1cecf0a5a16",
+      "predicted_source_fingerprint": "4230408184771ceb0040d8c181405b1be2663de052fb293dcaa385cdc71c3d07",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry",
+        "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority",
+        "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries",
+        "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1",
+        "SUSS_MIXED_CERT_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Exact6priorfailingnames; mixed3/capturecut originalassertions+programs+budgets unchanged withnativeattribution. Plan/health2 correctedcontractfixtures sourceonly untilactualresult. Alloriginalauthorityconstraints retained; no productionguard change. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 172.5424693399691,
+      "raw_sha256": "e1a84e7da37790ad1d3da46ca62464da95cd68dc53f162c8e1d6d1ca9c719e36"
+    },
+    "exact_results": {
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry": "FAILED",
+      "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority": "FAILED",
+      "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries": "FAILED",
+      "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children": "ok"
+    },
+    "counts": {
+      "passed": 1,
+      "failed": 5,
+      "ignored": 0,
+      "filtered": 567
+    },
+    "harness_seconds": 37.2,
+    "mixed_key_finish_passes": [
+      "MIXED_CERT_PREDICATE key=ReaderSource(user/watched,Completed:0x7931080132c0,Key(ReaderKeyPath { prefix: 0, pair: 0, origin: 1 })) stage=finish-validation result=true",
+      "MIXED_CERT_PREDICATE key=ReaderSource(user/watched,Completed:0x792ef422db80,Key(ReaderKeyPath { prefix: 0, pair: 0, origin: 1 })) stage=finish-validation result=true",
+      "MIXED_CERT_PREDICATE key=ReaderSource(user/watched,Completed:0x792ef2834200,Key(ReaderKeyPath { prefix: 0, pair: 0, origin: 1 })) stage=finish-validation result=true"
+    ],
+    "mixed_data_value_rejections": [
+      "MIXED_CERT_DECLINE key=ReaderSource(user/watched,Completed:0x7931080132c0,Value(ReaderValuePath { prefix: 0, pair: 0 })) stage=data-selector-excluded",
+      "MIXED_CERT_DECLINE key=ReaderSource(user/watched,Completed:0x792ef422db80,Value(ReaderValuePath { prefix: 0, pair: 0 })) stage=data-selector-excluded",
+      "MIXED_CERT_DECLINE key=ReaderSource(user/watched,Completed:0x792ef2834200,Value(ReaderValuePath { prefix: 0, pair: 0 })) stage=data-selector-excluded"
+    ],
+    "cut_rows": [
+      [
+        "0",
+        "10228",
+        "10000000"
+      ],
+      [
+        "1",
+        "10228",
+        "10000000"
+      ],
+      [
+        "5114",
+        "10228",
+        "10000000"
+      ],
+      [
+        "10227",
+        "10228",
+        "10000000"
+      ]
+    ],
+    "scope": "Plan/topologycorrectedtestPASS withstrictdeclineandDATApositive; notstrictfullDeclcertcoverage. Mixed3 correctKEYfullstrictPASS thensecondof2DATAValueearlyveto; originalparent/poison/fuelassertionsUNEXECUTED. HealthV1missingliteralkeysetup beforeinitialmemo/assertions correctedbyunexecutedV2. Cutlast10227unexpectedOk1; earliercuts0/1/5114typedTrap/emptycaptureassertscomplete; IRQtailUNEXECUTED."
+  },
+  "second_replay": {
+    "terminal": {
+      "head": "90d1a32aa30c1d4f864d9332e71e74d14f13084f",
+      "source_commit": "5fbd8ed271c049543459b2b745acb227c43960b3",
+      "predicted_source_fingerprint": "01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority",
+        "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1",
+        "SUSS_MIXED_CERT_TRACE": "1",
+        "SUSS_READER_KEY_CAPTURE_WORK_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Twoexacthealth/capturetests: healthV2actualcoldSourceSyntax+literalReaderShorthand origins mandatory; originalcutformula/asserts preserved withstagefuelattribution andfreshordinaryIRQretry. No rate/default/authoritychanges; originalMixed3notrerununchanged. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 171.60798644198803,
+      "raw_sha256": "9a3d36e19c85fc7422add554144d93fe09bb8549f5b39d461f013a2b197a4972"
+    },
+    "counts": {
+      "passed": 1,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 571
+    },
+    "harness_seconds": 35.69,
+    "health": "PASS: original explicit-map SourceSyntax cold key and added ReaderShorthandTag literal key both mandatory. Cold replacement preserves DATA health without strict certificate; preinitialized literal replacement rejects fresh certification.",
+    "capture_rows": [
+      {
+        "allowance": "0",
+        "measured_cost": "10228",
+        "remaining": "0",
+        "result_ok": "false",
+        "captures": "0"
+      },
+      {
+        "allowance": "1",
+        "measured_cost": "10228",
+        "remaining": "0",
+        "result_ok": "false",
+        "captures": "0"
+      },
+      {
+        "allowance": "5114",
+        "measured_cost": "10228",
+        "remaining": "0",
+        "result_ok": "false",
+        "captures": "0"
+      },
+      {
+        "allowance": "10227",
+        "measured_cost": "10228",
+        "remaining": "3433",
+        "result_ok": "true",
+        "captures": "1"
+      }
+    ],
+    "capture_attribution": {
+      "measurement_cost": 10228,
+      "successful_trial_cost": 6794,
+      "completed_reader_measurement_cost": 8751,
+      "completed_reader_trial_cost": 5317,
+      "difference": 3434,
+      "cause": "Not yet established; no arbitrary adjustment justified."
+    },
+    "unexecuted": "Last-cut failure prevents interrupt/retry tail; mixed three parent/poison/fuel assertions remain unexecuted on earlier source. Other acceptance cohorts and workspace baseline not rerun on this source."
+  },
+  "bootstrap": {
+    "generation": {
+      "head": "5fbd8ed271c049543459b2b745acb227c43960b3",
+      "compiler_source_sha256": "01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8",
+      "inputs": 222,
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+      "exit_code": 1,
+      "seconds": 88.25424371700501,
+      "raw_sha256": "b5eadc37e2052180cca07e387a17992098e88c941207b61d006c53223d59916c"
+    },
+    "identity": {
+      "head": "90d1a32aa30c1d4f864d9332e71e74d14f13084f",
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+      "source_sha256": "01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8",
+      "exit_code": 0,
+      "seconds": 1.1053098419797607,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+    },
+    "adoption_review": {
+      "reviewer": "Carver",
+      "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+      "head": "5fbd8ed271c049543459b2b745acb227c43960b3",
+      "tree": "a0720790ce39e6c790eca539fb4a678445b88967",
+      "clean_head_and_current_git_inputs_verified": true,
+      "terminal_sha256": "ec2a36f45f36c1faaaaf45429318f697ec54fe6504a9d34fb1fe36d461980fad",
+      "generator_receipt_sha256": "78cb54446e68f481cbb67aa81a8c09d39a16748d3703fffa68437b3dd6f8dd5a",
+      "source_fingerprint": "01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8",
+      "git_source_inputs_verified": 222,
+      "eight_output_hashes_and_sizes_verified": true,
+      "four_first_second_pairs_byte_exact": true,
+      "phase_comparison": {
+        "runtime": {
+          "changed_sections": [
+            {
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "f858423af8f52092eb096313f332f86aadf1a3ab2f34e38e89a8f0f9ae685393",
+              "new_sha256": "e86f96fc8cb068c8118ba5706818658307aaf83e92c3cae68ac9483ea6dabe86"
+            }
+          ],
+          "noncustom_bytes_identical": true,
+          "all_other_custom_sections_identical": true,
+          "manifest_changed_fields": [
+            "compiler_source_sha256",
+            "wasm_sha256"
+          ],
+          "catalog_ABI_flags_cells_other_fields_identical": true,
+          "new_wasm_sha256": "68adc71471f6ac8c9488ef875c2c1c522414050be6c3daec23b5163ae512c0af",
+          "new_json_sha256": "a4c645ef457296ff2250465ae1aa8f23d4a8589417b6c330ba4cd08d7fc506f9"
+        },
+        "macro": {
+          "changed_sections": [
+            {
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "4ba09d9b6c67450eb1f32fab6a71fe1cff2fddc23999de16b6acf139589b792c",
+              "new_sha256": "24f3ffc06dabe0de50c5fa51676d60a2c1dde49db8acdff65c73cc07e5f64b7e"
+            }
+          ],
+          "noncustom_bytes_identical": true,
+          "all_other_custom_sections_identical": true,
+          "manifest_changed_fields": [
+            "compiler_source_sha256",
+            "wasm_sha256"
+          ],
+          "catalog_ABI_flags_cells_other_fields_identical": true,
+          "new_wasm_sha256": "d79c3fadbc741d678d283dc96852ef5fe334cb8ca2414d638c8f1cbfcd4391f4",
+          "new_json_sha256": "56b08a6b711f3e04469ebe2fd66a024160c06cd03fbe3ad1170b55d00f85ecdb"
+        }
+      },
+      "allowlist": {
+        "runtime/bootstrap/runtime.wasm": {
+          "source": "diagnostics/first/runtime.wasm",
+          "sha256": "68adc71471f6ac8c9488ef875c2c1c522414050be6c3daec23b5163ae512c0af"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "source": "diagnostics/first/runtime.json",
+          "sha256": "a4c645ef457296ff2250465ae1aa8f23d4a8589417b6c330ba4cd08d7fc506f9"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "source": "diagnostics/first/macro.wasm",
+          "sha256": "d79c3fadbc741d678d283dc96852ef5fe334cb8ca2414d638c8f1cbfcd4391f4"
+        },
+        "runtime/bootstrap/macro.json": {
+          "source": "diagnostics/first/macro.json",
+          "sha256": "56b08a6b711f3e04469ebe2fd66a024160c06cd03fbe3ad1170b55d00f85ecdb"
+        }
+      },
+      "qualification": "Normal hostopt2 generation88.254244s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, key-origin/capture-work CORE/public-macro semantic or acceptance credit.",
+      "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations",
+      "actual_builder_output_copy_verified": true,
+      "actual_builder_output_sha256": "33f381240b6b7e354a4d377b7fb6a5a319ebb766b627284d62497b99f14fcf6c"
+    }
+  }
+}

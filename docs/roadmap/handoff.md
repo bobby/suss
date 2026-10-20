@@ -30610,3 +30610,14 @@ SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/callable cargo test -p s
 ```
 
 Use the custom target/private TMPDIR, one producer and the opt2/debug-assertion/overflow profile above; do not set RUSTFLAGS. [Exact11/6 commands, current observations, raw hashes and source/BOOT bindings](evidence/m4-pr263-retained-memo-and-authority-results-2026-10-20.json); raw cache `pr263-retained-memo-fixture-production-v1`. Separate namespace, complete literal/authority/source-tag/pinned69/source-child, workspace baseline and final-head CI are not established by this checkpoint. No allowance or production authority guard was relaxed.
+
+
+### Source-role fixtures and capture-cost attribution (2026-10-20)
+
+The plan fixture now explicitly verifies strict rejection of DATA reader values before checking its complete DATA admission topology. On source `24bda9c` / fingerprint `4230408184771ceb0040d8c181405b1be2663de052fb293dcaa385cdc71c3d07`, that test passes; the other five selected cases fail. Three mixed-reader tests obtain a valid strict KEY certificate but correctly fail to certify the second, DATA Value child. Their parent/poison/fuel assertions remain unexecuted. The first health fixture correction fails during key selection; its later correction follows actual SourceSyntax versus ReaderShorthandTag provenance.
+
+Source `5fbd8ed` / fingerprint `01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8` over222 inputs has independently reviewed BOOT `90d1a32`. Two normal generations agree; the verifier exits1 comparing old shipped files, followed by exact adoption and passing pure source identity verification. This is not a complete bootstrap verifier pass.
+
+The subsequent exact two-test replay completes1PASS1FAIL0ignored (35.69s harness /171.607986s command). Health passes both mandatory source-origin cases: original explicit-map cold key permits DATA health without strict authority after replacement; the shorthand preinitialized literal rejects fresh certification after replacement. Capture fuel still fails: measurement consumes10228 units, but the10227 trial succeeds using6794 and publishes one capture. The3434 difference occurs inside completed-reader construction (8751 versus5317). Cuts0/1/5114 still trap with no capture. The later IRQ/retry assertions do not execute. Diagnostics only read remaining fuel and preserve existing errors, cut formulas and guards.
+
+Exact commands, source bindings, raw hashes and bootstrap receipts are in [the attribution evidence](evidence/m4-pr263-source-role-and-capture-attribution-results-2026-10-20.json). Logs are in cache `pr263-authority-attribution-production-v1` and `pr263-key-origin-and-capture-work-production-v1`. Use the documented custom target, private TMPDIR, opt2/debug-assertion/overflow profile and one producer; do not set RUSTFLAGS. Other semantic cohorts, complete issue acceptance, workspace baseline and final-head CI are not established by these runs.
