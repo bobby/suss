@@ -1,0 +1,142 @@
+{
+  "scope": "Nine exact source-role, checked mixed-parent, capture and source-snapshot regressions. This is focused acceptance evidence, not all issue261, namespace identity, workspace or CI acceptance.",
+  "terminal": {
+    "head": "02aca5402846303dd1c3df9ab873fa67740f4b29",
+    "source_commit": "493bf105a926be605ff635a92cb4feac49647bd7",
+    "predicted_source_fingerprint": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+    "source_input_count": 222,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::original_completed_data_value_still_rejects_standalone_strict_certificate",
+      "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority",
+      "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries",
+      "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children",
+      "portable::origin::form_metadata::tests::provenance_snapshot_metering_charges_cold_build_and_warm_lookups",
+      "portable::origin::form_metadata::tests::root_metadata_projection_charges_cold_and_warm_cancellation_and_recovers"
+    ],
+    "trace_environment": {
+      "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+      "SUSS_POISON_RECEIPT_TRACE": "1",
+      "SUSS_MIXED_CERT_TRACE": "1",
+      "SUSS_READER_KEY_CAPTURE_WORK_TRACE": "1"
+    },
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Nineexacttests: originalsixauthority/fueltests withreviewedstrictmixedtwo-rolefullpayloadfixtures andwarm-origincutmeasurement; mandatoryoriginalDATAstrictnegative and2existingcold/warmmetering/cancellation/recoverycontrols. All originalsemanticanderrorassertionspreserved. No rate/default/authoritychanges. Optin native diagnostics do not authorize source/memo or performance claims.",
+    "exit_code": 0,
+    "seconds": 173.60233051504474,
+    "raw_sha256": "ac079a05ed65efeab659acb2ffe7bec3c1666a550c1ac98f0af0843e15831b61"
+  },
+  "counts": {
+    "passed": 9,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 565
+  },
+  "harness_seconds": 37.32,
+  "exact_results": {
+    "portable::origin::form_metadata::tests::provenance_snapshot_metering_charges_cold_build_and_warm_lookups": "PASS",
+    "portable::origin::form_metadata::tests::root_metadata_projection_charges_cold_and_warm_cancellation_and_recovers": "PASS",
+    "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot": "PASS",
+    "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect": "PASS",
+    "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry": "PASS",
+    "portable_macro_graph::source_roots::mixed_reader_inputs::tests::original_completed_data_value_still_rejects_standalone_strict_certificate": "PASS",
+    "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority": "PASS",
+    "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries": "PASS",
+    "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children": "PASS"
+  },
+  "executed_assertions": {
+    "mixed_parent": "Original program and original Runtime/Macro source loop, full metadata value and genuine KEY/private DeclarationField children, complete strict parent certificate, direct key reference after GC and children enrolled before snapshot. Actual native value producer identity and full metadata-view equality asserted.",
+    "mixed_poison": "Original later guest key memo991 poison causes no parent certificate; effect counter1 and old guest memo991 remain observed.",
+    "mixed_fuel_irq": "Original early0/1 cuts and active IRQ reject with no retained publication; source roots/recipes unchanged at cuts, subsequent retry and strict parent certification succeed.",
+    "data_negative": "Both original source phases use the original automatic DATA completed map; complete logical/direct/input/class/prototype health passes, standalone DATA Value strict certificate remains None.",
+    "health": "Both actual SourceSyntax cold key and ReaderShorthandTag initialized literal mandatory; cold replacement preserves DATA health without certificate and strict parent rejects; initialized-literal replacement rejects fresh certification.",
+    "plan": "Complete original topology/data admission passes while strict private DATA Value admission declines.",
+    "capture": "Cold10228>warm6794, all original cut formulas0/1/half/last resolve to0/1/3397/6793 and Trap with zero captures; active interrupt/empty capture and normal new-operation retry on the same graph pass.",
+    "origin_controls": "Existing shared-origin cold/warm performed-work and interrupted cold unpublished/warm cancellation recovery controls pass."
+  },
+  "source_correction": {
+    "patch_sha256": "52a24725253604324eb46683391a14ede63fa166c540eb9f71caaf741c87081f",
+    "reason": "Compiler shorthand key has a synthetic constructor span; expected key now derives independently from the actual normalized origin-selected production constructor. Full map equality, raw Symbol span/metadata and exact native producer lineage remain required. No extra guest materialization or callbacks.",
+    "review": "Independent source GO; its raw attribution condition is satisfied by preserved V2 manifest/report bound to the prior6ac4efdb focused-nine log."
+  },
+  "bootstrap": {
+    "generation": {
+      "head": "493bf105a926be605ff635a92cb4feac49647bd7",
+      "compiler_source_sha256": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+      "inputs": 222,
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+      "exit_code": 1,
+      "seconds": 90.94600360200275,
+      "raw_sha256": "0bdeb35b6705ebc1032500e503bf4bce934ad4414830a579b3245412f2f202fe"
+    },
+    "identity": {
+      "head": "02aca5402846303dd1c3df9ab873fa67740f4b29",
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+      "source_sha256": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+      "exit_code": 0,
+      "seconds": 1.105270424974151,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+    },
+    "actual_builder_identity": {
+      "actual_fingerprint": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+      "inputs": 222,
+      "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "fd232d239f95a63848e4ad1c7ee180e33af936044a65ec2b6fbc400dcb61c731",
+      "source_commit": "493bf105a926be605ff635a92cb4feac49647bd7"
+    },
+    "independent_adoption": {
+      "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+      "allowlist": {
+        "runtime/bootstrap/runtime.wasm": {
+          "source": "diagnostics/first/runtime.wasm",
+          "sha256": "336acb1fffc5cec48befd8f5944c2084523347b80f0b8ed6a95b2251db2e2f8c"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "source": "diagnostics/first/runtime.json",
+          "sha256": "9b0c6efe52f6d640b53b1061efa26d530449aff953d838017b24ea6a0f09d73e"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "source": "diagnostics/first/macro.wasm",
+          "sha256": "c9d67616a39e3d936e0d82d6a6c6f55d9e945b642be3eba24795d6b888be3f54"
+        },
+        "runtime/bootstrap/macro.json": {
+          "source": "diagnostics/first/macro.json",
+          "sha256": "bd99c8e525448b25074153ab14559292e112bbe37d0790d99284390c5f9b8064"
+        }
+      },
+      "scope": "All four normal first/second pairs byte-equal; executable sections unchanged. Initial old-shipped compare exits1, not a complete verifier pass."
+    }
+  },
+  "unchanged": "Production authority guards, tariffs, budgets, original programs/phase loops/callback/poison/GC/fuel/IRQ assertions; test-only expectation constructor adds normally metered native arena/projection work.",
+  "remaining": "Complete literal25 is running separately; namespace eight Boolean mismatches remain on source0126. Source-tags, pinned bodies/source-child/default core, workspace baseline, final issue mapping and final-head CI are separate gates."
+}
