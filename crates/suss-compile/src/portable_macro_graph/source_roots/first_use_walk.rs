@@ -153,6 +153,21 @@ impl<E> Context<E> {
     pub(super) fn diagnostic_repeat_policy(&self, id: Value) -> Option<bool> {
         self.repeat.get(id).copied()
     }
+    /// Existing request-local repeat policy, not source/memo authority.
+    /// Callers may omit a native scratch binding only for a noncacheable
+    /// occurrence. They must keep source-alias consistency checks separately.
+    pub(super) fn native_binding_cacheable(
+        &self,
+        session: &mut Session,
+        id: Value,
+    ) -> Result<bool> {
+        // Bounds selection, policy read, inversion and return/IRQ poll precede
+        // the actual read. No cache, evidence or repeat policy is modified.
+        session.charge_host_work(4)?;
+        let repeat = self.repeat.get(id)
+            .ok_or_else(|| invalid("Retained native binding outside first-use arena"))?;
+        Ok(!*repeat)
+    }
     pub(super) fn cached(&self, id: Value) -> Option<&Observed<E>> {
         if self.repeat.get(id).copied().unwrap_or(true) {
             None
@@ -387,4 +402,54 @@ mod tests {
         let root = graph.recipe(Recipe::Alias(0)).unwrap();
         assert!(Context::<()>::new(&mut graph, root).is_err());
     }
+    #[test]
+    fn retained_binding_policy_keeps_reader_occurrences_distinct_and_native_sharing_intact() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let _request = session.operation_budget_scope().unwrap();
+            let bridge = crate::portable_macro_data::FormBridge::new(&mut session).unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let key = graph.keyword("repeat-policy-key").unwrap();
+            let number = graph.number(17).unwrap();
+            let repeated = graph.recipe(Recipe::ReaderMap(vec![(key, number)])).unwrap();
+            let wrapped = graph.recipe(Recipe::ReaderVector(vec![repeated])).unwrap();
+            let stable = graph.map_values(vec![(key, number)]).unwrap();
+            let alias = graph.recipe(Recipe::Alias(repeated)).unwrap();
+            let root = graph.vector(&[wrapped, wrapped, stable, stable, alias]).unwrap();
+            let mut context = Context::<()>::new(&mut graph, root).unwrap();
+            assert!(!context.native_binding_cacheable(graph.session, repeated).unwrap());
+            assert!(!context.native_binding_cacheable(graph.session, wrapped).unwrap());
+            assert!(context.native_binding_cacheable(graph.session, stable).unwrap());
+            // Alias is the identity barrier even when its input repeats.
+            assert!(context.native_binding_cacheable(graph.session, alias).unwrap());
+            assert!(context.native_binding_cacheable(graph.session, usize::MAX).is_err());
+            let observed = context.walk(&mut graph, root, &mut Ordinary(&bridge)).unwrap();
+            graph.session.collect().unwrap();
+            let check = graph.session.eval("(fn [v] [(not (identical? (nth v 0) (nth v 1))) (not (identical? (nth (nth v 0) 0) (nth (nth v 1) 0))) (identical? (nth v 2) (nth v 3)) (= 17 (get (nth v 4) :repeat-policy-key))])").unwrap();
+            let result = graph.session.invoke(&check, &[&observed.value]).unwrap();
+            assert_eq!(crate::portable_repl::display(graph.session, &result).unwrap(), "[true true true true]");
+            assert!(context.cached(repeated).is_none());
+            assert!(context.cached(wrapped).is_none());
+            assert!(context.cached(stable).is_some());
+            assert!(context.cached(alias).is_some());
+        }
+    }
+
+    #[test]
+    fn retained_native_policy_poll_preserves_active_irq_and_fresh_operation_retry() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = crate::portable_macro_data::FormBridge::new(&mut session).unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let root = graph.number(17).unwrap();
+        let context = Context::<()>::new(&mut graph, root).unwrap();
+        {
+            let _request = graph.session.operation_budget_scope().unwrap();
+            graph.session.interrupt_handle().interrupt();
+            let error = context.native_binding_cacheable(graph.session, root).unwrap_err();
+            assert!(error.to_string().to_lowercase().contains("interrupt"), "{error}");
+        }
+        let _request = graph.session.operation_budget_scope().unwrap();
+        assert!(context.native_binding_cacheable(graph.session, root).unwrap());
+        assert!(context.cached(root).is_none(), "policy read cannot install an observation");
+    }
+
 }

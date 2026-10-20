@@ -323,3 +323,91 @@ fn uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object
         assert!(cache.data.is_empty(), "a request-only owner must not become persistent authority");
     }
 }
+
+
+#[test]
+fn cached_source_evidence_follows_only_actual_transparent_aliases_to_its_admitted_owner() {
+    let (_environment, global, info) = source();
+    let mut session = Session::new_macro().unwrap();
+    let bridge = FormBridge::new(&mut session).unwrap();
+    let _operation = session.operation_budget_scope().unwrap();
+    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+    graph.capture_roots = true;
+    graph.direct_reader_roots = true;
+    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+    let alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
+    let nested = graph.recipe(Recipe::Alias(alias)).unwrap();
+    graph.finish_recipes().unwrap();
+    let plan = graph.admit_first_use_data_controller(nested).unwrap().unwrap();
+    let source = graph.source_roots.index(graph.session, metadata).unwrap().unwrap();
+    let build = Build { plan: &plan, retained: &[], selected: Vec::new() };
+    let expected = build.expected(source).unwrap();
+    assert_eq!(build.source_through_transparent_alias(&mut graph, alias, &expected.key).unwrap(), Some(source));
+    assert_eq!(build.source_through_transparent_alias(&mut graph, nested, &expected.key).unwrap(), Some(source));
+    // Existing original reuse_frontier test supplies the actual materialization,
+    // repeat/metadata-clone/GC/exact physical identity regression unchanged.
+}
+
+#[test]
+fn cached_source_alias_resolution_rejects_non_alias_equal_foreign_owner_and_unadmitted_boundary() {
+    let (_environment, global, info) = source();
+    let (_other_environment, other_global, other_info) = source();
+    assert!(!Arc::ptr_eq(info.completed_values.as_ref().unwrap(), other_info.completed_values.as_ref().unwrap()));
+    let mut session = Session::new_macro().unwrap();
+    let bridge = FormBridge::new(&mut session).unwrap();
+    let _operation = session.operation_budget_scope().unwrap();
+    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+    graph.capture_roots = true;
+    graph.direct_reader_roots = true;
+    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+    let other = graph.completed_metadata_map(&other_global, other_info.completed_values.as_ref().unwrap(), &other_info, 0).unwrap();
+    let alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
+    let other_alias = graph.recipe(Recipe::Alias(other)).unwrap();
+    let non_alias = graph.recipe(Recipe::Vector(vec![metadata])).unwrap();
+    graph.finish_recipes().unwrap();
+    // Other is a genuine captured equal-source owner, but unreachable here.
+    let plan = graph.admit_first_use_data_controller(alias).unwrap().unwrap();
+    let source = graph.source_roots.index(graph.session, metadata).unwrap().unwrap();
+    let other_source = graph.source_roots.index(graph.session, other).unwrap().unwrap();
+    assert!(plan.expected[other_source].is_none());
+    let other_key = graph.source_roots.roots[other_source].owner.key(graph.session).unwrap();
+    let build = Build { plan: &plan, retained: &[], selected: Vec::new() };
+    let expected = build.expected(source).unwrap();
+    assert!(expected.key != other_key);
+    assert_eq!(build.source_through_transparent_alias(&mut graph, non_alias, &expected.key).unwrap(), None);
+    assert_eq!(build.source_through_transparent_alias(&mut graph, other_alias, &expected.key).unwrap(), None);
+    assert_eq!(build.source_through_transparent_alias(&mut graph, alias, &other_key).unwrap(), None);
+    assert_eq!(build.source_through_transparent_alias(&mut graph, alias, &expected.key).unwrap(), Some(source));
+}
+
+
+#[test]
+fn cached_source_alias_resolution_does_not_cross_an_unadmitted_captured_start() {
+    let (_environment, global, info) = source();
+    let mut session = Session::new_macro().unwrap();
+    let bridge = FormBridge::new(&mut session).unwrap();
+    let _operation = session.operation_budget_scope().unwrap();
+    let mut graph = AnalysisGraph::new(&bridge, &mut session);
+    graph.capture_roots = true;
+    graph.direct_reader_roots = true;
+    let metadata = graph.completed_metadata_map(&global, info.completed_values.as_ref().unwrap(), &info, 0).unwrap();
+    let ordinary_alias = graph.recipe(Recipe::Alias(metadata)).unwrap();
+    // Negative admission fixture only: a genuine native Request owner wraps
+    // that same admitted child, but is unreachable from this plan's export.
+    // This creates no guest value, receipt, certificate or positive authority.
+    let captured_start = graph.capture_source_root(Owner::Request(Arc::new(())), metadata).unwrap();
+    graph.finish_recipes().unwrap();
+    let plan = graph.admit_first_use_data_controller(ordinary_alias).unwrap().unwrap();
+    let source = graph.source_roots.index(graph.session, metadata).unwrap().unwrap();
+    let start = graph.source_roots.index(graph.session, captured_start).unwrap().unwrap();
+    assert!(plan.expected[source].is_some());
+    assert!(plan.expected[start].is_none());
+    assert!(matches!(graph.recipes[captured_start].as_ref(), Some(Recipe::Alias(child)) if *child == metadata));
+    let build = Build { plan: &plan, retained: &[], selected: Vec::new() };
+    let expected = build.expected(source).unwrap();
+    // V1 followed the first Alias before checking its starting boundary and
+    // could incorrectly return Some(source) here. Preserve the strict None.
+    assert_eq!(build.source_through_transparent_alias(&mut graph, captured_start, &expected.key).unwrap(), None);
+    assert_eq!(build.source_through_transparent_alias(&mut graph, ordinary_alias, &expected.key).unwrap(), Some(source));
+    assert!(plan.expected[start].is_none());
+}

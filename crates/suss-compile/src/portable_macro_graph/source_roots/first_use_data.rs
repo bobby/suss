@@ -464,6 +464,47 @@ impl Build<'_> {
         graph.session.charge_host_work(1)?;
         Ok(self.plan.expected[index].as_ref().map(|_| index))
     }
+    // An ordinary Alias can cache the exact Source evidence of its input.
+    // It is not a new source boundary. Follow ONLY native transparent edges to
+    // an already-admitted boundary with the SAME genuine owner/selector key.
+    // No structural/guest equality or bare-native-ID join supplies authority.
+    fn source_through_transparent_alias(
+        &self,
+        graph: &mut AnalysisGraph<'_>,
+        mut id: Value,
+        retained_key: &Key,
+    ) -> Result<Option<usize>> {
+        // source_id(None) can also mean a CAPTURED but unadmitted alias.
+        // This helper is only for ordinary aliases: never cross that starting
+        // source boundary, even if its child reaches an admitted matching key.
+        graph.session.charge_host_work(1)?; // starting capture/absence branch
+        if graph.source_roots.index(graph.session, id)?.is_some() {
+            return Ok(None);
+        }
+        graph.session.charge_host_work(1)?; // read finite native arena extent
+        let extent = graph.recipes.len();
+        for _ in 0..extent {
+            // Prepay bounded loop, recipe lookup/kind, child read and advance.
+            graph.session.charge_host_work(5)?;
+            let Some(Recipe::Alias(child)) = graph.recipes.get(id).and_then(Option::as_ref)
+            else {
+                return Ok(None);
+            };
+            id = *child;
+            if let Some(source) = graph.source_roots.index(graph.session, id)? {
+                graph.session.charge_host_work(2)?; // admitted expectation access
+                let Some(expected) = self.plan.expected.get(source).and_then(Option::as_ref)
+                else {
+                    return Ok(None); // never walk through an unadmitted boundary
+                };
+                graph.session.charge_host_work(key_comparison_work(retained_key, &expected.key))?;
+                return Ok((retained_key == &expected.key).then_some(source));
+            }
+        }
+        // The existing whole-DAG proof normally excludes cycles. Keep this
+        // local read-only walk bounded by the actual arena, not a form cap.
+        Ok(None)
+    }
     fn expected(&self, id: usize) -> Result<&Rc<Expectation>> {
         self.plan
             .expected
@@ -536,6 +577,17 @@ impl Build<'_> {
                             (graph.source_roots.roots[id].native, source.actual()),
                         ] {
                             graph.session.charge_host_work(2)?;
+                            // Source aliases are fixed owner bindings. Reader
+                            // native IDs can instead denote repeated occurrences:
+                            // the original walker deliberately never caches them.
+                            // Still traverse/validate every original input below;
+                            // omit only an unusable scratch-cache binding.
+                            graph.session.charge_host_work(3)?;
+                            if native != graph.source_roots.roots[id].alias
+                                && !current.native_binding_cacheable(graph.session, native)?
+                            {
+                                continue;
+                            }
                             if let Some(old) = current.cached(native) {
                                 if !graph
                                     .session
@@ -611,8 +663,10 @@ impl Observer for Build<'_> {
         if let Some(cached) = cached {
             // Source aliases retain identity but not an unchecked valid bit.
             if let Evidence::Source(root) = &cached.evidence {
-                let source = self
-                    .source_id(graph, id)?
+                let source = match self.source_id(graph, id)? {
+                    Some(source) => Some(source),
+                    None => self.source_through_transparent_alias(graph, id, &root.expected.key)?,
+                }
                     .ok_or_else(|| {
                         if reader_plan::declaration_key_traced(&root.expected.key)
                             || std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some()
