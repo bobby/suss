@@ -1,0 +1,188 @@
+{
+  "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+  "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+  "input_count": 227,
+  "bootstrap_commit": "3266c6f24260c5a233d76dfaeba1f3c4b6e1a6fc",
+  "terminal": {
+    "fixture_binding_manifest_sha256": "8fe8f9996b21ba3a82ddca3670d6e71f52a0a3ccf0c7010db33d78f62b8f85be",
+    "source_freeze_sha256": "3fabf9f3d8999f2e6ab921e0dfbee98c9253a2aac33a1bca932ca5bb13c07afb",
+    "head": "ea0bba3c6f775b9714e56da9ac46556edcf727ec",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "predicted_source_fingerprint": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "source_input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "clojure_test_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "pinned_map_declaration_executes_without_transport_loss",
+      "pinned_reader_identifier_names_keep_values"
+    ],
+    "trace_environment": {},
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Original unchanged pinned map69 and identifier15 bodies, originalMacro200M/caller200M. Fresh capture directory and independentcomparisonrequired; exactIDs/operand/verdictchecks remain. No source/metadata/observation reduction or quota/ratechange. Optin native diagnostics do not authorize source/memo or performance claims.",
+    "exit_code": 101,
+    "seconds": 451.058790477,
+    "raw_sha256": "db85098a7147cff7b93f39587598f148622ef0b24d461344007ea1ddbca07ea2"
+  },
+  "harness": {
+    "passed": 1,
+    "failed": 1,
+    "ignored": 0,
+    "filtered": 11,
+    "seconds": 252.09
+  },
+  "map_comparison": {
+    "counts": {
+      "pass": 0,
+      "guest-judged": 0,
+      "fail": 0,
+      "not-executed": 69,
+      "skipped": 0,
+      "namespaces-failed": 1
+    },
+    "failures": {
+      "schema": 1,
+      "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+      "namespaces": {
+        "clojure.core-test.map": {
+          "stage": "macro",
+          "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:  0x13f40 - <unknown>!<wasm function 327>\n    1:  0x1588d - <unknown>!<wasm function 328>\n    2:  0x19cd2 - <unknown>!<wasm function 362>\n    3:    0x1c1 - <unknown>!<wasm function 5>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+        }
+      },
+      "tests": {},
+      "assertions": {},
+      "skip-mismatches": []
+    },
+    "ordered_ids_match": false,
+    "expected_count": 69,
+    "actual_count": 0,
+    "observations_sha256": "e09ccb030b89d514450bcb7524341b3837a7516f94af4475d1ad5cb75077d221",
+    "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+    "accepted": false
+  },
+  "identifier_comparison": {
+    "counts": {
+      "pass": 15,
+      "guest-judged": 0,
+      "fail": 0,
+      "not-executed": 0,
+      "skipped": 0,
+      "namespaces-failed": 0
+    },
+    "failures": {
+      "schema": 1,
+      "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+      "namespaces": {},
+      "tests": {},
+      "assertions": {},
+      "skip-mismatches": []
+    },
+    "ordered_ids_match": true,
+    "expected_count": 15,
+    "actual_count": 15,
+    "observations_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+    "scope": "Original inline Rust Python comparator logic, repeated against retained capture. Host operand decisions only; no fabricated verdict.",
+    "accepted": true
+  },
+  "fixture_bindings": {
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "file_bindings": {
+      "crates/suss-compile/tests/clojure_test_suite.rs": {
+        "sha256": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "crates/suss-compile/tests/support/portable_decode.rs": {
+        "sha256": "5b8c8f5b130ec981c1f2ab49b6f869efef8c70dfcc34548427ca3c520c26bb87",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "crates/suss-compile/tests/support/compilation_fuel.rs": {
+        "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "scripts/clojure_test_suite.py": {
+        "sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "tests/oracle/clojure-test-suite-observations.json": {
+        "sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "tests/oracle/clojure-test-suite-known-failures.json": {
+        "sha256": "90ada9910a7529f0f7152247692eabeb47fd4214580575f94d685b9c36a7642c",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "tests/oracle/src/suss_oracle/clojure_test_suite.cljs": {
+        "sha256": "bd190dcffddff113bf7e1a7e9dd2d69cf39ac4e6a360df7edbc5d58cad818276",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs": {
+        "sha256": "7846d135c63178d0602eec38d60c099903f4b515e2ba0541a63b5faa64e10447",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc": {
+        "sha256": "a077bc1d9cc7d4e8e0e83d5fe5f1eb0e55c28eab7887919599b20e42f31b7c1e",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc": {
+        "sha256": "37cfac488528b43d8e492340885b1ed35c89362aa0167ff7ba72bdb0318a06b4",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc": {
+        "sha256": "df4f5fafcbc0b443956c964d8c9a59ee33be4f77321e84fd98eaffa8d82c1c3f",
+        "exact_source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      }
+    },
+    "test_body_bindings": {
+      "rust-test-body:pinned_map_declaration_executes_without_transport_loss": {
+        "sha256": "32baf16be6727b8ff9c8c87ae20e34e6f7afdc0883633c4e99eeeb836dc7fe10",
+        "extract": "exact fn header through unindented closing brace",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      },
+      "rust-test-body:pinned_reader_identifier_names_keep_values": {
+        "sha256": "3637de65117263f17bc9f27d2b172c479ce986fe2ebb66e33a760a9cdacb9f9e",
+        "extract": "exact fn header through unindented closing brace",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true
+      }
+    },
+    "budget": "Original Harness::new Macro200M/caller200M; generic suite100B helper is bound but NOT used by these two tests.",
+    "readonly_oracle_source": true,
+    "closed_macro_initialization_scope": "Production v5 uses its bounded closed bootstrap compilation allowance then restores the configured Macro limit. These unchanged pinned harness requests still configure Macro200M and caller200M; no semantic user request receives bootstrap allowance."
+  },
+  "scope": "Original complete pinned map69 and identifier15; Macro200M/caller200M unchanged. Map0observations/69unexecuted expanded-result transport239..5926; no assertion failure or success inferred for unexecuted map IDs. Identifier15 independently host-compared PASS. No default or issue acceptance claim."
+}
