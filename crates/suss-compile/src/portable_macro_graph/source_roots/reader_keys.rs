@@ -978,6 +978,7 @@ mod tests {
             let op = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
             graph.capture_roots = true;
+            eprintln!("READER_KEY_CAPTURE_CUT allowance={allowance} measured_cost={cost} initial_budget={initial_budget}");
             let error = graph
                 .capture_ordinary_reader_key(&ns, &global, &holder, (0, 0))
                 .unwrap_err();

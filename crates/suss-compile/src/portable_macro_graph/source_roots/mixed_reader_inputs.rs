@@ -248,6 +248,13 @@ mod tests {
             let value = graph
                 .materialize_using(graph.source_roots.roots[*child].alias, &recording)
                 .unwrap();
+            if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+                eprintln!("MIXED_CHILD ordinal={} total={} boundary={} alias={} native={} key={} expected_children={}",
+                    result.len(), layout[id].len(), child,
+                    graph.source_roots.roots[*child].alias,
+                    graph.source_roots.roots[*child].native,
+                    super::super::TraceSourceKey(&expected.key), expected.children.len());
+            }
             let proof = Certificate::finish(
                 graph.session,
                 graph.bridge,

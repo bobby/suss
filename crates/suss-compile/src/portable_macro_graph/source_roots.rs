@@ -793,6 +793,23 @@ impl AnalysisGraph<'_> {
         })))
     }
 }
+// Temporary cfg-test observation. Non-test expansion is the original
+// predicate, with no extra call, local, comparison or Session debit.
+macro_rules! mixed_certificate_predicate {
+    ($certificate:expr, $stage:literal, $predicate:expr) => {{
+        #[cfg(test)]
+        {
+            let result = $predicate;
+            if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+                eprintln!("MIXED_CERT_PREDICATE key={} stage={} result={}",
+                    TraceSourceKey(&$certificate.source.key), $stage, result);
+            }
+            result
+        }
+        #[cfg(not(test))]
+        { $predicate }
+    }};
+}
 impl Certificate {
     fn owners_live(session: &mut Session, root: &Rc<Self>) -> Result<bool> {
         let mut pending = Vec::new();
@@ -873,10 +890,23 @@ impl Certificate {
         // vector position is the canonical native boundary ordinal, not a
         // caller-selected field name or logical-equality match.
         session.charge_host_work(2)?;
+        #[cfg(test)]
+        if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+            eprintln!("MIXED_CERT_FINISH key={} expected_children={} supplied_children={} attached={} alias_root={}",
+                TraceSourceKey(&source.key), source.children.len(), children.len(), attached, alias_root);
+        }
         if matches!(&source.key, Key::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_))) {
+            #[cfg(test)]
+            if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+                eprintln!("MIXED_CERT_DECLINE key={} stage=data-selector-excluded", TraceSourceKey(&source.key));
+            }
             return Ok(None); // DATA value identity is not source-domain authority
         }
         if source.children.len() != children.len() {
+            #[cfg(test)]
+            if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+                eprintln!("MIXED_CERT_DECLINE key={} stage=child-count", TraceSourceKey(&source.key));
+            }
             return Ok(None);
         }
         let mut matches = true;
@@ -888,6 +918,10 @@ impl Certificate {
             matches &= *expected == child.certificate.source.key;
         }
         if !matches {
+            #[cfg(test)]
+            if std::env::var_os("SUSS_MIXED_CERT_TRACE").is_some() {
+                eprintln!("MIXED_CERT_DECLINE key={} stage=child-key-order", TraceSourceKey(&source.key));
+            }
             return Ok(None);
         }
         let mut owned = Vec::new();
@@ -909,7 +943,7 @@ impl Certificate {
             children: owned,
             alias_root,
         });
-        if !Self::validate(session, bridge, &certificate)? {
+        if !mixed_certificate_predicate!(certificate, "finish-validation", Self::validate(session, bridge, &certificate)?) {
             return Ok(None);
         }
         // Membership can no longer grow after the complete independent source
@@ -1009,7 +1043,7 @@ impl Certificate {
             session.charge_host_work(3)?;
             // Ownership precedes any invocation-local validation reuse.
             session.inspect(&certificate.value, |_, _| Ok(()))?;
-            if !certificate.source.owner.live(session)? { return Ok(false); }
+            if !mixed_certificate_predicate!(certificate, "owner-live", certificate.source.owner.live(session)?) { return Ok(false); }
             let pointer = Rc::as_ptr(&certificate);
             let mut seen = false;
             for (old, _) in done.iter() {
@@ -1056,26 +1090,26 @@ impl Certificate {
                 valid &= found.ok_or_else(|| invalid("Unvalidated source child"))?;
             }
             // No short circuit suppresses later native authority/errors.
-            valid &= certificate.source.witness.matches_logical_source(
+            valid &= mixed_certificate_predicate!(certificate, "logical", certificate.source.witness.matches_logical_source(
                 session,
                 bridge,
                 &certificate.value,
-            )?;
-            valid &= certificate.records.matches_direct_facts(session)?;
+            )?);
+            valid &= mixed_certificate_predicate!(certificate, "direct", certificate.records.matches_direct_facts(session)?);
             session.charge_host_work(1)?;
             valid &= if certificate.alias_root {
                 session.charge_host_work(3)?;
                 certificate.records.len() == 0 && certificate.children.len() == 1
                     && session.values_identical(&certificate.value, &certificate.children[0].value)?
             } else {
-                certificate.records.matches_recorded_inputs(session, &certificate.value)?
+                mixed_certificate_predicate!(certificate, "inputs", certificate.records.matches_recorded_inputs(session, &certificate.value)?)
             };
-            valid &= certificate
+            valid &= mixed_certificate_predicate!(certificate, "classes", certificate
                 .records
-                .matches_class_schemas_audited(session, audit)?;
-            valid &= certificate
+                .matches_class_schemas_audited(session, audit)?);
+            valid &= mixed_certificate_predicate!(certificate, "prototypes", certificate
                 .records
-                .matches_prototype_origins_audited(session, audit)?;
+                .matches_prototype_origins_audited(session, audit)?);
             reserve(session, done, 1)?;
             session.charge_host_work(1)?;
             done.push((certificate.clone(), valid));
