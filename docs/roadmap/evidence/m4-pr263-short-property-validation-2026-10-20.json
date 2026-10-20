@@ -792,6 +792,53 @@
       ],
       "exact_selection_matches": true,
       "measurement_lines": []
+    },
+    "bootstrap-four": {
+      "head": "6414859623856761a9eb4d095324bf69548a8c76",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_bootstrap",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+        "compiled_bootstrap_rejects_changed_identity_and_corruption",
+        "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+        "compiled_bootstrap_catalog_cache_never_shares_guest_state"
+      ],
+      "selection": {
+        "exact_names": [
+          "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+          "compiled_bootstrap_rejects_changed_identity_and_corruption",
+          "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+          "compiled_bootstrap_catalog_cache_never_shares_guest_state"
+        ],
+        "scope": "All4originalcompiledbootstraptests; onlycache-isolationnativecompilationcalibrated10M->100B cumulativeperinput, allRuntimefuel/source/assertions/effects/GC/resetunchanged. NotcompleteJava-freeverifiercredit."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 125.9750840050001,
+      "raw_sha256": "a4c2789541e6764ceefbe74fe22929c52965181e022444e54eddf048e6248904",
+      "harness_summaries": [
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 111.76s"
+      ],
+      "started_names": [
+        "compiled_bootstrap_catalog_cache_never_shares_guest_state",
+        "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+        "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+        "compiled_bootstrap_rejects_changed_identity_and_corruption"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
     }
   },
   "historical_acceptance": "m4-pr263-pinned-and-transport-attribution-83f-2026-10-20.json",
