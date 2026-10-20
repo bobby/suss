@@ -1,0 +1,441 @@
+{
+  "scope": "Source-qualified partial PR263 prefilter evidence; public/default/pinned/full-issue acceptance remains separate.",
+  "source": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+  "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+  "inputs": 227,
+  "bootstrap_commit": "40f22c6f2a4ec79cc2027aa35610847e28c43804",
+  "source_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_SOURCE_AND_FEES_ONLY_ACTUAL_GLOBAL_VALUE_PREFILTER",
+    "approved_for_source_integration": true,
+    "base": "41144bace3e1e17cf01d6b1657236cd1921eb905",
+    "patch_sha256": "c6899fa815b75f41cf6e5a64bb13bc8a349ade9ea3e4a2323d65291fa07788c2",
+    "manifest_sha256": "b05b20e9f62dcf99403ac80539c0f5c7d911ab3272cc8591a844adb3b193f61c",
+    "ledger_sha256": "7995dac85e71472140e656eea61cccb4d3a6867bc3899c6b953c97ebeba53a07",
+    "before_sha256": "0b960011b62b06d36a454011c062458c69c324db2ea814c673d72ba6b81cb765",
+    "after_sha256": "2dd11e93c3fc6f636778e00ff15953bd7f54f18b7453f63ba5116e095549133f",
+    "blockers": [],
+    "integrity": [
+      "Allfrozenartifacthashesverified. ExactbaseGit/currentpreimage andafterhashverified; cacheonlypatch application independentlyreconstructspostimage.",
+      "Inverse confirms productiondiff onlyseveninsertedlines; restoriginalmodulebyteexactaparttrailingblanklines; two cfgtestcontrols appended. All12existingcontrols/programs/budgets inotherfiles untouched."
+    ],
+    "semantic_proof": [
+      "Global/GlobalIdentity derivedOrdEq includesimmutablephase,namespace,name. PredicateP(actualGlobalphase/ns) isconstantoneach equalityclass, so pushingPbeforeunion/dedup preserves sorted selectedsequence and existingequalkeyrepresentative.",
+      "Closure appliesidentically toeligibleBindingCell/InternalCell/ReaderCell VALUES andmaterializedbootstrapGlobals. No bindingmapkeyfilter/range; fullstreams remain scanned inoriginalorder.",
+      "OriginalIntolter phase/nsfilter, hiddenlookup,outputgrowth/push andallcompletedSourceNamespacefields/currentowner/factorypublication remainunchanged. No sourcereceipt/health/authority expansion orcachedproof."
+    ],
+    "fees": [
+      "meter4 prepays newphase/nsaccess/shortcircuitcontrols on everyeligiblecandidateincludingfalse. Matchingphase invokesexistingtext_eq withpaidactualbytebounds beforecomparison.",
+      "Originalfullbegin_iter/step/finalNone/variantfees retained forbothfullstreams. Qualifyingentries retainexistinginsertion/clonefees plusnewpredicate; duplicatequalifyingentries retainoriginaldedupwork.",
+      "Unrelatedcandidates no longerperformGlobalretain/clone, insertionsearch/split/backing/relocation orlater setentryiteration/drop. Lower actualset n/largest reflects removedwork, notreducedrate. No quota/default/fuelreset orerrorcatch.",
+      "Existingpostfilter/hidden/outputfees remain. TypedDiagnostic fromnewprepayment propagates beforeinsert; partiallocalsetandInfoowners dropunderexistingretirementprepayment andfactoryisnotpublisheduntilcomplete."
+    ],
+    "fixtures": [
+      "Newnativeparitycontrolbothphases checksalllegacyfields,exactDefinitionInfoanddeclarationkeyArcowners,ordering/dedup,bootstraponly andduplicates,wrongphase/ns,hiddenReader/Internalcells.",
+      "Private-mismatchedkey/valuecases usegenuineGlobals butdirectcfgtestbindings mutation; explicitlynotclaimedpublicalias-produced. They enforce actualcells()valuecontract andavoidunsafe mapkeyshortcut.",
+      "Failurecontrol injectsoriginalDiagnosticateveryobservedcharge andfinite0/1/half/total-1cuts,checksEnvironmentgeneration/InfoArcstability andcompleteexactretry. NotactualSessionengineIRQ/fueltrap evidence.",
+      "Testsremainunexecuted; actualtype/setup/runtimeassumptionsmustbe preserved asfailures ifdisproved. Noexpectedvalue/oldassertionweakening."
+    ],
+    "limits": [
+      "No observedFormBridge/defaultconstructorCORE10Mfit orpinned200Mcost/net-saving claim. Previous8PASS4setupFAIL remains historical431sourceevidence.",
+      "Normalactualsourcefreeze/fingerprint/typecheck/BOOT andfocusedtest execution stillmainowned. Existing227count likelyunchanged becauseonlyexistingmodulechanged; verifyactualinputdiscovery.",
+      "No furtherEnvredesign/keyrange/namespacecachechangeapproved."
+    ],
+    "actions": {
+      "cargo": false,
+      "vm": false,
+      "shared_edits": false,
+      "producer_actions": false,
+      "cache_only": true
+    }
+  },
+  "typecheck": {
+    "head": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 33.81662872398738,
+    "raw_sha256": "d78caaabfbaec717b2c071a619433e9943384bda371ff2f04b4b901d4ab01698"
+  },
+  "normal_bootstrap": {
+    "head": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "inputs": 227,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 91.41559038200649,
+    "raw_sha256": "87660c875a64dabcf922bf4a8408c762a1a49db268c54f83f9da43492ad75e29"
+  },
+  "compiled_build_source_identity": {
+    "actual_fingerprint": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "inputs": 227,
+    "builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "06fd326edcbd85ea00dfc45dc056a6d5709aff366bb3a2ec69e64e3f969f74dc",
+    "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "exact_input_paths_and_current_hashes_verified": true
+  },
+  "adoption_review": {
+    "reviewer": "Cicero",
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "scope": "Independent artifact byte/source-integrity adoption review, not source re-review, new execution, library acceptance, current default/pinned fit or PR readiness.",
+    "reviewed_at_utc": "2026-10-20T14:42:48.000479+00:00",
+    "head": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "current_clean_checked_before_and_after": true,
+    "old_shipped_commit": "85d97e4ba65d14015418e0a7a3bc9075ab787cd0",
+    "source_fingerprint": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "compiler_inputs": 227,
+    "all_frozen_inputs_current_and_exact_git_head": true,
+    "fingerprint_recomputed_from_frozen_input_bytes": true,
+    "actual_builder_output_hash_verified": true,
+    "source_freeze_sha256": "8d28ae329f8795b8f5c3bdf41a27f122286f9d55d3cdcd5731197de0065a6476",
+    "compiled_source_identity_receipt_sha256": "18c73bdb56eeab1d28358f964ba34bbaa52210c5f57407a26addb0a986fbeb45",
+    "generator_terminal_sha256": "dcc31b70c022e970f3c1392db29783721c157573d7aef1bac72add0ab3e9e020",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 91.41559038200649,
+    "generator_log_sha256": "87660c875a64dabcf922bf4a8408c762a1a49db268c54f83f9da43492ad75e29",
+    "exit_scope": "Main two generations produce four equal pairs; verifier then fails comparing first/runtime.wasm against old shipped runtime.wasm. This review does not relabel verifier exit1 as PASS.",
+    "diagnostics_receipt_sha256": "991f14fc8d0dbc65cf7e58d3b1c5191ee39cbfd2c3386d63c222ca2c11bcfd3f",
+    "all_eight_generated_hashes_match_receipt": true,
+    "four_first_second_pairs_byte_equal": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+        "bytes": 2108122
+      },
+      "first/runtime.json": {
+        "sha256": "92ed90737a46e1d19c418298dd130763c36f0f52a1afdc39b9ba5af81675a26d",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+        "bytes": 2106643
+      },
+      "first/macro.json": {
+        "sha256": "e5d0750d9da56ba7c284a115454c9df2c6062d2940c4d608cd6607c6b9d4a530",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+        "bytes": 2108122
+      },
+      "second/runtime.json": {
+        "sha256": "92ed90737a46e1d19c418298dd130763c36f0f52a1afdc39b9ba5af81675a26d",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+        "bytes": 2106643
+      },
+      "second/macro.json": {
+        "sha256": "e5d0750d9da56ba7c284a115454c9df2c6062d2940c4d608cd6607c6b9d4a530",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "old_shipped_sha256": "18a76860c525ba3613ed28bc72ad1b1b71b75985d575679fab3de496f75c484d",
+        "first_wasm_sha256": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+        "first_manifest_sha256": "92ed90737a46e1d19c418298dd130763c36f0f52a1afdc39b9ba5af81675a26d",
+        "total_sections": 8,
+        "noncustom_sections": 6,
+        "all_ordered_noncustom_sections_byte_equal": true,
+        "noncustom_sections_sha256": "1ac447f8acc19264dda25006b8fed704bdedc6a7a3cf01a98a6d8abdcb0c08b0",
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "only_changed_payload_field": "compiler_source_sha256"
+          }
+        ],
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "all_other_manifest_fields_and_format_exact": true,
+        "runtime_abi_unchanged": 2,
+        "cells_count": 768,
+        "catalog_cells_order_and_values_unchanged": true
+      },
+      "macro": {
+        "old_shipped_sha256": "dc6c3b2d7954874dbb34e553bb31471baa6589ecf7dda68c0e96869e7431adc3",
+        "first_wasm_sha256": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+        "first_manifest_sha256": "e5d0750d9da56ba7c284a115454c9df2c6062d2940c4d608cd6607c6b9d4a530",
+        "total_sections": 8,
+        "noncustom_sections": 6,
+        "all_ordered_noncustom_sections_byte_equal": true,
+        "noncustom_sections_sha256": "e46acd1f0861623dcf6c7fe31b99ba3cee47a9d4fb7325e444c8fb3811166a5e",
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "only_changed_payload_field": "compiler_source_sha256"
+          }
+        ],
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "all_other_manifest_fields_and_format_exact": true,
+        "runtime_abi_unchanged": 2,
+        "cells_count": 768,
+        "catalog_cells_order_and_values_unchanged": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-namespace-identity-prefilter-production-v3/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-namespace-identity-prefilter-production-v3/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "92ed90737a46e1d19c418298dd130763c36f0f52a1afdc39b9ba5af81675a26d"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-namespace-identity-prefilter-production-v3/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-namespace-identity-prefilter-production-v3/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e5d0750d9da56ba7c284a115454c9df2c6062d2940c4d608cd6607c6b9d4a530"
+      }
+    ],
+    "adoption_performed": false,
+    "cargo_rustc_or_vm_executed_by_reviewer": false,
+    "shared_mutations": false,
+    "required_followup": "Main may adopt only these exact four first-generation files, then perform its planned pure identity/controlled tests. No runtime/default/pinned semantic verdict is supplied here."
+  },
+  "pure_identity": {
+    "head": "40f22c6f2a4ec79cc2027aa35610847e28c43804",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "exit_code": 0,
+    "seconds": 1.2705467600026168,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "previous_431_source_new12": {
+    "head": "85d97e4ba65d14015418e0a7a3bc9075ab787cd0",
+    "source_commit": "5af70db0daaa3fb5f9e7b76544a7249e80725792",
+    "compiler_source_sha256": "431f69edb030994dac1b5f69aa63c44e39b6c0fe6f3a47c2b1cc3a1c8c8a067c",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+      "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+      "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+      "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+      "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+      "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+      "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+      "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+      "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse"
+    ],
+    "selection": {
+      "exact_names": [
+        "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+        "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+        "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+        "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+        "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+        "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+        "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+        "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+        "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse"
+      ],
+      "scope": "All eight new namespace factory/capture/typed-error controls plus four unchanged donor compact capture/generation/rollover/cycle/fuel/IRQ/retry controls; no broader acceptance inference."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 158.0986640289775,
+    "raw_sha256": "aa8afd3dddbdc97d7b32471faec8e7e9507c855ef1d50b92e6b4472983fa1117"
+  },
+  "previous_failure_classification": "8PASS4FAIL; all4capture tests failed common FormBridge::new default native descriptor compilation0..16 before recipe graph construction. No capture algorithm verdict. All previous test programs/budgets/assertions unchanged by new source.",
+  "fourteen": {
+    "head": "40f22c6f2a4ec79cc2027aa35610847e28c43804",
+    "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+      "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+      "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+      "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+      "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+      "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+      "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+      "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+      "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly"
+    ],
+    "selection": {
+      "exact_names": [
+        "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+        "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+        "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+        "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+        "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+        "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+        "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+        "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+        "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+        "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+        "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+        "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+        "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly"
+      ],
+      "scope": "All original eight namespace/error and four compact tests unchanged plus two native identity-prefilter parity/failure-retry regressions. No broader/public identity/default/pinned acceptance inference."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 0,
+    "seconds": 197.55880738398992,
+    "raw_sha256": "b0b43beebb43d46353108f05482f6246be10d2f5028272d75d69bd16c260fe94"
+  },
+  "fourteen_reconciliation": {
+    "exact_names": [
+      "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+      "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+      "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+      "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+      "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+      "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+      "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly",
+      "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+      "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+      "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases"
+    ],
+    "count": 14,
+    "all_selected_and_unique": true,
+    "summary": "14PASS0FAIL0ignored587filtered",
+    "scope": "Main reconciliation of exact complete cohort only; independent review pending."
+  },
+  "native_boundary_measurement": {
+    "roots": 511,
+    "padding": 2048,
+    "optimized_units": 191924,
+    "full_clear_control_units": 1752494,
+    "optimized_resets": 3,
+    "control_resets": 511,
+    "scope": "One actual native boundary-discovery query including unchanged full DAG check, compared to retained test-only full-clear control using same compact-index fees. Not old-binary, whole-compilation, default-fit, CPU or general speedup evidence."
+  },
+  "fourteen_independent_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_EXACT_FOURTEEN_RESULT_RECONCILIATION",
+    "head": "40f22c6f2a4ec79cc2027aa35610847e28c43804",
+    "source_commit": "6c26ea75a6a75f79d99f63c32a21a5029efe64da",
+    "compiler_source_sha256": "1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3",
+    "input_count": 227,
+    "all_frozen_inputs_match_current_and_both_git_commits": true,
+    "actual_builder_output_hash_verified": true,
+    "boot_hashes": {
+      "runtime/bootstrap/runtime.wasm": "dd8bd5f4d44c0bdacbdcf4aa1f3b719fe7d0197d53791f27344097afa94c07e1",
+      "runtime/bootstrap/runtime.json": "92ed90737a46e1d19c418298dd130763c36f0f52a1afdc39b9ba5af81675a26d",
+      "runtime/bootstrap/macro.wasm": "f8db003ebd9b69966736618c819592b21d05910423f9546e3074124fe4d5587b",
+      "runtime/bootstrap/macro.json": "e5d0750d9da56ba7c284a115454c9df2c6062d2940c4d608cd6607c6b9d4a530"
+    },
+    "pure_identity_receipt_verified": true,
+    "result": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 587,
+      "harness_seconds": 25.46,
+      "command_seconds": 197.55880738398992
+    },
+    "exact_names": [
+      "portable::namespace_revision::tests::analyzer_namespace_factory_keeps_frozen_snapshot_and_live_revision_distinct",
+      "portable::namespace_revision::tests::analyzer_namespace_capability_is_lazy_and_foreign_borrow_cannot_rebind_cache",
+      "portable::namespace_revision::tests::analyzer_namespace_nonmacro_host_does_not_request_a_live_capture",
+      "portable::namespace_revision::tests::analyzer_namespace_equal_generation_branches_keep_independent_factories",
+      "portable::namespace_revision::tests::analyzer_namespace_variable_capture_matches_original_fields_and_exact_info_owners",
+      "portable::namespace_revision::tests::analyzer_namespace_every_variable_charge_boundary_preserves_cache_environment_and_retry",
+      "portable::namespace_revision::tests::analyzer_namespace_manual_fallback_variable_cuts_retry_without_factory_or_source_change",
+      "portable_macro_graph::namespace_revision_error_tests::native_catalog_capture_preserves_fuel_and_interrupt_trap_types_without_a_vm",
+      "portable_macro_graph::source_roots::index_tests::compact_capture_indexes_preserve_zero_holes_growth_and_old_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_match_full_clears_across_rollovers_and_typed_recovery",
+      "portable_macro_graph::source_roots::index_tests::boundary_generations_keep_full_cycle_guard_beneath_captured_aliases",
+      "portable_macro_graph::source_roots::index_tests::boundary_rollover_clears_dormant_unaliased_paths_after_byte_reuse",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners",
+      "portable::resolve::namespace_snapshot::tests::namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly"
+    ],
+    "raw_sha256": "b0b43beebb43d46353108f05482f6246be10d2f5028272d75d69bd16c260fe94",
+    "original_compact_regression_file_byte_identical_to_prior_cohort": true,
+    "historical_scope": "Prior v2 eight PASS/four FormBridge setup FAIL remain historical. Current four compact tests each actually execute and PASS; not a retrospective relabel of v2.",
+    "limits": "Only fourteen selected tests. No current default-constructor, public identity, source-tag, pinned-map, full baseline, CI or readiness verdict. Main default-constructor producer untouched.",
+    "receipt_hashes": {
+      "namespace-capture-fourteen-terminal.json": "648f7256de0c85fe1168f448cbe481b81d4630164538a3e05f9f505268078a70",
+      "namespace-capture-fourteen-selection.json": "781d4e6f357dc0a5e67ceccf967cdff0d742963c2c58f136dc22fe934a1ea773",
+      "source-freeze.json": "8d28ae329f8795b8f5c3bdf41a27f122286f9d55d3cdcd5731197de0065a6476",
+      "identity-terminal.json": "2dfd5d823e2291c7ff6f62d2aebb48424905009a4e053f4b76bf7198bde014ca",
+      "independent-adoption-review-cicero.json": "c397322c1e9bc53e9d54351ef51ca2e8a8b474bdbc347af83471f8484364086e"
+    },
+    "reviewer_execution": "Read-only Git/files and cache-only reconciliation; no Cargo/VM/shared edits."
+  },
+  "limits": "Default constructor10M replay is running, with no verdict; public namespace pair/companion, current scope25, source-tag pair/literal25, pinned200M, defaultCORE/source-child, full baseline, final-head review/CI remain unproven. Prior source-qualified results are not transferred."
+}
