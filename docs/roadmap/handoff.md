@@ -30454,3 +30454,24 @@ python3 scripts/verify_bootstrap_identity.py
 ```
 
 Use a writable private TMPDIR and the main-controlled target after other owned producers drain; do not set RUSTFLAGS. The focused argv/profile above are copied from the actual terminal receipt. Normal-generation command retained its historical stale-comparison exit1 before exact adoption; pure identity is a separate reproduction check, not semantic/bootstrap execution credit. Focused10PASS, historical scopes and pending publicCLI/baseline/finalCI limits above remain unchanged.
+
+
+### PR263 pinned acceptance on sourcee294 (2026-10-19)
+
+Original pinned map and identifier pair at2d340463ed7880a5b24058ba71ac4b92e25b38e6/sourcee2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940 (222 inputs): **1PASS/1FAIL/0ignored**,617.000411s total/292.53s harness, exit101. Raw SHA `b603e391c394ed17fa305bf704e235db9266d86ff61aebdefb1cb9b7aae9ce7d`.
+
+Identifier name/namespace declarations PASS all15 ordered assertion IDs via independent host operand comparison,0guest/failed/skipped/unexecuted. Map fails namespace compilation during **expanded result transport**, typed WasmOutOfFuel239..5926, at the unchanged200M Macro/caller budgets. Captured map has0IDs: **69notexecuted**,0assertionfailures,1namespacefailure; comparator acceptedfalse. This is transport exhaustion, not69 semantic failures or a successful map result.
+
+Commands/profile and capture hashes/IDs are in companion evidence JSON. Cache `/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-e294-v1/` retains terminal/raw/captures and compare_map.py result. Independent cache review separately recomputes both captures with exact tested-head oracle/comparator. Main next diagnostic is the exact original map at unchanged200M; bounded268 donor audits remain unmeasured hypotheses. No publicCLI/fullbaseline/finalCI/issue acceptance or promotion follows.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true cargo test -p suss-compile --locked --test clojure_test_suite -- --nocapture --test-threads=2 --exact pinned_map_declaration_executes_without_transport_loss pinned_reader_identifier_names_keep_values
+```
+
+Set both capture environment variables to a fresh cache directory; run the independent map comparator against that exact capture. Preserve main-owned serial target/privateTMPDIR; no RUSTFLAGS changes.
+
+Diagnostic followup: on a04d46831756764cfb172d2c35b55ac413d69377, same sourcee294/222 and original200M Macro/caller, also completes **0PASS/1FAIL**,134.995847s total/130.44s harness; raw `45057cbf72c905cb2c809fef2b3c650815dcd6284f93f0563fdb8b3a564e9ace`. It records139macro starts, including130 `is` expansions; these are **not assertion execution IDs**. The final transformer reaches `invoked` with122,814fuel remaining, then expanded-result decoding traps. There is no final decoded checkpoint, so complete last-decode cost is unknown. Map still0IDs/69unexecuted, not69 semantic failures.
+
+Completed flat interval totals: provenance5,118,607; provenance→caller-form417; caller-form→environment417; environment→arguments40,133,594; arguments→invoked80,436,360; completed invoked→decoded59,630,937. These exclude missing tail/gaps/other compile work and are not exclusive wholecompile attribution.
+
+Next bounded donor290e exact2file port awaitsCarverGO; no measurement benefit claimed. Evidence may batch with next source fix. Full diagnostic commands/environment remain in companion JSON; actual trace rawhash/cost limits above retained.

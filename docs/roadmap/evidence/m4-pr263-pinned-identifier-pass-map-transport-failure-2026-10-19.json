@@ -1,0 +1,211 @@
+{
+ "scope": "Pinned map/identifier focused outcome, no acceptance/promotion",
+ "head": "2d340463ed7880a5b24058ba71ac4b92e25b38e6",
+ "compiler_source_sha256": "e2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940",
+ "inputs": 222,
+ "command": [
+  "cargo",
+  "test",
+  "-p",
+  "suss-compile",
+  "--locked",
+  "--test",
+  "clojure_test_suite",
+  "--",
+  "--nocapture",
+  "--test-threads=2",
+  "--exact",
+  "pinned_map_declaration_executes_without_transport_loss",
+  "pinned_reader_identifier_names_keep_values"
+ ],
+ "environment": {
+  "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+  "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+  "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+  "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-e294-v1/capture",
+  "SUSS_READER_IDENTIFIER_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-e294-v1/capture"
+ },
+ "outcome": {
+  "exit": 101,
+  "passed": 1,
+  "failed": 1,
+  "ignored": 0,
+  "harness_seconds": 292.53,
+  "seconds": 617.0004110989976,
+  "raw_sha256": "b603e391c394ed17fa305bf704e235db9266d86ff61aebdefb1cb9b7aae9ce7d"
+ },
+ "actual_Rust_results": [
+  {
+   "name": "pinned_reader_identifier_names_keep_values",
+   "result": "ok"
+  },
+  {
+   "name": "pinned_map_declaration_executes_without_transport_loss",
+   "result": "FAILED"
+  }
+ ],
+ "identifier": {
+  "host_pass": 15,
+  "guest_judged": 0,
+  "ordered_ids_match": true,
+  "capture_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+  "actual_ids": [
+   [
+    "clojure.core-test.name/test-name",
+    1
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    2
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    3
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    4
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    5
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    6
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    7
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    8
+   ],
+   [
+    "clojure.core-test.name/test-name",
+    9
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    1
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    2
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    3
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    4
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    5
+   ],
+   [
+    "clojure.core-test.namespace/test-namespace",
+    6
+   ]
+  ],
+  "fail": 0,
+  "skipped": 0,
+  "not_executed": 0,
+  "namespace_failures": 0
+ },
+ "map": {
+  "expected_ids": 69,
+  "executed_ids": 0,
+  "host_pass": 0,
+  "guest_judged": 0,
+  "assertion_fail": 0,
+  "not_executed": 69,
+  "skipped": 0,
+  "namespace_failures": 1,
+  "accepted": false,
+  "stage": "expanded result transport",
+  "error": "WasmOutOfFuel",
+  "source_span": "239..5926",
+  "capture_sha256": "45ed552a1d6447d07ef9bfeaa9b8a1b515969901afce2b814270a04c87f09819",
+  "qualification": "Rust harness fails its namespace-loaded guard;69 map assertions are UNEXECUTED, not semantic failures. No prefix/encoding acceptance."
+ },
+ "budgets": "Original200M Macro AND caller, unchanged pinned bodies/assertions. Hostopt2 with debug assertions/overflow checks; not source-tag1T or a calibration trial.",
+ "independent_verification": "Existing suite.compare run independently on both actual captures vs exact tested-head oracle; identifier15orderedhostPASS, mapcounts/failures agree with retained compare_map.py acceptedfalse.",
+ "cache": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-e294-v1",
+ "receipts": [
+  "tests-terminal.json",
+  "tests.log",
+  "capture/identifier-observations.json",
+  "capture/map-transport-observations.json",
+  "map-comparison.json"
+ ],
+ "next": "Main considering bounded donor290e sparse-setter exact2file port pendingCarverGO, then same unchanged200M map measurement; no benefit presumed. Repo evidence/handoff may batch with next source fix; no isolated docs-only push required.",
+ "remaining": "PublicCLI completion, strict controls/fullbaseline, final-headCI and issue261 reconciliation remain separate. Priorfocused10PASS stays scoped, not pinned acceptance.",
+ "diagnostic_trace": {
+  "head": "a04d46831756764cfb172d2c35b55ac413d69377",
+  "compiler_source_sha256": "e2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940",
+  "inputs": 222,
+  "command": [
+   "cargo",
+   "test",
+   "-p",
+   "suss-compile",
+   "--locked",
+   "--test",
+   "clojure_test_suite",
+   "--",
+   "--nocapture",
+   "--test-threads=2",
+   "--exact",
+   "pinned_map_declaration_executes_without_transport_loss"
+  ],
+  "environment": {
+   "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+   "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+   "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+   "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-map-trace-e294-v1/capture",
+   "SUSS_READER_IDENTIFIER_CAPTURE": "/home/bobby/.cache/suss-m4-work/pr263-pinned-map-trace-e294-v1/capture",
+   "SUSS_MACRO_FUEL_TRACE": "1"
+  },
+  "outcome": {
+   "passed": 0,
+   "failed": 1,
+   "ignored": 0,
+   "exit": 101,
+   "harness_seconds": 130.44,
+   "seconds": 134.99584729300113,
+   "raw_sha256": "45057cbf72c905cb2c809fef2b3c650815dcd6284f93f0563fdb8b3a564e9ace"
+  },
+  "actual_macro_starts": 139,
+  "actual_is_macro_starts": 130,
+  "last_macro": {
+   "name": "suss.harness.test-macros/is",
+   "stages": {
+    "start": 1612920,
+    "provenance": 1604195,
+    "caller-form": 1604192,
+    "caller-environment": 1604189,
+    "arguments": 1554690,
+    "invoked": 122814
+   }
+  },
+  "known_complete_checkpoint_interval_totals": {
+   "start -> provenance": 5118607,
+   "provenance -> caller-form": 417,
+   "caller-form -> caller-environment": 417,
+   "caller-environment -> arguments": 40133594,
+   "arguments -> invoked": 80436360,
+   "invoked -> decoded": 59630937
+  },
+  "qualification": "Sequential flat completed checkpoint differences only; final decode has no end, so its complete cost is unknown.139 starts/130 is macro expansions are NOT executed map assertion IDs. Totals exclude unlogged/gap work and are not fullcompile/exclusivefuel attribution.",
+  "map_assertion_IDs": 0,
+  "expected_map_assertions_unexecuted": 69,
+  "capture_sha256": "45ed552a1d6447d07ef9bfeaa9b8a1b515969901afce2b814270a04c87f09819",
+  "receipts": "/home/bobby/.cache/suss-m4-work/pr263-pinned-map-trace-e294-v1",
+  "analysis_sha256": "1e04cda2381a24b1a00bcf1818d5fc89c09dc08415b6bf05437f5e45f06bec26",
+  "next": "Exact donor290e sparse-setter two-file source port pending CarverGO; no application/run/savings or acceptance proved by this diagnostic."
+ }
+}
