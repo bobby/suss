@@ -118,7 +118,7 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
 
 # Independent closed identities for the reviewed generic/typed generators and
 # complete property-find route. Not derived from refreshable manifest values.
-EXPECTED_NAMED_PROPERTY_SCOPES = {'checked': 'eaf232ef48fd0e6bf0723827594552746cc6c5e2ebc8b9d53902d5286f5e7adb', 'typed-route': '248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63', 'checked-validation': '1cb4bfe3558e5c2dc69d1220c873040db3c1179bc1192c219f40deea8ad3316e', 'short-route': 'a472a00aa8ff6c8c97dfac1da600bcdd8efa7698d3052b73fa82e7f08822a169', 'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5'}
+EXPECTED_NAMED_PROPERTY_SCOPES = {'checked-emitter': '76c90e88398bb4e49e320877d5bf04c84ab6d667bc3fcc5a0a93be96352918cf', 'checked': 'eaf232ef48fd0e6bf0723827594552746cc6c5e2ebc8b9d53902d5286f5e7adb', 'typed-route': '248000cee6ee3e9d496156092abd90d6ad878f2e21b8c171672427347bdf3f63', 'checked-validation': '1cb4bfe3558e5c2dc69d1220c873040db3c1179bc1192c219f40deea8ad3316e', 'short-route': 'a472a00aa8ff6c8c97dfac1da600bcdd8efa7698d3052b73fa82e7f08822a169', 'generic-canonical': 'ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5'}
 
 
 def named_property_guard_scopes(raw):
@@ -137,13 +137,21 @@ def named_property_guard_scopes(raw):
     short_anchor = b'pub(super) fn short_literal_functions('
     if raw.count(validation_anchor) != 1 or raw.count(short_anchor) != 1:
         raise ValueError('named-property shared validation/short route boundaries must be unique')
+    emitter_anchor = b'fn checked_function(\n'
+    if raw.count(emitter_anchor) != 1:
+        raise ValueError('named-property checked emitter boundary must be unique')
+    emitter = raw.index(emitter_anchor)
+    emitter_end = raw.index(b'\n}\n', emitter) + 3
     validation = raw.index(validation_anchor)
+    if not emitter < emitter_end < validation:
+        raise ValueError('named-property checked emitter scope order mismatch')
     validation_end = raw.index(b'\n}\n', validation) + 3
     short = raw.index(short_anchor)
     short_end = raw.index(b'\n}\n', short) + 3
     if not validation < validation_end < first < finish < short < short_end:
         raise ValueError('named-property shared validation/short route scope order mismatch')
-    return {'checked': raw[first:second], 'generic': raw[second:last],
+    return {'checked-emitter': raw[emitter:emitter_end],
+            'checked': raw[first:second], 'generic': raw[second:last],
             'typed-route': raw[last:finish],
             'checked-validation': raw[validation:validation_end],
             'short-route': raw[short:short_end]}
@@ -180,7 +188,8 @@ def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
     identities = {'guard-sha256': 'generic-canonical', 'route-sha256': 'typed-route',
                   'checked-guard-sha256': 'checked',
                   'checked-validation-sha256': 'checked-validation',
-                  'short-route-sha256': 'short-route'}
+                  'short-route-sha256': 'short-route',
+                  'checked-emitter-sha256': 'checked-emitter'}
     if any(provenance.get(field) != expected[scope] for field, scope in identities.items()):
         raise ValueError('named-property ABI guard identity mismatch')
     if provenance.get('typed-precondition') != 'property-find guards each entry and query as STRING; combined private helper fully validates each field before equality, throwing nominal language error on invalid field; full scan including late entries':
@@ -192,7 +201,8 @@ def verify_named_property_abi_adaptation(provenance=None, source_bytes=None):
             digest(scopes['checked']) != expected['checked'] or
             digest(scopes['typed-route']) != expected['typed-route'] or
             digest(scopes['checked-validation']) != expected['checked-validation'] or
-            digest(scopes['short-route']) != expected['short-route']):
+            digest(scopes['short-route']) != expected['short-route'] or
+            digest(scopes['checked-emitter']) != expected['checked-emitter']):
         raise ValueError('named-property ABI complete guard differs from its recorded algorithm')
     return 1
 

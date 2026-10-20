@@ -250,5 +250,30 @@ class RecordAbiProvenance(unittest.TestCase):
 
 
 
+    def test_checked_instruction_emitter_cannot_bypass_closed_guards(self):
+        source = (ROOT / self.data['source']).read_bytes()
+        scopes = named_property_guard_scopes(source)
+        scope = scopes['checked-emitter']
+        anchor = b'    let mut function = Function::new(locals.iter().copied());\n'
+        self.assertEqual(scope.count(anchor), 1)
+        changed_scope = scope.replace(anchor, anchor +
+            b'    function.instruction(&Instruction::I32Const(1));\n'
+            b'    function.instruction(&Instruction::Return);\n', 1)
+        mutated = source.replace(scope, changed_scope, 1)
+        after = named_property_guard_scopes(mutated)
+        for name, original in scopes.items():
+            if name != 'checked-emitter':
+                self.assertEqual(after[name], original)
+        for refresh_closed in [False, True]:
+            with self.subTest(refresh_closed=refresh_closed):
+                changed = copy.deepcopy(self.data)
+                changed['source-file-sha256'] = hashlib.sha256(mutated).hexdigest()
+                if refresh_closed:
+                    changed['checked-emitter-sha256'] = hashlib.sha256(changed_scope).hexdigest()
+                error = 'guard identity mismatch' if refresh_closed else 'complete guard differs'
+                with self.assertRaisesRegex(ValueError, error):
+                    verify_named_property_abi_adaptation(changed, mutated)
+
+
 if __name__ == '__main__':
     unittest.main()

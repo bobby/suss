@@ -15,5 +15,6 @@
   "typed-precondition": "property-find guards each entry and query as STRING; combined private helper fully validates each field before equality, throwing nominal language error on invalid field; full scan including late entries",
   "checked-validation-sha256": "1cb4bfe3558e5c2dc69d1220c873040db3c1179bc1192c219f40deea8ad3316e",
   "short-route-sha256": "a472a00aa8ff6c8c97dfac1da600bcdd8efa7698d3052b73fa82e7f08822a169",
-  "short-precondition": "packed raw UTF16 query length <=4; probe returns explicit hit/value only after complete live schema validation and last-duplicate scan; miss/excluded receivers return false/nil without callbacks; compiler fallback constructs the original literal and invokes the original dispatcher once; legacy getter shares inspection"
+  "short-precondition": "packed raw UTF16 query length <=4; probe returns explicit hit/value only after complete live schema validation and last-duplicate scan; miss/excluded receivers return false/nil without callbacks; compiler fallback constructs the original literal and invokes the original dispatcher once; legacy getter shares inspection",
+  "checked-emitter-sha256": "76c90e88398bb4e49e320877d5bf04c84ab6d667bc3fcc5a0a93be96352918cf"
 }

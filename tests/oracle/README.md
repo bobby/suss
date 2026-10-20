@@ -163,7 +163,7 @@ partial roadmap progress with `Refs #19` and `Refs #242`.
 exact source expressions, nil/boolean/binary64/vector tags and ordered getter
 and owner effects. `src/suss_oracle/short_property.cljs` is the original reference
 producer. The source/pin/output bindings and both reference attempts are retained
-in [the probe evidence](../../docs/roadmap/evidence/m4-short-literal-key-probe-2026-10-17.md).
+in [the donor-source probe evidence](https://github.com/bobby/suss/blob/8a110949f1c558ade6c38999e61aeeaffade6c2d/docs/roadmap/evidence/m4-short-literal-key-probe-2026-10-17.md).
 From this directory, reproduce with the pinned dependencies in `deps.edn`:
 
 ```sh
