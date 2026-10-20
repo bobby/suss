@@ -30522,3 +30522,31 @@ SUSS_MACRO_FUEL_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_na
 Use one producer, a private writable TMPDIR and bounded workers; do not set RUSTFLAGS. The companion evidence records the exact six-test native command, timings, raw hashes and source scopes. Local caches: `pr263-named-self-owner-production-v1`, `pr263-semantic-compilation-calibration-b0c5091-v1`, `pr263-identity-focused-calibrated-e497-v1`. The last contains the active runner and eventual terminal receipt. Earlier pinned map failure remains tied to source316a; no current-source map, full baseline or final-head CI success is claimed.
 
 Partial result from that same identity run: the original callable test has now returned FAILED. All six rows execute. First requests match in both phases; the next two requests in each phase differ only at index5, `(identical? callable-saved-raw raw)`, expected true but observed false. Metadata and method-parameter identities match. The namespace test remains running and the companion has not started; no whole-command verdict is claimed. Exact actual/expected rows are retained in companion JSON.
+
+
+### Global ownership, native work and identity observations (2026-10-20)
+
+Compiler source `370aa34` has actual fingerprint `067bd7378b6a1b6cbac036fa2b633c93d04f3325c652dfab966d0cf90ea0777c` over 222 frozen inputs. It shares immutable Global identities, charges borrowed resolution queries, adds opt-in declaration reuse diagnostics, and corrects a test that reordered raw pinned metadata observations. The original twelve syntax-quote cases and a new two-phase order regression pass. The first build stopped on four Rust type errors; the bounded repair moves original diagnostics instead of cloning them and makes the metered nominal helper mutable. That failed build executed no tests.
+
+All 23 focused native tests pass (0.47s harness /238.388496s total); all14 original direct resolution tests pass (28.95s /331.630287s). The latter execute freshly generated fragments and runtime ABI bytes. Neither suite establishes Session, public macro or default-core acceptance. Exact names, commands, profiles and raw hashes are in [the focused evidence](evidence/m4-pr263-global-ownership-and-native-work-results-2026-10-20.json).
+
+Actual layout shrank from Global56/Hir200 to Global8/Hir160 bytes. However, complete native preparation after parsing now charges46,101,793 units, versus17,476,366 on sourcee497. This is a charged-work regression, not an overall fuel saving or default-budget unblock. The proposal adds metered comparisons to resolution; the measurement is not exclusive cost attribution. Parsing389,921 units, source-byte charges and full Session setup/execution remain separate or excluded. The diagnostic uses a finite1B cap and never instantiates its emitted module. Its first link attempt selected an older cached library and failed; the successful retry uses Cargo-discovered current artifacts and checks their embedded source fingerprint.
+
+Normal bootstrap generation completed twice in361.356628s and stopped with exit1 at the old shipped comparison, raw `229142dacc724ef53c95cabf1e88e0b49b7cad12530be7cff9bc8ec02e1e8ff4`. All four pairs agree. Independent exact adoption produced BOOT commit `5028d03`; only source-identity custom sections and corresponding manifest hashes changed. Source identity/invalidation verification passes with the correct custom target (21.099615s, raw `910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704`). The initial wrong-target invocation failure is retained separately. Pure identity verification is not bootstrap semantic execution.
+
+```sh
+export CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+cargo test -p suss-compile --locked --test portable_resolution -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+cargo test -p suss-cli --locked --test core_import -- --test-threads=2 --nocapture
+```
+
+Use one producer, bounded workers and a private writable TMPDIR; do not set RUSTFLAGS. The subsequent original default-core17 replay completed0PASS17FAIL0ignored (6.92s harness /284.494829s total), raw `a9d2098bfadb35725b6e4d25a0ad61ca2c75e285b250f9b3c958a26d653a2c9c`. Every case failed at common Session::eval(CORE) setup with native-work exhaustion52909..52924; later core behavior assertions did not execute. The current callable trace, full source-child fixture, pinned map, source-tag programs, remaining semantic negatives, full baseline and final-head CI still require evidence. Existing #270 criteria and default allowances are unchanged.
+
+Historical sourcee497 identity evidence is [recorded separately](evidence/m4-pr263-identity-execution-results-2026-10-20.json). The original namespace/callable harness completed0PASS2FAIL, with all ten namespace calls and six callable rows observed. Namespace aliases differ in both phases; later callable rows differ only in saved raw-declaration identity. A separate corrected shared-environment companion passed1/0 with all six rows and four true booleans per row, retaining GC and three independent requests per phase. These e497 outcomes are not current067 results or an identity fix.
+
+Local receipts: `pr263-global-owner-production-v2`, `pr263-native-metered-noexpansion-global-v2`, `pr263-identity-focused-calibrated-e497-v1` and `pr263-shared-env-source-body-e497-v1`. Earlier failures remain source-qualified. No issue closure or promotion follows from this checkpoint.

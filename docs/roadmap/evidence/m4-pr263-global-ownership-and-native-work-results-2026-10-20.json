@@ -1,0 +1,315 @@
+{
+  "status": "FINAL_PARTIAL_PUBLICATION_SNAPSHOT_NATIVE_COST_BOOT_IDENTITY_CORE_RUNNING",
+  "source_commit": "370aa34261e5156e64d1ff4fc5ae0e36adab54f0",
+  "actual_build_source_fingerprint": "067bd7378b6a1b6cbac036fa2b633c93d04f3325c652dfab966d0cf90ea0777c",
+  "compiler_inputs": 222,
+  "source_binding": "222 frozen compiler inputs independently match source370 and adopted5028 Git blobs; actual067 build output confirmed. No live-root rehash/run-long detector claim.",
+  "cohorts": [
+    {
+      "cohort": "native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "portable::resolve::global_ownership_tests::hir_callers_propagate_every_interruption_and_recover_without_publishing",
+        "portable::resolve::global_ownership_tests::borrowed_queries_aliases_and_bootstrap_selection_allocate_no_identity_owners",
+        "portable::resolve::global_ownership_tests::all_bootstrap_variants_meter_absent_owners_and_restore_without_publishing_fallbacks",
+        "portable::resolve::global_ownership_tests::identity_value_order_debug_and_imports_do_not_depend_on_arc_address",
+        "portable::resolve::global_ownership_tests::creation_and_binding_publication_prepay_all_work_and_retry_without_partial_state",
+        "portable::resolve::global_ownership_tests::reader_pair_staging_and_readonly_checkpoint_identity_do_not_publish_partial_cells",
+        "portable::resolve::global_ownership_tests::redefinition_shares_language_identity_but_preserves_distinct_definition_revisions",
+        "portable::resolve::global_ownership_tests::borrowed_metered_queries_pay_each_comparison_and_never_expose_failed_results",
+        "portable::resolve::global_ownership_tests::native_interface_catalog_uses_actual_binding_and_propagates_current_meter_failure",
+        "portable::hir::local_bindings::ownership_tests::self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload",
+        "portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity",
+        "portable::hir::destructuring::tests::parameter_binding_qualified_shorthand_and_hygiene_preserve_local_metadata",
+        "portable::hir::destructuring::tests::parameter_binding_primitive_fn_star_stays_strict_and_bad_rest_fails",
+        "portable::hir::local_bindings::ownership_tests::direct_definition_function_retains_actual_provisional_owner_and_nested_def_restores_parent",
+        "portable::hir::local_bindings::ownership_tests::replaced_equal_function_and_nested_function_use_owned_fallback_defonce_reuses_actual_owner",
+        "portable::resolve::type_key_history::tests::type_key_history_captures_fresh_defaults_before_current_raw_overrides",
+        "portable::resolve::type_key_history::tests::type_key_history_preserves_original_raw_keys_through_repeated_types",
+        "portable::resolve::type_key_history::tests::type_key_history_distinguishes_completed_tag_and_top_fn_source_keys",
+        "portable::resolve::type_key_history::tests::type_key_history_rejects_foreign_binding_and_propagates_every_meter_error",
+        "portable::resolve::type_key_history::tests::type_key_history_retains_all_selected_fields_without_predecessor_chains",
+        "portable::resolve::type_key_history::tests::type_key_history_proof_query_defers_unsupported_paths_but_never_meter_errors",
+        "portable::syntax_quote::tests::pinned_reader_trees_match_with_generated_identity_preserved",
+        "portable::syntax_quote::tests::indexed_syntax_quote_metadata_keeps_pinned_association_order_in_both_phases",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "counts": {
+        "pass": 23,
+        "fail": 0,
+        "ignored": 0,
+        "filtered": 541
+      },
+      "seconds": 238.38849562301766,
+      "harness_seconds": 0.47,
+      "raw_sha256": "157dec9385995bd543758c029c6294888a36d4b754bd16e0063e198fec9ee65e",
+      "cache": "/home/bobby/.cache/suss-m4-work/pr263-global-owner-production-v2/native.log",
+      "passed_names": "All23 exact selector arguments in command passed; verified raw and pr263-global-owner-production-v2/verified-native-results.json retain explicit result list.",
+      "scope": "23 exact native-only HIR/resolution/catalog tests; no public Session/VM/default CORE credit. Actual compiled source identity must be verified separately."
+    },
+    {
+      "cohort": "resolution",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "portable_resolution",
+        "--",
+        "--test-threads=2",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "counts": {
+        "pass": 14,
+        "fail": 0,
+        "ignored": 0,
+        "filtered": 0
+      },
+      "seconds": 331.6302874800167,
+      "harness_seconds": 28.95,
+      "raw_sha256": "0fc8374681852d70264173ad39061c8404dcc7ef3bc844c8cada240261505f05",
+      "cache": "/home/bobby/.cache/suss-m4-work/pr263-global-owner-production-v2/resolution.log",
+      "passed_names": [
+        "namespace_arithmetic_values_materialize_canonical_phase_cells",
+        "namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval",
+        "namespace_configuration_and_compile_failures_do_not_change_resolution",
+        "namespace_core_aliases_import_one_canonical_live_cell",
+        "namespace_aliases_refers_exclusions_and_shadowing_share_resolution",
+        "namespace_global_reads_preserve_once_only_source_order_and_short_circuit",
+        "namespace_phases_resolve_and_execute_distinct_cells",
+        "namespace_scopes_persist_independently_when_reentered",
+        "namespace_globals_lower_into_shared_binding_reads",
+        "namespace_sources_reject_extension_and_root_ambiguity",
+        "source_core_require_records_identity_without_weakening_core_alias_guards",
+        "source_namespace_snapshots_share_unchanged_declarations_and_keep_old_revisions",
+        "namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise",
+        "source_requires_retain_library_identity_without_aliases_in_each_phase"
+      ],
+      "scope": "14 original direct resolution tests; fresh runtime_abi module and portable fragments, no shipped BOOT/Session. Independent pre-BOOT scope approval required. Not default CORE acceptance."
+    }
+  ],
+  "distinct_tests_across_two_commands": 37,
+  "scope_limit": "Native23 plus direct resolution14; not a single whole baseline. Resolution uses fresh runtime_abi/portable artifacts, not shipped BOOT/Session. No public macro identity or strict CORE17 pass.",
+  "native_measurement": {
+    "head": "370aa34261e5156e64d1ff4fc5ae0e36adab54f0",
+    "compiler_fingerprint": "067bd7378b6a1b6cbac036fa2b633c93d04f3325c652dfab966d0cf90ea0777c",
+    "normal_rlib": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_compile-c204c5b949caee77.rlib",
+    "rlib_sha256": "1b29ef0ecfcd5b282fc0a7a0fa15c0c535e684f4c711699cd2be4db38ad3e2ed",
+    "artifact_selection": "Matches actual Cargo artifact receipt; normal c204 rlib, not stale6b helper assumption.",
+    "scope": "Complete CORE Runtime Environment::default pathNone native preparation AFTER parse only; finite1B diagnostic, no Session/VM/default acceptance.",
+    "source_bytes": 276925,
+    "forms": 525,
+    "parse_work_separate": 389921,
+    "source_byte_debit_excluded": 276925,
+    "old_e497_cost": 17476366,
+    "new_067_cost": 46101793,
+    "increase_units": 28625427,
+    "new_over_old_ratio": 2.6379507616171463,
+    "increase_percent": 163.79507616171463,
+    "new_bottom_calls": 4568353,
+    "old_bottom_calls": 2400127,
+    "new_layout_bytes": {
+      "Global": 8,
+      "Hir": 160,
+      "Expression": 96,
+      "Type": 16,
+      "Parameter": 72
+    },
+    "old_layout_main_reported_bytes": {
+      "Global": 56,
+      "Hir": 200
+    },
+    "old_layout_qualification": "Main reported comparison; old retained diagnostic run.log does not print layout.",
+    "new_raw_sha256": "fba2e6916b01a240937e3f3ddf654c87e164ba1b7fd270d5aaa693060d048f70",
+    "old_raw_sha256": "c76fa2525a97e0dbebacc89182e41f7f0864dd3306b360a5b207a9c7506f9e13",
+    "new_cache": "/home/bobby/.cache/suss-m4-work/pr263-native-metered-noexpansion-global-v2",
+    "old_cache": "/home/bobby/.cache/suss-m4-work/pr263-native-metered-noexpansion-e497-v1",
+    "conclusion": "Measured charged work increases by28625427 units. Smaller native layouts do not establish an overall fuel benefit or default CORE unblock. New comparison metering contributes; no isolated attribution of whole increase.",
+    "cost_scope_unchanged_exclusions": [
+      "native parse separately measured",
+      "source byte debit excluded",
+      "full Session provisioning not measured",
+      "no wall-time speedup conclusion"
+    ]
+  },
+  "preserved_initial_failures": {
+    "production_v1": "pr263-global-owner-production-v1 native-terminal exit101 was a build failure; do not substitute it for successful v2 native23.",
+    "diagnostic_helper_v1": "pr263-native-metered-noexpansion-global-v1 compile_exit1 stale rlib linking; no measured-cost verdict or acceptance test result."
+  },
+  "pending_snapshot": {
+    "CORE17": {
+      "status": "RUNNING_NO_VERDICT_AT_SNAPSHOT",
+      "tested_head": "5028d03e225d585c0f3731e4cb7e7cae1b9750ff",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "core_import",
+        "--",
+        "--test-threads=2",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "start_receipt": "/home/bobby/.cache/suss-m4-work/pr263-global-owner-production-v2/core-start.json",
+      "start_sha256": "06786afbd7d730284fb968a73ef41968b6586ab3ba2a4193ec0e99aaa6e46212",
+      "limits": "Original default quotas/program/assertions unchanged. Live log not copied, hashed or treated as terminal."
+    },
+    "callable_attribution": "Pending; no current067 public callable result or exact rejecting-gate claim.",
+    "acceptance": "No defaultCORE unblock, overallfuel benefit, fullbaseline, finalheadCI, issueclosure or promotion claim; preserve all existing PR acceptance checkboxes."
+  },
+  "verification_files": {
+    "pr263-global-owner-production-v2/native-terminal.json": "48e3cfba9090c6a651b0d62f531f983b95c46a8ca0e5f6fd164a9f1deda96d1d",
+    "pr263-global-owner-production-v2/resolution-terminal.json": "60212119dbb4c7150857098b95125ddcbdb296745f831df9267b2b5e79736fd8",
+    "pr263-global-owner-production-v2/compiled-build-source-identity.json": "fdd18d3f17fd137322f9e7fabbe359d740c27e52f674da33d1109efadc0ee435",
+    "pr263-global-owner-production-v2/current-artifacts.json": "8589ccc7b06d796cd9663dcb0dfa4199d81b7bdf1698b14b26c30d7c51297df9",
+    "pr263-global-owner-production-v2/source-freeze.json": "4a9dc3424ff3dada12e556da92d09380dc71dd57b44ca26bf92b0159aaa443da",
+    "pr263-native-metered-noexpansion-global-v2/manifest.json": "9ada02f1283ac6b3fb9a8eee7f731b35d818da9995f3b38d401965e19ef8d345",
+    "pr263-native-metered-noexpansion-global-v2/terminal.json": "a1c395b75bd7ad9dea2e495b8916fc24b83d0d64db5b3941433efec855bd0f66",
+    "pr263-native-metered-noexpansion-e497-v1/measurement.json": "784944f18c933c0c866bb61fee29faf7d214ae8fef7d22ab5fed7daac48e96c4",
+    "pr263-global-owner-production-v2/bootstrap-terminal.json": "28c2a11849c2d2bb8d80ceb3ea7ffc2f4c891a20107b2ea41cfd95fef6d35c35",
+    "pr263-global-owner-production-v2/independent-adoption-review.json": "227d6a3cf6aafc532178c410726d2e42c3ad86c86ccdb3c4fc6d3b23b7578bc4",
+    "pr263-global-owner-production-v2/identity-terminal.json": "4e83b90997c0d26faf4cf55123f028a740358b5f46176fd18d88e16eac363649",
+    "pr263-global-owner-production-v2/identity-initial-wrong-target-terminal.json": "6af885037185edc1b1d5c01b07a7c772437ee717a45ee010079ea5e40ec2b5d4"
+  },
+  "BOOT_head": "5028d03e225d585c0f3731e4cb7e7cae1b9750ff",
+  "bootstrap": {
+    "source_head": "370aa34261e5156e64d1ff4fc5ae0e36adab54f0",
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "exit_code": 1,
+    "seconds": 361.35662794997916,
+    "raw_sha256": "229142dacc724ef53c95cabf1e88e0b49b7cad12530be7cff9bc8ec02e1e8ff4",
+    "stage": "Both normal generations completed; all4first/second bytepairs independently verified. Command failed at stale shipped comparison, not a full verifier PASS.",
+    "adoption_commit": "5028d03e225d585c0f3731e4cb7e7cae1b9750ff",
+    "adoption_peer_receipt": "/home/bobby/.cache/suss-m4-work/pr263-global-owner-production-v2/independent-adoption-review.json",
+    "adoption_peer_sha256": "227d6a3cf6aafc532178c410726d2e42c3ad86c86ccdb3c4fc6d3b23b7578bc4",
+    "adopted_four_git_hashes": {
+      "runtime/bootstrap/runtime.wasm": "d386127e50a41d7f4e1d576ccbb19d836be6521ca65837ceca1f111b0c6a5c92",
+      "runtime/bootstrap/runtime.json": "10a646135340f8a8bbaffb85c45a5cc0fb9ae4aeabadae93b14e2ca6c1d48d06",
+      "runtime/bootstrap/macro.wasm": "ebaafce55abec27561201ef6ff6b2b369c848dc32ac4c43d0cfac9c4d2266322",
+      "runtime/bootstrap/macro.json": "bf1f0d95dd9494b36122ce5866fec336b865f6c06aa817fab314bcc09359aa7d"
+    },
+    "noncustom_scope": "Carver receipt verifies both phase noncustom executable sections unchanged; source-artifact custom section plus two manifest fields updated. No new guest execution credit."
+  },
+  "pure_identity": {
+    "tested_head": "5028d03e225d585c0f3731e4cb7e7cae1b9750ff",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "environment": {
+      "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target"
+    },
+    "exit_code": 0,
+    "seconds": 21.099614812002983,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script/source identity and input invalidation, no Session/VM/publicmacro/bootstrap execution credit. Priorwrongdefaulttargetfailure retained separately.",
+    "first_wrong_default_target": {
+      "exit_code": 1,
+      "seconds": 0.19546349602751434,
+      "raw_sha256": "1302f6ad60013f870e257c661be3502bc365d5eddfde01c13dd50ffcfb39c027",
+      "cache": "/home/bobby/.cache/suss-m4-work/pr263-global-owner-production-v2/identity-initial-wrong-target.log",
+      "failure": "No compiled build script matches shipped compiler identity in wrong default target; corrected target invocation PASS. Original failure retained, not erased or relabeled semantic/bootstrap failure."
+    }
+  },
+  "historical_identity": {
+    "packet": "/home/bobby/.cache/suss-m4-work/pr263-identity-terminal-e497-publication-v2-companion/public-results.json",
+    "packet_sha256": "8c79555c0f804bf0e5148294a76e31a8294dcacf59236afda96a07808bf2c097",
+    "source_fingerprint": "e497f67802dbcec53e673f9f24e7d0164b3964007027a62bfcae7d94170def18",
+    "BOOT": "b0c5091b20a0ff87b87d4d62e89230acc7932e3b",
+    "original_namespace_callable": "8f1e4cf:0PASS2FAIL; ten namespace and six callable rows complete; semantic identity mismatches, not fuel/setup failures. Raw ea861c1c8c4ff1acdf6d03fe2fe6743395d87d27f3fa49f6512061287bce66be.",
+    "corrected_companion": "d7d48fd:1PASS; six label+four-true-Boolean rows through actual SourceCallable body, original GC/three independent requests each caller phase. Raw78b5c8471ade8ce027d46d7e4f5c9c7daf75188e08107b1fdb38f4cb9e42b0dc.",
+    "scope": "Historical separate source-qualified commands; not rerun on067 and not current identity acceptance or fresh aggregate."
+  },
+  "later_default_CORE17_terminal": {
+    "terminal": {
+      "head": "5028d03e225d585c0f3731e4cb7e7cae1b9750ff",
+      "source_commit": "370aa34261e5156e64d1ff4fc5ae0e36adab54f0",
+      "predicted_source_fingerprint": "067bd7378b6a1b6cbac036fa2b633c93d04f3325c652dfab966d0cf90ea0777c",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "core_import",
+        "--",
+        "--test-threads=2",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "17 original default Session CORE tests after fresh normalBOOT adoption and source identity; quotas/programs/assertions unchanged. No Runtime assertion credit if setupfails.",
+      "exit_code": 101,
+      "seconds": 284.49482936796267,
+      "raw_sha256": "a9d2098bfadb35725b6e4d25a0ad61ca2c75e285b250f9b3c958a26d653a2c9c"
+    },
+    "counts": {
+      "passed": 0,
+      "failed": 17,
+      "ignored": 0
+    },
+    "harness_seconds": 6.92,
+    "exact_failed_names": [
+      "bootstrap_nil_test_evaluates_once_and_propagates_exceptions",
+      "bootstrap_nil_test_captures_values_across_fragments_and_loop_edges",
+      "imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload",
+      "imported_boolean_port_arguments_run_once_before_arity_errors",
+      "imported_boolean_ports_keep_original_behavior_and_canonical_live_bindings",
+      "imported_boolean_ports_use_cljs_truthiness_for_primitives_and_objects",
+      "imported_core_aliases_and_captured_function_observe_live_redefinition",
+      "imported_core_matches_independently_decoded_pinned_scalar_corpus",
+      "imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity",
+      "imported_identity_preserves_exact_values_and_object_identity_across_gc",
+      "imported_inc_dec_alias_calls_capture_callee_before_mutating_operand",
+      "imported_inc_dec_array_conversion_and_unsupported_objects_recover",
+      "imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover",
+      "imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings",
+      "imported_some_distinguishes_nil_from_false_and_survives_gc",
+      "imported_some_evaluates_arguments_once_before_arity_error",
+      "imported_some_ignores_redefined_predicate_and_not_vars"
+    ],
+    "stage": "Every originalcase panicked at loaded Session.eval(CORE), nativeNoExpansion10M compilework exhausted52909..52924; latercorebehaviourassertionsUNEXECUTED. No testquota/source/assertionchange.",
+    "error_count": 17,
+    "span": "52909..52924"
+  }
+}

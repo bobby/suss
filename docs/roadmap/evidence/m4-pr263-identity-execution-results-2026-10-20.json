@@ -1,0 +1,190 @@
+{
+  "status": "FINAL_HISTORICAL_TERMINAL_RESULTS_CACHE_ONLY",
+  "compiler_context": {
+    "fingerprint": "e497f67802dbcec53e673f9f24e7d0164b3964007027a62bfcae7d94170def18",
+    "input_count": 222,
+    "BOOT_commit": "b0c5091b20a0ff87b87d4d62e89230acc7932e3b",
+    "scope": "Same existing e497 compiler and BOOT; no new compiler implementation pass. Companion repairs a supplemental fixture source-AST route, not production."
+  },
+  "original_identity_tuple": {
+    "tested_head": "8f1e4cface9a6c8d85573c71b8d7b5988054282d",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_namespace_identity",
+      "--test",
+      "compiled_macro_shared_environment_admission",
+      "--",
+      "--nocapture",
+      "--test-threads=2"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+      "CARGO_BUILD_JOBS": "1",
+      "RAYON_NUM_THREADS": "1",
+      "SUSS_MACRO_FUEL_TRACE": "1"
+    },
+    "exit_code": 101,
+    "counts": {
+      "pass": 0,
+      "fail": 2,
+      "ignored": 0
+    },
+    "command_seconds": 1517.899727209995,
+    "harness_seconds": 1504.31,
+    "raw_sha256": "ea861c1c8c4ff1acdf6d03fe2fe6743395d87d27f3fa49f6512061287bce66be",
+    "cache": "/home/bobby/.cache/suss-m4-work/pr263-identity-focused-calibrated-e497-v1",
+    "results": [
+      {
+        "name": "resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations",
+        "result": "FAILED"
+      },
+      {
+        "name": "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "result": "FAILED"
+      }
+    ],
+    "namespace": {
+      "completed_rows": 10,
+      "caller_phases": [
+        "runtime",
+        "macro"
+      ],
+      "calls_started_decoded": [
+        10,
+        10
+      ],
+      "mismatch_counts_per_phase": [
+        1,
+        15,
+        13,
+        13,
+        2
+      ],
+      "both_phases_identical": true,
+      "all_value_presence_fields_match": true,
+      "classification": "identity-semantic assertion failure; no fuel/setup failure",
+      "exact_field_mapping_cache": "/home/bobby/.cache/suss-m4-work/pr263-identity-terminal-e497-publication-v1/public-results.json"
+    },
+    "callable": {
+      "completed_rows": 6,
+      "matching_rows": 2,
+      "mismatching_rows": 4,
+      "only_differing_index": 5,
+      "field": "identical? callable-saved-raw raw",
+      "other_fields_match": true
+    },
+    "companion_in_this_command": "UNEXECUTED: Cargo stopped after first harness failure"
+  },
+  "corrected_companion_tuple": {
+    "tested_head": "d7d48fde0a63b26f9a668d4ae3b0543bbefd03c8",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_shared_environment_admission",
+      "--",
+      "--exact",
+      "actual_multi_ast_locals_share_one_projection_cold_and_across_same_revision_requests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+      "CARGO_BUILD_JOBS": "1",
+      "RAYON_NUM_THREADS": "1",
+      "SUSS_MACRO_FUEL_TRACE": "1"
+    },
+    "exit_code": 0,
+    "counts": {
+      "pass": 1,
+      "fail": 0,
+      "ignored": 0
+    },
+    "command_seconds": 133.39710765500786,
+    "harness_seconds": 130.51,
+    "raw_sha256": "78b5c8471ade8ce027d46d7e4f5c9c7daf75188e08107b1fdb38f4cb9e42b0dc",
+    "cache": "/home/bobby/.cache/suss-m4-work/pr263-shared-env-source-body-e497-v1",
+    "test_name": "actual_multi_ast_locals_share_one_projection_cold_and_across_same_revision_requests",
+    "fixture_sha256": "b5d6db548e4f552cd41534d24ea4d33038cbd8c80f93564f026ccb285d5e9cdd",
+    "rows": [
+      {
+        "phase": "runtime",
+        "label": "first",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      },
+      {
+        "phase": "runtime",
+        "label": "same-revision-2",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      },
+      {
+        "phase": "runtime",
+        "label": "same-revision-3",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      },
+      {
+        "phase": "macro",
+        "label": "first",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      },
+      {
+        "phase": "macro",
+        "label": "same-revision-2",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      },
+      {
+        "phase": "macro",
+        "label": "same-revision-3",
+        "count_equals_two": true,
+        "within_request_locals_identity": true,
+        "saved_locals_equals_first": true,
+        "saved_locals_equals_second": true
+      }
+    ],
+    "source_binding": "All 222 retained freeze entries independently match tested d7 Git blobs. No live root hash or run-long detector claim.",
+    "meaning": "Actual source-method body contains two x references; their locals projections are identical cold and across three independent requests in each phase, with original GC checks. Label plus FOUR booleans, including refs-count==2; not a numeric count plus four booleans."
+  },
+  "qualification": {
+    "cross_command_totals": "Three distinct tests across two source-qualified commands: one PASS, two FAIL. Not a fresh 1PASS2FAIL final-head run.",
+    "original_invalid_companion": "Original raw:init supplemental fixture previously failed language invocation; preserved separately in pr263-shared-env-calibrated-e497-v1 and diagnostic v2. Corrected SourceCallable route pass does not erase that receipt or prove original callable/namespace acceptance.",
+    "remaining_identity_cause": "Unknown rejecting source gate. Trace attribution required; no fix inferred from these rows.",
+    "new_applied_candidate": "Main reports reviewed Global727f82d, diagnostic79f8c45 and raw-metadata cfgtest fix5a3b965 applied. Current native23 producer running; no result, actual new fingerprint or identity acceptance credited. Predicted8bfa is not recorded as actual.",
+    "acceptance": "Original namespace/callable identity gates remain failed. No full baseline/final-head CI/promotion claim."
+  },
+  "verification": {
+    "raw_marker_rows": 6,
+    "true_boolean_leaves": 24,
+    "original_fixture_assertions_preserved": true,
+    "tested_git_compiler_inputs_verified": 222,
+    "terminal_sha256": "08a5f9263595b5d3d358b6376fe4a72fbe3201c41791d2e0b4928ea5132e1654",
+    "source_freeze_sha256": "7052f93d465177ae034820337b9cd798dbd34f82c01cffabfa49aea6b753b82d",
+    "no_Cargo_VM_shared_GH_writes": true
+  }
+}
