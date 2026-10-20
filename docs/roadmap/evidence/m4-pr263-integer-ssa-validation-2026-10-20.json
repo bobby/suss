@@ -2131,6 +2131,47 @@
       ],
       "accepted_complete_selected_tests": true,
       "measurement_lines": []
+    },
+    "default-constructor": {
+      "head": "eb84a77389419ddc59f19322d8d72de7995cbed6",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 415.96946190600283,
+      "raw_sha256": "d4b165709786f5b76b52da76c5baabd2f615c7e8abc0de1fa5fe999a46d4d16a",
+      "started_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 99.28s"
+      ],
+      "accepted_complete_selected_tests": false,
+      "measurement_lines": []
     }
   },
   "profile_environment": {
