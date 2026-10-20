@@ -6,8 +6,10 @@
 //! neither guest equality nor a same-spelling keyword mints a source owner.
 use super::*;
 use crate::portable_macro_graph::preserve_source_error;
+use crate::portable_macro_graph::{reuse, MetadataShape};
 use crate::portable::hir::MetadataKeyOrigin;
 use crate::portable::resolve::{CompletedDeclarationSource, TypeSourceValue};
+use suss_reader::forms::{Form, Kind};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct ReaderKeyPath {
