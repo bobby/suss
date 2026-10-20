@@ -23,6 +23,15 @@ impl FactoryPoint {
     }
 }
 
+// Immediate edges already satisfy construction membership in matches_local.
+// Classify without guest calls, current-storage capture or an operation refill.
+fn factory_immediate(session: &mut Session, value: &SessionValue) -> Result<bool> {
+    session.check(value)?;
+    session.charge_host_work(8)?; // owner/kind controls, scoped root and retirement
+    let mut scope = RootScope::new(&mut session.store);
+    Ok(value.value.to_rooted(&mut scope).as_i31(&scope)?.is_some())
+}
+
 fn invalid_factory(message: &'static str) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message))
 }
@@ -224,6 +233,9 @@ impl WriteDomain {
             }
             for edge in edges {
                 session.charge_host_work(3)?;
+                if factory_immediate(session, &edge)? {
+                    continue;
+                }
                 if let Some(owner) = domain.original_edge_owner(session, &edge)? {
                     reserve_factory(session, &mut pending, 1)?;
                     session.charge_host_work(2)?;
@@ -321,6 +333,10 @@ impl WriteDomain {
         edges: &[SessionValue],
     ) -> Result<Vec<ChildDomain>> {
         session.charge_host_work((4 * std::mem::size_of::<Vec<FactoryOrigin>>() + 10) as u64)?;
+        session.charge_host_work(1)?;
+        if edges.is_empty() {
+            return Ok(Vec::new());
+        }
         let mut candidates = Vec::new();
         {
             let state = registry_lock(&self.state);
@@ -339,6 +355,9 @@ impl WriteDomain {
         reserve_factory(session, &mut links, edges.len())?;
         for edge in edges {
             session.charge_host_work(3)?;
+            if factory_immediate(session, edge)? {
+                continue;
+            }
             // Already owned local inputs retain their original membership rule;
             // do not search unrelated predecessor outputs for them.
             let local = {
