@@ -3,6 +3,7 @@
 //! A capture is not a source/storage certificate. Its native recipe remains
 //! separate from its materialization alias. No guest contents or equality enter
 //! identity selection, and no child edge admits an external construction seed.
+use std::io::Write as _;
 use super::{AnalysisGraph, Recipe, Result, Value, reuse::reserve};
 use crate::portable::{
     hir,
@@ -138,6 +139,34 @@ pub(super) enum Key {
     ReaderSource(Global, reader_keys::ReaderSourceIndex, ReaderSelector),
     Request(usize),
 }
+struct TraceSourceKey<'a>(&'a Key);
+impl std::fmt::Display for TraceSourceKey<'_> {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0 {
+            Key::Namespace(p) => write!(out, "Namespace(0x{:x})", p),
+            Key::Defs(p) => write!(out, "Defs(0x{:x})", p),
+            Key::Declaration(g, p) => write!(out, "Declaration({}/{},0x{:x})", g.namespace(), g.name(), p),
+            Key::DeclarationField(g, p, slot) => write!(out, "DeclarationField({}/{},0x{:x},{})", g.namespace(), g.name(), p, slot),
+            Key::Locals(a, b) => write!(out, "Locals(0x{:x},0x{:x})", a, b),
+            Key::Local(p) => write!(out, "Local(0x{:x})", p),
+            Key::Field(p) => write!(out, "Field(0x{:x})", p),
+            Key::Scope(p) => write!(out, "Scope(0x{:x})", p),
+            Key::Callable(p) => write!(out, "Callable(0x{:x})", p),
+            Key::Ast(p) => write!(out, "Ast(0x{:x})", p),
+            Key::ReaderSource(g, owner, selector) => {
+                let (owner_kind, pointer) = match owner {
+                    reader_keys::ReaderSourceIndex::Ordinary(p) => ("Ordinary", p),
+                    reader_keys::ReaderSourceIndex::Completed(p) => ("Completed", p),
+                    reader_keys::ReaderSourceIndex::Explicit(p) => ("Explicit", p),
+                };
+                write!(out, "ReaderSource({}/{},{}:0x{:x},{:?})",
+                    g.namespace(), g.name(), owner_kind, pointer, selector)
+            },
+            Key::Request(p) => write!(out, "Request(0x{:x})", p),
+        }
+    }
+}
+
 impl Owner {
     fn key(&self, session: &mut Session) -> Result<Key> {
         session.charge_host_work(3)?;
@@ -185,7 +214,12 @@ impl RootCache {
         for certificate in &self.entries {
             session.charge_host_work(key_comparison_work(&expected.key, &certificate.source.key))?;
             if live && expected.key == certificate.source.key {
-                return Certificate::checked(session, bridge, certificate, expected);
+                let result = Certificate::checked(session, bridge, certificate, expected);
+                if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+                    let _ = writeln!(std::io::stderr().lock(), "POISON_STRICT_LOOKUP key={} certificate={:p} checked={:?}",
+                        TraceSourceKey(&expected.key), Rc::as_ptr(certificate), result.as_ref().ok().map(|v|v.is_some()));
+                }
+                return result;
             }
         }
         Ok(None)

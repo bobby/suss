@@ -148,6 +148,11 @@ impl<E> Context<E> {
             cache,
         })
     }
+    // Trace-only read of the existing policy, not a new cache decision.
+    // None means out of range; do not fabricate a repeat result for diagnostics.
+    pub(super) fn diagnostic_repeat_policy(&self, id: Value) -> Option<bool> {
+        self.repeat.get(id).copied()
+    }
     pub(super) fn cached(&self, id: Value) -> Option<&Observed<E>> {
         if self.repeat.get(id).copied().unwrap_or(true) {
             None

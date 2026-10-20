@@ -1,6 +1,7 @@
 //! Protected Macro-bootstrap memo writes, witnessed only for registered inputs.
 //! The ledger holds Weak watches; ConstructorInputs owns every live watch/root.
 //! No generic setter, public registration or uninstrumented Runtime store mints.
+use std::io::Write as _;
 use super::{Session, SessionError, SessionValue, own, registry_lock};
 use super::canonical_methods::{CanonicalMethods, InspectionContext};
 use crate::portable::{bootstrap, resolve::Phase};
@@ -29,6 +30,15 @@ pub(super) struct Watch {
     eligible_transition: bool,
     receipt: Mutex<Option<Receipt>>,
     source_domain: Mutex<Option<Weak<super::write_domain::WriteDomain>>>,
+}
+// Temporary private observation only. No receipt/domain validator is run here.
+fn poison_receipt_trace(stage: &str, watch: &Watch, receipt: &Receipt, valid: Option<bool>) {
+    if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_none() { return; }
+    let domain = registry_lock(&watch.source_domain);
+    let registered = domain.is_some();
+    let live = domain.as_ref().is_some_and(|domain| domain.strong_count() != 0);
+    let _ = writeln!(std::io::stderr().lock(), "POISON_RECEIPT stage={stage} watch={watch:p} owner={} site={} slot={} bits={:016x} source_safe={} domain_registered={registered} domain_live={live} valid={valid:?}",
+        watch.owner, watch.site, watch.slot, receipt.bits, receipt.source_safe);
 }
 struct Entries {
     authority: Option<Arc<CanonicalMethods>>,
@@ -112,11 +122,20 @@ impl Watch {
         let receipt = registry_lock(&self.receipt);
         let Some(receipt) = receipt.as_ref() else { return Ok(false) };
         if let Some(domain)=registry_lock(&self.source_domain).as_ref() {
-            if !receipt.source_safe || domain.upgrade().is_none() {return Ok(false);}
+            if !receipt.source_safe || domain.upgrade().is_none() {
+                if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+                    let _ = writeln!(std::io::stderr().lock(), "POISON_AUTHENTICATED watch={self:p} owner={} slot={} source_domain_bound=true source_safe={} bits={:016x} result=false reason=unsafe-or-dead-domain", self.owner, self.slot, receipt.source_safe, receipt.bits);
+                }
+                return Ok(false);
+            }
         }
         let expected = Val::AnyRef(Some(receipt.value.value.to_rooted(&mut store)));
-        Ok(same(&store, value, &expected)? &&
-            bits(store.as_context_mut(), value, &self.number_type)? == Some(receipt.bits))
+        let result = same(&store, value, &expected)? &&
+            bits(store.as_context_mut(), value, &self.number_type)? == Some(receipt.bits);
+        if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+            let _ = writeln!(std::io::stderr().lock(), "POISON_AUTHENTICATED watch={self:p} owner={} slot={} source_safe={} bits={:016x} result={result}", self.owner, self.slot, receipt.source_safe, receipt.bits);
+        }
+        Ok(result)
     }
     pub(super) fn canonical(&self, store: StoreContextMut<'_, ()>, runtime: Instance,
         authority: &CanonicalMethods, irq: &AtomicBool) -> wasmtime::Result<bool> {
@@ -316,7 +335,9 @@ pub(super) fn install(
                         }
                         watch.domain_matches(caller.as_context_mut(),runtime,authority,prototype,&interrupt,None,proof_receivers.as_deref().unwrap_or(&[]))?
                     } else {false};
-                    candidates.push((watch, Receipt { value, bits, source_safe }, false));
+                    let receipt = Receipt { value, bits, source_safe };
+                    poison_receipt_trace("canonical-pre-store", &watch, &receipt, None);
+                    candidates.push((watch, receipt, false));
                 }
             }
         }
@@ -336,6 +357,7 @@ pub(super) fn install(
         // All fallible validation/allocation completes before any publication.
         // Traps after the setter leave new state conservatively unauthenticated.
         for (watch, receipt, valid) in candidates {
+            poison_receipt_trace("canonical-post-store-publication", &watch, &receipt, Some(valid));
             if valid { *registry_lock(&watch.receipt) = Some(receipt); }
         }
         Ok(())
@@ -863,9 +885,20 @@ impl Watch {
  pub(super) fn source_authenticated(&self,mut store:StoreContextMut<'_,()>,value:&Val,irq:&AtomicBool)->wasmtime::Result<bool> {
   Session::consume_host_work(store.as_context_mut(),1,irq)?;
   let domain=registry_lock(&self.source_domain).as_ref().and_then(Weak::upgrade);
-  if domain.is_none() {return Ok(false);}
+  if domain.is_none() {
+   if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+    let _ = writeln!(std::io::stderr().lock(), "POISON_SOURCE_AUTH watch={self:p} owner={} slot={} domain_live=false result=false", self.owner, self.slot);
+   }
+   return Ok(false);
+  }
   let receipt=registry_lock(&self.receipt);
-  match receipt.as_ref() {Some(receipt) if receipt.source_safe=>self.matches_receipt(store,value,receipt,irq),_=>Ok(false)}
+  let result = match receipt.as_ref() {Some(receipt) if receipt.source_safe=>self.matches_receipt(store,value,receipt,irq),_=>Ok(false)};
+  if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+   let _ = writeln!(std::io::stderr().lock(), "POISON_SOURCE_AUTH watch={self:p} owner={} slot={} domain_live=true receipt_present={} source_safe={:?} bits={:?} result={:?}",
+    self.owner, self.slot, receipt.is_some(), receipt.as_ref().map(|r|r.source_safe),
+    receipt.as_ref().map(|r|r.bits), result.as_ref().ok());
+  }
+  result
  }
  fn domain_matches(&self,store:StoreContextMut<'_,()>,runtime:Instance,authority:&CanonicalMethods,prototype:&super::prototype_origin::Authority,irq:&AtomicBool,staged:Option<&Receipt>,receivers:&[Val])->wasmtime::Result<bool> {
   let domain=registry_lock(&self.source_domain).as_ref().and_then(Weak::upgrade);
@@ -921,7 +954,9 @@ pub(super) fn install_scoped(
                     Session::consume_host_work(scope.as_context_mut(), std::mem::size_of::<Receipt>() as u64 + 1, &interrupt)?;
                     let value = own(&mut scope, arguments[2].clone(), ledger.identity, &ledger.handles)
                         .map_err(scoped_error)?;
-                    candidates.push((watch, Receipt { value, bits, source_safe: true }, false));
+                    let receipt = Receipt { value, bits, source_safe: true };
+                    poison_receipt_trace("scoped-pre-store", &watch, &receipt, None);
+                    candidates.push((watch, receipt, false));
                 }
                 // Exact original instruction: no recursion, no exception translation.
                 raw_store.call(&mut scope, arguments, &mut [])?;
@@ -937,6 +972,7 @@ pub(super) fn install_scoped(
                 // No fallible work after the first publication. No outside write
                 // clears an old receipt: exact reference/domain checks decide reuse.
                 for (watch, receipt, valid) in candidates {
+                    poison_receipt_trace("scoped-post-store-publication", &watch, &receipt, Some(valid));
                     if valid { *registry_lock(&watch.receipt) = Some(receipt); }
                 }
                 return Ok(());

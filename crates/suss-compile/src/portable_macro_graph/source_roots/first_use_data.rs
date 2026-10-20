@@ -2,6 +2,7 @@
 //! Certificate, CheckedChild, WriteDomain, receipt or nil-write capability.
 //! All evidence is the ORIGINAL native factory record plus exact input edges;
 //! an exposed guest object is never recaptured to manufacture source authority.
+use std::io::Write as _;
 use super::first_use_walk::{Context, Entry, Observed, Observer};
 use super::*;
 use crate::portable::metered_map::{Context as MapContext, TryOrderedMap};
@@ -434,6 +435,27 @@ struct Build<'a> {
     retained: &'a [Rc<Root>],
     selected: Vec<Option<Rc<Root>>>,
 }
+// Diagnostic descriptors only. This does NOT change Evidence::identity(),
+// traversal seen keys, source authority, or physical binding consistency.
+struct BindingEvidenceDiagnostic<'a>(&'a Evidence);
+impl std::fmt::Display for BindingEvidenceDiagnostic<'_> {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (kind, pointer) = self.0.identity();
+        let mut leaf = self.0;
+        let mut wrappers = 0usize;
+        while let Evidence::Source(source) = leaf {
+            wrappers = wrappers.saturating_add(1);
+            leaf = source.actual();
+        }
+        let (_, native) = leaf.identity();
+        write!(out, "kind:{};ptr:0x{:x};source_wrappers:{};native:0x{:x}",
+            kind, pointer, wrappers, native)?;
+        if let Evidence::Source(source) = self.0 {
+            write!(out, ";source_key:{}", super::TraceSourceKey(&source.expected.key))?;
+        }
+        Ok(())
+    }
+}
 impl Build<'_> {
     fn source_id(&self, graph: &mut AnalysisGraph<'_>, id: Value) -> Result<Option<usize>> {
         let Some(index) = graph.source_roots.index(graph.session, id)? else {
@@ -530,6 +552,23 @@ impl Build<'_> {
                                         .session
                                         .values_identical(&old.value, selected.value())?
                                 {
+                                    if reader_plan::declaration_key_traced(&root.expected.key) {
+                                        // The original values_identical check above already
+                                        // returned false. Do not query the guest again.
+                                        reader_plan::trace_declaration_key(&root.expected.key,
+                                            "binding-conflict-detail", format_args!(
+                                                "source_boundary={} source_key={} slot={} slot_is_source_alias={} slot_is_source_native={} repeat_policy={:?} cache_eligible={:?} current_cache_visible={} recipe={:?} old_evidence={} selected_evidence={}",
+                                                id, super::TraceSourceKey(&source.expected.key), native,
+                                                native == graph.source_roots.roots[id].alias,
+                                                native == graph.source_roots.roots[id].native,
+                                                current.diagnostic_repeat_policy(native),
+                                                current.diagnostic_repeat_policy(native).map(|repeat| !repeat),
+                                                current.cached(native).is_some(),
+                                                graph.recipes.get(native).and_then(Option::as_ref)
+                                                    .map(std::mem::discriminant),
+                                                BindingEvidenceDiagnostic(&old.evidence),
+                                                BindingEvidenceDiagnostic(selected)));
+                                    }
                                     reader_plan::trace_declaration_key(&root.expected.key, "bindings-decline", format_args!("reason=staged-native-or-alias-conflict"));
                                     return Ok(None);
                                 }
@@ -574,7 +613,28 @@ impl Observer for Build<'_> {
             if let Evidence::Source(root) = &cached.evidence {
                 let source = self
                     .source_id(graph, id)?
-                    .ok_or_else(|| invalid("Source evidence at non-source alias"))?;
+                    .ok_or_else(|| {
+                        if reader_plan::declaration_key_traced(&root.expected.key)
+                            || std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some()
+                        {
+                            // Trace-only native inventory. Do not call source_id,
+                            // the metered index, or any guest check a second time.
+                            let capture = graph.source_roots.roots.iter()
+                                .position(|capture| capture.alias == id);
+                            let admitted = capture.map(|index|
+                                self.plan.expected.get(index).is_some_and(Option::is_some));
+                            let native = capture.map(|index| graph.source_roots.roots[index].native);
+                            let native_captures = graph.source_roots.roots.iter()
+                                .filter(|capture| capture.native == id).count();
+                            let _ = writeln!(std::io::stderr().lock(),
+                                "SOURCE_ALIAS_MODE event=source-at-nonsource-alias slot={} repeat_policy={:?} current_cache_visible={} current_source_alias={} alias_boundary={:?} alias_admitted={:?} alias_native={:?} current_native_capture_count={} retained_key={} cached_evidence={}",
+                                id, context.diagnostic_repeat_policy(id), context.cached(id).is_some(),
+                                capture.is_some(), capture, admitted, native, native_captures,
+                                super::TraceSourceKey(&root.expected.key),
+                                BindingEvidenceDiagnostic(&cached.evidence));
+                        }
+                        invalid("Source evidence at non-source alias")
+                    })?;
                 let mut audit = Audit::new(graph.session)?;
                 if !root.checked_current(graph, self.expected(source)?, &mut audit)? {
                     return Err(invalid(
@@ -612,6 +672,9 @@ impl Observer for Build<'_> {
                         if let Some(bindings) = self.bindings(graph, context, root)? {
                             graph.session.charge_host_work(2)?;
                             reader_plan::trace_declaration_key(&expected.key, "parent-selected", format_args!("source={}", source));
+                            if std::env::var_os("SUSS_POISON_RECEIPT_TRACE").is_some() {
+                                let _ = writeln!(std::io::stderr().lock(), "POISON_DATA_RETAINED source={source} native={} root={:p} key={} checked=true bindings=true", graph.source_roots.roots[source].native, Rc::as_ptr(root), super::TraceSourceKey(&expected.key));
+                            }
                             let selected = Evidence::Source(root.clone());
                             self.selected[source] = Some(root.clone());
                             return Ok(Entry::Selected {
