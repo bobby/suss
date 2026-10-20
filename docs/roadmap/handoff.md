@@ -31008,3 +31008,19 @@ Current command: `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.p
 pinned40df and original10Mconstructor controls are prepared, unexecuted. Prior
 db4control failure receipts now include independent combined review; they do not
 transfer to40df. No wholeprogram gain, fullbaseline, finalCI or readiness claim.
+
+The complete schema-witness cohort is now terminal: **80distinctPASS/0FAIL/0ignored**,
+552filtered,191.96s harness/512.674716271s total including5m20native compilation.
+Raw SHA256`3e9991608bb72a06b80bf461d74df89c73507a543c4f23ebbfafb967b896eb1a`.
+All6new and5old constructor tests plus allprior69 preserve complete bodies and
+assertions. This does not establish map/default fit. Fresh original200M/200M
+pinned replay on40df is running via
+`python3 /home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-40df5a30-v1/run.py`;
+use both comparison scripts only after terminal and retain all missing/failures.
+Then run unchanged10Mconstructor on this same source. No sharedRust changes
+during either run; fullworkspace/finalheadCI remain unexecuted on this source.
+
+Independent focused-result review verifies all80unique selected outcomes, prior69
+and original5constructor bodies, six new complete regressions and exact source/BOOT
+binding. Review SHA256`b376c47237b6cf4682ade8f3599218a3bc2b3dfd13372ab8d42fc5ab406d2ffa`.
+This is focused execution evidence, not map/default or finalhead acceptance.
