@@ -310,7 +310,7 @@
     "Both prior default public719 runs exhausted during first warm Runtime caller env transport before assertions; no semantic authority result. Immediate-edge elimination alone did not establish default-fit.",
     "Full25/source-tags/pinned/namespace/default-core/source-child/workspace/final-head CI remain separate unestablished gates.",
     "Bootstrap initial exit1 is stale shipped comparison, followed by exact adoption and pure identity pass; no complete verifier pass.",
-    "Complete original25 cohort is separately running on the same source. No aggregate result yet; the 23 focused tests are a different selection, not the historical23/2 full25 cohort."
+    "Complete25 now passes on source491/c5e2fc; source-tag/pinned/callable/namespace/default-control/source-child/workspace/final-head CI remain independent gates. Exact67ec CIknownFAILEDdefaultconstructor diagnosticunavailable; localunchanged10Mreplay is separately running."
   ],
   "semantic_controls": {
     "symbol-two": {
@@ -1736,5 +1736,339 @@
       "shared_edits": false,
       "producer_actions": false
     }
+  },
+  "full25": {
+    "receipt": {
+      "head": "cd8b37ad1bb3f4954648b5a11f6aa051e9691b9a",
+      "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+      "compiler_source_sha256": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+      "input_count": 224,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+        "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+        "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+        "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+      ],
+      "selection": {
+        "exact_names": [
+          "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc",
+          "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+          "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+          "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+          "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+          "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+          "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role",
+          "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+          "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+          "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+          "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+          "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos",
+          "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing",
+          "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+          "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+          "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+          "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+          "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+          "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+        ],
+        "scope": "Complete original25 literal/effect/authority cohort; all original source programs, assertions, metadata, both phases/GC/restoration preserved. Existingsemanticcompile100Bhelper; Runtime unchanged."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 2290.7596714320243,
+      "raw_sha256": "41acb11a8dfb947c00b1c0a83395ad1cfd8616bf4f3618488f38f85ad2fd56ff"
+    },
+    "reconciliation": {
+      "all25_names_accounted": true,
+      "actual_names": [
+        "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold",
+        "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+        "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+        "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+      ],
+      "harness_summaries": [
+        [
+          "ok",
+          "25",
+          "0",
+          "0",
+          "2151.54"
+        ]
+      ],
+      "expected_memo_windows": 48,
+      "actual_memo_windows": 48,
+      "complete_unique_memo_windows": true,
+      "missing_windows": [],
+      "unexpected_windows": [],
+      "duplicate_windows": [],
+      "mismatched_rows": [],
+      "scope": "Only exact25 cohort and full48 memo windows/13fields. No source-tag/pinned/namespace/workspace/wholeissue acceptance.",
+      "accepted": true
+    },
+    "observations_file": "docs/roadmap/evidence/m4-pr263-subroot-full25-memo-observations-2026-10-20.jsonl",
+    "observations_sha256": "fbf1802de62d73f75aed45e9aef4c90940a9524b3415ecd0beca5326f979db3f",
+    "independent_review": {
+      "reviewer": "Carver",
+      "verdict": "GO_COHORT_EVIDENCE_VERIFIED_EXACT_FULL25_AND48_TYPED_ROWS",
+      "head": "cd8b37ad1bb3f4954648b5a11f6aa051e9691b9a",
+      "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+      "source_fingerprint": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+      "compiler_inputs_verified": 224,
+      "terminal_sha256": "04bf061913e401f8b84c2e87ecc985c5bae6837cb6a36fc88d37ad67a811fd3f",
+      "raw_sha256": "41acb11a8dfb947c00b1c0a83395ad1cfd8616bf4f3618488f38f85ad2fd56ff",
+      "main_reconciliation_sha256": "407080cca8635a08f31aa5be99e227a4a42291aa970a19d813a61e861ad7577a",
+      "actual": {
+        "passed": 25,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 560,
+        "harness_seconds": 2151.54,
+        "total_seconds": 2290.7596714320243
+      },
+      "exact_names": [
+        "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+        "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role",
+        "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold",
+        "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+        "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing",
+        "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+        "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+        "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+        "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+      ],
+      "missing": [],
+      "duplicates": [],
+      "observations": {
+        "count": 48,
+        "cases": 16,
+        "stages_per_case": 3,
+        "fields_per_row": 13,
+        "all_actual_expected_values_and_types_match": true,
+        "main_derived_rows_exact_raw_match": true,
+        "missing": [],
+        "unexpected": [],
+        "duplicates": [],
+        "mismatches": []
+      },
+      "source_boot_binding": "All224 executed-head/current Git input hashes and all four adopted BOOT Git/current hashes independently rechecked. Source491/c5, BOOT91f tuple preserved.",
+      "qualification": "Complete original25 cohort is now current c5 evidence, including both Symbol and Keyword cold/warm and both methods/phases, all7AST/effect groups and strict receipt/domain negatives. This does not by itself establish whole261 acceptance, source-tags/pinned/namespace/defaultconstructor/workspace/finalCI success. Previous historical23/2 failures are not rewritten. Focused23/earlierSymbol2 overlap is not additional unique-test credit.",
+      "actions": {
+        "cargo": false,
+        "vm": false,
+        "shared_edits": false,
+        "producer_actions": false
+      }
+    }
+  },
+  "ci_67ec7a2_partial_review": {
+    "reviewer": "Carver",
+    "verdict": "CLASSIFIED_COMPLETED_RESULTS_AND_INCOMPLETE_RUNNER_SHUTDOWNS",
+    "run_id": 39414020650,
+    "head": "67ec7a2cd049d4f28218917ddf8f392181ae57dc",
+    "jobs": [
+      {
+        "job_id": 118598664413,
+        "api_head": "67ec7a2cd049d4f28218917ddf8f392181ae57dc",
+        "checkout": "82d06b7 Merge67ec7a2 into30f4787 (from checkout log); this review does not independently establish merge-tree equality",
+        "api_conclusion": "failure",
+        "execute_step_conclusion": "cancelled",
+        "execute_step_seconds": 798.0,
+        "raw_sha256": "f4e689a52cf84fb47921f2a6c8121fec0b17ac330b23aa63bc8802debb01e560",
+        "plain_sha256": "b704075886c38d04e4ee7b7a9b6838ba83629bc9c4bd6a65e2bb4bba4d1f1a39",
+        "metadata_sha256": "6ed2d691126fc4e475c56d385796cf98683a8bc91d7703b3b0770a129d8e5b0a",
+        "completed_pass_count": 7,
+        "completed_pass_selectors": [
+          "source_artifact_identity_keeps_external_macro_provenance_unknown",
+          "source_artifact_identity_records_actual_macro_versions_and_rejects_prior_graph",
+          "let_patterns_preserve_outer_initializer_scope_and_tail_recur",
+          "let_patterns_preserve_order_once_defaults_scope_and_hygiene",
+          "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+          "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+          "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers"
+        ],
+        "completed_fail_count": 1,
+        "completed_failed_selectors": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "started_unfinished_selectors": [
+          "constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc"
+        ],
+        "failure_detail": "FAILED selector recorded, but no panic payload/test failure section or target terminal summary before shutdown",
+        "termination": "Explicit runner shutdown signal then operation canceled. Underlying reason unknown; not proof of OOM, workflow timeout, user cancellation or test assertion failure for unfinished cases.",
+        "unstarted": "Other planned targets have no observed start/outcome here; not counted as failures or passes. No global unexecuted total inferred."
+      },
+      {
+        "job_id": 118598664697,
+        "api_head": "67ec7a2cd049d4f28218917ddf8f392181ae57dc",
+        "checkout": "82d06b7 Merge67ec7a2 into30f4787 (from checkout log); this review does not independently establish merge-tree equality",
+        "api_conclusion": "failure",
+        "execute_step_conclusion": "cancelled",
+        "execute_step_seconds": 722.0,
+        "raw_sha256": "353f35b1bf1e68507cad29637e0a64af916704a1f78d02d79c0b7e8e7c1d0ac1",
+        "plain_sha256": "a3f6b17736040d6d721ef2afa9fa9c6f943438536199836f63f4860c6bd1c4f0",
+        "metadata_sha256": "d78a01e88e6173e6ce343a34fba28d8cd1d8862bd1a5f85949039f1010c28733",
+        "completed_pass_count": 12,
+        "completed_pass_selectors": [
+          "compiled_macro_source_expands_into_an_executable_component_without_replay",
+          "exhausted_analysis_metadata_budget_preserves_effects_and_session_state",
+          "native_analysis_graph_keeps_function_declaration_environment_outside_new_self_binding",
+          "native_analysis_graph_namespace_exclusions_are_canonical_sets",
+          "native_analysis_graph_preserves_actual_definition_forms_through_staging_and_redefinition",
+          "native_analysis_graph_namespace_maps_preserve_actual_imports_and_renames_in_both_phases",
+          "native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source_execution",
+          "native_analysis_graph_preserves_unqualified_slash_keys_in_hash_maps",
+          "native_analysis_graph_reader_depth_is_independent_of_record_depth",
+          "native_analysis_graph_retains_staged_definition_and_function_syntax",
+          "native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_arity_elimination",
+          "native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalog"
+        ],
+        "completed_fail_count": 0,
+        "completed_failed_selectors": [],
+        "started_unfinished_selectors": [
+          "compiled_macro_core_namespace_keeps_complete_declaration_records"
+        ],
+        "failure_detail": "No completed failed selector in this raw log",
+        "termination": "Explicit runner shutdown signal then operation canceled. Underlying reason unknown; not proof of OOM, workflow timeout, user cancellation or test assertion failure for unfinished cases.",
+        "unstarted": "Other planned targets have no observed start/outcome here; not counted as failures or passes. No global unexecuted total inferred."
+      }
+    ],
+    "aggregate_observed_only": {
+      "completed_passes": 19,
+      "completed_failures": 1,
+      "started_unfinished_tests": 2,
+      "whole_targets_or_workspace_success": false
+    },
+    "constructor_control": {
+      "exact_name": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+      "source_path": "crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs",
+      "source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "actual_ci_and_current_file_bytes_equal": true,
+      "classification": "Explicit default-fuel control, not merely an unlabelled correctness corpus: name saysfit_default_fuel, body comment exercisesproductiondefaults, caller options asserted10M, Macro defaults left intact with no allowance setter.",
+      "semantic_assertions": "Both caller phases, actualconstructor AST:new children[:class :args], executedfield42 afterGC. These are original semantic assertions; actualCI failure location/cause and reachedphase are not printed.",
+      "separate_large_corpus": "constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc already uses compilation_fuel::COMPILATION_FUEL. It was started but unfinished; do not call its assertions failed or passed.",
+      "policy": "Do not add100B to the explicitly named default control and retain the samedefault-fit claim. #252 permits semantic calibration; it does not make this explicit existing control a measureddefaultPASS. If user elects to reclassify it, make that conscious policy/test-description change explicit and retain historicalfailure; preserve all programs/semantics/callerRuntime. No such change is authorized or implemented by this assessment."
+    },
+    "limits": [
+      "No root cause for runner service shutdown inferred; both execute steps canceled at12-14minutes, far below120minute job policy.",
+      "No panic text supports labeling the constructor FAILED as OutOfFuel yet. A separate complete replay or additionalrawdiagnostic is needed to identify cause.",
+      "The job API failure is not a verdict on every queued test or all assertions."
+    ],
+    "actions": {
+      "cargo": false,
+      "vm": false,
+      "shared_edits": false,
+      "remote_mutations": false
+    }
+  },
+  "default_constructor_replay": {
+    "receipt": {
+      "head": "67ec7a2cd049d4f28218917ddf8f392181ae57dc",
+      "source_commit": "4911688e926db6a161a81cee07bdaab3569abe7e",
+      "compiler_source_sha256": "c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb",
+      "input_count": 224,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 184.4281179580139,
+      "raw_sha256": "88af8331f3e9c210fe5f48eeecd96e850b87b68ff25db161953b8ee34fffda57"
+    },
+    "result": "0PASS1FAIL0ignored1filtered;41.87sharness",
+    "failure": "Compile Diagnostic span83..108: Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly. First Runtime invocation, before output assertions.",
+    "policy": "Original explicit10Mdefaultcontrol remainsunchanged; no calibration applied."
   }
 }
