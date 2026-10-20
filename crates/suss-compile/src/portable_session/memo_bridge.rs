@@ -890,15 +890,39 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
         for watch in watches { assert!(watch.matches(&mut session).unwrap()); }
     }
     fn recorded_list_domain(session: &mut Session, invalid: bool)
-        -> (SessionValue, Arc<Watch>, Arc<super::super::write_domain::WriteDomain>, super::super::construction_records::Fact) {
-        let (value, inputs) = registered_list(session);
-        let watch = inputs.memo_watch().unwrap();
-        let fact = super::super::construction_records::Fact::Constructor(inputs);
-        let domain = super::super::write_domain::WriteDomain::new();
-        domain.record(session, &value, &fact).unwrap();
-        domain.seal(session).unwrap();
+        -> (SessionValue, Arc<Watch>, Arc<super::super::write_domain::WriteDomain>, super::super::construction_records::ConstructionRecords) {
+        // Original factory recording, BEFORE exposure: scalar17, nil/count
+        // scalars, canonical empty-list seed, and the final List constructor.
+        // Copying fields from a guest-created list records only its outer
+        // constructor, leaving genuine non-i31 input edges unsupported.
+        let bridge = crate::portable_macro_data::FormBridge::new(session).unwrap();
+        let recording = bridge.recording(session).unwrap();
+        let item = recording.scalar(session, &crate::portable::hir::Literal::Number(17.0)).unwrap();
+        let value = recording.list_values(session, &[item]).unwrap();
+        let records = recording.into_records().unwrap();
+        records.seal_source_domain(session).unwrap();
+        let domain = records.write_domain();
+        // Upgrade only existing constructor watches; never mint or recapture
+        // proof for an exposed object. Release registry lock before ref_eq.
+        let ledger = session.memo_ledger.clone();
+        let count = registry_lock(&ledger.entries).watches.len();
+        let mut matched = None;
+        for index in 0..count {
+            let candidate = {
+                let entries = registry_lock(&ledger.entries);
+                entries.watches[index].upgrade()
+            };
+            if let Some(watch) = candidate {
+                if session.values_identical(&watch.receiver, &value).unwrap() {
+                    assert!(matched.is_none(), "one original watch for the exact recorded List receiver");
+                    matched = Some(watch);
+                }
+            }
+        }
+        let watch = matched.expect("recorded List must have its original memo watch");
         if invalid { domain.invalidate(); }
-        (value, watch, domain, fact)
+        // Keep the ENTIRE original input/seed/watch closure alive in caller.
+        (value, watch, domain, records)
     }
     #[test]
     fn retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates() {
@@ -906,7 +930,7 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
         session.enter_namespace("suss.core").unwrap();
         session.eval("(def hash-ordered-coll (fn [_] 719))").unwrap();
         session.enter_namespace("user").unwrap();
-        let (value, watch, _domain, _fact) = recorded_list_domain(&mut session, true);
+        let (value, watch, _domain, _records) = recorded_list_domain(&mut session, true);
         assert!(watch.retained_data_eligible(&mut session).unwrap());
         hash(&mut session, &value);
         session.collect().unwrap();
@@ -932,7 +956,7 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
     #[test]
     fn retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible() {
         let mut session = Session::new_macro().unwrap();
-        let (safe, watch, _domain, _fact) = recorded_list_domain(&mut session, false);
+        let (safe, watch, _domain, _records) = recorded_list_domain(&mut session, false);
         hash(&mut session, &safe);
         assert!(registry_lock(&watch.receipt).as_ref().is_some_and(|r| r.source_safe));
         assert!(watch.retained_data_eligible(&mut session).unwrap());
