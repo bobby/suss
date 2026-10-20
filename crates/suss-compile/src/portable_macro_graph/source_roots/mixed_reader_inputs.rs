@@ -232,6 +232,118 @@ mod tests {
         }
         panic!("cyclic fixture metadata aliases")
     }
+    fn original_alias_target(graph: &AnalysisGraph<'_>, mut value: Value) -> Value {
+        for _ in 0..graph.recipes.len() {
+            match graph.recipes[value].as_ref().unwrap() {
+                Recipe::Alias(child) => value = *child,
+                // Stop BEFORE Metadata or another real constructor. Matching
+                // the actual node retains its complete metadata-producing DAG.
+                _ => return value,
+            }
+        }
+        panic!("cyclic original fixture alias lineage")
+    }
+    fn strict_completed_metadata(
+        graph: &mut AnalysisGraph<'_>, global: &Global, info: &Arc<DefinitionInfo>,
+    ) -> Value {
+        use crate::portable::hir::MetadataKeyOrigin;
+        use crate::portable_macro_graph::{metadata_expectations, source_facts};
+        let owner = info.completed_values.as_ref().unwrap();
+        let original_declaration = info.declaration.clone();
+        // Do not build a DATA view and delete captures. Actual production final
+        // fields are captured from the outset; automatic DATA decoration is off.
+        assert!(graph.capture_roots);
+        assert!(!graph.direct_reader_roots);
+        graph.completed_owner_binding_full(global, owner, info).unwrap();
+        let metadata_before = graph.metadata_sources.len();
+        let declaration = graph.declaration(global, Some(info), 0).unwrap();
+        graph.finish_recipes().unwrap();
+        let fields = graph.completed_pairs(declaration).unwrap();
+        let tag_position = graph.declaration_field_position(&fields, "tag").unwrap().unwrap();
+        let tag_alias = fields[tag_position].1;
+        let tag_id = graph.source_roots.index(graph.session, tag_alias).unwrap().unwrap();
+        match &graph.source_roots.roots[tag_id].owner {
+            Owner::DeclarationField(actual, holder, ordinal) => {
+                assert_eq!(actual, global);
+                assert!(Arc::ptr_eq(holder, info));
+                assert_eq!(*ordinal, tag_position, "actual FINAL declaration ordinal");
+            }
+            _ => panic!("private child must be the actual production tag field"),
+        }
+        let original_export = {
+            let captured = &graph.metadata_sources[metadata_before];
+            assert_eq!(&captured.global, global);
+            assert!(Arc::ptr_eq(&captured.revision, info));
+            captured.recipe
+        };
+        let original_pairs = graph.completed_pairs(original_export).unwrap();
+        let metadata = graph.completed_reader(owner).unwrap();
+        assert_eq!(metadata.pairs.len(), 2, "complete original ^number metadata, no selection/filter");
+        assert_eq!(metadata.origins.len(), 1);
+        assert_eq!(metadata.key_positions.len(), 1);
+        assert!(matches!(metadata.origins[0], MetadataKeyOrigin::ReaderShorthandTag));
+        assert_eq!(original_pairs.len(), 1, "complete final metadata export");
+        let tag_in_original_meta = graph.declaration_field_position(&original_pairs, "tag").unwrap().unwrap();
+        // This actual source ordinal, not symbol spelling/Form equality, proves
+        // the final tag and metadata value used ONE producer occurrence.
+        assert_eq!(tag_in_original_meta, 0);
+        assert_eq!(original_alias_target(graph, original_pairs[0].1),
+            original_alias_target(graph, graph.source_roots.roots[tag_id].native),
+            "a different inferred/top-fn/tag writer is not this strict fixture");
+        let reader_source = graph.completed_reader_source(owner).unwrap();
+        let position = metadata.key_positions[0];
+        assert_eq!(position, (0, 0), "the original genuine shorthand prefix/pair");
+        assert!(matches!(reader_source.metadata[position.0].kind, suss_reader::forms::Kind::Symbol(_)));
+        assert_eq!(metadata.pairs[1], reader_source.metadata[position.0],
+            "retain the original complete Symbol, source span and metadata");
+        let original_projected = metadata_expectations::project(graph.session, &graph.recipes, original_export)
+            .unwrap().unwrap();
+        let expected_source = suss_reader::forms::Form {
+            span: 0..0, metadata: vec![],
+            kind: suss_reader::forms::Kind::Map(metadata.pairs.clone()),
+        };
+        let expected = source_facts::normalized_copy(graph.session, &expected_source).unwrap();
+        assert_eq!(original_projected, expected,
+            "the original full metadata export must itself match the independent owner source");
+        assert!(graph.source_roots.roots.iter().all(|root| !matches!(&root.owner,
+            Owner::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_)))),
+            "strict builder must not create/delete/relabel a DATA capture");
+        assert!(source_facts::LogicalSourceWitness::from_normalized_source(graph.session, expected)
+            .unwrap().is_some(), "independent complete owner view must be admissible");
+        let key_alias = graph.capture_completed_reader_key(global, owner, info, position).unwrap();
+        let key_id = graph.source_roots.index(graph.session, key_alias).unwrap().unwrap();
+        match &graph.source_roots.roots[key_id].owner {
+            Owner::ReaderSource(actual, super::super::reader_keys::ReaderSourceOwner::Completed(actual_owner), ReaderSelector::Key(_)) => {
+                assert_eq!(actual, global);
+                assert!(Arc::ptr_eq(actual_owner, owner));
+                // ReaderKeyPath fields intentionally remain private. The
+                // existing protected constructor receives the actual position
+                // above and derives origin from the fully checked metadata.
+                assert!(matches!(metadata.origins[0], MetadataKeyOrigin::ReaderShorthandTag));
+            }
+            _ => panic!("direct child must retain the original protected reader key origin"),
+        }
+        let mut keys = [Some(key_alias)];
+        let values = [Some(tag_alias)];
+        let native = graph.declaration_reader_metadata_map_with_values(
+            &metadata, &mut keys, Some(&values), global.namespace() == "suss.core", 0,
+        ).unwrap();
+        graph.finish_recipes().unwrap();
+        let assembled = metadata_expectations::project(graph.session, &graph.recipes, native)
+            .unwrap().unwrap();
+        assert_eq!(assembled, original_projected, "full original view, not a scalar-only tag check");
+        assert_eq!(info.declaration, original_declaration, "no source mutation");
+        let root = graph.capture_completed_metadata(global, owner, info, native).unwrap();
+        let parent = graph.source_roots.index(graph.session, root).unwrap().unwrap();
+        let layout = graph.source_root_children().unwrap();
+        assert_eq!(layout[parent], [key_id, tag_id],
+            "exactly TWO genuine original inputs in key/private-value order; none filtered");
+        assert!(layout[key_id].is_empty());
+        assert!(layout[tag_id].is_empty());
+        assert!(!matches!(&graph.source_roots.roots[tag_id].owner,
+            Owner::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_))));
+        root
+    }
     fn children(graph: &mut AnalysisGraph<'_>, id: usize) -> Vec<CheckedChild> {
         let layout = graph.source_root_children().unwrap();
         let mut result = Vec::new();
@@ -278,15 +390,12 @@ mod tests {
     fn actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot() {
         for phase in [Phase::Runtime, Phase::Macro] {
             let (_environment, global, info) = source(phase);
-            let owner = info.completed_values.as_ref().unwrap();
             let mut session = Session::new_macro().unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
             graph.capture_roots = true;
-            graph.direct_reader_roots = true;
-            let root = graph
-                .completed_metadata_map(&global, owner, &info, 0)
-                .unwrap();
+            graph.direct_reader_roots = false;
+            let root = strict_completed_metadata(&mut graph, &global, &info);
             let id = boundary(&mut graph, root);
             let children = children(&mut graph, id);
             let first = children[0].value().clone();
@@ -313,16 +422,13 @@ mod tests {
     #[test]
     fn later_guest_key_poison_prevents_parent_publication_and_preserves_effect() {
         let (_environment, global, info) = source(Phase::Runtime);
-        let owner = info.completed_values.as_ref().unwrap();
         let mut session = Session::new_macro().unwrap();
         session.eval("(def key-poison-count 0)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let mut graph = AnalysisGraph::new(&bridge, &mut session);
         graph.capture_roots = true;
-        graph.direct_reader_roots = true;
-        let root = graph
-            .completed_metadata_map(&global, owner, &info, 0)
-            .unwrap();
+        graph.direct_reader_roots = false;
+        let root = strict_completed_metadata(&mut graph, &global, &info);
         let id = boundary(&mut graph, root);
         let children = children(&mut graph, id);
         let key = children[0].value().clone();
@@ -353,15 +459,12 @@ mod tests {
     #[test]
     fn mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry() {
         let (_environment, global, info) = source(Phase::Macro);
-        let owner = info.completed_values.as_ref().unwrap();
         let mut session = Session::new_macro().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let mut graph = AnalysisGraph::new(&bridge, &mut session);
         graph.capture_roots = true;
-        graph.direct_reader_roots = true;
-        let root = graph
-            .completed_metadata_map(&global, owner, &info, 0)
-            .unwrap();
+        graph.direct_reader_roots = false;
+        let root = strict_completed_metadata(&mut graph, &global, &info);
         let id = boundary(&mut graph, root);
         let supplied = children(&mut graph, id);
         let alias_count = graph.source_roots.roots.len();
@@ -409,4 +512,41 @@ mod tests {
             "this staging API never publishes cache entries"
         );
     }
+    #[test]
+    fn original_completed_data_value_still_rejects_standalone_strict_certificate() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let (_environment, global, info) = source(phase);
+            let owner = info.completed_values.as_ref().unwrap();
+            let mut session = Session::new_macro().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            // ORIGINAL DATA producer and inventory stay intact in this separate
+            // negative, not relabeled or filtered to construct the strict view.
+            let root = graph.completed_metadata_map(&global, owner, &info, 0).unwrap();
+            graph.finish_recipes().unwrap();
+            let id = boundary(&mut graph, root);
+            let layout = graph.source_root_children().unwrap();
+            assert_eq!(layout[id].len(), 2);
+            assert!(matches!(&graph.source_roots.roots[layout[id][0]].owner,
+                Owner::ReaderSource(_, _, ReaderSelector::Key(_))));
+            let value_id = layout[id][1];
+            assert!(matches!(&graph.source_roots.roots[value_id].owner,
+                Owner::ReaderSource(_, _, ReaderSelector::Value(_))));
+            assert!(layout[value_id].is_empty());
+            let expected = graph.source_root_expectation_with_layout(value_id, &layout).unwrap().unwrap();
+            let recording = graph.bridge.recording(graph.session).unwrap();
+            let value = graph.materialize_using(graph.source_roots.roots[value_id].alias, &recording).unwrap();
+            let records = recording.into_records().unwrap();
+            assert!(expected.witness.matches_logical_source(graph.session, graph.bridge, &value).unwrap());
+            assert!(records.matches_direct_facts(graph.session).unwrap());
+            assert!(records.matches_recorded_inputs(graph.session, &value).unwrap());
+            assert!(records.matches_class_schemas(graph.session).unwrap());
+            assert!(records.matches_prototype_origins(graph.session).unwrap());
+            assert!(Certificate::finish(graph.session, graph.bridge, expected, value, records, vec![])
+                .unwrap().is_none(), "healthy DATA Value must NOT become a strict source capability");
+        }
+    }
+
 }

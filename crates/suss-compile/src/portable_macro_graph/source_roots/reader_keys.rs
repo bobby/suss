@@ -981,10 +981,10 @@ mod tests {
             let _op = session.operation_budget_scope().unwrap();
             session.operation_fuel_remaining().unwrap()
         };
-        let cost = {
+        let measure_capture = |session: &mut Session| {
             let op = session.operation_budget_scope().unwrap();
             let before = session.operation_fuel_remaining().unwrap();
-            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let mut graph = AnalysisGraph::new(&bridge, session);
             graph.capture_roots = true;
             graph
                 .capture_ordinary_reader_key(&ns, &global, &holder, (0, 0))
@@ -994,6 +994,13 @@ mod tests {
             drop(op);
             cost
         };
+        // Graphs are fresh, but the immutable SourceOrigin owns a shared,
+        // lazily built metadata snapshot. Keep its charged cold measurement;
+        // cuts below use the SAME warm-origin state as the trial captures.
+        let cold_cost = measure_capture(&mut session);
+        let cost = measure_capture(&mut session);
+        assert!(cold_cost > cost, "cold origin construction must remain charged");
+        eprintln!("READER_KEY_CAPTURE_COST cold={cold_cost} warm={cost} initial_budget={initial_budget}");
         assert!(cost > 2);
         for allowance in [0, 1, cost / 2, cost - 1] {
             session.set_operation_fuel(allowance);
