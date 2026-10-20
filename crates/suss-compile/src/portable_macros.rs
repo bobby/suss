@@ -7,6 +7,12 @@ use crate::{
 };
 use std::collections::{BTreeMap, BTreeSet};
 use suss_reader::forms::{Form, Kind, read_forms};
+
+// Only the fixed compiler library installed into a fresh Macro Store uses this
+// allowance. Return the caller's configured limit before exposing the host;
+// ordinary definitions, expansions and caller Runtime execution keep that limit.
+const FIXED_MACRO_INITIALIZATION_FUEL: u64 = 100_000_000_000;
+
 #[derive(Clone, Copy)]
 pub(crate) enum CompilerCatalogMode {
     Full,
@@ -266,6 +272,10 @@ impl CompiledMacros {
         Self::with_bootstrap(Session::new_macro()?)
     }
     fn with_bootstrap(mut session: Session) -> Result<Self, SessionError> {
+        // The two callers supply newly created/replacement Stores, never an
+        // active user operation. No caller source or prior guest state is run.
+        let caller_fuel = session.options().fuel_per_operation;
+        session.set_initialization_fuel(FIXED_MACRO_INITIALIZATION_FUEL)?;
         let bridge = FormBridge::new(&mut session)?;
         let mut macros = Self {
             session,
@@ -303,6 +313,7 @@ impl CompiledMacros {
         // Bootstrap code is already rooted in the Store. User source cache
         // accounting starts empty, including after an explicit session reset.
         macros.artifact_cache = Default::default();
+        macros.session.set_initialization_fuel(caller_fuel)?;
         Ok(macros)
     }
     /// Source normalization needs a rollback identity, not a fresh bootstrap
@@ -971,6 +982,57 @@ impl ExpansionHost for CompiledMacros {
 #[cfg(test)]
 mod memo_leaf_tests;
 
+
+#[cfg(test)]
+mod initialization_budget_tests {
+    use super::*;
+
+    #[test]
+    fn fixed_macro_initialization_restores_default_and_replacement_caller_limits() {
+        let mut macros = CompiledMacros::new().unwrap();
+        assert_eq!(macros.session.options().fuel_per_operation, 10_000_000);
+        assert_eq!(macros.session.operation_fuel_remaining().unwrap(), 10_000_000);
+        {
+            let _operation = macros.session.operation_budget_scope().unwrap();
+            let remaining = macros.session.operation_fuel_remaining().unwrap();
+            assert!(macros.session.set_initialization_fuel(FIXED_MACRO_INITIALIZATION_FUEL).is_err());
+            assert_eq!(macros.session.operation_fuel_remaining().unwrap(), remaining);
+            assert_eq!(macros.session.options().fuel_per_operation, 10_000_000);
+        }
+        macros.set_operation_fuel(1);
+        let error = macros.define("(defmacro initialization-limit-probe [] 17)").unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref trap)
+            if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert_eq!(macros.session.options().fuel_per_operation, 1);
+        assert!(!macros.definitions.contains_key(
+            &("user".to_owned(), "initialization-limit-probe".to_owned())
+        ));
+
+        macros.set_operation_fuel(10_000_000);
+        macros.define("(defmacro initialization-limit-probe [] 17)").unwrap();
+        let mut caller = Session::new_repl().unwrap();
+        let value = caller.eval_with_macros("(initialization-limit-probe)", &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut caller).unwrap();
+        let form = bridge.read(&mut caller, &value, 0..1).unwrap();
+        assert!(matches!(form.kind, Kind::Number(17.0)));
+        assert_eq!(caller.options().fuel_per_operation, 10_000_000);
+
+        // Replacement has a fresh Store, but must preserve the configured
+        // caller allowance rather than returning the fixed setup allowance.
+        macros.set_operation_fuel(77_777_777);
+        let mut replacement = macros.replacement().unwrap();
+        assert_eq!(macros.session.options().fuel_per_operation, 77_777_777);
+        assert_eq!(replacement.session.options().fuel_per_operation, 77_777_777);
+        assert_eq!(replacement.session.operation_fuel_remaining().unwrap(), 77_777_777);
+        replacement.set_operation_fuel(1);
+        let error = replacement.define("(defmacro replacement-limit-probe [] 23)").unwrap_err();
+        assert!(matches!(error, SessionError::Trap(ref trap)
+            if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert!(!replacement.definitions.contains_key(
+            &("user".to_owned(), "replacement-limit-probe".to_owned())
+        ));
+    }
+}
 
 #[cfg(test)]
 mod when_let_validation_tests {

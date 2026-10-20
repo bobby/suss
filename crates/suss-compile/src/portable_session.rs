@@ -688,6 +688,18 @@ impl Session {
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.options.fuel_per_operation = fuel;
     }
+    /// Set the allowance for fixed initialization of an owned fresh Store, or
+    /// restore its caller allowance before publication. Never refill a request.
+    pub(crate) fn set_initialization_fuel(&mut self, fuel: u64) -> Result<(), SessionError> {
+        if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
+            return Err(SessionError::Host(wasmtime::Error::msg(
+                "Cannot change initialization fuel during an active operation",
+            )));
+        }
+        self.store.set_fuel(fuel)?;
+        self.options.fuel_per_operation = fuel;
+        Ok(())
+    }
     pub(crate) fn operation_fuel_remaining(&self) -> Result<u64, SessionError> {
         self.store.get_fuel().map_err(Into::into)
     }
