@@ -31024,3 +31024,18 @@ Independent focused-result review verifies all80unique selected outcomes, prior6
 and original5constructor bodies, six new complete regressions and exact source/BOOT
 binding. Review SHA256`b376c47237b6cf4682ade8f3599218a3bc2b3dfd13372ab8d42fc5ab406d2ffa`.
 This is focused execution evidence, not map/default or finalhead acceptance.
+
+### Schema-witness source: pinned integration replay (2026-10-20)
+
+Original200M/200M pinnedpair on sourcef029b15/compiler40df5a30/229inputs/BOOT6379ca7
+is terminal1PASS1FAIL (196.18s harness/387.305391778s total), raw SHA256
+`fe6c8bc79e6f6e68e11e1b352a0654f35cdba90b0e3fad3d9bd9941320b70c6c`.
+Both independent comparison scripts ran in
+`/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-40df5a30-v1`.
+Identifier15ordered host comparisons pass; map0observations/69unexecuted after
+expanded-result239..5926 OutFuel. Captures match prior db4; no actual wholeprogram
+gain follows from focused80PASS or timing. Unchanged10M fullconstructor is now
+running via the frozen-cohort helper, labeldefault-constructor in schema-witness
+production-v1. A12 remains open; no completed historical checklist item reopened.
+Next: terminalconstructor, remaining46native semantic/namespace selectors and
+complete existing public/source-tag programs, then actual failing-blocker fixes.
