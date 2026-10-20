@@ -1,0 +1,471 @@
+{
+  "schema": 1,
+  "scope": "Exact typed/shared scalar witnesses and their source-bound validation; no issue completion, PR readiness or whole-program gain inferred.",
+  "source_commit": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+  "compiler_source_sha256": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+  "compiler_inputs": 229,
+  "source_freeze_sha256": "78b2c835e0e0da5310f55a8befebf765e495cd64046950904d60ceca198bd87b",
+  "adaptation": {
+    "base": "f2736372ed73d52f15c25c1fa9f08c1bab7feab1",
+    "donors": [
+      "667f583d210e1af396ff74e80087ada8c9b9bb89",
+      "6a1d15e88103484d9c6fc73c50b08f88024ebf49"
+    ],
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session/scalar_inputs.rs",
+        "before_sha256": "ef489ddfccb026a7ffb070959ded3a114f452ae2b16671dbf91e8da7f3c06fba",
+        "after_sha256": "48ea45398d46c1e86b3c532fc710fbed1fda58cef0c0bd262ed169dae76e58dc"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "before_sha256": "47599837639faeb49de989d4c361ded13138a903899a37c173360f8427be60d5",
+        "after_sha256": "e2390a3d0e4e4d3ffe98265c06c2d57a29f2f44da277b1803452c9e3d62c2c37"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain.rs",
+        "before_sha256": "0f0a1c92f4f83923f7c58d6780561ccb16675ab1203589f2621d88c8f31fd360",
+        "after_sha256": "7cc0293076433bc9b611fd4f24b4cbba0d2bf3673bd08e960a83bbbb69679b29"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+        "before_sha256": "75a6395d8be3be1f84226f31bdabc6f03eb5f91a70f3ca494ffad100bd465bb7",
+        "after_sha256": "5cebf6d64bb80247dfd936ffc12b82dde509291252085c952b959271c54d883f"
+      }
+    ],
+    "scope": "Four paths only; preserve current paged/boxed ledger, all original scoped factory traversals, stage-before-publication, retainedDATA/Watch and predecessor/source-domain checks. No donor graph/ABI/BOOT import. Cache candidate only, unexecuted.",
+    "added_genuine_factory_scope_regression": "original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage"
+  },
+  "independent_source_review": {
+    "verdict": "SOURCE_FEE_SEMANTIC_GO_FOR_MAIN_VALIDATION",
+    "scope": "Final revised four-file source candidate, now including genuine scalar producer-scope regression. Static source/fee/semantic GO for main validation; no reviewer Cargo/VM/shared edits or execution/fit/acceptance inference.",
+    "base": "f2736372ed73d52f15c25c1fa9f08c1bab7feab1",
+    "donors": [
+      "667f583d210e1af396ff74e80087ada8c9b9bb89",
+      "6a1d15e88103484d9c6fc73c50b08f88024ebf49"
+    ],
+    "manifest_sha256": "d7a14b6d31f8c1d033f43b71ffc5c15045ebd043f12535c8bb6657c4406e68c5",
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session/scalar_inputs.rs",
+        "before_sha256": "ef489ddfccb026a7ffb070959ded3a114f452ae2b16671dbf91e8da7f3c06fba",
+        "after_sha256": "48ea45398d46c1e86b3c532fc710fbed1fda58cef0c0bd262ed169dae76e58dc"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "before_sha256": "47599837639faeb49de989d4c361ded13138a903899a37c173360f8427be60d5",
+        "after_sha256": "e2390a3d0e4e4d3ffe98265c06c2d57a29f2f44da277b1803452c9e3d62c2c37"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain.rs",
+        "before_sha256": "0f0a1c92f4f83923f7c58d6780561ccb16675ab1203589f2621d88c8f31fd360",
+        "after_sha256": "7cc0293076433bc9b611fd4f24b4cbba0d2bf3673bd08e960a83bbbb69679b29"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+        "before_sha256": "75a6395d8be3be1f84226f31bdabc6f03eb5f91a70f3ca494ffad100bd465bb7",
+        "after_sha256": "5cebf6d64bb80247dfd936ffc12b82dde509291252085c952b959271c54d883f"
+      }
+    ],
+    "bindings": "All four before images match base Git; all eight before/after hashes match the current manifest.",
+    "findings": [],
+    "authority_review": [
+      "ScalarInputs is created by the genuine literal factory; Number captures the exact StructType and requires one physical field, then bit-exact f64. String captures exact ArrayType, length and every UTF16 unit. Sentinel checks exact original reference and i31 tag. Equal contents, subtype extra storage or unrelated refs do not substitute.",
+      "Node::Scalar is admitted only after own=true from ScalarInputs::matches against the supplied exact root. Wrong supplied roots still invalidate the domain and retain that supplied root in a proofless Complex node; no false-to-safe promotion.",
+      "Scalar has_original_storage grants only its exact receiver, with no seed, outgoing edges or snapshot interiors. Existing restricted member branch remains ahead of unrestricted dedup; Node/terminal seed scopes, linked exact references, Weak producer checks and full predecessor validation remain intact.",
+      "FactoryOrigin is still only eligibility: full current factory closure, actual domain/receiver/class/prototype/method checks and source/Watch receipt checks remain separate. Original nil eligibility, staged receipt and retained unsafe DATA rejection are not relaxed.",
+      "Complex constructor/array/general snapshots remain StorageSnapshot based, with unchanged memo-slot callbacks/source_authenticated and strict-child distinctions. No current guest recapture, arbitrary DATA certification or new memo authority.",
+      "Current-node scalar owner is checked before rooting. Revised other-node edge scan prepays8 controls and checks scalar owner before rooting its receiver, preserving typed foreign errors even during an earlier complex node scan.",
+      "Arc<ScalarInputs> retains only original scalar receiver/type/expected bytes, without domain/record/Watch backpointers. No new ownership cycle or deep Arc DAG; existing factory links remain Weak."
+    ],
+    "fee_and_failure_review": [
+      "Literal expectation preparation remains before guest factory allocation. String allocation/copy/release is prepaid with checked bytes+2 and per-unit copy debit. Exact factory type/root inspection prepays6; Arc payload/header/retain/release is prepaid before Arc::new; final direct matching remains fallible before return.",
+      "Direct scalar matching keeps foreign-owner validation before operation polling, then a poll before rooting; context validation polls before false/sentinel paths, checks owner, exact ref and exact physical type, and bills numeric/type and each UTF16 comparison. No Session refill/store mutation introduced.",
+      "Valid scalar domain slot prepays two Node-sized movements plus bounded Arc controls; shared witness replaces the removed generic scalar snapshot work, not its rate. Complex branch prepays twice ComplexNode size+Node+4 in addition to unchanged edge/cut/snapshot work before Box allocation.",
+      "All new Node accessors in validation/factory traversal are prepaid on empty/false paths too: original-storage dispatch5, value/seed/edge access3, current-node dispatch17, other-node8, watch collection original charges plus3.",
+      "Own checks and prior invalidation/Watch binding order are preserved. Node and exact factory links are fully staged, charged and reserved before publishing either; allocation/fuel/IRQ errors drop private staged owners without partial node/link publication. Pre-existing capacity or invalidation side effects are not misrepresented as rolled back.",
+      "No tariff/default/Runtime/pinned allowance changes; general snapshot validation and all current full-domain obligations retained. Standard Arc::new/Box::new allocator OOM behavior is unchanged; no whole-OOM recovery claim."
+    ],
+    "original_tests": [
+      {
+        "path": "crates/suss-compile/src/portable_session/scalar_inputs.rs",
+        "original_test_functions_byte_exact": 4
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain.rs",
+        "original_test_functions_byte_exact": 2
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+        "original_test_functions_byte_exact": 12
+      }
+    ],
+    "ledger_change": "Fact::Scalar(ScalarInputs) becomes Arc<ScalarInputs>; existing paged/boxed ledger implementation otherwise exact.",
+    "new_test_source_scope": [
+      "scalar_factory_owner_preparation_cancellation_releases_unenrolled_facts",
+      "scalar_physical_types_reject_extra_field_subtype_and_preserve_direct_errors",
+      "scalar_physical_false_and_sentinel_poll_irq_and_number_bits_restore_after_gc",
+      "scalar_domain_mixed_growth_and_record_drop_orders_keep_only_scalar_owners",
+      "scalar_domain_shares_only_valid_fact_and_preserves_wrong_supplied_root_and_late_error",
+      "scalar_domain_publication_fuel_irq_sweep_preserves_owners_and_recovers",
+      "original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage"
+    ],
+    "new_test_review": "Six complete donor regression additions retained. Tests include real scalar and mixed complex factories in both phases, exact-type/extra-field/wrong-ref rejection, mutable test-only physical storage mutation/GC/restore, all insufficient publication/factory preparation debits, IRQ/retry, foreign late-entry errors and owner drop order. Real Macro membership fixture supplies an actual Watch; Runtime branch explicitly establishes absence rather than fabricating capability. Final seventh regression additionally exercises real scalar original-root FactoryOrigin admission and two-generation dependency revalidation, with same-ledger sibling/equal-ref/ancestor negatives and mutation/GC/restore.",
+    "pending": "No additional source-review blocker found. Typecheck, generated artifact review and genuine focused execution remain main-owned; no native/VM test credit from this review.",
+    "previous_source_review_sha256": "29bab40e218aa7403991ea54e30d4ceeb1452c41c38d0de54f58b3446f44c4d2",
+    "final_delta_review": {
+      "test": "original_scalar_factory_root_links_stay_exact_and_recheck_predecessor_storage",
+      "only_changed_file": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+      "old_after_sha256": "86f4e7df6122bc97a1a5326c018db62dddf172c46a4fdf5bff6b355b3a553a4b",
+      "new_after_sha256": "5cebf6d64bb80247dfd936ffc12b82dde509291252085c952b959271c54d883f",
+      "production_byte_exact_to_previously_reviewed_candidate": true,
+      "review": "Uses genuine FormBridge scalar UTF16 producer and offered original factory origin, rejects unused sibling and distinct equal UTF16 receiver, checks no scalar permission climbs into its consumer, links two genuine vector generations, validates after GC, mutates only the original scalar storage and requires both generations fail then recover after exact restore. Reuses full complete_domain Watch/factory-closure checker without invented membership, expected scalar facts, source certificates or recapture.",
+      "unchanged_hardening": "Other-node edge scan retains prepaid8 owner-before-root scalar check; domain postimage7cc029... unchanged."
+    }
+  },
+  "independent_factory_accessor_review": {
+    "verdict": "GO_SOURCE_ONLY_BOUNDED_FACTORY_ACCESSOR_MIGRATION",
+    "scope": "Initial prepared four images: factory eligibility/accessor fees, scope and staging against prior bounded audit; not full four-path final approval or execution credit. Test addition will change factory hash and needs explicit rebind.",
+    "manifest_sha256": "843ff21ba2ed175d2e7b2ce3764d7fc61083936a7b9091f92e8922c882c2a619",
+    "images": [
+      {
+        "path": "crates/suss-compile/src/portable_session/scalar_inputs.rs",
+        "after_sha256": "48ea45398d46c1e86b3c532fc710fbed1fda58cef0c0bd262ed169dae76e58dc"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+        "after_sha256": "e2390a3d0e4e4d3ffe98265c06c2d57a29f2f44da277b1803452c9e3d62c2c37"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain.rs",
+        "after_sha256": "7cc0293076433bc9b611fd4f24b4cbba0d2bf3673bd08e960a83bbbb69679b29"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/write_domain/factory_inputs.rs",
+        "after_sha256": "86f4e7df6122bc97a1a5326c018db62dddf172c46a4fdf5bff6b355b3a553a4b"
+      }
+    ],
+    "confirmed_blockers": [],
+    "findings": [
+      "Single-match value/watch/seed/snapshot/edges accessors are prepaid at 3; has_original_storage at 5 preserves Complex snapshot-or-seed and adds validated Scalar exact-root evidence.",
+      "Factory scans pay +8 before eligibility/value short circuit; missed value accesses remain conservatively prepaid, not undercharged. Restricted seed path pays +3, full root miss seed +3, edges borrowed once with +3.",
+      "Both candidate-prefix production path and historical differential baseline use matching representation charges; full-candidate baseline selection remains independent.",
+      "matches_factory_closure, member-before-seen, sealed checks, Weak links, exact original outputs, seed-only downward scope and full predecessor checks remain present.",
+      "matches_local separately prepays accessors and other-node value/seed operations; original class/prototype/method/receipt and current payload checks retained.",
+      "New scalar branch is admitted only after original supplied-root direct validation; invalid facts retain Complex original root and invalidate domain. Complex links/node publication remains staged with prepaid work."
+    ],
+    "regression": "Use factory-scalar-root-test-candidate.rs in prior adaptation packet unchanged if existing fixtures compile. Genuine scalar and two Vector factories are recorded/linked through actual producer APIs. Macro complete_domain uses a genuine protected Watch; do not manufacture Runtime watch or weaken negatives.",
+    "test_status": "Authored test now included and source-rebound; compilation/VM unreviewed",
+    "unchanged_requirements": [
+      "root versus Node versus terminal original membership",
+      "retained DATA unsafe-receipt veto",
+      "full predecessor current health without caching",
+      "equal-distinct and unused sibling exclusion"
+    ],
+    "execution": null,
+    "final_factory_test_rebind": {
+      "status": "GO_SOURCE_ONLY_FINAL_FACTORY_HASH_REBOUND",
+      "previous_reviewed_factory_sha256": "86f4e7df6122bc97a1a5326c018db62dddf172c46a4fdf5bff6b355b3a553a4b",
+      "final_factory_sha256": "5cebf6d64bb80247dfd936ffc12b82dde509291252085c952b959271c54d883f",
+      "final_manifest_sha256": "d7a14b6d31f8c1d033f43b71ffc5c15045ebd043f12535c8bb6657c4406e68c5",
+      "test_matches_authored_candidate": "exact after per-line indentation normalization",
+      "worktree_equals_cache_and_manifest": true,
+      "observed_head": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+      "head_blob_equals_final": true,
+      "prior_hash_git_refs": [],
+      "coverage": [
+        "real recorded scalar exact-root admission",
+        "same-ledger unused sibling denied",
+        "equal raw UTF16 distinct allocation denied",
+        "no climbing scalar origin into consumer",
+        "two genuine producer-linked Vector generations",
+        "GC then original scalar mutation invalidates both complete components",
+        "exact restoration revalidates both components"
+      ],
+      "api_review": "Uses current existing Owner/finished/origin/complete_domain and FormBridge scalar/vector/bind_original_factory_inputs signatures; no forged links/witnesses; Macro-only genuine Watch fixture. Typecheck/VM result unreviewed.",
+      "execution": null,
+      "test_only_insertion_reproduces_original_reviewed_file_sha256": {
+        "removed_lines_first_1based": 1723,
+        "removed_lines_last_1based": 1785
+      },
+      "other_three_postimages_unchanged": true
+    }
+  },
+  "typecheck": {
+    "head": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+    "compiler_source_sha256": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 121.02088508900124,
+    "raw_sha256": "d898019588a4ff8710b4ee7e975542d9d6095705235b1bfa37ed96014834ddd9"
+  },
+  "cohorts": {},
+  "limits": [
+    "Only direct-validated supplied scalar roots share the actual immutable factory witness. Scalar witnesses have no reference edges/seed and no source/domain/Watch backpointer.",
+    "Complete current class/prototype/method/storage/memo/predecessor validation and originally-nil/retainedDATA policy remain separate. No DATA health becomes source authority.",
+    "No graph/HIR/ABI/emitter/BOOT donor import, quota/rate change, reduced fixture or nested fuel refill. Actual new Arc/Box/accessor/dispatch work is prepaid.",
+    "Prior4ba focused53PASS, identifier15PASS, map69unexecuted and constructor10MFAIL remain bound to their original source, not transferred to this compiler."
+  ],
+  "bootstrap-terminal": {
+    "head": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+    "compiler_source_sha256": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "inputs": 229,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 140.5505128879995,
+    "raw_sha256": "af9638472800755b4a6ba90145ba9034c2b234859732c89b5fc4008d666b5a9b"
+  },
+  "main-build-input-check": {
+    "fp": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "inputs": 229,
+    "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "40ca37dba2d28a3a157fa1c13c766a4063a62c1766c71377fbb08d6ace4f8c40",
+    "all_input_hashes_and_rerun_paths_verified": true
+  },
+  "main-generation-pair-check": {
+    "four_pairs_equal": true,
+    "source_fingerprint": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "phases": {
+      "runtime": {
+        "pairs": {
+          "wasm": {
+            "sha256": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d",
+            "bytes": 2121342
+          },
+          "json": {
+            "sha256": "2447d2977513438cb3e24915e107c57cc5db863a977da5f01424ca800ca46a4b",
+            "bytes": 47413
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+            "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+          },
+          "wasm_sha256": {
+            "old": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883",
+            "new": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d"
+          }
+        }
+      },
+      "macro": {
+        "pairs": {
+          "wasm": {
+            "sha256": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57",
+            "bytes": 2119863
+          },
+          "json": {
+            "sha256": "e95ff015ab83f1cb69cadee9e1cad01d19928a67fffd896a9a38bff5b742215e",
+            "bytes": 45875
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+            "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+          },
+          "wasm_sha256": {
+            "old": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a",
+            "new": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57"
+          }
+        }
+      }
+    }
+  },
+  "independent-adoption-review-cicero": {
+    "reviewer": "Cicero",
+    "scope": "Exact generated artifact adoption only; not new Cargo/VM execution, source re-review, performance/default/pinned fit or readiness.",
+    "reviewed_at_utc": "2026-10-20T21:32:35.542195+00:00",
+    "head": "17f650c4e98354fcd7b506a096b9cb01a9dbe40a",
+    "old_shipped_commit": "5a41e0427da08a43b4ef8c3841676ef2387ba460",
+    "source_fingerprint": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "compiler_inputs": 229,
+    "adoption_performed": false,
+    "shared_mutations": false,
+    "cargo_rustc_or_vm_execution": false,
+    "reviewed_typed_scalar_four_postimages_exact_commit": true,
+    "source_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-transplant-4ba-v1/independent-source-review-cicero.json",
+      "sha256": "04bb82984b67aac2dac144707f02e4a4c7b56690cf5689d72680d6977c9a6fad"
+    },
+    "all229_actual_builder_rerun_paths_verified": true,
+    "actual_builder_output": {
+      "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "40ca37dba2d28a3a157fa1c13c766a4063a62c1766c71377fbb08d6ace4f8c40",
+      "expected_fp_present": true
+    },
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "all_229_frozen_current_and_git_inputs_verified": true,
+    "source_fp_recomputed": true,
+    "current_clean_before_and_after": true,
+    "source_freeze_sha256": "78b2c835e0e0da5310f55a8befebf765e495cd64046950904d60ceca198bd87b",
+    "diagnostics_receipt_sha256": "a152dfa6f0c6f6773d9381450b4850fd7ef9f861dc7dc6559c221427b24f9d2f",
+    "terminal_sha256": "05ec278e686303a714e17931b0080967acf62521046c01094ff0d55051f29741",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 140.5505128879995,
+    "generator_log_sha256": "af9638472800755b4a6ba90145ba9034c2b234859732c89b5fc4008d666b5a9b",
+    "exit_interpretation": "Two complete matching generations; exit1 occurs at stale shipped runtime.wasm comparison, not reported as verifier PASS.",
+    "all_eight_hashes_verified": true,
+    "four_generation_pairs_exact": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d",
+        "bytes": 2121342
+      },
+      "first/runtime.json": {
+        "sha256": "2447d2977513438cb3e24915e107c57cc5db863a977da5f01424ca800ca46a4b",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57",
+        "bytes": 2119863
+      },
+      "first/macro.json": {
+        "sha256": "e95ff015ab83f1cb69cadee9e1cad01d19928a67fffd896a9a38bff5b742215e",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d",
+        "bytes": 2121342
+      },
+      "second/runtime.json": {
+        "sha256": "2447d2977513438cb3e24915e107c57cc5db863a977da5f01424ca800ca46a4b",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57",
+        "bytes": 2119863
+      },
+      "second/macro.json": {
+        "sha256": "e95ff015ab83f1cb69cadee9e1cad01d19928a67fffd896a9a38bff5b742215e",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+                "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+            "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+          },
+          "wasm_sha256": {
+            "old": "bc22fe65f1a4ef859520d30655593f1e0e0dfca4cb57130b4a21c7781e247883",
+            "new": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      },
+      "macro": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+                "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203",
+            "new": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3"
+          },
+          "wasm_sha256": {
+            "old": "7147e2ab66d173dbe28ccb3e75389db318ae5a4d4b60077a40c6c876407cf24a",
+            "new": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "4126b6b83095060b7b262f863a3252dcd88c131bfca8102b01dc24357143018d"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "2447d2977513438cb3e24915e107c57cc5db863a977da5f01424ca800ca46a4b"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "80f73acb49df5b4beb1bfe373ab99ddfa4a6e97fb14e32046e8f63844f176b57"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e95ff015ab83f1cb69cadee9e1cad01d19928a67fffd896a9a38bff5b742215e"
+      }
+    ]
+  },
+  "identity-terminal": {
+    "head": "2e35e5cee5f1e821d37c90dac063c7372b6b4860",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3",
+    "exit_code": 0,
+    "seconds": 10.850754889997916,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  }
+}
