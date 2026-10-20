@@ -75,6 +75,29 @@ pub(super) fn reserve_factory<T>(
         .try_reserve_exact(next - values.len())
         .map_err(|_| invalid_factory("Factory provenance allocation failed"))
 }
+// prepare_factory_inputs installs only candidates into an empty children vector.
+// attach_child/record only append Source/FactoryReference; seal removes candidates.
+// Thus the candidate pool is exactly an initial prefix, never a later suffix.
+// This optimization applies ONLY to selecting offers, not membership traversal.
+fn factory_candidate_prefix_len(session: &mut Session, children: &[ChildDomain]) -> Result<usize> {
+    session.charge_host_work((
+        2 * std::mem::size_of::<std::slice::Iter<'_, ChildDomain>>()
+        + 2 * std::mem::size_of::<usize>() + 8
+    ) as u64)?; // iterator/count initialization, forwarding and retirement
+    let mut count = 0;
+    let mut children = children.iter();
+    loop {
+        session.charge_host_work(3)?; // next/tag, including first noncandidate/None
+        match children.next() {
+            Some(ChildDomain::FactoryCandidate(_)) => {
+                session.charge_host_work(2)?; // increment/control before work
+                count += 1; // bounded by the existing slice length
+            }
+            _ => return Ok(count),
+        }
+    }
+}
+
 impl FactoryOrigin {
     fn retained(&self, session: &mut Session) -> Result<Self> {
         session.charge_host_work((2 * std::mem::size_of::<Self>() + 6) as u64)?;
@@ -379,6 +402,82 @@ impl WriteDomain {
     // Stage a link for EACH actual original ctor/array edge. Unmatched edges
     // stay unmatched; no whitelist or ordinary construction failure is added.
     pub(super) fn stage_factory_edges(
+        &self,
+        session: &mut Session,
+        edges: &[SessionValue],
+    ) -> Result<Vec<ChildDomain>> {
+        session.charge_host_work((4 * std::mem::size_of::<Vec<FactoryOrigin>>() + 10) as u64)?;
+        session.charge_host_work(1)?;
+        if edges.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut candidates = Vec::new();
+        {
+            let state = registry_lock(&self.state);
+            let count = factory_candidate_prefix_len(session, &state.children)?;
+            reserve_factory(session, &mut candidates, count)?;
+            session.charge_host_work(2)?; // bounded prefix slice/iterator setup
+            for child in &state.children[..count] {
+                session.charge_host_work(3)?;
+                if let ChildDomain::FactoryCandidate(origin) = child {
+                    candidates.push(origin.retained(session)?);
+                }
+            }
+        }
+        let mut links = Vec::new();
+        if candidates.is_empty() {
+            return Ok(links);
+        }
+        reserve_factory(session, &mut links, edges.len())?;
+        for edge in edges {
+            session.charge_host_work(3)?;
+            if factory_immediate(session, edge)? {
+                continue;
+            }
+            // Already owned local inputs retain their original membership rule;
+            // do not search unrelated predecessor outputs for them.
+            let local = {
+                let state = registry_lock(&self.state);
+                let mut local = false;
+                for node in &state.nodes {
+                    session.charge_host_work(3)?;
+                    if (node.snapshot.is_some() || node.seed.is_some())
+                        && session.values_identical(edge, &node.value)?
+                    {
+                        local = true;
+                        break;
+                    }
+                }
+                local
+            };
+            if local {
+                continue;
+            }
+            for origin in &candidates {
+                session.charge_host_work(2)?;
+                if let Some(owner) = Self::origin_contains(session, origin, edge)? {
+                    session
+                        .charge_host_work((2 * std::mem::size_of::<SessionValue>() + 4) as u64)?;
+                    session.charge_host_work(std::mem::size_of::<ChildDomain>() as u64 + 3)?;
+                    links.push(ChildDomain::FactoryReference {
+                        value: edge.clone(),
+                        origin: origin.retained(session)?,
+                        owner,
+                    });
+                    break;
+                }
+            }
+        }
+        Ok(links)
+    }
+}
+
+// Test-only baseline is the complete preimage staging function, name-only
+// changed. It retains every historical fee/allocation and identical membership
+// queries, so the measured comparison is not an estimate or mirrored formula.
+#[cfg(test)]
+impl WriteDomain {
+    fn stage_factory_edges_full_scan_reference(
         &self,
         session: &mut Session,
         edges: &[SessionValue],
@@ -1308,4 +1407,286 @@ mod tests {
         drop(last);
         drop(op);
     }
+    // Real factories install exact candidate offers and subsequently append
+    // FactoryReference links. No source certificate or synthetic seed is made.
+    fn prefix_recording(
+        session: &mut Session, bridge: &FormBridge,
+    ) -> (Owner, Owner, Owner) {
+        let base = symbol(session, bridge);
+        let meta = metadata(session, bridge);
+        let origins = [origin(session, &base), origin(session, &meta)];
+        let recording = bridge.recording(session).unwrap();
+        recording.bind_original_factory_inputs(session, &origins).unwrap();
+        let mut last = None;
+        for _ in 0..3 {
+            last = Some(recording.with_form_metadata(
+                session, MetadataShape::Symbol, &base.value, &meta.value, &[],
+            ).unwrap());
+        }
+        let owner = Owner {
+            value: last.unwrap(),
+            records: recording.into_records().unwrap(),
+        };
+        (base, meta, owner)
+    }
+
+    #[test]
+    fn factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (base, meta, owner) = prefix_recording(&mut session, &bridge);
+        let domain = owner.records.write_domain();
+        let operation = session.operation_budget_scope().unwrap();
+        {
+            let state = registry_lock(&domain.state);
+            assert!(!state.sealed);
+            assert!(state.children.len() > 2);
+            assert_eq!(factory_candidate_prefix_len(&mut session, &state.children).unwrap(), 2);
+            for (child, expected) in state.children[..2].iter().zip([&base.value, &meta.value]) {
+                let ChildDomain::FactoryCandidate(origin) = child else { panic!("missing original offer") };
+                assert!(session.values_identical(&origin.root, expected).unwrap());
+            }
+            assert!(state.children[2..].iter().all(|child|
+                matches!(child, ChildDomain::FactoryReference { .. })));
+        }
+        // Stage the genuine original metadata edge through unchanged rooted
+        // membership. Offers must neither disappear nor broaden to a ledger.
+        let links = domain.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap();
+        assert_eq!(links.len(), 1);
+        let ChildDomain::FactoryReference { value, owner: selected, .. } = &links[0]
+            else { panic!("missing proved edge") };
+        assert!(session.values_identical(value, &meta.value).unwrap());
+        assert!(selected.member.is_none());
+        assert!(Arc::ptr_eq(&selected.domain.upgrade().unwrap(), &meta.records.write_domain()));
+        drop(links);
+        // Sealing genuinely removes the offers but leaves proved references.
+        owner.records.seal_source_domain(&mut session).unwrap();
+        {
+            let state = registry_lock(&domain.state);
+            assert!(!state.children.is_empty());
+            assert_eq!(factory_candidate_prefix_len(&mut session, &state.children).unwrap(), 0);
+        }
+        assert!(domain.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap().is_empty());
+        let empty = WriteDomain::new();
+        assert!(empty.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap().is_empty());
+        hash(&mut session, &owner.value);
+        assert!(watch(&owner).matches(&mut session).unwrap());
+        drop(operation);
+    }
+
+    #[test]
+    fn factory_candidate_prefix_staging_fuel_irq_failures_leave_domain_unchanged_and_retry() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let (_base, meta, owner) = prefix_recording(&mut session, &bridge);
+        let domain = owner.records.write_domain();
+        let before = {
+            let state = registry_lock(&domain.state);
+            (state.nodes.len(), state.children.len(), state.sealed, state.valid)
+        };
+        let used = {
+            let operation = session.operation_budget_scope().unwrap();
+            let start = session.operation_fuel_remaining().unwrap();
+            let links = domain.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap();
+            assert_eq!(links.len(), 1);
+            let used = start - session.operation_fuel_remaining().unwrap();
+            drop(links);
+            drop(operation);
+            used
+        };
+        assert!(used > 2);
+        for (fuel, irq) in [(0, false), (1, false), (used / 2, false), (used, true)] {
+            let operation = session.operation_budget_scope().unwrap();
+            session.store.set_fuel(fuel).unwrap();
+            if irq { session.host_work_interrupt().store(true, std::sync::atomic::Ordering::SeqCst); }
+            let error = match domain.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)) {
+                Err(error) => error,
+                Ok(_) => panic!("staging unexpectedly passed a failing cut"),
+            };
+            if irq {
+                assert!(error.is_interrupt(), "{error:?}");
+            } else {
+                assert!(matches!(error, SessionError::Trap(ref trap)
+                    if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+            }
+            assert_eq!(session.operation_fuel_remaining().unwrap(), 0);
+            drop(operation);
+            {
+                let state = registry_lock(&domain.state);
+                assert_eq!((state.nodes.len(), state.children.len(), state.sealed, state.valid), before);
+            }
+            // A genuine fresh operation, same domain and inputs; no explicit
+            // refill inside the failed scope or partial link publication.
+            let operation = session.operation_budget_scope().unwrap();
+            let links = domain.stage_factory_edges(&mut session, std::slice::from_ref(&meta.value)).unwrap();
+            assert_eq!(links.len(), 1);
+            drop(links);
+            drop(operation);
+        }
+        owner.records.seal_source_domain(&mut session).unwrap();
+        hash(&mut session, &owner.value);
+        assert!(watch(&owner).matches(&mut session).unwrap());
+    }
+
+    #[test]
+    fn factory_candidate_prefix_actual_charges_match_old_membership_and_reduce_large_suffix_work() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let base = symbol(&mut session, &bridge);
+        let meta = metadata(&mut session, &bridge);
+        let origins = [origin(&mut session, &base), origin(&mut session, &meta)];
+        let recording = bridge.recording(&mut session).unwrap();
+        recording.bind_original_factory_inputs(&mut session, &origins).unwrap();
+        let mut last = None;
+        // Genuine completed factories append their actual proved references.
+        // No dummy Source/FactoryReference link or authority is fabricated.
+        for _ in 0..64 {
+            last = Some(recording.with_form_metadata(
+                &mut session, MetadataShape::Symbol, &base.value, &meta.value, &[],
+            ).unwrap());
+        }
+        let owner = Owner { value: last.unwrap(), records: recording.into_records().unwrap() };
+        let domain = owner.records.write_domain();
+        let state_before = {
+            let operation = session.operation_budget_scope().unwrap();
+            let state = registry_lock(&domain.state);
+            assert_eq!(factory_candidate_prefix_len(&mut session, &state.children).unwrap(), 2);
+            assert!(state.children.len() >= 66, "expected a genuinely large reference suffix");
+            for (child, expected) in state.children[..2].iter().zip([&base.value, &meta.value]) {
+                let ChildDomain::FactoryCandidate(origin) = child else { panic!("missing original offer") };
+                assert!(session.values_identical(&origin.root, expected).unwrap());
+            }
+            assert!(state.children[2..].iter().all(|child|
+                matches!(child, ChildDomain::FactoryReference { .. })));
+            let counts = (state.nodes.len(), state.children.len(), state.sealed, state.valid);
+            drop(state);
+            drop(operation);
+            counts
+        };
+        fn measured(
+            session: &mut Session, domain: &WriteDomain, edge: &SessionValue, reference: bool,
+        ) -> (Vec<ChildDomain>, u64) {
+            let operation = session.operation_budget_scope().unwrap();
+            let start = session.operation_fuel_remaining().unwrap();
+            let links = if reference {
+                domain.stage_factory_edges_full_scan_reference(session, std::slice::from_ref(edge))
+            } else {
+                domain.stage_factory_edges(session, std::slice::from_ref(edge))
+            }.unwrap();
+            let used = start - session.operation_fuel_remaining().unwrap();
+            drop(operation);
+            (links, used)
+        }
+        session.collect().unwrap();
+        // Same exact domain/prefix/edge, in both orders; never publish either
+        // staging result between measurements or infer a cold/warm cache gain.
+        for reference_first in [true, false] {
+            let (old, new) = if reference_first {
+                let old = measured(&mut session, &domain, &meta.value, true);
+                let new = measured(&mut session, &domain, &meta.value, false);
+                (old, new)
+            } else {
+                let new = measured(&mut session, &domain, &meta.value, false);
+                let old = measured(&mut session, &domain, &meta.value, true);
+                (old, new)
+            };
+            assert_eq!(old.0.len(), 1);
+            assert_eq!(new.0.len(), 1);
+            for links in [&old.0, &new.0] {
+                let ChildDomain::FactoryReference { value, origin, owner: selected } = &links[0]
+                    else { panic!("missing exact proved metadata link") };
+                assert!(session.values_identical(value, &meta.value).unwrap());
+                assert!(session.values_identical(&origin.root, &meta.value).unwrap());
+                assert!(selected.member.is_none());
+                assert!(Arc::ptr_eq(&selected.domain.upgrade().unwrap(), &meta.records.write_domain()));
+            }
+            let (ChildDomain::FactoryReference { owner: old_owner, .. },
+                 ChildDomain::FactoryReference { owner: new_owner, .. }) = (&old.0[0], &new.0[0])
+                else { panic!("expected two exact references") };
+            assert_eq!(old_owner.node, new_owner.node);
+            assert!(std::sync::Weak::ptr_eq(&old_owner.domain, &new_owner.domain));
+            eprintln!("factory-candidate-prefix reference_first={reference_first} candidates=2 suffix={} old={} new={}",
+                state_before.1 - 2, old.1, new.1);
+            assert!(new.1 < old.1, "large-suffix actual staging work should decrease");
+            let state = registry_lock(&domain.state);
+            assert_eq!((state.nodes.len(), state.children.len(), state.sealed, state.valid), state_before);
+        }
+        owner.records.seal_source_domain(&mut session).unwrap();
+        hash(&mut session, &owner.value);
+        assert!(watch(&owner).matches(&mut session).unwrap());
+    }
+
+    // Test-only integration entrypoint: the source_roots test must obtain its
+    // CheckedChild through full Certificate finish/checked on real source. This
+    // method cannot construct a certificate or an unchecked Source link.
+    impl WriteDomain {
+        pub(crate) fn test_candidate_prefix_with_checked_source(
+            session: &mut Session,
+            bridge: &FormBridge,
+            child: &crate::portable_macro_graph::source_roots::CheckedChild,
+        ) {
+            let (_base, meta, owner) = prefix_recording(session, bridge);
+            let domain = owner.records.write_domain();
+            let operation = session.operation_budget_scope().unwrap();
+            // Genuine source enrollment uses the production attachment guards.
+            // The existing recording already has candidate + reference suffix.
+            domain.attach_child(session, child).unwrap();
+            {
+                let state = registry_lock(&domain.state);
+                assert_eq!(factory_candidate_prefix_len(session, &state.children).unwrap(), 2);
+                assert!(state.children[2..].iter().any(|link|
+                    matches!(link, ChildDomain::FactoryReference { .. })));
+                let mut sources = 0;
+                for link in &state.children[2..] {
+                    if let ChildDomain::Source { value, domain } = link {
+                        sources += 1;
+                        assert!(session.values_identical(value, child.value()).unwrap());
+                        assert!(Arc::ptr_eq(domain, &child.domain()));
+                    }
+                }
+                assert_eq!(sources, 1);
+            }
+            let old = domain.stage_factory_edges_full_scan_reference(session, std::slice::from_ref(&meta.value)).unwrap();
+            let new = domain.stage_factory_edges(session, std::slice::from_ref(&meta.value)).unwrap();
+            assert_eq!(old.len(), 1);
+            assert_eq!(new.len(), 1);
+            for links in [&old, &new] {
+                let ChildDomain::FactoryReference { value, owner: selected, .. } = &links[0]
+                    else { panic!("lost original metadata edge") };
+                assert!(session.values_identical(value, &meta.value).unwrap());
+                assert!(selected.member.is_none());
+                assert!(Arc::ptr_eq(&selected.domain.upgrade().unwrap(), &meta.records.write_domain()));
+            }
+            drop((old, new));
+            // Separate unsealed Source-only domain: no offer pool ever existed,
+            // so Source must never be mistaken for a FactoryCandidate.
+            let source_only = WriteDomain::new();
+            source_only.attach_child(session, child).unwrap();
+            {
+                let state = registry_lock(&source_only.state);
+                assert!(!state.sealed);
+                assert!(state.nodes.is_empty());
+                assert_eq!(state.children.len(), 1);
+                assert!(matches!(state.children[0], ChildDomain::Source { .. }));
+                assert_eq!(factory_candidate_prefix_len(session, &state.children).unwrap(), 0);
+            }
+            assert!(source_only.stage_factory_edges_full_scan_reference(
+                session, std::slice::from_ref(child.value()),
+            ).unwrap().is_empty());
+            assert!(source_only.stage_factory_edges(
+                session, std::slice::from_ref(child.value()),
+            ).unwrap().is_empty());
+            owner.records.seal_source_domain(session).unwrap();
+            {
+                let state = registry_lock(&domain.state);
+                assert_eq!(factory_candidate_prefix_len(session, &state.children).unwrap(), 0);
+                assert!(state.children.iter().any(|link| matches!(link, ChildDomain::Source { .. })));
+                assert!(state.children.iter().any(|link| matches!(link, ChildDomain::FactoryReference { .. })));
+            }
+            hash(session, &owner.value);
+            assert!(watch(&owner).matches(session).unwrap());
+            drop(operation);
+        }
+    }
+
 }

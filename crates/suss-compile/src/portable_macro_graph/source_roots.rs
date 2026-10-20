@@ -2024,6 +2024,35 @@ mod tests {
             let _ = b;
         }
     }
+    #[test]
+    fn factory_candidate_prefix_keeps_genuine_checked_source_and_reference_suffixes() {
+        let mut session = Session::new_macro().unwrap();
+        session.eval("(def ^{:doc \"candidate-prefix-source\"} candidate-prefix-source 17)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let operation = session.operation_budget_scope().unwrap();
+        let mut graph = AnalysisGraph::new(&bridge, &mut session);
+        let (_declaration, _meta, entries) = declaration(&mut graph, "candidate-prefix-source");
+        let doc = retained_field(&mut graph, &entries, "doc", FixtureKeyOrigin::RetainedReader);
+        let id = graph.source_roots.index(graph.session, doc).unwrap().unwrap();
+        // Full native source expectation, real recorded materialization and
+        // unchanged complete Certificate checks; no test authority constructor.
+        let certificate = standalone(&mut graph, id);
+        let expected = certificate.source.clone();
+        let child = Certificate::checked(
+            graph.session, graph.bridge, &certificate, &expected,
+        ).unwrap().unwrap();
+        crate::portable_session::write_domain::WriteDomain::test_candidate_prefix_with_checked_source(
+            graph.session, graph.bridge, &child,
+        );
+        // Original declaration owner/expected source and certificate remain live
+        // throughout; the attachment/staging tests may not change this child.
+        assert!(Certificate::checked(
+            graph.session, graph.bridge, &certificate, &expected,
+        ).unwrap().is_some());
+        drop(graph);
+        drop(operation);
+    }
+
 }
 
 fn same_child_keys(session: &mut Session, a: &[Key], b: &[Key]) -> Result<bool> {
