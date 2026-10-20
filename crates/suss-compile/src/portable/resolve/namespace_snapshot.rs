@@ -286,6 +286,13 @@ impl Environment {
         let mut largest = 0;
         let mut insert =
             |global: &Global, cells: &mut BTreeSet<Global>, meter: &mut OwnerMeter<'_>| {
+                // Filter the ACTUAL Cell/bootstrap value, never the bindings
+                // map key: a foreign key may select a Global in this namespace.
+                // Prepay controls/comparison before skipping unrelated inserts.
+                meter(4)?;
+                if global.phase() != phase || !text_eq(global.namespace(), namespace, meter)? {
+                    return Ok(());
+                }
                 let incoming = global_text(global)?;
                 insertion::<Global, ()>(cells.len(), incoming, largest, meter)?;
                 global.prepay_clone(meter)?;
@@ -387,5 +394,166 @@ impl Environment {
         // Arc allocation/publication. Destruction on this error was prepaid too.
         meter(1)?;
         Ok(snapshot)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn environment(phase: Phase, unrelated: usize) -> Environment {
+        let source = "(def ^number local 17) (def other 23)";
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let (_, mut env) = crate::portable::hir::prepare(
+            &forms,
+            0..source.len(),
+            &Environment::new("prefilter.user").unwrap(),
+            phase,
+        ).unwrap();
+        let outside = env.declare_cell(phase, "outside.ns", "outside").unwrap();
+        env.alias(phase, "external", "outside.ns").unwrap();
+        env.refer(phase, "outside", "outside.ns", "outside").unwrap();
+        env.refer(phase, "renamed", "outside.ns", "outside").unwrap();
+        env.exclude_core(phase, "inc").unwrap();
+        env.declare_macro_exports(phase, "external.macros", &["macro-entry".into()]).unwrap();
+        env.macro_alias(phase, "mac", "external.macros").unwrap();
+        env.macro_refer(phase, "macro-entry", "external.macros", "macro-entry").unwrap();
+        env.macro_refer(phase, "renamed-macro", "external.macros", "macro-entry").unwrap();
+        let local = env.resolve(phase, &suss_reader::Symbol::new("local"), 0..0)
+            .unwrap().global().clone();
+        env.materialize_bootstrap(local); // genuine binding/bootstrap duplicate
+        let (reader, internal, _) = env.reader_sequence_cells(phase);
+        env.materialize_bootstrap(reader);
+        env.materialize_bootstrap(internal); // hidden even when also materialized
+        let other_phase = if phase == Phase::Runtime { Phase::Macro } else { Phase::Runtime };
+        for index in 0..unrelated {
+            let cell_phase = if index % 2 == 0 { phase } else { other_phase };
+            let cell = env.declare_cell(cell_phase, "outside.ns", &format!("unrelated-{index:04}")).unwrap();
+            env.materialize_bootstrap(cell);
+            // Same namespace but wrong phase also cannot enter the selected set.
+            let cell = env.declare_cell(other_phase, "prefilter.user", &format!("opposite-{index:04}")).unwrap();
+            env.materialize_bootstrap(cell);
+        }
+
+        // Representable private-map layout, using genuine declared Globals:
+        // preserve cells()'s VALUE semantics even if key/value names differ.
+        // Public alias()/refer() use Scope and do not themselves manufacture
+        // this storage layout. No production invariant permits key filtering.
+        let value_only = env.declare_cell(phase, "prefilter.user", "value-only").unwrap();
+        assert!(env.bindings.remove(&value_only).is_some());
+        let foreign_key = env.declare_cell(other_phase, "outside.key", "foreign-key").unwrap();
+        env.bindings.insert(foreign_key, Binding::Cell(value_only));
+        let key_only = env.declare_cell(phase, "prefilter.user", "key-only").unwrap();
+        env.bindings.insert(key_only, Binding::Cell(outside));
+        let bootstrap_only = env.declare_cell(phase, "prefilter.user", "bootstrap-only").unwrap();
+        assert!(env.bindings.remove(&bootstrap_only).is_some());
+        env.materialize_bootstrap(bootstrap_only);
+        env
+    }
+
+    fn same_snapshot(actual: &SourceNamespace, expected: &SourceNamespace) {
+        assert_eq!(actual.namespace, expected.namespace);
+        assert_eq!(actual.aliases, expected.aliases);
+        assert_eq!(actual.refers, expected.refers);
+        assert_eq!(actual.used_refers, expected.used_refers);
+        assert_eq!(actual.renamed_refers, expected.renamed_refers);
+        assert_eq!(actual.excluded_core, expected.excluded_core);
+        assert_eq!(actual.macro_aliases, expected.macro_aliases);
+        assert_eq!(actual.macro_refers, expected.macro_refers);
+        assert_eq!(actual.used_macro_refers, expected.used_macro_refers);
+        assert_eq!(actual.renamed_macro_refers, expected.renamed_macro_refers);
+        assert_eq!(actual.identities, expected.identities);
+        assert_eq!(actual.declarations.len(), expected.declarations.len());
+        for (global, info) in &expected.declarations {
+            assert!(Arc::ptr_eq(&actual.declarations[global], info));
+            let (actual_key, _) = actual.declarations.get_key_value(global).unwrap();
+            assert!(Arc::ptr_eq(&actual_key.0, &global.0));
+        }
+    }
+
+    #[test]
+    fn namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let environment = environment(phase, 128);
+            let generation = environment.source_generation();
+            let expected = SourceNamespace::capture(&environment, phase);
+            let actual = environment.capture_source_namespace_metered(phase, &mut |_| Ok(())).unwrap();
+            same_snapshot(&actual, &expected);
+            assert_eq!(actual.declarations.len(), 2);
+            assert!(actual.identities.iter().any(|g| g.name() == "value-only"));
+            assert!(actual.identities.iter().any(|g| g.name() == "bootstrap-only"));
+            assert!(!actual.identities.iter().any(|g| g.name() == "key-only"));
+            assert!(!actual.identities.iter().any(|g| g.name().starts_with("opposite-")));
+            assert_eq!(actual.identities.iter().filter(|g| g.name() == "local").count(), 1);
+            assert!(actual.identities.windows(2).all(|pair| pair[0] < pair[1]));
+            assert_eq!(environment.source_generation(), generation);
+
+            // Legacy capture also rejects real Reader/Internal values from
+            // their own namespaces, including materialized duplicate entries.
+            for namespace in ["suss.core", "suss.internal.reader"] {
+                let mut hidden = environment.clone();
+                hidden.enter_namespace(phase, namespace).unwrap();
+                let expected = SourceNamespace::capture(&hidden, phase);
+                let actual = hidden.capture_source_namespace_metered(phase, &mut |_| Ok(())).unwrap();
+                same_snapshot(&actual, &expected);
+                assert!(!actual.identities.iter().any(|g| g.name() == "sequence"));
+            }
+        }
+    }
+
+    #[test]
+    fn namespace_identity_prefilter_meter_failures_release_owners_and_retry_exactly() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let environment = environment(phase, 8);
+            let expected = SourceNamespace::capture(&environment, phase);
+            let generation = environment.source_generation();
+            let counts: Vec<_> = expected.declarations.values().map(Arc::strong_count).collect();
+            let mut costs = Vec::new();
+            let actual = environment.capture_source_namespace_metered(phase, &mut |work| {
+                costs.push(work);
+                Ok(())
+            }).unwrap();
+            same_snapshot(&actual, &expected);
+            drop(actual);
+            let total = costs.iter().try_fold(0u64, |sum, work| sum.checked_add(*work)).unwrap();
+            for cut in 0..costs.len() {
+                let mut call = 0;
+                let result = environment.capture_source_namespace_metered(phase, &mut |_| {
+                    let fail = call == cut;
+                    call += 1;
+                    if fail { Err(Diagnostic { span: 17..23, message: "namespace prefilter cancellation".into() }) }
+                    else { Ok(()) }
+                });
+                let failure = result.unwrap_err();
+                assert_eq!(failure.span, 17..23);
+                assert_eq!(failure.message, "namespace prefilter cancellation");
+                assert_eq!(environment.source_generation(), generation);
+                assert_eq!(expected.declarations.values().map(Arc::strong_count).collect::<Vec<_>>(), counts);
+                let retry = environment.capture_source_namespace_metered(phase, &mut |_| Ok(())).unwrap();
+                same_snapshot(&retry, &expected);
+            }
+            for allowance in [0, 1, total / 2, total - 1] {
+                let mut remaining = allowance;
+                let failure = environment.capture_source_namespace_metered(phase, &mut |work| {
+                    remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                        span: 29..31, message: "namespace prefilter native fuel exhausted".into()
+                    })?;
+                    Ok(())
+                }).unwrap_err();
+                assert_eq!(failure.span, 29..31);
+                assert_eq!(failure.message, "namespace prefilter native fuel exhausted");
+                assert_eq!(expected.declarations.values().map(Arc::strong_count).collect::<Vec<_>>(), counts);
+                let mut remaining = total;
+                let retry = environment.capture_source_namespace_metered(phase, &mut |work| {
+                    remaining = remaining.checked_sub(work).ok_or_else(|| error("retry native fuel exhausted"))?;
+                    Ok(())
+                }).unwrap();
+                same_snapshot(&retry, &expected);
+                assert_eq!(remaining, 0);
+            }
+            same_snapshot(&SourceNamespace::capture(&environment, phase), &expected);
+            assert_eq!(environment.source_generation(), generation);
+        }
     }
 }
