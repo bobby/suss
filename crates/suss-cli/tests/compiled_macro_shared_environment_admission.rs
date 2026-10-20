@@ -17,7 +17,7 @@ const OBSERVER: &str = r#"(defmacro inspect-shared-multi-ast-env [label]
                 (if (vector? child)
                   (reduce (fn [out item] (into out (gather item))) out child)
                   (into out (gather child))))) [] (:children node))))
-        refs (gather (:init raw))
+        refs (gather (:suss/body (first (:suss/methods (:suss/source-function raw)))))
         a (:locals (:env (nth refs 0)))
         b (:locals (:env (nth refs 1)))]
     (defonce saved-multi-ast-locals a)
