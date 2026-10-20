@@ -444,5 +444,75 @@
     },
     "execution": "Read-only cache/Git/current source; cache-only receipt. No Cargo/VM/shared edits."
   },
-  "limits": "Initialization regressions pass; default constructor10M replay is running with no verdict. Public namespace/callable full probes and original14 preservation must replay on this source; pinned/source-tags/literal/defaultCORE/source-child/workspace/final-head CI/review remain unproven."
+  "limits": "Initialization regressions pass. The unchanged explicit10M constructor fails after initialization and user definition, during first Runtime caller &env input transport83..108; constructor output assertions and Macro caller phase are unreached. Full namespace/callable pair is running without a terminal verdict. Original14 preservation, pinned/source-tags/literal/defaultCORE/source-child/workspace/final-head CI/review remain unproven on this source.",
+  "default_constructor_terminal": {
+    "head": "89265e05f71ba9f4b118ed48e49915a2f2f52532",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_constructor_source_asts",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+    ],
+    "selection": {
+      "exact_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 346.0271979420004,
+    "raw_sha256": "c937d8b95d18a2cc7baeeb3e46e5d00d352e1c4802f01a477389e7c8c7f6bc0a"
+  },
+  "default_constructor_independent_review": {
+    "reviewer": "Carver",
+    "verdict": "VERIFIED_DEFAULT_CONSTRUCTOR_FAILURE_AFTER_INITIALIZATION_AND_USER_DEFINE",
+    "executed_head": "89265e05f71ba9f4b118ed48e49915a2f2f52532",
+    "source_commit": "050e5d3e14b55918e3dc34216730dd1608010496",
+    "compiler_source_sha256": "de61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1",
+    "input_count": 227,
+    "all_current_frozen_inputs_and_executed_head_git_verified": true,
+    "boot_hashes": {
+      "runtime/bootstrap/runtime.wasm": "b3333239267f24e4dd3e35707838b1dd0231565d5cc194906265f6fc8a1a48cb",
+      "runtime/bootstrap/runtime.json": "ec5184969e85d07281ee7cd1d374782ad2fe99f941102a2607a969e764d1be12",
+      "runtime/bootstrap/macro.wasm": "9acdb68d90fd018fb600e5eaafe5a2fdbbb7b20ae3a0e0a2a117baaf98be4f22",
+      "runtime/bootstrap/macro.json": "4333d0673f17757388e74e93650d4fb5dee7bfb81482811bd25cb3fa63548cec"
+    },
+    "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+    "exact_name": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+    "result": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 1,
+      "harness_seconds": 93.03,
+      "command_seconds": 346.0271979420004,
+      "exit_code": 101
+    },
+    "raw_sha256": "c937d8b95d18a2cc7baeeb3e46e5d00d352e1c4802f01a477389e7c8c7f6bc0a",
+    "failure": {
+      "line": 192,
+      "operation": "first Runtime caller eval_with_macros, caller &env input transport",
+      "variant": "Compile(Diagnostic)",
+      "span": "83..108",
+      "message": "Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly"
+    },
+    "completed_before_failure": "CompiledMacros::new initialization, caller-default10M assertion and user constructor-facts define all return successfully before eval_with_macros unwrap at192. No constructor output projection/value assertions or second caller phase completed.",
+    "historical_distinction": "Source169 retry failed at179 CompiledMacros::new fixed defn bootstrap1..1727. Currentde61 passes that setup and user define, then fails original10M &env input transport83..108. Not default fit or whole-cost progress claim.",
+    "initialization_two": "Existing independent-initialization-two-evidence-review.json verifies separate exact2PASS same source/BOOT; not additional constructor pass credit.",
+    "public_pair": "namespace-public-terminal.json absent at this check; no row/result verdict supplied.",
+    "limits": "Original unchanged10M control; no quota/fixture changes, no identity/readiness inference. No Cargo/VM/shared edits."
+  }
 }
