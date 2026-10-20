@@ -1425,4 +1425,106 @@ mod absent_remove_tests {
             }
         }
     }
+
+    #[test]
+    fn unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry() {
+        use crate::portable_session::{Session, SessionError};
+        const SOURCE: &str = "(let* [saved 17] (inspect-owner) (deftype FieldOwner [f] Object (toString [this] (inspect-owner) f)) (inspect-owner))";
+        struct Metered<'a> {
+            session: &'a mut Session,
+            observe: Observe,
+            field_span: Range<usize>,
+            cut: Option<bool>, // false: exhaust remaining fuel; true: interrupt
+            reached: bool,
+            typed_error: Option<SessionError>,
+        }
+        impl crate::portable::ExpansionHost for Metered<'_> {
+            fn expand(&mut self, form: &Form, context: crate::portable::ExpansionContext<'_>)
+                -> Result<Option<Form>, Diagnostic>
+            {
+                <Observe as crate::portable::ExpansionHost>::expand(&mut self.observe, form, context)
+            }
+            fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+                let owner_work = (std::mem::size_of::<FieldBinding>()
+                    + 2 * std::mem::size_of::<usize>() + 8) as u64;
+                if span == self.field_span && work == owner_work {
+                    assert!(!self.reached, "one actual unshadowed field owner");
+                    self.reached = true;
+                    if let Some(interrupt) = self.cut {
+                        if interrupt {
+                            self.session.interrupt_handle().interrupt();
+                        } else {
+                            let left = self.session.operation_fuel_remaining().unwrap();
+                            self.session.charge_host_work(left).unwrap();
+                        }
+                    }
+                }
+                self.session.charge_host_work(work).map_err(|error| {
+                    let message = error.to_string();
+                    self.typed_error = Some(error);
+                    fail(span, &message)
+                })
+            }
+        }
+        let field_start = SOURCE.find("[f]").unwrap() + 1;
+        for phase in [Phase::Runtime, Phase::Macro] {
+            // Native analysis only: Session supplies its ordinary typed meter;
+            // no guest transformer or test-only fuel allowance is installed.
+            let mut session = Session::new().unwrap();
+            let configured = session.options().fuel_per_operation;
+            for interrupt in [false, true] {
+                let (saved, saved_fields, old_entry, old_initializer, old_debug) = {
+                    let _scope = session.operation_budget_scope().unwrap();
+                    let mut host = Metered { session: &mut session, observe: Observe::default(),
+                        field_span: field_start..field_start + 1, cut: Some(interrupt),
+                        reached: false, typed_error: None };
+                    let result = crate::portable::prepare_fragment_forms_with_expander(
+                        suss_reader::forms::read_forms(SOURCE).unwrap(), 0..SOURCE.len(),
+                        &Environment::default(), phase, &mut host);
+                    assert!(result.is_err());
+                    assert!(host.reached, "failure must reach actual field-owner acquisition");
+                    let error = host.typed_error.take().expect("actual Session meter failure");
+                    let expected = if interrupt { wasmtime::Trap::Interrupt } else { wasmtime::Trap::OutOfFuel };
+                    assert!(matches!(error, SessionError::Trap(ref error)
+                        if error.downcast_ref::<wasmtime::Trap>() == Some(&expected)), "{error:?}");
+                    assert_eq!(host.observe.0.len(), 1, "method body not observed after failure");
+                    let (saved, fields) = host.observe.0[0].clone();
+                    let entry = saved["saved"].clone();
+                    let initializer = entry.initializer.clone();
+                    let debug = format!("{saved:?}");
+                    (saved, fields, entry, initializer, debug)
+                };
+                // A new ordinary operation scope is the retry boundary; never
+                // refill a live request or clear cancellation mid-analysis.
+                {
+                    let _scope = session.operation_budget_scope().unwrap();
+                    let mut host = Metered { session: &mut session, observe: Observe::default(),
+                        field_span: field_start..field_start + 1, cut: None,
+                        reached: false, typed_error: None };
+                    crate::portable::prepare_fragment_forms_with_expander(
+                        suss_reader::forms::read_forms(SOURCE).unwrap(), 0..SOURCE.len(),
+                        &Environment::default(), phase, &mut host).unwrap();
+                    assert!(host.reached && host.typed_error.is_none());
+                    assert_eq!(host.observe.0.len(), 3);
+                    let (method_locals, method_fields) = &host.observe.0[1];
+                    assert!(!method_locals.contains_key("f"), "genuinely unshadowed field");
+                    let field = &method_fields["f"];
+                    assert_eq!(field.index, 0);
+                    assert!(!field.mutable);
+                    assert_eq!(field.declaration.span, field_start..field_start + 1);
+                    assert!(host.observe.0[0].1.is_empty() && host.observe.0[2].1.is_empty());
+                    assert!(Arc::ptr_eq(&host.observe.0[0].0, &host.observe.0[2].0));
+                }
+                assert!(Arc::ptr_eq(&saved["saved"], &old_entry));
+                match (&saved["saved"].initializer, &old_initializer) {
+                    (Some(actual), Some(old)) => assert!(Arc::ptr_eq(actual, old)),
+                    _ => panic!("original initialized lexical must remain present"),
+                }
+                assert!(saved_fields.is_empty());
+                assert_eq!(format!("{saved:?}"), old_debug);
+                assert_eq!(session.options().fuel_per_operation, configured);
+            }
+        }
+    }
+
 }

@@ -2005,6 +2005,14 @@ impl Analyzer<'_> {
                         vec![self.local(field, receiver)],
                     )
                 };
+                // The field map debit below does not acquire this owner. Pay the
+                // Arc payload, two strong/weak header words, and bounded owner
+                // initialization/transfer/retirement controls before allocation.
+                self.expander.charge_expansion_work(
+                    (std::mem::size_of::<FieldBinding>()
+                        + 2 * std::mem::size_of::<usize>() + 8) as u64,
+                    field.span.clone(),
+                )?;
                 let record = std::sync::Arc::new(FieldBinding {
                     identity: std::sync::Arc::new(()),
                     declaration: field.clone(),
