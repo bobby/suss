@@ -30550,3 +30550,26 @@ Use one producer, bounded workers and a private writable TMPDIR; do not set RUST
 Historical sourcee497 identity evidence is [recorded separately](evidence/m4-pr263-identity-execution-results-2026-10-20.json). The original namespace/callable harness completed0PASS2FAIL, with all ten namespace calls and six callable rows observed. Namespace aliases differ in both phases; later callable rows differ only in saved raw-declaration identity. A separate corrected shared-environment companion passed1/0 with all six rows and four true booleans per row, retaining GC and three independent requests per phase. These e497 outcomes are not current067 results or an identity fix.
 
 Local receipts: `pr263-global-owner-production-v2`, `pr263-native-metered-noexpansion-global-v2`, `pr263-identity-focused-calibrated-e497-v1` and `pr263-shared-env-source-body-e497-v1`. Earlier failures remain source-qualified. No issue closure or promotion follows from this checkpoint.
+
+
+### Ordinary native frontier and constructor callback (2026-10-20)
+
+Commit `c49c187` declines source-identity retention for an ordinary native frontier whose only reachable owner is its ephemeral request envelope. The complete dependency/cycle proof still runs before that decline, and private-slot handling and genuine source-owner guards remain in place. This lets ordinary constructors retain their actual callback result when unrelated declaration metadata exists elsewhere in the graph. Commit `9ba9969` adds opt-in diagnostics for staged physical-binding conflicts, source-alias repeat policy and memo receipt provenance; it changes no authorization checks or cache decisions.
+
+Current compiler fingerprint is `ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b` over222 inputs. The same23 focused native tests pass (0.04s harness /146.854875s total). Both normal bootstrap generations agree; the command exits1 at the expected old-shipped comparison (96.321978s). Independent exact-four adoption produced `8e0023f`, with executable sections unchanged. Pure compiled source identity/invalidation verification passes with the custom target (1.359204s). These facts do not establish bootstrap semantic acceptance.
+
+The three selected Session controls complete2PASS1FAIL0ignored (18.92s harness /160.751763s total). The original cold constructor callback test now passes unchanged: returned value17, one callback and no metadata cache publication. The new admission regression passes in both source phases. The original repeated-occurrence/alias/metadata-clone control still fails before its downstream assertions with `Host(Source evidence at non-source alias)` at reuse.rs685. Its trace attributes the rejected cached Source wrapper to a non-source alias at slot68 with repeat policyfalse and no current native capture; it does not authorize stripping source evidence or bypassing the guard.
+
+```sh
+export CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target
+export CARGO_BUILD_JOBS=1
+export RAYON_NUM_THREADS=1
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_POISON_RECEIPT_TRACE=1 cargo test -p suss-compile --locked --lib -- --exact portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration --test-threads=1 --nocapture
+```
+
+Use one producer and a private writable TMPDIR; do not set RUSTFLAGS. [Exact commands, source bindings, generated-file hashes and results](evidence/m4-pr263-native-frontier-callback-results-2026-10-20.json). Raw receipts/logs: cache `pr263-frontier-attribution-production-v1`. The new callable/poison diagnostic paths compile, but their tests have not run on this source. Their previous067 failures and CORE0/17 remain source-qualified; full source-child, source-tag, pinned69 and workspace/final-head CI results are not established by this run.
