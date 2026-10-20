@@ -568,11 +568,11 @@ mod health_tests {
     use crate::portable_macro_data::FormBridge;
     #[test]
     fn uncached_numeric_key_data_never_mints_direct_key_or_retained_authority() {
-        // The original program always runs. The second case adds an explicit
-        // reader key; neither provenance case can disappear behind a filter.
+        // Preserve the original explicit-map program as the cold case. The
+        // reader's shorthand supplies the separate protected literal origin.
         for (text, born_literal) in [
-            ("(def ^{:tag number} watched 17)", true),
-            ("(def ^{:tag number :health-data-key 17} watched 17)", false),
+            ("(def ^{:tag number} watched 17)", false),
+            ("(def ^number watched 17)", true),
         ] {
             let mut source_session = Session::new_repl().unwrap();
             source_session.eval(text).unwrap();
@@ -588,32 +588,42 @@ mod health_tests {
             graph.direct_reader_roots = true;
             graph.declaration(global, Some(info), 0).unwrap();
             graph.finish_recipes().unwrap();
-            let mut selected = None;
-            for (id, capture) in graph.source_roots.roots.iter().enumerate() {
-                if !matches!(&capture.owner,
-                    Owner::ReaderSource(_, _, super::super::reader_keys::ReaderSelector::Key(_))) {
-                    continue;
-                }
-                let mut native = capture.native;
-                for _ in 0..graph.recipes.len() {
-                    match graph.recipes[native].as_ref().unwrap() {
-                        Recipe::Alias(child) => native = *child,
-                        Recipe::Identifier { keyword: true, name, literal, .. } => {
-                            // The name selects the authored input only. Origin
-                            // is independently asserted from the protected token
-                            // and then the actual pre-write memo below.
-                            if literal.is_some() == born_literal
-                                && (born_literal || name == "health-data-key") {
-                                selected = Some(id);
-                            }
-                            break;
-                        }
-                        _ => break,
+            let owner = info.completed_values.as_ref().unwrap();
+            let metadata = graph.completed_reader(owner).unwrap();
+            let selected = metadata.pairs.chunks_exact(2).enumerate().find(|(index, pair)| {
+                // Name selects the authored input, never its origin. Origin is
+                // the existing native normalization enum, independently checked.
+                matches!(&pair[0].kind, suss_reader::forms::Kind::Keyword(name)
+                    if name.namespace.is_none() && name.name == "tag")
+                    && metadata.origins[*index] == if born_literal {
+                        hir::MetadataKeyOrigin::ReaderShorthandTag
+                    } else {
+                        hir::MetadataKeyOrigin::SourceSyntax
                     }
+            }).map(|(index, _)| index)
+                .expect("both actual normalized provenance cases must exist");
+            let captured = graph.capture_completed_reader_key(
+                global, owner, info, metadata.key_positions[selected],
+            ).unwrap();
+            let key = graph.source_roots.index(graph.session, captured).unwrap().unwrap();
+            let mut native = graph.source_roots.roots[key].native;
+            let mut provenance_checked = false;
+            for _ in 0..graph.recipes.len() {
+                match graph.recipes[native].as_ref().unwrap() {
+                    Recipe::Alias(child) => native = *child,
+                    Recipe::Identifier { keyword: true, literal: Some(_), .. } if born_literal => {
+                        provenance_checked = true;
+                        break;
+                    }
+                    Recipe::Form(form) if !born_literal => {
+                        assert!(matches!(form.kind, suss_reader::forms::Kind::Keyword(_)));
+                        provenance_checked = true;
+                        break;
+                    }
+                    _ => panic!("normalized origin must retain its actual native constructor path"),
                 }
-                if selected.is_some() { break; }
             }
-            let key = selected.expect("both literal and cold reader-key cases must exist");
+            assert!(provenance_checked, "native provenance walk must terminate");
             let alias = graph.source_roots.roots[key].alias;
             let scalar = graph.recipe(Recipe::Scalar(crate::portable::hir::Literal::Number(17.0))).unwrap();
             let request_map = graph.recipe(Recipe::ReaderMap(vec![(alias, scalar)])).unwrap();
