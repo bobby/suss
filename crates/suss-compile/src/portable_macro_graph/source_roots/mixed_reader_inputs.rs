@@ -298,9 +298,24 @@ mod tests {
             "retain the original complete Symbol, source span and metadata");
         let original_projected = metadata_expectations::project(graph.session, &graph.recipes, original_export)
             .unwrap().unwrap();
+        // The private reader-key constructor, selected by this genuine
+        // normalized origin, emits Identifier rather than a located source
+        // Form. Project that constructor independently of original_projected;
+        // do NOT erase source/value spans or compare only keyword spelling.
+        let expected_key_recipe = graph.reader_key_recipe(&metadata.pairs[0], metadata.origins[0]).unwrap();
+        let expected_key = metadata_expectations::project(graph.session, &graph.recipes, expected_key_recipe)
+            .unwrap().unwrap();
+        assert_eq!(expected_key.kind, metadata.pairs[0].kind,
+            "the complete actual keyword value must survive the origin-selected constructor");
+        assert_eq!(expected_key.metadata, metadata.pairs[0].metadata,
+            "no source-key metadata may be discarded by this fixture");
+        let mut expected_pairs = metadata.pairs.clone();
+        expected_pairs[0] = expected_key;
+        assert_eq!(expected_pairs[1], reader_source.metadata[position.0],
+            "the entire raw Symbol span/metadata remains exact after key projection");
         let expected_source = suss_reader::forms::Form {
             span: 0..0, metadata: vec![],
-            kind: suss_reader::forms::Kind::Map(metadata.pairs.clone()),
+            kind: suss_reader::forms::Kind::Map(expected_pairs),
         };
         let expected = source_facts::normalized_copy(graph.session, &expected_source).unwrap();
         assert_eq!(original_projected, expected,
