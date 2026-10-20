@@ -1396,6 +1396,63 @@ impl Session {
         })?;
         self.eval_prepared(prepared)
     }
+    /// Install a fixed compiler-library source without macro expansion. Analysis
+    /// and execution debit this same initialization operation and Store.
+    pub(crate) fn eval_fixed_initialization_source(
+        &mut self,
+        source: &'static str,
+    ) -> Result<SessionValue, SessionError> {
+        struct InitializationHost<'a> {
+            store: StoreContextMut<'a, ()>,
+            interrupt: &'a AtomicBool,
+            fuel: u64,
+            error: Option<SessionError>,
+        }
+        impl portable::ExpansionHost for InitializationHost<'_> {
+            fn expansion_work_fuel(&self) -> u64 { self.fuel }
+            fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { Some(vec![]) }
+            fn expand(
+                &mut self,
+                _: &suss_reader::forms::Form,
+                _: portable::ExpansionContext<'_>,
+            ) -> Result<Option<suss_reader::forms::Form>, Diagnostic> { Ok(None) }
+            fn charge_expansion_work(
+                &mut self,
+                work: u64,
+                span: std::ops::Range<usize>,
+            ) -> Result<(), Diagnostic> {
+                Session::consume_host_work(self.store.as_context_mut(), work, self.interrupt)
+                    .map_err(|error| {
+                        let diagnostic = Diagnostic {
+                            span,
+                            message: format!("Fixed compiler-library analysis failed: {error}"),
+                        };
+                        if self.error.is_none() { self.error = Some(error.into()); }
+                        diagnostic
+                    })
+            }
+        }
+        let _operation = self.operation_budget_scope()?;
+        self.charge_host_work((2 * std::mem::size_of::<InitializationHost<'_>>() + 8) as u64)?;
+        let mut host = InitializationHost {
+            store: self.store.as_context_mut(),
+            interrupt: &self.interrupt,
+            fuel: self.options.fuel_per_operation,
+            error: None,
+        };
+        let prepared = portable::modules::prepare_input_with_expander(
+            source, &self.options.source_paths, &self.environment,
+            self.phase, &self.provided, &mut host,
+        );
+        let error = host.error.take();
+        drop(host);
+        if let Some(error) = error { return Err(error); }
+        let prepared = prepared.map_err(|error| match error {
+            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+        })?;
+        self.eval_prepared(prepared)
+    }
     /// Publish only actual compiled macro roots owned by this phase Store.
     pub(crate) fn declare_macro_exports(
         &mut self,

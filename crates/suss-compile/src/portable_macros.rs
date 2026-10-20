@@ -298,15 +298,15 @@ impl CompiledMacros {
         macros.define(crate::portable_lazy_seq::SOURCE)?;
         macros
             .session
-            .eval(crate::portable_record_factories::SOURCE)?;
-        macros.session.eval(crate::portable_record_label::SOURCE)?;
+            .eval_fixed_initialization_source(crate::portable_record_factories::SOURCE)?;
+        macros.session.eval_fixed_initialization_source(crate::portable_record_label::SOURCE)?;
         macros
             .session
-            .eval(crate::portable_record_protocol_facts::SOURCE)?;
+            .eval_fixed_initialization_source(crate::portable_record_protocol_facts::SOURCE)?;
         macros
             .session
-            .eval(crate::portable_record_emitter::SOURCE)?;
-        macros.session.eval(crate::portable_record_public::SOURCE)?;
+            .eval_fixed_initialization_source(crate::portable_record_emitter::SOURCE)?;
+        macros.session.eval_fixed_initialization_source(crate::portable_record_public::SOURCE)?;
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_record_public::MACRO_SOURCE)?;
         macros.enter_namespace("user")?;
@@ -986,6 +986,38 @@ mod memo_leaf_tests;
 #[cfg(test)]
 mod initialization_budget_tests {
     use super::*;
+
+    #[test]
+    fn fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery() {
+        let mut session = Session::new_macro().unwrap();
+        {
+            let _operation = session.operation_budget_scope().unwrap();
+            let remaining = session.operation_fuel_remaining().unwrap();
+            session.charge_host_work(remaining - 10_000).unwrap();
+            let error = session.eval_fixed_initialization_source(
+                "(def initialization-unpublished 23)",
+            ).unwrap_err();
+            assert!(matches!(error, SessionError::Trap(ref trap)
+                if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+            assert_eq!(session.operation_fuel_remaining().unwrap(), 0);
+        }
+        assert!(matches!(session.eval("initialization-unpublished"), Err(SessionError::Compile(_))));
+        {
+            let _operation = session.operation_budget_scope().unwrap();
+            session.host_work_interrupt().store(true, std::sync::atomic::Ordering::SeqCst);
+            let error = session.eval_fixed_initialization_source(
+                "(def initialization-unpublished 23)",
+            ).unwrap_err();
+            assert!(error.is_interrupt(), "{error:?}");
+            assert_eq!(session.operation_fuel_remaining().unwrap(), 0);
+        }
+        session.eval_fixed_initialization_source("(def initialization-recovered 23)").unwrap();
+        let value = session.eval("initialization-recovered").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let form = bridge.read(&mut session, &value, 0..1).unwrap();
+        assert!(matches!(form.kind, Kind::Number(23.0)));
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+    }
 
     #[test]
     fn fixed_macro_initialization_restores_default_and_replacement_caller_limits() {
