@@ -453,6 +453,46 @@
       "measurements": [
         "test portable_session::write_domain::tests::scalar_domain_mixed_growth_and_record_drop_orders_keep_only_scalar_owners ... typed-scalar-layout Node=16 ComplexNode=160 ScalarInputs=112 Fact=24"
       ]
+    },
+    "default-constructor": {
+      "head": "c4f11aec5b99e57526194629c4e1705b183945fa",
+      "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+      "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 367.68201785600104,
+      "raw_sha256": "2e8805a52795743371154175013db11e989ca8ad34e641be014d2d2f6213ad41",
+      "started_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "unstarted_selected_names": [],
+      "harness_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 66.31s"
+      ],
+      "accepted_complete_selected_tests": false,
+      "measurements": []
     }
   },
   "limits": [
@@ -1961,6 +2001,286 @@
       "69PASS is focused current-source evidence, not fullbaseline/finalCI/public acceptance/readiness.",
       "Live fresh pinned pair has no verdict in this receipt.",
       "No Cargo/VM/comparator/oracle execution or shared edits by reviewer; no default/pinned fit or performance claim."
+    ]
+  },
+  "pinned_acceptance": {
+    "terminal": {
+      "fixture_binding_manifest_sha256": "e05b0f3143661040393d55f1d14ea9e05f974bac625f4828e75e4267432a5d4c",
+      "source_freeze_sha256": "2f7537a05b5acfc71b462fbb1c579ecdb8163cf6a2bf89b31083651b27f48d38",
+      "head": "db9a96ae832cb0acc07402749d55519fc0cb259f",
+      "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+      "predicted_source_fingerprint": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+      "source_input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ],
+      "trace_environment": {},
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original unchanged pinned map69 and identifier15 bodies, originalMacro200M/caller200M. Fresh capture directory and independentcomparisonrequired; exactIDs/operand/verdictchecks remain. No source/metadata/observation reduction or quota/ratechange. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 310.39048243199795,
+      "raw_sha256": "ccd5de00ac932f62dbd29c2436814a3b5e5693fd584f44c4a89dc17e3a4ef8dd"
+    },
+    "fixture_bindings": {
+      "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+      "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+      "bootstrap_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+      "file_bindings": {
+        "crates/suss-compile/tests/clojure_test_suite.rs": {
+          "sha256": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "crates/suss-compile/tests/support/portable_decode.rs": {
+          "sha256": "5b8c8f5b130ec981c1f2ab49b6f869efef8c70dfcc34548427ca3c520c26bb87",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "crates/suss-compile/tests/support/compilation_fuel.rs": {
+          "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "scripts/clojure_test_suite.py": {
+          "sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "tests/oracle/clojure-test-suite-observations.json": {
+          "sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "tests/oracle/clojure-test-suite-known-failures.json": {
+          "sha256": "90ada9910a7529f0f7152247692eabeb47fd4214580575f94d685b9c36a7642c",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite.cljs": {
+          "sha256": "bd190dcffddff113bf7e1a7e9dd2d69cf39ac4e6a360df7edbc5d58cad818276",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs": {
+          "sha256": "7846d135c63178d0602eec38d60c099903f4b515e2ba0541a63b5faa64e10447",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc": {
+          "sha256": "a077bc1d9cc7d4e8e0e83d5fe5f1eb0e55c28eab7887919599b20e42f31b7c1e",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc": {
+          "sha256": "37cfac488528b43d8e492340885b1ed35c89362aa0167ff7ba72bdb0318a06b4",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc": {
+          "sha256": "df4f5fafcbc0b443956c964d8c9a59ee33be4f77321e84fd98eaffa8d82c1c3f",
+          "exact_source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+          "scope": "Fixture/source bytes unchanged from prior4ba and unexecutedbc66 packet"
+        },
+        "runtime/bootstrap/runtime.wasm": {
+          "sha256": "fc10d767d580bfd389a11f4dc566ce0431f6163bf951bfc1c0f685b33becc413",
+          "exact_source_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+          "scope": "Reviewed current bootstrap artifact"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "sha256": "ff1b98e00fea8e1b4e90aebb3452c1f115950944c1f1ca05448a60ae228694b5",
+          "exact_source_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+          "scope": "Reviewed current bootstrap artifact"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "sha256": "92c17127864d825c2d06b6c7dbf88cb68b1a21927a3530cf01c94fd473899b6d",
+          "exact_source_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+          "scope": "Reviewed current bootstrap artifact"
+        },
+        "runtime/bootstrap/macro.json": {
+          "sha256": "9630b74951e5250cd15fc3ef93d823983c9a3c400237afcdb99443d7ad9de568",
+          "exact_source_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+          "scope": "Reviewed current bootstrap artifact"
+        }
+      },
+      "scope": "11 unchanged fixture/source files and4 independently reviewed matching2eb83 artifacts. Semantic native test calibration applies to none of these controls."
+    },
+    "map_comparison": {
+      "counts": {
+        "pass": 0,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 69,
+        "skipped": 0,
+        "namespaces-failed": 1
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {
+          "clojure.core-test.map": {
+            "stage": "macro",
+            "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:   0xcf18 - <unknown>!<wasm function 162>\n    1:   0xdb23 - <unknown>!<wasm function 175>\n    2:  0x494e1 - <unknown>!<wasm function 245>\n    3:  0xf5a62 - <unknown>!<wasm function 1123>\n    4:  0xeeb0a - <unknown>!<wasm function 1071>\n    5:   0xe0a4 - <unknown>!<wasm function 185>\n    6:  0x1049d - <unknown>!<wasm function 276>\n    7:  0x104c7 - <unknown>!<wasm function 277>\n    8:    0x218 - <unknown>!<wasm function 6>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+          }
+        },
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": false,
+      "expected_count": 69,
+      "actual_count": 0,
+      "observations_sha256": "e59635c6faee85a47b0a8a9601648fef8669da3fb23caeb07a16452a18ff75e6",
+      "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+      "accepted": false
+    },
+    "identifier_comparison": {
+      "counts": {
+        "pass": 15,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 0,
+        "skipped": 0,
+        "namespaces-failed": 0
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {},
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": true,
+      "expected_count": 15,
+      "actual_count": 15,
+      "observations_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+      "scope": "Original inline Rust Python comparator logic, repeated against retained capture. Host operand decisions only; no fabricated verdict.",
+      "accepted": true
+    },
+    "harness_summaries": [
+      "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 151.64s"
+    ]
+  },
+  "independent_pinned_default_review": {
+    "verdict": "PINNED_RESULTS_VERIFIED_DEFAULT_PENDING",
+    "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+    "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+    "compiler_inputs": 229,
+    "boot_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+    "launch_head": "db9a96ae832cb0acc07402749d55519fc0cb259f",
+    "prior_source_binding_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3/independent-focused-evidence-review-cicero.json",
+      "sha256": "96ad403706795616945f82a18f34000de57e762e062f2fdf6ccb67a96918fc59",
+      "scope": "Reused unchanged229source binding; no redundant census/run-long detector claim."
+    },
+    "bindings": {
+      "manifest_sha256": "e05b0f3143661040393d55f1d14ea9e05f974bac625f4828e75e4267432a5d4c",
+      "launch_manifest_hash_verified": true,
+      "top_level_boot_and_all_per_file_git_hashes_verified": true,
+      "launch_head_fixture_and_boot_git_hashes_verified": true
+    },
+    "pinned_terminal": {
+      "pass": 1,
+      "fail": 1,
+      "ignored": 0,
+      "filtered": 11,
+      "exit_code": 101,
+      "harness_seconds": 151.64,
+      "command_seconds": 310.39048243199795,
+      "raw_sha256": "ccd5de00ac932f62dbd29c2436814a3b5e5693fd584f44c4a89dc17e3a4ef8dd",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      }
+    },
+    "identifier15": {
+      "accepted": true,
+      "ordered_ids_match": true,
+      "host_pass": 15,
+      "guest_judged": 0,
+      "kind_counts": {
+        "predicate": 13,
+        "thrown": 2
+      },
+      "strict_operand_types_values_and_throw_observations_match_reference": true,
+      "ordered_ids": [
+        "clojure.core-test.name/test-name#1",
+        "clojure.core-test.name/test-name#2",
+        "clojure.core-test.name/test-name#3",
+        "clojure.core-test.name/test-name#4",
+        "clojure.core-test.name/test-name#5",
+        "clojure.core-test.name/test-name#6",
+        "clojure.core-test.name/test-name#7",
+        "clojure.core-test.name/test-name#8",
+        "clojure.core-test.name/test-name#9",
+        "clojure.core-test.namespace/test-namespace#1",
+        "clojure.core-test.namespace/test-namespace#2",
+        "clojure.core-test.namespace/test-namespace#3",
+        "clojure.core-test.namespace/test-namespace#4",
+        "clojure.core-test.namespace/test-namespace#5",
+        "clojure.core-test.namespace/test-namespace#6"
+      ],
+      "capture_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+      "comparison_sha256": "4abaa53d273e66d343af3de2d9c6da134e146f17e3fef18b20b1f574e17d73a6",
+      "inline_raw_comparator_summary_matches": true
+    },
+    "map69": {
+      "accepted": false,
+      "observed": 0,
+      "unexecuted": 69,
+      "semantic_assertion_failures": 0,
+      "namespace_failures": 1,
+      "stage": "expanded result transport",
+      "span": "239..5926",
+      "failure": "OutOfFuel",
+      "Macro_fuel": 200000000,
+      "caller_fuel": 200000000,
+      "raw_embedded_capture_verified": true,
+      "capture_sha256": "e59635c6faee85a47b0a8a9601648fef8669da3fb23caeb07a16452a18ff75e6",
+      "comparison_sha256": "c2ffd5ec32f00f98e455e51ef5e60cc21076c4f111558daefc8fefd5e569ddc9"
+    },
+    "captures_byte_identical_to_prior411": true,
+    "default_constructor": {
+      "status": "PENDING_NO_TERMINAL",
+      "cache": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3",
+      "note": "No default verdict included; no live producer inspection, interruption or rerun."
+    },
+    "limits": [
+      "Current pinned1P1F is source-qualified; identical captures do not establish cost savings/progress.",
+      "No semantic verdict for69unexecuted map assertions; no default fit/fullbaseline/readiness claim.",
+      "Static retained-evidence parsing only; no Cargo/VM/comparator/test execution or shared edits."
     ]
   }
 }

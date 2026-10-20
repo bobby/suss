@@ -30953,3 +30953,25 @@ Local audit records: `/home/bobby/.cache/suss-m4-work/target-cleanup-2026-10-20-
 generated subdirectory is absent and the protected shared target still exists.
 AGENTS.md now requests this check periodically at task/branch handoffs and after
 abandoned experiments. Documentation-only change; checked with `git diff --check`.
+
+### Typed-scalar source: complete pinned and constructor controls (2026-10-20)
+
+Source9fa6d99/compilerdb4a3fd9/229 inputs/BOOT2eb83ba: the original pinned
+pair ran via `python3 /home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-db4a3fd9-v1/run.py`;
+both `compare_map.py` and `compare_identifiers.py` ran against retained captures.
+Terminal1PASS1FAIL (151.64s harness/310.390482432s total), raw SHA256
+`ccd5de00ac932f62dbd29c2436814a3b5e5693fd584f44c4a89dc17e3a4ef8dd`.
+Identifier15 ordered host comparisons pass; map0observations/69unexecuted behind
+expanded-result239..5926 OutFuel at unchanged Macro200M/caller200M.
+
+Then ran `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py
+/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3 default-constructor
+suss-cli compiled_macro_constructor_source_asts
+/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3/default-constructor-selection.json`.
+The unchanged full10M constructor is terminal0PASS1FAIL (66.31s harness,
+367.682017856s total including native compile), raw SHA256
+`2e8805a52795743371154175013db11e989ca8ad34e641be014d2d2f6213ad41`.
+Line192 fails at first Runtime caller &env transport83..108; output assertions
+and Macro caller are unreached. Current69nativePASS does not establish either
+integration fit. Exact bindings, comparisons and failures are in the typed-scalar
+validation JSON. No quota/rate/fixture change or full baseline/readiness claim.
