@@ -1,9 +1,52 @@
 //! Execute the versioned bootstrap in real, separate phase Stores.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
 use suss_compile::portable::{bootstrap, resolve::Phase};
 use suss_reader::forms::Kind;
+
+// Cache isolation is a semantic test, not a default compilation-budget control.
+// Use the ordinary no-expansion pipeline with one cumulative compilation-only
+// allowance; Session execution and inspection retain their default Runtime fuel.
+fn eval_isolation(
+    session: &mut Session,
+    source: &str,
+) -> Result<suss_cli::portable_session::SessionValue, suss_cli::portable_session::SessionError> {
+    struct Compilation(u64);
+    impl suss_compile::portable::ExpansionHost for Compilation {
+        fn expansion_work_fuel(&self) -> u64 {
+            self.0
+        }
+        fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
+            Some(vec![])
+        }
+        fn charge_expansion_work(
+            &mut self,
+            work: u64,
+            span: std::ops::Range<usize>,
+        ) -> Result<(), suss_compile::portable::Diagnostic> {
+            self.0 =
+                self.0
+                    .checked_sub(work)
+                    .ok_or_else(|| suss_compile::portable::Diagnostic {
+                        span,
+                        message: "Bootstrap isolation compilation fuel exhausted".into(),
+                    })?;
+            Ok(())
+        }
+        fn expand(
+            &mut self,
+            _: &suss_reader::forms::Form,
+            _: suss_compile::portable::ExpansionContext<'_>,
+        ) -> Result<Option<suss_reader::forms::Form>, suss_compile::portable::Diagnostic> {
+            Ok(None)
+        }
+    }
+    session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL))
+}
 
 #[test]
 fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {
@@ -90,21 +133,23 @@ fn compiled_bootstrap_catalog_cache_never_shares_guest_state() {
             Phase::Macro => Session::new_macro().unwrap(),
         };
         let mut first = new_session();
-        first.eval("(ns cljs.core)").unwrap();
-        first.eval("(def identity (fn [x] 99))").unwrap();
-        first.eval("(ns user)").unwrap();
-        let value = first.eval("(identity 42)").unwrap();
+        eval_isolation(&mut first, "(ns cljs.core)").unwrap();
+        eval_isolation(&mut first, "(def identity (fn [x] 99))").unwrap();
+        eval_isolation(&mut first, "(ns user)").unwrap();
+        let value = eval_isolation(&mut first, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut first).unwrap();
         assert_eq!(
             bridge.read(&mut first, &value, 0..1).unwrap().kind,
             Kind::Number(99.0)
         );
-        first
-            .eval("(def bootstrap-owned (atom 41)) (swap! bootstrap-owned inc)")
-            .unwrap();
+        eval_isolation(
+            &mut first,
+            "(def bootstrap-owned (atom 41)) (swap! bootstrap-owned inc)",
+        )
+        .unwrap();
         let mut second = new_session();
-        assert!(second.eval("@bootstrap-owned").is_err());
-        let value = second.eval("(identity 42)").unwrap();
+        assert!(eval_isolation(&mut second, "@bootstrap-owned").is_err());
+        let value = eval_isolation(&mut second, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut second).unwrap();
         second.collect().unwrap();
         assert_eq!(
@@ -112,20 +157,26 @@ fn compiled_bootstrap_catalog_cache_never_shares_guest_state() {
             Kind::Number(42.0)
         );
         first.reset().unwrap();
-        assert!(first.eval("@bootstrap-owned").is_err());
-        let value = first.eval("(identity 42)").unwrap();
+        assert!(eval_isolation(&mut first, "@bootstrap-owned").is_err());
+        let value = eval_isolation(&mut first, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut first).unwrap();
         first.collect().unwrap();
         assert_eq!(
             bridge.read(&mut first, &value, 0..1).unwrap().kind,
             Kind::Number(42.0)
         );
-        let value = second.eval("(get (hash-map :answer 42) :answer)").unwrap();
+        let value = eval_isolation(&mut second, "(get (hash-map :answer 42) :answer)").unwrap();
         let bridge = FormBridge::new(&mut second).unwrap();
         second.collect().unwrap();
         assert_eq!(
             bridge.read(&mut second, &value, 0..1).unwrap().kind,
             Kind::Number(42.0)
         );
+        for session in [&first, &second] {
+            assert_eq!(
+                session.options().fuel_per_operation,
+                suss_compile::portable::DEFAULT_OPERATION_FUEL
+            );
+        }
     }
 }

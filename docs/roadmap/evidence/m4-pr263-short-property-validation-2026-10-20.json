@@ -613,11 +613,185 @@
       "harness_summaries": [
         "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 607 filtered out; finished in 0.00s"
       ],
-      "executed_test_lines": [
-        "test portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide ... ok",
-        "test portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir ... ok",
-        "test portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input ... ok"
+      "started_names": [
+        "portable::emit::short_keys::tests::short_key_continuation_disabled_and_nonadjacent_keys_never_elide",
+        "portable::emit::short_keys::tests::short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir",
+        "portable::emit::short_keys::tests::short_key_planning_cancellation_is_typed_and_full_retry_preserves_input"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
+    },
+    "runtime-three": {
+      "head": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_short_property_keys",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls",
+        "packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors",
+        "packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses"
+      ],
+      "selection": {
+        "exact_names": [
+          "packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls",
+          "packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors",
+          "packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 178.57683635899957,
+      "raw_sha256": "37185a7bc7084014a92323a0234845544f4d4df553b4e6499a535ff8e5f5ee20",
+      "harness_summaries": [
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.14s"
+      ],
+      "started_names": [
+        "packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls",
+        "packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses",
+        "packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": [
+        "test packed_helper_reads_live_last_slot_validates_later_schema_and_measures_exact_calls ... short-key nominal-hit existing=537 packed=463",
+        "test packed_probe_distinguishes_nil_false_hits_from_excluded_and_nominal_misses ... short-key explicit probe nil-hit fuel=455",
+        "test packed_raw_utf16_fallback_preserves_zero_surrogates_and_primitive_errors ... short-key fallback units=[] existing=634 packed=675 (no savings assertion)",
+        "short-key fallback units=[0] existing=643 packed=695 (no savings assertion)",
+        "short-key fallback units=[55296] existing=643 packed=695 (no savings assertion)",
+        "short-key fallback units=[0, 57343, 0, 55296] existing=664 packed=749 (no savings assertion)",
+        "short-key fallback units=[110, 115] existing=634 packed=697 (no savings assertion)"
       ]
+    },
+    "emitter-two": {
+      "head": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "portable_short_property_keys",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "adjacent_short_key_probe_keeps_original_allocation_only_on_miss",
+        "key_escape_in_return_and_closure_capture_keeps_original_allocation"
+      ],
+      "selection": {
+        "exact_names": [
+          "adjacent_short_key_probe_keeps_original_allocation_only_on_miss",
+          "key_escape_in_return_and_closure_capture_keeps_original_allocation"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 9.643790781999996,
+      "raw_sha256": "35e05efbe507ccb102284812d646e7397dc36c347bd8c5247dd3ccb8d5f971e6",
+      "harness_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"
+      ],
+      "started_names": [
+        "adjacent_short_key_probe_keeps_original_allocation_only_on_miss",
+        "key_escape_in_return_and_closure_capture_keeps_original_allocation"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
+    },
+    "cli-two": {
+      "head": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_short_property_keys",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc",
+        "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live"
+      ],
+      "selection": {
+        "exact_names": [
+          "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc",
+          "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 555.7521365149987,
+      "raw_sha256": "2234789d2e404a6793fd2afe405f5a9a9496b92e5b9b604492f6bcb8a49bc62e",
+      "harness_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 267.45s"
+      ],
+      "started_names": [
+        "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live",
+        "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
+    },
+    "cli-observations-one": {
+      "head": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_short_property_observations",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 98.31624451700009,
+      "raw_sha256": "619e67f733d06a2088fbb798e9fde123bf31ac37d4af19020416c4b3f209bce8",
+      "harness_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 73.35s"
+      ],
+      "started_names": [
+        "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
     }
   },
   "historical_acceptance": "m4-pr263-pinned-and-transport-attribution-83f-2026-10-20.json",
