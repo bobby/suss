@@ -82,7 +82,7 @@ Native library callers can use `Compiler::compile_with_compile_fuel`,
 The original methods keep their defaults. These options do not configure the
 Runtime Store that executes the returned component or expression artifact.
 
-Selected semantic tests use a shared 10B compilation allowance so their complete
+Selected semantic tests use a shared 100B compilation allowance so their complete
 programs can execute. Caller Runtime allowances, dedicated exhaustion/IRQ tests
 and default-fit controls are retained. This is calibration, not a performance win
 or proof that every corpus fits. See [test policy and exact selection](compilation-test-fuel.md).

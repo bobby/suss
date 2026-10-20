@@ -1,6 +1,8 @@
 //! Five actual compiled macro invocations: a bounded pinned persistent-object contract.
 //! Fresh re-resolution inside an observer is unavailable here (no ana/analyze API).
 //! Its fresh-info contract remains in compiled_macro_cross_invocation_identity_probe.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{json, Value};
 use suss_cli::{portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session};
 use suss_reader::forms::{Form, Kind};
@@ -97,9 +99,10 @@ fn compiler_namespace_and_declaration_aliases_match_pinned_five_call_observation
         let result: Result<Value, String> = (|| {
             let mut session = session.map_err(|e| format!("session: {e:?}"))?;
             let mut macros = CompiledMacros::new().map_err(|e| format!("macro store: {e:?}"))?;
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             session.enter_namespace("suss-oracle.sharing-target").map_err(|e| format!("caller ns: {e:?}"))?;
             macros.enter_namespace("suss-oracle.sharing-target").map_err(|e| format!("macro ns: {e:?}"))?;
-            // No fuel setter: both stores retain their existing default allowances.
+            // Only Macro compilation is calibrated; caller Runtime retains its existing allowance.
             macros.define(OBSERVER).map_err(|e| format!("define observer: {e:?}"))?;
             session.eval("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} watched 17) (def ^{:doc \"callable-doc\"} callable (fn* ([x] x) ([x y] y)))")
                 .map_err(|e| format!("setup declarations: {e:?}"))?;
@@ -157,6 +160,7 @@ fn resolved_callable_info_keeps_raw_declaration_children_across_macro_invocation
         let result: Result<Value, String> = (|| {
             let mut session = session.map_err(|e| format!("session: {e:?}"))?;
             let mut macros = CompiledMacros::new().map_err(|e| format!("macro store: {e:?}"))?;
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             session.enter_namespace("suss-oracle.sharing-target").map_err(|e| format!("caller ns: {e:?}"))?;
             macros.enter_namespace("suss-oracle.sharing-target").map_err(|e| format!("macro ns: {e:?}"))?;
             macros.define(CALLABLE_OBSERVER).map_err(|e| format!("define observer: {e:?}"))?;
@@ -189,7 +193,7 @@ fn resolved_callable_info_keeps_raw_declaration_children_across_macro_invocation
             Err(error) => {failures.push(format!("{phase}: {error}"));observations.push(json!({"phase":phase,"error":error}));}
         }
     }
-    let receipt=json!({"phases":observations,"limits":"Three independent default-budget requests per caller phase, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim."});
+    let receipt=json!({"phases":observations,"limits":"Three independent requests per caller phase with Macro compilation allowance 100000000000; caller Runtime limits unchanged, fresh caller binding each time. Raw/resolved method-params and metadata references, not cloned entry values. Separate from the five-call namespace test. No full-schema/source-storage-authority claim."});
     if let Some(path)=std::env::var_os("SUSS_NAMESPACE_IDENTITY_OUTPUT") {std::fs::write(path,serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();}
     eprintln!("CALLABLE_NAMESPACE_IDENTITY {receipt}");
     assert!(failures.is_empty(),"{}",failures.join("\n"));

@@ -1,5 +1,8 @@
 //! Source-only new companion; original public namespace/callable assertions stay
-//! byte-for-byte unchanged. No new allowance or default change.
+//! byte-for-byte unchanged. Explicit Macro-only compilation allowance; caller Runtime
+//! and shipped defaults are unchanged.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -31,6 +34,7 @@ fn actual_multi_ast_locals_share_one_projection_cold_and_across_same_revision_re
         let result: Result<(), String> = (|| {
             let mut caller = caller.map_err(|e| e.to_string())?;
             let mut macros = CompiledMacros::new().map_err(|e| e.to_string())?;
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             caller
                 .enter_namespace("shared-env-regression")
                 .map_err(|e| e.to_string())?;
