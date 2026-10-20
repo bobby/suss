@@ -928,7 +928,10 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
     fn retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(def hash-ordered-coll (fn [_] 719))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
+        super::super::memo_leaf_test_support::eval_with_compilation_fuel(
+            &mut session, "(def hash-ordered-coll (fn [_] 719))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
         session.enter_namespace("user").unwrap();
         let (value, watch, _domain, _records) = recorded_list_domain(&mut session, true);
         assert!(watch.retained_data_eligible(&mut session).unwrap());

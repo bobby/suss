@@ -86,7 +86,7 @@ impl Method {
 
 // The parent module is cfg(test). This helper grants only native compilation
 // headroom; Session options and Runtime Store allowances are never changed.
-#[path = "compilation_fuel.rs"]
+#[path = "../../tests/support/compilation_fuel.rs"]
 mod compilation_fuel;
 
 

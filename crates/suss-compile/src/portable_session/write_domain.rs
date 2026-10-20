@@ -728,7 +728,10 @@ mod tests {
         let original = method(&mut session, &descriptor);
         session.eval("(def child-method-calls 0)").unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(extend-type PersistentVector IHash (-hash [_] (do (set! user/child-method-calls (+ user/child-method-calls 1)) 999)))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
+        super::super::memo_leaf_test_support::eval_with_compilation_fuel(
+            &mut session, "(extend-type PersistentVector IHash (-hash [_] (do (set! user/child-method-calls (+ user/child-method-calls 1)) 999)))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
         session.enter_namespace("user").unwrap();
         let changed = method(&mut session, &descriptor);
         drop(session.invoke(&hash, &[&root]).unwrap());
@@ -797,7 +800,10 @@ mod tests {
         let original = method(&mut session, &descriptor);
         session.eval("(def child-method-calls 0)").unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(extend-type PersistentVector IHash (-hash [_] (do (set! user/child-method-calls (+ user/child-method-calls 1)) 999)))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
+        super::super::memo_leaf_test_support::eval_with_compilation_fuel(
+            &mut session, "(extend-type PersistentVector IHash (-hash [_] (do (set! user/child-method-calls (+ user/child-method-calls 1)) 999)))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, crate::portable::DEFAULT_OPERATION_FUEL);
         session.enter_namespace("user").unwrap();
         let bridge = FormBridge::new(&mut session)
             .unwrap()
