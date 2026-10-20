@@ -103,6 +103,18 @@ impl RetainedFieldKeys {
         }
         Ok(())
     }
+    pub(super) fn remember_completed_property_key(
+        &mut self, graph: &mut AnalysisGraph<'_>, label: &'static str,
+        global: &portable::resolve::Global, owner: &Arc<portable::resolve::CompletedDeclarationSource>,
+        holder: &Arc<portable::resolve::DefinitionInfo>, property: &'static str,
+    ) -> Result<()> {
+        graph.charge(8)?;
+        if self.find(graph, label)?.is_none() {
+            let occurrence = graph.completed_nested_property_key(global, owner, holder, property, label)?;
+            self.push(graph, Entry { label, key: Key::Source(occurrence) })?;
+        }
+        Ok(())
+    }
     pub(super) fn remember_proved_occurrence(
         &mut self, graph: &mut AnalysisGraph<'_>, label: &'static str, form: &Form, occurrence: Value,
     ) -> Result<()> {

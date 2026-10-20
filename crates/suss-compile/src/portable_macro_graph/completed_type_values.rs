@@ -116,6 +116,27 @@ impl AnalysisGraph<'_> {
         let entries = self.completed_pairs(registry)?;
         Ok(self.declaration_field_position(&entries, label)?.map(|i| entries[i].0))
     }
+    pub(super) fn completed_nested_property_key(&mut self, global: &portable::resolve::Global,
+        owner: &Arc<CompletedDeclarationSource>, holder: &Info,
+        property: &'static str, label: &'static str) -> Result<Value> {
+        self.completed_owner_binding(global, owner, holder)?;
+        let metadata = self.completed_reader(owner)?;
+        let index = self.completed_property_index(&metadata, property)?
+            .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Missing selected nested reader property")))?;
+        self.charge(8)?;
+        let items = match &metadata.pairs[index * 2 + 1].kind {
+            Kind::Map(items) if items.len() % 2 == 0 => items.as_slice(),
+            Kind::Vector(items) if items.len() == 2 => items.as_slice(),
+            _ => return Err(SessionError::Host(wasmtime::Error::msg("Invalid selected nested reader map"))),
+        };
+        for (pair, entry) in items.chunks_exact(2).enumerate() {
+            self.charge(label.len().saturating_add(6))?;
+            if matches!(&entry[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == label) {
+                return self.capture_completed_nested_reader_key(global, owner, holder, index, pair);
+            }
+        }
+        Err(SessionError::Host(wasmtime::Error::msg("Missing selected nested reader key")))
+    }
     // One normalized SOURCE occurrence, not one spelling/value. The owner is
     // retained by completed_store and fully bound to the current holder before
     // every lookup. Independent source owners never meet in this registry.
@@ -775,3 +796,7 @@ mod reader_property_value_tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "nested_reader_key_tests.rs"]
+mod nested_reader_key_tests;

@@ -22,10 +22,18 @@ pub(super) struct ReaderValuePath {
     prefix: usize,
     pair: usize,
 }
+// Direct child KEY of one winning reader property VALUE. DATA identity only;
+// never a CheckedDirectKey, memo slot, or persistent source-domain capability.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(super) struct ReaderNestedKeyPath {
+    value: ReaderValuePath,
+    pair: usize,
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum ReaderSelector {
     Key(ReaderKeyPath),
     Value(ReaderValuePath),
+    NestedKey(ReaderNestedKeyPath),
     Metadata,
     ExplicitValue,
 }
@@ -253,12 +261,151 @@ impl AnalysisGraph<'_> {
                 return Err(invalid("Ambiguous retained reader value coordinate"));
             }
         }
-        let native = self.form(entry.value.as_ref(), depth)?;
+        // Build the original full value first, retaining every old guard/debit.
+        // Decorate actual direct-key occurrences before publishing the parent.
+        let native = self.reader_value_with_nested_keys(global, owner, holder, index,
+            entry.value.as_ref(), depth)?;
         let native = self.recipe(Recipe::Alias(native))?;
         self.session.charge_host_work(6)?; // selector and actual owner retain/release
         let selector = ReaderValuePath { prefix: position.0, pair: position.1 };
         self.capture_reader_boundary(global, ReaderSourceOwner::Completed(owner.clone()),
             ReaderSelector::Value(selector), native)
+    }
+    // Metadata/count/index arguments are only native selectors. The actual KEY
+    // and winning VALUE coordinate always come from this checked owner.
+    pub(in crate::portable_macro_graph) fn capture_completed_nested_reader_key(
+        &mut self, global: &Global, owner: &Arc<CompletedDeclarationSource>,
+        holder: &Arc<DefinitionInfo>, index: usize, pair: usize,
+    ) -> Result<Value> {
+        self.completed_owner_binding(global, owner, holder)?;
+        self.charge(4)?;
+        if !self.capture_roots || !self.direct_reader_roots {
+            return Err(invalid("Nested reader keys require DATA controller mode"));
+        }
+        let declaration = self.completed_reader_source(owner)?;
+        let entries = preserve_source_error(declaration.span.clone(),
+            &mut |n| self.session.charge_host_work(n),
+            |meter| hir::reader_metadata_view_metered(&declaration, meter))?;
+        self.charge(8)?;
+        let entry = entries.get(index).ok_or_else(|| invalid("Unknown nested reader property"))?;
+        let position = entry.value_position();
+        for (other, candidate) in entries.iter().enumerate() {
+            self.charge(4)?;
+            if other != index && candidate.value_position() == position {
+                return Err(invalid("Ambiguous nested reader value coordinate"));
+            }
+        }
+        let items = match &entry.value.as_ref().kind {
+            Kind::Map(items) if items.len() % 2 == 0 => items.as_slice(),
+            Kind::Vector(items) if items.len() == 2 => items.as_slice(),
+            _ => return Err(invalid("Nested key requires actual reader map or entry")),
+        };
+        if !self.first_reader_keyword_pair(items, pair)? {
+            return Err(invalid("Nested key is not the first actual keyword occurrence"));
+        }
+        // Checked extent in first_reader_keyword_pair, no externally supplied Form.
+        self.charge(8)?;
+        let native = self.form(&items[pair * 2], 0)?;
+        let native = self.recipe(Recipe::Alias(native))?;
+        self.charge(8)?; // selector init, owner clone and retirement
+        self.capture_reader_boundary(global, ReaderSourceOwner::Completed(owner.clone()),
+            ReaderSelector::NestedKey(ReaderNestedKeyPath {
+                value: ReaderValuePath { prefix: position.0, pair: position.1 }, pair,
+            }), native)
+    }
+    fn first_reader_keyword_pair(&mut self, items: &[Form], pair: usize) -> Result<bool> {
+        self.charge(8)?;
+        if items.len() % 2 != 0 || pair >= items.len() / 2 { return Ok(false); }
+        let Kind::Keyword(key) = &items[pair * 2].kind else { return Ok(false) };
+        let mut earlier = 0;
+        loop {
+            self.charge(6)?; // next/probe and indexed read, including final probe
+            if earlier >= pair { break; }
+            if let Kind::Keyword(other) = &items[earlier * 2].kind {
+                self.charge(key.name.len().saturating_add(other.name.len())
+                    .saturating_add(key.namespace.as_ref().map_or(0, String::len))
+                    .saturating_add(other.namespace.as_ref().map_or(0, String::len)).saturating_add(8))?;
+                // Shipped Keyword IEquiv compares fqn, not its namespace/name
+                // partition. Stream the exact constructor fqn with no allocation.
+                self.charge(key.name.len().saturating_add(other.name.len())
+                    .saturating_add(key.namespace.as_ref().map_or(0, String::len))
+                    .saturating_add(other.namespace.as_ref().map_or(0, String::len))
+                    .saturating_add(4).saturating_mul(2).saturating_add(16))?;
+                let left = key.namespace.as_deref().unwrap_or("").bytes()
+                    .chain(key.namespace.as_ref().map(|_| b'/')).chain(key.name.bytes());
+                let right = other.namespace.as_deref().unwrap_or("").bytes()
+                    .chain(other.namespace.as_ref().map(|_| b'/')).chain(other.name.bytes());
+                if left.eq(right) { return Ok(false); }
+            }
+            self.charge(1)?;
+            earlier += 1;
+        }
+        Ok(true)
+    }
+    fn reader_value_with_nested_keys(&mut self, global: &Global,
+        owner: &Arc<CompletedDeclarationSource>, holder: &Arc<DefinitionInfo>,
+        index: usize, form: &Form, depth: usize,
+    ) -> Result<Value> {
+        let native = self.form(form, depth)?;
+        self.charge(6)?;
+        let items = match &form.kind {
+            Kind::Map(items) if items.len() % 2 == 0 => items.as_slice(),
+            Kind::Vector(items) if items.len() == 2 => items.as_slice(),
+            _ => return Ok(native),
+        };
+        // Recipe provenance is the immediately preceding original form build,
+        // not an external ID or equality-joined guest/source projection.
+        self.charge(std::mem::size_of::<Option<(MetadataShape, Value, Vec<Value>)>>() * 2 + 12)?;
+        let (base, wrapper) = match self.recipes.get(native).and_then(Option::as_ref) {
+            Some(Recipe::Metadata { set_items, .. }) => {
+                self.charge(set_items.len().saturating_mul(std::mem::size_of::<Value>() * 2 + 4)
+                    .saturating_add(std::mem::size_of::<Vec<Value>>() * 2 + 8))?;
+                let Some(Recipe::Metadata { shape, value, metadata, set_items }) = self.recipes[native].as_ref() else { unreachable!() };
+                (*value, Some((*shape, *metadata, set_items.clone())))
+            },
+            _ => (native, None),
+        };
+        self.charge(std::mem::size_of::<Vec<Value>>() * 2 + 8)?;
+        let mut children = Vec::new();
+        // Copy only original direct children, preserving their order/values.
+        reuse::reserve(self.session, &mut children, items.len())?;
+        match self.recipes.get(base).and_then(Option::as_ref) {
+            Some(Recipe::ReaderMap(entries)) if matches!(&form.kind, Kind::Map(_)) && entries.len() == items.len() / 2 => {
+                self.charge(items.len().saturating_mul(4))?;
+                let Some(Recipe::ReaderMap(entries)) = self.recipes[base].as_ref() else { unreachable!() };
+                for (key, value) in entries { children.push(*key); children.push(*value); }
+            },
+            Some(Recipe::ReaderVector(values)) if matches!(&form.kind, Kind::Vector(_)) && values.len() == 2 => {
+                self.charge(8)?;
+                let Some(Recipe::ReaderVector(values)) = self.recipes[base].as_ref() else { unreachable!() };
+                children.extend_from_slice(values);
+            },
+            _ => return Err(invalid("Reader value recipe does not match its native constructor")),
+        }
+        let mut pair = 0;
+        loop {
+            self.charge(6)?; // loop/extent probe before indexed selection
+            if pair >= items.len() / 2 { break; }
+            if self.first_reader_keyword_pair(items, pair)? {
+                let key = self.capture_completed_nested_reader_key(global, owner, holder, index, pair)?;
+                self.charge(4)?;
+                children[pair * 2] = key;
+            }
+            self.charge(1)?;
+            pair += 1;
+        }
+        let base = if matches!(&form.kind, Kind::Map(_)) {
+            self.charge(std::mem::size_of::<Vec<(Value, Value)>>() * 2 + 8)?;
+            let mut entries = Vec::new();
+            reuse::reserve(self.session, &mut entries, children.len() / 2)?;
+            self.charge(children.len().saturating_mul(2).saturating_add(4))?;
+            for pair in children.chunks_exact(2) { self.charge(4)?; entries.push((pair[0], pair[1])); }
+            self.recipe(Recipe::ReaderMap(entries))?
+        } else { self.recipe(Recipe::ReaderVector(children))? };
+        if let Some((shape, metadata, set_items)) = wrapper {
+            self.charge(8)?;
+            self.recipe(Recipe::Metadata { shape, value: base, metadata, set_items })
+        } else { Ok(base) }
     }
     pub(in crate::portable_macro_graph) fn capture_completed_metadata(
         &mut self,

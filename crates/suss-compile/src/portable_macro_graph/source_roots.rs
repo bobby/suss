@@ -839,7 +839,7 @@ impl Certificate {
         // vector position is the canonical native boundary ordinal, not a
         // caller-selected field name or logical-equality match.
         session.charge_host_work(2)?;
-        if matches!(&source.key, Key::ReaderSource(_, _, ReaderSelector::Value(_))) {
+        if matches!(&source.key, Key::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_))) {
             return Ok(None); // DATA value identity is not source-domain authority
         }
         if source.children.len() != children.len() {
@@ -1064,6 +1064,9 @@ fn key_comparison_work(a: &Key, b: &Key) -> u64 {
         _ => 0,
     };
     (text(a) + text(b)) as u64 + 4
+        + 4 // new NestedKey discriminator/short-circuit controls on EVERY pair
+        + if matches!(a, Key::ReaderSource(_, _, ReaderSelector::NestedKey(_)))
+            || matches!(b, Key::ReaderSource(_, _, ReaderSelector::NestedKey(_))) { 4 } else { 0 }
         + if matches!(a, Key::ReaderSource(..)) || matches!(b, Key::ReaderSource(..)) { 12 } else { 0 }
 }
 

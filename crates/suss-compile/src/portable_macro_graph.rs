@@ -2171,7 +2171,14 @@ impl<'a> AnalysisGraph<'a> {
                                         source_key = Some(*key); break;
                                     }
                                 }
-                                if let Some(key) = source_key { keys.remember_source(self, field, key)?; }
+                                if let Some(key) = source_key {
+                                    self.charge(3)?;
+                                    if self.capture_roots && self.direct_reader_roots {
+                                        if let Some(owner) = ordinary_owner {
+                                            keys.remember_completed_property_key(self, field, global, owner, info, "top-fn")?;
+                                        } else { keys.remember_source(self, field, key)?; }
+                                    } else { keys.remember_source(self, field, key)?; }
+                                }
                             }
                             fields.push((field, value));
                         }

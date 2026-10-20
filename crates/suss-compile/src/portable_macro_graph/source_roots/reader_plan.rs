@@ -147,7 +147,7 @@ impl AnalysisGraph<'_> {
         for &id in &order {
             self.session.charge_host_work(2)?;
             if private_slots && matches!(&self.source_roots.roots[id].owner,
-                Owner::ReaderSource(_, _, ReaderSelector::Value(_))) {
+                Owner::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_))) {
                 return Ok(None); // only the identity-only first-use route admits DATA values
             }
             let Some(witness) = self.source_root_expectation_with_layout(id, &layout)? else {
