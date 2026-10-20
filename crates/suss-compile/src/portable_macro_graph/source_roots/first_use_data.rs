@@ -392,8 +392,11 @@ impl Root {
             .session
             .charge_host_work(key_comparison_work(&self.expected.key, &expected.key))?;
         let mut valid = self.expected.key == expected.key;
-        valid &= expected.owner.live(graph.session)?;
-        valid &= same_child_keys(graph.session, &self.expected.children, &expected.children)?;
+        let trace_key_equal = valid;
+        let trace_owner_live = expected.owner.live(graph.session)?;
+        valid &= trace_owner_live;
+        let trace_children_equal = same_child_keys(graph.session, &self.expected.children, &expected.children)?;
+        valid &= trace_children_equal;
         // The current expected witness remains independent of retained native
         // evidence; no same-text/current-holder shortcut substitutes for it.
         #[cfg(test)]
@@ -408,6 +411,11 @@ impl Root {
         let evidence = Evidence::Source(self.clone());
         let diagnostic_audit = audit.check(graph, &evidence)?;
         valid &= diagnostic_audit;
+        reader_plan::trace_declaration_key(&expected.key, "current-check", format_args!(
+            "key_equal={} owner_live={} children_equal={} old_children={} current_children={} logical={} audit={} valid={}",
+            trace_key_equal, trace_owner_live, trace_children_equal, self.expected.children.len(),
+            expected.children.len(), diagnostic_logical, diagnostic_audit, valid));
+        reader_plan::trace_declaration_key(&self.expected.key, "checked-retained-owner", format_args!("key_equal={}", trace_key_equal));
         #[cfg(test)]
         if !valid {
             eprintln!("FIRST_USE_DATA_ROOT binding={} logical={} audit={} children={}",
@@ -498,6 +506,7 @@ impl Build<'_> {
                             &source.expected.children,
                             &expected.children,
                         )? {
+                            reader_plan::trace_declaration_key(&root.expected.key, "bindings-decline", format_args!("reason=descendant-child-keys"));
                             return Ok(None);
                         }
                         for (native, selected) in [
@@ -510,6 +519,7 @@ impl Build<'_> {
                                     .session
                                     .values_identical(&old.value, selected.value())?
                                 {
+                                    reader_plan::trace_declaration_key(&root.expected.key, "bindings-decline", format_args!("reason=already-built-native-or-alias"));
                                     return Ok(None);
                                 }
                             }
@@ -520,6 +530,7 @@ impl Build<'_> {
                                         .session
                                         .values_identical(&old.value, selected.value())?
                                 {
+                                    reader_plan::trace_declaration_key(&root.expected.key, "bindings-decline", format_args!("reason=staged-native-or-alias-conflict"));
                                     return Ok(None);
                                 }
                             }
@@ -529,6 +540,7 @@ impl Build<'_> {
                         break;
                     }
                     if !matched {
+                        reader_plan::trace_declaration_key(&root.expected.key, "bindings-decline", format_args!("reason=descendant-owner-absent"));
                         return Ok(None);
                     }
                     let actual = source.actual().retained(graph.session)?;
@@ -536,6 +548,7 @@ impl Build<'_> {
                 }
             }
         }
+        reader_plan::trace_declaration_key(&root.expected.key, "bindings-ok", format_args!("count={}", bindings.len()));
         Ok(Some(bindings))
     }
 }
@@ -577,6 +590,7 @@ impl Observer for Build<'_> {
         }
         if let Some(source) = self.source_id(graph, id)? {
             let expected = self.expected(source)?;
+            reader_plan::trace_declaration_key(&expected.key, "parent-enter", format_args!("source={} native={}", source, graph.source_roots.roots[source].native));
             // A bare native value already built by an earlier inline sibling
             // wins. A retained same-content object must not replace it.
             if context
@@ -587,6 +601,9 @@ impl Observer for Build<'_> {
                     graph
                         .session
                         .charge_host_work(key_comparison_work(&root.expected.key, &expected.key))?;
+                    if reader_plan::declaration_key_traced(&expected.key) {
+                        reader_plan::trace_declaration_key(&root.expected.key, "retained-candidate", format_args!("key_equal={}", root.expected.key == expected.key));
+                    }
                     if root.expected.key != expected.key {
                         continue;
                     }
@@ -594,6 +611,7 @@ impl Observer for Build<'_> {
                     if root.checked_current(graph, expected, &mut audit)? {
                         if let Some(bindings) = self.bindings(graph, context, root)? {
                             graph.session.charge_host_work(2)?;
+                            reader_plan::trace_declaration_key(&expected.key, "parent-selected", format_args!("source={}", source));
                             let selected = Evidence::Source(root.clone());
                             self.selected[source] = Some(root.clone());
                             return Ok(Entry::Selected {
@@ -603,6 +621,10 @@ impl Observer for Build<'_> {
                         }
                     }
                 }
+            }
+            if reader_plan::declaration_key_traced(&expected.key) {
+                reader_plan::trace_declaration_key(&expected.key, "parent-fresh", format_args!(
+                    "bare_native_already_built={}", context.cached(graph.source_roots.roots[source].native).is_some()));
             }
             return Ok(Entry::Visit(Scope::Source(source)));
         }
@@ -715,17 +737,20 @@ impl AnalysisGraph<'_> {
         root: Value,
         cache: &mut RootCache,
     ) -> Result<Option<SessionValue>> {
+        reader_plan::trace_declarations(self, "controller-enter", format_args!("cache={:p} retained={}", cache, cache.data.len()));
         let _request = self.session.operation_budget_scope()?;
         self.session.charge_host_work(2)?;
         if !self.capture_roots || !self.direct_reader_roots {
             return Ok(None);
         }
         if !self.session.source_controller_ready()? {
+            reader_plan::trace_declarations(self, "controller-decline", format_args!("reason=session-not-ready"));
             return Ok(None);
         }
         self.finish_recipes()?;
         let root = self.reader_request_export(root)?;
         let Some(plan) = self.admit_first_use_data_controller(root)? else {
+            reader_plan::trace_declarations(self, "ordinary-fallback", format_args!("reason=admission-declined"));
             return Ok(None);
         };
         let mut selected = Vec::new();
@@ -818,6 +843,7 @@ impl AnalysisGraph<'_> {
         self.session.charge_host_work(cache.data.len() as u64 + 1)?;
         let value = result.value;
         cache.data = replacement; // ONE final infallible identity-cache commit
+        reader_plan::trace_declarations(self, "publication-complete", format_args!("cache={:p} retained={}", cache, cache.data.len()));
         Ok(Some(value))
     }
 }

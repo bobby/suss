@@ -33,6 +33,40 @@ pub(super) fn populate<T>(
     output.extend(entries);
     Ok(())
 }
+use std::io::Write as _;
+
+// Diagnostic-only: no guest reads, source-key construction, fuel query or Result.
+// Owner addresses are process-local observations, never identity authority.
+fn declaration_trace_matches(global: &crate::portable::resolve::Global) -> bool {
+    let Some(target) = std::env::var_os("SUSS_DECLARATION_REUSE_TRACE") else { return false; };
+    let Some(target) = target.to_str() else { return false; };
+    target.split_once('/').is_some_and(|(namespace, name)|
+        namespace == global.namespace() && name == global.name())
+}
+pub(super) fn declaration_key_traced(key: &Key) -> bool {
+    matches!(key, Key::Declaration(global, _) if declaration_trace_matches(global))
+}
+pub(super) fn trace_declaration_key(key: &Key, event: &str, detail: std::fmt::Arguments<'_>) {
+    if let Key::Declaration(global, owner) = key {
+        if declaration_trace_matches(global) {
+            let _ = writeln!(std::io::stderr().lock(), "declaration-reuse target={}/{} owner=0x{:x} event={} {}",
+                global.namespace(), global.name(), owner, event, detail);
+        }
+    }
+}
+pub(super) fn trace_declarations(graph: &AnalysisGraph<'_>, event: &str, detail: std::fmt::Arguments<'_>) {
+    if std::env::var_os("SUSS_DECLARATION_REUSE_TRACE").is_none() { return; }
+    for (index, capture) in graph.source_roots.roots.iter().enumerate() {
+        if let Owner::Declaration(global, owner) = &capture.owner {
+            if declaration_trace_matches(global) {
+                let _ = writeln!(std::io::stderr().lock(), "declaration-reuse target={}/{} owner={:p} event={} boundary={} alias={} native={} {}",
+                    global.namespace(), global.name(), Arc::as_ptr(owner), event,
+                    index, capture.alias, capture.native, detail);
+            }
+        }
+    }
+}
+
 impl AnalysisGraph<'_> {
     pub(in crate::portable_macro_graph) fn admit_reader_controller(
         &mut self,
@@ -53,10 +87,12 @@ impl AnalysisGraph<'_> {
     ) -> Result<Option<NativeReaderPlan>> {
         self.session.charge_host_work(3)?;
         if !self.capture_roots || !self.direct_reader_roots {
+            trace_declarations(self, "admission-decline", format_args!("reason=disabled private_slots={}", private_slots));
             return Ok(None);
         }
         // Full graph cycle/error proof, even behind a prospective retained cut.
         // This performs no guest construction or retained-cache publication.
+        trace_declarations(self, "admission-start", format_args!("private_slots={}", private_slots));
         let layout = self.source_root_children()?;
         let mut exports = Vec::new();
         let mut seen = Vec::new();
@@ -92,6 +128,7 @@ impl AnalysisGraph<'_> {
             populate(self.session, &mut frontier, edges.into_iter().rev())?;
         }
         if exports.is_empty() {
+            trace_declarations(self, "admission-decline", format_args!("reason=no-exports private_slots={}", private_slots));
             return Ok(None);
         }
         let mut states = Vec::new();
@@ -148,9 +185,11 @@ impl AnalysisGraph<'_> {
             self.session.charge_host_work(2)?;
             if private_slots && matches!(&self.source_roots.roots[id].owner,
                 Owner::ReaderSource(_, _, ReaderSelector::Value(_) | ReaderSelector::NestedKey(_))) {
+                trace_declarations(self, "admission-decline", format_args!("reason=private-data-value private_slots={}", private_slots));
                 return Ok(None); // only the identity-only first-use route admits DATA values
             }
             let Some(witness) = self.source_root_expectation_with_layout(id, &layout)? else {
+                trace_declarations(self, "admission-decline", format_args!("reason=missing-expectation private_slots={}", private_slots));
                 return Ok(None);
             };
             // Reject inconsistent duplicate exports rather than publication by
@@ -164,6 +203,7 @@ impl AnalysisGraph<'_> {
                 self.session
                     .charge_host_work(key_comparison_work(&previous.key, &witness.key))?;
                 if previous.key == witness.key {
+                    trace_declarations(self, "admission-decline", format_args!("reason=duplicate-owner private_slots={}", private_slots));
                     return Ok(None);
                 }
             }
@@ -181,6 +221,7 @@ impl AnalysisGraph<'_> {
                 // selection. That does not permit any token-valued descendant there.
                 let native = self.source_roots.roots[id].native;
                 if !self.private_source_placement_for(native, &private_aliases)? {
+                    trace_declarations(self, "admission-decline", format_args!("reason=private-child-placement private_slots={}", private_slots));
                     return Ok(None);
                 }
             }
@@ -203,9 +244,11 @@ impl AnalysisGraph<'_> {
             if self.source_roots.index(self.session, root)?.is_none()
                 && !self.private_source_placement_for(root, &private_exports)?
             {
+                trace_declarations(self, "admission-decline", format_args!("reason=private-export-placement private_slots={}", private_slots));
                 return Ok(None);
             }
         }
+        trace_declarations(self, "admission-ok", format_args!("boundaries={} exports={}", order.len(), exports.len()));
         Ok(Some(NativeReaderPlan {
             layout,
             order,
