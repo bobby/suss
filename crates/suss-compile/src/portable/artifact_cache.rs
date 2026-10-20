@@ -716,7 +716,7 @@ impl ArtifactCache {
         ir::verify_metered(function, meter)?;
         let Some(dependencies) = dependencies else {
             self.stats.bypasses += 1;
-            return super::compile_verified_ir(function);
+            return super::compile_verified_ir(function, meter);
         };
         let key = probe_key_work(MAX_KEY_WORK, &function.span, meter, |meter| {
             artifact_key(function, phase, forms, origin, dependencies, meter)
@@ -725,7 +725,7 @@ impl ArtifactCache {
             // A decline only omits optional reuse. Verification already ran;
             // real fuel/cancellation errors cannot become a successful bypass.
             meter(0)?;
-            let wasm = super::compile_verified_ir(function)?;
+            let wasm = super::compile_verified_ir(function, meter)?;
             self.stats.bypasses += 1;
             return Ok(wasm);
         };
@@ -759,7 +759,7 @@ impl ArtifactCache {
             return Ok(wasm);
         }
         self.stats.misses += 1;
-        let wasm = super::compile_verified_ir(function)?;
+        let wasm = super::compile_verified_ir(function, meter)?;
         if wasm.len() <= MAX_BYTES {
             while self.entries.len() >= MAX_ENTRIES || self.stats.bytes + wasm.len() > MAX_BYTES {
                 let old = self.entries.pop_front().unwrap();

@@ -207,10 +207,12 @@ pub(crate) fn compile_ir_metered(
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<u8>, Diagnostic> {
     ir::verify_metered(function, meter)?;
-    compile_verified_ir(function)
+    compile_verified_ir(function, meter)
 }
-pub(crate) fn compile_verified_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
-    let wasm = emit::emit_verified(function)?;
+pub(crate) fn compile_verified_ir(
+    function: &ir::Function, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    let wasm = emit::emit_verified_metered(function, meter)?;
     artifact_identity::annotate_ir(&wasm).map_err(|message| Diagnostic { span: function.span.clone(), message })
 }
 

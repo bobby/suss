@@ -182,6 +182,42 @@ mod tests {
         }
     }
     #[test]
+    fn short_key_emission_uses_the_callers_meter_and_retries_without_changing_ir() {
+        let ir = getter();
+        let original = format!("{ir:?}");
+        let mut verification_calls = 0;
+        ir::verify_metered(&ir, &mut |_| {
+            verification_calls += 1;
+            Ok(())
+        }).unwrap();
+        let mut calls = 0;
+        let mut reached_emission = false;
+        let expected = Diagnostic { span: 3..7, message: "caller emission interrupted".into() };
+        let error = crate::portable::compile_ir_metered(&ir, &mut |_| {
+            calls += 1;
+            // Fail at the first actual emission charge after the unchanged
+            // verifier; no tariff value or mirrored fee formula is assumed.
+            if calls > verification_calls {
+                reached_emission = true;
+                return Err(Diagnostic { span: expected.span.clone(), message: expected.message.clone() });
+            }
+            Ok(())
+        }).unwrap_err();
+        assert!(reached_emission);
+        assert_eq!(error.span, expected.span);
+        assert_eq!(error.message, expected.message);
+        assert_eq!(format!("{ir:?}"), original);
+        let mut retry_calls = 0;
+        let wasm = crate::portable::compile_ir_metered(&ir, &mut |_| {
+            retry_calls += 1;
+            Ok(())
+        }).unwrap();
+        assert!(retry_calls > verification_calls);
+        assert!(!wasm.is_empty());
+        assert_eq!(format!("{ir:?}"), original);
+    }
+
+    #[test]
     fn short_key_continuation_disabled_and_nonadjacent_keys_never_elide() {
         // A module with no eligible getter passes disabled admission. Even an
         // immediately failing meter must not be called: no walk or scratch

@@ -109,18 +109,39 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
 }
 /// The caller must verify this exact immutable graph before entry.
 pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
-    emit_options(ir, None)
+    emit_with_plan_budget(ir, None)
+}
+
+pub(super) fn emit_verified_metered(
+    ir: &IrFunction, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    emit_options(ir, None, meter)
+}
+
+// Standalone compiler/bootstrap entrypoints have no caller Store. Session and
+// artifact-cache routes use emit_verified_metered with their existing meter.
+fn emit_with_plan_budget(
+    ir: &IrFunction, memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+) -> Result<Vec<u8>, Diagnostic> {
+    let mut remaining = super::DEFAULT_OPERATION_FUEL;
+    emit_options(ir, memos, &mut |work| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: ir.span.clone(), message: "Emitter planning fuel exhausted".into(),
+        })?;
+        Ok(())
+    })
 }
 
 pub(super) fn emit_memo_plan(plan: &super::bootstrap::VerifiedMemoPlan<'_>) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(plan.root())?;
     let mut emission = plan.emission();
-    let bytes = emit_options(plan.root(), Some(&mut emission))?;
+    let bytes = emit_with_plan_budget(plan.root(), Some(&mut emission))?;
     emission.finish()?;
     Ok(bytes)
 }
 
-fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>) -> Result<Vec<u8>, Diagnostic> {
+fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
