@@ -1332,100 +1332,6 @@ mod ownership_tests {
         assert_eq!(owner.text(), source);
     }
 
-}
-
-// Exact source320 original helper, test-only; generic map-copy implementation,
-// storage rates, hasher and keys are shared, not a fabricated cost model.
-#[cfg(test)]
-fn original_cow_remove<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, meter: &mut CowMeter<'_>) -> Result<Option<Arc<T>>, Diagnostic> {
-    let _trace = CowTraceScope::new("map_remove");
-    meter(1)?;
-    cow_charge(meter, name.len(), 1)?;
-    cow_map(map, meter)?;
-    Ok(Arc::get_mut(map).expect("private staged source map").remove(name))
-}
-
-#[cfg(test)]
-mod absent_remove_tests {
-    use super::*;
-    fn map(count: usize) -> Arc<HashMap<String, Arc<usize>>> {
-        Arc::new((0..count).map(|n| (format!("local-{n}"), Arc::new(n))).collect())
-    }
-    fn same(a: &Arc<HashMap<String, Arc<usize>>>, b: &Arc<HashMap<String, Arc<usize>>>) {
-        assert_eq!(a.len(), b.len());
-        for (key, value) in a.iter() {
-            assert!(Arc::ptr_eq(value, b.get(key).expect("same remaining key")));
-        }
-    }
-    #[test]
-    fn absent_remove_preserves_shared_owner_and_matches_original_contents_and_actual_work() {
-        for count in [0, 1, 8, 32] {
-            for present in [false, true] {
-                if present && count == 0 { continue; }
-                let saved = map(count);
-                let mut old = saved.clone();
-                let mut new = saved.clone();
-                let name = if present { "local-0" } else { "not-a-local" };
-                let mut old_work = 0;
-                let mut new_work = 0;
-                let a = original_cow_remove(&mut old, name, &mut |n| {old_work += n; Ok(())}).unwrap();
-                let b = cow_remove(&mut new, name, &mut |n| {new_work += n; Ok(())}).unwrap();
-                match (a, b) {
-                    (None, None) => assert!(!present),
-                    (Some(a), Some(b)) => { assert!(present); assert!(Arc::ptr_eq(&a, &b)); }
-                    _ => panic!("remove result differs"),
-                }
-                same(&old, &new);
-                if !present { assert!(Arc::ptr_eq(&new, &saved), "no allocation or revision change for missing key"); }
-                else { assert!(!Arc::ptr_eq(&new, &saved)); assert!(saved.contains_key(name)); }
-                eprintln!("cow-remove shared count={count} present={present} original_work={old_work} candidate_work={new_work}");
-            }
-            // Unique and weak-owned states are separate actual algorithms.
-            for weak in [false, true] {
-                let saved = map(count);
-                let mut old = Arc::new(saved.as_ref().clone());
-                let mut new = Arc::new(saved.as_ref().clone());
-                let old_weak = if weak { Some(Arc::downgrade(&old)) } else { None };
-                let new_weak = if weak { Some(Arc::downgrade(&new)) } else { None };
-                let new_ptr = Arc::as_ptr(&new);
-                let mut a = 0;
-                let mut b = 0;
-                original_cow_remove(&mut old, "missing", &mut |n| {a += n; Ok(())}).unwrap();
-                cow_remove(&mut new, "missing", &mut |n| {b += n; Ok(())}).unwrap();
-                same(&old, &new);
-                assert_eq!(Arc::as_ptr(&new), new_ptr);
-                if !weak { assert_eq!(a, b, "unique owner keeps exact old path/work"); }
-                else { assert!(Arc::ptr_eq(&new_weak.as_ref().unwrap().upgrade().unwrap(), &new)); }
-                eprintln!("cow-remove weak={weak} count={count} original_work={a} candidate_work={b}");
-                drop((old_weak, new_weak));
-            }
-        }
-    }
-    #[test]
-    fn absent_and_present_remove_propagate_all_small_meter_failures_without_publication_and_retry() {
-        let saved = map(8);
-        for present in [false, true] {
-            let name = if present { "local-0" } else { "not-a-local" };
-            let mut measured = saved.clone();
-            let mut calls = 0;
-            cow_remove(&mut measured, name, &mut |_| {calls += 1; Ok(())}).unwrap();
-            for stop in 0..calls {
-                let mut trial = saved.clone();
-                let mut seen = 0;
-                let error = cow_remove(&mut trial, name, &mut |_| {
-                    let index = seen; seen += 1;
-                    if index == stop {Err(fail(11..19, "remove-cut"))} else {Ok(())}
-                }).unwrap_err();
-                assert_eq!(error.message, "remove-cut");
-                assert_eq!(error.span, 11..19);
-                assert!(Arc::ptr_eq(&trial, &saved), "all failures before removal publication");
-                cow_remove(&mut trial, name, &mut |_| Ok(())).unwrap();
-                assert_eq!(trial.contains_key(name), false);
-                assert!(saved.contains_key("local-0"));
-            }
-        }
-    }
-
     #[test]
     fn unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry() {
         use crate::portable_session::{Session, SessionError};
@@ -1526,5 +1432,100 @@ mod absent_remove_tests {
             }
         }
     }
+
+}
+
+// Exact source320 original helper, test-only; generic map-copy implementation,
+// storage rates, hasher and keys are shared, not a fabricated cost model.
+#[cfg(test)]
+fn original_cow_remove<T>(map: &mut Arc<HashMap<String, Arc<T>>>, name: &str, meter: &mut CowMeter<'_>) -> Result<Option<Arc<T>>, Diagnostic> {
+    let _trace = CowTraceScope::new("map_remove");
+    meter(1)?;
+    cow_charge(meter, name.len(), 1)?;
+    cow_map(map, meter)?;
+    Ok(Arc::get_mut(map).expect("private staged source map").remove(name))
+}
+
+#[cfg(test)]
+mod absent_remove_tests {
+    use super::*;
+    fn map(count: usize) -> Arc<HashMap<String, Arc<usize>>> {
+        Arc::new((0..count).map(|n| (format!("local-{n}"), Arc::new(n))).collect())
+    }
+    fn same(a: &Arc<HashMap<String, Arc<usize>>>, b: &Arc<HashMap<String, Arc<usize>>>) {
+        assert_eq!(a.len(), b.len());
+        for (key, value) in a.iter() {
+            assert!(Arc::ptr_eq(value, b.get(key).expect("same remaining key")));
+        }
+    }
+    #[test]
+    fn absent_remove_preserves_shared_owner_and_matches_original_contents_and_actual_work() {
+        for count in [0, 1, 8, 32] {
+            for present in [false, true] {
+                if present && count == 0 { continue; }
+                let saved = map(count);
+                let mut old = saved.clone();
+                let mut new = saved.clone();
+                let name = if present { "local-0" } else { "not-a-local" };
+                let mut old_work = 0;
+                let mut new_work = 0;
+                let a = original_cow_remove(&mut old, name, &mut |n| {old_work += n; Ok(())}).unwrap();
+                let b = cow_remove(&mut new, name, &mut |n| {new_work += n; Ok(())}).unwrap();
+                match (a, b) {
+                    (None, None) => assert!(!present),
+                    (Some(a), Some(b)) => { assert!(present); assert!(Arc::ptr_eq(&a, &b)); }
+                    _ => panic!("remove result differs"),
+                }
+                same(&old, &new);
+                if !present { assert!(Arc::ptr_eq(&new, &saved), "no allocation or revision change for missing key"); }
+                else { assert!(!Arc::ptr_eq(&new, &saved)); assert!(saved.contains_key(name)); }
+                eprintln!("cow-remove shared count={count} present={present} original_work={old_work} candidate_work={new_work}");
+            }
+            // Unique and weak-owned states are separate actual algorithms.
+            for weak in [false, true] {
+                let saved = map(count);
+                let mut old = Arc::new(saved.as_ref().clone());
+                let mut new = Arc::new(saved.as_ref().clone());
+                let old_weak = if weak { Some(Arc::downgrade(&old)) } else { None };
+                let new_weak = if weak { Some(Arc::downgrade(&new)) } else { None };
+                let new_ptr = Arc::as_ptr(&new);
+                let mut a = 0;
+                let mut b = 0;
+                original_cow_remove(&mut old, "missing", &mut |n| {a += n; Ok(())}).unwrap();
+                cow_remove(&mut new, "missing", &mut |n| {b += n; Ok(())}).unwrap();
+                same(&old, &new);
+                assert_eq!(Arc::as_ptr(&new), new_ptr);
+                if !weak { assert_eq!(a, b, "unique owner keeps exact old path/work"); }
+                else { assert!(Arc::ptr_eq(&new_weak.as_ref().unwrap().upgrade().unwrap(), &new)); }
+                eprintln!("cow-remove weak={weak} count={count} original_work={a} candidate_work={b}");
+                drop((old_weak, new_weak));
+            }
+        }
+    }
+    #[test]
+    fn absent_and_present_remove_propagate_all_small_meter_failures_without_publication_and_retry() {
+        let saved = map(8);
+        for present in [false, true] {
+            let name = if present { "local-0" } else { "not-a-local" };
+            let mut measured = saved.clone();
+            let mut calls = 0;
+            cow_remove(&mut measured, name, &mut |_| {calls += 1; Ok(())}).unwrap();
+            for stop in 0..calls {
+                let mut trial = saved.clone();
+                let mut seen = 0;
+                let error = cow_remove(&mut trial, name, &mut |_| {
+                    let index = seen; seen += 1;
+                    if index == stop {Err(fail(11..19, "remove-cut"))} else {Ok(())}
+                }).unwrap_err();
+                assert_eq!(error.message, "remove-cut");
+                assert_eq!(error.span, 11..19);
+                assert!(Arc::ptr_eq(&trial, &saved), "all failures before removal publication");
+                cow_remove(&mut trial, name, &mut |_| Ok(())).unwrap();
+                assert_eq!(trial.contains_key(name), false);
+                assert!(saved.contains_key("local-0"));
+            }
+        }
+    }
+
 
 }
