@@ -426,6 +426,57 @@ impl Root {
     }
 }
 
+// A distinct CLOSED negative-retention pass. Its index can never substitute
+// for Audit health or vice versa; no result survives a constructor/callback.
+struct RetainedAudit {
+    checked: TryOrderedMap<(u8, usize), bool>,
+}
+impl RetainedAudit {
+    fn new(session: &mut Session) -> Result<Self> {
+        session.charge_host_work(2)?;
+        Ok(Self { checked: TryOrderedMap::default() })
+    }
+    fn check(&mut self, graph: &mut AnalysisGraph<'_>, evidence: &Evidence) -> Result<bool> {
+        let mut pending = Vec::new();
+        populate(graph.session, &mut pending, std::iter::once((evidence, false)))?;
+        while let Some((current, exit)) = pending.pop() {
+            graph.session.charge_host_work(2)?;
+            let key = current.identity();
+            if self.checked.get(&key, &mut Meter(graph.session))?.is_some() { continue; }
+            if !exit {
+                populate(graph.session, &mut pending, std::iter::once((current, true)))?;
+                match current {
+                    Evidence::Native(node) => populate(graph.session, &mut pending,
+                        node.inputs.iter().rev().map(|child| (child, false)))?,
+                    Evidence::Source(root) => populate(graph.session, &mut pending,
+                        std::iter::once((root.actual(), false)))?,
+                }
+                continue;
+            }
+            let mut eligible = true;
+            match current {
+                Evidence::Native(node) => {
+                    // No early false return: every original watch/descendant
+                    // remains visited, and typed fuel/IRQ errors propagate.
+                    eligible &= node.records.retained_data_eligible(graph.session)?;
+                    for child in &node.inputs {
+                        graph.session.charge_host_work(2)?;
+                        eligible &= *self.checked.get(&child.identity(), &mut Meter(graph.session))?
+                            .ok_or_else(|| invalid("Missing retained DATA child eligibility"))?;
+                    }
+                }
+                Evidence::Source(root) => {
+                    eligible &= *self.checked.get(&root.actual().identity(), &mut Meter(graph.session))?
+                        .ok_or_else(|| invalid("Missing retained DATA source eligibility"))?;
+                }
+            }
+            self.checked.insert(key, eligible, &mut Meter(graph.session))?;
+        }
+        self.checked.get(&evidence.identity(), &mut Meter(graph.session))?.copied()
+            .ok_or_else(|| invalid("Missing retained DATA eligibility result"))
+    }
+}
+
 enum Scope {
     Native(FormBridge),
     Source(usize),
@@ -457,6 +508,42 @@ impl std::fmt::Display for BindingEvidenceDiagnostic<'_> {
     }
 }
 impl Build<'_> {
+    // Classification is ONLY actual membership in the incoming cache roots.
+    // No strong-count heuristic, key/content merge or guest identity lookup.
+    fn was_retained(&self, session: &mut Session, root: &Rc<Root>) -> Result<bool> {
+        session.charge_host_work(1)?;
+        let mut found = false;
+        for old in self.retained {
+            session.charge_host_work(4)?;
+            found |= Rc::ptr_eq(old, root);
+        }
+        Ok(found)
+    }
+    fn old_sources_eligible(&self, graph: &mut AnalysisGraph<'_>, evidence: &Evidence,
+        audit: &mut RetainedAudit) -> Result<bool> {
+        let mut pending = Vec::new();
+        populate(graph.session, &mut pending, std::iter::once(evidence))?;
+        let mut seen = TryOrderedMap::<(u8, usize), bool>::default();
+        let mut eligible = true;
+        while let Some(current) = pending.pop() {
+            graph.session.charge_host_work(2)?;
+            let key = current.identity();
+            if seen.get(&key, &mut Meter(graph.session))?.is_some() { continue; }
+            seen.insert(key, true, &mut Meter(graph.session))?;
+            match current {
+                Evidence::Native(node) => populate(graph.session, &mut pending, node.inputs.iter().rev())?,
+                Evidence::Source(root) => {
+                    if self.was_retained(graph.session, root)? {
+                        eligible &= audit.check(graph, current)?;
+                    }
+                    // Fresh wrappers must not hide an old selected descendant.
+                    populate(graph.session, &mut pending, std::iter::once(root.actual()))?;
+                }
+            }
+        }
+        Ok(eligible)
+    }
+
     fn source_id(&self, graph: &mut AnalysisGraph<'_>, id: Value) -> Result<Option<usize>> {
         let Some(index) = graph.source_roots.index(graph.session, id)? else {
             return Ok(None);
@@ -695,6 +782,10 @@ impl Observer for Build<'_> {
                         "First-use source changed after selection; no construction replay",
                     ));
                 }
+                let mut retained = RetainedAudit::new(graph.session)?;
+                if !self.old_sources_eligible(graph, &cached.evidence, &mut retained)? {
+                    return Err(invalid("Previously selected retained DATA became ineligible; no replay"));
+                }
                 self.selected[source] = Some(root.clone());
             }
             return Ok(Entry::Selected {
@@ -723,6 +814,11 @@ impl Observer for Build<'_> {
                     }
                     let mut audit = Audit::new(graph.session)?;
                     if root.checked_current(graph, expected, &mut audit)? {
+                        let mut retained_audit = RetainedAudit::new(graph.session)?;
+                        graph.session.charge_host_work(2)?; // temporary Rc retain/drop
+                        if !retained_audit.check(graph, &Evidence::Source(root.clone()))? {
+                            continue; // preconstruction miss, original fresh first-use path
+                        }
                         if let Some(bindings) = self.bindings(graph, context, root)? {
                             graph.session.charge_host_work(2)?;
                             reader_plan::trace_declaration_key(&expected.key, "parent-selected", format_args!("source={}", source));
@@ -889,6 +985,12 @@ impl AnalysisGraph<'_> {
                 "Source data changed before whole-build publication",
             ));
         }
+        // No callbacks remain. Keep negative-retention memoization separate
+        // from the fresh whole-build health audit above.
+        let mut retained_audit = RetainedAudit::new(self.session)?;
+        if !build.old_sources_eligible(self, &result.evidence, &mut retained_audit)? {
+            return Err(invalid("Retained DATA invalidated before whole-build publication; no replay"));
+        }
         let mut updates = Vec::new();
         reserve(self.session, &mut updates, plan.order.len())?;
         for &id in &plan.order {
@@ -898,6 +1000,12 @@ impl AnalysisGraph<'_> {
             if let Some(source) = build.selected[id].as_ref() {
                 if !source.checked_current(self, build.expected(id)?, &mut audit)? {
                     return Err(invalid("Selected source invalidated by a later callback"));
+                }
+                if build.was_retained(self.session, source)? {
+                    self.session.charge_host_work(2)?; // temporary Rc retain/drop
+                    if !retained_audit.check(self, &Evidence::Source(source.clone()))? {
+                        return Err(invalid("Selected retained DATA invalidated by a later callback; no replay"));
+                    }
                 }
                 if !matches!(source.expected.key, Key::Request(_)) {
                     self.session.charge_host_work(2)?;

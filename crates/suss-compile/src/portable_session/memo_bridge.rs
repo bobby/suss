@@ -191,6 +191,30 @@ impl Watch {
         Session::consume_host_work(store.as_context_mut(), 8, irq)?;
         Ok(bits(store.as_context_mut(), value, &self.number_type)?.is_some())
     }
+    // Negative retention eligibility ONLY. This does not authenticate a memo
+    // or alter fresh numeric DATA health. A stale/nonmatching receipt is not
+    // a sticky veto; compare the actual original receiver/storage/slot/value.
+    pub(super) fn retained_data_eligible(&self, session: &mut Session) -> Result<bool, SessionError> {
+        let _request = session.operation_budget_scope()?;
+        session.charge_host_work(12)?; // owner/scope, two locks, flags, root/IRQ retains and branches
+        session.check(&self.receiver)?;
+        // Match the lock order of source_authenticated: drop domain guard
+        // before taking receipt. Never upgrade/revalidate the source domain.
+        let bound = registry_lock(&self.source_domain).is_some();
+        if !bound { return Ok(true); }
+        let receipt = registry_lock(&self.receipt);
+        let Some(receipt) = receipt.as_ref() else { return Ok(true); };
+        if receipt.source_safe { return Ok(true); }
+        let irq = session.host_work_interrupt();
+        let mut scope = RootScope::new(&mut session.store);
+        let receiver = Val::AnyRef(Some(self.receiver.value.to_rooted(&mut scope)));
+        let Some(current) = self.current(scope.as_context_mut(), &receiver, &irq)? else {
+            // Health independently rejects changed layout/storage. This policy
+            // makes no claim about a receipt not bound to the current slot.
+            return Ok(true);
+        };
+        Ok(!self.matches_receipt(scope.as_context_mut(), &current, receipt, &irq)?)
+    }
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool, SessionError> {
         session.check(&self.receiver)?;
         let _request = session.operation_budget_scope()?;
@@ -865,6 +889,80 @@ fn memo_receipts_past_warming_rejects_malformed_live_hash_layouts() {
         assert!(inputs.matches(&mut session, &value).unwrap());
         for watch in watches { assert!(watch.matches(&mut session).unwrap()); }
     }
+    fn recorded_list_domain(session: &mut Session, invalid: bool)
+        -> (SessionValue, Arc<Watch>, Arc<super::super::write_domain::WriteDomain>, super::super::construction_records::Fact) {
+        let (value, inputs) = registered_list(session);
+        let watch = inputs.memo_watch().unwrap();
+        let fact = super::super::construction_records::Fact::Constructor(inputs);
+        let domain = super::super::write_domain::WriteDomain::new();
+        domain.record(session, &value, &fact).unwrap();
+        domain.seal(session).unwrap();
+        if invalid { domain.invalidate(); }
+        (value, watch, domain, fact)
+    }
+    #[test]
+    fn retained_data_exact_unsafe_receipt_veto_is_not_sticky_and_never_authenticates() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        session.eval("(def hash-ordered-coll (fn [_] 719))").unwrap();
+        session.enter_namespace("user").unwrap();
+        let (value, watch, _domain, _fact) = recorded_list_domain(&mut session, true);
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+        hash(&mut session, &value);
+        session.collect().unwrap();
+        assert!(registry_lock(&watch.receipt).as_ref().is_some_and(|r| !r.source_safe));
+        assert!(!watch.retained_data_eligible(&mut session).unwrap());
+        assert!(!watch.matches(&mut session).unwrap());
+        let original = session.data_fields(&value).unwrap().remove(watch.slot());
+        let distinct = session.eval("719").unwrap();
+        assert!(!session.values_identical(&original, &distinct).unwrap());
+        let setter = session.eval("(fn [x n] (set! (.-__hash x) n))").unwrap();
+        session.invoke(&setter, &[&value, &distinct]).unwrap();
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+        assert!(!watch.matches(&mut session).unwrap());
+        let nil = session.eval("nil").unwrap();
+        session.invoke(&setter, &[&value, &nil]).unwrap();
+        session.collect().unwrap();
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+        assert!(!watch.matches(&mut session).unwrap());
+        session.invoke(&setter, &[&value, &original]).unwrap();
+        assert!(!watch.retained_data_eligible(&mut session).unwrap());
+        assert!(!watch.matches(&mut session).unwrap());
+    }
+    #[test]
+    fn retained_data_safe_receipt_and_unbound_uncertified_data_remain_eligible() {
+        let mut session = Session::new_macro().unwrap();
+        let (safe, watch, _domain, _fact) = recorded_list_domain(&mut session, false);
+        hash(&mut session, &safe);
+        assert!(registry_lock(&watch.receipt).as_ref().is_some_and(|r| r.source_safe));
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+        assert!(watch.matches(&mut session).unwrap());
+        let (unbound, inputs) = registered_list(&mut session);
+        let unbound_watch = inputs.memo_watch().unwrap();
+        hash(&mut session, &unbound);
+        assert!(registry_lock(&unbound_watch.source_domain).is_none());
+        assert!(unbound_watch.retained_data_eligible(&mut session).unwrap());
+    }
+    #[test]
+    fn retained_data_policy_propagates_typed_fuel_irq_and_normal_operation_retry() {
+        let mut session = Session::new_macro().unwrap();
+        let (_value, inputs) = registered_list(&mut session);
+        let watch = inputs.memo_watch().unwrap();
+        session.with_operation_budget(|session| {
+            session.store.set_fuel(0).unwrap();
+            let error = watch.retained_data_eligible(session).unwrap_err();
+            assert!(matches!(error, SessionError::Trap(ref e) if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+            Ok(())
+        }).unwrap();
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+        session.with_operation_budget(|session| {
+            session.interrupt_handle().interrupt();
+            assert!(watch.retained_data_eligible(session).unwrap_err().is_interrupt());
+            Ok(())
+        }).unwrap();
+        assert!(watch.retained_data_eligible(&mut session).unwrap());
+    }
+
 }
 
 impl Watch {

@@ -174,6 +174,23 @@ pub(crate) struct ConstructionRecords {
     class_prechecks_valid: bool,
 }
 impl ConstructionRecords {
+    // Scan ALL original constructor facts. Arc retain/drop work is paid
+    // before using the existing memo_watch getter; no snapshot or new watch.
+    pub(crate) fn retained_data_eligible(&self, session: &mut Session) -> Result<bool, SessionError> {
+        let _request = session.operation_budget_scope()?;
+        session.charge_host_work(1)?;
+        let mut eligible = true;
+        for record in &self.records {
+            session.charge_host_work(8)?; // fact/option reads, branches, Arc retain/drop and result
+            if let Fact::Constructor(inputs) = &record.fact {
+                if let Some(watch) = inputs.memo_watch() {
+                    eligible &= watch.retained_data_eligible(session)?;
+                }
+            }
+        }
+        Ok(eligible)
+    }
+
     pub(crate) fn with_bridge_classes(bridge_classes: Vec<BridgeClassInput>) -> Self {
         Self {
             domain: super::write_domain::WriteDomain::new(),
