@@ -226,7 +226,10 @@ impl WriteDomain {
             reserve_factory(session, &mut seen, 1)?;
             session.charge_host_work(3)?;
             seen.push(key);
-            let (root, seed, edges) = {
+            // Compare the borrowed exact output first. A hit needs neither
+            // owned root/seed/edge staging nor expansion scratch.
+            let seed = {
+                session.charge_host_work(8)?; // lock/sealed/index/eligibility reads
                 let state = registry_lock(&domain.state);
                 if !state.sealed {
                     return Ok(None);
@@ -237,23 +240,21 @@ impl WriteDomain {
                 if node.snapshot.is_none() && node.seed.is_none() {
                     continue;
                 }
-                session.charge_host_work(
-                    (2 * std::mem::size_of::<SessionValue>()
-                        + 2 * std::mem::size_of::<Arc<CanonicalSeed>>()
-                        + 8) as u64,
-                )?;
-                let mut edges = Vec::new();
-                reserve_factory(session, &mut edges, node.edges.len())?;
-                for edge in &node.edges {
-                    session
-                        .charge_host_work((2 * std::mem::size_of::<SessionValue>() + 3) as u64)?;
-                    edges.push(edge.clone());
+                session.charge_host_work(3)?; // borrowed root and match controls
+                if session.values_identical(value, &node.value)? {
+                    return Ok(Some(point));
                 }
-                (node.value.clone(), node.seed.clone(), edges)
+                session.charge_host_work(2)?;
+                match &node.seed {
+                    Some(seed) => {
+                        session.charge_host_work(
+                            (2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64,
+                        )?;
+                        Some(seed.clone())
+                    }
+                    None => None,
+                }
             };
-            if session.values_identical(value, &root)? {
-                return Ok(Some(point));
-            }
             if let Some(seed) = seed {
                 if let Some(scope) = seed.original_member(session, value, None)? {
                     session.charge_host_work(3)?;
@@ -262,6 +263,30 @@ impl WriteDomain {
                     return Ok(Some(selected));
                 }
             }
+            // Exact-root and seed-member misses alone require captured edges.
+            // The sealed topology is immutable; no lock spans recursion or a
+            // seed-subtree query. Copy only this node's original edge list.
+            let edges = {
+                session.charge_host_work(
+                    (2 * std::mem::size_of::<Vec<SessionValue>>() + 8) as u64,
+                )?;
+                let state = registry_lock(&domain.state);
+                if !state.sealed {
+                    return Ok(None);
+                }
+                let Some(node) = state.nodes.get(point.node) else {
+                    return Ok(None);
+                };
+                let mut edges = Vec::new();
+                reserve_factory(session, &mut edges, node.edges.len())?;
+                for edge in &node.edges {
+                    session.charge_host_work(
+                        (2 * std::mem::size_of::<SessionValue>() + 3) as u64,
+                    )?;
+                    edges.push(edge.clone());
+                }
+                edges
+            };
             for edge in edges {
                 session.charge_host_work(3)?;
                 if factory_immediate(session, &edge)? {
@@ -284,66 +309,63 @@ impl WriteDomain {
         session: &mut Session,
         value: &SessionValue,
     ) -> Result<Option<FactoryPoint>> {
-        session.charge_host_work((6 * std::mem::size_of::<Vec<FactoryPoint>>() + 10) as u64)?;
-        let mut originals = Vec::new();
-        let mut linked = Vec::new();
-        let mut source = Vec::new();
-        {
+        session.charge_host_work(10)?; // lock/sealed/scan initialization controls
+        let source = {
             let state = registry_lock(&self.state);
             if !state.sealed {
                 return Ok(None);
             }
-            reserve_factory(session, &mut originals, state.nodes.len())?;
+            // Preserve exact local-output priority. Native equality is the
+            // existing rooted ref_eq helper, with no guest call or recapture.
             for (index, node) in state.nodes.iter().enumerate() {
-                session.charge_host_work(
-                    (2 * std::mem::size_of::<SessionValue>()
-                        + 2 * std::mem::size_of::<Arc<CanonicalSeed>>()
-                        + 8) as u64,
-                )?;
-                if node.snapshot.is_some() || node.seed.is_some() {
-                    originals.push((index, node.value.clone(), node.seed.clone()));
+                session.charge_host_work(8)?; // iterator/index/eligibility controls
+                if node.snapshot.is_none() && node.seed.is_none() {
+                    continue;
+                }
+                session.charge_host_work(3)?; // original exact-comparison controls
+                if session.values_identical(value, &node.value)? {
+                    session.charge_host_work(
+                        (2 * std::mem::size_of::<FactoryPoint>() + 6) as u64,
+                    )?;
+                    return Ok(Some(FactoryPoint {
+                        domain: Arc::downgrade(self),
+                        node: index,
+                        member: None,
+                    }));
                 }
             }
-            reserve_factory(session, &mut linked, state.children.len())?;
-            reserve_factory(session, &mut source, state.children.len())?;
+            // Preserve exact linked-reference priority and its complete scoped
+            // member. Retain ONLY the selected owner; unused links need no
+            // SessionValue/Weak/seed-member copies or temporary inventory.
             for child in &state.children {
                 session.charge_host_work(4)?;
-                match child {
-                    ChildDomain::FactoryReference { value, owner, .. } => {
-                        session.charge_host_work(
-                            (2 * std::mem::size_of::<SessionValue>() + 3) as u64,
-                        )?;
-                        linked.push((value.clone(), owner.retained(session)?));
+                if let ChildDomain::FactoryReference { value: root, owner, .. } = child {
+                    session.charge_host_work(3)?;
+                    if session.values_identical(value, root)? {
+                        return Ok(Some(owner.retained(session)?));
                     }
-                    ChildDomain::Source { value, domain } => {
-                        session.charge_host_work(
-                            (2 * std::mem::size_of::<SessionValue>() + 6) as u64,
-                        )?;
-                        source.push((value.clone(), domain.clone()));
-                    }
-                    ChildDomain::FactoryCandidate(_) => {}
                 }
             }
-        }
-        for (index, root, _seed) in originals {
-            session.charge_host_work(3)?;
-            // Membership flows from an exact reached seed root to its original
-            // members, never from a shared interior back to an unrelated seed.
-            if session.values_identical(value, &root)? {
-                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 6) as u64)?;
-                return Ok(Some(FactoryPoint {
-                    domain: Arc::downgrade(self),
-                    node: index,
-                    member: None,
-                }));
+            // Strict source fallback only after both prior searches miss.
+            // Prepay/stage these actual roots and Arcs, then drop the parent
+            // lock before consulting another domain (including possible self).
+            session.charge_host_work(
+                (2 * std::mem::size_of::<Vec<(SessionValue, Arc<WriteDomain>)>>() + 10) as u64,
+            )?;
+            let mut source = Vec::new();
+            for child in &state.children {
+                session.charge_host_work(4)?;
+                if let ChildDomain::Source { value, domain } = child {
+                    reserve_factory(session, &mut source, 1)?;
+                    session.charge_host_work(
+                        (2 * (std::mem::size_of::<SessionValue>()
+                            + std::mem::size_of::<Arc<WriteDomain>>()) + 6) as u64,
+                    )?;
+                    source.push((value.clone(), domain.clone()));
+                }
             }
-        }
-        for (root, owner) in linked {
-            session.charge_host_work(3)?;
-            if session.values_identical(value, &root)? {
-                return Ok(Some(owner));
-            }
-        }
+            source
+        };
         for (root, domain) in source {
             session.charge_host_work(3)?;
             if session.values_identical(value, &root)? {
