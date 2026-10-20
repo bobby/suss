@@ -1,12 +1,16 @@
 use suss_cli::{portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session};
 use suss_reader::forms::Kind;
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 #[test]
 fn fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc() {
     let mut failures = Vec::new();
     for (phase, mut caller) in [("runtime",Session::new_repl().unwrap()),("macro",Session::new_macro().unwrap())] {
         let result = (|| -> Result<(), String> {
             caller.eval("(def ^{:audit-leaf :reader-only-leaf} watched 17)").map_err(|e| e.to_string())?;
+            assert_eq!(caller.options().fuel_per_operation, 10_000_000);
             let mut macros = CompiledMacros::new().map_err(|e|e.to_string())?;
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             macros.define(r#"(defmacro inspect-literal-memos [source-kw source-sym]
               (let [find-key (fn [m text]
                      (reduce (fn [found key] (if (= (str key) text) key found)) nil (keys m)))
@@ -32,7 +36,9 @@ fn fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_g
                    (vec (map str (keys (:init descriptor))))]))))"#).map_err(|e|e.to_string())?;
             for stage in 0..2 {
                 caller.collect().map_err(|e|e.to_string())?;
-                let value=caller.eval_with_macros("(let [^number local-x 17] (inspect-literal-memos :op op))",&mut macros).map_err(|e|format!("stage{stage}: {e}"))?;
+                let evaluated=caller.eval_with_macros("(let [^number local-x 17] (inspect-literal-memos :op op))",&mut macros);
+                assert_eq!(caller.options().fuel_per_operation, 10_000_000);
+                let value=evaluated.map_err(|e|format!("stage{stage}: {e}"))?;
                 let bridge=FormBridge::new(&mut caller).map_err(|e|e.to_string())?;
                 let form=bridge.read(&mut caller,&value,0..1).map_err(|e|e.to_string())?;
                 eprintln!("analyzer-literal-env {phase}/stage{stage}: {:?}",form.kind);
@@ -48,7 +54,9 @@ fn fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_g
 #[test]
 fn vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos() {
     for mut caller in [Session::new_repl().unwrap(),Session::new_macro().unwrap()] {
+        assert_eq!(caller.options().fuel_per_operation, 10_000_000);
         let mut macros=CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(r#"(defmacro inspect-vector-literals [name]
           (let [find-key (fn [m text] (reduce (fn [found key] (if (= (str key) text) key found)) nil (keys m)))
                 ast (:init (get (:locals &env) name))
@@ -59,7 +67,9 @@ fn vector_source_literal_items_children_keys_and_child_keyword_have_initialized_
                          (some? (.-_hash child-name)) (= :items child-name)
                          (= 17 (:val (first (:items ast))))])))"#).unwrap();
         caller.collect().unwrap();
-        let value=caller.eval_with_macros("(let [v [17]] (inspect-vector-literals v))",&mut macros).unwrap();
+        let evaluated=caller.eval_with_macros("(let [v [17]] (inspect-vector-literals v))",&mut macros);
+        assert_eq!(caller.options().fuel_per_operation, 10_000_000);
+        let value=evaluated.unwrap();
         let bridge=FormBridge::new(&mut caller).unwrap();
         let form=bridge.read(&mut caller,&value,0..1).unwrap();
         eprintln!("analyzer-literal-vector: {:?}",form.kind);
