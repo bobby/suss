@@ -183,7 +183,7 @@ impl Analyzer<'_> {
         let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
         Ok(self.nominal(form, Nominal::CallableGet, vec![owner, name, keys]))
     }
-    fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
+    fn named_global(&mut self, name: &Form) -> Result<Global, Diagnostic> {
         let Kind::Symbol(symbol) = &name.kind else {
             return Err(fail(
                 name.span.clone(),

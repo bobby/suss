@@ -242,11 +242,14 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                 &symbol.name,
             ));
         }
-        let mut meter_error = None;
+        let mut meter_failed = false;
         let resolved = self.environment.resolve_metered(self.phase, symbol, form.span.clone(), &mut |work| {
-            (self.meter)(work).map_err(|error| { meter_error = Some(error.clone()); error })
+            (self.meter)(work).inspect_err(|_| meter_failed = true)
         });
-        if let Some(error) = meter_error { return Err(error); }
+        let resolved = match resolved {
+            Err(error) if meter_failed => return Err(error),
+            other => other,
+        };
         if let Ok(binding) = resolved {
             let global = binding.global();
             return Ok(Symbol::namespaced(

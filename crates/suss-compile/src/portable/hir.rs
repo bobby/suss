@@ -1162,13 +1162,18 @@ impl Analyzer<'_> {
                     return Some(SourceBinding::Field(field.clone()));
                 }
             }
-            self.environment
+            let mut meter_failed = false;
+            let binding = self.environment
                 .resolve_metered(self.phase, symbol, form.span.clone(), &mut |work| {
-                    self.expander.charge_expansion_work(work, form.span.clone()).map_err(|error| {
-                        resolution_meter_error = Some(error.clone()); error
-                    })
-                })
-                .ok()
+                    self.expander.charge_expansion_work(work, form.span.clone())
+                        .inspect_err(|_| meter_failed = true)
+                });
+            match binding {
+                Err(error) if meter_failed => {
+                    resolution_meter_error = Some(error);
+                    None
+                }
+                binding => binding.ok()
                 .map(|binding| {
                     let global = binding.global().clone();
                     if global.namespace() == "js" && matches!(binding, ResolvedBinding::Core { .. })
@@ -1180,7 +1185,8 @@ impl Analyzer<'_> {
                         global,
                         declaration,
                     }
-                })
+                }),
+            }
         });
         if let Some(error) = resolution_meter_error { return Err(error); }
         // A nested source function gets its own fact slot. Compiler-only
@@ -2340,14 +2346,13 @@ impl Analyzer<'_> {
             // A fresh generated type can query a real unbound cell only in the
             // current, already declared namespace; no arbitrary namespace or
             // source declaration facts are fabricated for an existence probe.
-            let mut resolution_meter_error = None;
+            let mut meter_failed = false;
             let resolved = self.environment.resolve_metered(self.phase, target, args[0].span.clone(), &mut |work| {
-                self.expander.charge_expansion_work(work, args[0].span.clone()).map_err(|error| {
-                    resolution_meter_error = Some(error.clone()); error
-                })
+                self.expander.charge_expansion_work(work, args[0].span.clone())
+                    .inspect_err(|_| meter_failed = true)
             });
-            if let Some(error) = resolution_meter_error { return Err(error); }
             let global = match resolved {
+                Err(error) if meter_failed => return Err(error),
                 Ok(ResolvedBinding::Cell(global)) => global,
                 Ok(_) => {
                     return Err(fail(
