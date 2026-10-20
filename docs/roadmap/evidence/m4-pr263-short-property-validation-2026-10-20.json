@@ -839,6 +839,45 @@
       ],
       "exact_selection_matches": true,
       "measurement_lines": []
+    },
+    "default-constructor": {
+      "head": "f97f67f3c5a62882a280bff690b92103862f830f",
+      "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+      "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "input_count": 228,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 377.9056627869995,
+      "raw_sha256": "d0b1841e6ad74ab290e1d3fbf4edc4ba99afa035194354da0e7d3ee30ccf289c",
+      "harness_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 87.12s"
+      ],
+      "started_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "exact_selection_matches": true,
+      "measurement_lines": []
     }
   },
   "historical_acceptance": "m4-pr263-pinned-and-transport-attribution-83f-2026-10-20.json",
