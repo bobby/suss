@@ -2727,5 +2727,260 @@
       "Main bootstrap4/publicshort3 live follow-up not inspected, aggregated or inferred.",
       "No default/pinned gain, readiness, final-head PR approval, promotion or fullbaseline claim."
     ]
+  },
+  "fresh_pinned_controls": {
+    "terminal": {
+      "fixture_binding_manifest_sha256": "0f71996e42d35044569e343aafbf918b0f03611ad467961ae124a2ea9c633f16",
+      "source_freeze_sha256": "420993c4fe4187d695e5d94b423eef9bac24c58c9def2ce018d3be3a668be4ba",
+      "head": "f50289c1fbf530df76642a712368eb8783259138",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "predicted_source_fingerprint": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "source_input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ],
+      "trace_environment": {},
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original unchanged pinned map69 and identifier15 bodies, originalMacro200M/caller200M. Fresh capture directory and independentcomparisonrequired; exactIDs/operand/verdictchecks remain. No source/metadata/observation reduction or quota/ratechange. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 342.44259676,
+      "raw_sha256": "cda37be4700896d72541b5fddd195a54e239a8d1f1b7b0b1b0d5de6a27962cd7"
+    },
+    "fixture_bindings": {
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "file_bindings": {
+        "crates/suss-compile/tests/clojure_test_suite.rs": {
+          "sha256": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "crates/suss-compile/tests/support/portable_decode.rs": {
+          "sha256": "5b8c8f5b130ec981c1f2ab49b6f869efef8c70dfcc34548427ca3c520c26bb87",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "crates/suss-compile/tests/support/compilation_fuel.rs": {
+          "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "scripts/clojure_test_suite.py": {
+          "sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "tests/oracle/clojure-test-suite-observations.json": {
+          "sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "tests/oracle/clojure-test-suite-known-failures.json": {
+          "sha256": "90ada9910a7529f0f7152247692eabeb47fd4214580575f94d685b9c36a7642c",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite.cljs": {
+          "sha256": "bd190dcffddff113bf7e1a7e9dd2d69cf39ac4e6a360df7edbc5d58cad818276",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs": {
+          "sha256": "7846d135c63178d0602eec38d60c099903f4b515e2ba0541a63b5faa64e10447",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc": {
+          "sha256": "a077bc1d9cc7d4e8e0e83d5fe5f1eb0e55c28eab7887919599b20e42f31b7c1e",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc": {
+          "sha256": "37cfac488528b43d8e492340885b1ed35c89362aa0167ff7ba72bdb0318a06b4",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc": {
+          "sha256": "df4f5fafcbc0b443956c964d8c9a59ee33be4f77321e84fd98eaffa8d82c1c3f",
+          "exact_source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true,
+          "byte_exact_to_prior_83f_source": true,
+          "byte_exact_to_prior_f3_source": true
+        },
+        "runtime/bootstrap/runtime.wasm": {
+          "sha256": "c0f18c0679219992a6f2ae3079d9313970bc80ef5ab5fa25688eefc795936535",
+          "exact_source_commit": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+          "previous_f3_sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+          "scope": "Reviewed integer emission BOOT; intentionally changed from f3.",
+          "adoption_review_sha256": "2ef94a9269fb899e9e5efd71d09b4b74e9e78054600ee4be25c312707f99b05d"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "sha256": "ea2aa79f8e83c78d22c571797c516ee4401ecf9466e51d71f706a494b8debe99",
+          "exact_source_commit": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+          "previous_f3_sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+          "scope": "Reviewed integer emission BOOT; intentionally changed from f3.",
+          "adoption_review_sha256": "2ef94a9269fb899e9e5efd71d09b4b74e9e78054600ee4be25c312707f99b05d"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "sha256": "83acd8d6602d9d3398a9ef3f1ca7f10d744ef2cda12785951295d144c53e52bf",
+          "exact_source_commit": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+          "previous_f3_sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+          "scope": "Reviewed integer emission BOOT; intentionally changed from f3.",
+          "adoption_review_sha256": "2ef94a9269fb899e9e5efd71d09b4b74e9e78054600ee4be25c312707f99b05d"
+        },
+        "runtime/bootstrap/macro.json": {
+          "sha256": "6f6c8b321608e68a431ff1991ae0b9fded8fe48de7d5bc07c3281abfbd4a622f",
+          "exact_source_commit": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+          "previous_f3_sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+          "scope": "Reviewed integer emission BOOT; intentionally changed from f3.",
+          "adoption_review_sha256": "2ef94a9269fb899e9e5efd71d09b4b74e9e78054600ee4be25c312707f99b05d"
+        }
+      },
+      "test_body_bindings": {
+        "rust-test-body:pinned_map_declaration_executes_without_transport_loss": {
+          "sha256": "32baf16be6727b8ff9c8c87ae20e34e6f7afdc0883633c4e99eeeb836dc7fe10",
+          "extract": "exact fn header through unindented closing brace",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true
+        },
+        "rust-test-body:pinned_reader_identifier_names_keep_values": {
+          "sha256": "3637de65117263f17bc9f27d2b172c479ce986fe2ebb66e33a760a9cdacb9f9e",
+          "extract": "exact fn header through unindented closing brace",
+          "byte_exact_to_previous_source3b1dfbd": true,
+          "byte_exact_to_prior1697_source": true,
+          "byte_exact_to_prior_de61_source": true,
+          "byte_exact_to_prior_3f_source": true
+        }
+      },
+      "budget": "Original Harness::new Macro200M/caller200M; generic suite100B helper is bound but NOT used by these two tests.",
+      "readonly_oracle_source": true,
+      "closed_macro_initialization_scope": "Current production retains v5 private fixed initialization allowance and restores user operation limits. Original pinned Macro/caller200M requests unchanged; prefix work does not alter quotas.",
+      "bootstrap_commit": "51cc2b2343a6be862890471249a5d8fbcb2e9f2e",
+      "prior_packet": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-3f5552e-v1"
+    },
+    "map_comparison": {
+      "counts": {
+        "pass": 0,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 69,
+        "skipped": 0,
+        "namespaces-failed": 1
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {
+          "clojure.core-test.map": {
+            "stage": "macro",
+            "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:  0x47f59 - <unknown>!<wasm function 228>\n    1:   0xe14d - <unknown>!<wasm function 186>\n    2:  0xf5a62 - <unknown>!<wasm function 1123>\n    3:  0xeeb0a - <unknown>!<wasm function 1071>\n    4:   0xe0a4 - <unknown>!<wasm function 185>\n    5:  0x1049d - <unknown>!<wasm function 276>\n    6:  0x104c7 - <unknown>!<wasm function 277>\n    7:    0x218 - <unknown>!<wasm function 6>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+          }
+        },
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": false,
+      "expected_count": 69,
+      "actual_count": 0,
+      "observations_sha256": "8ad472728ca464a534309caf92077a12ac24d300aab151db512bdda451fee5e5",
+      "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+      "accepted": false
+    },
+    "identifier_comparison": {
+      "counts": {
+        "pass": 15,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 0,
+        "skipped": 0,
+        "namespaces-failed": 0
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {},
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": true,
+      "expected_count": 15,
+      "actual_count": 15,
+      "observations_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+      "scope": "Original inline Rust Python comparator logic, repeated against retained capture. Host operand decisions only; no fabricated verdict.",
+      "accepted": true
+    },
+    "scope": "Original complete200M/200M pair; actual failures/unexecuted observations retained, no structural/fullfit inference."
   }
 }
