@@ -79,7 +79,9 @@ fn manifest(phase: Phase, wasm: &[u8], cells: &[super::resolve::Global]) -> Mani
 // This fixed, embedded compiler catalog has a separate native-analysis cap.
 // It is used for development generation and checked shipped-fact restoration,
 // never for caller source, guest execution, or a nested Session budget refill.
-const CATALOG_ANALYSIS_FUEL: u64 = 100_000_000;
+// Complete metered namespace snapshots are part of this fixed catalog analysis.
+// Keep its finite allowance separate from ordinary caller/default fuel controls.
+const CATALOG_ANALYSIS_FUEL: u64 = 100_000_000_000;
 struct CatalogAnalysis;
 impl super::ExpansionHost for CatalogAnalysis {
     fn expansion_work_fuel(&self) -> u64 { CATALOG_ANALYSIS_FUEL }
