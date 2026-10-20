@@ -162,6 +162,25 @@ impl AnalysisGraph<'_> {
                 )?;
             }
         }
+        if !private_slots {
+            // The request envelope has no persistent source identity. Without
+            // a reachable source boundary, ordinary constructors must keep
+            // their normal result, including a live constructor's replacement.
+            // The complete dependency/cycle proof above still runs first.
+            let mut persistent_source = false;
+            for &id in &order {
+                self.session.charge_host_work(2)?;
+                persistent_source |= !matches!(
+                    &self.source_roots.roots[id].owner,
+                    Owner::Request(_)
+                );
+            }
+            if !persistent_source {
+                trace_declarations(self, "admission-decline", format_args!(
+                    "reason=no-reachable-persistent-source private_slots=false"));
+                return Ok(None);
+            }
+        }
         let mut modes = Vec::new();
         reserve(self.session, &mut modes, layout.len())?;
         for capture in &self.source_roots.roots {
@@ -267,6 +286,33 @@ mod tests {
         resolve::{Environment, Phase},
     };
     use crate::portable_macro_data::FormBridge;
+    #[test]
+    fn ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let input = "(def ^{:doc \"unreachable\"} unrelated 17)";
+            let forms = suss_reader::forms::read_forms(input).unwrap();
+            let environment = hir::prepare(
+                &forms, 0..input.len(), &Environment::default(), phase,
+            ).unwrap().1;
+            let binding = environment.resolve(
+                phase, &suss_reader::Symbol::new("unrelated"), 0..0,
+            ).unwrap();
+            let holder = environment.shared_definition_info(binding.global()).unwrap();
+            let mut session = Session::new_macro().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            graph.declaration(binding.global(), Some(holder), 0).unwrap();
+            assert!(!graph.metadata_sources.is_empty());
+            let scalar = graph.recipe(Recipe::Scalar(
+                crate::portable::hir::Literal::Number(17.0),
+            )).unwrap();
+            let ordinary = graph.recipe(Recipe::List(vec![scalar])).unwrap();
+            let request = graph.reader_request_export(ordinary).unwrap();
+            assert!(graph.admit_first_use_data_controller(request).unwrap().is_none());
+        }
+    }
     #[test]
     fn actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children() {
         let input = "(def ^number watched 17)";
