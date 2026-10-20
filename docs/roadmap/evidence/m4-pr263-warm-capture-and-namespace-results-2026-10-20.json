@@ -1,0 +1,1245 @@
+{
+  "scope": "Reviewed test-only strict mixed fixture and state-matched fuel cuts; partial progress. Production budget/authority/constructor/metering rules unchanged.",
+  "focused_nine": {
+    "terminal": {
+      "head": "5eddfc2a8c32734e4a8c2194535da1fc436ee5d8",
+      "source_commit": "e22078951978dc0fbf058e2169cff8227ccd147f",
+      "predicted_source_fingerprint": "63deb5edff8fea42eaea0ee8efc2ce16c6f6008d71434105b713b1cb93e90cdf",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry",
+        "portable_macro_graph::source_roots::mixed_reader_inputs::tests::original_completed_data_value_still_rejects_standalone_strict_certificate",
+        "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority",
+        "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries",
+        "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children",
+        "portable::origin::form_metadata::tests::provenance_snapshot_metering_charges_cold_build_and_warm_lookups",
+        "portable::origin::form_metadata::tests::root_metadata_projection_charges_cold_and_warm_cancellation_and_recovers"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1",
+        "SUSS_MIXED_CERT_TRACE": "1",
+        "SUSS_READER_KEY_CAPTURE_WORK_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Nineexacttests: originalsixauthority/fueltests withreviewedstrictmixedtwo-rolefullpayloadfixtures andwarm-origincutmeasurement; mandatoryoriginalDATAstrictnegative and2existingcold/warmmetering/cancellation/recoverycontrols. All originalsemanticanderrorassertionspreserved. No rate/default/authoritychanges. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 172.80820688296808,
+      "raw_sha256": "6ac4efdb219cbd56beeb8f63925cda396fa367202a34251f17076665a9e4e68b"
+    },
+    "exact_results": {
+      "portable::origin::form_metadata::tests::provenance_snapshot_metering_charges_cold_build_and_warm_lookups": "ok",
+      "portable::origin::form_metadata::tests::root_metadata_projection_charges_cold_and_warm_cancellation_and_recovers": "ok",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::actual_metadata_parent_keeps_direct_key_reference_and_enrolls_children_before_snapshot": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::later_guest_key_poison_prevents_parent_publication_and_preserves_effect": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::mixed_parent_fuel_and_active_irq_leave_no_retained_publication_and_retry": "FAILED",
+      "portable_macro_graph::source_roots::mixed_reader_inputs::tests::original_completed_data_value_still_rejects_standalone_strict_certificate": "ok",
+      "portable_macro_graph::source_roots::reader_controller::health_tests::uncached_numeric_key_data_never_mints_direct_key_or_retained_authority": "ok",
+      "portable_macro_graph::source_roots::reader_keys::tests::reader_key_capture_fuel_irq_leaves_no_published_capture_and_retries": "ok",
+      "portable_macro_graph::source_roots::reader_plan::tests::actual_completed_declaration_admission_distinguishes_direct_keys_from_private_children": "ok"
+    },
+    "harness_seconds": 37.12,
+    "counts": {
+      "passed": 6,
+      "failed": 3,
+      "ignored": 0,
+      "filtered": 565
+    },
+    "fuel_costs": {
+      "cold": 10228,
+      "warm": 6794,
+      "explanation": "SourceOrigin clones share the lazily built immutable metadata snapshot; trials use the measured warm state."
+    },
+    "cut_rows": [
+      [
+        "0",
+        "6794",
+        "0",
+        "false",
+        "0"
+      ],
+      [
+        "1",
+        "6794",
+        "0",
+        "false",
+        "0"
+      ],
+      [
+        "3397",
+        "6794",
+        "0",
+        "false",
+        "0"
+      ],
+      [
+        "6793",
+        "6794",
+        "0",
+        "false",
+        "0"
+      ]
+    ],
+    "capture_irq_retry": "Executed and PASS: typed interrupt, empty capture, retire exhausted operation, normal new operation on SAME graph and successful capture.",
+    "mixed_failure": "Three tests stop at new complete native Form comparison: compiler literal key span0..0 differs from reader shorthand span6..12. Value symbol span6..12 and native value lineage assertions match. Parent/poison/fuel tails unexecuted; comparison correction required without dropping original source checks."
+  },
+  "namespace_previous_source": {
+    "terminal": {
+      "head": "90d1a32aa30c1d4f864d9332e71e74d14f13084f",
+      "source_commit": "5fbd8ed271c049543459b2b745acb227c43960b3",
+      "predicted_source_fingerprint": "01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_namespace_identity",
+        "--",
+        "--exact",
+        "compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "trace_environment": {
+        "SUSS_DECLARATION_REUSE_TRACE": "user/watched",
+        "SUSS_POISON_RECEIPT_TRACE": "1",
+        "SUSS_MIXED_CERT_TRACE": "1",
+        "SUSS_READER_KEY_CAPTURE_WORK_TRACE": "1"
+      },
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original unchanged namespace five-call program and all observations in Runtime and Macro; compilation helper100B and caller Runtime unchanged. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 544.9067085369607,
+      "raw_sha256": "93ba1049dc7ecfc62b2f5d18526abf608cf0f89983d02d038466dc63f906f3d9"
+    },
+    "harness_seconds": 402.31,
+    "counts": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 1
+    },
+    "observations_sha256": "9de98c1e2d1a27d094d3aae6e15501567a50d007dbfe130a49aadd9c35e8754c",
+    "phases": [
+      {
+        "phase": "runtime",
+        "rows": [
+          [
+            "same-1",
+            [
+              true,
+              true,
+              true,
+              true,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "same-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-1",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "new-env-after-def",
+            [
+              false,
+              false,
+              false,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              false,
+              false,
+              false,
+              null,
+              null
+            ],
+            [
+              true,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            "same-1",
+            [
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "same-2",
+            [
+              false,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-1",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "new-env-after-def",
+            [
+              false,
+              false,
+              false,
+              false,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              false,
+              false,
+              false,
+              null,
+              null
+            ],
+            [
+              true,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ]
+        ],
+        "mismatches": [
+          {
+            "path": [
+              0,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              1,
+              1,
+              3
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              1,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              4,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          }
+        ]
+      },
+      {
+        "phase": "macro",
+        "rows": [
+          [
+            "same-1",
+            [
+              true,
+              true,
+              true,
+              true,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "same-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-1",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "new-env-after-def",
+            [
+              false,
+              false,
+              false,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              false,
+              false,
+              false,
+              null,
+              null
+            ],
+            [
+              true,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            "same-1",
+            [
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "same-2",
+            [
+              false,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              false,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-1",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "post-def-2",
+            [
+              false,
+              true,
+              true,
+              false,
+              false
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              [
+                true,
+                true,
+                true,
+                true
+              ],
+              [
+                true,
+                true,
+                true,
+                true,
+                true,
+                true
+              ]
+            ],
+            [
+              false,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ],
+          [
+            "new-env-after-def",
+            [
+              false,
+              false,
+              false,
+              false,
+              true
+            ],
+            [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ],
+            [
+              false,
+              false,
+              false,
+              null,
+              null
+            ],
+            [
+              true,
+              true,
+              null,
+              "callable-doc",
+              true,
+              2.0,
+              true
+            ]
+          ]
+        ],
+        "mismatches": [
+          {
+            "path": [
+              0,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              1,
+              1,
+              3
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              1,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          },
+          {
+            "path": [
+              4,
+              1,
+              4
+            ],
+            "actual": false,
+            "expected": true
+          }
+        ]
+      }
+    ],
+    "total_mismatched_boolean_observations": 8,
+    "limits": "Bounded aliases only; Suss :suss/catalog mapped to live analyzer namespace. No fresh ana/analyze inside native macro observer. Existing oracle arglists is nil; no full-schema or source/storage-proof claim.",
+    "scope": "All original five calls decoded in each phase; live ns!=captured ns at first, second and new top-level call; saved-live!=live on second. Other original fields compare equal. This remains a semantic failure, not a whole-issue or final-source pass."
+  },
+  "bootstrap": {
+    "generation": {
+      "head": "e22078951978dc0fbf058e2169cff8227ccd147f",
+      "compiler_source_sha256": "63deb5edff8fea42eaea0ee8efc2ce16c6f6008d71434105b713b1cb93e90cdf",
+      "inputs": 222,
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+      "exit_code": 1,
+      "seconds": 82.21553904697066,
+      "raw_sha256": "cfd1989684c9b787fae624c346b3304995f96d4cd957c9808f6244f75966ea70"
+    },
+    "identity": {
+      "head": "5eddfc2a8c32734e4a8c2194535da1fc436ee5d8",
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+      "source_sha256": "63deb5edff8fea42eaea0ee8efc2ce16c6f6008d71434105b713b1cb93e90cdf",
+      "exit_code": 0,
+      "seconds": 1.1475666990154423,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+    },
+    "adoption_review": {
+      "reviewer": "Carver",
+      "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+      "head": "e22078951978dc0fbf058e2169cff8227ccd147f",
+      "tree": "1f6eada9db9ec47cf9be0b8b526e5c1738c49349",
+      "clean_head_and_current_git_inputs_verified": true,
+      "terminal_sha256": "62a01ceb74da7dfc46d5c6b8588ded04af074485eca44d4345ec5390b8879265",
+      "generator_receipt_sha256": "7b8dca1ceddecb4a813e4631aaab162c47615999e8c0907b8131026d3ec1c659",
+      "source_fingerprint": "63deb5edff8fea42eaea0ee8efc2ce16c6f6008d71434105b713b1cb93e90cdf",
+      "git_source_inputs_verified": 222,
+      "eight_output_hashes_and_sizes_verified": true,
+      "four_first_second_pairs_byte_exact": true,
+      "phase_comparison": {
+        "runtime": {
+          "changed_sections": [
+            {
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "e86f96fc8cb068c8118ba5706818658307aaf83e92c3cae68ac9483ea6dabe86",
+              "new_sha256": "7a1e04f4da5e6063f4c8a1d3a01c32f85680fc8cc80dd1ef1703d17adb4e5919"
+            }
+          ],
+          "noncustom_bytes_identical": true,
+          "all_other_custom_sections_identical": true,
+          "manifest_changed_fields": [
+            "compiler_source_sha256",
+            "wasm_sha256"
+          ],
+          "catalog_ABI_flags_cells_other_fields_identical": true,
+          "new_wasm_sha256": "841dbcfd01251f65b38087b11254f9b2cf2c714fa5e3061728b7da9c81d73f91",
+          "new_json_sha256": "3fd7c726dc3405f34cd89e5c12de818fc97ca46b4d17643663722f18de18e711"
+        },
+        "macro": {
+          "changed_sections": [
+            {
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "24f3ffc06dabe0de50c5fa51676d60a2c1dde49db8acdff65c73cc07e5f64b7e",
+              "new_sha256": "0816c338952d3d9cfc7908911004992c45e6388b4bed4d0d56968b9718dd47ee"
+            }
+          ],
+          "noncustom_bytes_identical": true,
+          "all_other_custom_sections_identical": true,
+          "manifest_changed_fields": [
+            "compiler_source_sha256",
+            "wasm_sha256"
+          ],
+          "catalog_ABI_flags_cells_other_fields_identical": true,
+          "new_wasm_sha256": "3fe603627e4435d3928c455cf4f30c9b2bf391c393ef53eb3390624fdcbdcbe3",
+          "new_json_sha256": "ea6c0c26163098206720f9d63dbceb8889035acf0d405ff2c379a9d6def9ab6c"
+        }
+      },
+      "allowlist": {
+        "runtime/bootstrap/runtime.wasm": {
+          "source": "diagnostics/first/runtime.wasm",
+          "sha256": "841dbcfd01251f65b38087b11254f9b2cf2c714fa5e3061728b7da9c81d73f91"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "source": "diagnostics/first/runtime.json",
+          "sha256": "3fd7c726dc3405f34cd89e5c12de818fc97ca46b4d17643663722f18de18e711"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "source": "diagnostics/first/macro.wasm",
+          "sha256": "3fe603627e4435d3928c455cf4f30c9b2bf391c393ef53eb3390624fdcbdcbe3"
+        },
+        "runtime/bootstrap/macro.json": {
+          "source": "diagnostics/first/macro.json",
+          "sha256": "ea6c0c26163098206720f9d63dbceb8889035acf0d405ff2c379a9d6def9ab6c"
+        }
+      },
+      "qualification": "Normal hostopt2 generation82.215539s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, strictmixed/warmcapture CORE/public-macro semantic or acceptance credit.",
+      "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations",
+      "actual_builder_output_verified": true,
+      "actual_builder_output_path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "actual_builder_output_sha256": "37771ee224d61a998d069b503ae69ee3537fcecbcd6dd1c3453054c75ed36561",
+      "independent_builder_copy": "independent-builder-output.txt"
+    }
+  },
+  "remaining": "Mixed three downstream assertions, namespace eight identity mismatches, complete literal/source-tag/pinned/source-child criteria, workspace baseline and final-head CI remain unproven. No acceptance, closure, promotion or merge."
+}
