@@ -202,7 +202,7 @@ trait RecordAccess {
     fn len(&self) -> usize;
     fn record<'a>(&'a self, id: usize, session: &mut Session) -> Result<&'a Record, SessionError>;
 }
-impl<R: RecordAccess + ?Sized> RecordAccess for [R] {
+impl<R: AsRef<Record>> RecordAccess for [R] {
     fn len(&self) -> usize {
         <[R]>::len(self)
     }
