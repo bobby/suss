@@ -738,5 +738,481 @@
   "layout_observations": [
     "borrowed-cut-layout slice=16 node=88 cut=56 snapshot=80",
     "snapshot-owned-layout Node=88 Contents=32 Snapshot=80 Atom=48"
-  ]
+  ],
+  "independent_focused_evidence_review": {
+    "verdict": "GO_SCOPED_SNAPSHOT53_EXECUTIONS_EVIDENCE",
+    "publication_head_reviewed": "9b977b78985690302b3fc635095e84a2ada998ad",
+    "public_evidence": "docs/roadmap/evidence/m4-pr263-snapshot-cut-validation-2026-10-20.json",
+    "public_evidence_sha256": "1e88d221fda1954c8a6816e3ccd315ea4281f27da0681348d9679465b35ef883",
+    "source_commit": "b03c1e00865f42e113a9ba32a0e8ba7ab72d7160",
+    "compiler_source_sha256": "411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b",
+    "compiler_inputs": 229,
+    "boot_commit": "71a4126ef1a36bc9506b928dc7135e7b4319a077",
+    "all229_postrun_current_frozen_source_boot_publication_git_blobs_match": true,
+    "source_fingerprint_recomputed": true,
+    "adopted_four_BOOT_bytes_match_reviewed_generated_files": true,
+    "identity": {
+      "exit_code": 0,
+      "seconds": 21.746895778996986,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "raw_hash_verified": true,
+      "scope": "Pure build-source identity/input invalidation only"
+    },
+    "aggregate": {
+      "test_executions_passed": 53,
+      "distinct_test_names_passed": 39,
+      "repeated_names_across_cohorts": 14,
+      "fail": 0,
+      "ignored": 0,
+      "both_complete_exact_selections_verified": true
+    },
+    "cohorts": [
+      {
+        "cohort": "snapshot-all",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--lib",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_float_bits_and_all_scalar_variants",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_compares_functions_not_only_their_signatures",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_reports_uid_warming_without_repairing_it",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_covers_schema_and_reports_live_protocol_changes",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_rejects_opaque_payload_without_leaking_roots",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_owner_check_precedes_any_foreign_root_access",
+          "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+          "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+          "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+          "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_owned_nodes_survive_external_type_and_module_drop",
+          "portable_session::storage_snapshot::tests::borrowed_cuts_keep_snapshot_handle_accounting_and_owned_leaves_after_inputs_drop",
+          "portable_session::storage_snapshot::tests::borrowed_cut_boundaries_fuel_irq_unused_foreign_and_root_rejection_recover",
+          "portable_session::storage_snapshot::tests::borrowed_cut_strategies_match_current_index_across_supplied_boundaries_and_collisions",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph"
+        ],
+        "selection_sha256": "4e347d1dbf163e03160f46197431bbc7b9ac9e21e645d73a597fcf46556f0a6c",
+        "terminal_sha256": "42c8e5efea1d476f7928758d38208bd952f2c5b70efb5ef7bbe3357be1aea58e",
+        "raw_sha256": "705dab794445016a294b0c78e9579b20683f196a31ba809f3fc2846ff49707c5",
+        "pass": 24,
+        "fail": 0,
+        "ignored": 0,
+        "filtered": 591,
+        "harness_seconds": 34.21,
+        "command_seconds": 279.93790771099884,
+        "all_exact_results": [
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::borrowed_cut_boundaries_fuel_irq_unused_foreign_and_root_rejection_recover",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::borrowed_cut_strategies_match_current_index_across_supplied_boundaries_and_collisions",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::borrowed_cuts_keep_snapshot_handle_accounting_and_owned_leaves_after_inputs_drop",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_compares_functions_not_only_their_signatures",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_covers_schema_and_reports_live_protocol_changes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_owned_nodes_survive_external_type_and_module_drop",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_owner_check_precedes_any_foreign_root_access",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_float_bits_and_all_scalar_variants",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_rejects_opaque_payload_without_leaking_roots",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_reports_uid_warming_without_repairing_it",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+            "result": "ok"
+          }
+        ]
+      },
+      {
+        "cohort": "prefix-scope29",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--lib",
+          "--",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture",
+          "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates",
+          "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_staging_fuel_irq_failures_leave_domain_unchanged_and_retry",
+          "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_actual_charges_match_old_membership_and_reduce_large_suffix_work",
+          "portable_macro_graph::source_roots::tests::factory_candidate_prefix_keeps_genuine_checked_source_and_reference_suffixes",
+          "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+          "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+          "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+          "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+          "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+          "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+          "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+          "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+          "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member"
+        ],
+        "selection_sha256": "3c3b4f22fce2a86d60ef6781ac0bd3d878c89854832e5dc2ae17c3728eab4cc2",
+        "terminal_sha256": "81348e64daddf5e5dc45950740770bf4265b39643708491f34cf10a29ff062e1",
+        "raw_sha256": "fa85761ff9fde49283b6843d933cf87e5b664f800d5127c10af6184c583f1157",
+        "pass": 29,
+        "fail": 0,
+        "ignored": 0,
+        "filtered": 586,
+        "harness_seconds": 64.59,
+        "command_seconds": 65.86636771899794,
+        "all_exact_results": [
+          {
+            "name": "portable_macro_graph::source_roots::tests::factory_candidate_prefix_keeps_genuine_checked_source_and_reference_suffixes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::canonical_seeds::tests::canonical_seeds_bind_initial_roots_and_survive_hash_warming_and_gc",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::canonical_seeds::tests::canonical_seeds_cover_initial_children_without_authorizing_current_mutation",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_actual_charges_match_old_membership_and_reduce_large_suffix_work",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_preserves_real_origins_with_reference_suffix_and_zero_candidates",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::factory_candidate_prefix_staging_fuel_irq_failures_leave_domain_unchanged_and_retry",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_attachment_fuel_irq_or_foreign_failure_publishes_no_partial_links_and_retries",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_input_domains_are_weak_and_retire_without_recursive_ownership",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_initial_seed_storage_from_an_unrelated_root",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_cannot_borrow_unused_sibling_outputs_from_the_same_recording",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_close_copied_symbol_fields_through_live_custom_hash_and_gc",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_equal_but_foreign_references_and_missing_metadata_edge",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_inputs_reject_mutated_original_producer_without_recapturing_it",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_seed_member_links_cannot_reexport_the_container_across_generations",
+            "result": "ok"
+          },
+          {
+            "name": "portable_session::write_domain::factory_inputs::tests::original_factory_seed_node_descendants_survive_links_without_ancestor_or_sibling_authority",
+            "result": "ok"
+          }
+        ]
+      }
+    ],
+    "overlapping_exact_names": [
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph",
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal",
+      "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases",
+      "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup",
+      "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine",
+      "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity",
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers"
+    ],
+    "cut_strategy_samples_independently_parsed": [
+      {
+        "supplied": 0,
+        "forced_hash_collision": false,
+        "selected_cost": 1232,
+        "forced_current_indexed_cost": 1227
+      },
+      {
+        "supplied": 0,
+        "forced_hash_collision": true,
+        "selected_cost": 1019,
+        "forced_current_indexed_cost": 1014
+      },
+      {
+        "supplied": 1,
+        "forced_hash_collision": false,
+        "selected_cost": 1089,
+        "forced_current_indexed_cost": 1599
+      },
+      {
+        "supplied": 1,
+        "forced_hash_collision": true,
+        "selected_cost": 983,
+        "forced_current_indexed_cost": 1495
+      },
+      {
+        "supplied": 31,
+        "forced_hash_collision": false,
+        "selected_cost": 1479,
+        "forced_current_indexed_cost": 1974
+      },
+      {
+        "supplied": 31,
+        "forced_hash_collision": true,
+        "selected_cost": 1373,
+        "forced_current_indexed_cost": 1710
+      },
+      {
+        "supplied": 32,
+        "forced_hash_collision": false,
+        "selected_cost": 1492,
+        "forced_current_indexed_cost": 1983
+      },
+      {
+        "supplied": 32,
+        "forced_hash_collision": true,
+        "selected_cost": 1386,
+        "forced_current_indexed_cost": 1717
+      },
+      {
+        "supplied": 33,
+        "forced_hash_collision": false,
+        "selected_cost": 1996,
+        "forced_current_indexed_cost": 1992
+      },
+      {
+        "supplied": 33,
+        "forced_hash_collision": true,
+        "selected_cost": 1728,
+        "forced_current_indexed_cost": 1724
+      }
+    ],
+    "sample_conclusion": "Ten actual ordinary/collision rows: supplied1/31/32 lower than forced-current index; supplied0 costs5more and33costs4more. Corresponding complete differential test passed opaque and strict mutations/restoration, GC, unused membership and handle accounting checks. Not an all-input improvement bound.",
+    "native_layout_log_observations": [
+      "borrowed-cut-layout slice=16 node=88 cut=56 snapshot=80",
+      "snapshot-owned-layout Node=88 Contents=32 Snapshot=80 Atom=48"
+    ],
+    "layout_limit": "Node88 and other sizeof outputs are actual native layout observations from this run, not total allocation/fuel or whole-program performance measures.",
+    "prefix_rows_independently_parsed": [
+      {
+        "reference_first": true,
+        "candidates": 2,
+        "suffix": 192,
+        "old": 49216,
+        "new": 5703
+      },
+      {
+        "reference_first": false,
+        "candidates": 2,
+        "suffix": 192,
+        "old": 49216,
+        "new": 5703
+      }
+    ],
+    "scope_assessment": "Snapshot24 includes20storage tests plus4original-member controls. Prefix29 covers4prefix and25preservation cases, with14repeated names. Published JSON records separate exact cohorts and explicitly preserves adverse samples, source qualification, historical24ed outcomes and pending strict controls; no confirmed overclaim found.",
+    "excluded": "Fresh pinned66221 and subsequent default10M were reported live/pending and are not read, inferred or aggregated. Historical24ed42passes/70typedobservations stay separate from current source411 results.",
+    "limits": [
+      "No reviewer Cargo/VM/oracle/Python test execution or producer interaction; cache-only static parsing/hash/Git reads and receipt write.",
+      "Postrun source correspondence is not an independent run-long mutation detector.",
+      "No default-fit/pinned200M benefit/public acceptance/fullbaseline/final-head readiness or promotion claim."
+    ]
+  },
+  "accepted_selected_name_accounting": {
+    "executions": 53,
+    "distinct_names": 39,
+    "repeat_executions": 14,
+    "repeated_names": {
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_excludes_unused_cuts_and_preserves_node_and_opaque_scopes": 2,
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_full_root_scan_fuel_irq_foreign_and_retry_leave_no_partial_member": 2,
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_fuel_irq_owner_and_retry_preserve_the_original_graph": 2,
+      "portable_session::storage_snapshot::original_members::tests::original_snapshot_subroot_is_downward_and_opaque_cuts_stay_terminal": 2,
+      "portable_session::storage_snapshot::tests::native_cut_storage_forced_collision_cuts_do_not_hide_other_nodes_or_aliases": 2,
+      "portable_session::storage_snapshot::tests::native_cut_storage_fuel_irq_owner_and_failed_capture_cleanup": 2,
+      "portable_session::storage_snapshot::tests::native_cut_storage_opaque_identity_mutability_membership_and_own_spine": 2,
+      "portable_session::storage_snapshot::tests::native_cut_storage_slot_hook_is_exact_and_never_exempts_root_or_struct": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_checks_actual_owned_source_array_backing": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_follows_deep_graphs_iteratively": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_hash_collisions_preserve_distinct_nodes": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_mid_capture_and_check_interrupts_are_atomic": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_preserves_aliases_cycles_and_gc_identity": 2,
+      "portable_session::storage_snapshot::tests::native_storage_snapshot_uses_fuel_for_capture_and_check_then_recovers": 2
+    },
+    "scope": "Names across completed accepted recorded cohorts only; intentional overlap is not unique coverage."
+  }
 }
