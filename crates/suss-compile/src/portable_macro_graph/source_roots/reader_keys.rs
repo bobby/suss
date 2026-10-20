@@ -135,6 +135,17 @@ impl CheckedDirectKey {
     }
 }
 
+// Native-unit diagnostic only; no guest work, debit or error conversion.
+#[cfg(test)]
+fn trace_reader_key_stage(graph: &AnalysisGraph<'_>, stage: &str) {
+    if std::env::var_os("SUSS_READER_KEY_CAPTURE_WORK_TRACE").is_some() {
+        use std::io::Write as _;
+        let _ = writeln!(std::io::stderr().lock(),
+            "READER_KEY_CAPTURE_STAGE stage={} remaining={:?}",
+            stage, graph.session.operation_fuel_remaining().ok());
+    }
+}
+
 impl AnalysisGraph<'_> {
     /// Mint a stable source-root alias AFTER native holder/selector validation.
     /// Private callers below obtain `native` from the original reader/value
@@ -186,17 +197,26 @@ impl AnalysisGraph<'_> {
         holder: &Arc<DefinitionInfo>,
         position: (usize, usize),
     ) -> Result<Value> {
+        #[cfg(test)]
+        trace_reader_key_stage(self, "completed-entry");
         // Checks actual Global, exact held completed owner, full ordinary/type
         // current-input binding, including original SourceOrigin correspondence.
         self.completed_owner_binding(global, owner, holder)?;
+        #[cfg(test)]
+        trace_reader_key_stage(self, "completed-binding-done");
         let metadata = self.completed_reader(owner)?;
+        #[cfg(test)]
+        trace_reader_key_stage(self, "completed-reader-done");
         self.session.charge_host_work(2)?;
-        self.capture_normalized_reader_key(
+        let result = self.capture_normalized_reader_key(
             global,
             ReaderSourceOwner::Completed(owner.clone()),
             &metadata,
             position,
-        )
+        );
+        #[cfg(test)]
+        trace_reader_key_stage(self, "completed-normalized-return");
+        result
     }
     fn capture_normalized_reader_key(
         &mut self,
@@ -451,6 +471,8 @@ impl AnalysisGraph<'_> {
         holder: &Arc<DefinitionInfo>,
         position: (usize, usize),
     ) -> Result<Value> {
+        #[cfg(test)]
+        trace_reader_key_stage(self, "ordinary-entry");
         self.session.charge_host_work(4)?;
         if !self.capture_roots {
             return Err(invalid("Reader key capture requires captured source"));
@@ -979,9 +1001,10 @@ mod tests {
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
             graph.capture_roots = true;
             eprintln!("READER_KEY_CAPTURE_CUT allowance={allowance} measured_cost={cost} initial_budget={initial_budget}");
-            let error = graph
-                .capture_ordinary_reader_key(&ns, &global, &holder, (0, 0))
-                .unwrap_err();
+            let result = graph.capture_ordinary_reader_key(&ns, &global, &holder, (0, 0));
+            eprintln!("READER_KEY_CAPTURE_RESULT allowance={allowance} measured_cost={cost} remaining={:?} result_ok={} captures={}",
+                graph.session.operation_fuel_remaining().ok(), result.is_ok(), graph.source_roots.roots.len());
+            let error = result.unwrap_err();
             assert!(matches!(error, SessionError::Trap(_)), "{error}");
             assert!(graph.source_roots.roots.is_empty());
             drop(graph);
@@ -999,6 +1022,10 @@ mod tests {
                 .is_interrupt()
         );
         assert!(graph.source_roots.roots.is_empty());
+        // Interrupt consumes/exhausts the active operation. Retire it; retry
+        // with the SAME empty graph in a genuine ordinary operation, no refill.
+        drop(op);
+        let op = graph.session.operation_budget_scope().unwrap();
         graph
             .capture_ordinary_reader_key(&ns, &global, &holder, (0, 0))
             .unwrap();
