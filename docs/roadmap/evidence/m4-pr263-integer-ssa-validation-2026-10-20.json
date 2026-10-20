@@ -1930,6 +1930,207 @@
       ],
       "accepted_complete_selected_tests": false,
       "measurement_lines": []
+    },
+    "bitwise-cli-all-calibrated": {
+      "head": "f50289c1fbf530df76642a712368eb8783259138",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_bitwise_hash",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+        "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+        "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+        "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+        "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+        "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+        "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+        "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+        "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+        "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls"
+      ],
+      "selection": {
+        "exact_names": [
+          "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+          "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+          "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+          "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+          "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+          "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+          "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+          "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+          "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+          "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls"
+        ],
+        "test_file": "crates/suss-cli/tests/portable_bitwise_hash.rs",
+        "test_source_sha256": "55af6b9c1ad0390167eeba8a7ed33eaaef56dd43a511712d95589cc560260763",
+        "scope": "Complete10case retry: primary70originalsources/IDs/expectedvalues at100Bcumulativecompilation perinput (previous10M), Runtime10M unchanged;9othercasesbyteexact. Initial9PASS1compileFAIL retained separately."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 149.79344776299695,
+      "raw_sha256": "6a1a5d580ca49df32dfa2f03e21dc8308e5b4b03a474f2c63607f8d41cac72e1",
+      "started_names": [
+        "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+        "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+        "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+        "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+        "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls",
+        "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+        "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+        "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+        "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+        "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 124.68s"
+      ],
+      "accepted_complete_selected_tests": true,
+      "measurement_lines": []
+    },
+    "cli-two": {
+      "head": "f50289c1fbf530df76642a712368eb8783259138",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_short_property_keys",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc",
+        "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live"
+      ],
+      "selection": {
+        "exact_names": [
+          "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc",
+          "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 96.5245412559998,
+      "raw_sha256": "81a0902f9c947a610db73806ae47ed78b63108ec1651c1c6b218cd2720977f27",
+      "started_names": [
+        "short_static_getter_throw_is_not_retried_and_returned_key_alias_stays_live",
+        "short_static_key_preserves_dynamic_receiver_getter_replacement_and_order_after_gc"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 79.75s"
+      ],
+      "accepted_complete_selected_tests": true,
+      "measurement_lines": []
+    },
+    "cli-observations-one": {
+      "head": "f50289c1fbf530df76642a712368eb8783259138",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_short_property_observations",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+        ],
+        "scope": "Complete unchanged donor tests for checked short-key property source adaptation; sourcephase/lifetime/fallback/ABI/provenance bounds preserved. No default/pinned/full acceptance claim."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 86.63181167700168,
+      "raw_sha256": "898611d5d2d2377d9526d5471a2e99503341efb7ca4dd8f88adcff9df6b3a9f7",
+      "started_names": [
+        "short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 64.55s"
+      ],
+      "accepted_complete_selected_tests": true,
+      "measurement_lines": []
+    },
+    "bootstrap-four": {
+      "head": "f50289c1fbf530df76642a712368eb8783259138",
+      "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+      "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_bootstrap",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+        "compiled_bootstrap_rejects_changed_identity_and_corruption",
+        "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+        "compiled_bootstrap_catalog_cache_never_shares_guest_state"
+      ],
+      "selection": {
+        "exact_names": [
+          "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+          "compiled_bootstrap_rejects_changed_identity_and_corruption",
+          "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+          "compiled_bootstrap_catalog_cache_never_shares_guest_state"
+        ],
+        "scope": "All4originalcompiledbootstraptests; onlycache-isolationnativecompilationcalibrated10M->100B cumulativeperinput, allRuntimefuel/source/assertions/effects/GC/resetunchanged. NotcompleteJava-freeverifiercredit."
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 0,
+      "seconds": 135.36359171500226,
+      "raw_sha256": "ea6be628bd3610c481462d3d79e556ddbcc2f764afe0eaa429dbf62fdb391d5f",
+      "started_names": [
+        "compiled_bootstrap_catalog_cache_never_shares_guest_state",
+        "compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation",
+        "compiled_bootstrap_images_are_reproducible_and_phase_specific",
+        "compiled_bootstrap_rejects_changed_identity_and_corruption"
+      ],
+      "unstarted_selected_names": [],
+      "complete_exact_selection_matches": true,
+      "harness_summaries": [
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 119.55s"
+      ],
+      "accepted_complete_selected_tests": true,
+      "measurement_lines": []
     }
   },
   "profile_environment": {
@@ -2290,6 +2491,241 @@
       "Published profile environment is recorded configuration; raw logs show optimized compilation, but this evidence-only review does not re-execute or inspect compiler flag internals.",
       "No Cargo/VM/oracle/Python test execution or shared edits. Only cache-only parsing/hash/Git reads/writes.",
       "Not final-head review, acceptance, promotion, full baseline or performance verdict."
+    ]
+  },
+  "test_only_compilation_calibration": {
+    "manifest": {
+      "base": "90729ee9129f7d1766d85077db372bf58883f7bb",
+      "compiler_source_fp_unchanged": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+      "files": {
+        "crates/suss-cli/tests/compiled_bootstrap.rs": {
+          "before": "8dda485ad2a5c3e4c008805014d02e39907defd1534fa90f15cb6f39e5b80cf7",
+          "after": "4dfe0646a45cb2b693db5fd5831f47365d4ebb9fef3821bc42ae1d93a67579ec"
+        },
+        "crates/suss-cli/tests/portable_bitwise_hash.rs": {
+          "before": "4b14a284d4f722ccdd276793f4ae5f212a357f9ea1d8b25af65ab14c0e05806c",
+          "after": "55af6b9c1ad0390167eeba8a7ed33eaaef56dd43a511712d95589cc560260763"
+        },
+        "crates/suss-cli/tests/support/eval_with_compilation_fuel.rs": {
+          "before": null,
+          "after": "0e8bd8ad990f1e3bf7478c14a7030714dc104ad6cb85106af304549a368c019c"
+        }
+      },
+      "scope": "Test-only shared no-expansion compiler host; primary70 compiler allowance10M->100B per complete originalinput. Runtime/defaultCORE17/constructor/pinned200M controls unchanged; no corpus/source/ID/comparison changes.",
+      "preservation_checks": {
+        "nine_other_bitwise_test_bodies_and_helpers_byte_exact": true,
+        "all_four_bootstrap_test_bodies_byte_exact": true,
+        "namespace_entry_unchanged": "Session.enter_namespace is native catalog mutation, left identical.",
+        "actual_rows": "70actual typed decoded values emitted for independent host reconciliation; expected/source corpus unchanged."
+      }
+    },
+    "independent_source_review": {
+      "verdict": "SOURCE_GO_TEST_ONLY_COMPILATION_CALIBRATION",
+      "base": "90729ee9129f7d1766d85077db372bf58883f7bb",
+      "manifest_sha256": "4144fff56059accc7e2884c489586870dc77c296a0d148a9c373b5f754830f28",
+      "all_three_preimages_git_bound_and_postimages_manifest_bound": true,
+      "files": {
+        "crates/suss-cli/tests/compiled_bootstrap.rs": {
+          "before": "8dda485ad2a5c3e4c008805014d02e39907defd1534fa90f15cb6f39e5b80cf7",
+          "after": "4dfe0646a45cb2b693db5fd5831f47365d4ebb9fef3821bc42ae1d93a67579ec"
+        },
+        "crates/suss-cli/tests/portable_bitwise_hash.rs": {
+          "before": "4b14a284d4f722ccdd276793f4ae5f212a357f9ea1d8b25af65ab14c0e05806c",
+          "after": "55af6b9c1ad0390167eeba8a7ed33eaaef56dd43a511712d95589cc560260763"
+        },
+        "crates/suss-cli/tests/support/eval_with_compilation_fuel.rs": {
+          "before": null,
+          "after": "0e8bd8ad990f1e3bf7478c14a7030714dc104ad6cb85106af304549a368c019c"
+        }
+      },
+      "compiler_input_scope": "All3paths are outside the frozen229 compiler fingerprint inputs; no production Rust, Runtime ABI, shippedBOOT or production default modification. SourceFP24ed remains an input-byte assertion, not a new build/test execution.",
+      "helper_review": {
+        "extraction": "Actual Compilation host implementation matches the previously reviewed bootstrap helper exactly except error-context label. Bootstrap imports it under eval_isolation alias.",
+        "cumulative": "Exactly one Compilation(100B) is created per complete eval_semantics(source) call. Reader/native analysis/emission all debit its mutable remaining counter through ExpansionRequest/ExpansionHost; expansion_work_fuel returns remaining, not original limit. No nested helper/callee reinitialization.",
+        "no_expansion": "expand returns None, artifact_dependencies Some(empty), and existing no-expansion support defaults remain. Original CORE and70source expressions do not become a different mocked evaluator. Session.eval_with_macros still prepares and executes the compiled pipeline.",
+        "runtime": "Helper makes no Session.options/Store fuel mutation, no set_operation_fuel or scope/refill call. eval_prepared and inspect/GC retain ordinary caller Runtime operations. Final options assertion explicitly requires DEFAULT_OPERATION_FUEL10M.",
+        "source_route_qualification": "New primary corpus path uses public eval_with_macros and metered reader/preparation rather than Session.eval module-input wrapper. For retained embeddedCORE and corpus expressions this is the intended no-expansion semantic route; no module-dependency/namespace-control test has been replaced. enter_namespace remains byte-exact native operation."
+      },
+      "preservation": {
+        "all_four_bootstrap_test_bodies_byte_exact": true,
+        "nine_other_bitwise_cases_and_helpers_entire_suffix_byte_exact": true,
+        "primary70_count_uniqueness_expected_values_all_original_comparisons_retained": true,
+        "core_and_corpus_source_files_untouched": true,
+        "corpus_sha256": "11cb7ba26e41e6ab138215469595055fbc484b03fd0b83e30c70248f8abfa635",
+        "cases": 70,
+        "namespace_entry_unchanged": true,
+        "strict_CORE17_pinned200M_default_constructor_exhaustion_sources_not_in_patch": true
+      },
+      "output_review": "Each successfully decoded actual typed value is printed with its originalID before comparison. Expected JSON/source/pin unchanged. Compile failures still accumulate and fail the original final assertion; complete marker is printed only after failures.is_empty. Host comparator must require exact70 IDs and matching independent expectations; marker alone is not a verdict.",
+      "calibration_scope": "Primary semantic corpus compilation-only10M->100Bperoriginalinput under user-approved252 calibration; unchanged Runtime10M. No sufficiency/performance/defaultfit claim. Original observed CLI9P1F CORE-preparation failure and zero primary observations remain historical.",
+      "remaining": "Main controlled retry and independent70typed-row comparison, plus existing bootstrap4 replay for extracted helper; not executed or inferred by this source review.",
+      "limits": [
+        "No Cargo/VM/oracle/Python test execution.",
+        "Only cache-only hashing/Git reads and review write; no shared source/index/ref/GitHub mutations.",
+        "No public acceptance, fullbaseline, pinned/default success, readiness or promotion credit."
+      ]
+    }
+  },
+  "primary70_comparison": {
+    "scope": "Independent Python comparison of70actualtypeddecodedRuntimeobservations from completeoriginalprimarycorpus; not allupstreambitwiseconformance or map/defaultfit.",
+    "cohort_head": "f50289c1fbf530df76642a712368eb8783259138",
+    "production_source": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+    "compiler_fp": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+    "test_file_sha256": "55af6b9c1ad0390167eeba8a7ed33eaaef56dd43a511712d95589cc560260763",
+    "fixture_sha256": "11cb7ba26e41e6ab138215469595055fbc484b03fd0b83e30c70248f8abfa635",
+    "oracle_header": {
+      "schema": 1,
+      "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1"
+    },
+    "raw_sha256": "6a1a5d580ca49df32dfa2f03e21dc8308e5b4b03a474f2c63607f8d41cac72e1",
+    "observations_sha256": "da5368b05cc768b0b1f4b587590ebe8bd014fd2d2d0c6a89884d63460eabc3c7",
+    "expected_count": 70,
+    "actual_count": 70,
+    "ordered_ids_match": true,
+    "complete_marker_count": 1,
+    "failures": [],
+    "accepted": true,
+    "compile_allowance": 100000000000,
+    "previous_compile_allowance": 10000000,
+    "runtime_allowance": 10000000,
+    "limits": "Original9PASS1COREcompilationFAIL remainsseparate; no original fixture/source/ID/expected mutation. Other9test bodies are byte-exact; thiscomparisoncoversprimary70Runtimeonly."
+  },
+  "primary70_observations": {
+    "artifact": "m4-pr263-bitwise-primary70-observations-2026-10-20.jsonl",
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-integer-production-v1/bitwise-primary70-observations.jsonl",
+    "sha256": "da5368b05cc768b0b1f4b587590ebe8bd014fd2d2d0c6a89884d63460eabc3c7"
+  },
+  "primary70_independent_evidence_review": {
+    "verdict": "GO_SCOPED_CALIBRATED_CLI10_AND_PRIMARY70_EVIDENCE",
+    "head": "f50289c1fbf530df76642a712368eb8783259138",
+    "source_commit": "ab6fe8ca7d069caf61d9d180374e2fc081348571",
+    "compiler_source_sha256": "24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d",
+    "compiler_inputs": 229,
+    "boot_commit": "2e0c066eb3203e5571642b0bfe5b8159c55dd8cc",
+    "terminal_sha256": "19e81375d71255b98e7a952d05475ec0a41d70cb61bf83f412816a43cb916790",
+    "raw_sha256": "6a1a5d580ca49df32dfa2f03e21dc8308e5b4b03a474f2c63607f8d41cac72e1",
+    "selection_sha256": "8ce08fc1ac17d5c61c2f885b6a84a8ab844b147d02cd8cf18a0eb1b6c4efb3b9",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "portable_bitwise_hash",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+      "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+      "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+      "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+      "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+      "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+      "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+      "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+      "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+      "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls"
+    ],
+    "result": {
+      "pass": 10,
+      "fail": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "harness_seconds": 124.68,
+      "command_seconds": 149.79344776299695
+    },
+    "all_exact_test_outcomes": [
+      {
+        "name": "bitwise_alias_exclusion_and_both_compilation_phases_are_explicit",
+        "result": "ok"
+      },
+      {
+        "name": "bitwise_bad_arities_fail_with_spans_and_no_partial_publication",
+        "result": "ok"
+      },
+      {
+        "name": "bitwise_hash_match_independently_decoded_primary_observations_after_gc",
+        "result": "ok"
+      },
+      {
+        "name": "bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args",
+        "result": "ok"
+      },
+      {
+        "name": "cached_integer_bits_preserve_alias_capture_effects_and_recursive_calls",
+        "result": "ok"
+      },
+      {
+        "name": "captured_variadic_bitwise_body_reads_the_current_tail_reducer_once",
+        "result": "ok"
+      },
+      {
+        "name": "integer_chains_keep_valueof_at_the_original_position_and_preserve_throw_order",
+        "result": "ok"
+      },
+      {
+        "name": "integer_chains_preserve_signed_unsigned_shift_and_nonfinite_boundaries",
+        "result": "ok"
+      },
+      {
+        "name": "integer_results_escape_through_multiple_uses_branches_captures_and_shadowed_calls",
+        "result": "ok"
+      },
+      {
+        "name": "variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery",
+        "result": "ok"
+      }
+    ],
+    "primary70": {
+      "phase": "Runtime Session only, as original primary corpus",
+      "actual_count": 70,
+      "ordered_ids_match": true,
+      "every_typed_actual_matches_immutable_expected": true,
+      "strict_json_types_compared": true,
+      "duplicates_missing_or_extra": [],
+      "first_inline_harness_row_included": true,
+      "complete_marker_count": 1,
+      "complete_marker_value": 70,
+      "corpus_sha256": "11cb7ba26e41e6ab138215469595055fbc484b03fd0b83e30c70248f8abfa635",
+      "corpus_unchanged_since_precalibration_head": true,
+      "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+      "main_comparison_and_observation_jsonl_independently_match_raw": true,
+      "observation_jsonl_sha256": "da5368b05cc768b0b1f4b587590ebe8bd014fd2d2d0c6a89884d63460eabc3c7",
+      "actual_tag_counts": {
+        "f64": 68,
+        "bool": 2
+      }
+    },
+    "historical_initial": {
+      "head": "90729ee9129f7d1766d85077db372bf58883f7bb",
+      "exit_code": 101,
+      "passed": 9,
+      "failed": 1,
+      "raw_sha256": "cc283480e80f05b6bf9c2944d4a7b7522eceb5a1f8a051b513f67ee95218e503",
+      "primary_error": "CORE compilation native work fuel exhausted1632..1745 at line15 before primary case loop; zero primary corpus observations reached. This remains a separate failure, not relabelled PASS.",
+      "no_hidden_failures": "Same10testnames selected in both runs; current10 all passed from current complete replay, no historical pass transfer or blanket skip."
+    },
+    "source_and_budget_scope": {
+      "all229_current_frozen_source_boot_and_cohort_git_inputs_match": true,
+      "fp_recomputed": true,
+      "all_four_BOOT_bytes_match_reviewed_generation": true,
+      "all_three_calibration_postimages_exact": true,
+      "nine_other_tests_and_helpers_byte_exact": true,
+      "test_source_sha256": "55af6b9c1ad0390167eeba8a7ed33eaaef56dd43a511712d95589cc560260763",
+      "compilation_allowance": 100000000000,
+      "previous_compilation_allowance": 10000000,
+      "runtime_config": 10000000,
+      "runtime_no_setter": "Shared helper has no Store/Session allowance mutation. One Compilation counter per whole original input; test terminal PASS includes unchanged DEFAULT_OPERATION_FUEL assertion. Not a guest/runtime quota calibration.",
+      "preserved": "Original corpus sources/IDs/expectedvalues and namespace entry unchanged; strictCORE17/sourcechild/defaultconstructor/pinned200M/exhaustion unaffected by these3test-onlypaths."
+    },
+    "limits": [
+      "No reviewer Cargo/VM/oracle/Python test execution; cache-only parsing/hashing/Git reads and review write.",
+      "Postrun source/hash correspondence is not an independent run-long mutation detector.",
+      "70 typed comparisons prove this original Runtime corpus only; other selected tests execute their own stated phase/GC/order/recovery assertions. No blanket all-upstream/full-public acceptance.",
+      "Main bootstrap4/publicshort3 live follow-up not inspected, aggregated or inferred.",
+      "No default/pinned gain, readiness, final-head PR approval, promotion or fullbaseline claim."
     ]
   }
 }
