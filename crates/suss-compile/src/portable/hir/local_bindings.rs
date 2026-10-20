@@ -578,6 +578,22 @@ fn cow_parameter(parameter: &Parameter, meter: &mut CowMeter<'_>) -> Result<Para
     Ok(Parameter { id: parameter.id, name: cow_text(&parameter.name, meter)?,
         metadata: cow_forms(&parameter.metadata, meter)?, span: parameter.span.clone() })
 }
+/// Move the completed parameter into an immutable owner, after charging its
+/// payload and Arc header. Nested text/metadata are moved, not copied. Arc::new
+/// retains the existing generic Arc allocation/OOM policy.
+pub(super) fn capture_self_parameter(parameter: Parameter, meter: &mut CowMeter<'_>) -> Result<Arc<Parameter>, Diagnostic> {
+    cow_charge(meter, 1, std::mem::size_of::<Parameter>())?;
+    cow_charge(meter, 2, std::mem::size_of::<usize>())?;
+    Ok(Arc::new(parameter))
+}
+fn cow_self_parameter(parameter: &Option<Arc<Parameter>>, meter: &mut CowMeter<'_>) -> Result<Option<Arc<Parameter>>, Diagnostic> {
+    if let Some(parameter) = parameter {
+        meter(1)?; // bounded retain of the immutable parameter; no payload copy
+        Ok(Some(parameter.clone()))
+    } else {
+        Ok(None)
+    }
+}
 fn cow_parameters(parameters: &[Parameter], meter: &mut CowMeter<'_>) -> Result<Vec<Parameter>, Diagnostic> {
     let mut result = cow_vector(parameters.len(), meter)?;
     for parameter in parameters { result.push(cow_parameter(parameter, meter)?); }
@@ -670,7 +686,7 @@ fn cow_hir(node: &Hir, meter: &mut CowMeter<'_>) -> Result<Hir, Diagnostic> {
                     parameters: cow_parameters(&method.parameters, meter)?, body: cow_box(&method.body, meter)? }); }
                 let methods = copied;
                 GeneralFunction { methods, captures: cow_captures(captures, meter)?,
-                    self_binding: self_binding.as_ref().map(|p| cow_parameter(p, meter)).transpose()?,
+                    self_binding: cow_self_parameter(self_binding, meter)?,
                     rest_class: rest_class.as_ref().map(|g| cow_global(g, meter)).transpose()? }
             }
             Call { callee, arguments } => Call { callee: cow_box(callee, meter)?, arguments: cow_hirs(arguments, meter)? },
@@ -795,6 +811,74 @@ fn local_revision_mut<'a>(locals: &'a mut SourceLocals, name: &str, meter: &mut 
 #[cfg(test)]
 mod ownership_tests {
     use super::*;
+
+    #[test]
+    fn self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload() {
+        let parameter = || Parameter {
+            id: BindingId(7),
+            name: "recursive-name".repeat(1024),
+            metadata: suss_reader::forms::read_forms("{:tag [original nested facts]}").unwrap(),
+            span: 11..29,
+        };
+        // Either allocation charge can fail before any owner is published.
+        for reject in 0..2 {
+            let mut calls = 0;
+            let mut published = None;
+            let result = capture_self_parameter(parameter(), &mut |_| {
+                let current = calls;
+                calls += 1;
+                if current == reject { Err(fail(11..29, "injected self owner cancellation")) }
+                else { Ok(()) }
+            });
+            match result {
+                Ok(owner) => published = Some(owner),
+                Err(error) => {
+                    assert_eq!(error.span, 11..29);
+                    assert_eq!(error.message, "injected self owner cancellation");
+                }
+            }
+            assert!(published.is_none());
+            assert_eq!(calls, reject + 1);
+        }
+        let value = parameter();
+        let name_storage = value.name.as_ptr();
+        let metadata_storage = value.metadata.as_ptr();
+        let mut charges = Vec::new();
+        let owner = capture_self_parameter(value, &mut |work| { charges.push(work); Ok(()) }).unwrap();
+        assert_eq!(charges, vec![std::mem::size_of::<Parameter>() as u64,
+            (2 * std::mem::size_of::<usize>()) as u64]);
+        assert_eq!(owner.name.as_ptr(), name_storage);
+        assert_eq!(owner.metadata.as_ptr(), metadata_storage);
+        let node = Hir { source: None, span: 11..29, metadata: vec![], ty: Type::Value,
+            kind: Expression::GeneralFunction { methods: vec![], captures: vec![],
+                self_binding: Some(owner.clone()), rest_class: None } };
+        let initial_count = Arc::strong_count(&owner);
+        let rejected = cow_hir(&node, &mut |work| {
+            if work == 1 { Err(fail(11..29, "injected retain cancellation")) }
+            else { Ok(()) }
+        });
+        assert!(rejected.is_err());
+        assert_eq!(Arc::strong_count(&owner), initial_count);
+        // A retry fits node-copy plus one retain, independent of the large
+        // parameter text/metadata. No deep Parameter copy is charged or made.
+        let mut remaining = (std::mem::size_of::<Hir>() + 1) as u64;
+        let copied = cow_hir(&node, &mut |work| {
+            remaining = remaining.checked_sub(work).ok_or_else(|| fail(11..29, "copy budget exhausted"))?;
+            Ok(())
+        }).unwrap();
+        assert_eq!(remaining, 0);
+        let cloned = node.clone();
+        for retained in [&copied, &cloned] {
+            let Expression::GeneralFunction { self_binding: Some(binding), .. } = &retained.kind else { panic!("named function") };
+            assert!(Arc::ptr_eq(binding, &owner));
+            assert_eq!(binding.span, 11..29);
+            assert_eq!(binding.id, BindingId(7));
+            assert_eq!(binding.metadata.as_ptr(), metadata_storage);
+        }
+        // Anonymous functions add neither an owner nor a retain charge.
+        assert!(cow_self_parameter(&None, &mut |_| panic!("no owner to retain")).unwrap().is_none());
+    }
+
 
     #[derive(Default)]
     struct Observe(Vec<(SourceLocals, SourceFields)>);
