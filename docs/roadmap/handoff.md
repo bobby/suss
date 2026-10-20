@@ -30975,3 +30975,36 @@ Line192 fails at first Runtime caller &env transport83..108; output assertions
 and Macro caller are unreached. Current69nativePASS does not establish either
 integration fit. Exact bindings, comparisons and failures are in the typed-scalar
 validation JSON. No quota/rate/fixture change or full baseline/readiness claim.
+
+### Strict constructor schema witnesses: source/artifact checkpoint (2026-10-20)
+
+Adapted retained d21b410 and constructor-only092f8be changes into exactly3paths;
+current paged ledger, shared scalar witnesses, factory graph and prototype buffers
+remain intact. Session-local retention is bounded16; root17evicts rather than
+rejecting construction. Every hit checks exact same-session reference plus full
+strict storage; mutated schema recaptures privately without upgrading old facts.
+Private counters genuinely own witness roots. Replacement backing, retains,
+eviction release and initialized snapshot retirement are prepaid. Final
+publication follows all current fallible direct/Watch/Runtime memo setup.
+
+All6donor regressions retained, Runtime failure seam/positive retry extended,
+private-allocation charge included in cold failure thresholds after independent
+review caught its omission. Existing test lines and guards are unchanged.
+Candidate/reviews: `/home/bobby/.cache/suss-m4-work/pr263-schema-witness-transplant-db4-v1/`.
+Sourcef029b15/compiler40df5a30/229inputs; validation cache
+`/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1`.
+`python3 <cache>/run-typecheck.py` passes workspace/alltargets70.538495413s.
+`python3 <cache>/run-bootstrap.py` generates2matching complete sets181.223669563s,
+exit1 only oldshipped comparison. `python3 <cache>/check-generated.py` and
+independent review verify all229actualbuilder inputs, all4pairs and fingerprint-only
+custom/manifest changes with byte-exact executable sections/ABI/catalog cells.
+Adopted exact4at6379ca7. `python3 <cache>/run-identity.py` PASS2.895553498s.
+Raw hashes and independent bindings are in the schema-witness validation JSON.
+
+Current command: `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py
+<cache> schema-preservation80 suss-compile lib
+<cache>/schema-preservation-selection.json`. All80distinct complete tests selected
+(prior69plus11constructor tests); running, no outcomes inferred. Fresh source-bound
+pinned40df and original10Mconstructor controls are prepared, unexecuted. Prior
+db4control failure receipts now include independent combined review; they do not
+transfer to40df. No wholeprogram gain, fullbaseline, finalCI or readiness claim.

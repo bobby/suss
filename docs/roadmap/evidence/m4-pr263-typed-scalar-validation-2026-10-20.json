@@ -2178,7 +2178,7 @@
     ]
   },
   "independent_pinned_default_review": {
-    "verdict": "PINNED_RESULTS_VERIFIED_DEFAULT_PENDING",
+    "verdict": "PINNED_AND_DEFAULT_TERMINAL_RESULTS_VERIFIED",
     "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
     "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
     "compiler_inputs": 229,
@@ -2273,14 +2273,55 @@
     },
     "captures_byte_identical_to_prior411": true,
     "default_constructor": {
-      "status": "PENDING_NO_TERMINAL",
-      "cache": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3",
-      "note": "No default verdict included; no live producer inspection, interruption or rerun."
+      "status": "TERMINAL_VERIFIED",
+      "head": "c4f11aec5b99e57526194629c4e1705b183945fa",
+      "source_commit": "9fa6d99df9a194aa9e8b9bd795f21af893aded8d",
+      "compiler_source_sha256": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+      "compiler_inputs": 229,
+      "test": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "exit_code": 101,
+      "pass": 0,
+      "fail": 1,
+      "ignored": 0,
+      "filtered": 1,
+      "harness_seconds": 66.31,
+      "command_seconds": 367.68201785600104,
+      "raw_sha256": "2e8805a52795743371154175013db11e989ca8ad34e641be014d2d2f6213ad41",
+      "terminal_receipt": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3/default-constructor-terminal.json",
+        "sha256": "27925e1ed8c38fc4be0917d758061c720db84a303d499ab63ab715595854a78f"
+      },
+      "full_unchanged_test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "test_source_equal_source_commit_and_launch_head": true,
+      "same_reviewed_BOOT_hashes_at_launch_head": true,
+      "first_failing_caller": "Runtime, established by original caller-loop order",
+      "stage": "caller &env input transport",
+      "error": "OutOfFuel / all fuel consumed by WebAssembly",
+      "span": "83..108",
+      "failure_line": 192,
+      "unchanged_default_fuel": 10000000,
+      "unreached": "Output/value/GC/bridge-decode assertions after first Runtime request; Macro caller body unexecuted. Session initialization is not Macro caller acceptance."
     },
     "limits": [
       "Current pinned1P1F is source-qualified; identical captures do not establish cost savings/progress.",
       "No semantic verdict for69unexecuted map assertions; no default fit/fullbaseline/readiness claim.",
-      "Static retained-evidence parsing only; no Cargo/VM/comparator/test execution or shared edits."
-    ]
+      "Static retained-evidence parsing only; no Cargo/VM/comparator/test execution or shared edits.",
+      "Default0P1F verified separately from pinned1P1F; no229-file re-audit, test rerun, default-fit or readiness claim."
+    ],
+    "previous_pending_receipt_sha256": "aa2dde54966a3eb6824256b4baa92de8ac25e87a1a2147b100e4d67648b5147e"
   }
 }

@@ -1,0 +1,345 @@
+{
+  "schema": 1,
+  "scope": "Session-local strictly checked constructor schema witnesses; exact source-bound validation only. No issue completion, PR readiness or whole-program fuel gain inferred.",
+  "source_commit": "f029b15d304b75175d0b3e215db301b5344c7d66",
+  "compiler_source_sha256": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+  "compiler_inputs": 229,
+  "source_freeze_sha256": "4d6ffa961e3bc308d148e078dde1c0ac38cbb123c0eaa60d230985bee8c0162c",
+  "adaptation": {
+    "base_head": "c4f11aec5b99e57526194629c4e1705b183945fa",
+    "donors": [
+      "d21b410a3f3f6051cf88959606f5a72660599703",
+      "092f8be7d7a60a5f13367ced26f1cbb1d2a9f942"
+    ],
+    "files": {
+      "crates/suss-compile/src/portable_session.rs": {
+        "before_sha256": "8e64b8bbdaf54503223b41386157ca1ca7dd581e4a52169aaf7f40d2d2b6218c",
+        "after_sha256": "92a80a9f747eaff090077e11d5a6f1e823d8637b4b34a1e3afe78333502a46f8"
+      },
+      "crates/suss-compile/src/portable_session/constructor_inputs.rs": {
+        "before_sha256": "2f5f6c4be5f7c4c3d205981732f52542e645e2c11c6d48cfca86bb57b8934bac",
+        "after_sha256": "95e49e370c78347c7735e167b376bc8cc7bb951eb3562c50b261171ffaff329c"
+      },
+      "crates/suss-compile/src/portable_session/storage_snapshot.rs": {
+        "before_sha256": "1c8191e40997e6558ad26f8709dd355e9af62e1c196924879c9cf66b31284f78",
+        "after_sha256": "45c622e76760c3aba1190d21577212d839e9b9cb500463b16baf58254eb594cb"
+      }
+    },
+    "scope": "Three-path schema cache adaptation; Runtime publication moved after fallible setup; six complete donor tests, Runtime failure seam/assert extended. Current guards and original tests preserved. No donor BOOT or prototype buffer import."
+  },
+  "independent_source_review": {
+    "verdict": "GO_SOURCE_ONLY_FINAL_IMAGES",
+    "manifest_sha256": "ab3af68f50e2ce4979b5ea71f4b64397a752c840648a10bef1c0cbdfdf5d9007",
+    "base_head": "c4f11aec5b99e57526194629c4e1705b183945fa",
+    "files": [
+      {
+        "path": "crates/suss-compile/src/portable_session.rs",
+        "before_sha256": "8e64b8bbdaf54503223b41386157ca1ca7dd581e4a52169aaf7f40d2d2b6218c",
+        "after_sha256": "92a80a9f747eaff090077e11d5a6f1e823d8637b4b34a1e3afe78333502a46f8"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/constructor_inputs.rs",
+        "before_sha256": "2f5f6c4be5f7c4c3d205981732f52542e645e2c11c6d48cfca86bb57b8934bac",
+        "after_sha256": "95e49e370c78347c7735e167b376bc8cc7bb951eb3562c50b261171ffaff329c"
+      },
+      {
+        "path": "crates/suss-compile/src/portable_session/storage_snapshot.rs",
+        "before_sha256": "1c8191e40997e6558ad26f8709dd355e9af62e1c196924879c9cf66b31284f78",
+        "after_sha256": "45c622e76760c3aba1190d21577212d839e9b9cb500463b16baf58254eb594cb"
+      }
+    ],
+    "prior_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-transplant-db4-v1/independent-source-review-carver.json",
+      "sha256": "648f2fcc89292334a120e5cfe3f32076fb98a96099dd269250e461e2b81304f3",
+      "preserved_unchanged": true
+    },
+    "delta_proof": "Removing only new accounting_owner test-size expression and reverting only allowance list exactly reproduces previous reviewed constructor SHA256. Other2 afterimages and all3 beforeimages unchanged.",
+    "coverage_note_status": "RESOLVED: existing0/1 preserved, accounting-owner preallocation failure retained, new1+accounting_owner reaches following capture boundary, all subsequent cuts include owner fee. Final cut is one unit below full successful cold preparation under unchanged branch/size costs.",
+    "correctness_accounting_scope": "Prior source-only GO carries over: private roots/counters, exact schema ref_eq plus full strict storage validation, staged rollback/retirement, post-Runtime-tail publication, original Watch/DATA/factory guards unchanged.",
+    "remaining_confirmed_blockers": [],
+    "execution": null
+  },
+  "cohorts": {},
+  "limits": [
+    "Cache16 is retention only; root17 evicts rather than rejecting construction. Same-session exact ref_eq plus full strict storage validation required on every hit.",
+    "Prepared entry/backing and eviction retirement are prepaid; only final successful constructor tail publishes. Fallible names/factory/Watch/Runtime setup leave cache unchanged.",
+    "Private handle counter is actually owned by the witness roots; no stats offset, health authority, source/domain/Watch backpointer, copied old prototype implementation or donor BOOT.",
+    "Original matching/source/storage/class/prototype/method/initial-nil memo guards and all existing tests preserved. Current immutable scalar, paged ledger and Root/Node/terminal factory checks remain separate.",
+    "Prior db4a3fd9 native69PASS, identifier15PASS, map69unexecuted and full10MconstructorFAIL remain source-qualified; no result transfer or fuel-fit claim.",
+    "No quotas, numeric rates, fixture/assertion removal, metadata stripping or nested caller refills. General RAII drop/reset not reclassified as globally metered by cache eviction prepayment."
+  ],
+  "typecheck-terminal": {
+    "head": "f029b15d304b75175d0b3e215db301b5344c7d66",
+    "compiler_source_sha256": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 70.5384954129986,
+    "raw_sha256": "975263271f449b13bb7f04aa7b2fa4bc2e6d75d13ebed6793b74d0c4c7f62cf5"
+  },
+  "bootstrap-terminal": {
+    "head": "f029b15d304b75175d0b3e215db301b5344c7d66",
+    "compiler_source_sha256": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "inputs": 229,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 181.22366956300175,
+    "raw_sha256": "02cef08642ba552c65b3513122eb13ed756471da8a030ad289fd7b33c27532ab"
+  },
+  "main-build-input-check": {
+    "fp": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "inputs": 229,
+    "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "05fa6c026af4476be1d64dd21e012ad61243b3982e0f9a6eec3e64690146a6a6",
+    "all_input_hashes_and_rerun_paths_verified": true
+  },
+  "main-generation-pair-check": {
+    "four_pairs_equal": true,
+    "source_fingerprint": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "phases": {
+      "runtime": {
+        "pairs": {
+          "wasm": {
+            "sha256": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d",
+            "bytes": 2121342
+          },
+          "json": {
+            "sha256": "d28c28b4fc1f825e5151c15e7cd7cd77ea78fa34160ad1bdb434738cd8c83312",
+            "bytes": 47413
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+            "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+          },
+          "wasm_sha256": {
+            "old": "fc10d767d580bfd389a11f4dc566ce0431f6163bf951bfc1c0f685b33becc413",
+            "new": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d"
+          }
+        }
+      },
+      "macro": {
+        "pairs": {
+          "wasm": {
+            "sha256": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a",
+            "bytes": 2119863
+          },
+          "json": {
+            "sha256": "e55297e9d3f8391cf0d9e7cad4b496c99e69b1284d096c7a3a1fe67415a01356",
+            "bytes": 45875
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+            "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+          },
+          "wasm_sha256": {
+            "old": "92c17127864d825c2d06b6c7dbf88cb68b1a21927a3530cf01c94fd473899b6d",
+            "new": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a"
+          }
+        }
+      }
+    }
+  },
+  "independent-adoption-review-cicero": {
+    "reviewer": "Cicero",
+    "scope": "Exact generated artifact adoption only; not new Cargo/VM execution, source re-review, performance/default/pinned fit or readiness.",
+    "reviewed_at_utc": "2026-10-20T22:19:55.226705+00:00",
+    "head": "f029b15d304b75175d0b3e215db301b5344c7d66",
+    "old_shipped_commit": "2eb83baf66d47cada2b1f72b02444c38de16e6e5",
+    "source_fingerprint": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "compiler_inputs": 229,
+    "adoption_performed": false,
+    "shared_mutations": false,
+    "cargo_rustc_or_vm_execution": false,
+    "docs_only_review_worktree_status": "",
+    "source_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-transplant-db4-v1/final-independent-source-review-carver.json",
+      "sha256": "c6bf4e7b601f3cf5d236a1f352e8eeea2e67c01234ded0035a0fa4817688ab35",
+      "manifest_sha256": "ab3af68f50e2ce4979b5ea71f4b64397a752c840648a10bef1c0cbdfdf5d9007",
+      "exact_three_reviewed_postimages_and_preimages_verified": true,
+      "scope": "Source-only Carver review; no passing focused80/current40df acceptance inferred."
+    },
+    "all229_actual_builder_rerun_paths_verified": true,
+    "actual_builder_output": {
+      "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "05fa6c026af4476be1d64dd21e012ad61243b3982e0f9a6eec3e64690146a6a6",
+      "expected_fp_present": true
+    },
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "all_229_frozen_current_and_git_inputs_verified": true,
+    "source_fp_recomputed": true,
+    "source_boot_exact_before_review_and_review_status_unchanged": true,
+    "generation_receipt_clean": true,
+    "source_freeze_sha256": "4d6ffa961e3bc308d148e078dde1c0ac38cbb123c0eaa60d230985bee8c0162c",
+    "diagnostics_receipt_sha256": "fa171986345e8de0d6f88c0afc13a4fd826180af5a9d60412390f77480c8d277",
+    "terminal_sha256": "5b579d6d5371fa62a2d3f862fa92fcaf87813f22191fa05573f5b94fd4d002b0",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 181.22366956300175,
+    "generator_log_sha256": "02cef08642ba552c65b3513122eb13ed756471da8a030ad289fd7b33c27532ab",
+    "exit_interpretation": "Two complete matching generations; exit1 occurs at stale shipped runtime.wasm comparison, not reported as verifier PASS.",
+    "all_eight_hashes_verified": true,
+    "four_generation_pairs_exact": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d",
+        "bytes": 2121342
+      },
+      "first/runtime.json": {
+        "sha256": "d28c28b4fc1f825e5151c15e7cd7cd77ea78fa34160ad1bdb434738cd8c83312",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a",
+        "bytes": 2119863
+      },
+      "first/macro.json": {
+        "sha256": "e55297e9d3f8391cf0d9e7cad4b496c99e69b1284d096c7a3a1fe67415a01356",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d",
+        "bytes": 2121342
+      },
+      "second/runtime.json": {
+        "sha256": "d28c28b4fc1f825e5151c15e7cd7cd77ea78fa34160ad1bdb434738cd8c83312",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a",
+        "bytes": 2119863
+      },
+      "second/macro.json": {
+        "sha256": "e55297e9d3f8391cf0d9e7cad4b496c99e69b1284d096c7a3a1fe67415a01356",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+                "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+            "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+          },
+          "wasm_sha256": {
+            "old": "fc10d767d580bfd389a11f4dc566ce0431f6163bf951bfc1c0f685b33becc413",
+            "new": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      },
+      "macro": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+                "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a",
+            "new": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71"
+          },
+          "wasm_sha256": {
+            "old": "92c17127864d825c2d06b6c7dbf88cb68b1a21927a3530cf01c94fd473899b6d",
+            "new": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "d28c28b4fc1f825e5151c15e7cd7cd77ea78fa34160ad1bdb434738cd8c83312"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e55297e9d3f8391cf0d9e7cad4b496c99e69b1284d096c7a3a1fe67415a01356"
+      }
+    ]
+  },
+  "identity-terminal": {
+    "head": "6379ca7b736dfe877be9a8c33395236aa0d1e730",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "exit_code": 0,
+    "seconds": 2.895553498001391,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  }
+}
