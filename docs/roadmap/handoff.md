@@ -31039,3 +31039,44 @@ running via the frozen-cohort helper, labeldefault-constructor in schema-witness
 production-v1. A12 remains open; no completed historical checklist item reopened.
 Next: terminalconstructor, remaining46native semantic/namespace selectors and
 complete existing public/source-tag programs, then actual failing-blocker fixes.
+
+
+### Method inspection validation commands (2026-10-20)
+
+Source `548699669cbafa5ada761595e531308db9ea0acd`, compiler fingerprint
+`d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4`
+(229 inputs), matching bootstrap commit `c163189b714dae06731e8f60ed81759776093f48`.
+The method inspection pass reuses only successful exact-descriptor inspections
+within one Store borrow and retains later source/storage/memo checks. New
+setup/control work is metered. No whole-program fuel-fit result is inferred.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-typecheck.py`
+passed workspace/all-targets locked typechecking in 201.84s. The normal bootstrap
+verifier generated two matching pairs for each phase in 165.34s, then exited 1
+comparing against the stale shipped artifacts. That command is not a full
+verifier pass. All 229 actual builder inputs, noncustom sections and manifest
+deltas were checked, independently reviewed, and the exact four artifacts
+adopted. `run-identity.py` then passed in 10.78s; identity is not semantic execution.
+
+`python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1 method-preservation86 suss-compile lib /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/method-preservation86-selection.json`
+is running at this checkpoint; no passing execution is claimed. Complete exact
+selectors, source hashes and command receipts are in
+`docs/roadmap/evidence/m4-pr263-method-inspection-validation-2026-10-20.json`.
+
+Two public literal semantic tests now use the existing cumulative 100B compilation
+allowance instead of 10M, with Runtime 10M checked before and after evaluation.
+One native receipt test receives the same calibration solely for its unchanged
+List91 method-replacement setup. All source strings and later assertions remain.
+Dedicated default, map200M, CORE/sourcechild, exhaustion and IRQ controls are
+unchanged. These exact calibrations were independently source-reviewed; their
+new-source execution remains pending.
+
+Historical source40df remaining-native46 finished 45 pass / 1 fail in 3966.40s
+harness time. All 48 rows by 13 fields matched. Its single List91 setup
+compilation failure occurred after the early forge/canonical-warm assertions;
+replacement and recovery assertions were unreached. The original failure is
+retained, and those results do not transfer to source d689. The source40df pinned
+map has zero observations/69 unexecuted judgments; identifier15 passes. The
+unchanged10M constructor fails at first Runtime caller environment transport,
+with later assertions and Macro caller unreached. CI run39509386134 ended without
+a passing final-head result. No PR readiness or issue completion is inferred.

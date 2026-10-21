@@ -1,0 +1,504 @@
+{
+  "schema": 1,
+  "scope": "Exact single-proof method inspection candidate and source-bound validation; no fuel-fit, issue completion, PR readiness or final CI inferred.",
+  "source_commit": "548699669cbafa5ada761595e531308db9ea0acd",
+  "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+  "compiler_inputs": 229,
+  "adaptation": {
+    "base_head": "8be3251a7f10edfc17941c4db0d707f4ccc5f240",
+    "donor": "ce88795e8174937e64de3a8457266d29e8520950",
+    "files": {
+      "crates/suss-compile/src/portable_session/memo_bridge.rs": {
+        "before_sha256": "7fc4890b5c38d87810dc60e69661894099889cd25d821402fd76ef641479cb4d",
+        "after_sha256": "25d151acc1b89a56e56530d8d844d4ba09648ef89173ff0b9c1ead997bf81809"
+      },
+      "crates/suss-compile/src/portable_session/write_domain.rs": {
+        "before_sha256": "cbeca0bfe1be2dd3d7e2aeb7a694b994ed320bcde6bf2ac124094870f9234b74",
+        "after_sha256": "40265f78a58fc2e70f554508204082a3dfe786bcbe3739d4be3b57d74c5349b6"
+      }
+    },
+    "observed_semantic_setup_calibration": {
+      "selector": "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+      "input": "(extend-type List IHash (-hash [_] 91))",
+      "before_compilation": 10000000,
+      "after_compilation": 100000000000,
+      "Runtime": 10000000,
+      "prior_failure_raw_sha256": "9802367ea3a2a7d6e75b3d4a6257dca38ced987ae84774358b7f10e3682ccbb0"
+    },
+    "scope": "Two-path single-proof exact method inspection; five complete donor regressions. No archived payload or donor BOOT. All current source/storage/class/prototype/physical-memo and factory-root checks remain after pass drop. Added fixed16 setup/release +8per-watch control fees; original performed inspection and lookup/reservation fees preserved. Per-watch debug trace becomes aggregate method-pass trace; Original assertion statements retained; one observed complete List91 setup input uses100B compilation with before/afterRuntime10M guards, and direct-check cost measurement is scoped precisely."
+  },
+  "independent_source_review": {
+    "verdict": "GO_SOURCE_ONLY_FINAL_TWO_IMAGES",
+    "base_head": "8be3251a7f10edfc17941c4db0d707f4ccc5f240",
+    "manifest_sha256": "5efe65bbf755adcabd64247567d458138409dd271afec2ed7aef704bcf256774",
+    "files": {
+      "crates/suss-compile/src/portable_session/memo_bridge.rs": {
+        "before_sha256": "7fc4890b5c38d87810dc60e69661894099889cd25d821402fd76ef641479cb4d",
+        "after_sha256": "25d151acc1b89a56e56530d8d844d4ba09648ef89173ff0b9c1ead997bf81809"
+      },
+      "crates/suss-compile/src/portable_session/write_domain.rs": {
+        "before_sha256": "cbeca0bfe1be2dd3d7e2aeb7a694b994ed320bcde6bf2ac124094870f9234b74",
+        "after_sha256": "40265f78a58fc2e70f554508204082a3dfe786bcbe3739d4be3b57d74c5349b6"
+      }
+    },
+    "prior_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-transplant-40df-v1/independent-source-review-cicero.json",
+      "sha256": "eb24e093d32faa6a337559870261c9d2a995c4e956921a7ce9ee1db940eee55b",
+      "preserved_unchanged": true,
+      "verdict": "SOURCE_FEE_SEMANTIC_GO_FOR_MAIN_VALIDATION"
+    },
+    "delta_proof": "Reversing exactly one cfgtest List91 helper call and added Runtime guards/result binding produces the entire prior reviewed memo postimage b07a... byte-for-byte. Other write_domain postimage unchanged. Thus production and all5donor tests remain exact to previous GO. All before images match newbase8be Git.",
+    "source_query_anchors_unchanged_at_new_base": true,
+    "observed_failure": {
+      "receipt": "/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1/independent-remaining-native46-review-cicero.json",
+      "sha256": "5845d9d58b909c91d7edfad7f4fa1548d70e5b7423a97f6ba177ed8c7cd77564",
+      "raw_sha256": "9802367ea3a2a7d6e75b3d4a6257dca38ced987ae84774358b7f10e3682ccbb0",
+      "classification": "Original setup compilation Native work OutOfFuel0..39 before replacement/past-memo/recovery tails; earlier generic-forge and canonical-warm assertions executed."
+    },
+    "calibration": {
+      "test": "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+      "original_input_unchanged": "(extend-type List IHash (-hash [_] 91))",
+      "compilation_before": 10000000,
+      "compilation_after": 100000000000,
+      "Runtime": 10000000,
+      "exact_scope": "Single complete setup input only. Existing one cumulative100B compilation counter, no Runtime setter or nested/perhelper refill; explicit10M options guard before and after returned Result, before unwrap, covers success/error. Original negative zero-fuel/IRQ/recovery bodies untouched. Configured allowance assertions are not equal remaining-fuel assertions.",
+      "policy": "Approved #252 semantic setup calibration; dedicated default/pinned/CORE/sourcechild controls untouched.",
+      "helper_source_sha256": "97643f96aeb3d7d1185176492f61306c838b57f3c65dccf44375b04efacd0a1d",
+      "policy_sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906"
+    },
+    "remaining_confirmed_blockers": [],
+    "limits": [
+      "Source/fee/semantic review carries over only for these hash-bound images.",
+      "No Cargo/VM/shared edits by reviewer; no current focused86/BOOT/pinned/default/acceptance credit.",
+      "No dominance or fuel-fit/sufficiency/performance claim from known transport failure or reused method inspection."
+    ]
+  },
+  "public_literal_semantic_calibration": {
+    "base_head": "08b5665d6d992958411f96f6e5314cc5ef32c105",
+    "files": {
+      "crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs": {
+        "before_sha256": "0c99b22b9bdff3068d120ccf24c3c5dce1b8b6441fc2b44cdddbb2a1d6315beb",
+        "after_sha256": "52bfc8f5c619d138a93adf9d7782fc6bb487d0f242e7d2b38ab78ce33df8a087"
+      }
+    },
+    "compilation_allowance_before": 10000000,
+    "compilation_allowance_after": 100000000000,
+    "caller_Runtime_allowance_unchanged": 10000000,
+    "complete_original_tests": [
+      "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+      "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos"
+    ],
+    "protected_control_file_hashes": {
+      "crates/suss-compile/tests/clojure_test_suite.rs": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+      "crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "crates/suss-cli/tests/core_import.rs": "e4966c8a74bc8502d04c2858eec92d73ff6831835fe4bedb5f27e6464606e772"
+    },
+    "scope": "User-approved #252 semantic test compilation calibration: configure existing separate CompiledMacros before definitions; callerRuntime10M asserted before configuration and after eval on success/error. Same complete original source inputs, phases, stages, GC and assertions. No budget setter on caller; no shipped source/default/rate change, fixture reduction or nested refill. Dedicatedmap200M/constructor10M/CORE17/sourcechild controls untouched."
+  },
+  "independent_public_calibration_review": {
+    "verdict": "GO_TEST_ONLY_COMPILATION_CALIBRATION_SOURCE",
+    "manifest_sha256": "843d90adf0e74a80b413c6e1d2d41b8b71190d7c9b2eb5457f46f048571cffc4",
+    "base_head": "08b5665d6d992958411f96f6e5314cc5ef32c105",
+    "files": {
+      "crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs": {
+        "before_sha256": "0c99b22b9bdff3068d120ccf24c3c5dce1b8b6441fc2b44cdddbb2a1d6315beb",
+        "after_sha256": "52bfc8f5c619d138a93adf9d7782fc6bb487d0f242e7d2b38ab78ce33df8a087"
+      }
+    },
+    "tests": [
+      "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+      "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos"
+    ],
+    "intent": "User-approved #252 semantic correctness compilation headroom, narrowly applied to two reported CI probes stopping in caller&env transport. Actual CI outcome is supplied context, not independently re-triaged by this source receipt.",
+    "source_preservation": {
+      "full_inverse_byte_exact": true,
+      "detail": "Removing only helper import, two CompiledMacros setters and four configuration guards, and reversing the two temporary eval-result bindings reproduces the entire original file. All programs, assertions, phases, stages, GC and failure aggregation are retained.",
+      "one_eval_per_original_request": true,
+      "no_error_suppression": true
+    },
+    "budget_route": {
+      "Macro_compilation_before": 10000000,
+      "Macro_compilation_after": 100000000000,
+      "shared_existing_policy": {
+        "path": "crates/suss-cli/tests/support/compilation_fuel.rs",
+        "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906"
+      },
+      "caller_Runtime": 10000000,
+      "guards": "Configured fuel_per_operation asserted before configuring CompiledMacros and after eval returns, before unwrap/error mapping on both success and error. Not a remaining-fuel equality claim.",
+      "setter_scope": "Only newly owned CompiledMacros, immediately after construction/before define; no caller setter, default, tariff, per-helper or nested refill change."
+    },
+    "protected_control_hashes": {
+      "crates/suss-compile/tests/clojure_test_suite.rs": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+      "crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "crates/suss-cli/tests/core_import.rs": "e4966c8a74bc8502d04c2858eec92d73ff6831835fe4bedb5f27e6464606e772"
+    },
+    "control_scope": "One test-file delta only. Map200M, constructor10M, CORE17, sourcechild and dedicated default/exhaustion/IRQ Runtime controls untouched. Listed control hashes match base Git. No shared helper default or production changes.",
+    "limits": [
+      "Static source review only; no Cargo/VM/shared edits or executed acceptance claim.",
+      "100B finite test headroom is not a proven sufficiency bound or shipped default change.",
+      "Complete focused semantic execution remains required and main-owned."
+    ]
+  },
+  "cohorts": {},
+  "limits": [
+    "Reuse only a successful method inspection within one fixed callback-free Store-borrowed pass, with exact Session identity, owner, mode and GC descriptor ref_eq. No retained source-health/certificate/receipt cache.",
+    "Per-Watch layout selection, false disables reuse and later errors still escape. Full source classes/prototype/node/storage/seed/memo-slot/receipt/edge/factory checks remain after pass drop.",
+    "Existing fixed Wasm inspection adapter/dynamic-frame restoration is not literally free of Store mutation, but does not mutate inspected descriptor/table/key/schema/closure state or invoke arbitrary user code.",
+    "Original performed fees remain; fixed16setup/release and8perWatch controls plus checked lookup/rooting/owner/growth fees are prepaid. Unique/small cohorts can be adverse; no dominance or whole-program gain claim.",
+    "Only exact semantic compile allowances changed under#252: publicliteral2 and observedList91setup10M->100B; Runtime10M checked before/after. Dedicated map200M/constructor10M/CORE17/sourcechild/default/exhaustion/IRQ limits unchanged.",
+    "Prior40df results stay source-qualified: native80PASS, remaining46=45PASS1FAIL with48x13matchedwindows, identifier15PASS/map69unexecuted, defaultconstructorFAIL. No pass transfers to new source."
+  ],
+  "typecheck-terminal": {
+    "head": "548699669cbafa5ada761595e531308db9ea0acd",
+    "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Controlled type/borrow checking including new and existing tests/manual ExpansionContext callers. No VM/bootstrap/public semantic acceptance credit.",
+    "exit_code": 0,
+    "seconds": 201.8437564970045,
+    "raw_sha256": "28884159557875ce91c138202dca6821e203d89f986804f9765044c5d1436e7d"
+  },
+  "bootstrap-terminal": {
+    "head": "548699669cbafa5ada761595e531308db9ea0acd",
+    "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "inputs": 229,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 165.34147383399977,
+    "raw_sha256": "20c919d09c4ffe9aa61152c28f14a5d57bdf1543e5e4ae8be1a252f570b4ed80"
+  },
+  "main-build-input-check": {
+    "fp": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "inputs": 229,
+    "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+    "all_input_hashes_and_rerun_paths_verified": true
+  },
+  "main-generation-pair-check": {
+    "four_pairs_equal": true,
+    "source_fingerprint": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "phases": {
+      "runtime": {
+        "pairs": {
+          "wasm": {
+            "sha256": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+            "bytes": 2121342
+          },
+          "json": {
+            "sha256": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+            "bytes": 47413
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+            "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+          },
+          "wasm_sha256": {
+            "old": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d",
+            "new": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da"
+          }
+        }
+      },
+      "macro": {
+        "pairs": {
+          "wasm": {
+            "sha256": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+            "bytes": 2119863
+          },
+          "json": {
+            "sha256": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097",
+            "bytes": 45875
+          }
+        },
+        "noncustom_sections_byte_exact": true,
+        "manifest_deltas": {
+          "compiler_source_sha256": {
+            "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+            "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+          },
+          "wasm_sha256": {
+            "old": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a",
+            "new": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02"
+          }
+        }
+      }
+    }
+  },
+  "independent-adoption-review-cicero": {
+    "reviewer": "Cicero",
+    "scope": "Exact generated artifact adoption only; not new Cargo/VM execution, source re-review, performance/default/pinned fit or readiness.",
+    "reviewed_at_utc": "2026-10-21T00:11:53.346219+00:00",
+    "head": "548699669cbafa5ada761595e531308db9ea0acd",
+    "old_shipped_commit": "6379ca7b736dfe877be9a8c33395236aa0d1e730",
+    "source_fingerprint": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "compiler_inputs": 229,
+    "adoption_performed": false,
+    "shared_mutations": false,
+    "cargo_rustc_or_vm_execution": false,
+    "docs_only_review_worktree_status": "",
+    "source_review": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-transplant-40df-v1/final-independent-source-review-cicero.json",
+      "sha256": "dd478b86ebae01824e3f12d7b6bb71aa36e07bf73be684592bdd56cac1a688ea",
+      "manifest_sha256": "5efe65bbf755adcabd64247567d458138409dd271afec2ed7aef704bcf256774",
+      "exact_two_final_postimages_and_preimages_verified": true,
+      "scope": "Hash-bound method-inspection source GO plus single cfgtest setup calibration; no current focused/native/pinned/default acceptance credit."
+    },
+    "all229_actual_builder_rerun_paths_verified": true,
+    "actual_builder_output": {
+      "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+      "expected_fp_present": true
+    },
+    "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+    "all_229_frozen_current_and_git_inputs_verified": true,
+    "source_fp_recomputed": true,
+    "source_boot_exact_before_review_and_review_status_unchanged": true,
+    "generation_receipt_clean": true,
+    "source_freeze_sha256": "879ddc61f71e1d3187cb057c46aab9dbfb7b8fec654a85d1b5f5d56d8d837e7e",
+    "diagnostics_receipt_sha256": "ef3d3bcaeceaaf535c597146b288cc38df2e53d7ca26f2ecc9d898e6a9151b5f",
+    "terminal_sha256": "97312a733ca9bf48d5f16e6901ce47df9cae39e3bfdaf67d8b83fc1361ba29ef",
+    "generator_command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "generator_exit_code": 1,
+    "generator_seconds": 165.34147383399977,
+    "generator_log_sha256": "20c919d09c4ffe9aa61152c28f14a5d57bdf1543e5e4ae8be1a252f570b4ed80",
+    "exit_interpretation": "Two complete matching generations; exit1 occurs at stale shipped runtime.wasm comparison, not reported as verifier PASS.",
+    "all_eight_hashes_verified": true,
+    "four_generation_pairs_exact": true,
+    "generated_files": {
+      "first/runtime.wasm": {
+        "sha256": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+        "bytes": 2121342
+      },
+      "first/runtime.json": {
+        "sha256": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+        "bytes": 47413
+      },
+      "first/macro.wasm": {
+        "sha256": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+        "bytes": 2119863
+      },
+      "first/macro.json": {
+        "sha256": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097",
+        "bytes": 45875
+      },
+      "second/runtime.wasm": {
+        "sha256": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+        "bytes": 2121342
+      },
+      "second/runtime.json": {
+        "sha256": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+        "bytes": 47413
+      },
+      "second/macro.wasm": {
+        "sha256": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+        "bytes": 2119863
+      },
+      "second/macro.json": {
+        "sha256": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097",
+        "bytes": 45875
+      }
+    },
+    "phase_checks": {
+      "runtime": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+                "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+            "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+          },
+          "wasm_sha256": {
+            "old": "014331deaa0ccec8aa4febfd4decd0cb0c944f2c965e39bd9269cb9ed1dc5a6d",
+            "new": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      },
+      "macro": {
+        "all_noncustom_and_other_custom_sections_order_and_bytes_exact": true,
+        "noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+        "total_sections": 8,
+        "changed_sections": [
+          {
+            "ordinal": 7,
+            "id": 0,
+            "name": "suss.source-artifact",
+            "complete_custom_json_diffs": {
+              "compiler_source_sha256": {
+                "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+                "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+              }
+            }
+          }
+        ],
+        "complete_manifest_diffs": {
+          "compiler_source_sha256": {
+            "old": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+            "new": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4"
+          },
+          "wasm_sha256": {
+            "old": "8da80da68d8b5154e847b32045eb4db86f0c01b2f1ca1c8f682cef9fced96e5a",
+            "new": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02"
+          }
+        },
+        "all_other_manifest_bytes_exact": true,
+        "runtime_abi": 2,
+        "catalog_cells_count": 768,
+        "catalog_cells_order_and_values_exact": true
+      }
+    },
+    "approved_adoptions": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097"
+      }
+    ]
+  },
+  "identity-terminal": {
+    "head": "c163189b714dae06731e8f60ed81759776093f48",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "exit_code": 0,
+    "seconds": 10.78263901599712,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "prior40df_remaining46": {
+    "source_commit": "f029b15d304b75175d0b3e215db301b5344c7d66",
+    "compiler_source_sha256": "40df5a3020d849f0864b1358df9bdb1d94d79b66d3df3f59e635a30a76efdd71",
+    "raw_sha256": "9802367ea3a2a7d6e75b3d4a6257dca38ced987ae84774358b7f10e3682ccbb0",
+    "summary": {
+      "pass": 45,
+      "fail": 1,
+      "ignored": 0,
+      "filtered": 586,
+      "distinct_tests": 46,
+      "unexecuted_selected_tests": 0,
+      "harness_seconds": 3966.4,
+      "command_seconds": 4241.216765165998,
+      "exit_code": 101
+    },
+    "memo_windows": {
+      "groups": [
+        {
+          "test": "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+          "kind": "keyword",
+          "nil_aware": false,
+          "rows": 12,
+          "fields_per_row": 13,
+          "strict_typed_actual_expected_match": true,
+          "coverage": "warm/cold x Runtime/Macro x baseline/custom-write/restored-method"
+        },
+        {
+          "test": "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+          "kind": "keyword",
+          "nil_aware": true,
+          "rows": 12,
+          "fields_per_row": 13,
+          "strict_typed_actual_expected_match": true,
+          "coverage": "warm/cold x Runtime/Macro x baseline/custom-write/restored-method"
+        },
+        {
+          "test": "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+          "kind": "symbol",
+          "nil_aware": false,
+          "rows": 12,
+          "fields_per_row": 13,
+          "strict_typed_actual_expected_match": true,
+          "coverage": "warm/cold x Runtime/Macro x baseline/custom-write/restored-method"
+        },
+        {
+          "test": "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+          "kind": "symbol",
+          "nil_aware": true,
+          "rows": 12,
+          "fields_per_row": 13,
+          "strict_typed_actual_expected_match": true,
+          "coverage": "warm/cold x Runtime/Macro x baseline/custom-write/restored-method"
+        }
+      ],
+      "total_rows": 48,
+      "fields_per_row": 13,
+      "total_typed_field_comparisons": 624,
+      "raw_actual_equals_expected": true,
+      "summary_difference_lists_empty": true
+    },
+    "failure": {
+      "test": "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+      "source": "crates/suss-compile/src/portable_session/memo_bridge.rs",
+      "line": 679,
+      "span": "0..39",
+      "setup_input": "(extend-type List IHash (-hash [_] 91))",
+      "classification": "Compile Diagnostic: Macro expansion native work fuel exhausted during setup compilation; not Runtime or semantic assertion failure.",
+      "executed_before_failure": "Generic forged write rejected by original assertion; separate canonical warming and inputs.matches assertion succeeded before failing setup eval.",
+      "unreached": "Post-replacement current method, past memo identity/reference checks, subsequent zero-fuel/IRQ/recovery tail and all later statements in this test.",
+      "source_file_sha256": "7fc4890b5c38d87810dc60e69661894099889cd25d821402fd76ef641479cb4d"
+    },
+    "limits": [
+      "One selected test FAIL remains; partial prior assertions are not full-test acceptance.",
+      "No old-baseline pass/regression classification or post-calibration/method-pass result inferred.",
+      "No fullbaseline/finalCI/map/default fit or PR readiness claim.",
+      "No Cargo/VM/source/GitHub modifications or producer actions by reviewer."
+    ]
+  },
+  "prior40df_review_sha256": "5845d9d58b909c91d7edfad7f4fa1548d70e5b7423a97f6ba177ed8c7cd77564"
+}
