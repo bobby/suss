@@ -401,8 +401,10 @@ mod tests {
         let root = graph.declaration(&global, Some(&info), 0).unwrap();
         graph
             .materialize_reader_controller(root, cache)
-            .unwrap()
-            .unwrap()
+            .unwrap_or_else(|error| panic!(
+                "reader controller build phase={phase:?} strict_cache={} data_cache={} remaining={:?}: {error:?}",
+                cache.entries.len(), cache.data.len(), graph.session.operation_fuel_remaining()))
+            .expect("reader controller fixture must admit its declaration")
     }
     #[test]
     fn whole_build_preserves_cold_key_alias_and_warm_original_meta_across_type_revisions() {

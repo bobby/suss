@@ -31255,3 +31255,15 @@ No additional disk recovery was performed or inferred from available free space.
 
 [Exact source bindings, CI failure partition, selectors, parse-only results,
 original build failure and successful storage retry](evidence/m4-pr263-native-semantic-calibration-2026-10-21.json).
+
+
+Failure-only diagnostics now identify phase/width/padding/route for the recorded
+metadata construction, depth for deep DATA, cache sizes for reader-controller
+build and source phase/variant for child checking, each with remaining fuel.
+All original calls, scopes, quotas, order, assertions and typed errors remain.
+Rustfmt parse-only2024 and diff check pass; these are not executed fixes. Saved
+CI construction output proves all Runtime cases and Macro width2 cases finish;
+Macro width128 has no completed construction line before its trap. Do not infer
+an exact internal stage or cost from that absence. Two initial ambiguous text
+selectors stopped before changing the selected lifecycle call; diagnostics were
+then scoped to its original let-root statement. All attempts remain in cache.

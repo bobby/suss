@@ -190,7 +190,10 @@ fn genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_af
     let bridge = FormBridge::new(&mut session).unwrap();
     let mut cache = RootCache::default();
     let root =
-        super::tests::build(&mut session, &bridge, &mut cache, &global, &info, false).unwrap();
+        super::tests::build(&mut session, &bridge, &mut cache, &global, &info, false)
+            .unwrap_or_else(|error| panic!(
+                "deep reader DATA build depth={depth} remaining={:?}: {error:?}",
+                session.operation_fuel_remaining()));
     let meta = super::tests::metadata(&mut session, &root, false);
     let project = session.eval("(fn [m] (loop [v (get m :deep) n 0] (if (vector? v) (recur (nth v 0) (inc n)) [n (nil? v)])))").unwrap();
     session.collect().unwrap();

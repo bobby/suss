@@ -502,7 +502,9 @@ mod recorded_scratch_comparison {
                     eprintln!("real-recorded-scratch width={width} padding={padding} n={n} production=false workspace=dense cost={}",
                         before - graph.session.operation_fuel_remaining()?);
                     Ok(record)
-                }).unwrap();
+                }).unwrap_or_else(|error| panic!(
+                    "recorded metadata construction phase={:?} width={width} padding={padding} production={sparse} remaining={:?}: {error:?}",
+                    session.phase(), session.operation_fuel_remaining()));
                 assert_eq!(record.source().global(), global);
                 assert!(Arc::ptr_eq(record.source().revision(), revision));
                 session.collect().unwrap();

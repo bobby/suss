@@ -486,5 +486,78 @@
     "alias_fixture": "Request-only graph intentionally declines; execute ordinary fallback and preserve original GC/identity check. Add genuine completed declaration metadata as fourth vector element, rerun same first-three-values predicate and check persistent DATA owner/non-Request/no strict capabilities. Production admission guard unchanged.",
     "dedicated_fixed_caps": "Constructor/pinned/CORE/source-child policy unchanged; no pending user answer assumed.",
     "execution": "Patch is not typechecked, bootstrap-regenerated, identity-verified or semantically executed yet."
+  },
+  "runtime_failure_context": {
+    "scope": "Failure context only at four original operations; same inputs, limits, order, operation scopes and assertions. Syntax only, no execution.",
+    "results": [
+      {
+        "file": "crates/suss-compile/src/portable_macro_graph/construction.rs",
+        "before_sha256": "b438a8103a62493138ee9776696a0b1fc9d52a32e32107b2dcc915bae19a77e1",
+        "after_sha256": "7309b529600f029da26968d5bc28175db7ccfd01f520f7807a9fb518a0bbd392",
+        "parse_exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "file": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs",
+        "before_sha256": "c6992f71d91b5b4d8e47942ee9d68c9f142f74783e2d4f591aa5643c65e58a96",
+        "after_sha256": "30f6e302bbb8edfbd682729eea0e066025e7a691a810ee4ead23ef56af5637f7",
+        "parse_exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "file": "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs",
+        "before_sha256": "1bd0f3162bb95dcaad0f67edbea8aa11c61ea276af454a530405aa46fe737d41",
+        "after_sha256": "27524c48c52e3cc5fcc5a6595617dcb257ddab20b82ef29bffee77cc263af4b3",
+        "parse_exit_code": 0,
+        "stderr": ""
+      },
+      {
+        "file": "crates/suss-compile/src/portable_macro_graph/source_roots.rs",
+        "before_sha256": "dd6f9b10b48c173afa312e13e8eafabf4b4eed2e5ae13711a34781d020145fb5",
+        "after_sha256": "fbc7be0a9f97a6761885def3d5981828752fb682765e8fcc7a6eb9e97fed27ba",
+        "parse_exit_code": 0,
+        "stderr": ""
+      }
+    ],
+    "observed_recorded_scratch_lines": [
+      "2026-10-21T02:48:04.2153564Z real-recorded-scratch width=2 padding=0 n=61 production=false workspace=dense cost=362082",
+      "2026-10-21T02:48:04.2154342Z recorded-source-policy phase=Runtime width=2 padding=0 production=false stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.2155006Z real-recorded-scratch width=2 padding=0 n=61 production=true workspace=dense cost=351917",
+      "2026-10-21T02:48:04.2155860Z recorded-source-policy phase=Runtime width=2 padding=0 production=true stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.2156736Z recorded-source-policy phase=Runtime width=2 padding=0 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.2157988Z recorded-source-policy phase=Runtime width=2 padding=0 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.2158656Z real-recorded-scratch width=2 padding=20000 n=20061 production=false workspace=dense cost=450729",
+      "2026-10-21T02:48:04.2159477Z recorded-source-policy phase=Runtime width=2 padding=20000 production=false stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.2160163Z real-recorded-scratch width=2 padding=20000 n=20061 production=true workspace=sparse cost=369741",
+      "2026-10-21T02:48:04.2160838Z recorded-source-policy phase=Runtime width=2 padding=20000 production=true stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.2161709Z recorded-source-policy phase=Runtime width=2 padding=20000 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.2174952Z recorded-source-policy phase=Runtime width=2 padding=20000 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.2176144Z real-recorded-scratch width=128 padding=0 n=306 production=false workspace=dense cost=5429373",
+      "2026-10-21T02:48:04.2485969Z recorded-source-policy phase=Runtime width=128 padding=0 production=false stage=before logical=true direct=false inputs=true classes=true prototypes=true full=false expected=false",
+      "2026-10-21T02:48:04.2486687Z real-recorded-scratch width=128 padding=0 n=306 production=true workspace=dense cost=5429346",
+      "2026-10-21T02:48:04.2794299Z recorded-source-policy phase=Runtime width=128 padding=0 production=true stage=before logical=true direct=false inputs=true classes=true prototypes=true full=false expected=false",
+      "2026-10-21T02:48:04.3111868Z recorded-source-policy phase=Runtime width=128 padding=0 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.3394705Z recorded-source-policy phase=Runtime width=128 padding=0 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.3394934Z real-recorded-scratch width=128 padding=20000 n=20306 production=false workspace=dense cost=5526220",
+      "2026-10-21T02:48:04.3541859Z recorded-source-policy phase=Runtime width=128 padding=20000 production=false stage=before logical=true direct=false inputs=true classes=true prototypes=true full=false expected=false",
+      "2026-10-21T02:48:04.3542221Z real-recorded-scratch width=128 padding=20000 n=20306 production=true workspace=sparse cost=5666569",
+      "2026-10-21T02:48:04.3717118Z recorded-source-policy phase=Runtime width=128 padding=20000 production=true stage=before logical=true direct=false inputs=true classes=true prototypes=true full=false expected=false",
+      "2026-10-21T02:48:04.3862261Z recorded-source-policy phase=Runtime width=128 padding=20000 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.4007848Z recorded-source-policy phase=Runtime width=128 padding=20000 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.4008193Z real-recorded-scratch width=2 padding=0 n=61 production=false workspace=dense cost=366205",
+      "2026-10-21T02:48:04.4008605Z recorded-source-policy phase=Macro width=2 padding=0 production=false stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.4008802Z real-recorded-scratch width=2 padding=0 n=61 production=true workspace=dense cost=356546",
+      "2026-10-21T02:48:04.4009186Z recorded-source-policy phase=Macro width=2 padding=0 production=true stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.4009578Z recorded-source-policy phase=Macro width=2 padding=0 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.4009961Z recorded-source-policy phase=Macro width=2 padding=0 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.4010176Z real-recorded-scratch width=2 padding=20000 n=20061 production=false workspace=dense cost=454153",
+      "2026-10-21T02:48:04.4010574Z recorded-source-policy phase=Macro width=2 padding=20000 production=false stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.4010788Z real-recorded-scratch width=2 padding=20000 n=20061 production=true workspace=sparse cost=374097",
+      "2026-10-21T02:48:04.4011183Z recorded-source-policy phase=Macro width=2 padding=20000 production=true stage=before logical=true direct=true inputs=true classes=true prototypes=true full=true expected=true",
+      "2026-10-21T02:48:04.4011574Z recorded-source-policy phase=Macro width=2 padding=20000 production=false stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false",
+      "2026-10-21T02:48:04.4011951Z recorded-source-policy phase=Macro width=2 padding=20000 production=true stage=after-poison logical=false direct=false inputs=true classes=true prototypes=true full=false"
+    ],
+    "inference": "Runtime phase completes both widths and padding choices before/after poison; Macro phase completes width2 cases. No Macro width128 construction success line appears before Trap at construction closure unwrap. Stage/width on next execution is now explicit; no exclusive internal cost or solution inferred.",
+    "limits": "No Runtime quota, refill, operation scope, input or assertion change. Four failing Runtime cases are not claimed fixed. Initial ambiguous text-selector attempts retained in local cache; assertions stopped before ambiguous edits."
   }
 }

@@ -1889,7 +1889,9 @@ mod tests {
                 });
                 let mut supplied: Vec<_> =
                     Certificate::checked_batch(graph.session, graph.bridge, selected)
-                        .unwrap()
+                        .unwrap_or_else(|error| panic!(
+                            "source child batch phase={source_phase:?} variant={variant} remaining={:?}: {error:?}",
+                            graph.session.operation_fuel_remaining()))
                         .into_iter()
                         .map(|child| child.unwrap())
                         .collect();
