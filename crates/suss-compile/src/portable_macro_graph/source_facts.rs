@@ -634,7 +634,7 @@ mod tests {
                     .unwrap()
             );
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (= key 101) (do (aset (.-arr (get user/source-root :audit)) 1 99) (set! user/source-hash-calls (+ user/source-hash-calls 1))) nil) (user/saved-source-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (= key 101) (do (aset (.-arr (get user/source-root :audit)) 1 99) (set! user/source-hash-calls (+ user/source-hash-calls 1))) nil) (user/saved-source-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             session
                 .eval("(set [101 102 103 104 105 106 107 108 109])")

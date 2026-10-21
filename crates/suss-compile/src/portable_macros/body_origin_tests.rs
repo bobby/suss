@@ -8,6 +8,7 @@ fn analyzer_literal_actual_body_transport_distinguishes_future_origin_and_restor
     let mut failures = Vec::new();
     for (phase, mut caller) in [("runtime", Session::new_repl().unwrap()), ("macro", Session::new_macro().unwrap())] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL);
         let run = (|| -> Result<(), String> {
             macros.session.eval("(def leaf-original-method nil) (def body-origin-events [])").map_err(|e| e.to_string())?;
             let original = Method::capture(&mut macros.session, "Keyword").map_err(|e| e.to_string())?;

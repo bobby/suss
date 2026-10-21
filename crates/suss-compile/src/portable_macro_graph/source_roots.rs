@@ -1585,8 +1585,7 @@ mod tests {
                 )
                 .unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session
-                .eval(
+            session.eval_with_test_compilation_fuel(
                     r#"
               (def hash (fn [key]
                 (do

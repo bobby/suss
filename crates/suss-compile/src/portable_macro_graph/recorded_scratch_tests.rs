@@ -19,7 +19,7 @@ fn dense_and_sparse_materialization_preserve_reader_effects_metadata_sharing_and
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.eval("(def workspace-hash-log []) (def workspace-original-hash suss.core/hash)").unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(def hash (fn [key] (do (set! user/workspace-hash-log (conj user/workspace-hash-log key)) (user/workspace-original-hash key))))").unwrap();
+        session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (set! user/workspace-hash-log (conj user/workspace-hash-log key)) (user/workspace-original-hash key))))").unwrap();
         session.enter_namespace("user").unwrap();
         let inspect = session.eval("(fn [v] [(identical? (nth v 2) (nth v 3)) (identical? (nth v 0) (nth v 1))])").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
@@ -241,7 +241,7 @@ fn dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live() 
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.eval("(def scratch-fail-events []) (def scratch-fail-old-hash suss.core/hash)").unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(def hash (fn [key] (do (set! user/scratch-fail-events (conj user/scratch-fail-events key)) (if (= key :e) (throw \"scratch-stop\") (user/scratch-fail-old-hash key)))))").unwrap();
+        session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (set! user/scratch-fail-events (conj user/scratch-fail-events key)) (if (= key :e) (throw \"scratch-stop\") (user/scratch-fail-old-hash key)))))").unwrap();
         session.enter_namespace("user").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let form = read("{:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9}");

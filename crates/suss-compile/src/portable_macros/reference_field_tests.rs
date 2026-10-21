@@ -8,6 +8,7 @@ fn analyzer_literal_global_references_keep_tags_and_resolved_identity_after_gc_a
     let mut failures = Vec::new();
     for (phase, mut caller) in [("runtime", Session::new_repl().unwrap()), ("macro", Session::new_macro().unwrap())] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL);
         let run = (|| -> Result<(), String> {
             caller.eval("(def ^{:name shadow-name :ns shadow-ns} reference-num 17)").map_err(|e|e.to_string())?;
             macros.session.eval("(def leaf-original-method nil) (def reference-tag-events [])").map_err(|e|e.to_string())?;

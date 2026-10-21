@@ -951,8 +951,7 @@ mod tests {
                 methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "unrelated protocol stays live"
             );
-            session
-                .eval("(ns suss.core) (def registry-saved-list List) (def List nil)")
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def registry-saved-list List) (def List nil)")
                 .unwrap();
             assert!(
                 methods.matches(&mut session, "List", &descriptor).unwrap(),
@@ -1396,7 +1395,7 @@ mod tests {
                     .initial_source_class_matches("List", Some(&impostor), &list.descriptor)
                     .unwrap()
             );
-            session.eval("(ns suss.core) (def List Keyword)").unwrap();
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def List Keyword)").unwrap();
             let rebound = session.eval("List").unwrap();
             let rebound_descriptor = session.data_descriptor(&rebound, true).unwrap();
             assert!(

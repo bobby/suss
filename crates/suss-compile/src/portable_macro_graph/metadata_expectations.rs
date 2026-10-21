@@ -529,7 +529,7 @@ mod tests {
                 .eval("(def expectation-events 0) (def expectation-original-hash suss.core/hash)")
                 .unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (number? key) (set! user/expectation-events (+ user/expectation-events 1)) nil) (user/expectation-original-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (number? key) (set! user/expectation-events (+ user/expectation-events 1)) nil) (user/expectation-original-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let (witness, value) = {

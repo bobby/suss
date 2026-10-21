@@ -189,7 +189,7 @@ mod tests {
             let mut session = session(phase);
             session.eval("(def recorded-events 0) (def recorded-order []) (def recorded-old-hash suss.core/hash) (def ^{:items #{101 102 103 104 105 106 107 108 109}} recording-effects 17)").unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (number? key) (do (set! user/recorded-events (+ user/recorded-events 1)) (set! user/recorded-order (conj user/recorded-order key))) nil) (user/recorded-old-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (number? key) (do (set! user/recorded-events (+ user/recorded-events 1)) (set! user/recorded-order (conj user/recorded-order key))) nil) (user/recorded-old-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let snapshot = session.compilation_snapshot();
@@ -353,7 +353,7 @@ mod tests {
             let mut session = session(phase);
             session.eval("(def recorded-child-events []) (def recorded-child-hash suss.core/hash) (def ^{:items #{:recording-target :other1 :other2 :other3 :other4 :other5 :other6 :other7 :other8}} recording-child 17)").unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (if (= key :recording-target) (do (set! user/recorded-child-events (conj user/recorded-child-events (.-name key))) (set! (.-name key) \"changed\") 719) (user/recorded-child-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (if (= key :recording-target) (do (set! user/recorded-child-events (conj user/recorded-child-events (.-name key))) (set! (.-name key) \"changed\") 719) (user/recorded-child-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let recorded = record(&mut session, &bridge, "recording-child");

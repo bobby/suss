@@ -20,6 +20,7 @@ fn reader_shorthand_declaration_keys_preserve_first_origin_and_meta_alias_after_
         for (source, numeric, expected_value, field) in cases {
             let mut caller = if phase == "runtime" { Session::new_repl().unwrap() } else { Session::new_macro().unwrap() };
             let mut macros = CompiledMacros::new().unwrap();
+            macros.set_operation_fuel(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL);
             let result = (|| -> Result<(), String> {
                 caller.eval(source).map_err(|e| e.to_string())?;
                 macros.session.eval("(def leaf-original-method nil) (def reader-origin-events [])").map_err(|e| e.to_string())?;

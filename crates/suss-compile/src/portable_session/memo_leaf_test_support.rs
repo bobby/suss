@@ -88,6 +88,7 @@ impl Method {
 // headroom; Session options and Runtime Store allowances are never changed.
 #[path = "../../tests/support/compilation_fuel.rs"]
 mod compilation_fuel;
+pub(crate) use compilation_fuel::COMPILATION_FUEL;
 
 
 pub(crate) fn eval_with_compilation_fuel(
@@ -124,5 +125,19 @@ pub(crate) fn eval_with_compilation_fuel(
             Ok(None)
         }
     }
-    session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL))
+    let runtime_fuel = session.options().fuel_per_operation;
+    let result = session.eval_with_macros(source, &mut Compilation(COMPILATION_FUEL));
+    assert_eq!(session.options().fuel_per_operation, runtime_fuel);
+    result
+}
+
+// Test-only convenience for semantic fixtures whose source compilation is not
+// the resource limit under test. Runtime options and guest allowances stay put.
+impl Session {
+    pub(crate) fn eval_with_test_compilation_fuel(
+        &mut self,
+        source: &str,
+    ) -> Result<SessionValue, SessionError> {
+        eval_with_compilation_fuel(self, source)
+    }
 }

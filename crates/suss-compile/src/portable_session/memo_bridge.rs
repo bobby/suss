@@ -512,8 +512,7 @@ mod tests {
             };
             session.eval("(def bridge-value (list 1 2))").unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session
-                .eval("(def hash-ordered-coll (fn [_] 719))")
+            session.eval_with_test_compilation_fuel("(def hash-ordered-coll (fn [_] 719))")
                 .unwrap();
             session.enter_namespace("user").unwrap();
             let first = session.eval("(hash bridge-value)").unwrap();
@@ -945,7 +944,7 @@ mod receipt_tests {
             let (value, inputs) = registered_list(&mut session);
             assert!(inputs.matches(&mut session, &value).unwrap());
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash-ordered-coll (fn [_] 719))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash-ordered-coll (fn [_] 719))").unwrap();
             session.enter_namespace("user").unwrap();
             hash(&mut session, &value);
             session.collect().unwrap();

@@ -2972,6 +2972,7 @@ mod tests {
     fn session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup() {
         let mut session = Session::new_repl().unwrap();
         let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(memo_leaf_test_support::COMPILATION_FUEL);
         session.eval_with_macros(
             "(ns reset-callback-test (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
             &mut macros,
@@ -3101,6 +3102,7 @@ mod tests {
         let drops = Arc::new(AtomicUsize::new(0));
         let mut session = Session::new_repl().unwrap();
         let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(memo_leaf_test_support::COMPILATION_FUEL);
         session.eval_with_macros(
             "(ns hooked-reset (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
             &mut macros,

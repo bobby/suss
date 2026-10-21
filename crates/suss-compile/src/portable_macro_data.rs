@@ -1565,7 +1565,7 @@ mod identity_tests {
           (def bridge-original-hash suss.core/hash)
         "#).unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval(r#"
+        session.eval_with_test_compilation_fuel(r#"
           (def hash (fn [key]
             (do (set! user/bridge-old-hash-calls (+ user/bridge-old-hash-calls 1))
                 (user/bridge-original-hash key))))

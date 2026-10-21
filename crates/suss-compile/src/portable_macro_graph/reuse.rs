@@ -458,7 +458,7 @@ mod tests {
             } else {
                 "(def rebuild-poison-prototype false)"
             }).unwrap();
-            session.eval(r#"
+            session.eval_with_test_compilation_fuel(r#"
               (def ^{:doc "A" :items #{301 302 303 304 305 306 307 308 309}} rebuild-a 17)
               (def ^{:items #{101 102 103 104 105 106 107 108 109}} rebuild-b 18)
               (def ^{:doc "C"} rebuild-c 19)

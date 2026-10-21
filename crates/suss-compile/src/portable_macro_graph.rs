@@ -3942,7 +3942,7 @@ mod sharing_tests {
     fn declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def metadata-hash-log (array)) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (aset metadata-hash-log (alength metadata-hash-log) key) nil) (metadata-original-hash key))))").unwrap();
+        session.eval_with_test_compilation_fuel("(def metadata-hash-log (array)) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (aset metadata-hash-log (alength metadata-hash-log) key) nil) (metadata-original-hash key))))").unwrap();
         session.eval("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} review-callback-metadata 0)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let snapshot = session.compilation_snapshot();
@@ -4095,7 +4095,7 @@ mod sharing_tests {
     fn bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def raw-key-hash-calls 0) (def raw-key-original-hash suss.core/hash) (def hash (fn [key] (do (set! raw-key-hash-calls (+ raw-key-hash-calls 1)) (raw-key-original-hash key))))").unwrap();
+        session.eval_with_test_compilation_fuel("(def raw-key-hash-calls 0) (def raw-key-original-hash suss.core/hash) (def hash (fn [key] (do (set! raw-key-hash-calls (+ raw-key-hash-calls 1)) (raw-key-original-hash key))))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let value = {
             let _request = session.operation_budget_scope().unwrap();
@@ -4211,7 +4211,7 @@ mod sharing_tests {
     fn metadata_set_preserves_canonical_hash_callback_count_and_order() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def review-hash-effects 0) (def review-first-hash nil) (def review-original-hash suss.core/hash) (def hash (fn [key] (do (if (== review-hash-effects 0) (set! review-first-hash key) nil) (set! review-hash-effects (+ review-hash-effects 1)) (review-original-hash key))))").unwrap();
+        session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def review-first-hash nil) (def review-original-hash suss.core/hash) (def hash (fn [key] (do (if (== review-hash-effects 0) (set! review-first-hash key) nil) (set! review-hash-effects (+ review-hash-effects 1)) (review-original-hash key))))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         for (source, calls, first) in [
             ("^:private #{1 2 3 4 5 6 7 8 9}", 9.0, 1.0),
@@ -4266,7 +4266,7 @@ mod sharing_tests {
     fn duplicate_reader_collections_preserve_effects_and_occurrence_results() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) review-hash-effects)))").unwrap();
+        session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) review-hash-effects)))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let probe = session
             .eval("(fn [value index] (nth (nth value index) 0))")
@@ -4323,7 +4323,7 @@ mod sharing_tests {
     fn compact_diamond_admission_rejects_before_reader_callbacks() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def review-diamond-effects 0) (def hash (fn [key] (do (set! review-diamond-effects (+ review-diamond-effects 1)) key)))").unwrap();
+        session.eval_with_test_compilation_fuel("(def review-diamond-effects 0) (def hash (fn [key] (do (set! review-diamond-effects (+ review-diamond-effects 1)) key)))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let form = suss_reader::forms::read_forms("#{1 2 3 4 5 6 7 8 9}").unwrap().remove(0);
         let mut graph = AnalysisGraph::new(&bridge, &mut session);
@@ -4360,7 +4360,7 @@ mod sharing_tests {
     fn reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) key)))").unwrap();
+        session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) key)))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let form = suss_reader::forms::read_forms("[#{1 2 3 4 5 6 7 8 9} #{1 2 3 4 5 6 7 8 9}]")
             .unwrap()
