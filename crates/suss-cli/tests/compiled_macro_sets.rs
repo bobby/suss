@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{read_forms, Kind};
 
@@ -154,7 +156,7 @@ fn compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc
             assert!(bridge.read(&mut session, &malformed, 10..20).is_err(), "{source}");
         }
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(deftype PersistentHashSet [meta hash-map __hash]) (deftype KeySeq [s meta __hash])").unwrap();
+        semantic_compilation::eval(&mut session, "(deftype PersistentHashSet [meta hash-map __hash]) (deftype KeySeq [s meta __hash])").unwrap();
         session.enter_namespace("user").unwrap();
         for source in [
             "(suss.core/PersistentHashSet. nil {} nil)",

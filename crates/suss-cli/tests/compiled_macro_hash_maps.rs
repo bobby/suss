@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_session::{Session, SessionError},
@@ -177,8 +179,7 @@ fn compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases() {
     assert_eq!(corpus["cases"].as_array().unwrap().len(), 111);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../tests/oracle/hash-map-fixture.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../tests/oracle/hash-map-fixture.sus"))
             .unwrap();
         for case in corpus["cases"].as_array().unwrap() {
             session.collect().unwrap();
@@ -203,8 +204,7 @@ fn compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition() {
             .unwrap();
         let saved = session.eval("saved").unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session
-            .eval("(deftype PersistentHashMap [meta cnt root has-nil? nil-val __hash])")
+        semantic_compilation::eval(&mut session, "(deftype PersistentHashMap [meta cnt root has-nil? nil-val __hash])")
             .unwrap();
         session.enter_namespace("user").unwrap();
         let foreign = session
@@ -263,8 +263,7 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
 fn compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../tests/oracle/hash-map-fixture.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../tests/oracle/hash-map-fixture.sus"))
             .unwrap();
         session.collect().unwrap();
         for source in [

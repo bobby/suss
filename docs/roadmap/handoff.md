@@ -31370,3 +31370,25 @@ writes; no patch was applied. Existing compact capture-index work is already
 present, so do not transplant the older268 branch wholesale.
 
 [Exact commands, source/BOOT/test hashes, terminal scopes and retained failures](evidence/m4-pr263-a705-validation-2026-10-21.json).
+
+
+## Additional completed CI2 setup failures — 2026-10-21
+
+94276e7 integration2 raw28c73f5f8381d1a8ee25a5694c53908c113d1b684b5ec213ff6d6b147c9d99eb
+executes its complete harnesses and identifies17 more setup fuel failures.
+Those17 plus the earlier AOT-list source-identity case now get the existing100B
+compilation allowance through their actual routes. Custom Contexts retains its
+real recording callback,24 ordered observations,15 values and recur-tail errors;
+only its native request allowance changes. Both pinned independent factory source
+loads, three CompiledMacros instances, root/class replacements, CORE setup,
+three decoder setup inputs, public async-file AotOptions and semantic AOT-list
+instantiation preserve all original inputs/assertions/phases/GC/effects and
+Runtime limits. A test-only native integration helper mirrors the existing CLI
+NoExpansion route and asserts unchanged caller Runtime options on success/error.
+
+All11 Rust files parse2024 and exact full-file inverse proofs pass. Initial
+ambiguous preparation stopped before source writes; corrected replacement bounds
+include the next function. No execution/typecheck result yet. All229 actual
+compiler inputs, BOOT4 and the active native32 support dependency are byte-exact;
+a705 identity is unchanged. Do not alter frozen native sources while replay runs.
+[Exact18 cases, hashes, inverse proofs and preservation scope](evidence/m4-pr263-ci2-semantic-calibration-2026-10-21.json).

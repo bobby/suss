@@ -1,5 +1,7 @@
 //! Public file compilation: compiled macros, dependency initialization and
 //! genuinely pending canonical imports through production assembly.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::{
     future::Future,
     pin::pin,
@@ -63,6 +65,7 @@ fn public_file_async_import_uses_macros_and_initializes_dependencies_once() {
     let wit = root.join("api.wit");
     std::fs::write(&wit, "package test:file-async; world api { import increment: async func(value: u32) -> u32; export run: async func(value: u32) -> u32; }").unwrap();
     let options = AotOptions {
+        compile_fuel: Some(compilation_fuel::COMPILATION_FUEL),
         exports: vec![("run".into(), Symbol::namespaced("app", "run"))],
         async_imports: vec![AsyncImportMapping {
             wit_name: "increment".into(),

@@ -1,0 +1,444 @@
+{
+  "schema": 1,
+  "scope": "Additional positive semantic compilation calibration; execution not yet performed.",
+  "ci_head": "94276e79217342581cc45425ad891ebd2c530682",
+  "ci2_job_url": "https://github.com/bobby/suss/actions/runs/39530511823/job/118996666802",
+  "ci2_raw_sha256": "28c73f5f8381d1a8ee25a5694c53908c113d1b684b5ec213ff6d6b147c9d99eb",
+  "cases": [
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_analysis_context",
+      "name": "compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope",
+      "location": "crates/suss-cli/tests/compiled_macro_analysis_context.rs:87:54",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 314..424, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_control_source_asts",
+      "name": "function_metadata_keeps_wrapper_and_inner_method_edges",
+      "location": "crates/suss-cli/tests/compiled_macro_control_source_asts.rs:253:14",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 43..66, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })",
+      "kind": "macro_guest_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_control_source_asts",
+      "name": "function_name_asts_match_primary_identity_presence_and_shadow_after_gc",
+      "location": "crates/suss-cli/tests/compiled_macro_control_source_asts.rs:455:70",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 25..49, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })",
+      "kind": "macro_guest_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_control_source_asts",
+      "name": "method_recurrence_flags_survive_gc_in_both_caller_phases",
+      "location": "crates/suss-cli/tests/compiled_macro_control_source_asts.rs:370:72",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 25..50, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })",
+      "kind": "macro_guest_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_hash_maps",
+      "name": "compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases",
+      "location": "crates/suss-cli/tests/compiled_macro_hash_maps.rs:268:14",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1300..1354, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_hash_maps",
+      "name": "compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases",
+      "location": "crates/suss-cli/tests/compiled_macro_hash_maps.rs:182:14",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1300..1354, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_hash_maps",
+      "name": "compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition",
+      "location": "crates/suss-cli/tests/compiled_macro_hash_maps.rs:208:14",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..67, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_macro_sets",
+      "name": "compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc",
+      "location": "crates/suss-cli/tests/compiled_macro_sets.rs:157:109",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..50, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_forward_declarations",
+      "name": "forward_declarations_match_independently_decoded_primary_observations_after_gc",
+      "location": "crates/suss-cli/tests/portable_forward_declarations.rs:15:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_public_hash",
+      "name": "date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority",
+      "location": "crates/suss-cli/tests/portable_public_hash.rs:63:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_public_hash",
+      "name": "public_hash_matches_independently_decoded_primary_observations",
+      "location": "crates/suss-cli/tests/portable_public_hash.rs:128:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_public_hash",
+      "name": "public_hash_retains_scalar_branches_and_captured_callable_after_gc",
+      "location": "crates/suss-cli/tests/portable_public_hash.rs:22:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "record_factory_preservation",
+      "name": "old_and_candidate_factory_forms_match_with_recursive_metadata",
+      "location": "crates/suss-cli/tests/record_factory_preservation.rs:139:10",
+      "message": "load old factory source: Compile(Diagnostic { span: 1713..3625, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "compiled_async_import_file",
+      "name": "public_file_async_import_uses_macros_and_initializes_dependencies_once",
+      "location": "crates/suss-compile/tests/compiled_async_import_file.rs:74:10",
+      "message": "public AOT source/macro/dependency route: \"Semantic error: suss.async (Some(\\\"<suss-stdlib>/suss/async.sus\\\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 643..707\"\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "macro_guest_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_value_decoder",
+      "name": "identifier_decoder_retains_canonical_identity_through_gc_and_redefinition",
+      "location": "crates/suss-compile/tests/portable_value_decoder.rs:171:54",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_value_decoder",
+      "name": "persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_calls",
+      "location": "crates/suss-compile/tests/portable_value_decoder.rs:276:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": 118996666802,
+      "target": "portable_value_decoder",
+      "name": "vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc",
+      "location": "crates/suss-compile/tests/portable_value_decoder.rs:580:57",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_aot_lists",
+      "name": "list_schema_retains_core_nominal_identity_after_user_redefinition",
+      "location": "crates/suss-compile/tests/portable_aot_lists.rs:64:55",
+      "message": "called `Result::unwrap()` on an `Err` value: Semantic(\"Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 56..70\")\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "macro_guest_compilation_fuel"
+    }
+  ],
+  "files": {
+    "crates/suss-cli/tests/compiled_macro_hash_maps.rs": {
+      "before_sha256": "f4d258344d6463b0401554a3a229de92ab2160accdb5788832ed93374c131914",
+      "after_sha256": "62222044dc94d561c8510bc4430d6988c26f4e21344ff728d7189b4b2ed53b97",
+      "operations_sequential": [
+        {
+          "start": 11305,
+          "before": "session\n            .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 8008,
+          "before": "session\n            .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 6946,
+          "before": "session\n            .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 0,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_sets.rs": {
+      "before_sha256": "5009151c440b90dde0a6a6f2e29cf255aa201e72a7b7d119e1c08f6459fa3ab3",
+      "after_sha256": "c56a1a72c515471f52d4a62f8e80108b285b3a244a5c9b287d7218fa5eb9b760",
+      "operations_sequential": [
+        {
+          "start": 8861,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 0,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_forward_declarations.rs": {
+      "before_sha256": "a6d22b918ed2e12bb202ae2099d483ab47e4226ad3a95458e87e93c0809d3634",
+      "after_sha256": "ed8db02b1ddbbc70c1dd6277cacf94476e05dc98aef3d635a6f096fbdc24806f",
+      "operations_sequential": [
+        {
+          "start": 448,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 0,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_public_hash.rs": {
+      "before_sha256": "48bba0badf564585f503897f2c769d702a8037f910619c108eba201c019a40f1",
+      "after_sha256": "de0880b9510d60bca7c469de8645d966707caeecc771f80a276d03ffbe26d5b1",
+      "operations_sequential": [
+        {
+          "start": 4989,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 2256,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 658,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 0,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-compile/tests/portable_value_decoder.rs": {
+      "before_sha256": "8ad520f35f11c47be3cbd104fdc003eeab35159f15f2eda5b1d607d2732a659e",
+      "after_sha256": "e7831615cae633c878133cbf97d20805bd6d1540a501a0ea0d153795ae95b851",
+      "operations_sequential": [
+        {
+          "start": 21074,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 9396,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 5617,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, "
+        },
+        {
+          "start": 177,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/record_factory_preservation.rs": {
+      "before_sha256": "b232686df99ea86bc1d3523f568fbfabe259d8cc295e98025b1a508845a9e2dd",
+      "after_sha256": "95f6e0ea1b38df93ae8cc8f3f3ca3cf1b9acaa2d58a90e0e63144f4f0bf1254d",
+      "operations_sequential": [
+        {
+          "start": 6701,
+          "before": "old_session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut old_session, "
+        },
+        {
+          "start": 6807,
+          "before": "new_session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut new_session, "
+        },
+        {
+          "start": 159,
+          "before": "",
+          "after": "#[path = \"support/eval_with_compilation_fuel.rs\"]\nmod semantic_compilation;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_analysis_context.rs": {
+      "before_sha256": "3505721c9028b92e5500dbf611569355a19b6b1cac8e9c52a3fa90cea11a03e2",
+      "after_sha256": "b9310c8cec213f7df638026e6cc0e29171935bfb71444f0c59e6572b09ecf0b0",
+      "operations_sequential": [
+        {
+          "start": 318,
+          "before": "impl portable::ExpansionHost for Contexts {",
+          "after": "impl portable::ExpansionHost for Contexts {\n    fn expansion_work_fuel(&self) -> u64 { compilation_fuel::COMPILATION_FUEL }"
+        },
+        {
+          "start": 0,
+          "before": "",
+          "after": "#[path = \"support/compilation_fuel.rs\"]\nmod compilation_fuel;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_control_source_asts.rs": {
+      "before_sha256": "d8b16b12e2683312b4d41bb0b96e58b68e4e21f2cf9aa5388e6d5b8adb4c533d",
+      "after_sha256": "ed87bc9ca1b0ee50a96fc5a2a6dd88f8d70a3d1796e65445d19530e6b4ed1f8a",
+      "operations_sequential": [
+        {
+          "start": 9445,
+          "before": "let mut macros = CompiledMacros::new().unwrap();",
+          "after": "let mut macros = CompiledMacros::new().unwrap();\n        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);"
+        },
+        {
+          "start": 12776,
+          "before": "let mut macros = CompiledMacros::new().unwrap();",
+          "after": "let mut macros = CompiledMacros::new().unwrap();\n        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);"
+        },
+        {
+          "start": 16439,
+          "before": "let mut macros = CompiledMacros::new().unwrap();",
+          "after": "let mut macros = CompiledMacros::new().unwrap();\n        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-compile/tests/compiled_async_import_file.rs": {
+      "before_sha256": "77a979715c2fa18bcbcd8165c676d9675427e5daf5ea7adb132651eb10210893",
+      "after_sha256": "46e3a6bacff12a7208cb0bafcb802398a6d20c0993b77a866d9facdf1d96f20d",
+      "operations_sequential": [
+        {
+          "start": 2380,
+          "before": "    let options = AotOptions {\n        exports:",
+          "after": "    let options = AotOptions {\n        compile_fuel: Some(compilation_fuel::COMPILATION_FUEL),\n        exports:"
+        },
+        {
+          "start": 145,
+          "before": "",
+          "after": "#[path = \"support/compilation_fuel.rs\"]\nmod compilation_fuel;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-compile/tests/portable_aot_lists.rs": {
+      "before_sha256": "ad86de670e616f113af5a6e5f38d72b3e5d9f5281e3b6c9d690b9c8d00a9646b",
+      "after_sha256": "f88667af090521e8636468ff53ea189b5398f2bbef94a8b7f3c31559946300a2",
+      "operations_sequential": [
+        {
+          "start": 2250,
+          "before": "Compiler::new().compile(source, &wit).unwrap()",
+          "after": "Compiler::new().compile_with_compile_fuel(source, &wit, Some(compilation_fuel::COMPILATION_FUEL)).unwrap()"
+        },
+        {
+          "start": 109,
+          "before": "",
+          "after": "#[path = \"support/compilation_fuel.rs\"]\nmod compilation_fuel;\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-compile/tests/support/eval_with_compilation_fuel.rs": {
+      "before_sha256": null,
+      "after_sha256": "0194222533d73f1a44b432002b92c74333c2077e75d63aca011510efafe55734",
+      "operations_sequential": [
+        {
+          "start": 0,
+          "before": "",
+          "after": "//! Compile semantic test inputs with a separate, cumulative native allowance.\n//! Runtime evaluation still uses the caller Session's configured budget.\n#[path = \"compilation_fuel.rs\"]\nmod compilation_fuel;\nuse suss_compile::portable_session::Session;\n\npub fn eval(\n    session: &mut Session,\n    source: &str,\n) -> Result<suss_compile::portable_session::SessionValue, suss_compile::portable_session::SessionError> {\n    struct Compilation(u64);\n    impl suss_compile::portable::ExpansionHost for Compilation {\n        fn expansion_work_fuel(&self) -> u64 {\n            self.0\n        }\n        fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {\n            Some(vec![])\n        }\n        fn charge_expansion_work(\n            &mut self,\n            work: u64,\n            span: std::ops::Range<usize>,\n        ) -> Result<(), suss_compile::portable::Diagnostic> {\n            self.0 =\n                self.0\n                    .checked_sub(work)\n                    .ok_or_else(|| suss_compile::portable::Diagnostic {\n                        span,\n                        message: \"Semantic corpus compilation fuel exhausted\".into(),\n                    })?;\n            Ok(())\n        }\n        fn expand(\n            &mut self,\n            _: &suss_reader::forms::Form,\n            _: suss_compile::portable::ExpansionContext<'_>,\n        ) -> Result<Option<suss_reader::forms::Form>, suss_compile::portable::Diagnostic> {\n            Ok(None)\n        }\n    }\n    let runtime_fuel = session.options().fuel_per_operation;\n    let result = session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL));\n    assert_eq!(session.options().fuel_per_operation, runtime_fuel);\n    result\n}\n"
+        }
+      ],
+      "full_file_inverse_exact": true
+    }
+  },
+  "syntax_only": [
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_sets.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_forward_declarations.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_public_hash.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-compile/tests/portable_value_decoder.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/record_factory_preservation.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_analysis_context.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_control_source_asts.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-compile/tests/compiled_async_import_file.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-compile/tests/portable_aot_lists.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-compile/tests/support/eval_with_compilation_fuel.rs",
+      "exit_code": 0,
+      "stderr": ""
+    }
+  ],
+  "preservation": [
+    "Original custom Contexts expansion callback and all24 ordered contexts/15 results retained. Override only expansion_work_fuel; actual cumulative ExpansionRequest charging remains.",
+    "Pinned old/candidate factory source strings/hashes and both independent Macro sessions retained. Both source loads use same100B compilation helper.",
+    "Three CompiledMacros instances get100B; every complete function/method/name corpus, phase, effect and GC assertion remains.",
+    "Canonical root/class replacement and decoder malformed/foreign/storage/source guards retained. Three integration decoder source compilations use a test-only NoExpansion helper with the original Runtime options checked after success/error.",
+    "Actual public async-file AotOptions uses Some100B; mappings, macro/dependency initialization, pending imports and original component Runtime policy remain.",
+    "AOT-list instantiate helper uses existing compile_with_compile_fuel; complete1057-element input, storage/type/arity and component Runtime limits remain. Other direct-default compiler controls unchanged.",
+    "All compiler229 inputs, BOOT4 and native32 dependency hashes still match its active snapshot. These changes are integration-test-only and do not change fingerprinta705.",
+    "Initial preparation ambiguity was stopped before source writes; corrected scope ends at the next function as well as the next test. No typecheck/semantic pass inferred from syntax/inverse proofs."
+  ]
+}
