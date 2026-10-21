@@ -31321,3 +31321,52 @@ is retained; final packet is pr263-cli-macro-compilation-calibration-afd-v2.
 All7 fixture files parse2024 and diffcheck passes. There is no typecheck,
 semantic execution, full-baseline or final-head CI result for these edits.
 [Exact selected failures, source hashes, preservation and limitations](evidence/m4-pr263-cli-macro-calibration-2026-10-21.json).
+
+
+## Sourcea705 matching-artifact checks and actual eval regression — 2026-10-21
+
+Compiler sourcebd292e9 fingerprints a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459
+over229 actual builder inputs. All-targets workspace Rust typecheck passes74.50s
+(raw6156bc5b3f91944f001776fd1d309a6c3898e2d24960820f5957f6d0305363f0);
+CLI binary typecheck passes13.72s (raw91750cbb7938e16569925b4eb074712aa48a14660b74dc369961c3b953c9fd17).
+Commands: `cargo check --workspace --all-targets --locked --profile test` and
+`cargo check -p suss-cli --bin suss --locked --profile test`.
+
+`cargo test -p suss-cli --bin suss --locked args::tests:: -- --test-threads=1 --nocapture`
+passes all9 parser tests,0fail/0ignored/29filtered atbd292e9 (244.90s including
+build; rawb45a917a13aad2d5b1f2ca54c09fb85d22e220f34b8847de1bff0c0f6df3dad6).
+These are actual Rust parser tests, not Session/bootstrap semantic execution.
+Cargo metadata confirms the new eval integration target belongs to exactly one
+CI partition; all263 workspace integration targets are discovered automatically.
+
+`nice -n 10 sh scripts/verify-bootstrap.sh` generates both normal pairs in12.04s,
+retains all8 files, then exits1 at stale shipped runtime.wasm comparison. It is
+not a full verifier pass. Read-only main review verifies exact source/Git bytes,
+all229 actual Cargo builder watch paths, identical generation pairs, unchanged
+noncustom executable bytes and only source-fingerprint/Wasm-hash manifest deltas.
+Adoption9db32aa copies exact4 reviewed files. Separate actual compiled
+`python3 scripts/verify_bootstrap_identity.py` passes5.48s at9db32aa. No independent
+subagent/final review is implied by main artifact inspection.
+
+`cargo test -p suss-cli --locked --test compiled_eval_compile_fuel -- --test-threads=1 --nocapture`
+at9db32aa/a705/matchingBOOT passes1/0/0/0filtered,390.66s harness/851.81s including
+build. Raw70c5fd706323c65aa9eba7b606f20dc776c84f68bb14a866a21176e372c034e9.
+Both default and explicit100B eval print42, with empty stderr; zero compilation
+fuel rejects the original `(throw17)` input before Runtime throw. Source/test/
+BOOT/head postflight matches. This is the complete new CLI regression only.
+Commands use the protected shared target, one Cargo job and bounded test profile;
+no RUSTFLAGS override. The frozen main metadata process and source were untouched.
+
+The separate57edbd5/afd metadata6 batch remains live: export1PASS; two declaration
+cases actually fail with configuredcompile100B/Runtime10M. Full corpus namespace
+load fails caller&env960..1000 at scalar-redefinition; metadata merge fails
+caller&env19..46. The raw-function metadata case is now running. No exclusive
+Store debit, completed caller phase, full batch verdict, OOM or sourcea705
+semantic acceptance is inferred. Both partial logs remain retained. Next run
+the exact32 native failures and targeted CLI semantics with matching artifacts;
+additional completed CI2 logs identify17 other setup failures. The attempted
+preparation for those17 stopped at a unique-scope assertion before any source
+writes; no patch was applied. Existing compact capture-index work is already
+present, so do not transplant the older268 branch wholesale.
+
+[Exact commands, source/BOOT/test hashes, terminal scopes and retained failures](evidence/m4-pr263-a705-validation-2026-10-21.json).
