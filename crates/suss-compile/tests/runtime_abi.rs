@@ -9644,9 +9644,29 @@ mod protocol_marker_direct_tests {
         assert!(used > 2, "real lookup must perform fueled guest work");
         for cap in [0, 1, used/2, used-1] {
             f.store.set_fuel(cap).unwrap();
-            let error = f.marked().expect_err(&format!(
-                "lookup should exhaust with cap={cap}, measured successful cost={used}"
-            ));
+            let result = f.marked();
+            let error = if cap == used - 1 {
+                match result {
+                    Err(error) => error,
+                    Ok(value) => {
+                        // Wasmtime may debit the final block without polling
+                        // again at return. It must not permit another entry.
+                        assert_eq!(value, 1, "same lookup result at boundary cap={cap}, used={used}");
+                        assert_eq!(f.store.get_fuel().unwrap(), 0,
+                            "successful tail must have exhausted cap={cap}, used={used}");
+                        assert!(!f.store.has_pending_exception());
+                        f.expect_same_table(&table);
+                        // Identical input and Store, deliberately NO refill.
+                        f.marked().expect_err(&format!(
+                            "zero-remaining retry must exhaust after successful tail, cap={cap}, used={used}"
+                        ))
+                    }
+                }
+            } else {
+                result.expect_err(&format!(
+                    "lookup should exhaust with cap={cap}, measured successful cost={used}"
+                ))
+            };
             assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
             assert!(!f.store.has_pending_exception());
             f.expect_same_table(&table);
