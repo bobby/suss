@@ -1,0 +1,168 @@
+{
+  "source_commit": "2fb354755b40f2b2a6ab0c2f7bd62d12ba31a1e4",
+  "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+  "input_count": 229,
+  "changes": [
+    "Carry a current-namespace borrowed hit through the original visibility filter and final clone; remove only its identical second lookup. Qualified/referred and miss/excluded second searches remain.",
+    "Conservatively charge4 for new selection/slot/retirement work; all actualBTreecomparison and binding-retain rates unchanged.",
+    "Inline tests preserve old controls and add bothphase current/core precedence, excluded/missing, hidden InternalCell/ReaderCell errors, one-search charge, ownership, every failureboundary and retry.",
+    "Opt-in source-child test diagnostics read existing configured/remaining fuel; no charge/cap/scope/refill/fixture/assertion change. Diagnosticphase is sourcephase; graphStore isMacro."
+  ],
+  "independent_review": {
+    "agent_id": "01a15d30-909e-74a0-9111-ec6d38696c61",
+    "reviewer": "Kepler",
+    "source_review_result": "No actionable findings in dirtyresolve.rs against97289d9.",
+    "verified": [
+      "Currentborrowedhitselection,qualified/referredpaths,hiddenhitrinejection,miss/exclusionsecondlookup,errors/borrowing preserved.",
+      "New4unitcontrolchargeprecedes selection;comparison/retain rates unchanged.",
+      "Bothphaseidentity, cancellationboundary/retrytests and singleton41unitexpectation source-consistent. No likelystaleexactchargeassertions found."
+    ],
+    "limits": "Read-only source review; no Cargo/VM/Gitmutations. No CORE10Mfit or wholePRacceptance proof."
+  },
+  "typecheck": {
+    "source_commit": "2fb354755b40f2b2a6ab0c2f7bd62d12ba31a1e4",
+    "predicted_fingerprint": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "source_input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Rusttypecheck only; shipped BOOT still preceding8c source. No semantic execution.",
+    "exit_code": 0,
+    "seconds": 90.92797173000145,
+    "post_head": "2fb354755b40f2b2a6ab0c2f7bd62d12ba31a1e4",
+    "raw_sha256": "2df83d324eee6386d2309e4aa37b76048c358882fd74fcccf023c93cdefab55c"
+  },
+  "bootstrap_generation": {
+    "head": "2fb354755b40f2b2a6ab0c2f7bd62d12ba31a1e4",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "shipped_before": {
+      "runtime/bootstrap/macro.json": "bbadf18e681dc5a198ab841a5e8b7edbc65d5c87817c24fd98df9ad102233dab",
+      "runtime/bootstrap/macro.wasm": "9160d3cfaa6fc4e31a3dd5a684f18e6a86f6f0a08ceb6183dfa309584185bd8d",
+      "runtime/bootstrap/runtime.json": "1838d6e9918e96a94959561219e025f15258581a19c94b7ca91277b10b373610",
+      "runtime/bootstrap/runtime.wasm": "6fbba7431fa199ca9060b87b826a66631f34f83fe60aefeace416efe8c5be34f"
+    },
+    "scope": "Two normal generations, retained diagnostics before stale shipped comparison. No automatic adoption/full-verifier claim.",
+    "exit_code": 1,
+    "seconds": 238.27208088099724,
+    "post_head": "2fb354755b40f2b2a6ab0c2f7bd62d12ba31a1e4",
+    "raw_sha256": "f8757bea5ae7753bbf653627a4520984978f78a22d5c9e8abf8729eb1018c3da"
+  },
+  "artifact_review_adoption": {
+    "source_fingerprint": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "source_input_count": 229,
+    "builders": [
+      "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output"
+    ],
+    "scope": "Main source/artifact inspection; not independent subagent or semantic execution.",
+    "phases": {
+      "runtime": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      },
+      "macro": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      }
+    },
+    "adoption_candidates": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "3417b83f6d6fbcd19bff2314f4ab035de88e5311a57dbc99fbc17179a4b535f0"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "248686a9e886dae28c889f02382fee85d1a8e4caf00b605c58519344bc634b3a"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "daa89b33f839542b4ba1d4f7fc4a529e82f43955ba6857e3cb49b25cb53aefa8"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "46ad18b88c5e6aeb7688d3486a2639ecce175a2a0e69bd07f41c2e8b77233686"
+      }
+    ],
+    "adopted_head": "565115d3abd36d7a9ae15bbf9cb4575cf274f9fd"
+  },
+  "identity": {
+    "head": "565115d3abd36d7a9ae15bbf9cb4575cf274f9fd",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 0,
+    "seconds": 5.023273673999938,
+    "post_head": "565115d3abd36d7a9ae15bbf9cb4575cf274f9fd",
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "postflight_error": null,
+    "harness_summaries": []
+  },
+  "resolver11": {
+    "state": "Live building at publication; no result claimed.",
+    "command": [
+      "env",
+      "SUSS_SOURCE_CHILD_FUEL_TRACE=1",
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable::resolve::global_ownership_tests::hir_callers_propagate_every_interruption_and_recover_without_publishing",
+      "portable::resolve::global_ownership_tests::borrowed_queries_aliases_and_bootstrap_selection_allocate_no_identity_owners",
+      "portable::resolve::global_ownership_tests::all_bootstrap_variants_meter_absent_owners_and_restore_without_publishing_fallbacks",
+      "portable::resolve::global_ownership_tests::identity_value_order_debug_and_imports_do_not_depend_on_arc_address",
+      "portable::resolve::global_ownership_tests::creation_and_binding_publication_prepay_all_work_and_retry_without_partial_state",
+      "portable::resolve::global_ownership_tests::reader_pair_staging_and_readonly_checkpoint_identity_do_not_publish_partial_cells",
+      "portable::resolve::global_ownership_tests::redefinition_shares_language_identity_but_preserves_distinct_definition_revisions",
+      "portable::resolve::global_ownership_tests::borrowed_metered_queries_pay_each_comparison_and_never_expose_failed_results",
+      "portable::resolve::global_ownership_tests::borrowed_current_hits_preserve_core_precedence_exclusions_and_private_cell_errors",
+      "portable::resolve::global_ownership_tests::native_interface_catalog_uses_actual_binding_and_propagates_current_meter_failure",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo"
+    ],
+    "scope": "All10resolverownership/meteringcases plus original complete source-child case with readonly fuel observations enabled."
+  },
+  "limits": [
+    "No defaultCORE10Mfit or sourcechildfit yet; no wholeprogram gain inferred.",
+    "Normal2generations match but verifier exits1 at stale shipped compare; not fullverifier pass.",
+    "No fullbaseline/final-head CI/wholeissue completion proof.",
+    "Fixed-cap compilation calibration remains a pending user-policy question. Originalcaps/rates/programs/assertions remain in effect."
+  ]
+}
