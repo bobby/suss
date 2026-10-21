@@ -31392,3 +31392,10 @@ include the next function. No execution/typecheck result yet. All229 actual
 compiler inputs, BOOT4 and the active native32 support dependency are byte-exact;
 a705 identity is unchanged. Do not alter frozen native sources while replay runs.
 [Exact18 cases, hashes, inverse proofs and preservation scope](evidence/m4-pr263-ci2-semantic-calibration-2026-10-21.json).
+
+
+Additional CI2 patch034ffc2 passes the actual all-targets workspace Rust check:
+`cargo check --workspace --all-targets --locked --profile test`, exit0 in191.01s
+including the native32 build-lock wait. RawSHA7a13511f5c02cba1a390d2cb422790194eb0610ebd9537cc40f21cc0a12b98e6.
+Exact HEAD034 pre/post matches. No semantic execution result for its18 cases is
+inferred. All native32 source/BOOT/dependency inputs remain unchanged.

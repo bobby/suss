@@ -440,5 +440,25 @@
     "AOT-list instantiate helper uses existing compile_with_compile_fuel; complete1057-element input, storage/type/arity and component Runtime limits remain. Other direct-default compiler controls unchanged.",
     "All compiler229 inputs, BOOT4 and native32 dependency hashes still match its active snapshot. These changes are integration-test-only and do not change fingerprinta705.",
     "Initial preparation ambiguity was stopped before source writes; corrected scope ends at the next function as well as the next test. No typecheck/semantic pass inferred from syntax/inverse proofs."
-  ]
+  ],
+  "typecheck": {
+    "head": "034ffc2854045fcb30b06859698a9cb52a3b3a9c",
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "scope": "Rust workspace/all-targets check for additional integration-only changes, not semantic execution. Native32 source/dependencies/BOOT snapshot unchanged.",
+    "post_head": "034ffc2854045fcb30b06859698a9cb52a3b3a9c",
+    "head_unchanged": true,
+    "exit_code": 0,
+    "seconds": 191.01348040000448,
+    "raw_sha256": "7a13511f5c02cba1a390d2cb422790194eb0610ebd9537cc40f21cc0a12b98e6"
+  },
+  "validation_limits": "Workspace/all-targets Rust compilation passes at034ffc2; added18 semantic test bodies still need execution. Native32 pre-existing running cohort keeps source229/BOOT/dependency hashes unchanged."
 }
