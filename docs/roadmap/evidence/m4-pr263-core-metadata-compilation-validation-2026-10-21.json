@@ -1,0 +1,94 @@
+{
+  "base_head": "e19cb79dbc64752621aa6dac7b00ce73b386f53b",
+  "target": "crates/suss-cli/tests/compiled_macro_declaration_metadata.rs",
+  "test": "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer",
+  "previous_compilation": 100000000000,
+  "new_compilation_for_only_core_file_probe": 1000000000000,
+  "caller_runtime": 10000000,
+  "scope": "Ordinarypositivefull-coremetadata underexisting#252 authorization, notthependingspecialfixedcapcontrols. Alloriginalsource, assertions, ordering, GC, bothphase loops retained. RestoreMacroconfiguration100B afterthecompletedrequest; setter doesnotrefill withinrequest. Priorfulltest0P1Fretained. No sufficiency/performance proof.",
+  "before_sha256": "48fe6d61df5a4fa070afc304a6e16d2ca0d704b2e6c345f17d67ee9e68aa17a4",
+  "after_sha256": "da53daf0115daf753ed368fa3c2cd8e73707ddf4982b4d8b7176d5aef66f3572",
+  "typecheck": {
+    "head": "eabe1c3053934b561402f28726770eb971506b2b",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_declaration_metadata",
+      "--profile",
+      "test"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 0,
+    "seconds": 11.289244188999874,
+    "post_head": "eabe1c3053934b561402f28726770eb971506b2b",
+    "raw_sha256": "0d9a4c13c415626dc21b5032c39cc18855231162b0bac4ae4b671667c088c605",
+    "postflight_error": null,
+    "harness_summaries": []
+  },
+  "execution": {
+    "state": "Live at publication; no complete outcome claimed.",
+    "command": [
+      "env",
+      "SUSS_MACRO_FUEL_TRACE=1",
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_declaration_metadata",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer"
+    ]
+  },
+  "previous_failure": {
+    "head": "ed75d3500ca3560b45eac2de0b8b5fb2c604aab1",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "env",
+      "SUSS_MACRO_FUEL_TRACE=1",
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_declaration_metadata",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 1290.4938723230007,
+    "post_head": "7b50858e7291ce698c5ac9cce98c6b0587b2fed5",
+    "raw_sha256": "0aa21df0d7b5f892de53bff219f35c67c674c821c212b0652134a8cde306f9ee",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "0",
+        "1",
+        "0",
+        "0",
+        "2"
+      ]
+    ]
+  },
+  "limits": [
+    "Configured100Bexhaustion doesnot prove100Bexecuted becauseprojectedadmissioncanexhaustpreemptively.",
+    "1Tisordinarycompilationheadroom, notsufficiency/performanceproof.",
+    "Allspecialfixedcapsfrompendingpolicyquestionremainunchanged.",
+    "No fullbaseline/final-headCI/issuecompletion proof."
+  ]
+}
