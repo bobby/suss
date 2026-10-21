@@ -313,14 +313,41 @@ fn uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object
             let first = graph.recipe(Recipe::Alias(original)).unwrap();
             let second = graph.recipe(Recipe::Alias(first)).unwrap();
             let outer = graph.vector(&[original, first, second]).unwrap();
-            graph.materialize_reader_controller(outer, &mut cache).unwrap()
-                .expect("healthy transparent alias DATA must not decline")
+            assert!(graph.materialize_reader_controller(outer, &mut cache).unwrap().is_none(),
+                "request-only aliases must leave construction to the ordinary route");
+            graph.materialize(outer).unwrap()
         };
         session.collect().unwrap();
         let check = session.eval("(fn [v] (and (symbol? (nth v 0)) (identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))))").unwrap();
         let passed = session.invoke(&check, &[&result]).unwrap();
         assert!(matches!(bridge.read(&mut session, &passed, 0..0).unwrap().kind, suss_reader::forms::Kind::Bool(true)));
         assert!(cache.data.is_empty(), "a request-only owner must not become persistent authority");
+
+        // A real completed declaration supplies the persistent boundary required
+        // for DATA admission. The first three values remain uncaptured native
+        // aliases, with the identical identity/GC observation as the fallback.
+        let (global, info) = actual_alias_fixture_declaration(&mut session);
+        let result = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            graph.capture_roots = true;
+            graph.direct_reader_roots = true;
+            let original = graph.symbol("alias-evidence").unwrap();
+            let first = graph.recipe(Recipe::Alias(original)).unwrap();
+            let second = graph.recipe(Recipe::Alias(first)).unwrap();
+            let metadata = actual_alias_fixture_metadata(&mut graph, &global, &info);
+            let outer = graph.vector(&[original, first, second, metadata]).unwrap();
+            graph.materialize_reader_controller(outer, &mut cache).unwrap()
+                .expect("a genuine reachable completed source must admit alias DATA")
+        };
+        session.collect().unwrap();
+        let passed = session.invoke(&check, &[&result]).unwrap();
+        assert!(matches!(bridge.read(&mut session, &passed, 0..0).unwrap().kind, suss_reader::forms::Kind::Bool(true)));
+        assert!(cache.data.iter().all(|root| !matches!(&root.expected.key, Key::Request(_))),
+            "request envelopes never become persistent authority");
+        assert!(cache.data.iter().any(|root| matches!(&root.expected.key,
+            Key::ReaderSource(owner, _, _) if owner == &global)),
+            "DATA admission must retain the genuine completed declaration source");
+        assert!(cache.entries.is_empty(), "DATA values never mint strict source capabilities");
     }
 }
 
