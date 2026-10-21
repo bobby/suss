@@ -163,6 +163,12 @@ impl Watch {
     pub(super) fn domain_method(&self, mut store: StoreContextMut<'_, ()>, runtime: Instance,
         authority: &CanonicalMethods, irq: &AtomicBool, layout_descriptors: &[Val],
     ) -> wasmtime::Result<bool> {
+        let require_initial = self.domain_method_mode(store.as_context_mut(), irq, layout_descriptors)?;
+        self.method_valid(store, runtime, authority, irq, require_initial)
+    }
+    fn domain_method_mode(&self, mut store: StoreContextMut<'_, ()>, irq: &AtomicBool,
+        layout_descriptors: &[Val],
+    ) -> wasmtime::Result<bool> {
         Session::consume_host_work(store.as_context_mut(), 1, irq)?;
         let descriptor = Val::AnyRef(Some(self.descriptor.value.to_rooted(&mut store)));
         let mut relaxed = false;
@@ -170,7 +176,7 @@ impl Watch {
             Session::consume_host_work(store.as_context_mut(), 1, irq)?;
             if same(&store, &descriptor, active)? { relaxed = true; break; }
         }
-        self.method_valid(store, runtime, authority, irq, !relaxed)
+        Ok(!relaxed)
     }
     pub(super) fn anchor(&self, mut store: StoreContextMut<'_, ()>, receiver: &Val,
         domain: &super::write_domain::WriteDomain, irq: &AtomicBool,
@@ -236,6 +242,107 @@ impl Watch {
         let Some(current) = self.current(scope.as_context_mut(), &receiver, &irq)? else { return Ok(false) };
         Ok(self.authenticated(scope.as_context_mut(), &current, &irq)?)
     }
+}
+
+// A representative index only selects an already-owned Watch. Every hit still
+// checks Watch identity, owner content, selected mode and actual GC descriptor.
+#[derive(Clone, Copy)]
+struct SuccessfulMethod { watch: usize, require_initial: bool }
+
+// No Store accessor, generic callback or invocation API. This private owner of
+// the mutable Store borrow cannot escape the one canonical-loop invocation.
+struct MethodInspectionPass<'store, 'facts> {
+    store: StoreContextMut<'store, ()>,
+    runtime: Instance,
+    authority: &'facts CanonicalMethods,
+    irq: &'facts AtomicBool,
+    layouts: &'facts [Val],
+    watches: &'facts [Arc<Watch>],
+    successes: Vec<SuccessfulMethod>,
+    enabled: bool,
+    #[cfg(test)] inspections: usize,
+    #[cfg(test)] hits: usize,
+}
+impl<'store, 'facts> MethodInspectionPass<'store, 'facts> {
+    fn new(store: StoreContextMut<'store, ()>, runtime: Instance,
+        authority: &'facts CanonicalMethods, irq: &'facts AtomicBool,
+        layouts: &'facts [Val], watches: &'facts [Arc<Watch>],
+    ) -> Self {
+        Self { store, runtime, authority, irq, layouts, watches,
+            successes: Vec::new(), enabled: true,
+            #[cfg(test)] inspections: 0, #[cfg(test)] hits: 0 }
+    }
+    fn check_watch(&mut self, index: usize) -> wasmtime::Result<bool> {
+        Session::consume_host_work(self.store.as_context_mut(), 8, self.irq)?;
+        let watch = &self.watches[index];
+        // Preserve per-Watch layout-anchor selection BEFORE looking for a hit.
+        let require_initial = watch.domain_method_mode(self.store.as_context_mut(), self.irq, self.layouts)?;
+        if self.enabled {
+            for entry in &self.successes {
+                Session::consume_host_work(self.store.as_context_mut(), 2, self.irq)?;
+                let previous = &self.watches[entry.watch];
+                if watch.identity != previous.identity || require_initial != entry.require_initial { continue; }
+                Session::consume_host_work(self.store.as_context_mut(), 1, self.irq)?;
+                let bytes = watch.owner.len().checked_add(previous.owner.len())
+                    .and_then(|n| u64::try_from(n).ok())
+                    .ok_or_else(|| wasmtime::Error::msg("Method inspection owner work overflow"))?;
+                Session::consume_host_work(self.store.as_context_mut(), bytes, self.irq)?;
+                if watch.owner != previous.owner { continue; }
+                // Scope entry/exit, two rooted conversions/releases, exact ref_eq.
+                Session::consume_host_work(self.store.as_context_mut(), 7, self.irq)?;
+                let equal = {
+                    let mut scope = RootScope::new(self.store.as_context_mut());
+                    let current = watch.descriptor.value.to_rooted(&mut scope);
+                    let previous = previous.descriptor.value.to_rooted(&mut scope);
+                    Rooted::<AnyRef>::ref_eq(&scope, &current, &previous)?
+                };
+                if equal {
+                    #[cfg(test)] { self.hits += 1; }
+                    return Ok(true);
+                }
+            }
+        }
+        #[cfg(test)] { self.inspections += 1; }
+        let valid = watch.method_valid(self.store.as_context_mut(), self.runtime,
+            self.authority, self.irq, require_initial)?;
+        if !valid {
+            // Do not reuse across a malformed/false inspection. The caller still
+            // evaluates every later Watch, preserving non-short-circuit behavior.
+            Session::consume_host_work(self.store.as_context_mut(), 1, self.irq)?;
+            self.successes.clear();
+            self.enabled = false;
+            return Ok(false);
+        }
+        if self.enabled {
+            if self.successes.len() == self.successes.capacity() {
+                let capacity = self.successes.capacity().checked_mul(2)
+                    .ok_or_else(|| wasmtime::Error::msg("Method inspection capacity overflow"))?.max(4);
+                let bytes = capacity.checked_add(self.successes.len())
+                    .and_then(|n| n.checked_mul(std::mem::size_of::<SuccessfulMethod>()))
+                    .and_then(|n| n.checked_add(2)) // reserve/buffer-release controls
+                    .and_then(|n| u64::try_from(n).ok())
+                    .ok_or_else(|| wasmtime::Error::msg("Method inspection allocation overflow"))?;
+                Session::consume_host_work(self.store.as_context_mut(), bytes, self.irq)?;
+                self.successes.try_reserve_exact(capacity - self.successes.len())
+                    .map_err(|_| wasmtime::Error::msg("Method inspection allocation failed"))?;
+            }
+            Session::consume_host_work(self.store.as_context_mut(), 1, self.irq)?;
+            self.successes.push(SuccessfulMethod { watch: index, require_initial });
+        }
+        Ok(true)
+    }
+}
+// The pass and its Store borrow end before the caller can inspect classes,
+// prototypes, perform writes or start another proof. No cache is returned.
+pub(super) fn inspect_domain_methods(mut store: StoreContextMut<'_, ()>, runtime: Instance,
+    authority: &CanonicalMethods, irq: &AtomicBool, layouts: &[Val], watches: &[Arc<Watch>],
+) -> wasmtime::Result<bool> {
+    // Fixed private borrow/view initialization and release controls; no retained health.
+    Session::consume_host_work(store.as_context_mut(), 16, irq)?;
+    let mut pass = MethodInspectionPass::new(store, runtime, authority, irq, layouts, watches);
+    let mut valid = true;
+    for index in 0..watches.len() { valid &= pass.check_watch(index)?; }
+    Ok(valid)
 }
 
 impl Session {
@@ -576,6 +683,187 @@ mod receipt_tests {
         let (value, inputs) = session.data_construct_with_inputs(&class, &args).unwrap();
         (value, inputs.unwrap())
     }
+    // Test-only copies never enter the ledger/domain and cannot mint receipts.
+    fn pass_test_watch(watch: &Watch, identity: u64, owner: &'static str,
+        descriptor: &SessionValue,
+    ) -> Arc<Watch> {
+        Arc::new(Watch { identity, site: watch.site, owner, slot: watch.slot,
+            receiver: watch.receiver.clone(), descriptor: descriptor.clone(),
+            constructor: watch.constructor.clone(), storage: watch.storage.clone(),
+            number_type: watch.number_type.clone(), eligible_transition: watch.eligible_transition,
+            receipt: Mutex::new(None), source_domain: Mutex::new(None) })
+    }
+    #[test]
+    fn method_pass_reuses_exact_descriptors_across_watches_and_roots_survive_gc() {
+        let mut session = Session::new_macro().unwrap();
+        let (_a, a) = registered_list(&mut session);
+        let (_b, b) = registered_list(&mut session);
+        let watches = vec![a.memo_watch().unwrap(), b.memo_watch().unwrap()];
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        let _request = session.operation_budget_scope().unwrap();
+        {
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            assert!(pass.check_watch(0).unwrap());
+            // Private test-only forced collection, no public Store accessor.
+            pass.store.gc(None).unwrap();
+            assert!(pass.check_watch(1).unwrap());
+            assert_eq!((pass.inspections, pass.hits), (1, 1));
+        }
+        for watch in &watches { assert!(registry_lock(&watch.receipt).is_none()); }
+    }
+    #[test]
+    fn method_pass_separates_watch_identity_owner_and_actual_descriptor() {
+        let mut session = Session::new_macro().unwrap();
+        let (_value, inputs) = registered_list(&mut session);
+        let watch = inputs.memo_watch().unwrap();
+        let other_class = session.eval("suss.core/Keyword").unwrap();
+        let other_descriptor = session.data_descriptor(&other_class, true).unwrap();
+        let bad_identity = pass_test_watch(&watch, watch.identity ^ 1, watch.owner, &watch.descriptor);
+        let bad_owner = pass_test_watch(&watch, watch.identity, "Keyword", &watch.descriptor);
+        let bad_descriptor = pass_test_watch(&watch, watch.identity, watch.owner, &other_descriptor);
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        for bad in [bad_identity.clone(), bad_owner.clone(), bad_descriptor] {
+            let _request = session.operation_budget_scope().unwrap();
+            let expected = bad.domain_method(session.store.as_context_mut(), runtime, &authority, &irq, &[]);
+            let watches = vec![watch.clone(), bad, watch.clone()];
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            assert!(pass.check_watch(0).unwrap());
+            match expected {
+                Err(error) => assert_eq!(pass.check_watch(1).unwrap_err().to_string(), error.to_string()),
+                Ok(false) => {
+                    assert!(!pass.check_watch(1).unwrap());
+                    assert!(!pass.enabled);
+                    assert!(pass.successes.is_empty());
+                    assert!(pass.check_watch(2).unwrap());
+                    assert_eq!((pass.inspections, pass.hits), (3, 0));
+                }
+                Ok(true) => panic!("mismatched Watch cannot validate"),
+            }
+        }
+        // The production wrapper must inspect the late identity error even
+        // after an earlier owner mismatch has already made the proof false.
+        let _request = session.operation_budget_scope().unwrap();
+        assert!(!bad_owner.domain_method(session.store.as_context_mut(), runtime, &authority, &irq, &[]).unwrap());
+        let expected = bad_identity.domain_method(session.store.as_context_mut(), runtime, &authority, &irq, &[]).unwrap_err();
+        let watches = [bad_owner, bad_identity];
+        let error = inspect_domain_methods(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches).unwrap_err();
+        assert_eq!(error.to_string(), expected.to_string());
+    }
+    #[test]
+    fn method_pass_fresh_mode_after_live_replacement_does_not_invoke_hash() {
+        let mut session = Session::new_macro().unwrap();
+        let (value, inputs) = registered_list(&mut session);
+        let watch = inputs.memo_watch().unwrap();
+        let watches = vec![watch.clone(), watch.clone()];
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            assert!(inspect_domain_methods(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches).unwrap());
+        }
+        session.eval("(def pass-hash-events 0) (extend-type List IHash (-hash [_] (do (set! pass-hash-events (+ pass-hash-events 1)) 91)))").unwrap();
+        session.collect().unwrap();
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut scope = RootScope::new(&mut session.store);
+            let layouts = [Val::AnyRef(Some(watch.descriptor.value.to_rooted(&mut scope)))];
+            let mut pass = MethodInspectionPass::new(scope.as_context_mut(), runtime, &authority, &irq, &layouts, &watches);
+            assert!(pass.check_watch(0).unwrap());
+            assert!(pass.check_watch(1).unwrap());
+            assert_eq!((pass.inspections, pass.hits), (1, 1));
+        }
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            assert!(!inspect_domain_methods(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches).unwrap());
+        }
+        let count = session.eval("pass-hash-events").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &count).unwrap(), "0");
+        hash(&mut session, &value);
+        let count = session.eval("pass-hash-events").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &count).unwrap(), "1");
+
+    }
+    #[test]
+    fn method_pass_prepays_growth_lookup_and_recovers_after_fuel_or_irq() {
+        let mut session = Session::new_macro().unwrap();
+        let (_value, inputs) = registered_list(&mut session);
+        let watches = vec![inputs.memo_watch().unwrap(), inputs.memo_watch().unwrap()];
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        let first_cost = {
+            let _request = session.operation_budget_scope().unwrap();
+            let before = session.store.get_fuel().unwrap();
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches[..1]);
+            assert!(pass.check_watch(0).unwrap());
+            before - session.store.get_fuel().unwrap()
+        };
+        let reservation = 4 * std::mem::size_of::<SuccessfulMethod>() as u64 + 2;
+        for allowance in [0, first_cost - reservation - 1, first_cost - 1] {
+            let _request = session.operation_budget_scope().unwrap();
+            session.store.set_fuel(allowance).unwrap();
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            let error = pass.check_watch(0).unwrap_err();
+            assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
+            assert!(pass.successes.is_empty());
+        }
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            assert!(pass.check_watch(0).unwrap());
+            let before = pass.store.get_fuel().unwrap();
+            assert!(pass.check_watch(1).unwrap());
+            let hit_cost = before - pass.store.get_fuel().unwrap();
+            pass.store.set_fuel(hit_cost - 1).unwrap();
+            let error = pass.check_watch(1).unwrap_err();
+            assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
+        }
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            assert!(pass.check_watch(0).unwrap());
+            irq.store(true, std::sync::atomic::Ordering::SeqCst);
+            let error = pass.check_watch(1).unwrap_err();
+            assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::Interrupt));
+        }
+        irq.store(false, std::sync::atomic::Ordering::SeqCst);
+        let _request = session.operation_budget_scope().unwrap();
+        assert!(inspect_domain_methods(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches).unwrap());
+        for watch in &watches { assert!(registry_lock(&watch.receipt).is_none()); }
+    }
+    #[test]
+    fn method_pass_success_does_not_certify_receiver_storage_or_mint_receipts() {
+        let mut session = Session::new_macro().unwrap();
+        let (value, first) = registered_list(&mut session);
+        let (_other, second) = registered_list(&mut session);
+        let watches = vec![first.memo_watch().unwrap(), second.memo_watch().unwrap()];
+        let authority = session.canonical_methods.clone().unwrap();
+        let irq = session.host_work_interrupt();
+        let runtime = session.runtime;
+        let poison = session.eval("99").unwrap();
+        session.inspect(&value, |store, value| {
+            let mut scope = RootScope::new(store);
+            let object = value.unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+            let fields = object.field(&mut scope, 1)?.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();
+            let poison = poison.value.to_rooted(&mut scope);
+            fields.set(&mut scope, 1, Val::AnyRef(Some(poison)))
+        }).unwrap();
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut pass = MethodInspectionPass::new(session.store.as_context_mut(), runtime, &authority, &irq, &[], &watches);
+            assert!(pass.check_watch(0).unwrap());
+            assert!(pass.check_watch(1).unwrap());
+            assert_eq!((pass.inspections, pass.hits), (1, 1));
+        }
+        assert!(!first.matches(&mut session, &value).unwrap());
+        for watch in &watches { assert!(registry_lock(&watch.receipt).is_none()); }
+    }
+
     fn hash(session: &mut Session, value: &SessionValue) {
         let function = session.eval("(fn [x] (hash x))").unwrap();
         drop(session.invoke(&function, &[value]).unwrap());
@@ -676,7 +964,12 @@ mod receipt_tests {
         hash(&mut session, &warmed);
         assert!(inputs.matches(&mut session, &warmed).unwrap());
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(extend-type List IHash (-hash [_] 91))").unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let replacement = super::super::memo_leaf_test_support::eval_with_compilation_fuel(
+            &mut session, "(extend-type List IHash (-hash [_] 91))",
+        );
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        replacement.unwrap();
         session.enter_namespace("user").unwrap();
         session.collect().unwrap();
         assert!(inputs.matches(&mut session, &warmed).unwrap());

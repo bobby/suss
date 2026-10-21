@@ -316,13 +316,13 @@ impl WriteDomain {
         // The caller derives these only from actual receiver Watch anchors in
         // this exact factory-ownership component, never a strict source child.
         factory_inputs::append_layouts(store.as_context_mut(), irq, &mut layouts, factory_layouts)?;
-        let mut canonical = true;
-        for watch in &watches {
-            let method_valid = watch.domain_method(store.as_context_mut(), runtime, methods, irq, &layouts)?;
-            #[cfg(test)]
-            memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=method watch={:p} valid={method_valid}", watch.as_ref()));
-            canonical &= method_valid;
-        }
+        // This callback-free pass ends before any class/prototype/storage proof
+        // or write. Only repeated exact method inspections share a result.
+        let canonical = super::memo_bridge::inspect_domain_methods(
+            store.as_context_mut(), runtime, methods, irq, &layouts, &watches,
+        )?;
+        #[cfg(test)]
+        memo_domain_trace(format_args!("domain={self:p} target={target:p} stage=method-pass watches={} valid={canonical}", watches.len()));
         let classes = methods.source_classes_in_context(InspectionContext {
             store: store.as_context_mut(),
             runtime,
