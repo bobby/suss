@@ -944,7 +944,7 @@ mod tests {
                 .descriptor
                 .clone();
             session
-                .eval("(extend-type List ICounted (-count [_] 73))")
+                .eval_with_test_compilation_fuel("(extend-type List ICounted (-count [_] 73))")
                 .unwrap();
             session.collect().unwrap();
             assert!(
@@ -959,7 +959,7 @@ mod tests {
             );
             session.eval_with_test_compilation_fuel("(def List registry-saved-list) (def registry-saved-hash hash-ordered-coll) (def hash-ordered-coll (fn [_] 711))").unwrap();
             session.enter_namespace("user").unwrap();
-            let hash = session.eval("(hash (list 1))").unwrap();
+            let hash = session.eval_with_test_compilation_fuel("(hash (list 1))").unwrap();
             assert_eq!(
                 crate::portable_repl::display(&mut session, &hash).unwrap(),
                 "711"
@@ -970,7 +970,7 @@ mod tests {
                 "live hash helper remains ordinary dispatch"
             );
             session
-                .eval("(extend-type List IHash (-hash [_] 91))")
+                .eval_with_test_compilation_fuel("(extend-type List IHash (-hash [_] 91))")
                 .unwrap();
             session.collect().unwrap();
             assert!(!methods.matches(&mut session, "List", &descriptor).unwrap());
@@ -982,7 +982,7 @@ mod tests {
                 .is_err(),
                 "late capture must not refresh replaced methods"
             );
-            session.eval("(ns suss.core) (def List nil)").unwrap();
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def List nil)").unwrap();
             assert!(
                 !methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "mutable globals cannot refresh authority"

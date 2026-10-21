@@ -427,5 +427,213 @@
       ]
     ],
     "test_source_sha256": "7605b9e1a3717f39cb1e701f6055c1d7b9229d732bd542ecfbcc213eefa7983a"
+  },
+  "native19": {
+    "head": "dcf988c8cfb4cf57f9903418a99bba240d25c2a0",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "portable_session::memo_leaf_test_support::compiler_data_allowance_restores_runtime_fuel_after_success_error_and_unwind"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 315.77386300599755,
+    "post_head": "dcf988c8cfb4cf57f9903418a99bba240d25c2a0",
+    "raw_sha256": "1853ff9f282207512dbdbb5b2c0c36b0117ff8f8a076fb8d3cc3e3d4a5d50efa",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "10",
+        "9",
+        "0",
+        "0",
+        "619"
+      ]
+    ],
+    "failures": [
+      {
+        "name": "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4117:56:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..18, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4347:62:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..22, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:3955:62:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..32, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4273:14:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..44, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4229:58:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..28, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4376:57:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..19, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs:401:63:",
+        "message": "called `Result::unwrap()` on an `Err` value: Trap(wasm trap: all fuel consumed by WebAssembly)"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1892:49:",
+        "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+      },
+      {
+        "name": "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+        "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:985:59:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })"
+      }
+    ],
+    "interpretation": "All19 selected complete:10PASS9FAIL0ignored619filtered;9previouslyfailed pass plus new restoration regressionPASS. Seven remaining fail in later positive native compilation calls, onecontroller declaration work before fresh recovery scope, unchangedRuntime source-childvariant3OutFuel. No old14 passes transferred or wholebaseline inferred. Intentional caughtunwind panic belongs passingrestorationtest and is not a failedverdict."
+  },
+  "foundation_prefix_checks": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 48.32932755300135,
+      "raw_sha256": "ea4dceb4c2dba56e2ea3249762a4148bfd38233e8ae248b5faf391547a383ff1"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_inventory.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7643769060014165,
+      "raw_sha256": "69fdb2770db81046b95d2b1a8ecdd5fb52225b233dd3bff58758266fadf2236e"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_reviews.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.044072122000216,
+      "raw_sha256": "279f7cdc0522831c9dc073020098d2af8e93e86b1b2a5702008752af7340dc92"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 3.5358694230017136,
+      "raw_sha256": "eb7d495f5ec269fcea0c49b8e7efa618eae1c745654c97c2a2221f54a67c6660"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/reader_core_catalog.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 2.5974502930039307,
+      "raw_sha256": "3fb333e1c745e400096788b97d3611b8381fb476ecbf9ee4a2ae799593b4b001"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/apply_bootstrap.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.575901732998318,
+      "raw_sha256": "5bdb53d5b984bde01e2214e0e9b386231b60dd5cf1da82a9ae84b3ae6c66153e"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/sequence_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7025988539971877,
+      "raw_sha256": "0835b642781cdae893742539f572ae0918efca72494ac216e360c4623c227323"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_transducer_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.1702825510001276,
+      "raw_sha256": "0229ff9a4a1ac5ba3bf8c07d16d187b3e0876ffa98b1eb001d7d3ba8c0c2a118"
+    }
+  ],
+  "foundation_prefix_scope": "Prefix commands at dcf988c:365Python script tests and all8inventory/provenance commandsPASS. Separate from bootstrap/VM/fullbaseline; tail6 receipts retained above.",
+  "next_source_changes": {
+    "scope": "Applied source changes, syntax2024 only; not yet typechecked/executed. Matching artifacts required.",
+    "positive_compilation": {
+      "observation_functions": [
+        "bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+        "compact_diamond_admission_rejects_before_reader_callbacks",
+        "declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+        "duplicate_reader_collections_preserve_effects_and_occurrence_results",
+        "metadata_set_preserves_canonical_hash_callback_count_and_order",
+        "reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery"
+      ],
+      "remaining_positive_eval_calls": 17,
+      "inverse_entire_file_proof": "Normalizing onlyevalhelpernames makes original andafterimage wholefilebyteexact; no source/assertions/budget/Runtime changes.",
+      "reader_controller": "Begin one top-level operation before charged graph preparation. Materializer remains nested without refill; recovery still original10M. ExistingcoldprimingMacro100B outer scope unchanged.",
+      "canonical_method_function": "canonical_methods_capture_actual_installations_without_external_handles",
+      "canonical_remaining_positive_eval_calls": 4
+    },
+    "source_expectation_reuse": "Only full successful current certificate validation plus exact Rc expectation identity reuses the successful logical read inside the callback-free batch. Addedfallible2unitbranch/identity debit. All independent/invalid paths keep originalfallibledecode. Existing storage/source/memo/child/method checks remain.",
+    "independent_candidate_review": {
+      "agent": "Faraday 01a15d18-5f13-7290-9064-aada138141fd",
+      "result": "No blocking findings on prepared exactpatch; source review only, no Cargo/VM.",
+      "qualification": "Optionaldirectwrong-witnessnegativeassert added after review, no productioncode change from reviewedpatch. Paireddebits not workloadfitproof."
+    }
   }
 }

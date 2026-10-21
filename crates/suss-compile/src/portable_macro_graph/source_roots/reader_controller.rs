@@ -394,6 +394,10 @@ mod tests {
         environment: &Environment,
         phase: Phase,
     ) -> crate::portable_session::SessionValue {
+        // Graph preparation and materialization are one cumulative operation.
+        // Nested callers keep their existing remainder; a fresh recovery starts
+        // its configured budget before the first charged graph recipe.
+        let _request = session.operation_budget_scope().unwrap();
         let (global, info) = declaration(environment, phase);
         let mut graph = AnalysisGraph::new(bridge, session);
         graph.capture_roots = true;

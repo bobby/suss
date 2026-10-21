@@ -1092,10 +1092,17 @@ impl Certificate {
         session.charge_host_work(key_comparison_work(owner, &certificate.source.key))?;
         let same = *owner == certificate.source.key;
         let valid = Self::validate_into(session, bridge, certificate, done, audit)?;
-        let current =
-            expected
-                .witness
-                .matches_logical_source(session, bridge, &certificate.value)?;
+        // Complete validation above already checks this exact immutable source
+        // witness. Within this callback-free batch, reuse only that successful
+        // check; independent expectations and failed certificates still perform
+        // the original fallible read. No storage or source authority is cached
+        // beyond the existing batch.
+        session.charge_host_work(2)?;
+        let current = if valid && Rc::ptr_eq(expected, &certificate.source) {
+            true
+        } else {
+            expected.witness.matches_logical_source(session, bridge, &certificate.value)?
+        };
         if !(same && valid && current) {
             return Ok(None);
         }
@@ -1429,16 +1436,40 @@ mod tests {
             .eval("(def ^{:audit {:x 17}} batch-a 1) (def ^{:audit {:x 17}} batch-b 1)")
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        let (certificate, wrong) = {
+        let (certificate, wrong, independent, wrong_same_key) = {
             let _request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
             let (_, a, _) = declaration(&mut graph, "batch-a");
             let (_, b, _) = declaration(&mut graph, "batch-b");
             let certificate = standalone(&mut graph, a);
             let wrong = graph.source_root_expectation(b).unwrap().unwrap();
-            (certificate, wrong)
+            let independent = graph.source_root_expectation(a).unwrap().unwrap();
+            let mut wrong_same_key = graph.source_root_expectation(b).unwrap().unwrap();
+            // Negative fixture: a same-key expectation with the other native
+            // declaration's logical witness must never inherit validation.
+            Rc::get_mut(&mut wrong_same_key).unwrap().key = certificate.source.key.clone();
+            (certificate, wrong, independent, wrong_same_key)
         };
         session.collect().unwrap();
+        assert!(!Rc::ptr_eq(&independent, &certificate.source));
+        assert!(independent.key == certificate.source.key);
+        assert!(wrong_same_key.key == certificate.source.key);
+        assert!(!wrong_same_key.witness.matches_logical_source(
+            &mut session, &bridge, &certificate.value,
+        ).unwrap(), "negative witness must independently differ from the actual source");
+        let measure = |session: &mut Session, expected: &Rc<Expectation>| {
+            session.with_operation_budget(|session| {
+                let before = session.operation_fuel_remaining()?;
+                assert!(Certificate::checked(session, &bridge, &certificate, expected)?.is_some());
+                Ok(before - session.operation_fuel_remaining()?)
+            }).unwrap()
+        };
+        // Both operations validate the same complete certificate with fresh
+        // batch state. The independent expectation retains the second read.
+        let independent_cost = measure(&mut session, &independent);
+        let exact_cost = measure(&mut session, &certificate.source);
+        eprintln!("source-expectation-check exact={exact_cost} independent={independent_cost}");
+        assert!(exact_cost < independent_cost);
         // Repeating the same genuine root exercises a completed-root hit; its
         // independent expected owner must still be checked on every occurrence.
         let result = Certificate::checked_batch(
@@ -1448,12 +1479,16 @@ mod tests {
                 (&certificate, &certificate.source),
                 (&certificate, &wrong),
                 (&certificate, &certificate.source),
+                (&certificate, &independent),
+                (&certificate, &wrong_same_key),
             ],
         )
         .unwrap();
         assert!(result[0].is_some());
         assert!(result[1].is_none());
         assert!(result[2].is_some());
+        assert!(result[3].is_some(), "independent matching witness remains valid");
+        assert!(result[4].is_none(), "same key cannot authenticate a different witness");
         drop(result);
         // A later error is not hidden by the earlier false result. Inject the
         // interrupt between inputs, not before the initial source mismatch.

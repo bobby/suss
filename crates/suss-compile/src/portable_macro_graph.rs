@@ -3952,7 +3952,7 @@ mod sharing_tests {
             .map(|(global, source)| (global.clone(), source.clone())).unwrap();
         let mut baseline: Option<Vec<f64>> = None;
         for _ in 0..2 {
-            session.eval("(set! metadata-hash-log (array))").unwrap();
+            session.eval_with_test_compilation_fuel("(set! metadata-hash-log (array))").unwrap();
             let value = {
                 let _request = session.operation_budget_scope().unwrap();
                 let mut graph = AnalysisGraph::new(&bridge, &mut session);
@@ -3960,7 +3960,7 @@ mod sharing_tests {
                 graph.materialize(root).unwrap()
             };
             session.collect().unwrap();
-            let log = session.eval("(seq metadata-hash-log)").unwrap();
+            let log = session.eval_with_test_compilation_fuel("(seq metadata-hash-log)").unwrap();
             let form = bridge.read(&mut session, &log, 0..1).unwrap();
             let Kind::List(items) = &form.kind else { panic!("nonempty numeric hash callback log") };
             let actual = items.iter().map(|item| {
@@ -4114,11 +4114,11 @@ mod sharing_tests {
             value
         };
         session.collect().unwrap();
-        let count = session.eval("raw-key-hash-calls").unwrap();
+        let count = session.eval_with_test_compilation_fuel("raw-key-hash-calls").unwrap();
         // Direct occurrence and first alias each construct two nine-item sets;
         // the second alias reuses its result. Key interning executes no hashes.
         assert_eq!(bridge.read(&mut session, &count, 0..1).unwrap().kind, Kind::Number(36.0));
-        let probe = session.eval("(fn [v] [(identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))])").unwrap();
+        let probe = session.eval_with_test_compilation_fuel("(fn [v] [(identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))])").unwrap();
         let result = session.invoke(&probe, &[&value]).unwrap();
         let result = bridge.read(&mut session, &result, 0..1).unwrap();
         let Kind::Vector(items) = &result.kind else { panic!("identity projection") };
@@ -4226,32 +4226,32 @@ mod sharing_tests {
                 201.0,
             ),
         ] {
-            session.eval("(set! review-hash-effects 0)").unwrap();
+            session.eval_with_test_compilation_fuel("(set! review-hash-effects 0)").unwrap();
             let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
             let expected = bridge.quote(&mut session, form.clone()).unwrap();
-            let count = session.eval("review-hash-effects").unwrap();
+            let count = session.eval_with_test_compilation_fuel("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
                 Kind::Number(calls)
             );
-            let first_key = session.eval("review-first-hash").unwrap();
+            let first_key = session.eval_with_test_compilation_fuel("review-first-hash").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
                 Kind::Number(first)
             );
-            session.eval("(set! review-hash-effects 0)").unwrap();
+            session.eval_with_test_compilation_fuel("(set! review-hash-effects 0)").unwrap();
             let actual = {
                 let mut graph = AnalysisGraph::new(&bridge, &mut session);
                 let root = graph.form(&form, 0).unwrap();
                 graph.materialize(root).unwrap()
             };
             session.collect().unwrap();
-            let count = session.eval("review-hash-effects").unwrap();
+            let count = session.eval_with_test_compilation_fuel("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
                 Kind::Number(calls)
             );
-            let first_key = session.eval("review-first-hash").unwrap();
+            let first_key = session.eval_with_test_compilation_fuel("review-first-hash").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
                 Kind::Number(first)
@@ -4269,7 +4269,7 @@ mod sharing_tests {
         session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) review-hash-effects)))").unwrap();
         let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let probe = session
-            .eval("(fn [value index] (nth (nth value index) 0))")
+            .eval_with_test_compilation_fuel("(fn [value index] (nth (nth value index) 0))")
             .unwrap();
         fn bitmaps(
             session: &mut Session,
@@ -4298,19 +4298,19 @@ mod sharing_tests {
             "[[#{1 2 3 4 5 6 7 8 9}] [#{1 2 3 4 5 6 7 8 9}]]",
             "([#{1 2 3 4 5 6 7 8 9}] [#{1 2 3 4 5 6 7 8 9}])",
         ] {
-            session.eval("(set! review-hash-effects 0)").unwrap();
+            session.eval_with_test_compilation_fuel("(set! review-hash-effects 0)").unwrap();
             let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
             let expected = bridge.quote(&mut session, form.clone()).unwrap();
             let expected_probe = bitmaps(&mut session, &bridge, &probe, &expected);
             assert_ne!(expected_probe[0], expected_probe[1]);
-            session.eval("(set! review-hash-effects 0)").unwrap();
+            session.eval_with_test_compilation_fuel("(set! review-hash-effects 0)").unwrap();
             let actual = {
                 let mut graph = AnalysisGraph::new(&bridge, &mut session);
                 let root = graph.form(&form, 0).unwrap();
                 graph.materialize(root).unwrap()
             };
             session.collect().unwrap();
-            let count = session.eval("review-hash-effects").unwrap();
+            let count = session.eval_with_test_compilation_fuel("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
                 Kind::Number(18.0)
@@ -4344,7 +4344,7 @@ mod sharing_tests {
         drop(request);
         drop(graph);
         // The same allowance admits a genuinely small independent operation.
-        let effects = session.eval("review-diamond-effects").unwrap();
+        let effects = session.eval_with_test_compilation_fuel("review-diamond-effects").unwrap();
         assert_eq!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0));
         let small = {
             let request = session.operation_budget_scope().unwrap();
@@ -4373,7 +4373,7 @@ mod sharing_tests {
         };
         assert!(error.to_string().contains("fuel") || error.to_string().contains("Fuel"));
         session.set_operation_fuel(10_000_000);
-        let count = session.eval("review-hash-effects").unwrap();
+        let count = session.eval_with_test_compilation_fuel("review-hash-effects").unwrap();
         assert_eq!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
             Kind::Number(0.0)
@@ -4384,7 +4384,7 @@ mod sharing_tests {
             graph.materialize(root).unwrap()
         };
         session.collect().unwrap();
-        let count = session.eval("review-hash-effects").unwrap();
+        let count = session.eval_with_test_compilation_fuel("review-hash-effects").unwrap();
         assert_eq!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
             Kind::Number(18.0)
