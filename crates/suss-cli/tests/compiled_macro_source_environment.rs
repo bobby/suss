@@ -4,6 +4,8 @@ use suss_cli::{
     portable_session::Session,
 };
 use suss_reader::forms::{Form, Kind};
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 
 fn read(session: &mut Session, value: &suss_cli::portable_session::SessionValue) -> Form {
     let bridge = FormBridge::new(session).unwrap();
@@ -66,16 +68,21 @@ fn compiled_source_macro_environment_retains_lexical_initializer_and_shadow_with
                       (get &env :context)
                       (nth &form 1)])))"#;
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.define(definition).unwrap();
-        let value = session.eval_with_macros(r#"
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros(r#"
           (def effects 0)
           (def result
             (let [x (do (set! effects (+ effects 1)) 7)]
               (let [x 9] (lexical-facts x))))
-          result"#, &mut macros).unwrap();
+          result"#, &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let result = read(&mut session, &value);
         assert_shared("lexical", &result);
         let Kind::Vector(items) = result.into_parts().2 else { panic!("executed source environment facts") };
@@ -104,11 +111,16 @@ fn compiled_source_macro_environment_tracks_function_scopes_and_implicit_argumen
                     (count more)
                     (count &form)])))"#;
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.define(definition).unwrap();
-        let value = session.eval_with_macros("(def function (fn [x] (scope-facts))) (function 17)", &mut macros).unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros("(def function (fn [x] (scope-facts))) (function 17)", &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let result = read(&mut session, &value);
         assert_shared("function", &result);
         let Kind::Vector(items) = result.into_parts().2 else { panic!("function facts") };
@@ -116,7 +128,10 @@ fn compiled_source_macro_environment_tracks_function_scopes_and_implicit_argumen
         assert!(matches!(&items[0].kind, Kind::Keyword(keyword) if keyword.name == "return"));
         assert!(matches!(&items[1].kind, Kind::Number(1.0)));
         assert!(matches!(&items[2].kind, Kind::Keyword(keyword) if keyword.name == "arg"));
-        let value = session.eval_with_macros("(let [x 7] (scope-facts x a b))", &mut macros).unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros("(let [x 7] (scope-facts x a b))", &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let result = read(&mut session, &value);
         assert_shared("variadic", &result);
         let Kind::Vector(items) = result.into_parts().2 else { panic!("variadic facts") };
@@ -138,13 +153,24 @@ fn compiled_source_macro_environment_keeps_snapshot_documents_separate_from_stag
                       (get (get catalog 'tracked) :doc)
                       (get (get catalog 'tracked) :suss/analysis-completed)])))"#;
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.define(definition).unwrap();
-        let first = session.eval_with_macros("(def tracked \"first\" (snapshot-facts))", &mut macros).unwrap();
-        let second = session.eval_with_macros("(def tracked \"second\" (snapshot-facts))", &mut macros).unwrap();
-        let after = session.eval_with_macros("(snapshot-facts)", &mut macros).unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros("(def tracked \"first\" (snapshot-facts))", &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let first = evaluated.unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros("(def tracked \"second\" (snapshot-facts))", &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let second = evaluated.unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros("(snapshot-facts)", &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let after = evaluated.unwrap();
         for (index, value) in [&first, &second, &after].into_iter().enumerate() {
             let Kind::Vector(items) = read(&mut session, value).into_parts().2 else { panic!("snapshot facts") };
             assert_eq!(items.len(), 4);
