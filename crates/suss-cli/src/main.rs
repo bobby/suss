@@ -28,8 +28,8 @@ fn run_command(cmd: args::Command) {
         args::Command::Repl { fuel, compile_fuel } => {
             run_repl(fuel, compile_fuel);
         }
-        args::Command::Eval { expr } => {
-            run_eval(&expr);
+        args::Command::Eval { expr, compile_fuel } => {
+            run_eval(&expr, compile_fuel);
         }
         args::Command::RunFile { path } => {
             run_file(&path);
@@ -62,8 +62,8 @@ fn run_command(cmd: args::Command) {
 }
 
 /// Evaluate a single expression using WASM compilation and wasmtime
-fn run_eval(expr: &str) {
-    match run_eval_compiled(expr, None) {
+fn run_eval(expr: &str, compile_fuel: Option<u64>) {
+    match run_eval_compiled(expr, None, compile_fuel) {
         Ok(()) => {}
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -73,10 +73,11 @@ fn run_eval(expr: &str) {
 }
 
 /// Execute native source with the same isolated compiled phases as the REPL.
-fn run_eval_compiled(source: &str, path: Option<std::path::PathBuf>) -> Result<(), String> {
+fn run_eval_compiled(source: &str, path: Option<std::path::PathBuf>, compile_fuel: Option<u64>) -> Result<(), String> {
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
     let mut runtime = Session::new_repl().map_err(|error| error.to_string())?;
     let mut macros = CompiledMacros::new().map_err(|error| error.to_string())?;
+    if let Some(fuel) = compile_fuel { macros.set_operation_fuel(fuel); }
     let result = portable_repl::evaluate_script_compiled(&mut runtime, &mut macros, source, path)
         .map_err(|error| portable_repl::error_display(&mut runtime, &error))?;
     println!("{result}");
@@ -94,7 +95,7 @@ fn run_file(path: &str) {
     };
 
     // Each source form imports the same persistent runtime and compiled macro phase.
-    if let Err(e) = run_eval_compiled(&contents, Some(std::path::PathBuf::from(path))) {
+    if let Err(e) = run_eval_compiled(&contents, Some(std::path::PathBuf::from(path)), None) {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }

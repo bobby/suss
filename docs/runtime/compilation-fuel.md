@@ -72,7 +72,12 @@ promises. See [staging](../../crates/suss-compile/src/portable_repl.rs) and
 Shipped evaluation and compilation defaults remain 10,000,000 each. REPL `--fuel`
 sets both; explicit `--compile-fuel` overrides compilation independently of flag
 order. AOT `compile --compile-fuel` configures source compilation, not subsequent
-artifact execution. See [compiled REPL configuration](compiled-repl.md).
+artifact execution. Expression commands accept
+`suss -e 'EXPR' --compile-fuel N`; the option configures the compiled Macro
+Session, while the Runtime Session keeps its default allowance. Omitting it
+preserves the existing default, and zero is an explicit allowance. This follows
+the staged script boundaries above, not a new whole-script aggregate promise.
+See [compiled REPL configuration](compiled-repl.md).
 
 Native library callers can use `Compiler::compile_with_compile_fuel`,
 `compile_files_with_compile_fuel`, `compile_for_main_with_compile_fuel`,

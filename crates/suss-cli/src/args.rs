@@ -11,7 +11,7 @@ pub enum Command {
     /// Start the REPL; legacy `fuel` sets both budgets, then `compile_fuel` overrides compilation/Macro.
     Repl { fuel: Option<u64>, compile_fuel: Option<u64> },
     /// Evaluate an expression and print the result
-    Eval { expr: String },
+    Eval { expr: String, compile_fuel: Option<u64> },
     /// Run a file
     RunFile { path: String },
     /// Compile a source file to a WASM component (file mode with WIT)
@@ -94,7 +94,7 @@ fn parse_command(mut parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
 
         Some(Short('e')) => {
             let expr = parser.value()?.string()?;
-            Ok(Command::Eval { expr })
+            parse_eval(expr, &mut parser)
         }
 
         Some(Value(val)) => {
@@ -109,6 +109,19 @@ fn parse_command(mut parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
 
         Some(arg) => Err(arg.unexpected()),
     }
+}
+
+/// The expression remains the first -e value; optional compilation headroom
+/// applies to its compiled Macro request, independently of Runtime evaluation.
+fn parse_eval(expr: String, parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
+    let mut compile_fuel = None;
+    while let Some(arg) = parser.next()? {
+        match arg {
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
+            _ => return Err(arg.unexpected()),
+        }
+    }
+    Ok(Command::Eval { expr, compile_fuel })
 }
 
 /// Parse the compile subcommand arguments
@@ -369,6 +382,8 @@ OPTIONS:
                         Override compilation and macro-expansion fuel; evaluation fuel is unchanged
                         Ctrl-C interrupts a running input
     -e <EXPR>       Evaluate an expression and print the result
+        --compile-fuel <N>
+                        Override compilation fuel; Runtime evaluation is unchanged
     -h, --help      Print this help message
     -V, --version   Print version information
 
@@ -509,6 +524,31 @@ mod tests {
         assert_eq!(aot_budget(&["compile", "--compile-fuel", "0"]), Some(0));
         assert_eq!(aot_budget(&["compile", "--compile-fuel", "18446744073709551615"]), Some(u64::MAX));
         assert_eq!(aot_budget(&["compile", "--compile-fuel", "1", "--compile-fuel", "2"]), Some(2));
+    }
+
+    #[test]
+    fn eval_compile_fuel_preserves_expression_defaults_and_unsigned_boundaries() {
+        let parse = |args: &[&str]| match parse_command(lexopt::Parser::from_args(args.iter().copied())).unwrap() {
+            Command::Eval { expr, compile_fuel } => {
+                assert_eq!(expr, "(+ 20 22)");
+                compile_fuel
+            }
+            command => panic!("expected eval, got {command:?}"),
+        };
+        assert_eq!(parse(&["-e", "(+ 20 22)"]), None);
+        assert_eq!(parse(&["-e", "(+ 20 22)", "--compile-fuel", "0"]), Some(0));
+        assert_eq!(parse(&["-e", "(+ 20 22)", "--compile-fuel", "18446744073709551615"]), Some(u64::MAX));
+        assert_eq!(parse(&["-e", "(+ 20 22)", "--compile-fuel", "1", "--compile-fuel", "2"]), Some(2));
+    }
+    #[test]
+    fn eval_compile_fuel_rejects_missing_invalid_and_unrecognized_options() {
+        for value in ["-1", "no", "18446744073709551616"] {
+            assert!(parse_command(lexopt::Parser::from_args(
+                ["-e", "(+ 20 22)", "--compile-fuel", value])).is_err());
+        }
+        for tail in ["--compile-fuel", "--unknown", "unrequested.sus"] {
+            assert!(parse_command(lexopt::Parser::from_args(["-e", "(+ 20 22)", tail])).is_err());
+        }
     }
 
 }
