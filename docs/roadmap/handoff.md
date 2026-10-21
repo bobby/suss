@@ -31080,3 +31080,43 @@ map has zero observations/69 unexecuted judgments; identifier15 passes. The
 unchanged10M constructor fails at first Runtime caller environment transport,
 with later assertions and Macro caller unreached. CI run39509386134 ended without
 a passing final-head result. No PR readiness or issue completion is inferred.
+
+
+### Method-inspection execution and unchanged controls (2026-10-20)
+
+On compiler d689/229 with BOOT c163189, the exact `method-preservation86`
+command above passed86, failed0, ignored0 (168.13s harness/409.03s total), raw
+`d09136e84fea900f9e523d3d58c735a27237edfa4af82868e1fec85f0a2fddc1`.
+Independent execution review confirms the original80, all5 new tests and the full
+List91 replacement/recovery test. This is actual current-source execution.
+
+The unchanged10M constructor control remains0PASS1FAIL at first Runtime caller
+&env83..108, line192 (81.07s harness/342.57s total), raw
+`66f7fa626a2e2be3b78d4929c7c165791a864c81cbca9ef7010abbbace5c28ce`.
+Output assertions and Macro caller are unreached. The d689 pinned200M pair
+(`pr263-pinned-acceptance-d6893703-v1/run.py`) is1PASS1FAIL
+(228.95s harness/413.64s total), raw
+`9a0925956b65f8fdab1c407b7008000204b0c36ce3e1f25b589d4f4e778618c9`.
+Both independent comparison scripts ran: identifier15 ordered host checks pass;
+map0observations/69unexecuted after expanded-result239..5926 OutFuel.
+These results do not establish whole-program fuel improvement.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-default-constructor-attribution-d689-v1/run.py --execute`
+replayed only the exact existing default-control binary with existing macro and
+metadata trace hooks, after the pinned producer drained. It retained the same
+failure, changed no input/binary and drained its owned process group (39.50s
+harness/39.88s total), raw
+`fe6cfac137345ab47e26c012366af77f241378357faccc5969a838012e8a00e8`.
+The last completed declaration preparation trace has8654631 fuel remaining;
+the later failing interval is unresolved. Nested trace costs are not additive.
+
+CLI-only commits6ab3a57 and88680bc calibrate exactly2 cross-invocation and6
+constant/source-environment semantic tests from10M to100B cumulative compilation.
+Their original programs/assertions/phases/GC and request order remain intact, with
+Runtime10M checks before and after each evaluated Result. Source229 freeze checks
+pass after each commit; compiler fingerprint and BOOT are unchanged. These tests
+and the earlier2 public literal calibrations await a combined ten-test execution:
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-semantic10.py`.
+It runs all4 complete original integration targets in one Cargo invocation,
+checks exact2+2+3+3 outcomes and binds every source afterimage. No execution or
+acceptance result is inferred from preparation or calibrated allowances.
