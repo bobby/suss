@@ -31120,3 +31120,90 @@ and the earlier2 public literal calibrations await a combined ten-test execution
 It runs all4 complete original integration targets in one Cargo invocation,
 checks exact2+2+3+3 outcomes and binds every source afterimage. No execution or
 acceptance result is inferred from preparation or calibrated allowances.
+
+
+### Literal/environment calibration execution and marker ABI validation (2026-10-20)
+
+On published c40e2bb/compiler d689/229/BOOT c163189,
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-semantic10.py`
+passed all10 tests, zero failed/ignored, exact four full targets2+3+2+3, in1237.39s
+including build. Raw SHA256
+`1358ea3febeb2d1e5042d6b3a4f5aed69d6d2af8434f13caf22d3505bfb49da5`.
+Independent review verifies the literal/cold/GC, constant/binary64/UTF16/effect,
+cross-invocation identity/retention/reset and source-environment programs, exact
+afterimages and identical source/BOOT/head postflight. This result is historical
+once marker ABI source changes; it is not transferred to afd.
+
+Marker source923888/compiler
+`afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5`
+(229 inputs), production edit049fefb, specializes the actual protocol-marker
+lookup path to Boolean without a generic VALUE-return roundtrip. It retains
+key/receiver/table/odd-length guards, exact first-key/sentinel identity, current
+tables and error priority. No source/memo authority, caching or host tariff or
+budget changes. Independent source review proves unchanged general getter and
+setter emission.
+
+The first7-case direct ABI attempt was6PASS1FAIL at a new resource-test
+expectation (raw344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5).
+A diagnostic-only exact1 rerun confirms cap202 versus measured cost203 returned1
+(rawdd35a898076264a9fdee3a63ac0d86aae218b044ad0f34912f18e6db19878520).
+Locked Wasmtime49.0.1 checks fuel at entry/loops and saves final consumption on
+return; used-minus-one need not trap before finite return. The reviewed test-only
+correction retains all4caps. Its near-boundary successful result must leave0fuel
+and immediately trap on same-input/no-refill reentry; all other low-cut, identity,
+retry and pending-IRQ checks remain. No production limit changed.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/run-abi7.py`
+then passed all7 direct ABI tests (3new+4original), zero failed/ignored,20.42s
+harness/52.75s total; raw
+`9cb6a3a0d87fce2a094f8b9b16b712cd1a6dcec25fdd6e351162e7a565293171`.
+These instantiate actual runtime_abi::module bytes without Session/shipped BOOT;
+no Macro/Session acceptance is inferred. Workspace/all-targets locked test-profile
+typecheck passed185.71s, raw
+`4e4e7eb334e68d7941754650b67781a1f7d030efff2724cef74f1b45cb615025`.
+
+The normal bootstrap verifier generated two matching pairs per phase in177.00s
+then exited1 at comparison against stale shipped artifacts, raw
+`38b54d213a105edbffe0a9cb11dc70bd90841513ae90d5e40a1f3bcb7e8c6063`.
+Actual229 builder inputs/FP/paths, all8hashes/4pairs and exact custom/manifest
+deltas were independently reviewed. Both core BOOT noncustom sections are exact;
+the runtime ABI is separately generated and changed by the reviewed emitter.
+Adopted only the exact4approved files at0548d7c. Pure compiled identity passed
+41.62s, raw910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704.
+A cache-directory creation error preceded the first freeze; an identity-wrapper
+receipt-key mismatch preceded identity launch. Both preparatory failures are
+retained separately and are not semantic test failures.
+
+New-source whole-program fuel fit, remaining source/memo/namespace preservation,
+full workspace baseline and final-head review/CI are unproven. Unchanged explicit
+constructor10M and pinned200M controls must execute with complete original
+fixtures. Commands/bindings/limitations are in the linked protocol-marker evidence.
+
+
+The new afd unchanged10M constructor replay is0PASS1FAIL at the same first
+Runtime caller&env83..108, line192 (73.35s harness/331.36s total), raw
+`2c504489ae49f1e851e28d03a19f0dff4d55711b5e1c4a08e554dae9aeab82f5`.
+Its output assertions and Macro caller are unreached. New pinned200M/200M pair
+is1PASS1FAIL (237.17s harness/429.21s total), raw
+`722a0841c5e786e1e27639634347f89ddf05cf23ad3afa168191e7dd1ea1543c`.
+Independent comparators retain identifier15ordered hostPASS and map0observations/
+69unexecuted after expanded-result239..5926 OutFuel. The changed raw backtrace is
+not an acceptance result or a proven cost gain. Original fixtures/quotas remain.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-default-constructor-cli-cost-afd27-v1/run.py`
+then executes one existing bound CLI binary with the exact original macro and
+constructor program strings, compile100B/Runtime10M. Exit0 in42.55s and one exact
+display `[[:new [:class :args]] 42]`; stdout SHA
+`2eccb1b9d797bf9edd1d83e0d70dda7ac417b700917d84070136f01faefdcb99`,
+stderr SHA083bf9dc1baf06e178ec13762b2be13e6635f1e24f227bcf9f0518a1ea54820d.
+All7ordered target-macro fuel trace stages complete monotonically. Target Store
+debit61891031 includes caller-environment61761927, arguments8017, invocation120639,
+provenance261, caller-form3 and decoder184. These6intervals are disjoint; nested
+metadata/lazy/callback costs are not added. It excludes startup, defining the
+macro, pretrace analysis and display. CLI SourceOrigin/request splitting and
+Runtime-only coverage differ from native acceptance; no exact native total or
+Macro caller result follows. The original10M control remains a failure.
+
+No compilation policy/production default/issue criterion has been changed by this
+diagnostic. Additional calibration of currently explicit fixed-cap acceptance
+fixtures requires a separate user decision; preserve current criteria meanwhile.
