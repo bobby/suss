@@ -394,5 +394,38 @@
       ]
     ],
     "failure": "New fixture used bare with_options_in without shipped core, so first positive capture failed on unresolved Runtime suss.core/Symbol. Zero-budget rejection and no-publication/options checks passed before this failure. Corrected fixture uses normal new_repl/new_macro, no assertions removed; fresh replay pending."
+  },
+  "bridge_regression_replay": {
+    "head": "07d8f06e6574802101282b334d9c85ecad0d8af7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "compiled_bridge_compilation_fuel",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "Complete one test, both caller phases: zero native compilation rejection before publication; options/resident-fragments/bindings unchanged; explicit100B recovery; original default constructor;42 afterGC read through bothcaptures. No native19/fullbaseline or live-getter/multi-helper-exhaustion proof.",
+    "exit_code": 0,
+    "seconds": 125.7392113629976,
+    "post_head": "07d8f06e6574802101282b334d9c85ecad0d8af7",
+    "raw_sha256": "7d198bc31c3bbb04e45ed71749cb648394d999d9f74120b9c2ffd53f97d3b9f2",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "ok",
+        "1",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "test_source_sha256": "7605b9e1a3717f39cb1e701f6055c1d7b9229d732bd542ecfbcc213eefa7983a"
   }
 }
