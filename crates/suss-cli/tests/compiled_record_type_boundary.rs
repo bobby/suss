@@ -3,6 +3,8 @@
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use portable_decode::{Decoder, Observation};
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 use suss_compile::portable::{self, hir::SourceFields};
@@ -177,6 +179,7 @@ fn compiled_macro_catalog_reports_declared_field_count_and_intrinsic_record_kind
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define("(defmacro intrinsic-type-facts [name] (let [info (get (get (get &env :suss/catalog) :defs) name)] (list 'quote [(get info :type) (get info :num-fields) (get info :record)])))").unwrap();
         let value = session.eval_with_macros(
             "(defrecord* CatalogRecord [left right] nil (def catalog-body-facts (intrinsic-type-facts CatalogRecord))) [(intrinsic-type-facts CatalogRecord) catalog-body-facts]",

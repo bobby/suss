@@ -31290,3 +31290,34 @@ The live metadata6 main checkout and process are unchanged. The actual failed
 source locations, raw messages, numerical calibration, full-file hash/inverse
 proofs and limits are recorded in
 [evidence](evidence/m4-pr263-cli-semantic-calibration-2026-10-21.json).
+
+
+## Explicit native eval and positive Macro/CLI compilation — 2026-10-21
+
+c8449d9 adds `suss -e 'EXPR' --compile-fuel N` through the actual native script
+pipeline. It sets only CompiledMacros operation fuel before source preparation;
+Runtime construction/options remain unchanged, as do omitted-option defaults.
+The same staged logical-request boundaries apply; this is no whole-script
+aggregate guarantee. Parser regressions cover defaults, unchanged expression,
+zero/u64max/repeated values, invalid/overflow/missing/unknown options. A real
+subprocess regression checks default/explicit42 and rejects zero compilation
+before `(throw17)` executes. Syntax parses2024; neither test is executed yet.
+CI discovers the new integration target from Cargo metadata automatically.
+
+Another15 observed positive semantic Macro/CLI failures get the existing100B
+compilation allowance: three exact CompiledMacros instances, the diamond source
+preparation API, exact project/namespace entry tests, actual eval lexical-env
+command, and eight normal async lifecycle cases via their shared fixture.
+All Runtime allowances (including explicit1M async-failure case), original
+programs/assertions/inputs/phase/GC/deadlines/effects/component40M execution and
+realFIFO/FD/reset/cancel/cleanup checks remain. The existing supplied10M REPL
+compile-order/trace test retains its exact cap; normal cases still disable
+traces. Large-source100k recovery and native AOT-list route are excluded.
+
+Source review caught an initial unsupported global flag order before any test
+launch. Project invocation now puts compile first; eval explicitly implements
+its option after the expression instead of assuming it existed. Initial packet
+is retained; final packet is pr263-cli-macro-compilation-calibration-afd-v2.
+All7 fixture files parse2024 and diffcheck passes. There is no typecheck,
+semantic execution, full-baseline or final-head CI result for these edits.
+[Exact selected failures, source hashes, preservation and limitations](evidence/m4-pr263-cli-macro-calibration-2026-10-21.json).

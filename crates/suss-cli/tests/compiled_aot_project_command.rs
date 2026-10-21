@@ -1,4 +1,6 @@
 //! Actual project commands and typed components through compiled source phases.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::{path::Path, process::Command, sync::OnceLock};
 use wasmtime::component::{Component, Linker};
 use wasmtime::{AsContextMut, Config, Engine, Store};
@@ -309,11 +311,12 @@ fn explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization() 
         "deps.sus",
         "{:worlds {:bundle {:namespace suss.core :wit \"api.wit\" :output \"app.wasm\"}}}",
     );
-    success(&command(root.path(), &[]));
+    success(&command(root.path(), &["--compile-fuel", &compilation_fuel::COMPILATION_FUEL.to_string()]));
     let output = Command::new(env!("CARGO_BIN_EXE_suss"))
         .current_dir(root.path().join("project"))
+        .arg("compile")
+        .args(["--compile-fuel", &compilation_fuel::COMPILATION_FUEL.to_string()])
         .args([
-            "compile",
             "--namespace",
             "suss.core",
             "-w",
