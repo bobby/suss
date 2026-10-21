@@ -31207,3 +31207,51 @@ Macro caller result follows. The original10M control remains a failure.
 No compilation policy/production default/issue criterion has been changed by this
 diagnostic. Additional calibration of currently explicit fixed-cap acceptance
 fixtures requires a separate user decision; preserve current criteria meanwhile.
+
+
+## Native semantic compilation calibration — source observations 2026-10-21
+
+CI run39530511823, foundation job118996666368, on94276e7 completes the native
+compiler library harness:605PASS/32FAIL/0ignored/0filtered,2092.29s. The checkout
+merge and94276e7 have identical Git tree7c54a374dd976d0c9a680a003dd953a13d44f333.
+RawSHA25862d82223c1b49880aa387176d238472e6be9e4eaf483e9e09be752f05d5a0.
+This is complete native-suite evidence, not full-workspace or green-CI proof.
+
+cc8125c changes only test setup:20 observed native source-eval sites across22
+cases use the existing cumulative100B compilation helper. Three literal-env
+and two async lifecycle cases set their actual CompiledMacros compilation fuel
+to the same existing semantic allowance. Caller Runtime options and all source
+strings, assertions, GC, effects, negative fuel/IRQ/reset/recovery scopes remain.
+The cfg(test) convenience method introduces no shipped Session API. Helper
+asserts Runtime options unchanged after both successful and failed evaluation.
+
+1e289fc repairs the alias fixture's contradiction with reader-plan admission:
+a request-only graph must decline, then its ordinary fallback must retain the
+same first-three-value identity afterGC. An additional real completed declaration
+metadata boundary exercises positive DATA admission with the same alias/GC
+predicate and checks real persistent owner/non-Request/no strict capability.
+Production source authority/admission guards are unchanged.
+
+Detached preparation checkout:
+`/home/bobby/.cache/suss-m4-work/pr263-native-semantic-calibration-afd-v3/checkout`.
+`git diff --check` and rustfmt parse-only of all17 edited files with actual
+workspace edition2024 pass. The initial parse command mistakenly selected2021;
+its let-chain errors are retained and are not a compiler regression. No Cargo
+or VM producer was started there. These changes have no typecheck, matching
+bootstrap, identity or semantic execution result yet. Source-input edits require
+a fresh fingerprint/bootstrap cycle before Session test acceptance. Preserve
+main57edbd5 while its exact6 metadata batch is live; integrate only after its
+postflight. Exact28 test names are in the linked evidence. Four separate native
+Runtime/materialization fuel failures still need investigation; no Runtime
+increase or dedicated fixed-cap policy change is included.
+
+The prior marker storage command's first attempt failed in rustc with ENOSPC;
+no selected test ran, its original wrapper exit is unknown. The separately bound
+retry at94276e7/afd/229/BOOT0548 executes the complete original test:1PASS/0FAIL/
+0ignored/636filtered,3.04s harness/305.06s total. Command:
+`cargo test -p suss-compile --locked --lib -- --exact --test-threads=1 --nocapture portable_session::storage_snapshot::tests::native_storage_snapshot_covers_schema_and_reports_live_protocol_changes`.
+RawSHA84b8d048f91d5137c8be3a955f82850ce7aa9a867a4bf8e2df40e6667bd1ff61.
+No additional disk recovery was performed or inferred from available free space.
+
+[Exact source bindings, CI failure partition, selectors, parse-only results,
+original build failure and successful storage retry](evidence/m4-pr263-native-semantic-calibration-2026-10-21.json).
