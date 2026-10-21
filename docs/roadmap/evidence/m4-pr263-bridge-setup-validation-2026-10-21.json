@@ -361,5 +361,38 @@
     "scope": "Retain captured native fixture and oracle bytes. Exact adaptation patch updated to include existing compilation-only allowance change; original/patch/current hashes verified by original checker. No verifier weakening.",
     "initial_local_attempt": "Failed before provenance validation because detached checkout lacked initialized upstream submodule. Initialized exact pinned c4295f3 via existing local reference, then original checker passed.",
     "published_ci_foundation_log_sha256": "06d45b57bc01c5b34b6851fe89736304ede7929848d87400e09d44bdf2487682"
+  },
+  "initial_bridge_regression": {
+    "head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "compiled_bridge_compilation_fuel",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 310.94771406599466,
+    "post_head": "67fd3cd16a6ece433972014060ca6289e4d00e64",
+    "raw_sha256": "d1c54b694ea268689af9c787cd16354164931e3a6bb5f2e7586a2149dc6ab8ca",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "0",
+        "1",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "failure": "New fixture used bare with_options_in without shipped core, so first positive capture failed on unresolved Runtime suss.core/Symbol. Zero-budget rejection and no-publication/options checks passed before this failure. Corrected fixture uses normal new_repl/new_macro, no assertions removed; fresh replay pending."
   }
 }

@@ -1,12 +1,15 @@
 //! Explicit bridge compilation allowance preserves capture and Runtime defaults.
 use suss_compile::{portable::resolve::Phase, portable_macro_data::FormBridge,
-    portable_session::{Session, SessionError, SessionOptions}};
+    portable_session::{Session, SessionError}};
 use suss_reader::forms::Kind;
 
 #[test]
 fn bridge_compile_fuel_zero_preserves_runtime_and_complete_recovery() {
     for phase in [Phase::Runtime, Phase::Macro] {
-        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        let mut session = match phase {
+            Phase::Runtime => Session::new_repl().unwrap(),
+            Phase::Macro => Session::new_macro().unwrap(),
+        };
         let runtime_fuel = session.options().fuel_per_operation;
         let before = session.stats();
         let error = FormBridge::new_with_compile_fuel(&mut session, Some(0)).err()
