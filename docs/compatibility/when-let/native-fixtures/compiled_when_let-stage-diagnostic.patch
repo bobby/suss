@@ -1,6 +1,23 @@
 --- captured/crates/suss-cli/tests/compiled_when_let.rs
 +++ current/crates/suss-cli/tests/compiled_when_let.rs
-@@ -93,7 +93,7 @@
+@@ -2,6 +2,8 @@
+ #[path = "../../suss-compile/tests/support/portable_decode.rs"]
+ mod portable_decode;
+ 
++#[path = "support/compilation_fuel.rs"]
++mod compilation_fuel;
+ use portable_decode::{Decoder, Observation};
+ use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
+ 
+@@ -20,6 +22,7 @@
+ fn when_let_preserves_truthiness_once_only_initialization_scope_and_body_order() {
+     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+         let mut macros = CompiledMacros::new().unwrap();
++        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+         let actual = observe(&mut session, &mut macros, r#"
+           (def when-let-events (atom []))
+           [(when-let [x nil] x)
+@@ -93,7 +96,7 @@
              // Public transport currently wraps the language exception. Exact
              // message/ex-data require separate macro-store/oracle observations;
              // an unresolved name or read error cannot satisfy this assertion.
