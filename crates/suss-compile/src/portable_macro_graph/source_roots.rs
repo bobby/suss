@@ -1838,6 +1838,14 @@ mod tests {
         // A changed child remains invalid; no posthoc guest facts are captured.
         assert!(!Certificate::validate(graph.session, graph.bridge, &parent).unwrap());
     }
+    // Diagnostic-only observations of the existing cumulative operation. This
+    // never charges, changes, or refills fuel and is absent from shipped code.
+    fn source_child_fuel_trace(session: &Session, phase: Phase, variant: Option<usize>, stage: &str) {
+        if std::env::var_os("SUSS_SOURCE_CHILD_FUEL_TRACE").is_some() {
+            eprintln!("source-child-fuel phase={phase:?} variant={variant:?} stage={stage} configured={} remaining={:?}",
+                session.options().fuel_per_operation, session.operation_fuel_remaining());
+        }
+    }
     #[test]
     fn source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo() {
         for source_phase in [Phase::Runtime, Phase::Macro] {
@@ -1854,6 +1862,7 @@ mod tests {
             .unwrap();
             let bridge = FormBridge::new(&mut s).unwrap();
             let _op = s.operation_budget_scope().unwrap();
+            source_child_fuel_trace(&s, source_phase, None, "budget-start");
             let mut graph = AnalysisGraph::new(&bridge, &mut s);
             let (a, am, entries) = declaration_from_source(
                 &mut graph,
@@ -1867,6 +1876,7 @@ mod tests {
                 source_phase,
                 "source-child-b",
             );
+            source_child_fuel_trace(graph.session, source_phase, None, "captures-ready");
             // These explicit ^{:doc ...} occurrences remain reader Form keys,
             // even though both selected values are equal strings.
             let a_doc = retained_field(&mut graph, &entries, "doc", FixtureKeyOrigin::RetainedReader);
@@ -1882,6 +1892,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
             let layout = graph.source_root_children().unwrap();
+            source_child_fuel_trace(graph.session, source_phase, None, "layout-ready");
             let child_doc = standalone_with_layout(&mut graph, ad, &layout);
             let wrong = graph
                 .source_root_expectation_with_layout(bd, &layout)
@@ -1913,7 +1924,9 @@ mod tests {
                     standalone_with_layout(&mut graph, *boundary, &layout)
                 });
             }
+            source_child_fuel_trace(graph.session, source_phase, None, "common-ready");
             for variant in 0..5 {
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "batch-before");
                 let selected = layout[a].iter().enumerate().map(|(slot, boundary)| {
                     let certificate = if *boundary == ad && variant == 0 {
                         &wrong_doc
@@ -1930,6 +1943,7 @@ mod tests {
                         .into_iter()
                         .map(|child| child.unwrap())
                         .collect();
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "batch-after");
                 match variant {
                     1 => {
                         supplied.pop().unwrap();
@@ -1967,13 +1981,16 @@ mod tests {
                     }
                     _ => {}
                 }
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "children-adjusted");
                 let expected = graph
                     .source_root_expectation_with_layout(a, &layout)
                     .unwrap()
                     .unwrap();
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "expectation-ready");
                 let recording = graph.bridge.recording(graph.session).unwrap();
                 let alias = graph.source_roots.roots[a].alias;
                 let value = graph.materialize_using(alias, &recording).unwrap();
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "parent-materialized");
                 assert!(
                     Certificate::finish(
                         graph.session,
@@ -1987,7 +2004,9 @@ mod tests {
                     .is_none(),
                     "invalid parent child coverage variant {variant}"
                 );
+                source_child_fuel_trace(graph.session, source_phase, Some(variant), "parent-rejected");
             }
+            source_child_fuel_trace(graph.session, source_phase, None, "variants-complete");
             // Physical lineage negative: inject only the CORRECT native alias
             // tokens, then deliberately patch the doc slot with the equal-valued
             // wrong-owner child. Correct child inventory cannot bless that slot.

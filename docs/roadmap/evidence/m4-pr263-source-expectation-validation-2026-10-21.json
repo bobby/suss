@@ -145,7 +145,8 @@
     "harness_summaries": []
   },
   "native20": {
-    "state": "Live at publication; no outcome claimed.",
+    "head": "06f21a0025c65a4d80ce6c9ed590e0b5d1706882",
+    "compiler_source_sha256": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
     "command": [
       "cargo",
       "test",
@@ -178,7 +179,31 @@
       "portable_session::memo_leaf_test_support::compiler_data_allowance_restores_runtime_fuel_after_success_error_and_unwind",
       "portable_macro_graph::source_roots::tests::checked_batch_rechecks_expected_source_and_releases_state_after_errors"
     ],
-    "expected_scope": "All19 previous selectors plus complete strengthened batch regression;20 exact tests. No test/fixture trimming; expected638totalunit inventory."
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 534.1112461569937,
+    "post_head": "97289d9446eb24eb5c00aed07940e523c684cfb2",
+    "raw_sha256": "dc74f7b10035137e61908ae5b421310c73772416ced66fb8572651aff9ed0f10",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "19",
+        "1",
+        "0",
+        "0",
+        "618"
+      ]
+    ],
+    "failures": [
+      {
+        "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1927:49:",
+        "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+      }
+    ],
+    "complete_exact20_scope": true,
+    "interpretation": "All20 execute once:19PASS1FAIL0ignored618filtered. Allseven laternativecompilationcases andwholecontrollerrecovery pass. Only unchangedfixed10M sourcechildRuntimevariant3 fails; all5variants/bothphases/physicalmemo tail notcompleted. Caughtintentionalunwind belongs passingrestorationtest."
   },
   "limits": [
     "Typecheck/identity/generation do not prove semantic acceptance.",
@@ -186,5 +211,11 @@
     "No measured source-witness saving,10M source-child fit or whole-workload gain yet.",
     "OriginalRuntime/defaultconstructor10M, CORE17, source-childfixedcap,pinned200M and dedicatednegative/recovery budgets unchanged.",
     "No fullbaseline/final-head CI/wholeissue completion proof."
-  ]
+  ],
+  "source_expectation_bounded_measurement": {
+    "exact_current_expectation_debit": 48771,
+    "independent_matching_expectation_debit": 51135,
+    "observed_difference": 2364,
+    "scope": "Actual paired complete checks with fresh completion/audit state;samecertificate/nativesource; independent/forgedwitness/GC/IRQ/fuel/foreign/recovery assertionsPASS. Notwholeworkloadgain, no10Mfit: complete sourcechildstillfailsRuntimevariant3."
+  }
 }

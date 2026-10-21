@@ -1676,6 +1676,8 @@ impl Environment {
     {
         let result = (|| {
             meter(4)?;
+            meter(4)?; // borrowed hit slot setup/store, selection and retirement
+            let mut current_hit = None;
             let scope = self.scope(phase);
             let (namespace, name) = if let Some(namespace) = &symbol.namespace {
                 let namespace = if namespace == "js" { "js" }
@@ -1685,12 +1687,20 @@ impl Environment {
             } else if let Some(global) = scope.refers.get(&symbol.name) {
                 (global.namespace(), global.name())
             } else {
-                let namespace = if lookup_global(&self.bindings, phase, &scope.namespace, &symbol.name, meter)?.is_some()
+                current_hit = lookup_global(&self.bindings, phase, &scope.namespace, &symbol.name, meter)?;
+                let namespace = if current_hit.is_some()
                     || scope.excluded_core.contains(&symbol.name) { scope.namespace.as_str() }
                     else { "suss.core" };
                 (namespace, symbol.name.as_str())
             };
-            let binding = lookup_global(&self.bindings, phase, namespace, name, meter)?
+            // A current hit already selected this exact immutable binding.
+            // Keep private-cell rejection below: a hidden hit cannot fall back
+            // to core. Misses retain their original second lookup.
+            let selected = match current_hit {
+                Some(hit) => Some(hit),
+                None => lookup_global(&self.bindings, phase, namespace, name, meter)?,
+            };
+            let binding = selected
                 .map(|(_, value)| value)
                 .filter(|binding| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
                 .ok_or_else(|| Diagnostic { span: span.clone(), message: format!("Unresolved {phase:?} name {symbol}") })?;
@@ -2067,14 +2077,29 @@ mod global_ownership_tests {
             let original = env.declare_cell(phase, "borrowed.target", "actual").unwrap();
             env.alias(phase, "t", "borrowed.target").unwrap();
             env.refer(phase, "selected", "borrowed.target", "actual").unwrap();
+            let current = env.declare_cell(phase, "borrowed.lookup", "local").unwrap();
             let before = allocations();
             let generation = env.source_generation();
             let bindings = env.bindings.clone();
-            for symbol in [Symbol::namespaced("t", "actual"), Symbol::new("selected")] {
+            for (symbol, expected) in [
+                (Symbol::namespaced("t", "actual"), &original),
+                (Symbol::new("selected"), &original),
+                (Symbol::new("local"), &current),
+            ] {
+                let strong = Arc::strong_count(&expected.0);
+                let mut one_search = Vec::new();
+                lookup_global(&env.bindings, phase, expected.namespace(), expected.name(),
+                    &mut |work| { one_search.push(work); Ok(()) }).unwrap().unwrap();
                 let mut charges = Vec::new();
                 let selected = env.resolve_metered(phase, &symbol, 11..19,
                     &mut |work| { charges.push(work); Ok(()) }).unwrap();
-                assert!(same_owner(&original, selected.global()));
+                assert!(same_owner(expected, selected.global()));
+                assert_eq!(Arc::strong_count(&expected.0), strong + 1);
+                let mut expected_charges = vec![4, 4];
+                expected_charges.extend(one_search);
+                expected_charges.push(1);
+                assert_eq!(charges, expected_charges, "exactly one search and one retained result for {symbol}");
+                drop(selected);
                 assert_eq!(allocations(), before, "lookup hit allocates no identity owner");
                 assert!(charges.len() > 2, "real BTree comparisons and retained result are charged");
                 for reject in 0..charges.len() {
@@ -2090,9 +2115,10 @@ mod global_ownership_tests {
                     assert_eq!(env.bindings, bindings);
                     assert_eq!(env.source_generation(), generation);
                     assert_eq!(allocations(), before);
+                    assert_eq!(Arc::strong_count(&expected.0), strong);
                 }
                 let retry = env.resolve_metered(phase, &symbol, 11..19, &mut |_| Ok(())).unwrap();
-                assert!(same_owner(&original, retry.global()));
+                assert!(same_owner(expected, retry.global()));
             }
             let other = Global::new_metered(phase, "borrowed.target", "actual", &mut |_| Ok(())).unwrap();
             assert_eq!(original, other);
@@ -2106,6 +2132,99 @@ mod global_ownership_tests {
                 }).unwrap_err();
             assert_eq!(failure.message, "no lookup budget");
             assert_eq!(calls, 2);
+
+            // A singleton fixes the comparison path independently of BTree
+            // layout: setup, phase, namespace, name, then the single clone.
+            let mut singleton = Environment::new("one").unwrap();
+            singleton.bindings.clear();
+            let owner = singleton.declare_cell(phase, "one", "hit").unwrap();
+            let before = allocations();
+            let mut charges = Vec::new();
+            let selected = singleton.resolve_metered(phase, &Symbol::new("hit"), 11..19,
+                &mut |work| { charges.push(work); Ok(()) }).unwrap();
+            assert_eq!(charges, vec![4, 4, 12, 4, 8, 8, 1]);
+            assert_eq!(charges.iter().sum::<u64>(), 41);
+            assert!(same_owner(&owner, selected.global()));
+            assert_eq!(allocations(), before);
+        }
+    }
+
+    #[test]
+    fn borrowed_current_hits_preserve_core_precedence_exclusions_and_private_cell_errors() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut env = Environment::new("current.lookup").unwrap();
+            let core = env.declare_cell(phase, "suss.core", "collision").unwrap();
+            let current = env.declare_cell(phase, "current.lookup", "collision").unwrap();
+            let selected = env.resolve_metered(phase, &Symbol::new("collision"), 23..31,
+                &mut |_| Ok(())).unwrap();
+            assert!(same_owner(&current, selected.global()), "current beats core before exclusion");
+            drop(selected);
+            env.exclude_core(phase, "collision").unwrap();
+            let fallback = env.declare_cell(phase, "suss.core", "fallback").unwrap();
+            env.declare_cell(phase, "suss.core", "excluded").unwrap();
+            env.exclude_core(phase, "excluded").unwrap();
+            for (symbol, owner) in [
+                (Symbol::new("collision"), &current),
+                (Symbol::namespaced("cljs.core", "collision"), &core),
+                (Symbol::new("fallback"), &fallback),
+            ] {
+                let selected = env.resolve_metered(phase, &symbol, 23..31, &mut |_| Ok(())).unwrap();
+                assert!(same_owner(owner, selected.global()));
+            }
+            for name in ["excluded", "missing"] {
+                let symbol = Symbol::new(name);
+                let mut expected_charges = vec![4, 4];
+                for namespace in ["current.lookup", if name == "excluded" { "current.lookup" } else { "suss.core" }] {
+                    assert!(lookup_global(&env.bindings, phase, namespace, name,
+                        &mut |work| { expected_charges.push(work); Ok(()) }).unwrap().is_none());
+                }
+                let mut charges = Vec::new();
+                let failure = env.resolve_metered(phase, &symbol, 23..31,
+                    &mut |work| { charges.push(work); Ok(()) }).unwrap_err();
+                assert_eq!(failure.message, format!("Unresolved {phase:?} name {symbol}"));
+                assert_eq!(failure.span, 23..31);
+                assert_eq!(charges, expected_charges, "misses keep both searches and never clone");
+            }
+
+            for reader in [false, true] {
+                // Deliberately collide a hidden current binding with a public
+                // core binding. Visibility filtering must not retry in core.
+                let name = if reader { "hidden-reader" } else { "hidden-internal" };
+                env.declare_cell(phase, "suss.core", name).unwrap();
+                let hidden = env.declare_cell(phase, "current.lookup", name).unwrap();
+                env.bindings.insert(hidden.clone(), if reader {
+                    Binding::ReaderCell(hidden.clone())
+                } else { Binding::InternalCell(hidden.clone()) });
+                let bindings = env.bindings.clone();
+                let generation = env.source_generation();
+                let before = allocations();
+                let strong = Arc::strong_count(&hidden.0);
+                let symbol = Symbol::new(name);
+                let mut expected_charges = vec![4, 4];
+                lookup_global(&env.bindings, phase, "current.lookup", name,
+                    &mut |work| { expected_charges.push(work); Ok(()) }).unwrap().unwrap();
+                let mut charges = Vec::new();
+                let failure = env.resolve_metered(phase, &symbol, 23..31,
+                    &mut |work| { charges.push(work); Ok(()) }).unwrap_err();
+                assert_eq!(failure.message, format!("Unresolved {phase:?} name {symbol}"));
+                assert_eq!(failure.span, 23..31);
+                assert_eq!(charges, expected_charges, "one hidden hit, no core search or clone");
+                for reject in 0..charges.len() {
+                    let mut calls = 0;
+                    let failure = env.resolve_metered(phase, &symbol, 23..31, &mut |_| {
+                        let call = calls; calls += 1;
+                        if call == reject { Err(error("hidden lookup cancellation")) } else { Ok(()) }
+                    }).unwrap_err();
+                    assert_eq!(failure.message, "hidden lookup cancellation");
+                    assert_eq!(failure.span, 23..31);
+                    assert_eq!(calls, reject + 1);
+                }
+                assert_eq!(env.bindings, bindings);
+                assert_eq!(env.source_generation(), generation);
+                assert_eq!(allocations(), before);
+                assert_eq!(Arc::strong_count(&hidden.0), strong);
+                assert!(env.resolve_metered(phase, &symbol, 23..31, &mut |_| Ok(())).is_err());
+            }
         }
     }
 
