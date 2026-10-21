@@ -187,5 +187,179 @@
     "New compiler source needs matching bootstrap artifacts before semantic execution.",
     "Original fixed-cap Runtime source-child failure remains unresolved.",
     "No full-workspace, final-head CI, or issue completion proof."
-  ]
+  ],
+  "independent_source_review": {
+    "agent_id": "01a15d04-82b3-7070-92e4-756cebd7731a",
+    "nickname": "James",
+    "reviewed_commit": "ff77ce8b291f99135d932013a9e8c2a6ab38e2e5",
+    "parent": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "result": "No actionable defects found in bounded read-only source review.",
+    "findings": [
+      "One mutable bridge native allowance persists across helper compilations; nested work debits without refill. None keeps original Session.eval path.",
+      "Capture expressions, order, live getters, rooting and captured callbacks preserved.",
+      "Test-only helper rejects Runtime Store and active requests before mutation; original option restored after operation guard retirement on success/error/unwind.",
+      "Shipped Runtime and dedicated exhaustion/recovery limits unchanged; diagnostic Macro allowance intentionally changed."
+    ],
+    "coverage_limits": [
+      "New bridge test does not directly show multi-helper exhaustion or live-getter equivalence.",
+      "Restoration test does not explicitly exercise nested-entry rejection.",
+      "No Cargo/semantic execution performed by reviewer; not whole-PR promotion review."
+    ]
+  },
+  "bootstrap_generation": {
+    "head": "ff77ce8b291f99135d932013a9e8c2a6ab38e2e5",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "shipped_before": {
+      "runtime/bootstrap/macro.json": "e8ce1854fae636c53704d6d683e887ad3900bffd0568bfc079b631cd25ce169b",
+      "runtime/bootstrap/macro.wasm": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768",
+      "runtime/bootstrap/runtime.json": "c16fca7468407aa28eda1dfb5fd2b2e7101db160af1510ef529c335afb1b9320",
+      "runtime/bootstrap/runtime.wasm": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+    },
+    "exit_code": 1,
+    "seconds": 402.2250144510035,
+    "raw_sha256": "2d709eac007fa9a8e1a3bc5e486ac13004f993d410eb171968c75311c1437334",
+    "post_head": "91197e65c18e5a74d29a2ebe6ab1b902fa29d869",
+    "scope": "Two matching normal generations; verifier exit1 at stale shipped comparison, not full verifier pass. Only non-compiler provenance files committed during generation; all229 compiler inputs matched frozen hashes at postflight."
+  },
+  "artifact_review_and_adoption": {
+    "source_fingerprint": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "source_input_count": 229,
+    "builders": [
+      "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output"
+    ],
+    "scope": "Main source/artifact inspection; not independent subagent or semantic execution.",
+    "phases": {
+      "runtime": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      },
+      "macro": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      }
+    },
+    "adoption_candidates": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "42c8d91af73c1c8fe94ec969e3af42e4ae85213247285d395cb058754e2038d2"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "63d66c5b77802d68f2567516397f2991685bd8b13317e8d4d2de5cec95aecdf8"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "616ce618ea71af5e820a4e3cbbb243bad9d1931fafecbc906a0e67a59eeebc0d"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "feae3ba4ab96ece809f6fac6bddc32ae8ccb4e5a5276a199283877ce477b5439"
+      }
+    ],
+    "adopted_head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7"
+  },
+  "identity": {
+    "head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 0,
+    "seconds": 3.626956334002898,
+    "post_head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "postflight_error": null,
+    "harness_summaries": []
+  },
+  "foundation_tail_checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/check_when_let_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.13514863599993987,
+      "raw_sha256": "150d9a7865662baad72b40794b2f39aa6822c6d447fca87f03fb7c2855cbcae4"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bitwise_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1384071889988263,
+      "raw_sha256": "e1fbd6c01dc8516dba88a1d6a73b38b32daac9617034dc459d3eb86cfee46d5c"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/wasi_lock.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.30970793499727733,
+      "raw_sha256": "d2e2fedccd215d0b67c40a6643444bdcfeef5d4a3ab39bd2d5e804b9655f8fc0"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.19764218800264644,
+      "raw_sha256": "081e403746c9a4758034db7fe4c4f4178a7d5a4ebb56b42b67781814651bdda4"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2560585200044443,
+      "raw_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "overlap"
+      ],
+      "exit_code": 0,
+      "seconds": 0.22218069900554838,
+      "raw_sha256": "9570d69f8ba9c1b7375a20e14241a0d6a7275d7524d1476e524aed84b00aed4e"
+    }
+  ],
+  "provenance_repair": {
+    "commit": "91197e65c18e5a74d29a2ebe6ab1b902fa29d869",
+    "scope": "Retain captured native fixture and oracle bytes. Exact adaptation patch updated to include existing compilation-only allowance change; original/patch/current hashes verified by original checker. No verifier weakening.",
+    "initial_local_attempt": "Failed before provenance validation because detached checkout lacked initialized upstream submodule. Initialized exact pinned c4295f3 via existing local reference, then original checker passed.",
+    "published_ci_foundation_log_sha256": "06d45b57bc01c5b34b6851fe89736304ede7929848d87400e09d44bdf2487682"
+  }
 }
