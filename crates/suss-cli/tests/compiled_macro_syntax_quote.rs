@@ -1,5 +1,7 @@
 //! Executing M3 syntax quote regressions. These exercise compiled transformers,
 //! rather than the prototype evaluator or reader encoding alone.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 use wasmtime::Val;
 
@@ -368,8 +370,7 @@ fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
         },
     )
     .unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     let mut macros = suss_cli::portable_macros::CompiledMacros::new().unwrap();
     session

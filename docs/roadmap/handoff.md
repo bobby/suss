@@ -31267,3 +31267,26 @@ Macro width128 has no completed construction line before its trap. Do not infer
 an exact internal stage or cost from that absence. Two initial ambiguous text
 selectors stopped before changing the selected lifecycle call; diagnostics were
 then scoped to its original let-root statement. All attempts remain in cache.
+
+
+## CLI positive semantic setup compilation — source observations 2026-10-21
+
+Saved94276e7 integration logs identify28 additional positive semantic test cases
+that stop in native compilation setup, before their asserted behavior. Exactly25
+observed calls across11 integration files now use the existing cumulative100B
+NoExpansion compilation helper. Shared comparator/sorted setup accounts for the
+case/callsite difference. All programs/fixtures/IDs/counts/assertions/GC/effects/
+error/recovery code remain byte-exact outside invocation prefixes and imports.
+Shared helper now checks original caller Runtime options on both success/error;
+existing10M/100M Runtime allowances remain unchanged. CORE17 and the explicitly
+documented default-budget HAMT test are deliberately excluded. The already
+published metadata/self-local calibration is separate and unchanged.
+
+`git diff --check`, exact full-file inverse proofs and rustfmt2024 parse-only
+pass for these12 Rust files. There is no semantic execution/typecheck/identity/
+bootstrap or full-baseline result for this patch. CLI-only files do not add
+compiler inputs, but the preceding native patch still needs fresh artifacts.
+The live metadata6 main checkout and process are unchanged. The actual failed
+source locations, raw messages, numerical calibration, full-file hash/inverse
+proofs and limits are recorded in
+[evidence](evidence/m4-pr263-cli-semantic-calibration-2026-10-21.json).

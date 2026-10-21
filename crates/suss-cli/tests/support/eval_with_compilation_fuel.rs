@@ -38,5 +38,8 @@ pub fn eval(
             Ok(None)
         }
     }
-    session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL))
+    let runtime_fuel = session.options().fuel_per_operation;
+    let result = session.eval_with_macros(source, &mut Compilation(compilation_fuel::COMPILATION_FUEL));
+    assert_eq!(session.options().fuel_per_operation, runtime_fuel);
+    result
 }

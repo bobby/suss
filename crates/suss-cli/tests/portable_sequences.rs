@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -43,8 +45,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 137);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     let mut identities = std::collections::BTreeSet::new();
@@ -67,8 +68,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
 #[test]
 fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def retained-tail (cons 2 nil)) (def retained-head (cons 1 retained-tail)) (def retained-array (array 3 4)) (def retained-view (seq retained-array))").unwrap();
@@ -137,8 +137,7 @@ fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
 fn retained_source_errors_are_typed_and_recover_after_gc() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for (source, message) in [
@@ -180,8 +179,7 @@ fn retained_source_errors_are_typed_and_recover_after_gc() {
 fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def saved-rest ((fn [a & xs] xs) 17 nil false (fn [] 29))) (def variadic-floor (fn [a b & xs] (count xs))) (def variadic-trace 0)").unwrap();
@@ -240,8 +238,7 @@ fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
 fn variadic_live_class_failures_are_typed_and_recover_after_gc() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def saved-class cljs.core/IndexedSeq) (def receiver (fn [& xs] xs)) (def argument-effect 0)").unwrap();
@@ -276,8 +273,7 @@ fn variadic_live_class_failures_are_typed_and_recover_after_gc() {
 fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def retained-equality =) (def equality-left (list (list 1 2) nil false)) (def equality-right (cons (seq (array 1 2)) (list nil false))) (def equality-arity-trace 0)").unwrap();

@@ -1,0 +1,574 @@
+{
+  "schema": 1,
+  "scope": "Compilation-only native setup calibration for28 observed semantic CLI tests; not executed.",
+  "base_head": "568bca89fc9edc757321920573a7630b68bd1ac4",
+  "ci_source_head": "94276e79217342581cc45425ad891ebd2c530682",
+  "ci_url": "https://github.com/bobby/suss/actions/runs/39530511823",
+  "cases": [
+    {
+      "job": "integration-0",
+      "target": "compiled_macro_maps",
+      "name": "compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover",
+      "location": "crates/suss-cli/tests/compiled_macro_maps.rs:131:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..50, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "compiled_macro_syntax_quote",
+      "name": "compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces",
+      "location": "crates/suss-cli/tests/compiled_macro_syntax_quote.rs:373:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_chunk_effects",
+      "name": "chunk_demand_cache_and_retry_survive_gc_between_source_fragments",
+      "location": "crates/suss-cli/tests/portable_chunk_effects.rs:80:31",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1346..1517, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_chunk_effects",
+      "name": "chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc",
+      "location": "crates/suss-cli/tests/portable_chunk_effects.rs:61:31",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1346..1517, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_comparators",
+      "name": "complete_comparator_source_candidates_and_policy_in_both_phases_after_gc",
+      "location": "crates/suss-cli/tests/portable_comparators.rs:62:24",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_comparators",
+      "name": "comparator_numeric_return_bits_errors_and_retained_capture_after_gc",
+      "location": "crates/suss-cli/tests/portable_comparators.rs:62:24",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:72:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:281:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "retained_source_errors_are_typed_and_recover_after_gc",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:142:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "sequence_foundations_match_independently_encoded_primary_observations",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:48:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "variadic_live_class_failures_are_typed_and_recover_after_gc",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:245:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_sequences",
+      "name": "variadic_rest_values_survive_gc_and_arity_failures_preserve_effects",
+      "location": "crates/suss-cli/tests/portable_sequences.rs:185:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_string_cache",
+      "name": "reviewed_cache_accessors_preserve_live_effects_and_failed_write_order",
+      "location": "crates/suss-cli/tests/portable_string_cache.rs:217:78",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_string_cache",
+      "name": "string_cache_aliases_factories_and_native_members_remain_live",
+      "location": "crates/suss-cli/tests/portable_string_cache.rs:127:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_string_cache",
+      "name": "string_cache_errors_and_macro_arity_preserve_effects_and_recover",
+      "location": "crates/suss-cli/tests/portable_string_cache.rs:183:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-0",
+      "target": "portable_string_cache",
+      "name": "string_cache_match_independently_decoded_primary_observations_after_gc",
+      "location": "crates/suss-cli/tests/portable_string_cache.rs:15:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "compiled_macro_form_source_metadata",
+      "name": "compiled_source_macro_file_metadata_uses_the_loaded_source_path",
+      "location": "crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:213:14",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "compiled_macro_indexed_data",
+      "name": "compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc",
+      "location": "crates/suss-cli/tests/compiled_macro_indexed_data.rs:74:56",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_collection_literals",
+      "name": "collection_literals_match_independently_decoded_primary_values",
+      "location": "crates/suss-cli/tests/portable_collection_literals.rs:51:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_collection_literals",
+      "name": "large_vector_method_is_captured_before_entry_property_mutation",
+      "location": "crates/suss-cli/tests/portable_collection_literals.rs:104:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_collection_literals",
+      "name": "small_vector_captures_constructor_and_empty_node_before_entry_redefinition",
+      "location": "crates/suss-cli/tests/portable_collection_literals.rs:142:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_collection_literals",
+      "name": "thrown_map_and_set_entries_stop_later_effects_and_construction",
+      "location": "crates/suss-cli/tests/portable_collection_literals.rs:187:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_collection_literals",
+      "name": "vector_literal_normalizes_entries_once_before_constructor_invocation",
+      "location": "crates/suss-cli/tests/portable_collection_literals.rs:27:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_iteration",
+      "name": "iteration_contract_match_independently_encoded_primary_observations",
+      "location": "crates/suss-cli/tests/portable_iteration.rs:47:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_iteration",
+      "name": "retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors",
+      "location": "crates/suss-cli/tests/portable_iteration.rs:75:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_sorted_tree_collections",
+      "name": "additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_order",
+      "location": "crates/suss-cli/tests/portable_sorted_tree_collections.rs:15:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_sorted_tree_collections",
+      "name": "complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_values",
+      "location": "crates/suss-cli/tests/portable_sorted_tree_collections.rs:15:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    },
+    {
+      "job": "integration-4",
+      "target": "portable_sorted_tree_collections",
+      "name": "tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc",
+      "location": "crates/suss-cli/tests/portable_sorted_tree_collections.rs:15:10",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })",
+      "kind": "native_compilation_fuel"
+    }
+  ],
+  "files": {
+    "crates/suss-cli/tests/compiled_macro_maps.rs": {
+      "before_sha256": "9a1ce577503634b7bd3593686795144af67206d512dce6a1c87a9f6b32f73bef",
+      "after_sha256": "2cb12cd0e745c864d2a55f0cd9d041bc66c6ea9017c8632299403e7cdf7ceb1b",
+      "edits_descending": [
+        {
+          "start": 5538,
+          "end": 5560,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/compiled_macro_maps.rs:131:10"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_syntax_quote.rs": {
+      "before_sha256": "604c15d4f9e2d6d94d14f67d14757edbfa92a34e25aea909a6e45aaa7eab336d",
+      "after_sha256": "5c84dcbf32700ac2355e74ec9edd906ba3ce55ad8a656915050feae16b2f0594",
+      "edits_descending": [
+        {
+          "start": 14022,
+          "end": 14044,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/compiled_macro_syntax_quote.rs:373:10"
+        }
+      ],
+      "module_insertion_offset": 147,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_chunk_effects.rs": {
+      "before_sha256": "7384488d937cc54c7a070fac2d4f5099a5212491275c1c0e8837015ff34f4385",
+      "after_sha256": "7ab687c13763e68b47557ad0d006d9d82f1e5f85f100bbb59b9460772bd339f3",
+      "edits_descending": [
+        {
+          "start": 3068,
+          "end": 3081,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_chunk_effects.rs:80:31"
+        },
+        {
+          "start": 2381,
+          "end": 2394,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_chunk_effects.rs:61:31"
+        }
+      ],
+      "module_insertion_offset": 75,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_comparators.rs": {
+      "before_sha256": "f02cbcb8869b6f622b5b16abf9518e6448502bb0dc90dea3645b4a99e4dfdf36",
+      "after_sha256": "56c826a13f55fbdd290b4de0e2210e634ab2b2e305517dc7c2bb987a5eaca9c0",
+      "edits_descending": [
+        {
+          "start": 2217,
+          "end": 2230,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_comparators.rs:62:24"
+        }
+      ],
+      "module_insertion_offset": 166,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_sequences.rs": {
+      "before_sha256": "4419fbc18599f6248b122d3fa0806a8412271ed34dc61552ae4f2212091c0707",
+      "after_sha256": "5b27c13d7bc2c456101752a1195ada5d7cdc0aa5059670877220d702077533b7",
+      "edits_descending": [
+        {
+          "start": 10433,
+          "end": 10455,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:281:10"
+        },
+        {
+          "start": 9151,
+          "end": 9173,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:245:10"
+        },
+        {
+          "start": 7237,
+          "end": 7259,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:185:10"
+        },
+        {
+          "start": 5472,
+          "end": 5494,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:142:10"
+        },
+        {
+          "start": 2541,
+          "end": 2563,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:72:10"
+        },
+        {
+          "start": 1524,
+          "end": 1546,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sequences.rs:48:10"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_string_cache.rs": {
+      "before_sha256": "6e831698949232ef785c52eddb7c6120cb73ec697e78c4b9a7ec529687a56c12",
+      "after_sha256": "7b80f4f5c2343d700e19d651b46cbf75894211ac436323135abab98afd6c5438",
+      "edits_descending": [
+        {
+          "start": 7674,
+          "end": 7687,
+          "before": "session.eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_string_cache.rs:217:78"
+        },
+        {
+          "start": 6296,
+          "end": 6318,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_string_cache.rs:183:10"
+        },
+        {
+          "start": 4624,
+          "end": 4646,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_string_cache.rs:127:10"
+        },
+        {
+          "start": 433,
+          "end": 455,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_string_cache.rs:15:10"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_form_source_metadata.rs": {
+      "before_sha256": "f226002c09756df8ed08ce8f0f5a7cdb8b3a3cc1a7af9e03a3b0b60f2e0a126f",
+      "after_sha256": "ba20c770a0382c52a4c317b3c7563823faa9704478f418c419d3179606554fcd",
+      "edits_descending": [
+        {
+          "start": 7993,
+          "end": 8019,
+          "before": "session\n            .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:213:14"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/compiled_macro_indexed_data.rs": {
+      "before_sha256": "791be271060f773f7aaf53b269e4ddbd47b6d840048ef91edc96148976fe6d52",
+      "after_sha256": "e1a4e0d6207ba38f7463eab49bdd36eae95c01ee18a8236dae1a12a8ce6f8699",
+      "edits_descending": [
+        {
+          "start": 2717,
+          "end": 2729,
+          "before": "macros.eval(",
+          "after": "semantic_compilation::eval(&mut macros, ",
+          "evidence": "crates/suss-cli/tests/compiled_macro_indexed_data.rs:74:56"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_collection_literals.rs": {
+      "before_sha256": "6494478a996248ba3c5e6fdd300e8365bacced6114baff7789bf9a36aacef424",
+      "after_sha256": "cc31ec034aadb97aa1de5be9970760762af3d2fe4b3d2c51ba0be154ad56a5ee",
+      "edits_descending": [
+        {
+          "start": 8147,
+          "end": 8169,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_collection_literals.rs:187:10"
+        },
+        {
+          "start": 6022,
+          "end": 6044,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_collection_literals.rs:142:10"
+        },
+        {
+          "start": 4297,
+          "end": 4319,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_collection_literals.rs:104:10"
+        },
+        {
+          "start": 2018,
+          "end": 2040,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_collection_literals.rs:51:10"
+        },
+        {
+          "start": 700,
+          "end": 722,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_collection_literals.rs:27:10"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_iteration.rs": {
+      "before_sha256": "ce1dc01d707477776c211862397ab0a18e9dce7dbe8579b0dfbb8b5ff3c4792d",
+      "after_sha256": "4845646d7a64d11f9c62772ddab5a3273ff453abed5b38400fe4215617a9968f",
+      "edits_descending": [
+        {
+          "start": 2675,
+          "end": 2697,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_iteration.rs:75:10"
+        },
+        {
+          "start": 1480,
+          "end": 1502,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_iteration.rs:47:10"
+        }
+      ],
+      "module_insertion_offset": 0,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/portable_sorted_tree_collections.rs": {
+      "before_sha256": "f0f2564b6f88b12a308564501a832fb4455dde83f1c6f990487965527735ddc0",
+      "after_sha256": "6f03d2ed47a00399b7d481c3cef6ac8554c2c601eb6218923653d9d89c16a44a",
+      "edits_descending": [
+        {
+          "start": 593,
+          "end": 615,
+          "before": "session\n        .eval(",
+          "after": "semantic_compilation::eval(&mut session, ",
+          "evidence": "crates/suss-cli/tests/portable_sorted_tree_collections.rs:15:10"
+        }
+      ],
+      "module_insertion_offset": 82,
+      "full_file_inverse_exact": true
+    },
+    "crates/suss-cli/tests/support/eval_with_compilation_fuel.rs": {
+      "before_sha256": "0e8bd8ad990f1e3bf7478c14a7030714dc104ad6cb85106af304549a368c019c",
+      "after_sha256": "244c2c8a3981cec5cac1233346b569e07225d942c567d14fbe49b198ce2e06b8",
+      "full_file_inverse_exact": true,
+      "helper_change": "Check original caller Runtime options after both success and error; same cumulative native100B host."
+    }
+  },
+  "preservation": [
+    "Exactly25 observed source-eval callsites; all original guest input strings and fixtures unchanged.",
+    "Existing cumulative100B NoExpansion host preserves original plain Session.eval expansion behavior; no per-node refill.",
+    "Runtime options unchanged, now asserted by shared helper after success or error. Original10M and100M Runtime settings remain.",
+    "All assertions, ordered IDs, full collection widths, source effects, errors, recovery and GC remain.",
+    "core_import17 and explicitly documented default-budget portable_hash_map_sharing control excluded. Existing57edbd5 metadata cohort left frozen in main checkout.",
+    "No new semantic/typecheck/bootstrap/fullbaseline/CI success inferred."
+  ],
+  "syntax_only": [
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_maps.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_syntax_quote.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_chunk_effects.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_comparators.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_sequences.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_string_cache.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_form_source_metadata.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_macro_indexed_data.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_collection_literals.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_iteration.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/portable_sorted_tree_collections.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/support/eval_with_compilation_fuel.rs",
+      "exit_code": 0,
+      "stderr": ""
+    }
+  ]
+}

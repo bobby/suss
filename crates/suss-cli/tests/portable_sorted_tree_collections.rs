@@ -1,4 +1,6 @@
 //! Execute retained sorted collections and independently decode their contracts.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
@@ -10,8 +12,7 @@ use wasmtime::{AnyRef, OwnedRooted, Val};
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def sorted-effects 0)").unwrap();

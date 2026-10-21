@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 use wasmtime::Val;
 
@@ -10,8 +12,7 @@ fn string_cache_match_independently_decoded_primary_observations_after_gc() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 70);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.string-cache-cases")
@@ -122,8 +123,7 @@ fn cache_number(session: &mut Session, source: &str) -> f64 {
 #[test]
 fn string_cache_aliases_factories_and_native_members_remain_live() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .eval("(ns cache.alias (:require [cljs.core :as c]))")
@@ -178,8 +178,7 @@ fn string_cache_aliases_factories_and_native_members_remain_live() {
 fn string_cache_errors_and_macro_arity_preserve_effects_and_recover() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     for source in [
         "(do (def cache_unpublished 1) (unchecked-get nil))",
@@ -214,7 +213,7 @@ fn string_cache_errors_and_macro_arity_preserve_effects_and_recover() {
 fn reviewed_cache_accessors_preserve_live_effects_and_failed_write_order() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session.eval(include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
     assert_eq!(cache_number(&mut session, r#"(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p "answer" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o "__proto__" p) (+ (unchecked-get o "answer") (unchecked-get o "answer") review_effects)))"#), 48.0);
     assert_eq!(cache_number(&mut session, r#"(let [p (js-obj) o (js-obj)] (.__defineSetter__ p "answer" (fn [v] (set! review_effects v))) (unchecked-set o "__proto__" p) (unchecked-set o "answer" 31) (+ review_effects (if (.hasOwnProperty o "answer") 100 0)))"#), 31.0);
     session.eval(r#"(def review_cache (js-obj)) (.__defineSetter__ review_cache "new" (fn [v] (throw v)))"#).unwrap();

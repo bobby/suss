@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{Kind, read_forms};
 
@@ -126,8 +128,7 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
     }
     session.eval("(def saved-map {:a 1})").unwrap();
     session.enter_namespace("suss.core").unwrap();
-    session
-        .eval("(deftype PersistentArrayMap [meta cnt arr __hash])")
+    semantic_compilation::eval(&mut session, "(deftype PersistentArrayMap [meta cnt arr __hash])")
         .unwrap();
     session.enter_namespace("user").unwrap();
     let foreign = session
