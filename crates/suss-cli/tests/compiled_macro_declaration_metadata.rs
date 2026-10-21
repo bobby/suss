@@ -127,6 +127,9 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
             Kind::Vector(vec![form(Kind::Keyword(suss_reader::Keyword::new("raw")))])
         );
         macros.define("(defmacro core-file [name] (let [info (get (get (get &env :suss/catalog) :defs) name)] (list 'quote [(get info :file) (get (get info :meta) :file)])))").unwrap();
+        // The full core catalog exceeds the ordinary 100B compilation
+        // allowance. Keep its source and both phases; caller Runtime stays 10M.
+        macros.set_operation_fuel(1_000_000_000_000);
         session.enter_namespace("cljs.core").unwrap();
         let value = {
             assert_eq!(session.options().fuel_per_operation, 10_000_000);
@@ -136,6 +139,7 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
                 &mut macros,
             );
             assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
             evaluated
         }
             .unwrap();
