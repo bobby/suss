@@ -9450,3 +9450,219 @@ mod sparse_set_repair_tests {
         assert_eq!(bits(&mut store, &actual), 17.0);
     }
 }
+
+// Direct live-table contracts for the production marker primitive. These tests
+// instantiate runtime_abi::module(), not a replacement lookup implementation.
+mod protocol_marker_direct_tests {
+    use super::*;
+
+    struct Fixture {
+        store: Store<()>,
+        runtime: Instance,
+        producer: Instance,
+        owner: Val,
+        key: Val,
+        object: Val,
+        empty: Val,
+        nil: Val,
+        sentinel: Val,
+        closure: Val,
+    }
+    impl Fixture {
+        fn new(engine: &wasmtime::Engine, epoch: bool) -> Self {
+            let mut store = Store::new(engine, ());
+            store.set_fuel(100_000_000).unwrap();
+            if epoch { store.set_epoch_deadline(1); }
+            let runtime = Instance::new(
+                &mut store, &Module::new(engine, runtime_abi::module()).unwrap(), &[],
+            ).unwrap();
+            let mut linker = wasmtime::Linker::new(engine);
+            linker.instance(&mut store, "rt", runtime).unwrap();
+            let producer = linker.instantiate(
+                &mut store, &Module::new(engine, nominal_fragment()).unwrap(),
+            ).unwrap();
+            let closures = linker.instantiate(
+                &mut store, &Module::new(engine, closure_fragment(false)).unwrap(),
+            ).unwrap();
+            let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+            let owner = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+            let key = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+            let object = nominal_value(&mut store, runtime, "object-new", &[owner.clone(), empty.clone()]);
+            let nil = nominal_value(&mut store, runtime, "nil", &[]);
+            let closure = nominal_value(&mut store, closures, "make", &[nil.clone(), Val::I32(0), Val::I32(0)]);
+            // Obtain the actual opaque marker only via the genuine marker setter
+            // and ordinary getter. Its identity is not guessed from an ID/type.
+            nominal_value(&mut store, runtime, "protocol-marker-set", &[owner.clone(), key.clone()]);
+            let sentinel = nominal_value(&mut store, runtime, "protocol-method-get", &[owner.clone(), key.clone()]);
+            let mut fixture = Self { store, runtime, producer, owner, key, object, empty, nil, sentinel, closure };
+            let empty = fixture.empty.clone();
+            fixture.install(&empty);
+            fixture
+        }
+        fn array(&mut self, values: &[Val]) -> Val {
+            let result = nominal_value(&mut self.store, self.runtime, "args-new", &[Val::I32(values.len() as i32)]);
+            let array = result.unwrap_anyref().unwrap().as_array(&self.store).unwrap().unwrap();
+            for (index, value) in values.iter().enumerate() {
+                array.set(&mut self.store, index as u32, value.clone()).unwrap();
+            }
+            result
+        }
+        fn descriptor(&mut self) -> Val {
+            nominal_value(&mut self.store, self.runtime, "descriptor-new", &[self.empty.clone()])
+        }
+        fn install(&mut self, table: &Val) {
+            self.owner.unwrap_anyref().unwrap().as_struct(&self.store).unwrap().unwrap()
+                .set_field(&mut self.store, 2, table.clone()).unwrap();
+        }
+        fn marker(&mut self, key: &Val, receiver: &Val) -> wasmtime::Result<i32> {
+            let mut result = [Val::I32(-1)];
+            self.runtime.get_func(&mut self.store, "protocol-marker-satisfies").unwrap()
+                .call(&mut self.store, &[key.clone(), receiver.clone()], &mut result)?;
+            Ok(result[0].unwrap_i32())
+        }
+        fn marked(&mut self) -> wasmtime::Result<i32> {
+            let key = self.key.clone(); let object = self.object.clone();
+            self.marker(&key, &object)
+        }
+        fn expect_language_error(&mut self, key: &Val, receiver: &Val) {
+            let error = self.marker(key, receiver).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+            let exception = self.store.take_pending_exception().unwrap();
+            let actual = exception.tag(&mut self.store).unwrap();
+            let expected = self.runtime.get_tag(&mut self.store, "language-exception").unwrap();
+            assert!(wasmtime::Tag::eq(&actual, &expected, &self.store));
+            assert!(!self.store.has_pending_exception());
+        }
+        fn expect_same_table(&mut self, expected: &Val) {
+            let actual = self.owner.unwrap_anyref().unwrap().as_struct(&self.store).unwrap().unwrap()
+                .field(&mut self.store, 2).unwrap();
+            assert!(wasmtime::Rooted::ref_eq(&self.store, actual.unwrap_anyref().unwrap(), expected.unwrap_anyref().unwrap()).unwrap());
+        }
+    }
+
+    #[test]
+    fn marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit() {
+        let mut f = Fixture::new(&nominal_fueled_engine(), false);
+        let key = f.key.clone(); let object = f.object.clone();
+        let number = nominal_value(&mut f.store, f.runtime, "number-box", &[Val::F64(17.0_f64.to_bits())]);
+        for receiver in [f.nil.clone(), f.empty.clone(), f.owner.clone(), f.closure.clone(), number.clone(), Val::null_any_ref()] {
+            assert_eq!(f.marker(&key, &receiver).unwrap(), 0);
+        }
+        // A false receiver test cannot hide an invalid key's language error.
+        for bad_key in [f.nil.clone(), f.empty.clone(), f.closure.clone(), number.clone(), Val::null_any_ref()] {
+            let nil = f.nil.clone();
+            f.expect_language_error(&bad_key, &nil);
+            assert_eq!(f.marked().unwrap(), 0, "same Store recovers after rejection");
+        }
+        // A malformed object descriptor cannot be constructed through the exact
+        // ABI: OBJECT.field0 is immutable and nonnullable DESCRIPTOR-typed.
+        // Check that boundary explicitly; do not forge a weaker object layout.
+        let raw_object = object.unwrap_anyref().unwrap().as_struct(&f.store).unwrap().unwrap();
+        assert!(raw_object.set_field(&mut f.store, 0, f.nil.clone()).is_err());
+        assert!(!f.store.has_pending_exception());
+        assert_eq!(f.marked().unwrap(), 0);
+        let other = f.descriptor();
+        let odd = f.array(&[key.clone(), f.sentinel.clone(), other]);
+        for malformed in [f.nil.clone(), f.closure.clone(), number, odd] {
+            f.install(&malformed);
+            f.expect_language_error(&key, &object);
+            f.expect_same_table(&malformed);
+            let empty = f.empty.clone(); f.install(&empty);
+            assert_eq!(f.marked().unwrap(), 0);
+        }
+        let missing = f.descriptor();
+        for count in [0, 1, 5, 9, 17] {
+            let mut pairs = Vec::new();
+            for _ in 0..count { pairs.extend([f.descriptor(), f.sentinel.clone()]); }
+            let table = f.array(&pairs); f.install(&table);
+            assert_eq!(f.marker(&missing, &object).unwrap(), 0, "valid missing key, pairs={count}");
+            f.expect_same_table(&table);
+        }
+    }
+
+    #[test]
+    fn marker_uses_first_exact_key_and_live_sentinel_identity_after_gc() {
+        let mut f = Fixture::new(&nominal_fueled_engine(), false);
+        let key = f.key.clone(); let object = f.object.clone();
+        let id = key.unwrap_anyref().unwrap().as_struct(&f.store).unwrap().unwrap()
+            .field(&mut f.store, 0).unwrap().unwrap_i64();
+        let equal_id_key = nominal_value(&mut f.store, f.producer, "forge-descriptor", &[f.empty.clone(), f.empty.clone(), Val::I64(id)]);
+        let false_value = nominal_value(&mut f.store, f.runtime, "false", &[]);
+        let true_value = nominal_value(&mut f.store, f.runtime, "true", &[]);
+        let sentinel_id = f.sentinel.unwrap_anyref().unwrap().as_struct(&f.store).unwrap().unwrap()
+            .field(&mut f.store, 0).unwrap().unwrap_i64();
+        let equal_id_not_sentinel = nominal_value(&mut f.store, f.producer, "forge-descriptor", &[f.empty.clone(), f.empty.clone(), Val::I64(sentinel_id)]);
+        let one = f.array(&[key.clone(), f.sentinel.clone()]); f.install(&one);
+        assert_eq!(f.marker(&equal_id_key, &object).unwrap(), 0, "equal numeric key ID grants no match");
+        assert_eq!(f.marked().unwrap(), 1);
+        // Live values are compared by marker identity, never truthiness/type/ID.
+        let slots = one.unwrap_anyref().unwrap().as_array(&f.store).unwrap().unwrap();
+        for (value, expected) in [(f.nil.clone(),0), (false_value,0), (true_value,0), (equal_id_not_sentinel,0), (f.closure.clone(),0), (f.sentinel.clone(),1)] {
+            slots.set(&mut f.store, 1, value).unwrap();
+            f.store.gc(None).unwrap();
+            assert_eq!(f.marked().unwrap(), expected);
+            f.expect_same_table(&one);
+        }
+        // Earlier matching values win, including false over a later marker.
+        // Positions cover early hit, unrolled/fallback boundary, and fallback.
+        for first in [0, 15, 16] {
+            let mut pairs = Vec::new();
+            for _ in 0..18 { pairs.extend([f.descriptor(), f.closure.clone()]); }
+            pairs[2*first] = key.clone(); pairs[2*(first+1)] = key.clone();
+            pairs[2*first+1] = f.closure.clone(); pairs[2*(first+1)+1] = f.sentinel.clone();
+            let table = f.array(&pairs); f.install(&table); f.store.gc(None).unwrap();
+            assert_eq!(f.marked().unwrap(), 0, "first non-marker must stop search, first={first}");
+            let slots = table.unwrap_anyref().unwrap().as_array(&f.store).unwrap().unwrap();
+            slots.set(&mut f.store, (2*first+1) as u32, f.sentinel.clone()).unwrap();
+            slots.set(&mut f.store, (2*(first+1)+1) as u32, f.closure.clone()).unwrap();
+            f.store.gc(None).unwrap();
+            assert_eq!(f.marked().unwrap(), 1, "first marker must stop search, first={first}");
+            // Replacing the whole table on the same descriptor is also live.
+            let replacement = f.array(&[key.clone(), f.closure.clone()]); f.install(&replacement);
+            assert_eq!(f.marked().unwrap(), 0);
+            f.install(&table); assert_eq!(f.marked().unwrap(), 1);
+        }
+    }
+
+    #[test]
+    fn marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry() {
+        // Isolated epoch engine: no increment can interrupt another test's Store.
+        let mut config = wasmtime::Config::new();
+        config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)
+            .wasm_exceptions(true).consume_fuel(true).epoch_interruption(true)
+            .cranelift_opt_level(wasmtime::OptLevel::None);
+        let engine = wasmtime::Engine::new(&config).unwrap();
+        let mut f = Fixture::new(&engine, true);
+        let mut pairs = Vec::new();
+        for _ in 0..17 { pairs.extend([f.descriptor(), f.closure.clone()]); }
+        pairs.extend([f.key.clone(), f.sentinel.clone()]);
+        let table = f.array(&pairs); f.install(&table);
+        f.store.set_fuel(100_000_000).unwrap();
+        let before = f.store.get_fuel().unwrap();
+        assert_eq!(f.marked().unwrap(), 1);
+        let used = before - f.store.get_fuel().unwrap();
+        assert!(used > 2, "real lookup must perform fueled guest work");
+        for cap in [0, 1, used/2, used-1] {
+            f.store.set_fuel(cap).unwrap();
+            let error = f.marked().unwrap_err();
+            assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
+            assert!(!f.store.has_pending_exception());
+            f.expect_same_table(&table);
+            f.store.set_fuel(100_000_000).unwrap();
+            assert_eq!(f.marked().unwrap(), 1, "same objects recover after cap={cap}");
+        }
+        // Already-pending epoch interruption, not a timer/mid-loop stage claim.
+        f.store.set_fuel(100_000_000).unwrap();
+        f.store.set_epoch_deadline(1);
+        engine.increment_epoch();
+        let error = f.marked().unwrap_err();
+        assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::Interrupt));
+        assert!(!f.store.has_pending_exception());
+        f.expect_same_table(&table);
+        f.store.set_epoch_deadline(1);
+        // No refill after Interrupt: retry uses the actual remaining fuel.
+        assert_eq!(f.marked().unwrap(), 1);
+        let empty = f.empty.clone(); f.install(&empty);
+        assert_eq!(f.marked().unwrap(), 0, "no cached true survives table replacement");
+    }
+}
