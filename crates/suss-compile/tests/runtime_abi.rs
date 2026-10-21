@@ -9644,7 +9644,9 @@ mod protocol_marker_direct_tests {
         assert!(used > 2, "real lookup must perform fueled guest work");
         for cap in [0, 1, used/2, used-1] {
             f.store.set_fuel(cap).unwrap();
-            let error = f.marked().unwrap_err();
+            let error = f.marked().expect_err(&format!(
+                "lookup should exhaust with cap={cap}, measured successful cost={used}"
+            ));
             assert_eq!(error.downcast_ref::<wasmtime::Trap>(), Some(&wasmtime::Trap::OutOfFuel));
             assert!(!f.store.has_pending_exception());
             f.expect_same_table(&table);
