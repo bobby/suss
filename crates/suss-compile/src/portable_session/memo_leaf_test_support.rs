@@ -141,3 +141,45 @@ impl Session {
         eval_with_compilation_fuel(self, source)
     }
 }
+
+/// One top-level compiler-data operation in a Macro Store. The original Runtime
+/// setting is restored on success, error and unwind, before later projections.
+/// This never refills an already active request or accepts a Runtime Store.
+pub(crate) fn with_compilation_data_fuel<T>(
+    session: &mut Session,
+    operation: impl FnOnce(&mut Session) -> Result<T, SessionError>,
+) -> Result<T, SessionError> {
+    assert_eq!(session.phase(), crate::portable::resolve::Phase::Macro);
+    assert_eq!(session.operation_budget_depth.load(std::sync::atomic::Ordering::SeqCst), 0);
+    struct Restore<'a> { session: &'a mut Session, fuel: u64 }
+    impl Drop for Restore<'_> {
+        fn drop(&mut self) { self.session.set_operation_fuel(self.fuel); }
+    }
+    let fuel = session.options().fuel_per_operation;
+    session.set_operation_fuel(COMPILATION_FUEL);
+    let restore = Restore { session, fuel };
+    restore.session.with_operation_budget(operation)
+}
+
+#[test]
+fn compiler_data_allowance_restores_runtime_fuel_after_success_error_and_unwind() {
+    let mut session = Session::new_macro().unwrap();
+    session.set_operation_fuel(1);
+    with_compilation_data_fuel(&mut session, |s| s.charge_host_work(2)).unwrap();
+    assert_eq!(session.options().fuel_per_operation, 1);
+    let runtime_error = session.with_operation_budget(|s| s.charge_host_work(2)).unwrap_err();
+    assert!(matches!(runtime_error, SessionError::Trap(ref error)
+        if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+    let error = with_compilation_data_fuel(&mut session, |s| s.charge_host_work(u64::MAX)).unwrap_err();
+    assert!(matches!(error, SessionError::Trap(ref trap)
+        if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+    assert_eq!(session.options().fuel_per_operation, 1);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        with_compilation_data_fuel(&mut session, |_| -> Result<(), SessionError> {
+            panic!("intentional compiler-data scope unwind");
+        })
+    }));
+    assert!(result.is_err());
+    assert_eq!(session.options().fuel_per_operation, 1);
+    session.with_operation_budget(|s| s.charge_host_work(1)).unwrap();
+}

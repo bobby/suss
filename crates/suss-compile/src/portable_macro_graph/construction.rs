@@ -458,11 +458,17 @@ mod recorded_scratch_comparison {
     #[test]
     fn real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison() {
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-            // Diagnostic cost calibration only: the original dense width128
-            // control exceeds 10M. Both routes and source audits use 200M;
-            // this is not evidence for shipped/default-budget acceptance.
-            session.set_operation_fuel(200_000_000);
-            eprintln!("real-recorded-scratch diagnostic-only allowance=200000000");
+            // Diagnostic calibration only. Preserve the Runtime reference's
+            // 200M limit; Macro constructor/receipt work gets the existing
+            // semantic compilation allowance for BOTH compared routes/audits.
+            // This is not shipped/default-budget or whole-program fuel evidence.
+            let allowance = if session.phase() == crate::portable::resolve::Phase::Macro {
+                crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL
+            } else {
+                200_000_000
+            };
+            session.set_operation_fuel(allowance);
+            eprintln!("real-recorded-scratch diagnostic-only phase={:?} allowance={allowance}", session.phase());
             for width in [2usize, 128] {
             for padding in [0usize, 20_000] {
             let entries = (0..width).map(|n| format!(":key{n} {n}")).collect::<Vec<_>>().join(" ");

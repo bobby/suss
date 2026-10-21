@@ -957,7 +957,7 @@ mod tests {
                 methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "rebinding globals does not redirect captured identity"
             );
-            session.eval("(def List registry-saved-list) (def registry-saved-hash hash-ordered-coll) (def hash-ordered-coll (fn [_] 711))").unwrap();
+            session.eval_with_test_compilation_fuel("(def List registry-saved-list) (def registry-saved-hash hash-ordered-coll) (def hash-ordered-coll (fn [_] 711))").unwrap();
             session.enter_namespace("user").unwrap();
             let hash = session.eval("(hash (list 1))").unwrap();
             assert_eq!(
@@ -1396,7 +1396,7 @@ mod tests {
                     .unwrap()
             );
             session.eval_with_test_compilation_fuel("(ns suss.core) (def List Keyword)").unwrap();
-            let rebound = session.eval("List").unwrap();
+            let rebound = session.eval_with_test_compilation_fuel("List").unwrap();
             let rebound_descriptor = session.data_descriptor(&rebound, true).unwrap();
             assert!(
                 !session

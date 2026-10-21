@@ -190,7 +190,7 @@ fn genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_af
     let bridge = FormBridge::new(&mut session).unwrap();
     let mut cache = RootCache::default();
     let root =
-        super::tests::build(&mut session, &bridge, &mut cache, &global, &info, false)
+        crate::portable_session::memo_leaf_test_support::with_compilation_data_fuel(&mut session, |session| super::tests::build(session, &bridge, &mut cache, &global, &info, false))
             .unwrap_or_else(|error| panic!(
                 "deep reader DATA build depth={depth} remaining={:?}: {error:?}",
                 session.operation_fuel_remaining()));

@@ -528,8 +528,7 @@ mod tests {
                 "719"
             );
             session.enter_namespace("suss.core").unwrap();
-            session
-                .eval("(def hash-ordered-coll (fn [_] (throw 8801)))")
+            session.eval_with_test_compilation_fuel("(def hash-ordered-coll (fn [_] (throw 8801)))")
                 .unwrap();
             session.enter_namespace("user").unwrap();
             let hit = session.eval("(hash bridge-value)").unwrap();

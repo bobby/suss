@@ -267,7 +267,7 @@ fn dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live() 
         // Recovery is an explicit new request after restoring the live binding;
         // production never catches and replays a failed sparse invocation.
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(def hash user/scratch-fail-old-hash)").unwrap();
+        session.eval_with_test_compilation_fuel("(def hash user/scratch-fail-old-hash)").unwrap();
         session.enter_namespace("user").unwrap();
         // A bridge captures constructor inputs, including hash. A fresh request
         // must capture the restored binding rather than retain the throwing one.

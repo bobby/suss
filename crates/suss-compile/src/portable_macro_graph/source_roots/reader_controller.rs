@@ -511,13 +511,9 @@ mod tests {
         let mut session = Session::new_macro().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let mut cache = RootCache::default();
-        let first = build(
-            &mut session,
-            &bridge,
-            &mut cache,
-            &environment,
-            Phase::Macro,
-        );
+        let first = crate::portable_session::memo_leaf_test_support::with_compilation_data_fuel(
+            &mut session, |session| Ok(build(session, &bridge, &mut cache, &environment, Phase::Macro)),
+        ).unwrap();
         let previous: Vec<_> = cache.entries.iter().map(Rc::as_ptr).collect();
         assert!(
             !cache.data.is_empty(),

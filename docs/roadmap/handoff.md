@@ -31399,3 +31399,9 @@ Additional CI2 patch034ffc2 passes the actual all-targets workspace Rust check:
 including the native32 build-lock wait. RawSHA7a13511f5c02cba1a390d2cb422790194eb0610ebd9537cc40f21cc0a12b98e6.
 Exact HEAD034 pre/post matches. No semantic execution result for its18 cases is
 inferred. All native32 source/BOOT/dependency inputs remain unchanged.
+
+### Bridge/setup compilation checks (2026-10-21)
+
+The complete a705 native32 replay ran all32 previously failed tests:14 pass,18 fail,zero ignored,605 filtered. Raw log SHA256 `5e8e09bfa5d3550e3992faf782950178e8aa3247439813f8b30e7293e5336b8b`; source/BOOT postflight matched. Fourteen failures were native compilation exhaustion,three Macro compiler-data construction exhaustion,and one the unchanged fixed-cap Runtime source-child fixture.
+
+Bridge initialization now accepts an optional cumulative native compilation allowance across the original helper inputs. Positive setup callsites use the existing100B allowance; Runtime options and dedicated exhaustion/recovery controls stay unchanged. The Macro compiler-data helper restores original options on success,error,and unwind. `cargo check --workspace --all-targets --locked --profile test` passes for the exact changed Rust files (79.27s; raw SHA256 `f6160005e803cb36a3b8e9740634bbc9b9d255ca12df3973626b8c01a73de5fa`). Matching bootstrap generation and actual semantic execution are still required. Commands, source hashes, complete prior failure rows and limitations are in `docs/roadmap/evidence/m4-pr263-bridge-setup-validation-2026-10-21.json`.

@@ -474,7 +474,7 @@ mod tests {
             // Install before bridge capture: B's real ReaderSet construction invokes
             // this captured hash function. Initial priming/production runs unarmed.
             session.enter_namespace("suss.core").unwrap();
-            session.eval(r#"
+            session.eval_with_test_compilation_fuel(r#"
               (def hash
                 (fn [key]
                   (do

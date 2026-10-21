@@ -1,0 +1,191 @@
+{
+  "scope": "Exact prior native32 replay and current bridge/setup typecheck; semantic execution of current fixes remains unverified.",
+  "native32": {
+    "head": "9d6cbe2a09b31cc5d75686499d6acffb8ea15900",
+    "post_head": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "exit_code": 101,
+    "seconds": 2040.0284035389996,
+    "raw_sha256": "5e8e09bfa5d3550e3992faf782950178e8aa3247439813f8b30e7293e5336b8b",
+    "started_names": [
+      "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "portable_macro_graph::construction::tests::construction_records_preserve_reader_hash_counts_and_authenticate_only_macro_warming",
+      "portable_macro_graph::construction::tests::construction_records_reject_child_poison_during_parent_hash_callback",
+      "portable_macro_graph::metadata_expectations::tests::metadata_expectations_project_metadata_sets_without_callbacks",
+      "portable_macro_graph::recorded_scratch_tests::dense_and_sparse_materialization_preserve_reader_effects_metadata_sharing_and_gc",
+      "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "portable_macro_graph::source_facts::tests::source_facts_reject_callback_poison_that_a_fresh_physical_snapshot_accepts",
+      "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+      "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "portable_macro_graph::source_roots::tests::source_parent_lineage_keeps_selected_identity_and_rechecks_after_real_hash_callback",
+      "portable_macros::body_origin_tests::analyzer_literal_actual_body_transport_distinguishes_future_origin_and_restores_hash",
+      "portable_macros::reader_metadata_tests::reader_shorthand_declaration_keys_preserve_first_origin_and_meta_alias_after_gc",
+      "portable_macros::reference_field_tests::analyzer_literal_global_references_keep_tags_and_resolved_identity_after_gc_and_hash_restore",
+      "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "portable_session::dispatch_observer::tests::ihash_dispatch_boundary_live_replacement_helpers_and_rebinding",
+      "portable_session::memo_bridge::receipt_tests::memo_receipts_authenticate_macro_warming_but_not_runtime_stores",
+      "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "portable_session::tests::session_lifecycle_reset_host_hook_once_and_cleanup_catches_cancellation",
+      "portable_session::tests::session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup"
+    ],
+    "summaries": [
+      [
+        "FAILED",
+        "14",
+        "18",
+        "0",
+        "0",
+        "605"
+      ]
+    ],
+    "postflight_error": null,
+    "complete_exact32_scope": true,
+    "all32_pass": false,
+    "scope_limits": "Only native32; no other acceptance, fullbaseline or final-headCI proof. Actualfailures preserved."
+  },
+  "native32_failures": [
+    {
+      "name": "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "location": "crates/suss-compile/src/portable_macro_data.rs:1600:13",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 11..164, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "location": "crates/suss-compile/src/portable_macro_graph/construction.rs:505:43",
+      "message": "recorded metadata construction phase=Macro width=128 padding=0 production=false remaining=Ok(0): Trap(error while executing at wasm backtrace:\n    0:  0x622ee - <unknown>!<wasm function 441>\n    1:   0xe64d - <unknown>!<wasm function 186>\n    2:  0x59cc9 - <unknown>!<wasm function 392>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)"
+    },
+    {
+      "name": "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "location": "crates/suss-compile/src/portable_macro_graph/recorded_scratch_tests.rs:270:63",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..37, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4099:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4327:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:3946:107",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..81, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4270:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4215:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4364:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:194:37",
+      "message": "deep reader DATA build depth=192 remaining=Ok(0): Trap(error while executing at wasm backtrace:\n    0:   0xc558 - <unknown>!<wasm function 155>\n    1:   0xe083 - <unknown>!<wasm function 177>\n    2:  0x2634d - <unknown>!<wasm function 551>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs:401:63",
+      "message": "called `Result::unwrap()` on an `Err` value: Trap(wasm trap: all fuel consumed by WebAssembly)"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1892:49",
+      "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+    },
+    {
+      "name": "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:960:141",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..30, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:1399:48",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..4, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "location": "crates/suss-compile/src/portable_session/memo_bridge.rs:533:18",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..45, message: \"Macro expansion native work fuel exhausted\" })"
+    }
+  ],
+  "bridge_setup_typecheck": {
+    "base_head": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "working_source_hashes": {
+      "crates/suss-compile/src/portable_macro_data.rs": "403685a2974ea22d3f462d46ae379069ab4d379a5f5ddd87890a255406e01945",
+      "crates/suss-compile/src/portable_macro_graph.rs": "9e263f6654cece8d68f7a417aac34f6334235d47be7fbcdb67a86cd1b2f669c8",
+      "crates/suss-compile/src/portable_macro_graph/construction.rs": "d4b4c8303f75923ddcbb01b60831d2910a6f342baf102d284de5d360c6a57e8f",
+      "crates/suss-compile/src/portable_macro_graph/recorded_scratch_tests.rs": "4c2cf9019e3c5e98695e2e3f00b95ba45dc066fd76714379b6275aee83b41d0c",
+      "crates/suss-compile/src/portable_macro_graph/reuse.rs": "33cfdfcfa7958e4348c138bad60f622133129faceac6aae005d0b72784828dee",
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs": "7bd122939769557ba36a147227fade665598a8ba680387ca263098765a539eb6",
+      "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs": "31bc2f5c909d1e7aed1c9b244993dce4422624dc57b0ec9ee7c7b21fa9f55a42",
+      "crates/suss-compile/src/portable_session/canonical_methods.rs": "1cd5c722cff04c456340ba7d47dac38b07fa4989fbb5202bdcd41198a03a303d",
+      "crates/suss-compile/src/portable_session/memo_bridge.rs": "6f067d2a15aa5eb6b2fa5ac84805b2d046a39787683aeef8ab057f5875074ccd",
+      "crates/suss-compile/src/portable_session/memo_leaf_test_support.rs": "234f0080594e3953210bad4b619e8b98ee57d2c28328f9119de14bbe749d98f4",
+      "crates/suss-compile/tests/compiled_bridge_compilation_fuel.rs": "9d085dc03f51d6f73b9ddaa6e95e9309858ea7ab717f5beef9937576bd3aebee"
+    },
+    "scope": "Dirty-tree exact afterimage Rust typecheck; no matchingBOOT or semantic execution yet. Frozen old metadata6 source unchanged.",
+    "exit_code": 0,
+    "seconds": 79.27033028900041,
+    "raw_sha256": "f6160005e803cb36a3b8e9740634bbc9b9d255ca12df3973626b8c01a73de5fa",
+    "postflight_error": null
+  },
+  "changes": [
+    "Optional cumulative native compilation allowance across bridge constructor helper inputs; None preserves existing path and defaults.",
+    "Positive semantic setup compilation uses existing100B; original source/order/assertions and Runtime options retained.",
+    "Macro compiler-data setup allowance restores original operation option after success, failure and unwind; dedicated low-fuel and recovery controls unchanged."
+  ],
+  "limits": [
+    "New compiler source needs matching bootstrap artifacts before semantic execution.",
+    "Original fixed-cap Runtime source-child failure remains unresolved.",
+    "No full-workspace, final-head CI, or issue completion proof."
+  ]
+}

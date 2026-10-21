@@ -603,11 +603,47 @@ impl FormBridge {
         )
     }
     pub fn new(session: &mut Session) -> Result<Self, SessionError> {
+        Self::new_with_compile_fuel(session, None)
+    }
+    /// Initialize through the same live compiled helpers with an explicit
+    /// cumulative native compilation allowance. None retains the original
+    /// per-input compilation defaults; Runtime operation options are unchanged.
+    pub fn new_with_compile_fuel(
+        session: &mut Session,
+        compile_fuel: Option<u64>,
+    ) -> Result<Self, SessionError> {
+        struct Compilation(u64);
+        impl crate::portable::ExpansionHost for Compilation {
+            fn expansion_work_fuel(&self) -> u64 { self.0 }
+            fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
+                crate::portable::ExpansionHost::artifact_dependencies(&crate::portable::NoExpansion)
+            }
+            fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+                self.0 = self.0.checked_sub(work).ok_or_else(|| Diagnostic {
+                    span,
+                    message: "Macro data bridge initialization compilation fuel exhausted".into(),
+                })?;
+                Ok(())
+            }
+            fn expand(&mut self, _: &Form, _: crate::portable::ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
+                Ok(None)
+            }
+        }
+        let mut compilation = compile_fuel.map(Compilation);
+        Self::capture_with(session, |session, source| match compilation.as_mut() {
+            Some(host) => session.eval_with_macros(source, host),
+            None => session.eval(source),
+        })
+    }
+    fn capture_with(
+        session: &mut Session,
+        mut evaluate: impl FnMut(&mut Session, &str) -> Result<SessionValue, SessionError>,
+    ) -> Result<Self, SessionError> {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
         for (name, class) in SOURCE_CLASSES {
-            let value = session.eval(&format!("suss.core/{name}"))?;
+            let value = evaluate(session, &format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
                 let closure = fields(&mut store, &value, 5)?;
                 let owner = fields(&mut store, &closure[0], 4)?;
@@ -632,7 +668,7 @@ impl FormBridge {
         }
         // Source arrays have a private runtime descriptor rather than a public
         // class constructor. Capture its actual identity from one owned sample.
-        let value = session.eval("(suss.core/array)")?;
+        let value = evaluate(session, "(suss.core/array)")?;
         let id = session.inspect(&value, |mut store, value| {
             let owner = fields(&mut store, &value, 4)?;
             let descriptor = fields(&mut store, &owner[0], 5)?;
@@ -660,7 +696,7 @@ impl FormBridge {
             ("empty-list", "(.-EMPTY suss.core/List)"),
             ("lazy-sval", "(fn* [value] (.sval value))"),
         ] {
-            factories.insert(name, session.eval(source)?);
+            factories.insert(name, evaluate(session, source)?);
         }
         session.charge_host_work((std::mem::size_of::<BridgeCore>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
@@ -1593,7 +1629,7 @@ mod identity_tests {
         // Redefine the PUBLIC binding only after all captures/forks. No fork may
         // recapture it. Counter reset excludes setup/compiler activity explicitly.
         session.enter_namespace("suss.core").unwrap();
-        session.eval(r#"
+        session.eval_with_test_compilation_fuel(r#"
           (def hash (fn [key]
             (do (set! user/bridge-new-hash-calls (+ user/bridge-new-hash-calls 1))
                 (user/bridge-original-hash key))))

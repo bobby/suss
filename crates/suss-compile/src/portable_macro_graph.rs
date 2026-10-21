@@ -3943,8 +3943,8 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def metadata-hash-log (array)) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (aset metadata-hash-log (alength metadata-hash-log) key) nil) (metadata-original-hash key))))").unwrap();
-        session.eval("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} review-callback-metadata 0)").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        session.eval_with_test_compilation_fuel("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} review-callback-metadata 0)").unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let snapshot = session.compilation_snapshot();
         let namespace = SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
         let (global, source) = namespace.declarations.iter()
@@ -4096,7 +4096,7 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def raw-key-hash-calls 0) (def raw-key-original-hash suss.core/hash) (def hash (fn [key] (do (set! raw-key-hash-calls (+ raw-key-hash-calls 1)) (raw-key-original-hash key))))").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let value = {
             let _request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
@@ -4212,7 +4212,7 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def review-first-hash nil) (def review-original-hash suss.core/hash) (def hash (fn [key] (do (if (== review-hash-effects 0) (set! review-first-hash key) nil) (set! review-hash-effects (+ review-hash-effects 1)) (review-original-hash key))))").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         for (source, calls, first) in [
             ("^:private #{1 2 3 4 5 6 7 8 9}", 9.0, 1.0),
             (
@@ -4267,7 +4267,7 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) review-hash-effects)))").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let probe = session
             .eval("(fn [value index] (nth (nth value index) 0))")
             .unwrap();
@@ -4324,7 +4324,7 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def review-diamond-effects 0) (def hash (fn [key] (do (set! review-diamond-effects (+ review-diamond-effects 1)) key)))").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let form = suss_reader::forms::read_forms("#{1 2 3 4 5 6 7 8 9}").unwrap().remove(0);
         let mut graph = AnalysisGraph::new(&bridge, &mut session);
         let leaf = graph.form(&form, 0).unwrap();
@@ -4361,7 +4361,7 @@ mod sharing_tests {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
         session.eval_with_test_compilation_fuel("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) key)))").unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
+        let bridge = FormBridge::new_with_compile_fuel(&mut session, Some(crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL)).unwrap();
         let form = suss_reader::forms::read_forms("[#{1 2 3 4 5 6 7 8 9} #{1 2 3 4 5 6 7 8 9}]")
             .unwrap()
             .remove(0);
