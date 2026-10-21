@@ -523,5 +523,42 @@
     "finding": "Configured100B reaches ownedMacroSession outerrequest; nested &form/&env/args/invoke/decode shareits remaining Storefuel; nativeExpansionRequest chargesStorethroughhosthook andmaintainsseparate mirrored nativecounter. Caller evaluation remains separate10M. No hidden10MStore/reset identified insidefailing &envpath.",
     "qualification": "Graphoccurrenceadmission can deliberatelyexhaust Storeusingu64MAXwhen projectedworkoverflows/exceedsremaining. TypedOutOfFuelnotproof100Bexecuted. Actualfailuremechanism unresolved. Default10M FormBridge initializationNoExpansion existsbutisbeforeMacro&env; notexplanationofreportedfailure. GenericRuntimeTraplabeldoesnotdenoteStorephase.",
     "next": "Useexisting SUSS_MACRO_FUEL_TRACE +minimaladmissionreason instrumentation torecord projectedwork/remaining before rejection; preservetypedfailure/fullcorpus/caller Runtime."
+  },
+  "metadata_merge_trace": {
+    "head": "ed75d3500ca3560b45eac2de0b8b5fb2c604aab1",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "env",
+      "SUSS_MACRO_FUEL_TRACE=1",
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_declaration_metadata",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 1290.4938723230007,
+    "post_head": "7b50858e7291ce698c5ac9cce98c6b0587b2fed5",
+    "raw_sha256": "0aa21df0d7b5f892de53bff219f35c67c674c821c212b0652134a8cde306f9ee",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "0",
+        "1",
+        "0",
+        "0",
+        "2"
+      ]
+    ],
+    "interpretation": "Completeoriginaltest0PASS1FAIL0ignored2filtered. AdvancedthroughRuntimephaseuserprojections/rawmeta, thenfailsfullcoreNamespaceprobe core-filecaller&env19..46 atline141. Macrocallerphaseandfinalfile assertionsunexecuted. Finalcaller-form fuel99920973270, no caller-environmentend; no exclusive100Bdebit/admissionreason inferred. Ordinaryprobe1Tcalibration separate, pendingexecution."
   }
 }
