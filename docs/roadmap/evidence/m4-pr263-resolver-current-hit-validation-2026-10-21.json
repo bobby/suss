@@ -131,7 +131,8 @@
     "harness_summaries": []
   },
   "resolver11": {
-    "state": "Live building at publication; no result claimed.",
+    "head": "565115d3abd36d7a9ae15bbf9cb4575cf274f9fd",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
     "command": [
       "env",
       "SUSS_SOURCE_CHILD_FUEL_TRACE=1",
@@ -157,12 +158,370 @@
       "portable::resolve::global_ownership_tests::native_interface_catalog_uses_actual_binding_and_propagates_current_meter_failure",
       "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo"
     ],
-    "scope": "All10resolverownership/meteringcases plus original complete source-child case with readonly fuel observations enabled."
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 562.5660162919958,
+    "post_head": "ed75d3500ca3560b45eac2de0b8b5fb2c604aab1",
+    "raw_sha256": "678ed6a8d51680000586593f4a2e708ee44ce8a5893d8bab47f38e69cc5a3c16",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "10",
+        "1",
+        "0",
+        "0",
+        "628"
+      ]
+    ],
+    "interpretation": "All11selected once:10PASS1FAIL0ignored628filtered. All10resolvertestsPASS; originalfixed10M sourcechild sourcephaseRuntimevariant3stillfails, latercoverageunexecuted. No fullbaseline proof."
   },
   "limits": [
     "No defaultCORE10Mfit or sourcechildfit yet; no wholeprogram gain inferred.",
     "Normal2generations match but verifier exits1 at stale shipped compare; not fullverifier pass.",
     "No fullbaseline/final-head CI/wholeissue completion proof.",
     "Fixed-cap compilation calibration remains a pending user-policy question. Originalcaps/rates/programs/assertions remain in effect."
-  ]
+  ],
+  "source_child_stage_fuel": {
+    "events": [
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": null,
+        "stage": "budget-start",
+        "configured": 10000000,
+        "remaining": 10000000
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": null,
+        "stage": "captures-ready",
+        "configured": 10000000,
+        "remaining": 9859405
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": null,
+        "stage": "layout-ready",
+        "configured": 10000000,
+        "remaining": 9852797
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": null,
+        "stage": "common-ready",
+        "configured": 10000000,
+        "remaining": 8753797
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "batch-before",
+        "configured": 10000000,
+        "remaining": 8753797
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "batch-after",
+        "configured": 10000000,
+        "remaining": 8657136
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "children-adjusted",
+        "configured": 10000000,
+        "remaining": 8657136
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "expectation-ready",
+        "configured": 10000000,
+        "remaining": 8616370
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "parent-materialized",
+        "configured": 10000000,
+        "remaining": 5837294
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 0,
+        "stage": "parent-rejected",
+        "configured": 10000000,
+        "remaining": 5836740
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "batch-before",
+        "configured": 10000000,
+        "remaining": 5836740
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "batch-after",
+        "configured": 10000000,
+        "remaining": 5740079
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "children-adjusted",
+        "configured": 10000000,
+        "remaining": 5740079
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "expectation-ready",
+        "configured": 10000000,
+        "remaining": 5699313
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "parent-materialized",
+        "configured": 10000000,
+        "remaining": 2941413
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 1,
+        "stage": "parent-rejected",
+        "configured": 10000000,
+        "remaining": 2941411
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "batch-before",
+        "configured": 10000000,
+        "remaining": 2941411
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "batch-after",
+        "configured": 10000000,
+        "remaining": 2844750
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "children-adjusted",
+        "configured": 10000000,
+        "remaining": 2813384
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "expectation-ready",
+        "configured": 10000000,
+        "remaining": 2772618
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "parent-materialized",
+        "configured": 10000000,
+        "remaining": 14326
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 2,
+        "stage": "parent-rejected",
+        "configured": 10000000,
+        "remaining": 14324
+      },
+      {
+        "source_phase": "Runtime",
+        "store_phase": "Macro (from fixed fixture Session::new_macro)",
+        "variant": 3,
+        "stage": "batch-before",
+        "configured": 10000000,
+        "remaining": 14324
+      }
+    ],
+    "nonoverlapping_parent_intervals": [
+      {
+        "source_phase": "Runtime",
+        "variant": 0,
+        "stage_from": "expectation-ready",
+        "stage_to": "parent-materialized",
+        "debit": 2779076,
+        "scope": "Includes recording creation and parent materialization; joint guest and explicit native-work Store debit, not exclusiveCPU/guest instructions."
+      },
+      {
+        "source_phase": "Runtime",
+        "variant": 1,
+        "stage_from": "expectation-ready",
+        "stage_to": "parent-materialized",
+        "debit": 2757900,
+        "scope": "Includes recording creation and parent materialization; joint guest and explicit native-work Store debit, not exclusiveCPU/guest instructions."
+      },
+      {
+        "source_phase": "Runtime",
+        "variant": 2,
+        "stage_from": "expectation-ready",
+        "stage_to": "parent-materialized",
+        "debit": 2758292,
+        "scope": "Includes recording creation and parent materialization; joint guest and explicit native-work Store debit, not exclusiveCPU/guest instructions."
+      }
+    ],
+    "sum_completed_parent_intervals": 8295268,
+    "remaining_before_variant3_batch": 14324,
+    "terminal_scope": "Runtime source variants0..2 complete parent rejection; variant3failsinbatch at0remaining. Variant3parent/variant4/Macrosource/physicalmemotailunexecuted. No projected unknown cost promoted to measured result."
+  },
+  "core17": {
+    "head": "ed75d3500ca3560b45eac2de0b8b5fb2c604aab1",
+    "compiler_source_sha256": "3e4d9f476abea78f46da11807e41661158784ea5a8971abf53525c1430421209",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "core_import",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 7.98091087800276,
+    "post_head": "ed75d3500ca3560b45eac2de0b8b5fb2c604aab1",
+    "raw_sha256": "88837ab2655dcb890cbb510c891797b28d6057b08047b1a1e8d4a8a738225413",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "0",
+        "17",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "interpretation": "All17selected execute,0PASS17FAIL0ignored0filtered. EachfailsnativeCOREsetupbeforesemanticassertions at original10M;commonspan1632..1745. No importedcoresemantic verdict."
+  },
+  "reader_diagnostic": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/reader-cost.rs",
+      "--extern",
+      "suss_reader=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_reader.rlib",
+      "-L",
+      "dependency=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps",
+      "-o",
+      "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/reader-cost"
+    ],
+    "reader_rlib_sha256": "4180d1a8bf3011635119535677616219f897c256b1b98093e4991140825f003e",
+    "reader_source_sha256": "7155e7e9808092d66989e67a20cc0db0e0c78c28764f40fa77ae81c6fda47f4d",
+    "core_sha256": "51f4f48bbb9a3a75ed38a9167da90182fe787aad0a95d0fe587d3226bcdc190f",
+    "diagnostic_source_sha256": "49a9515b3629e474745a45ed30d7d3c39ed6cef9b44cebc7ac4700d5bfc3c937",
+    "scope": "Direct existing public reader+selection charge callbacks only; sourceOrigin byte charge mirrors prepare_input. No compilation/HIR/emission/Runtime/defaultcap or wholeprogram proof; no quota/rate/source change.",
+    "build_exit": 0,
+    "run_exit": 0,
+    "seconds": 0.036552244004269596,
+    "result": {
+      "source_bytes": 276925,
+      "read_forms": 525,
+      "selected_forms": 525,
+      "read_work": 347767,
+      "read_calls": 347767,
+      "selection_work": 42154,
+      "selection_calls": 42154,
+      "source_origin_bytes_charge": 276925,
+      "subtotal_before_module_discovery_or_HIR": 666846
+    }
+  },
+  "core_preparation_diagnostic": {
+    "build": {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/core-prepare-cost.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_compile-6b174a16d8bbae2b.rlib",
+        "--extern",
+        "suss_reader=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_reader.rlib",
+        "-L",
+        "dependency=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps",
+        "-o",
+        "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/core-prepare-cost"
+      ],
+      "compiler_rlib": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_compile-6b174a16d8bbae2b.rlib",
+      "compiler_rlib_sha256": "4d7789f0f72eb151938f7a19df7dd47f5db4182ce1f2a382c329155ac116db65",
+      "diagnostic_source_sha256": "32224f3859fc08f8358af6324d00415b66d2c8a19e6714a630b15d8261f76741",
+      "scope": "Diagnostic publicnative forms pipeline with DefaultEnvironment/emptyprovided/srcRoots, originalfullCORE and explicit checked100B countHost; no Session/Runtime or issueacceptance. Reader/firstselection/origin charge mirrored fromprepare_input; publicformspipeline performs actualremainingpreparation/emission. Nativeobserver receivesforwardedchargesonce, no overlappingrequestcounters summed.",
+      "build_exit": 0
+    },
+    "runs": [
+      {
+        "command": [
+          "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/core-prepare-cost",
+          "/home/bobby/.cache/suss-m4-work/pr263-native-semantic-calibration-afd-v3/checkout/runtime/core-import/suss/core.sus",
+          "10000000"
+        ],
+        "exit_code": 0,
+        "seconds": 0.7261984189972281,
+        "raw_sha256": "7433350ef3a829b02342da5abc278f36b3e15b56d2a431169be7ff08e2dcd433"
+      },
+      {
+        "command": [
+          "/home/bobby/.cache/suss-m4-work/pr263-resolver-current-hit-production-v1/core-prepare-cost",
+          "/home/bobby/.cache/suss-m4-work/pr263-native-semantic-calibration-afd-v3/checkout/runtime/core-import/suss/core.sus",
+          "100000000000"
+        ],
+        "exit_code": 0,
+        "seconds": 20.275323295994895,
+        "raw_sha256": "41ed693b44297e2985232d3b24d881aebabd27dada4b84575e2dc497c8e40a4f"
+      }
+    ],
+    "scope": "Diagnostic publicnative forms pipeline with DefaultEnvironment/emptyprovided/srcRoots, originalfullCORE and explicit checked100B countHost; no Session/Runtime or issueacceptance. Reader/firstselection/origin charge mirrored fromprepare_input; publicformspipeline performs actualremainingpreparation/emission. Nativeobserver receivesforwardedchargesonce, no overlappingrequestcounters summed.",
+    "interpretation": "Diagnostic driver exit0onlyreportsitsrun. 10MpreparationFAILSat1632..1745 (used9991983,remaining8017);100Bpreparation/emissioncompletes using16300549344units,remaining83699450656,32264398forwardedchargecalls. DefaultEnvironment/emptyprovided/srcRoots publicforms pipeline with originalCORE, no Session/Runtime. Nativecallbackobservercountsforwardedworkonce, notnestedcounter sums. No Runtime or originalCORE17 acceptance inferred.",
+    "original_build_failure": "Originaldiagnosticdriverused &String where SourceOrigin::newrequiresInto<Arc<str>>; changedonly driver tosource.as_str(); initialfailure/retry logsretained. No compiler/testinput change.",
+    "retained_driver_source": "docs/roadmap/evidence/m4-pr263-core-native-preparation-cost-2026-10-21.rs",
+    "retained_driver_sha256": "32224f3859fc08f8358af6324d00415b66d2c8a19e6714a630b15d8261f76741",
+    "compiler_rlib_contains_current_fingerprint": true
+  },
+  "old_metadata_budget_path_review": {
+    "old_head": "57edbd5f698d3e9ea4b203ddb277a01633404019",
+    "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+    "reviewer": "Helmholtz",
+    "agent_id": "01a15d38-7c3d-7772-ba87-9feec6ee6761",
+    "scope": "Read-only static oldsource investigation; checked229inputs/three testfiles/two dependencies/fourBOOT against frozen producer. No VM/readout measurement or source mutation.",
+    "finding": "Configured100B reaches ownedMacroSession outerrequest; nested &form/&env/args/invoke/decode shareits remaining Storefuel; nativeExpansionRequest chargesStorethroughhosthook andmaintainsseparate mirrored nativecounter. Caller evaluation remains separate10M. No hidden10MStore/reset identified insidefailing &envpath.",
+    "qualification": "Graphoccurrenceadmission can deliberatelyexhaust Storeusingu64MAXwhen projectedworkoverflows/exceedsremaining. TypedOutOfFuelnotproof100Bexecuted. Actualfailuremechanism unresolved. Default10M FormBridge initializationNoExpansion existsbutisbeforeMacro&env; notexplanationofreportedfailure. GenericRuntimeTraplabeldoesnotdenoteStorephase.",
+    "next": "Useexisting SUSS_MACRO_FUEL_TRACE +minimaladmissionreason instrumentation torecord projectedwork/remaining before rejection; preservetypedfailure/fullcorpus/caller Runtime."
+  }
 }
