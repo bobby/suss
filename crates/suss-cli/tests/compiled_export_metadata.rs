@@ -1,5 +1,7 @@
 //! Execute retained export facts and selected-WIT source mapping through compiled phases.
 use std::{path::Path, process::Command, sync::OnceLock};
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -94,14 +96,20 @@ fn export_metadata_maps_freestanding_functions_and_preserves_live_effects() {
 fn source_export_metadata_matches_macro_snapshots_in_both_phases() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("export-probe").unwrap();
         macros.enter_namespace("export-probe").unwrap();
         macros.define("(defmacro inspect-export [name] (let [d (get (get (get &env :ns) :defs) name)] (list 'quote [(get d :export) (get (get d :meta) :export)])))").unwrap();
-        let value = session
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
             .eval_with_macros(
                 "(def ^:export staged (inspect-export staged)) staged",
                 &mut macros,
-            )
+            );
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
@@ -110,8 +118,13 @@ fn source_export_metadata_matches_macro_snapshots_in_both_phases() {
         };
         assert!(matches!(&items[0].kind, Kind::Nil));
         assert!(matches!(&items[1].kind, Kind::Nil));
-        let value = session
-            .eval_with_macros("(inspect-export staged)", &mut macros)
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
+            .eval_with_macros("(inspect-export staged)", &mut macros);
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         session.collect().unwrap();
         let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {
@@ -119,11 +132,16 @@ fn source_export_metadata_matches_macro_snapshots_in_both_phases() {
         };
         assert!(matches!(&items[0].kind, Kind::Bool(true)));
         assert!(matches!(&items[1].kind, Kind::Bool(true)));
-        let value = session
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
             .eval_with_macros(
                 "(def ^{:export false} ^:export disabled 1) (inspect-export disabled)",
                 &mut macros,
-            )
+            );
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         session.collect().unwrap();
         let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {

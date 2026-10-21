@@ -1,4 +1,8 @@
 //! Execute selected named-self and parameter binding observations from the pinned corpus.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -278,18 +282,32 @@ fn named_self_and_method_argument_fields_match_the_pinned_local_observations() {
         // The full quoted method-binding observation executes retained map/list
         // construction in the caller as well as the native macro helper.
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        {
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            let evaluated = semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"));
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            evaluated
+        }
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
-        macros.set_operation_fuel(100_000_000);
-        session
-            .load_namespace_with_macros("suss-oracle.declaration-runner", &mut macros)
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        {
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            let evaluated = session
+            .load_namespace_with_macros("suss-oracle.declaration-runner", &mut macros);
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            evaluated
+        }
             .unwrap();
         for row in corpus["locals"].as_array().unwrap() {
             let label = row[0].as_str().unwrap();
-            let value = session
-                .eval_with_macros(&format!("(tools/observation {label:?})"), &mut macros)
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                let evaluated = session
+                .eval_with_macros(&format!("(tools/observation {label:?})"), &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                evaluated
+            }
                 .unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             session.collect().unwrap();
@@ -328,7 +346,12 @@ fn named_self_and_method_argument_fields_match_the_pinned_local_observations() {
             "(== (suss-oracle.declaration-runner/named 11) 11)",
             "(== (suss-oracle.declaration-runner/named 12 13 14) 13)",
         ] {
-            let value = session.eval(expression).unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                let evaluated = session.eval(expression);
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                evaluated
+            }.unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
@@ -391,16 +414,30 @@ fn reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_ord
         )
         .unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        {
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            let evaluated = semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"));
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            evaluated
+        }
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
-        macros.set_operation_fuel(100_000_000);
-        session
-            .load_namespace_with_macros("review", &mut macros)
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        {
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            let evaluated = session
+            .load_namespace_with_macros("review", &mut macros);
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            evaluated
+        }
             .unwrap();
-        let value = session
-            .eval_with_macros("(review-tools/observation)", &mut macros)
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            let evaluated = session
+            .eval_with_macros("(review-tools/observation)", &mut macros);
+            assert_eq!(session.options().fuel_per_operation, 100_000_000);
+            evaluated
+        }
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
@@ -411,7 +448,12 @@ fn reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_ord
             "{phase:?} both-pass shadows and expansion order"
         );
         for expression in ["(== (review/f 11) 11)", "(== (review/f 12 13 14) 13)"] {
-            let value = session.eval(expression).unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                let evaluated = session.eval(expression);
+                assert_eq!(session.options().fuel_per_operation, 100_000_000);
+                evaluated
+            }.unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
                 Kind::Bool(true)

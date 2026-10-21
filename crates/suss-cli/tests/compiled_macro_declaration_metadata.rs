@@ -1,6 +1,8 @@
 //! Compare actual compiled macro declaration records with the pinned corpus.
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -48,8 +50,12 @@ const TOOLS: &str = r#"(ns tools)
 fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"));
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
@@ -86,7 +92,12 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
                 "[replaced nil number false \"override\" true :replacement]",
             ),
         ] {
-            let value = session.eval_with_macros(source, &mut macros).unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session.eval_with_macros(source, &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }.unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             session.collect().unwrap();
             let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
@@ -96,11 +107,16 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
             assert_eq!(actual, expected, "{phase:?}: {source}");
         }
         macros.define("(defmacro raw-meta [name] (list 'quote (get (get (get (get &env :suss/catalog) :defs) name) :meta)))").unwrap();
-        let value = session
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
             .eval_with_macros(
                 "(def ^{:meta [:raw]} pending (raw-meta pending)) pending",
                 &mut macros,
-            )
+            );
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
@@ -112,11 +128,16 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
         );
         macros.define("(defmacro core-file [name] (let [info (get (get (get &env :suss/catalog) :defs) name)] (list 'quote [(get info :file) (get (get info :meta) :file)])))").unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        let value = session
+        let value = {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
             .eval_with_macros(
                 "(def core-probe 7) (user/core-file core-probe)",
                 &mut macros,
-            )
+            );
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
         normalize(&mut actual);
@@ -137,11 +158,16 @@ fn form(kind: Kind) -> Form {
 fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"));
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro raw-fields [name]
@@ -173,7 +199,12 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
                 "[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]] false]",
             ),
         ] {
-            let value = session.eval_with_macros(source, &mut macros).unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session.eval_with_macros(source, &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }.unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             session.collect().unwrap();
             let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
@@ -189,7 +220,12 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
             ("(raw-function 23)", 23.0),
             ("(normal-function 29)", 29.0),
         ] {
-            let value = session.eval(source).unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session.eval(source);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }.unwrap();
             session.collect().unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
@@ -214,9 +250,19 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
                 "[[true true] [false nil] [false nil] [true [:b [y]]] [true {:a [x] :b [y]}] [false nil] false]",
             ),
         ] {
-            session.eval(source).unwrap();
-            let value = session
-                .eval_with_macros(&format!("(raw-fields {name})"), &mut macros)
+            {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session.eval(source);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }.unwrap();
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session
+                .eval_with_macros(&format!("(raw-fields {name})"), &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }
                 .unwrap();
             session.collect().unwrap();
             let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
@@ -224,8 +270,13 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
             normalize(&mut actual);
             normalize(&mut expected);
             assert_eq!(actual, expected, "{phase:?}: {source}");
-            let value = session
-                .eval_with_macros(&format!("(declared-flag {name})"), &mut macros)
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session
+                .eval_with_macros(&format!("(declared-flag {name})"), &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }
                 .unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
@@ -447,15 +498,24 @@ fn compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields
             phase,
         )
         .unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"));
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         // The observer constructs up to 12 records of 18 three-element field
         // projections. Keep a finite budget appropriate to this real workload.
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-        session
-            .load_namespace_with_macros("suss-oracle.declaration-runner", &mut macros)
+        {
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            let evaluated = session
+            .load_namespace_with_macros("suss-oracle.declaration-runner", &mut macros);
+            assert_eq!(session.options().fuel_per_operation, 10_000_000);
+            evaluated
+        }
             .unwrap();
         // Batch at most two observations within the bridge's unchanged
         // per-form bound. Every field of every case is still compared exactly.
@@ -465,8 +525,13 @@ fn compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields
                 .map(|row| format!("{:?}", row[0].as_str().unwrap()))
                 .collect::<Vec<_>>()
                 .join(" ");
-            let value = session
-                .eval_with_macros(&format!("(tools/observation [{labels}])"), &mut macros)
+            let value = {
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                let evaluated = session
+                .eval_with_macros(&format!("(tools/observation [{labels}])"), &mut macros);
+                assert_eq!(session.options().fuel_per_operation, 10_000_000);
+                evaluated
+            }
                 .unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             session.collect().unwrap();
